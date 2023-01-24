@@ -158,10 +158,10 @@ func TestGenerateIngerssDefaultPlacement(t *testing.T) {
 					UUID:    "test-uuid",
 					InfraID: "test-infra-id",
 				},
-				&installconfig.InstallConfig{
-					Config: installConfigFromTopologies(t, tc.installConfigBuildOptions,
+				installconfig.MakeAsset(
+					installConfigFromTopologies(t, tc.installConfigBuildOptions,
 						tc.controlPlaneTopology, tc.infrastructureTopology),
-				},
+				),
 			)
 			ingressAsset := &Ingress{}
 			err := ingressAsset.Generate(parents)

@@ -134,8 +134,8 @@ spec:
 					UUID:    "test-uuid",
 					InfraID: "test-infra-id",
 				},
-				&installconfig.InstallConfig{
-					Config: &types.InstallConfig{
+				installconfig.MakeAsset(
+					&types.InstallConfig{
 						ObjectMeta: metav1.ObjectMeta{
 							Name: "test-cluster",
 						},
@@ -156,8 +156,7 @@ spec:
 								},
 							},
 						},
-					},
-				},
+					}),
 				(*rhcos.Image)(pointer.StringPtr("test-image")),
 				(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 				&machine.Master{
@@ -185,8 +184,8 @@ spec:
 
 func TestControlPlaneIsNotModified(t *testing.T) {
 	parents := asset.Parents{}
-	installConfig := installconfig.InstallConfig{
-		Config: &types.InstallConfig{
+	installConfig := installconfig.MakeAsset(
+		&types.InstallConfig{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-cluster",
 			},
@@ -209,15 +208,14 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 					},
 				},
 			},
-		},
-	}
+		})
 
 	parents.Add(
 		&installconfig.ClusterID{
 			UUID:    "test-uuid",
 			InfraID: "test-infra-id",
 		},
-		&installConfig,
+		installConfig,
 		(*rhcos.Image)(pointer.StringPtr("test-image")),
 		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Master{
@@ -239,8 +237,8 @@ func TestControlPlaneIsNotModified(t *testing.T) {
 
 func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 	parents := asset.Parents{}
-	installConfig := installconfig.InstallConfig{
-		Config: &types.InstallConfig{
+	installConfig := installconfig.MakeAsset(
+		&types.InstallConfig{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-cluster",
 			},
@@ -279,15 +277,14 @@ func TestBaremetalGeneratedAssetFiles(t *testing.T) {
 					Platform: types.MachinePoolPlatform{},
 				},
 			},
-		},
-	}
+		})
 
 	parents.Add(
 		&installconfig.ClusterID{
 			UUID:    "test-uuid",
 			InfraID: "test-infra-id",
 		},
-		&installConfig,
+		installConfig,
 		(*rhcos.Image)(pointer.StringPtr("test-image")),
 		(*rhcos.Release)(pointer.StringPtr("412.86.202208101040-0")),
 		&machine.Master{

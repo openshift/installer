@@ -45,6 +45,13 @@ type InstallConfig struct {
 
 var _ asset.WritableAsset = (*InstallConfig)(nil)
 
+// MakeAsset returns an InstallConfig asset containing a given InstallConfig CR.
+func MakeAsset(config *types.InstallConfig) *InstallConfig {
+	return &InstallConfig{
+		Config: config,
+	}
+}
+
 // Dependencies returns all of the dependencies directly needed by an
 // InstallConfig asset.
 func (a *InstallConfig) Dependencies() []asset.Asset {

@@ -17,8 +17,8 @@ import (
 
 // TestMasterGenerate tests generating the master asset.
 func TestMasterGenerate(t *testing.T) {
-	installConfig := &installconfig.InstallConfig{
-		Config: &types.InstallConfig{
+	installConfig := installconfig.MakeAsset(
+		&types.InstallConfig{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "test-cluster",
 			},
@@ -35,8 +35,7 @@ func TestMasterGenerate(t *testing.T) {
 				Name:     "master",
 				Replicas: pointer.Int64Ptr(3),
 			},
-		},
-	}
+		})
 
 	rootCA := &tls.RootCA{}
 	err := rootCA.Generate(nil)
