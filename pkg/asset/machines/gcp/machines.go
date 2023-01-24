@@ -207,6 +207,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		Zone:                   az,
 		ProjectID:              platform.ProjectID,
 		ShieldedInstanceConfig: shieldedInstanceConfig,
+		ConfidentialCompute:    machineapi.ConfidentialComputePolicy(mpool.ConfidentialCompute),
+		OnHostMaintenance:      machineapi.GCPHostMaintenanceType(mpool.OnHostMaintenance),
 	}, nil
 }
 
