@@ -36,11 +36,11 @@ var (
 	// tagValueRegex is for verifying that the tag value contains only allowed characters.
 	tagValueRegex = regexp.MustCompile(`^[0-9A-Za-z_.=+\-@]{1,256}$`)
 
-	// tagKeyPrefixRegex is for verifying that the tag value does not contain restricted prefixes
+	// tagKeyPrefixRegex is for verifying that the tag value does not contain restricted prefixes.
 	tagKeyPrefixRegex = regexp.MustCompile(`^(?i)(name$|kubernetes\.io|openshift\.io|microsoft|azure|windows)`)
 )
 
-// maxUserTagLimit is the maximum userTags that can be configured as defined in openshift/api
+// maxUserTagLimit is the maximum userTags that can be configured as defined in openshift/api.
 // https://github.com/openshift/api/blob/068483260288d83eac56053e202761b1702d46f5/config/v1/types_infrastructure.go#L482-L488
 const maxUserTagLimit = 10
 
@@ -88,7 +88,7 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
 	}
 
-	// check if configured userTags are valid
+	// check if configured userTags are valid.
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
 	switch cloud := p.CloudName; cloud {
@@ -107,7 +107,7 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 }
 
 // validateUserTags verifies if configured number of UserTags is not more than
-// allowed limit and the tag keys and values are valid
+// allowed limit and the tag keys and values are valid.
 func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(tags) == 0 {
@@ -126,7 +126,7 @@ func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorLi
 	return allErrs
 }
 
-// validateTag checks the following to ensure that the tag configured is acceptable
+// validateTag checks the following to ensure that the tag configured is acceptable.
 //   - The key and value contain only allowed characters.
 //   - The key is not empty and at most 128 characters and starts with an alphabet.
 //   - The value is not empty and at most 256 characters.

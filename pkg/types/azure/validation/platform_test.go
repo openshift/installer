@@ -181,11 +181,11 @@ func TestValidateUserTags(t *testing.T) {
 			wantErr:  false,
 		},
 		{
-			name:     "userTags configured",
+			name: "userTags configured",
 			userTags: map[string]string{
 				"key1": "value1", "key_2": "value_2", "key.3": "value.3", "key=4": "value=4", "key+5": "value+5",
 				"key-6": "value-6", "key@7": "value@7", "key8_": "value8-", "key9=": "value9+", "key10-": "value10@"},
-			wantErr:  false,
+			wantErr: false,
 		},
 		{
 			name: "userTags configured is more than max limit",
@@ -206,10 +206,10 @@ func TestValidateUserTags(t *testing.T) {
 			wantErr:  true,
 		},
 		{
-			name:     "userTags contains key length greater than 128",
+			name: "userTags contains key length greater than 128",
 			userTags: map[string]string{
 				"thisisaverylongkeywithmorethan128characterswhichisnotallowedforazureresourcetagkeysandthetagkeyvalidationshouldfailwithinvalidfieldvalueerror": "value"},
-			wantErr:  true,
+			wantErr: true,
 		},
 		{
 			name:     "userTags contains key with invalid character",
