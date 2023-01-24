@@ -64,9 +64,22 @@ resource "google_compute_instance" "master" {
 
   dynamic "shielded_instance_config" {
     for_each = var.secure_boot != "" ? [1] : []
-
     content {
       enable_secure_boot = var.secure_boot == "Enabled"
+    }
+  }
+
+  dynamic "confidential_instance_config" {
+    for_each = var.confidential_compute != "" ? [1] : []
+    content {
+      enable_confidential_compute = var.confidential_compute == "Enabled"
+    }
+  }
+
+  dynamic "scheduling" {
+    for_each = var.on_host_maintenance != "" ? [1] : []
+    content {
+      on_host_maintenance = var.on_host_maintenance
     }
   }
 

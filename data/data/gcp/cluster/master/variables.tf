@@ -73,3 +73,15 @@ variable "secure_boot" {
   description = "Verify the digital signature of all boot components."
   default     = ""
 }
+
+variable "confidential_compute" {
+  type        = string
+  description = "Defines whether the instance should have confidential compute enabled."
+  default     = ""
+}
+
+variable "on_host_maintenance" {
+  type        = string
+  description = "The behavior when a maintenance event occurs."
+  default     = ""
+}
