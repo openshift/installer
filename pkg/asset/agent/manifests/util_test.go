@@ -72,53 +72,51 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 
 	return &agent.OptionalInstallConfig{
-		InstallConfig: installconfig.InstallConfig{
-			AssetBase: installconfig.AssetBase{
-				Config: &types.InstallConfig{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ocp-edge-cluster-0",
-						Namespace: "cluster-0",
+		AssetBase: installconfig.AssetBase{
+			Config: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ocp-edge-cluster-0",
+					Namespace: "cluster-0",
+				},
+				BaseDomain: "testing.com",
+				PullSecret: testSecret,
+				SSHKey:     testSSHKey,
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64Ptr(3),
+					Platform: types.MachinePoolPlatform{},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker-machine-pool-1",
+						Replicas: pointer.Int64Ptr(2),
 					},
-					BaseDomain: "testing.com",
-					PullSecret: testSecret,
-					SSHKey:     testSSHKey,
-					ControlPlane: &types.MachinePool{
-						Name:     "master",
+					{
+						Name:     "worker-machine-pool-2",
 						Replicas: pointer.Int64Ptr(3),
-						Platform: types.MachinePoolPlatform{},
 					},
-					Compute: []types.MachinePool{
+				},
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
 						{
-							Name:     "worker-machine-pool-1",
-							Replicas: pointer.Int64Ptr(2),
+							CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
 						},
+					},
+					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
-							Name:     "worker-machine-pool-2",
-							Replicas: pointer.Int64Ptr(3),
+							CIDR:       ipnet.IPNet{IPNet: *newCidr},
+							HostPrefix: 23,
 						},
 					},
-					Networking: &types.Networking{
-						MachineNetwork: []types.MachineNetworkEntry{
-							{
-								CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
-							},
-						},
-						ClusterNetwork: []types.ClusterNetworkEntry{
-							{
-								CIDR:       ipnet.IPNet{IPNet: *newCidr},
-								HostPrefix: 23,
-							},
-						},
-						ServiceNetwork: []ipnet.IPNet{
-							*ipnet.MustParseCIDR("172.30.0.0/16"),
-						},
-						NetworkType: "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{
+						*ipnet.MustParseCIDR("172.30.0.0/16"),
 					},
-					Platform: types.Platform{
-						BareMetal: &baremetal.Platform{
-							APIVIPs:     []string{"192.168.122.10"},
-							IngressVIPs: []string{"192.168.122.11"},
-						},
+					NetworkType: "OVNKubernetes",
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
 					},
 				},
 			},
@@ -135,59 +133,57 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 	_, machineNetCidrIPv6, _ := net.ParseCIDR("2001:db8:5dd8:c956::/64")
 
 	return &agent.OptionalInstallConfig{
-		InstallConfig: installconfig.InstallConfig{
-			AssetBase: installconfig.AssetBase{
-				Config: &types.InstallConfig{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "ocp-edge-cluster-0",
-						Namespace: "cluster-0",
+		AssetBase: installconfig.AssetBase{
+			Config: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "ocp-edge-cluster-0",
+					Namespace: "cluster-0",
+				},
+				BaseDomain: "testing.com",
+				PullSecret: testSecret,
+				SSHKey:     testSSHKey,
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64Ptr(3),
+					Platform: types.MachinePoolPlatform{},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker-machine-pool-1",
+						Replicas: pointer.Int64Ptr(2),
 					},
-					BaseDomain: "testing.com",
-					PullSecret: testSecret,
-					SSHKey:     testSSHKey,
-					ControlPlane: &types.MachinePool{
-						Name:     "master",
+					{
+						Name:     "worker-machine-pool-2",
 						Replicas: pointer.Int64Ptr(3),
-						Platform: types.MachinePoolPlatform{},
 					},
-					Compute: []types.MachinePool{
+				},
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
 						{
-							Name:     "worker-machine-pool-1",
-							Replicas: pointer.Int64Ptr(2),
+							CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
 						},
 						{
-							Name:     "worker-machine-pool-2",
-							Replicas: pointer.Int64Ptr(3),
+							CIDR: ipnet.IPNet{IPNet: *machineNetCidrIPv6},
 						},
 					},
-					Networking: &types.Networking{
-						MachineNetwork: []types.MachineNetworkEntry{
-							{
-								CIDR: ipnet.IPNet{IPNet: *machineNetCidr},
-							},
-							{
-								CIDR: ipnet.IPNet{IPNet: *machineNetCidrIPv6},
-							},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       ipnet.IPNet{IPNet: *newCidr},
+							HostPrefix: 23,
 						},
-						ClusterNetwork: []types.ClusterNetworkEntry{
-							{
-								CIDR:       ipnet.IPNet{IPNet: *newCidr},
-								HostPrefix: 23,
-							},
-							{
-								CIDR:       ipnet.IPNet{IPNet: *newCidrIPv6},
-								HostPrefix: 64,
-							},
-						},
-						ServiceNetwork: []ipnet.IPNet{
-							*ipnet.MustParseCIDR("172.30.0.0/16"), *ipnet.MustParseCIDR("fd02::/112"),
+						{
+							CIDR:       ipnet.IPNet{IPNet: *newCidrIPv6},
+							HostPrefix: 64,
 						},
 					},
-					Platform: types.Platform{
-						BareMetal: &baremetal.Platform{
-							APIVIPs:     []string{"192.168.122.10"},
-							IngressVIPs: []string{"192.168.122.11"},
-						},
+					ServiceNetwork: []ipnet.IPNet{
+						*ipnet.MustParseCIDR("172.30.0.0/16"), *ipnet.MustParseCIDR("fd02::/112"),
+					},
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
 					},
 				},
 			},
@@ -206,7 +202,7 @@ func getValidOptionalInstallConfigDualStackDualVIPs() *agent.OptionalInstallConf
 // getProxyValidOptionalInstallConfig returns a valid optional install config for proxied installation
 func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
-	validIC.InstallConfig.Config.Proxy = &types.Proxy{
+	validIC.Config.Proxy = &types.Proxy{
 		HTTPProxy:  "http://10.10.10.11:80",
 		HTTPSProxy: "http://my-lab-proxy.org:443",
 		NoProxy:    "internal.com",

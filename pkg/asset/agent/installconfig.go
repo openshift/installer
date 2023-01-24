@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
@@ -24,9 +25,11 @@ const (
 // OptionalInstallConfig is an InstallConfig where the default is empty, rather
 // than generated from running the survey.
 type OptionalInstallConfig struct {
-	installconfig.InstallConfig
+	installconfig.AssetBase
 	Supplied bool
 }
+
+var _ asset.WritableAsset = (*OptionalInstallConfig)(nil)
 
 // Dependencies returns all of the dependencies directly needed by an
 // InstallConfig asset.
@@ -45,21 +48,24 @@ func (a *OptionalInstallConfig) Generate(parents asset.Parents) error {
 
 // Load returns the installconfig from disk.
 func (a *OptionalInstallConfig) Load(f asset.FileFetcher) (bool, error) {
-
-	var foundValidatedDefaultInstallConfig bool
-
-	foundValidatedDefaultInstallConfig, err := a.InstallConfig.Load(f)
-	if foundValidatedDefaultInstallConfig && err == nil {
+	found, err := a.LoadFromFile(f)
+	if found && err == nil {
 		a.Supplied = true
 		if err := a.validateInstallConfig(a.Config).ToAggregate(); err != nil {
 			return false, errors.Wrapf(err, "invalid install-config configuration")
 		}
+		if err := a.RecordFile(); err != nil {
+			return false, err
+		}
 	}
-	return foundValidatedDefaultInstallConfig, err
+	return found, err
 }
 
 func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
+	if err := validation.ValidateInstallConfig(a.Config); err != nil {
+		allErrs = append(allErrs, err...)
+	}
 
 	if err := a.validateSupportedPlatforms(installConfig); err != nil {
 		allErrs = append(allErrs, err...)

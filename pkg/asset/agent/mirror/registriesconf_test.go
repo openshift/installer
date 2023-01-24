@@ -37,12 +37,10 @@ func TestRegistriesConf_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{
 					Supplied: true,
-					InstallConfig: installconfig.InstallConfig{
-						AssetBase: installconfig.AssetBase{
-							Config: &types.InstallConfig{
-								ObjectMeta: v1.ObjectMeta{
-									Namespace: "cluster-0",
-								},
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
 							},
 						},
 					},
@@ -58,24 +56,22 @@ func TestRegistriesConf_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{
 					Supplied: true,
-					InstallConfig: installconfig.InstallConfig{
-						AssetBase: installconfig.AssetBase{
-							Config: &types.InstallConfig{
-								ObjectMeta: v1.ObjectMeta{
-									Namespace: "cluster-0",
-								},
-								ImageContentSources: []types.ImageContentSource{
-									{
-										Source: "registry.ci.openshift.org/origin/release",
-										Mirrors: []string{
-											"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
-										},
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
+							},
+							ImageContentSources: []types.ImageContentSource{
+								{
+									Source: "registry.ci.openshift.org/origin/release",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
 									},
-									{
-										Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-										Mirrors: []string{
-											"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
-										},
+								},
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
 									},
 								},
 							},
@@ -93,24 +89,22 @@ func TestRegistriesConf_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{
 					Supplied: true,
-					InstallConfig: installconfig.InstallConfig{
-						AssetBase: installconfig.AssetBase{
-							Config: &types.InstallConfig{
-								ObjectMeta: v1.ObjectMeta{
-									Namespace: "cluster-0",
-								},
-								ImageContentSources: []types.ImageContentSource{
-									{
-										Source: "registry.ci.openshift.org/ocp/release",
-										Mirrors: []string{
-											"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
-										},
+					AssetBase: installconfig.AssetBase{
+						Config: &types.InstallConfig{
+							ObjectMeta: v1.ObjectMeta{
+								Namespace: "cluster-0",
+							},
+							ImageContentSources: []types.ImageContentSource{
+								{
+									Source: "registry.ci.openshift.org/ocp/release",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
 									},
-									{
-										Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-										Mirrors: []string{
-											"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
-										},
+								},
+								{
+									Source: "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
+									Mirrors: []string{
+										"virthost.ostest.test.metalkube.org:5000/localimages/local-release-image",
 									},
 								},
 							},
