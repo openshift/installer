@@ -163,9 +163,8 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "failed to meet the prerequisite for Cloud Connections")
 			}
 		}
-		// @TODO: This needs to check the DHCP CIDR for a conflict, not just the existence of one
 		if ic.Config.Platform.PowerVS.PVSNetworkName == "" {
-			err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID)
+			err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID, ic.Config.MachineNetwork)
 			if err != nil {
 				return errors.Wrap(err, "failed to meet the prerequisite of one DHCP service per Power VS instance")
 			}
