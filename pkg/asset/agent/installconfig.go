@@ -63,7 +63,7 @@ func (a *OptionalInstallConfig) Load(f asset.FileFetcher) (bool, error) {
 
 func (a *OptionalInstallConfig) validateInstallConfig(installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
-	if err := validation.ValidateInstallConfig(a.Config); err != nil {
+	if err := validation.ValidateInstallConfig(a.Config, true); err != nil {
 		allErrs = append(allErrs, err...)
 	}
 

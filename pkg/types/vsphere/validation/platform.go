@@ -16,7 +16,7 @@ import (
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
+func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	isLegacyUpi := false
 	// This is to cover existing UPI non-zonal case
 	// where neither network or cluster is required.
@@ -33,7 +33,7 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path, c *types.Install
 		allErrs = append(allErrs, validateDiskType(p, fldPath)...)
 	}
 
-	if !validate.IsAgentBasedInstallation() {
+	if !agentBasedInstallation {
 		if len(p.VCenters) == 0 {
 			return append(allErrs, field.Required(fldPath.Child("vcenters"), "must be defined"))
 		}
