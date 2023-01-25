@@ -46,9 +46,9 @@ require (
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/zclconf/go-cty v1.9.1 // indirect
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e // indirect
-	golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/net v0.5.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	google.golang.org/appengine v1.6.6 // indirect
 	google.golang.org/genproto v0.0.0-20200711021454-869866162049 // indirect
 	google.golang.org/grpc v1.32.0 // indirect
@@ -64,3 +64,6 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 
 // https://issues.redhat.com/browse/OCPBUGS-5667
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
+
+// https://issues.redhat.com/browse/OCPBUGS-6422
+replace golang.org/x/net => golang.org/x/net v0.5.0
