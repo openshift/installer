@@ -309,7 +309,7 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/zapcore
 # golang.org/x/lint v0.0.0-20210508222113-6edffad5e616
 ## explicit; go 1.11
-# golang.org/x/net v0.0.0-20211112202133-69e39bad7dc2
+# golang.org/x/net v0.5.0 => golang.org/x/net v0.5.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -323,16 +323,16 @@ golang.org/x/net/trace
 ## explicit; go 1.11
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e
+# golang.org/x/sys v0.4.0
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
-## explicit; go 1.11
+# golang.org/x/term v0.4.0
+## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.3.7 => golang.org/x/text v0.3.7
+# golang.org/x/text v0.6.0 => golang.org/x/text v0.3.7
 ## explicit; go 1.17
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
@@ -752,3 +752,4 @@ sigs.k8s.io/yaml
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
+# golang.org/x/net => golang.org/x/net v0.5.0
