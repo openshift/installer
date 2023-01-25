@@ -50,7 +50,7 @@ func (a *AssetBase) LoadFromFile(f asset.FileFetcher) (found bool, err error) {
 		if !strings.Contains(err.Error(), "unknown field") {
 			return false, errors.Wrap(err, asset.InstallConfigError)
 		}
-		err = errors.Wrapf(err, "failed to parse first occurence of unknown field")
+		err = errors.Wrapf(err, "failed to parse first occurrence of unknown field")
 		logrus.Warnf(err.Error())
 		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
 		if err = yaml.UnmarshalStrict(file.Data, config); err != nil {
