@@ -32,6 +32,9 @@ func Test_PrintFields(t *testing.T) {
     baseDomain <string> -required-
       BaseDomain is the base domain to which the cluster should belong.
 
+    bootstrap <object>
+      Bootstrap is the configuration for the machines that comprise the bootstrap.
+
     bootstrapInPlace <object>
       BootstrapInPlace is the configuration for installing a single node with bootstrap in place installation.
 

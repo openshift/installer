@@ -38,6 +38,9 @@ func defaultInstallConfig() *types.InstallConfig {
 				},
 			},
 		},
+		Bootstrap: &types.MachinePool{
+			Name: "bootstrap",
+		},
 		ControlPlane: defaultMachinePool("master"),
 		Compute:      []types.MachinePool{*defaultMachinePool("worker")},
 		Publish:      types.ExternalPublishingStrategy,

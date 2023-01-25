@@ -287,6 +287,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						},
 					},
 				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
+				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
 					Replicas:       pointer.Int64Ptr(1),
@@ -390,6 +393,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
+				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
@@ -533,6 +539,9 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 							HostPrefix: 23,
 						},
 					},
+				},
+				Bootstrap: &types.MachinePool{
+					Name: "bootstrap",
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
