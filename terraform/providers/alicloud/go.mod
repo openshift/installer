@@ -112,11 +112,11 @@ require (
 	golang.org/x/crypto v0.0.0-20220208050332-20e1d8d225ab // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8 // indirect
-	golang.org/x/sys v0.0.0-20220517195934-5e4e11fc645e // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
+	golang.org/x/sys v0.4.0 // indirect
+	golang.org/x/term v0.4.0 // indirect
+	golang.org/x/text v0.6.0 // indirect
 	golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11 // indirect
 	golang.org/x/tools v0.1.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
@@ -153,3 +153,6 @@ replace github.com/hashicorp/vault => github.com/hashicorp/vault v1.9.10
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2045880
 replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
+
+// https://issues.redhat.com/browse/OCPBUGS-6422
+replace golang.org/x/net => golang.org/x/net v0.5.0
