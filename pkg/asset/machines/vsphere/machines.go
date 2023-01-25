@@ -103,11 +103,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
 	folder := fmt.Sprintf("/%s/vm/%s", platform.Datacenter, clusterID)
 
-	resourcePool := fmt.Sprintf("/%s/host/%s/Resources", platform.Datacenter, platform.Cluster)
+	resourcePool := fmt.Sprintf("/%s/host/%s/Resources/%s", platform.Datacenter, platform.Cluster, clusterID)
 	resourcePoolPrefix := "^\\/(.*?)\\/host\\/(.*?)"
 	hasFullPath, _ := regexp.MatchString(resourcePoolPrefix, platform.Cluster)
 	if hasFullPath {
-		resourcePool = fmt.Sprintf("%s/Resources", platform.Cluster)
+		resourcePool = fmt.Sprintf("%s/Resources/%s", platform.Cluster, clusterID)
 	}
 
 	if platform.Folder != "" {

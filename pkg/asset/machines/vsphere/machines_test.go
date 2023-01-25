@@ -254,7 +254,7 @@ func TestConfigMasters(t *testing.T) {
 					Datacenter:   "datacenter",
 					Folder:       "/datacenter/vm/test",
 					Datastore:    "datastore",
-					ResourcePool: "/datacenter/host//Resources",
+					ResourcePool: "/datacenter/host//Resources/test",
 				},
 			},
 		},
@@ -328,7 +328,7 @@ func TestConfigMasters(t *testing.T) {
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
 					Datastore:    "datastore1",
-					ResourcePool: "/dc1/host/c1/Resources",
+					ResourcePool: "/dc1/host/c1/Resources/test",
 				},
 				{
 					Server:       "your.vcenter.example.com",
