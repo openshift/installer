@@ -1,0 +1,15 @@
+[Unit]
+Description=set up registry and push container images to it
+Wants=network-online.target
+After=network-online.target
+Before=agent.service
+
+[Service]
+KillMode=none
+Type=oneshot
+RemainAfterExit=true
+
+ExecStart=/usr/local/bin/run_registry_on_node.sh
+
+[Install]
+WantedBy=multi-user.target
