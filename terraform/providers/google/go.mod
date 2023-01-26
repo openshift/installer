@@ -29,7 +29,7 @@ require (
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/census-instrumentation/opencensus-proto v0.2.1 // indirect
 	github.com/cespare/xxhash v1.1.0 // indirect
-	github.com/cespare/xxhash/v2 v2.1.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/charithe/durationcheck v0.0.6 // indirect
 	github.com/chavacava/garif v0.0.0-20210405163807-87a70f3d418b // indirect
 	github.com/client9/misspell v0.3.4 // indirect
@@ -144,10 +144,10 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/polyfloyd/go-errorlint v0.0.0-20210418123303-74da32850375 // indirect
-	github.com/prometheus/client_golang v1.7.1 // indirect
+	github.com/prometheus/client_golang v1.11.0 // indirect
 	github.com/prometheus/client_model v0.2.0 // indirect
-	github.com/prometheus/common v0.10.0 // indirect
-	github.com/prometheus/procfs v0.1.3 // indirect
+	github.com/prometheus/common v0.32.1 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/quasilyte/go-ruleguard v0.3.4 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20200407221936-30656e2c4a95 // indirect
 	github.com/ryancurrah/gomodguard v1.2.0 // indirect
@@ -214,3 +214,6 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 
 // https://issues.redhat.com/browse/OCPBUGS-5667
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2045880
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1

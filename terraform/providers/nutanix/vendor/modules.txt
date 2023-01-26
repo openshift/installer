@@ -80,7 +80,7 @@ github.com/gofrs/flock
 # github.com/gogo/protobuf v1.2.1
 ## explicit
 github.com/gogo/protobuf/proto
-# github.com/golang/protobuf v1.4.2
+# github.com/golang/protobuf v1.5.2
 ## explicit; go 1.9
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
@@ -488,7 +488,7 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1
+# golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
 ## explicit; go 1.17
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/unix
@@ -499,7 +499,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.0.0-20200713011307-fd294ab11aed
+# golang.org/x/tools v0.0.0-20200825202427-b303f430e36d
 ## explicit; go 1.11
 golang.org/x/tools/go/analysis
 golang.org/x/tools/go/analysis/passes/asmdecl
@@ -560,9 +560,10 @@ golang.org/x/tools/internal/fastwalk
 golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
+golang.org/x/tools/internal/lsp/fuzzy
 golang.org/x/tools/internal/packagesinternal
 golang.org/x/tools/internal/typesinternal
-# golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
+# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 ## explicit; go 1.11
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
@@ -579,7 +580,7 @@ google.golang.org/appengine/internal/datastore
 google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/modules
 google.golang.org/appengine/internal/remote_api
-# google.golang.org/genproto v0.0.0-20200711021454-869866162049
+# google.golang.org/genproto v0.0.0-20200825200019-8632dd797987
 ## explicit; go 1.11
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.32.0
@@ -628,7 +629,7 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.25.0
+# google.golang.org/protobuf v1.26.0
 ## explicit; go 1.9
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -640,18 +641,18 @@ google.golang.org/protobuf/internal/encoding/messageset
 google.golang.org/protobuf/internal/encoding/tag
 google.golang.org/protobuf/internal/encoding/text
 google.golang.org/protobuf/internal/errors
-google.golang.org/protobuf/internal/fieldsort
 google.golang.org/protobuf/internal/filedesc
 google.golang.org/protobuf/internal/filetype
 google.golang.org/protobuf/internal/flags
 google.golang.org/protobuf/internal/genid
 google.golang.org/protobuf/internal/impl
-google.golang.org/protobuf/internal/mapsort
+google.golang.org/protobuf/internal/order
 google.golang.org/protobuf/internal/pragma
 google.golang.org/protobuf/internal/set
 google.golang.org/protobuf/internal/strs
 google.golang.org/protobuf/internal/version
 google.golang.org/protobuf/proto
+google.golang.org/protobuf/reflect/protodesc
 google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
@@ -716,3 +717,4 @@ sourcegraph.com/sqs/pbtypes
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
 # github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
+# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
