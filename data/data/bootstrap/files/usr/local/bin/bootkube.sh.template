@@ -372,18 +372,13 @@ then
     record_service_stage_success
 fi
 
-# Check if the API and API_INT Server URLs can be resolved and reached.
+# Check if the API and API_INT Server URLs can be resolved.
 echo "Check if API and API-Int URLs are resolvable during bootstrap"
 API_SERVER_URL="{{.APIServerURL}}"
 API_INT_SERVER_URL="{{.APIIntServerURL}}" 
 
-if [[ ! -z "${API_SERVER_URL}" ]] ; then
-    check_url "API_URL" "${API_SERVER_URL}"
-fi
-
-if [[ ! -z "${API_INT_SERVER_URL}" ]] ; then
-    check_url "API_INT_URL" "${API_INT_SERVER_URL}"
-fi
+resolve_url "API_URL" "${API_SERVER_URL}"
+resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"
 
 if [ ! -f cco-bootstrap.done ]
 then
@@ -492,6 +487,12 @@ else
         record_service_stage_success
     fi
 fi
+
+# Check if the API and API_INT Server URLs can be reached.
+echo "Check if API and API-Int URLs are reachable during bootstrap"
+
+check_url "API_URL" "${API_SERVER_URL}"
+check_url "API_INT_URL" "${API_INT_SERVER_URL}"
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
