@@ -1,7 +1,9 @@
 package validation
 
 import (
-	"math/rand"
+	"crypto/rand"
+	"errors"
+	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,13 +12,31 @@ import (
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
-var (
-	validRegion = powervs.RegionShortNames()[rand.Intn(len(powervs.RegionShortNames()))]
-)
+func genRandNum(min int64, max int64) int64 {
+	// calculate the max we will be using
+	bg := big.NewInt(max - min)
+
+	// get big.Int between 0 and bg
+	n, err := rand.Int(rand.Reader, bg)
+	if err != nil {
+		panic(err)
+	}
+
+	// add n to min to support the passed in range
+	return n.Int64() + min
+}
 
 func validMinimalPlatform() *powervs.Platform {
+	// Avoid lint error: G404: Use of weak random number generator (math/rand instead of crypto/rand) (gosec)
+	zoneNames := powervs.ZoneNames()
+	len64 := int64(len(zoneNames))
+	idx := genRandNum(0, len64)
+	if idx < 0 || idx > len64 {
+		panic(errors.New("genRandNum out of bounds of zoneNames"))
+	}
+	zone := powervs.ZoneNames()[idx]
 	return &powervs.Platform{
-		Region: validRegion,
+		Zone: zone,
 	}
 }
 
@@ -36,6 +56,15 @@ func TestValidatePlatform(t *testing.T) {
 			valid:    true,
 		},
 		{
+			name: "Zone: Invalid zone",
+			platform: func() *powervs.Platform {
+				p := validMinimalPlatform()
+				p.Zone = "invalid"
+				return p
+			}(),
+			valid: false,
+		},
+		{
 			name: "Region: Invalid region",
 			platform: func() *powervs.Platform {
 				p := validMinimalPlatform()
@@ -51,7 +80,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Region = ""
 				return p
 			}(),
-			valid: false,
+			valid: true,
 		},
 		{
 			name: "Machine Pool: Valid machine pool",
