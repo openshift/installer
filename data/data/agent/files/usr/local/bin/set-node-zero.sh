@@ -3,18 +3,18 @@
 set -e
 
 # shellcheck disable=SC1091
-source /etc/assisted/agent-installer.env
+source common.sh
 echo "NODE_ZERO_IP: $NODE_ZERO_IP"
 
 timeout=$((SECONDS + 30))
 
 while [[ $SECONDS -lt $timeout ]]
 do
-     IS_NODE_ZERO=$(ip -j address | jq "[.[].addr_info] | flatten | map(.local==\"$NODE_ZERO_IP\") | any")
-     if [ "${IS_NODE_ZERO}" = "true" ]; then
-          break
-     fi
-     sleep 5
+    if [[ $(is_node_zero) -eq 1 ]]; then
+        IS_NODE_ZERO="true"
+        break
+    fi
+    sleep 5
 done
 
 if [ "${IS_NODE_ZERO}" = "true" ]; then
