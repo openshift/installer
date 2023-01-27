@@ -153,7 +153,7 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/inf.v0 v0.9.0 // indirect
 	gopkg.in/ini.v1 v1.42.0 // indirect
-	gopkg.in/yaml.v2 v2.3.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // indirect
 	k8s.io/apimachinery v0.0.0-20190913080033-27d36303b655 // indirect
 	k8s.io/client-go v10.0.0+incompatible // indirect
@@ -173,3 +173,6 @@ replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2100495
 replace golang.org/x/text => golang.org/x/text v0.3.7
+
+// https://issues.redhat.com//browse/OCPBUGS-5324
+replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0

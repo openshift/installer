@@ -30,7 +30,6 @@ require (
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -262,3 +261,6 @@ replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2100495
 replace golang.org/x/text => golang.org/x/text v0.3.7
+
+// https://issues.redhat.com//browse/OCPBUGS-5324
+replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
