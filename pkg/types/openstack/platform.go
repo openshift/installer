@@ -1,5 +1,9 @@
 package openstack
 
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -114,4 +118,9 @@ type Platform struct {
 	// The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
 	// +optional
 	MachinesSubnet string `json:"machinesSubnet,omitempty"`
+
+	// LoadBalancer defines how the load balancer used by the cluster is configured.
+	// LoadBalancer is available in TechPreview.
+	// +optional
+	LoadBalancer *configv1.OpenStackPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }

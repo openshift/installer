@@ -6,12 +6,14 @@ import (
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if err := validate.UUID(p.ClusterID); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("ovirt_cluster_id"), p.ClusterID, err.Error()))
@@ -30,6 +32,19 @@ func ValidatePlatform(p *ovirt.Platform, fldPath *field.Path) field.ErrorList {
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
+	}
+
+	// Platform fields only allowed in TechPreviewNoUpgrade
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		if c.Ovirt.LoadBalancer != nil {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("loadBalancer"), "load balancer is not supported in this feature set"))
+		}
+	}
+
+	if c.Ovirt.LoadBalancer != nil {
+		if !validateLoadBalancer(c.Ovirt.LoadBalancer.Type) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.Ovirt.LoadBalancer.Type, "invalid load balancer type"))
+		}
 	}
 
 	return allErrs
@@ -77,4 +92,14 @@ func validateAffinityGroupDuplicate(agList []ovirt.AffinityGroup) field.ErrorLis
 		}
 	}
 	return allErrs
+}
+
+// validateLoadBalancer returns an error if the load balancer is not valid.
+func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
+	switch lbType {
+	case configv1.LoadBalancerTypeOpenShiftManagedDefault, configv1.LoadBalancerTypeUserManaged:
+		return true
+	default:
+		return false
+	}
 }

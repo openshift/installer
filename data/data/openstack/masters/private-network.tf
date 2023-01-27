@@ -62,18 +62,25 @@ resource "openstack_networking_port_v2" "masters" {
     subnet_id = local.nodes_subnet_id
   }
 
-  allowed_address_pairs {
-    ip_address = var.openstack_api_int_ip
+  dynamic "allowed_address_pairs" {
+    for_each = var.openstack_user_managed_load_balancer ? [] : [1]
+    content {
+      ip_address = var.openstack_api_int_ip
+    }
   }
 
-  allowed_address_pairs {
-    ip_address = var.openstack_ingress_ip
+  dynamic "allowed_address_pairs" {
+    for_each = var.openstack_user_managed_load_balancer ? [] : [1]
+    content {
+      ip_address = var.openstack_ingress_ip
+    }
   }
 
   depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port]
 }
 
 resource "openstack_networking_port_v2" "api_port" {
+  count       = var.openstack_user_managed_load_balancer ? 0 : 1
   name        = "${var.cluster_id}-api-port"
   description = local.description
 
@@ -89,6 +96,7 @@ resource "openstack_networking_port_v2" "api_port" {
 }
 
 resource "openstack_networking_port_v2" "ingress_port" {
+  count       = var.openstack_user_managed_load_balancer ? 0 : 1
   name        = "${var.cluster_id}-ingress-port"
   description = local.description
 
@@ -134,15 +142,15 @@ resource "openstack_networking_trunk_v2" "masters" {
 // as expected.
 
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
-  count       = length(var.openstack_api_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.api_port.id
+  count       = (var.openstack_user_managed_load_balancer || length(var.openstack_api_floating_ip) == 0) ? 0 : 1
+  port_id     = openstack_networking_port_v2.api_port[0].id
   floating_ip = var.openstack_api_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
 resource "openstack_networking_floatingip_associate_v2" "ingress_fip" {
-  count       = length(var.openstack_ingress_floating_ip) == 0 ? 0 : 1
-  port_id     = openstack_networking_port_v2.ingress_port.id
+  count       = (var.openstack_user_managed_load_balancer || length(var.openstack_ingress_floating_ip) == 0) ? 0 : 1
+  port_id     = openstack_networking_port_v2.ingress_port[0].id
   floating_ip = var.openstack_ingress_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }

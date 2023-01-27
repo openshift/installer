@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -181,6 +182,35 @@ func TestValidatePlatform(t *testing.T) {
 			expected: "baremetal.hosts\\[0\\].Name: Required value: missing Name",
 		},
 		{
+			name: "forbidden_feature_loadbalancer",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().LoadBalancerType("OpenShiftManagedDefault")).build(),
+			expected: "baremetal.loadBalancer: Forbidden: load balancer is not supported in this feature set",
+		},
+		{
+			name: "allowed_feature_loadbalancer_openshift_managed_default",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().LoadBalancerType("OpenShiftManagedDefault")).
+				FeatureSet(configv1.TechPreviewNoUpgrade).build(),
+		},
+		{
+			name: "allowed_feature_loadbalancer_user_managed",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().LoadBalancerType("UserManaged")).
+				FeatureSet(configv1.TechPreviewNoUpgrade).build(),
+		},
+		{
+			name: "allowed_feature_loadbalancer_invalid",
+			config: installConfig().
+				BareMetalPlatform(
+					platform().LoadBalancerType("FooBar")).
+				FeatureSet(configv1.TechPreviewNoUpgrade).build(),
+			expected: "baremetal.loadBalancer.type: Invalid value: \"FooBar\": invalid load balancer type",
+		},
+		{
 			name: "missing_mac",
 			platform: platform().
 				Hosts(host1().BootMACAddress("")).build(),
@@ -312,7 +342,7 @@ interfaces:
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			//Build default wrapping installConfig
+			// Build default wrapping installConfig
 			if tc.config == nil {
 				tc.config = installConfig().build()
 				tc.config.BareMetal = tc.platform
@@ -656,7 +686,7 @@ func TestValidateProvisioning(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			//Build default wrapping installConfig
+			// Build default wrapping installConfig
 			if tc.config == nil {
 				tc.config = installConfig().build()
 			}
@@ -861,6 +891,13 @@ func (pb *platformBuilder) Hosts(builders ...*hostBuilder) *platformBuilder {
 	return pb
 }
 
+func (pb *platformBuilder) LoadBalancerType(value string) *platformBuilder {
+	pb.Platform.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{
+		Type: configv1.PlatformLoadBalancerType(value),
+	}
+	return pb
+}
+
 func (pb *platformBuilder) LibvirtURI(value string) *platformBuilder {
 	pb.Platform.LibvirtURI = value
 	return pb
@@ -913,6 +950,11 @@ func (icb *installConfigBuilder) BareMetalPlatform(builder *platformBuilder) *in
 	icb.InstallConfig.Platform = types.Platform{
 		BareMetal: builder.build(),
 	}
+	return icb
+}
+
+func (icb *installConfigBuilder) FeatureSet(value configv1.FeatureSet) *installConfigBuilder {
+	icb.InstallConfig.FeatureSet = value
 	return icb
 }
 

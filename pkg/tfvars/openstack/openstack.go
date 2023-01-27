@@ -12,6 +12,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 
+	configv1 "github.com/openshift/api/config/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	installconfig_openstack "github.com/openshift/installer/pkg/asset/installconfig/openstack"
@@ -93,6 +94,11 @@ func TFVars(
 			panic("Multiple machine-pools are currently not supported by the OpenShift installer on OpenStack platform")
 		}
 		workermpool = installConfig.Config.Compute[0].Platform.OpenStack
+	}
+
+	var userManagedLoadBalancer bool
+	if lb := installConfig.Config.Platform.OpenStack.LoadBalancer; lb != nil && lb.Type == configv1.LoadBalancerTypeUserManaged {
+		userManagedLoadBalancer = true
 	}
 
 	var zones []string
@@ -211,6 +217,7 @@ func TFVars(
 		MachinesNetwork                   string                            `json:"openstack_machines_network_id,omitempty"`
 		MasterAvailabilityZones           []string                          `json:"openstack_master_availability_zones,omitempty"`
 		MasterRootVolumeAvailabilityZones []string                          `json:"openstack_master_root_volume_availability_zones,omitempty"`
+		UserManagedLoadBalancer           bool                              `json:"openstack_user_managed_load_balancer"`
 	}{
 		BaseImageName:                     imageName,
 		ExternalNetwork:                   installConfig.Config.Platform.OpenStack.ExternalNetwork,
@@ -236,6 +243,7 @@ func TFVars(
 		MachinesNetwork:                   machinesNetwork,
 		MasterAvailabilityZones:           zones,
 		MasterRootVolumeAvailabilityZones: masterRootVolumeAvailabilityZones,
+		UserManagedLoadBalancer:           userManagedLoadBalancer,
 	}, "", "  ")
 }
 

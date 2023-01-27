@@ -160,6 +160,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			IngressIP:            installConfig.Config.Platform.BareMetal.IngressVIPs[0],
 			APIServerInternalIPs: installConfig.Config.Platform.BareMetal.APIVIPs,
 			IngressIPs:           installConfig.Config.Platform.BareMetal.IngressVIPs,
+			LoadBalancer:         installConfig.Config.Platform.BareMetal.LoadBalancer,
 		}
 	case gcp.Name:
 		config.Spec.PlatformSpec.Type = configv1.GCPPlatformType
@@ -210,6 +211,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			IngressIP:            installConfig.Config.OpenStack.IngressVIPs[0],
 			APIServerInternalIPs: installConfig.Config.OpenStack.APIVIPs,
 			IngressIPs:           installConfig.Config.OpenStack.IngressVIPs,
+			LoadBalancer:         installConfig.Config.OpenStack.LoadBalancer,
 		}
 	case vsphere.Name:
 		config.Spec.PlatformSpec.Type = configv1.VSpherePlatformType
@@ -219,8 +221,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				IngressIP:            installConfig.Config.VSphere.IngressVIPs[0],
 				APIServerInternalIPs: installConfig.Config.VSphere.APIVIPs,
 				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
+				LoadBalancer:         installConfig.Config.VSphere.LoadBalancer,
 			}
 		}
+
 		config.Spec.PlatformSpec.VSphere = vsphereinfra.GetInfraPlatformSpec(installConfig)
 
 		if _, exists := cloudproviderconfig.ConfigMap.Data["vsphere.conf"]; exists {
@@ -234,6 +238,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			IngressIP:            installConfig.Config.Ovirt.IngressVIPs[0],
 			APIServerInternalIPs: installConfig.Config.Ovirt.APIVIPs,
 			IngressIPs:           installConfig.Config.Ovirt.IngressVIPs,
+			LoadBalancer:         installConfig.Config.Ovirt.LoadBalancer,
 		}
 	case powervs.Name:
 		config.Spec.PlatformSpec.Type = configv1.PowerVSPlatformType
@@ -303,6 +308,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 				IngressIP:            installConfig.Config.Nutanix.IngressVIPs[0],
 				APIServerInternalIPs: installConfig.Config.Nutanix.APIVIPs,
 				IngressIPs:           installConfig.Config.Nutanix.IngressVIPs,
+				LoadBalancer:         installConfig.Config.Nutanix.LoadBalancer,
 			}
 		}
 	default:

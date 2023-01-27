@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ovirt"
 )
 
@@ -23,14 +25,85 @@ func validPlatform() *ovirt.Platform {
 
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
-		name     string
-		platform *ovirt.Platform
-		valid    bool
+		name          string
+		config        *types.InstallConfig
+		platform      *ovirt.Platform
+		valid         bool
+		expectedError string
 	}{
 		{
 			name:     "minimal",
 			platform: validPlatform(),
 			valid:    true,
+		},
+		{
+			name:     "forbidden load balancer field",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					Ovirt: func() *ovirt.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+						}
+						return p
+					}(),
+				},
+			},
+			valid:         false,
+			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
+		},
+		{
+			name:     "allowed load balancer field with OpenShift managed default",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					Ovirt: func() *ovirt.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+						}
+						return p
+					}(),
+				},
+			},
+			valid: true,
+		},
+		{
+			name:     "allowed load balancer field with user-managed",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					Ovirt: func() *ovirt.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeUserManaged,
+						}
+						return p
+					}(),
+				},
+			},
+			valid: true,
+		},
+		{
+			name:     "allowed load balancer field invalid type",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					Ovirt: func() *ovirt.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
+							Type: "FooBar",
+						}
+						return p
+					}(),
+				},
+			},
+			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
+			valid:         false,
 		},
 		{
 			name: "invalid when empty cluster ID",
@@ -39,7 +112,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.ClusterID = ""
 				return p
 			}(),
-			valid: false,
+			expectedError: `^test-path.ovirt_cluster_id: Invalid value: "": invalid UUID length: 0`,
+			valid:         false,
 		},
 		{
 			name: "invalid when empty storage ID",
@@ -48,7 +122,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.StorageDomainID = ""
 				return p
 			}(),
-			valid: false,
+			expectedError: `^test-path.ovirt_storage_domain_id: Invalid value: "": invalid UUID length: 0`,
+			valid:         false,
 		},
 		{
 			name: "malformed vnic profile id",
@@ -57,7 +132,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.VNICProfileID = "abcd-sdf"
 				return p
 			}(),
-			valid: false,
+			expectedError: `^test-path.vnicProfileID: Invalid value: "abcd-sdf": invalid UUID length: 8`,
+			valid:         false,
 		},
 		{
 			name: "valid empty vnic profile id",
@@ -80,12 +156,32 @@ func TestValidatePlatform(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
-			if tc.valid {
+			// Build default wrapping installConfig
+			if tc.config == nil {
+				tc.config = installConfig().build()
+				tc.config.Ovirt = tc.platform
+			}
+
+			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config).ToAggregate()
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
+				assert.Regexp(t, tc.expectedError, err)
 			}
 		})
 	}
+}
+
+type installConfigBuilder struct {
+	types.InstallConfig
+}
+
+func installConfig() *installConfigBuilder {
+	return &installConfigBuilder{
+		InstallConfig: types.InstallConfig{},
+	}
+}
+
+func (icb *installConfigBuilder) build() *types.InstallConfig {
+	return &icb.InstallConfig
 }

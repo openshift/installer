@@ -9,13 +9,14 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
-
+func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	isLegacyUpi := false
 	// This is to cover existing UPI non-zonal case
 	// where neither network or cluster is required.
@@ -42,6 +43,19 @@ func ValidatePlatform(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 			return append(allErrs, field.Required(fldPath.Child("failureDomains"), "must be defined"))
 		}
 		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+	}
+
+	// Platform fields only allowed in TechPreviewNoUpgrade
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		if c.VSphere.LoadBalancer != nil {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("loadBalancer"), "load balancer is not supported in this feature set"))
+		}
+	}
+
+	if c.VSphere.LoadBalancer != nil {
+		if !validateLoadBalancer(c.VSphere.LoadBalancer.Type) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.VSphere.LoadBalancer.Type, "invalid load balancer type"))
+		}
 	}
 
 	return allErrs
@@ -196,4 +210,14 @@ func validateDiskType(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	}
 
 	return allErrs
+}
+
+// validateLoadBalancer returns an error if the load balancer is not valid.
+func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
+	switch lbType {
+	case configv1.LoadBalancerTypeOpenShiftManagedDefault, configv1.LoadBalancerTypeUserManaged:
+		return true
+	default:
+		return false
+	}
 }

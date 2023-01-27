@@ -374,3 +374,8 @@ variable "openstack_worker_server_group_policy" {
   type        = string
   description = "Policy of the server groups for the worker nodes."
 }
+
+variable "openstack_user_managed_load_balancer" {
+  type        = bool
+  description = "True if the load balancer that is used for the control plane VIPs is managed by the user."
+}

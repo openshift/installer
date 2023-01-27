@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/nutanix"
 )
 
@@ -27,6 +29,7 @@ func validPlatform() *nutanix.Platform {
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name          string
+		config        *types.InstallConfig
 		platform      *nutanix.Platform
 		expectedError string
 	}{
@@ -42,6 +45,71 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `^test-path\.prismCentral\.endpoint\.address: Required value: must specify the Prism Central endpoint address$`,
+		},
+		{
+			name:     "forbidden load balancer field",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					Nutanix: func() *nutanix.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.NutanixPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+						}
+						return p
+					}(),
+				},
+			},
+			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
+		},
+		{
+			name:     "allowed load balancer field with OpenShift managed default",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					Nutanix: func() *nutanix.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.NutanixPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+						}
+						return p
+					}(),
+				},
+			},
+		},
+		{
+			name:     "allowed load balancer field with user-managed",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					Nutanix: func() *nutanix.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.NutanixPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeUserManaged,
+						}
+						return p
+					}(),
+				},
+			},
+		},
+		{
+			name:     "allowed load balancer field invalid type",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					Nutanix: func() *nutanix.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.NutanixPlatformLoadBalancer{
+							Type: "FooBar",
+						}
+						return p
+					}(),
+				},
+			},
+			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
 		},
 		{
 			name: "missing Prism Central username",
@@ -118,7 +186,12 @@ func TestValidatePlatform(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path")).ToAggregate()
+			// Build default wrapping installConfig
+			if tc.config == nil {
+				tc.config = installConfig().build()
+				tc.config.Nutanix = tc.platform
+			}
+			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
@@ -126,4 +199,18 @@ func TestValidatePlatform(t *testing.T) {
 			}
 		})
 	}
+}
+
+type installConfigBuilder struct {
+	types.InstallConfig
+}
+
+func installConfig() *installConfigBuilder {
+	return &installConfigBuilder{
+		InstallConfig: types.InstallConfig{},
+	}
+}
+
+func (icb *installConfigBuilder) build() *types.InstallConfig {
+	return &icb.InstallConfig
 }

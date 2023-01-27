@@ -2225,6 +2225,28 @@ spec:
                       must be reachable from the host where the installer is run.
                       Default is qemu:///system
                     type: string
+                  loadBalancer:
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured. LoadBalancer is available in TechPreview.
+                    properties:
+                      type:
+                        default: OpenShiftManagedDefault
+                        description: type defines the type of load balancer used by
+                          the cluster on BareMetal platform which can be a user-managed
+                          or openshift-managed load balancer that is to be used for
+                          the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault
+                          the static pods in charge of API and Ingress traffic load-balancing
+                          defined in the machine config operator will be deployed.
+                          When set to UserManaged these static pods will not be deployed
+                          and it is expected that the load balancer is configured
+                          out of band by the deployer. When omitted, this means no
+                          opinion and the platform is left to choose a reasonable
+                          default. The default value is OpenShiftManagedDefault.
+                        enum:
+                        - OpenShiftManagedDefault
+                        - UserManaged
+                        type: string
+                    type: object
                   provisioningBridge:
                     description: Provisioning bridge is used for provisioning nodes,
                       on the host that will run the bootstrap VM.
@@ -2627,6 +2649,28 @@ spec:
                     maxItems: 2
                     type: array
                     uniqueItems: true
+                  loadBalancer:
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured. LoadBalancer is available in TechPreview.
+                    properties:
+                      type:
+                        default: OpenShiftManagedDefault
+                        description: type defines the type of load balancer used by
+                          the cluster on Nutanix platform which can be a user-managed
+                          or openshift-managed load balancer that is to be used for
+                          the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault
+                          the static pods in charge of API and Ingress traffic load-balancing
+                          defined in the machine config operator will be deployed.
+                          When set to UserManaged these static pods will not be deployed
+                          and it is expected that the load balancer is configured
+                          out of band by the deployer. When omitted, this means no
+                          opinion and the platform is left to choose a reasonable
+                          default. The default value is OpenShiftManagedDefault.
+                        enum:
+                        - OpenShiftManagedDefault
+                        - UserManaged
+                        type: string
+                    type: object
                   prismCentral:
                     description: PrismCentral is the endpoint (address and port) and
                       credentials to connect to the Prism Central.
@@ -2871,6 +2915,28 @@ spec:
                       IP in your OpenStack cluster to associate with the OpenShift
                       load balancer. Deprecated: this value has been renamed to apiFloatingIP.'
                     type: string
+                  loadBalancer:
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured. LoadBalancer is available in TechPreview.
+                    properties:
+                      type:
+                        default: OpenShiftManagedDefault
+                        description: type defines the type of load balancer used by
+                          the cluster on OpenStack platform which can be a user-managed
+                          or openshift-managed load balancer that is to be used for
+                          the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault
+                          the static pods in charge of API and Ingress traffic load-balancing
+                          defined in the machine config operator will be deployed.
+                          When set to UserManaged these static pods will not be deployed
+                          and it is expected that the load balancer is configured
+                          out of band by the deployer. When omitted, this means no
+                          opinion and the platform is left to choose a reasonable
+                          default. The default value is OpenShiftManagedDefault.
+                        enum:
+                        - OpenShiftManagedDefault
+                        - UserManaged
+                        type: string
+                    type: object
                   machinesSubnet:
                     description: MachinesSubnet is the UUIDv4 of an openstack subnet.
                       This subnet will be used by all nodes created by the installer.
@@ -3065,6 +3131,28 @@ spec:
                     maxItems: 2
                     type: array
                     uniqueItems: true
+                  loadBalancer:
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured. LoadBalancer is available in TechPreview.
+                    properties:
+                      type:
+                        default: OpenShiftManagedDefault
+                        description: type defines the type of load balancer used by
+                          the cluster on Ovirt platform which can be a user-managed
+                          or openshift-managed load balancer that is to be used for
+                          the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault
+                          the static pods in charge of API and Ingress traffic load-balancing
+                          defined in the machine config operator will be deployed.
+                          When set to UserManaged these static pods will not be deployed
+                          and it is expected that the load balancer is configured
+                          out of band by the deployer. When omitted, this means no
+                          opinion and the platform is left to choose a reasonable
+                          default. The default value is OpenShiftManagedDefault.
+                        enum:
+                        - OpenShiftManagedDefault
+                        - UserManaged
+                        type: string
+                    type: object
                   ovirt_cluster_id:
                     description: The target cluster under which all VMs will run
                     type: string
@@ -3372,6 +3460,28 @@ spec:
                     maxItems: 2
                     type: array
                     uniqueItems: true
+                  loadBalancer:
+                    description: LoadBalancer defines how the load balancer used by
+                      the cluster is configured. LoadBalancer is available in TechPreview.
+                    properties:
+                      type:
+                        default: OpenShiftManagedDefault
+                        description: type defines the type of load balancer used by
+                          the cluster on VSphere platform which can be a user-managed
+                          or openshift-managed load balancer that is to be used for
+                          the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault
+                          the static pods in charge of API and Ingress traffic load-balancing
+                          defined in the machine config operator will be deployed.
+                          When set to UserManaged these static pods will not be deployed
+                          and it is expected that the load balancer is configured
+                          out of band by the deployer. When omitted, this means no
+                          opinion and the platform is left to choose a reasonable
+                          default. The default value is OpenShiftManagedDefault.
+                        enum:
+                        - OpenShiftManagedDefault
+                        - UserManaged
+                        type: string
+                    type: object
                   network:
                     description: 'Network specifies the name of the network to be
                       used by the cluster. Deprecated: Use FailureDomains.Topology.Network'

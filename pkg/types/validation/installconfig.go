@@ -722,7 +722,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	}
 	if platform.VSphere != nil {
 		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList {
-			return vspherevalidation.ValidatePlatform(platform.VSphere, f)
+			return vspherevalidation.ValidatePlatform(platform.VSphere, f, c)
 		})
 	}
 	if platform.BareMetal != nil {
@@ -732,12 +732,12 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	}
 	if platform.Ovirt != nil {
 		validate(ovirt.Name, platform.Ovirt, func(f *field.Path) field.ErrorList {
-			return ovirtvalidation.ValidatePlatform(platform.Ovirt, f)
+			return ovirtvalidation.ValidatePlatform(platform.Ovirt, f, c)
 		})
 	}
 	if platform.Nutanix != nil {
 		validate(nutanix.Name, platform.Nutanix, func(f *field.Path) field.ErrorList {
-			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f)
+			return nutanixvalidation.ValidatePlatform(platform.Nutanix, f, c)
 		})
 	}
 	return allErrs
