@@ -62,6 +62,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&Proxy{},
 		&Scheduler{},
 		&ImageContentSourcePolicy{},
+		&ClusterCSIDriverConfig{},
 		&tls.RootCA{},
 		&tls.MCSCertKey{},
 
@@ -83,7 +84,8 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	proxy := &Proxy{}
 	scheduler := &Scheduler{}
 	imageContentSourcePolicy := &ImageContentSourcePolicy{}
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy)
+	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, clusterCSIDriverConfig)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -118,6 +120,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, proxy.Files()...)
 	m.FileList = append(m.FileList, scheduler.Files()...)
 	m.FileList = append(m.FileList, imageContentSourcePolicy.Files()...)
+	m.FileList = append(m.FileList, clusterCSIDriverConfig.Files()...)
 
 	asset.SortFiles(m.FileList)
 
