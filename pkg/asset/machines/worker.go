@@ -182,11 +182,12 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 	}
 }
 
-func awsDefaultMachineTypes(region string, arch types.Architecture) []string {
+func awsDefaultMachineTypes(region string, arch types.Architecture, instanceSize string) []string {
 	classes := awsdefaults.InstanceClasses(region, arch)
+
 	types := make([]string, len(classes))
 	for i, c := range classes {
-		types[i] = fmt.Sprintf("%s.xlarge", c)
+		types[i] = fmt.Sprintf("%s.%s", c, instanceSize)
 	}
 	return types
 }
@@ -340,11 +341,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 					zoneDefaults = true
 				}
 			}
+
 			if mpool.InstanceType == "" {
-				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
+				instanceSize := defaultAWSInstanceSize
+				mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, instanceSize), mpool.Zones)
 				if err != nil {
 					logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-					mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+					mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, instanceSize)[0]
 				}
 			}
 			// if the list of zones is the default we need to try to filter the list in case there are some zones where the instance might not be available
