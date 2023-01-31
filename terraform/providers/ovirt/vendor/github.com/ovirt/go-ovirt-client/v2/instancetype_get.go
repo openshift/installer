@@ -1,4 +1,4 @@
-package ovirtclient
+package ovirtclient //nolint:dupl
 
 import (
 	"fmt"

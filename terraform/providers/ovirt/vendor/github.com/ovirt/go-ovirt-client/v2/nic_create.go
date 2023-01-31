@@ -2,6 +2,7 @@ package ovirtclient
 
 import (
 	"fmt"
+	"net"
 
 	"github.com/google/uuid"
 	ovirtsdk "github.com/ovirt/go-ovirt"
@@ -11,11 +12,19 @@ func (o *oVirtClient) CreateNIC(
 	vmid VMID,
 	vnicProfileID VNICProfileID,
 	name string,
-	_ OptionalNICParameters,
+	params OptionalNICParameters,
 	retries ...RetryStrategy,
 ) (result NIC, err error) {
 	if err := validateNICCreationParameters(vmid, name); err != nil {
 		return nil, err
+	}
+
+	var mac string
+	if params != nil {
+		if err := validateNICCreationOptionalParameters(params); err != nil {
+			return nil, err
+		}
+		mac = params.Mac()
 	}
 
 	retries = defaultRetries(retries, defaultReadTimeouts(o))
@@ -27,6 +36,11 @@ func (o *oVirtClient) CreateNIC(
 			nicBuilder := ovirtsdk.NewNicBuilder()
 			nicBuilder.Name(name)
 			nicBuilder.VnicProfile(ovirtsdk.NewVnicProfileBuilder().Id(string(vnicProfileID)).MustBuild())
+
+			if mac != "" {
+				nicBuilder.Mac(ovirtsdk.NewMacBuilder().Address(mac).MustBuild())
+			}
+
 			nic := nicBuilder.MustBuild()
 
 			response, err := o.conn.SystemService().VmsService().VmService(string(vmid)).NicsService().Add().Nic(nic).Send()
@@ -60,7 +74,7 @@ func (m *mockClient) CreateNIC(
 	vmid VMID,
 	vnicProfileID VNICProfileID,
 	name string,
-	_ OptionalNICParameters,
+	params OptionalNICParameters,
 	_ ...RetryStrategy,
 ) (NIC, error) {
 	m.lock.Lock()
@@ -87,6 +101,14 @@ func (m *mockClient) CreateNIC(
 		vmid:          vmid,
 		vnicProfileID: vnicProfileID,
 	}
+
+	if params != nil {
+		if err := validateNICCreationOptionalParameters(params); err != nil {
+			return nil, err
+		}
+		nic.mac = params.Mac()
+	}
+
 	m.nics[id] = nic
 
 	return nic, nil
@@ -98,6 +120,15 @@ func validateNICCreationParameters(vmid VMID, name string) error {
 	}
 	if name == "" {
 		return newError(EBadArgument, "NIC name cannot be empty")
+	}
+	return nil
+}
+
+func validateNICCreationOptionalParameters(params OptionalNICParameters) error {
+	if mac := params.Mac(); mac != "" {
+		if _, err := net.ParseMAC(mac); err != nil {
+			return newError(EUnidentified, "Failed to parse MacAddress: %s", mac)
+		}
 	}
 	return nil
 }

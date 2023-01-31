@@ -2,7 +2,7 @@
 
 package ovirtclient
 
-func (o *oVirtClient) ListStorageDomains(retries ...RetryStrategy) (result []StorageDomain, err error) {
+func (o *oVirtClient) ListStorageDomains(retries ...RetryStrategy) (result StorageDomainList, err error) {
 	retries = defaultRetries(retries, defaultReadTimeouts(o))
 	result = []StorageDomain{}
 	err = retry(
@@ -30,7 +30,7 @@ func (o *oVirtClient) ListStorageDomains(retries ...RetryStrategy) (result []Sto
 	return
 }
 
-func (m *mockClient) ListStorageDomains(_ ...RetryStrategy) ([]StorageDomain, error) {
+func (m *mockClient) ListStorageDomains(_ ...RetryStrategy) (StorageDomainList, error) {
 	m.lock.Lock()
 	defer m.lock.Unlock()
 	result := make([]StorageDomain, len(m.storageDomains))

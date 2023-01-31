@@ -11,6 +11,7 @@ import (
 
 // NewMock creates a new in-memory mock client. This client can be used as a testing facility for
 // higher level code.
+//
 //goland:noinspection GoUnusedExportedFunction
 func NewMock() MockClient {
 	return NewMockWithLogger(&noopLogger{})
@@ -191,6 +192,7 @@ func generateTestStorageDomain() *storageDomain {
 		available:      10 * 1024 * 1024 * 1024,
 		status:         StorageDomainStatusActive,
 		externalStatus: StorageDomainExternalStatusNA,
+		storageType:    StorageDomainTypeNFS,
 	}
 }
 

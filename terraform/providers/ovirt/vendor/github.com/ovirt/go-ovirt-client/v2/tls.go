@@ -3,7 +3,7 @@ package ovirtclient
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"regexp"
 	"sync"
@@ -186,7 +186,7 @@ func (s *standardTLSProvider) CreateTLSConfig() (*tls.Config, error) {
 
 func (s *standardTLSProvider) addCertsFromDir(certPool *x509.CertPool) error {
 	for _, dir := range s.directories {
-		files, err := ioutil.ReadDir(dir.dir)
+		files, err := os.ReadDir(dir.dir)
 		if err != nil {
 			return wrap(
 				err,
@@ -212,7 +212,7 @@ func (s *standardTLSProvider) addCertsFromDir(certPool *x509.CertPool) error {
 				}
 			}
 			fullPath := filepath.Join(dir.dir, info.Name())
-			data, err := ioutil.ReadFile(fullPath) // nolint:gosec
+			data, err := os.ReadFile(fullPath) //nolint:gosec
 			if err != nil {
 				return wrap(
 					err,
@@ -235,7 +235,7 @@ func (s *standardTLSProvider) addCertsFromDir(certPool *x509.CertPool) error {
 
 func (s *standardTLSProvider) addCertsFromFile(certPool *x509.CertPool) error {
 	for _, file := range s.files {
-		pemData, err := ioutil.ReadFile(file) //nolint:gosec
+		pemData, err := os.ReadFile(file) //nolint:gosec
 		if err != nil {
 			return wrap(err, EFileReadFailed, "failed to read CA certificate from file %s", file)
 		}

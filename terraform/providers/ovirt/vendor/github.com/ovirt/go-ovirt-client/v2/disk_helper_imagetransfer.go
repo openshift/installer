@@ -28,16 +28,16 @@ func generateCorrelationID(prefix string) string {
 // newImageTransfer creates a new image transfer for both uploads and downloads of images. It must be passed the
 // following parameters:
 //
-// - cli is the oVirt SDK client.
-// - logger is a logger from the go-ovirt-client-logger library
-// - diskID is the ID of the disk that is being transferred to/from.
-// - correlationID is an optional unique ID that can be used to check if the job completed. If no correlation ID is
-//   passed, this function generates a random one.
-// - retries is a list of retry strategies to use for each API call.
-// - direction is the direction of transfer. See ovirtsdk.ImageTransferDirection.
-// - format is the disk format being uploaded, or the disk format requested. The oVirt Engine will automatically convert
-//   images to the requested format.
-// - updateDisk is a function that will be called whenever the disk object is updated.
+//   - cli is the oVirt SDK client.
+//   - logger is a logger from the go-ovirt-client-logger library
+//   - diskID is the ID of the disk that is being transferred to/from.
+//   - correlationID is an optional unique ID that can be used to check if the job completed. If no correlation ID is
+//     passed, this function generates a random one.
+//   - retries is a list of retry strategies to use for each API call.
+//   - direction is the direction of transfer. See ovirtsdk.ImageTransferDirection.
+//   - format is the disk format being uploaded, or the disk format requested. The oVirt Engine will automatically convert
+//     images to the requested format.
+//   - updateDisk is a function that will be called whenever the disk object is updated.
 func newImageTransfer(
 	cli *oVirtClient,
 	logger Logger,

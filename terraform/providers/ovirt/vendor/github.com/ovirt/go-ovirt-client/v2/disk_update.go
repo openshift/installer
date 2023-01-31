@@ -14,7 +14,7 @@ func (o *oVirtClient) UpdateDisk(id DiskID, params UpdateDiskParameters, retries
 ) {
 	progress, err := o.StartUpdateDisk(id, params, retries...)
 	if err != nil {
-		return progress.Disk(), err
+		return nil, err
 	}
 	return progress.Wait(retries...)
 }
