@@ -31,10 +31,10 @@ var (
 
 var (
 	// tagKeyRegex is for verifying that the tag key contains only allowed characters.
-	tagKeyRegex = regexp.MustCompile(`^[a-zA-Z][0-9A-Za-z_.=+\-@]{1,127}$`)
+	tagKeyRegex = regexp.MustCompile(`^[a-zA-Z]([0-9A-Za-z_.-]{0,126}[0-9A-Za-z_])?$`)
 
 	// tagValueRegex is for verifying that the tag value contains only allowed characters.
-	tagValueRegex = regexp.MustCompile(`^[0-9A-Za-z_.=+\-@]{1,256}$`)
+	tagValueRegex = regexp.MustCompile(`^[0-9A-Za-z_.=+-@]{1,256}$`)
 
 	// tagKeyPrefixRegex is for verifying that the tag value does not contain restricted prefixes.
 	tagKeyPrefixRegex = regexp.MustCompile(`^(?i)(name$|kubernetes\.io|openshift\.io|microsoft|azure|windows)`)
@@ -137,10 +137,10 @@ func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorLi
 //     windows prefixes.
 func validateTag(key, value string) error {
 	if !tagKeyRegex.MatchString(key) {
-		return fmt.Errorf("key is invalid or contains invalid characters")
+		return fmt.Errorf("key is invalid or contains invalid characters. Key can have a maximum of 128 characters and cannot be empty. Key must begin with a letter, end with a letter, number or underscore, and can contain only letters, numbers, underscores, periods, or hyphens.")
 	}
 	if !tagValueRegex.MatchString(value) {
-		return fmt.Errorf("value is invalid or contains invalid characters")
+		return fmt.Errorf("value is invalid or contains invalid characters. Value can have a maximum of 256 characters and cannot be empty. Value can contain only `a-zA-Z0-9_.=+-@` characters.")
 	}
 	if tagKeyPrefixRegex.MatchString(key) {
 		return fmt.Errorf("key contains restricted prefix")
