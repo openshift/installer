@@ -685,7 +685,7 @@ func IsMachineManifest(file *asset.File) bool {
 		return false
 	}
 	filename := filepath.Base(file.Filename)
-	if filename == masterUserDataFileName || filename == workerUserDataFileName {
+	if filename == masterUserDataFileName || filename == workerUserDataFileName || filename == controlPlaneMachineSetFileName {
 		return true
 	}
 	if matched, err := machineconfig.IsManifest(filename); err != nil {
