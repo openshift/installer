@@ -25,20 +25,20 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 	if vspherePool.MemoryMiB < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("memoryMB"), vspherePool.MemoryMiB, "memory size must be positive"))
 	}
-	if vspherePool.NumCPUs < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), vspherePool.NumCPUs, "number of CPUs must be positive"))
+	numCPUs := vspherePool.NumCPUs
+	if numCPUs < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), numCPUs, "number of CPUs must be positive"))
 	}
-	if vspherePool.NumCoresPerSocket < 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), vspherePool.NumCoresPerSocket, "cores per socket must be positive"))
+	numCoresPerSocket := vspherePool.NumCoresPerSocket
+	if numCoresPerSocket < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), numCoresPerSocket, "cores per socket must be positive"))
 	}
 
 	// Either the number set by the user or a default value
-	numCPUs := vspherePool.NumCPUs
-	if numCPUs == 0 {
+	if numCPUs <= 0 {
 		numCPUs = defaultNumCPUs
 	}
-	numCoresPerSocket := vspherePool.NumCoresPerSocket
-	if numCoresPerSocket == 0 {
+	if numCoresPerSocket <= 0 {
 		numCoresPerSocket = defaultCoresPerSocket
 	}
 
