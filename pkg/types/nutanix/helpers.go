@@ -1,6 +1,7 @@
 package nutanix
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -114,9 +115,9 @@ func CreateBootstrapISO(infraID, userData string) (string, error) {
 }
 
 // WaitForTasks is a wrapper for WaitForTask
-func WaitForTasks(clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
+func WaitForTasks(ctx context.Context, clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
 	for _, t := range taskUUIDs {
-		err := WaitForTask(clientV3, t)
+		err := WaitForTask(ctx, clientV3, t)
 		if err != nil {
 			return err
 		}
@@ -125,11 +126,11 @@ func WaitForTasks(clientV3 nutanixclientv3.Service, taskUUIDs []string) error {
 }
 
 // WaitForTask waits until a queued task has been finished or timeout has been reached
-func WaitForTask(clientV3 nutanixclientv3.Service, taskUUID string) error {
+func WaitForTask(ctx context.Context, clientV3 nutanixclientv3.Service, taskUUID string) error {
 	finished := false
 	var err error
 	for start := time.Now(); time.Since(start) < timeout; {
-		finished, err = isTaskFinished(clientV3, taskUUID)
+		finished, err = isTaskFinished(ctx, clientV3, taskUUID)
 		if err != nil {
 			return err
 		}
@@ -145,13 +146,13 @@ func WaitForTask(clientV3 nutanixclientv3.Service, taskUUID string) error {
 	return nil
 }
 
-func isTaskFinished(clientV3 nutanixclientv3.Service, taskUUID string) (bool, error) {
+func isTaskFinished(ctx context.Context, clientV3 nutanixclientv3.Service, taskUUID string) (bool, error) {
 	isFinished := map[string]bool{
 		"QUEUED":    false,
 		"RUNNING":   false,
 		"SUCCEEDED": true,
 	}
-	status, err := getTaskStatus(clientV3, taskUUID)
+	status, err := getTaskStatus(ctx, clientV3, taskUUID)
 	if err != nil {
 		return false, err
 	}
@@ -161,8 +162,8 @@ func isTaskFinished(clientV3 nutanixclientv3.Service, taskUUID string) (bool, er
 	return false, errors.Errorf("retrieved unexpected task status: %s", status)
 }
 
-func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, error) {
-	v, err := clientV3.GetTask(taskUUID)
+func getTaskStatus(ctx context.Context, clientV3 nutanixclientv3.Service, taskUUID string) (string, error) {
+	v, err := clientV3.GetTask(ctx, taskUUID)
 
 	if err != nil {
 		return "", err

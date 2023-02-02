@@ -139,13 +139,12 @@ func getClients() (*PrismCentralClient, error) {
 
 	// There is a noticeable delay when creating the client, so let the user know what's going on.
 	logrus.Infof("Connecting to Prism Central %s", prismCentral)
-	clientV3, err := nutanixtypes.CreateNutanixClient(context.TODO(),
+	clientV3, err := nutanixtypes.CreateNutanixClient(
 		prismCentral,
 		port,
 		username,
 		password,
 	)
-
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable to connect to Prism Central %s. Ensure provided information is correct", prismCentral)
 	}
@@ -165,7 +164,7 @@ func getPrismElement(ctx context.Context, client *nutanixclientv3.Client) (*nuta
 
 	pe := &nutanixtypes.PrismElement{}
 	emptyFilter := ""
-	pesAll, err := client.V3.ListAllCluster(emptyFilter)
+	pesAll, err := client.V3.ListAllCluster(ctx, emptyFilter)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to list prism element clusters")
 	}
@@ -216,7 +215,7 @@ func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID strin
 
 	emptyFilter := ""
 	emptyClientFilters := make([]*nutanixclient.AdditionalFilter, 0)
-	subnetsAll, err := client.V3.ListAllSubnet(emptyFilter, emptyClientFilters)
+	subnetsAll, err := client.V3.ListAllSubnet(ctx, emptyFilter, emptyClientFilters)
 	if err != nil {
 		return "", errors.Wrap(err, "unable to list subnets")
 	}

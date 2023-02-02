@@ -257,7 +257,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		// Retrieve the prism element name
 		var peName string
 		if len(nutanixPlatform.PrismElements[0].Name) == 0 {
-			nc, err := nutanix.CreateNutanixClient(context.Background(),
+			nc, err := nutanix.CreateNutanixClient(
 				nutanixPlatform.PrismCentral.Endpoint.Address,
 				strconv.Itoa(int(nutanixPlatform.PrismCentral.Endpoint.Port)),
 				nutanixPlatform.PrismCentral.Username,
@@ -265,7 +265,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			if err != nil {
 				return errors.Wrapf(err, "unable to connect to Prism Central %s", nutanixPlatform.PrismCentral.Endpoint.Address)
 			}
-			pe, err := nc.V3.GetCluster(nutanixPlatform.PrismElements[0].UUID)
+			ctx := context.TODO()
+			pe, err := nc.V3.GetCluster(ctx, nutanixPlatform.PrismElements[0].UUID)
 			if err != nil {
 				return errors.Wrapf(err, "fail to find the Prism Element (cluster) with uuid %s", nutanixPlatform.PrismElements[0].UUID)
 			}

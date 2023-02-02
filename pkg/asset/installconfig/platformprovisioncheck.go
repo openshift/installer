@@ -148,7 +148,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:
-		err := nutanixconfig.ValidateForProvisioning(ic.Config)
+		err := nutanixconfig.ValidateForProvisioning(context.TODO(), ic.Config)
 		if err != nil {
 			return err
 		}
