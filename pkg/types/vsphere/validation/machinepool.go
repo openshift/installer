@@ -33,17 +33,12 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 	}
 
 	// Either the number set by the user or a default value
-	var numCPUs int32
-	if vspherePool.NumCPUs > 0 {
-		numCPUs = vspherePool.NumCPUs
-	} else {
+	numCPUs := vspherePool.NumCPUs
+	if numCPUs == 0 {
 		numCPUs = defaultNumCPUs
 	}
-	// Either the number set by the user or a default value
-	var numCoresPerSocket int32
-	if vspherePool.NumCoresPerSocket > 0 {
-		numCoresPerSocket = vspherePool.NumCoresPerSocket
-	} else {
+	numCoresPerSocket := vspherePool.NumCoresPerSocket
+	if numCoresPerSocket == 0 {
 		numCoresPerSocket = defaultCoresPerSocket
 	}
 
