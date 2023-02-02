@@ -15,9 +15,9 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/defaults"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
+	nutanixdefaults "github.com/openshift/installer/pkg/types/nutanix/defaults"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -269,10 +269,11 @@ func getSubnet(ctx context.Context, client *nutanixclientv3.Client, peUUID strin
 func getVIPs() (string, string, error) {
 	var apiVIP, ingressVIP string
 
+	cidr := nutanixdefaults.GetMachineCIDR()
 	defaultMachineNetwork := &types.Networking{
 		MachineNetwork: []types.MachineNetworkEntry{
 			{
-				CIDR: *defaults.DefaultMachineCIDR,
+				CIDR: *cidr,
 			},
 		},
 	}

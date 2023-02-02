@@ -2,6 +2,7 @@ package defaults
 
 import (
 	operv1 "github.com/openshift/api/operator/v1"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
@@ -45,6 +46,12 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		if c.Platform.PowerVS != nil {
 			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
 				{CIDR: *powervsdefaults.DefaultMachineCIDR},
+			}
+		}
+		if c.Platform.Nutanix != nil {
+			cidr := nutanixdefaults.GetMachineCIDR()
+			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+				{CIDR: *cidr},
 			}
 		}
 	}
