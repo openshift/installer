@@ -1,4 +1,4 @@
-package ovirtclient
+package ovirtclient //nolint:dupl
 
 func (o *oVirtClient) ListVMs(retries ...RetryStrategy) (result []VM, err error) {
 	retries = defaultRetries(retries, defaultReadTimeouts(o))
@@ -18,7 +18,7 @@ func (o *oVirtClient) ListVMs(retries ...RetryStrategy) (result []VM, err error)
 			}
 			result = make([]VM, len(sdkObjects.Slice()))
 			for i, sdkObject := range sdkObjects.Slice() {
-				result[i], e = convertSDKVM(sdkObject, o, o.logger, "listing VMs")
+				result[i], e = convertSDKVM(sdkObject, o)
 				if e != nil {
 					return wrap(e, EBug, "failed to convert vm during listing item #%d", i)
 				}

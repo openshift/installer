@@ -4,7 +4,7 @@ import (
 	"math/rand"
 )
 
-var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") // nolint:gochecknoglobals
+var letters = []byte("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ") //nolint:gochecknoglobals
 
 func generateRandomID(length uint, r *rand.Rand) string {
 	b := make([]byte, length)

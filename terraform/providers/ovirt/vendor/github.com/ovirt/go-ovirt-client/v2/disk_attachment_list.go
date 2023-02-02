@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-// nolint:dupl
+//nolint:dupl
 func (o *oVirtClient) ListDiskAttachments(
 	vmid VMID,
 	retries ...RetryStrategy,

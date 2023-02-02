@@ -22,6 +22,8 @@ builds:
     ignore:
       - goos: darwin
         goarch: "386"
+      - goos: windows
+        goarch: arm64
     binary: "{{ .ProjectName }}_{{ .Version }}"
 archives:
   - format: zip
@@ -39,6 +41,8 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
+    stdin: '{{ .Env.GPG_PASSWORD }}'
+    output: false
 release:
 changelog:
   skip: true

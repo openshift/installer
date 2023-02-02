@@ -13,14 +13,14 @@ import (
 // under 30 chars. To set a correlationID add `Query("correlation_id", correlationID)` to the engine API call, for
 // example:
 //
-//     correlationID := fmt.Sprintf("image_transfer_%s", utilrand.String(5))
-//     conn.
-//         SystemService().
-//         DisksService().
-//         DiskService(diskId).
-//         Update().
-//         Query("correlation_id", correlationID).
-//         Send()
+//	correlationID := fmt.Sprintf("image_transfer_%s", utilrand.String(5))
+//	conn.
+//	    SystemService().
+//	    DisksService().
+//	    DiskService(diskId).
+//	    Update().
+//	    Query("correlation_id", correlationID).
+//	    Send()
 func (o *oVirtClient) waitForJobFinished(correlationID string, retries []RetryStrategy) error {
 	return retry(
 		fmt.Sprintf("waiting for job with correlation ID %s to finish", correlationID),

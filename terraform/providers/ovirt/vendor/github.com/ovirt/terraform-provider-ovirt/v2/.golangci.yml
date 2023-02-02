@@ -84,3 +84,7 @@ linters-settings:
       - all
 issues:
   exclude-use-default: false
+  exclude-rules:
+  - linters:
+      - revive
+    source: "^package main"

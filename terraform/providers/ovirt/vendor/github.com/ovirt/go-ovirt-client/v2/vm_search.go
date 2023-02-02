@@ -103,7 +103,7 @@ func (o *oVirtClient) SearchVMs(params VMSearchParameters, retries ...RetryStrat
 			}
 			result = make([]VM, len(sdkObjects.Slice()))
 			for i, sdkObject := range sdkObjects.Slice() {
-				result[i], e = convertSDKVM(sdkObject, o, o.logger, "searching for VMs")
+				result[i], e = convertSDKVM(sdkObject, o)
 				if e != nil {
 					return wrap(e, EBug, "failed to convert VM during searching item #%d", i)
 				}

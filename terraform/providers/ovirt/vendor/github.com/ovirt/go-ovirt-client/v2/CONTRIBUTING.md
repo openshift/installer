@@ -20,7 +20,7 @@ The provided [.golangci.yaml](.golangci.yml) describes the linting rules we are 
 // We are working through all template files here, so
 // including these files is intentional and not a
 // security issue.
-fh, err := os.Open(templateFileName) // nolint:gosec
+fh, err := os.Open(templateFileName) //nolint:gosec
 ```
 
 ## Design principles

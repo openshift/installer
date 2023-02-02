@@ -285,7 +285,7 @@ func setupBlankTemplateID(blankTemplateID TemplateID, client Client) (id Templat
 func setupTestStorageDomainID(storageDomainID StorageDomainID, client Client) (id StorageDomainID, err error) {
 	if storageDomainID == "" {
 		storageDomainID, err = findTestStorageDomainID("", client)
-		if err != nil {
+		if err != nil && !errors.Is(err, errNoTestStorageDomainFound) {
 			return "", fmt.Errorf("failed to find storage domain to test on (%w)", err)
 		}
 	} else if err := verifyTestStorageDomainID(client, storageDomainID); err != nil {
@@ -394,19 +394,19 @@ func findTestStorageDomainID(skipID StorageDomainID, client Client) (StorageDoma
 	if err != nil {
 		return "", err
 	}
-	for _, storageDomain := range storageDomains {
-		if storageDomain.ID() == skipID {
-			continue
-		}
+	storageDomains = storageDomains.Filter(func(sd StorageDomain) bool {
+		return sd.ID() != skipID
+	}).Filter(func(sd StorageDomain) bool {
 		// Assume 2GB will be enough for testing
-		if storageDomain.Available() < 2*1024*1024*1024 {
-			continue
-		}
-		if storageDomain.Status() != StorageDomainStatusActive &&
-			(storageDomain.Status() != StorageDomainStatusNA || storageDomain.ExternalStatus() != StorageDomainExternalStatusOk) {
-			continue
-		}
-		return storageDomain.ID(), nil
+		return sd.Available() >= 2*1024*1024*1024
+	}).Filter(func(sd StorageDomain) bool {
+		return (sd.Status() == StorageDomainStatusActive) || (sd.Status() == StorageDomainStatusNA && sd.ExternalStatus() == StorageDomainExternalStatusOk)
+	}).Filter(func(sd StorageDomain) bool {
+		return sd.StorageType() == StorageDomainTypeNFS
+	})
+
+	if len(storageDomains) > 0 {
+		return storageDomains[0].ID(), nil
 	}
 	return "", errNoTestStorageDomainFound
 }
@@ -505,43 +505,43 @@ func NewMockTestHelper(logger ovirtclientlog.Logger) (TestHelper, error) {
 // NewLiveTestHelperFromEnv is a function that creates a test helper working against a live (not mock)
 // oVirt engine using environment variables. The environment variables are as follows:
 //
-//   OVIRT_URL
+//	OVIRT_URL
 //
 // URL of the oVirt engine. Mandatory.
 //
-//   OVIRT_USERNAME
+//	OVIRT_USERNAME
 //
 // The username for the oVirt engine. Mandatory.
 //
-//   OVIRT_PASSWORD
+//	OVIRT_PASSWORD
 //
 // The password for the oVirt engine. Mandatory.
 //
-//   OVIRT_CAFILE
+//	OVIRT_CAFILE
 //
 // A file containing the CA certificate in PEM format.
 //
-//   OVIRT_CA_BUNDLE
+//	OVIRT_CA_BUNDLE
 //
 // Provide the CA certificate in PEM format directly.
 //
-//   OVIRT_INSECURE
+//	OVIRT_INSECURE
 //
 // Disable certificate verification if set. Not recommended.
 //
-//   OVIRT_CLUSTER_ID
+//	OVIRT_CLUSTER_ID
 //
 // The cluster to use for testing. Will be automatically chosen if not provided.
 //
-//   OVIRT_BLANK_TEMPLATE_ID
+//	OVIRT_BLANK_TEMPLATE_ID
 //
 // ID of the blank template. Will be automatically chosen if not provided.
 //
-//   OVIRT_STORAGE_DOMAIN_ID
+//	OVIRT_STORAGE_DOMAIN_ID
 //
 // Storage domain to use for testing. Will be automatically chosen if not provided.
 //
-//   OVIRT_VNIC_PROFILE_ID
+//	OVIRT_VNIC_PROFILE_ID
 //
 // VNIC profile to use for testing. Will be automatically chosen if not provided.
 func NewLiveTestHelperFromEnv(logger ovirtclientlog.Logger) (TestHelper, error) {
