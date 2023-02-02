@@ -1,11 +1,18 @@
 package validation
 
 import (
+	"fmt"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/installer/pkg/validate"
+)
+
+const (
+	defaultCoresPerSocket = int32(4)
+	defaultNumCPUs        = int32(4)
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -25,18 +32,27 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), vspherePool.NumCoresPerSocket, "cores per socket must be positive"))
 	}
 
-	defaultCoresPerSocket := int32(4)
-	defaultNumCPUs := int32(4)
+	// Either the number set by the user or a default value
+	var numCPUs int32
 	if vspherePool.NumCPUs > 0 {
-		if vspherePool.NumCoresPerSocket > vspherePool.NumCPUs {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), vspherePool.NumCoresPerSocket, "cores per socket must be less than number of CPUs"))
-		} else if vspherePool.NumCoresPerSocket > 0 && vspherePool.NumCPUs%vspherePool.NumCoresPerSocket != 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), vspherePool.NumCPUs, "numCPUs specified should be a multiple of cores per socket"))
-		} else if vspherePool.NumCPUs%defaultCoresPerSocket != 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), vspherePool.NumCPUs, "numCPUs specified should be a multiple of cores per socket which is by default 4"))
-		}
-	} else if vspherePool.NumCoresPerSocket > defaultNumCPUs {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), vspherePool.NumCoresPerSocket, "cores per socket must be less than number of CPUs which is by default 4"))
+		numCPUs = vspherePool.NumCPUs
+	} else {
+		numCPUs = defaultNumCPUs
+	}
+	// Either the number set by the user or a default value
+	var numCoresPerSocket int32
+	if vspherePool.NumCoresPerSocket > 0 {
+		numCoresPerSocket = vspherePool.NumCoresPerSocket
+	} else {
+		numCoresPerSocket = defaultCoresPerSocket
+	}
+
+	if numCoresPerSocket > numCPUs {
+		errorMsg := fmt.Sprintf("cores per socket must be less than the number of CPUs (which is by default %d)", defaultNumCPUs)
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("coresPerSocket"), numCoresPerSocket, errorMsg))
+	} else if numCPUs%numCoresPerSocket != 0 {
+		errMsg := fmt.Sprintf("numCPUs specified should be a multiple of cores per socket (which is by default %d)", defaultCoresPerSocket)
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("cpus"), numCPUs, errMsg))
 	}
 
 	if len(vspherePool.Zones) > 0 {
