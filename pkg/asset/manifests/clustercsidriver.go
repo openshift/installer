@@ -7,8 +7,8 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
-	"github.com/openshift/installer/pkg/asset/manifests/gcp"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
@@ -46,6 +46,22 @@ func (csi *ClusterCSIDriverConfig) Generate(dependencies asset.Parents) error {
 	dependencies.Get(installConfig, clusterID)
 
 	switch installConfig.Config.Platform.Name() {
+	case awstypes.Name:
+		platform := installConfig.Config.Platform.AWS.DefaultMachinePlatform
+		if platform == nil || platform.EC2RootVolume.KMSKeyARN == "" {
+			return nil
+		}
+		configData, err := aws.ClusterCSIDriverConfig{
+			KMSKeyARN: platform.EC2RootVolume.KMSKeyARN,
+		}.YAML()
+		if err != nil {
+			return errors.Wrap(err, "could not create CSI cluster driver config")
+		}
+		csi.File = &asset.File{
+			Filename: clusterCSIDriverConfigFileName,
+			Data:     configData,
+		}
+
 	case azuretypes.Name:
 		platform := installConfig.Config.Platform.Azure.DefaultMachinePlatform
 		if platform == nil || platform.OSDisk.DiskEncryptionSet == nil {
