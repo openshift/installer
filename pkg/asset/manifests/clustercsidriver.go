@@ -9,8 +9,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/aws"
 	"github.com/openshift/installer/pkg/asset/manifests/azure"
+	"github.com/openshift/installer/pkg/asset/manifests/gcp"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 var (
@@ -87,7 +89,25 @@ func (csi *ClusterCSIDriverConfig) Generate(dependencies asset.Parents) error {
 			Filename: clusterCSIDriverConfigFileName,
 			Data:     configData,
 		}
-
+	case gcptypes.Name:
+		platform := installConfig.Config.Platform.GCP.DefaultMachinePlatform
+		if platform == nil || platform.OSDisk.EncryptionKey == nil || platform.OSDisk.EncryptionKey.KMSKey == nil {
+			return nil
+		}
+		kmsKey := platform.OSDisk.EncryptionKey.KMSKey
+		configData, err := gcp.ClusterCSIDriverConfig{
+			Name:      kmsKey.Name,
+			KeyRing:   kmsKey.KeyRing,
+			ProjectID: kmsKey.ProjectID,
+			Location:  kmsKey.Location,
+		}.YAML()
+		if err != nil {
+			return errors.Wrap(err, "could not create CSI cluster driver config")
+		}
+		csi.File = &asset.File{
+			Filename: clusterCSIDriverConfigFileName,
+			Data:     configData,
+		}
 	}
 
 	return nil
