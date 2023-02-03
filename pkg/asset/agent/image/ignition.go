@@ -63,6 +63,7 @@ type agentTemplateData struct {
 	InfraEnvID                string
 	ClusterName               string
 	OSImage                   *models.OsImage
+	Proxy                     *v1beta1.Proxy
 }
 
 // Name returns the human-friendly name of the asset.
@@ -160,7 +161,8 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		publicContainerRegistries,
 		agentManifests.AgentClusterInstall,
 		infraEnvID,
-		osImage)
+		osImage,
+		infraEnv.Spec.Proxy)
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
 	if err != nil {
@@ -252,7 +254,8 @@ func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImag
 	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
 	agentClusterInstall *hiveext.AgentClusterInstall,
 	infraEnvID string,
-	osImage *models.OsImage) *agentTemplateData {
+	osImage *models.OsImage,
+	proxy *v1beta1.Proxy) *agentTemplateData {
 	serviceBaseURL := url.URL{
 		Scheme: "http",
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
@@ -276,6 +279,7 @@ func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImag
 		InfraEnvID:                infraEnvID,
 		ClusterName:               name,
 		OSImage:                   osImage,
+		Proxy:                     proxy,
 	}
 }
 
