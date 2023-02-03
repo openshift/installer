@@ -3,12 +3,6 @@ Type=simple
 Restart=always
 RestartSec=3
 StartLimitInterval=0
-Environment=HTTP_PROXY=
-Environment=http_proxy=
-Environment=HTTPS_PROXY=
-Environment=https_proxy=
-Environment=NO_PROXY=
-Environment=no_proxy=
 TimeoutStartSec=3000
 ExecStartPre=/usr/local/bin/extract-agent.sh
 ExecStart=/usr/local/bin/start-agent.sh
