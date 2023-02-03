@@ -1,6 +1,7 @@
 package vsphere
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -205,7 +206,7 @@ func TestVsphereDeleteFolder(t *testing.T) {
 			}
 			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
 			assert.NotNil(t, uninstaller)
-			err := uninstaller.deleteFolder()
+			err := uninstaller.deleteFolder(context.TODO())
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)
 			} else {
@@ -332,7 +333,7 @@ func TestVsphereStopVirtualMachines(t *testing.T) {
 			}
 			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
 			assert.NotNil(t, uninstaller)
-			err := uninstaller.stopVirtualMachines()
+			err := uninstaller.stopVirtualMachines(context.TODO())
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)
 			} else {
@@ -428,7 +429,7 @@ func TestVsphereDeleteVirtualMachines(t *testing.T) {
 			}
 			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
 			assert.NotNil(t, uninstaller)
-			err := uninstaller.deleteVirtualMachines()
+			err := uninstaller.deleteVirtualMachines(context.TODO())
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)
 			} else {
@@ -480,7 +481,7 @@ func TestDeleteStoragePolicy(t *testing.T) {
 			}
 			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
 			assert.NotNil(t, uninstaller)
-			err := uninstaller.deleteStoragePolicy()
+			err := uninstaller.deleteStoragePolicy(context.TODO())
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)
 			} else {
@@ -530,7 +531,7 @@ func TestDeleteTag(t *testing.T) {
 			}
 			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
 			assert.NotNil(t, uninstaller)
-			err := uninstaller.deleteTag()
+			err := uninstaller.deleteTag(context.TODO())
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)
 			} else {
@@ -582,7 +583,7 @@ func TestDeleteTagCategory(t *testing.T) {
 			}
 			uninstaller := newWithClient(nullLogger, &editedMetadata, vsphereClient)
 			assert.NotNil(t, uninstaller)
-			err := uninstaller.deleteTagCategory()
+			err := uninstaller.deleteTagCategory(context.TODO())
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)
 			} else {

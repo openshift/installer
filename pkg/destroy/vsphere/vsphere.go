@@ -25,8 +25,7 @@ type ClusterUninstaller struct {
 
 	Logger logrus.FieldLogger
 
-	context context.Context
-	client  API
+	client API
 }
 
 // New returns an VSphere destroyer from ClusterMetadata.
@@ -44,18 +43,13 @@ func newWithClient(logger logrus.FieldLogger, metadata *installertypes.ClusterMe
 		InfraID:           metadata.InfraID,
 		terraformPlatform: metadata.VSphere.TerraformPlatform,
 
-		Logger:  logger,
-		context: context.Background(),
-		client:  client,
+		Logger: logger,
+		client: client,
 	}
 }
 
-func (o *ClusterUninstaller) contextWithTimeout() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(o.context, defaultTimeout)
-}
-
-func (o *ClusterUninstaller) deleteFolder() error {
-	ctx, cancel := o.contextWithTimeout()
+func (o *ClusterUninstaller) deleteFolder(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	o.Logger.Debug("Delete Folder")
@@ -102,8 +96,8 @@ func (o *ClusterUninstaller) deleteFolder() error {
 	return nil
 }
 
-func (o *ClusterUninstaller) deleteStoragePolicy() error {
-	ctx, cancel := context.WithTimeout(o.context, time.Minute*30)
+func (o *ClusterUninstaller) deleteStoragePolicy(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
 	policyName := fmt.Sprintf("openshift-storage-policy-%s", o.InfraID)
@@ -119,8 +113,8 @@ func (o *ClusterUninstaller) deleteStoragePolicy() error {
 	return nil
 }
 
-func (o *ClusterUninstaller) deleteTag() error {
-	ctx, cancel := context.WithTimeout(o.context, time.Minute*30)
+func (o *ClusterUninstaller) deleteTag(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
 	tagLogger := o.Logger.WithField("Tag", o.InfraID)
@@ -135,8 +129,8 @@ func (o *ClusterUninstaller) deleteTag() error {
 	return nil
 }
 
-func (o *ClusterUninstaller) deleteTagCategory() error {
-	ctx, cancel := o.contextWithTimeout()
+func (o *ClusterUninstaller) deleteTagCategory(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	categoryID := "openshift-" + o.InfraID
@@ -164,8 +158,8 @@ func (o *ClusterUninstaller) stopVirtualMachine(ctx context.Context, vmMO mo.Vir
 	return nil
 }
 
-func (o *ClusterUninstaller) stopVirtualMachines() error {
-	ctx, cancel := context.WithTimeout(o.context, time.Minute*30)
+func (o *ClusterUninstaller) stopVirtualMachines(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
 	o.Logger.Debug("Power Off Virtual Machines")
@@ -199,8 +193,8 @@ func (o *ClusterUninstaller) deleteVirtualMachine(ctx context.Context, vmMO mo.V
 	return nil
 }
 
-func (o *ClusterUninstaller) deleteVirtualMachines() error {
-	ctx, cancel := context.WithTimeout(o.context, time.Minute*30)
+func (o *ClusterUninstaller) deleteVirtualMachines(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
 	defer cancel()
 
 	o.Logger.Debug("Delete Virtual Machines")
@@ -220,10 +214,10 @@ func (o *ClusterUninstaller) deleteVirtualMachines() error {
 	return utilerrors.NewAggregate(errs)
 }
 
-func (o *ClusterUninstaller) destroyCluster() (bool, error) {
+func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	stagedFuncs := [][]struct {
 		name    string
-		execute func() error
+		execute func(context.Context) error
 	}{{
 		{name: "Stop virtual machines", execute: o.stopVirtualMachines},
 	}, {
@@ -242,7 +236,7 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 			break
 		}
 		for _, f := range stage {
-			err := f.execute()
+			err := f.execute(ctx)
 			if err != nil {
 				o.Logger.Debugf("%s: %v", f.name, err)
 				stageFailed = true
@@ -257,7 +251,8 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 func (o *ClusterUninstaller) Run() (*installertypes.ClusterQuota, error) {
 	defer o.client.Logout()
 
-	err := wait.PollImmediateInfinite(
+	err := wait.PollImmediateInfiniteWithContext(
+		context.Background(),
 		time.Second*10,
 		o.destroyCluster,
 	)
