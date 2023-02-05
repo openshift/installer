@@ -38,7 +38,7 @@ type API interface {
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
 	GetCredentials() *googleoauth.Credentials
-	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.String, error)
+	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error)
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
 }
 
@@ -375,12 +375,12 @@ func (c *Client) getPermissions(ctx context.Context, project string, permissions
 // GetProjectPermissions consumes a set of permissions and returns the set of found permissions for the service
 // account (in the provided project). A list of valid permissions can be found at
 // https://cloud.google.com/iam/docs/understanding-roles.
-func (c *Client) GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.String, error) {
+func (c *Client) GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error) {
 	validPermissions, err := c.getPermissions(ctx, project, permissions)
 	if err != nil {
 		return nil, err
 	}
-	return sets.NewString(validPermissions...), nil
+	return sets.New[string](validPermissions...), nil
 }
 
 // ValidateServiceAccountHasPermissions compares the permissions to the set returned from the GCP API. Returns true
