@@ -37,7 +37,7 @@ require (
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-playground/validator/v10 v10.2.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible
-	github.com/golang/mock v1.6.0
+	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
