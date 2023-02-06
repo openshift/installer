@@ -79,9 +79,15 @@ func TestIgnition_getTemplateData(t *testing.T) {
 		URL:              &isoURL,
 		Version:          &ver,
 	}
+
+	proxy := &aiv1beta1.Proxy{
+		HTTPProxy:  "http://1.1.1.1:80",
+		HTTPSProxy: "https://1.1.1.1:443",
+		NoProxy:    "valid-proxy.com,172.30.0.0/16",
+	}
 	clusterName := "test-agent-cluster-install.test"
 
-	templateData := getTemplateData(clusterName, pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage)
+	templateData := getTemplateData(clusterName, pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
@@ -98,6 +104,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, publicContainerRegistries, templateData.PublicContainerRegistries)
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
 	assert.Equal(t, osImage, templateData.OSImage)
+	assert.Equal(t, proxy, templateData.Proxy)
 }
 
 func TestIgnition_addStaticNetworkConfig(t *testing.T) {
