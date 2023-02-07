@@ -46,11 +46,11 @@
     "masterSubnetName" : "[concat(parameters('baseName'), '-master-subnet')]",
     "masterSubnetRef" : "[concat(variables('virtualNetworkID'), '/subnets/', variables('masterSubnetName'))]",
     "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
-    "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-avset')]",
+    "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
     "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
     "clusterNsgName" : "[concat(parameters('baseName'), '-nsg')]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "imageName" : "[parameters('baseName')]",
     "numberOfMasters" : 3,
     "vms" : {
       "copy" : [

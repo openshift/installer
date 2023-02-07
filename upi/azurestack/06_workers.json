@@ -50,8 +50,8 @@
     "infraLoadBalancerName" : "[parameters('baseName')]",
     "sshKeyPath" : "/home/core/.ssh/authorized_keys",
     "identityName" : "[concat(parameters('baseName'), '-identity')]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]",
-    "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-avset')]",
+    "imageName" : "[parameters('baseName')]",
+    "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
     "numberOfNodes" : "[parameters('numberOfNodes')]",
     "vms" : {
       "copy" : [
