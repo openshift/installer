@@ -27,6 +27,16 @@ resource "nutanix_category_value" "ocp_category_value_shared" {
   description = "Openshift Cluster Category Value: resources used but not owned by the cluster"
 }
 
+resource "nutanix_category_key" "kubernetes_name" {
+  name        = "KubernetesClusterName"
+  description = "Kubernetes Cluster Name"
+}
+
+resource "nutanix_category_value" "kubernetes_name_value" {
+  name        = nutanix_category_key.kubernetes_name.id
+  value       = var.cluster_id
+}
+
 resource "nutanix_image" "rhcos" {
   name        = var.nutanix_image
   source_uri  = var.nutanix_image_uri
