@@ -131,6 +131,7 @@ aliases:
     - prestist
     - marmijo
     - RishabhSaini
+    - Adam0Brien
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -149,6 +150,7 @@ aliases:
     - prestist
     - marmijo
     - RishabhSaini
+    - Adam0Brien
   agent-reviewers:
     - andfasano
     - bfournie
