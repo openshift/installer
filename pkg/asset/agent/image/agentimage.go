@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
+	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
 
 const (
@@ -18,9 +20,11 @@ const (
 
 // AgentImage is an asset that generates the bootable image used to install clusters.
 type AgentImage struct {
-	imageReader  isoeditor.ImageReader
 	cpuArch      string
 	rendezvousIP string
+
+	tmpPath  string
+	volumeID string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -30,56 +34,112 @@ func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&Ignition{},
 		&BaseIso{},
+		&manifests.AgentManifests{},
+		&mirror.RegistriesConf{},
 	}
 }
 
 // Generate generates the image file for to ISO asset.
 func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	ignition := &Ignition{}
-	dependencies.Get(ignition)
-
 	baseImage := &BaseIso{}
-	dependencies.Get(baseImage)
+	agentManifests := &manifests.AgentManifests{}
+	registriesConf := &mirror.RegistriesConf{}
+
+	dependencies.Get(ignition, baseImage, agentManifests, registriesConf)
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
 		return err
 	}
 
-	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
-	custom, err := isoeditor.NewRHCOSStreamReader(baseImage.File.Filename, ignitionContent, nil)
+	agentTuiFile, err := a.fetchAgentTuiBinary(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {
 		return err
 	}
 
-	a.imageReader = custom
+	err = a.prepareAgentISO(baseImage.File.Filename, ignitionByte, agentTuiFile)
+	if err != nil {
+		return err
+	}
+
 	a.cpuArch = ignition.CPUArch
 	a.rendezvousIP = ignition.RendezvousIP
 
 	return nil
 }
 
+func (a *AgentImage) fetchAgentTuiBinary(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
+	r := NewRelease(&executer.CommonExecuter{},
+		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
+		releaseImage, pullSecret, mirrorConfig)
+
+	// TODO: This is just a temporary placeholder to test the entire workflow.
+	// As soon as https://github.com/openshift/assisted-installer-agent/pull/482 will land, then
+	// the following line should be fixed to extract the agent-tui binary
+	filename, err := r.ExtractFile("agent-installer-node-agent", "/usr/bin/agent")
+	if err != nil {
+		return "", err
+	}
+
+	return filename, nil
+}
+
+func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, agentTuiFile string) error {
+	// Create a tmp folder to store all the pieces required to generate the agent ISO.
+	tmpPath, err := os.MkdirTemp("", "agent")
+	if err != nil {
+		return err
+	}
+	a.tmpPath = tmpPath
+
+	err = isoeditor.Extract(iso, a.tmpPath)
+	if err != nil {
+		return err
+	}
+
+	ca := NewCpioArchive()
+	err = ca.StoreBytes("config.ign", ignition)
+	if err != nil {
+		return err
+	}
+
+	err = ca.StoreFile(agentTuiFile)
+	if err != nil {
+		return err
+	}
+
+	// Overwrite the default ignition.img with new enriched one
+	err = ca.Save(filepath.Join(a.tmpPath, "images", "ignition.img"))
+	if err != nil {
+		return err
+	}
+
+	volumeID, err := isoeditor.VolumeIdentifier(iso)
+	if err != nil {
+		return err
+	}
+	a.volumeID = volumeID
+
+	return nil
+}
+
 // PersistToFile writes the iso image in the assets folder
 func (a *AgentImage) PersistToFile(directory string) error {
-	// If the imageReader is not set then it means that either one of the AgentImage
+	defer os.RemoveAll(a.tmpPath)
+
+	// If the volumeId or tmpPath are not set then it means that either one of the AgentImage
 	// dependencies or the asset itself failed for some reason
-	if a.imageReader == nil {
+	if a.tmpPath == "" || a.volumeID == "" {
 		return errors.New("cannot generate ISO image due to configuration errors")
 	}
 
-	defer a.imageReader.Close()
 	agentIsoFile := filepath.Join(directory, fmt.Sprintf(agentISOFilename, a.cpuArch))
 
 	// Remove symlink if it exists
 	os.Remove(agentIsoFile)
 
-	output, err := os.Create(agentIsoFile)
-	if err != nil {
-		return err
-	}
-	defer output.Close()
-
-	_, err = io.Copy(output, a.imageReader)
+	err := isoeditor.Create(agentIsoFile, a.tmpPath, a.volumeID)
 	if err != nil {
 		return err
 	}

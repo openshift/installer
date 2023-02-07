@@ -142,13 +142,6 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		switch {
 		case installConfig.Config.Publish != types.ExternalPublishingStrategy:
 			// Do not use a public zone when not publishing externally.
-		case installConfig.Config.GCP.PublicDNSZone != nil && installConfig.Config.GCP.PublicDNSZone.ID != "":
-			// Use the provided zone if specified.
-			zoneID := installConfig.Config.GCP.PublicDNSZone.ID
-			if installConfig.Config.GCP.PublicDNSZone.ProjectID != "" && installConfig.Config.GCP.ProjectID != installConfig.Config.GCP.PublicDNSZone.ProjectID {
-				zoneID = combineGCPZoneInfo(installConfig.Config.GCP.PublicDNSZone.ProjectID, installConfig.Config.GCP.PublicDNSZone.ID)
-			}
-			config.Spec.PublicZone = &configv1.DNSZone{ID: zoneID}
 		default:
 			// Search the project for a zone with the specified base domain.
 			zone, err := icgcp.GetPublicZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
@@ -160,17 +153,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 
 		// Set the private zone
 		privateZoneID := fmt.Sprintf("%s-private-zone", clusterID.InfraID)
-		switch {
-		case installConfig.Config.GCP.PrivateDNSZone != nil:
-			// Use the provided zone if specified.
-			if installConfig.Config.GCP.PrivateDNSZone.ProjectID != "" && installConfig.Config.GCP.ProjectID != installConfig.Config.GCP.PrivateDNSZone.ProjectID {
-				privateZoneID = combineGCPZoneInfo(installConfig.Config.GCP.PrivateDNSZone.ProjectID, privateZoneID)
-			}
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
-		default:
-			// Use the installer created private zone.
-			config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
-		}
+		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 
 	case ibmcloudtypes.Name:
 		client, err := icibmcloud.NewClient()

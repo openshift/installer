@@ -3,6 +3,7 @@ package azure
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -11,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types"
@@ -23,12 +26,12 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
-		return nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != azure.Name {
-		return nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-Azure machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.Azure
 	mpool := pool.Platform.Azure
@@ -45,6 +48,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	var machines []machineapi.Machine
+	machineSetProvider := &machineapi.AzureMachineProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
 		var azIndex int
 		if len(azs) > 0 {
@@ -52,7 +56,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, useImageGallery)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -75,11 +79,66 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-
+		*machineSetProvider = *provider
 		machines = append(machines, machine)
 	}
+	replicas := int32(total)
+	failureDomains := []machinev1.AzureFailureDomain{}
+	sort.Strings(mpool.Zones)
+	for _, zone := range mpool.Zones {
+		domain := machinev1.AzureFailureDomain{
+			Zone: zone,
+		}
 
-	return machines, nil
+		failureDomains = append(failureDomains, domain)
+	}
+	machineSetProvider.Zone = nil
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					FailureDomains: machinev1.FailureDomains{
+						Platform: v1.AzurePlatformType,
+						Azure:    &failureDomains,
+					},
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: machineSetProvider},
+						},
+					},
+				},
+			},
+		},
+	}
+	return machines, controlPlaneMachineSet, nil
 }
 
 func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool) (*machineapi.AzureMachineProviderSpec, error) {
@@ -200,13 +259,19 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterID string) {
+func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.ControlPlaneMachineSet, clusterID string) error {
 	internalLB := fmt.Sprintf("%s-internal", clusterID)
 
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.AzureMachineProviderSpec)
 		providerSpec.InternalLoadBalancer = internalLB
 	}
+	providerSpec, ok := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machineapi.AzureMachineProviderSpec)
+	if !ok {
+		return errors.New("Unable to set internal load balancers to control plane machine set")
+	}
+	providerSpec.InternalLoadBalancer = internalLB
+	return nil
 }
 
 func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, error) {

@@ -1,8 +1,8 @@
 [Unit]
 Description=Service that monitors host-specific configuration status
-Wants=network-online.target apply-host-config.service
-After=network-online.target apply-host-config.service
-ConditionPathExists=/etc/assisted-service/node0
+Wants=network-online.target create-cluster-and-infraenv.service
+After=network-online.target create-cluster-and-infraenv.service
+ConditionPathExists=/etc/assisted/node0
 
 [Service]
 ExecStart=/usr/local/bin/install-status.sh

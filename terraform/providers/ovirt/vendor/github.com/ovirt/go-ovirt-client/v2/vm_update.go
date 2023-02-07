@@ -38,7 +38,7 @@ func (o *oVirtClient) UpdateVM(
 			if !ok {
 				return newError(EFieldMissing, "missing VM in VM update response")
 			}
-			result, err = convertSDKVM(vm, o, o.logger, "updating VM")
+			result, err = convertSDKVM(vm, o)
 			if err != nil {
 				return wrap(
 					err,

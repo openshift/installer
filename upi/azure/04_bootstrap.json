@@ -36,6 +36,17 @@
       "metadata" : {
         "description" : "The size of the Bootstrap Virtual Machine"
       }
+    },
+    "hyperVGen": {
+      "type": "string",
+      "metadata": {
+        "description": "VM generation image to use"
+      },
+      "defaultValue": "V2",
+      "allowedValues": [
+        "V1",
+        "V2"
+      ]
     }
   },
   "variables" : {
@@ -50,7 +61,8 @@
     "identityName" : "[concat(parameters('baseName'), '-identity')]",
     "vmName" : "[concat(parameters('baseName'), '-bootstrap')]",
     "nicName" : "[concat(variables('vmName'), '-nic')]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]",
+    "galleryName": "[concat('gallery_', replace(parameters('baseName'), '-', '_'))]",
+    "imageName" : "[concat(parameters('baseName'), if(equals(parameters('hyperVGen'), 'V2'), '-gen2', ''))]",
     "clusterNsgName" : "[concat(if(not(empty(parameters('vnetBaseName'))), parameters('vnetBaseName'), parameters('baseName')), '-nsg')]",
     "sshPublicIpAddressName" : "[concat(variables('vmName'), '-ssh-pip')]"
   },
@@ -132,7 +144,7 @@
         },
         "storageProfile" : {
           "imageReference": {
-            "id": "[resourceId('Microsoft.Compute/images', variables('imageName'))]"
+            "id": "[resourceId('Microsoft.Compute/galleries/images', variables('galleryName'), variables('imageName'))]"
           },
           "osDisk" : {
             "name": "[concat(variables('vmName'),'_OSDisk')]",

@@ -86,6 +86,12 @@ type Platform struct {
 	//
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
+
+	// UserTags has additional keys and values that the installer will add
+	// as tags to all resources that it creates. Resources created by the
+	// cluster itself may not include these tags.
+	// +optional
+	UserTags map[string]string `json:"userTags,omitempty"`
 }
 
 // CloudEnvironment is the name of the Azure cloud environment

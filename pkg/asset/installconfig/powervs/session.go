@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
 	gohttp "net/http"
 	"os"
 	"path/filepath"
@@ -24,6 +25,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/powervs"
 )
 
@@ -183,20 +185,53 @@ func (c *BxClient) ValidateAccountPermissions() error {
 }
 
 // ValidateDhcpService checks for existing Dhcp service for the provided PowerVS cloud instance
-func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string) error {
-	ctx, cancel := context.WithTimeout(ctx, 2*time.Minute)
+func (c *BxClient) ValidateDhcpService(ctx context.Context, svcInsID string, machineNetworks []types.MachineNetworkEntry) error {
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 	defer cancel()
 
-	//create Power VS DHCP Client
-	dhcpClient := instance.NewIBMPIDhcpClient(ctx, c.PISession, svcInsID)
-	//Get all DHCP Services
-	dhcpServices, err := dhcpClient.GetAll()
+	// Create PowerVS network client
+	networkClient := instance.NewIBMPINetworkClient(ctx, c.PISession, svcInsID)
+
+	// Create PowerVS CloudConnection client
+	cloudConnectionClient := instance.NewIBMPICloudConnectionClient(ctx, c.PISession, svcInsID)
+
+	allCloudConnecitons, err := cloudConnectionClient.GetAll()
 	if err != nil {
-		return errors.Wrap(err, "failed to get DHCP service details")
+		return errors.Wrap(err, "failed to get all existing Cloud Connections")
 	}
-	if len(dhcpServices) > 0 {
-		return fmt.Errorf("DHCP service already exists for provided cloud instance")
+
+	for _, singleCloudConnection := range allCloudConnecitons.CloudConnections {
+		// Unfortunately, the Networks array is not filled in for a GetAll call :(
+		cloudConnection, err := cloudConnectionClient.Get(*singleCloudConnection.CloudConnectionID)
+		if err != nil {
+			return errors.Wrap(err, "failed to get existing Cloud Connection details")
+		}
+		for _, ccNetwork := range cloudConnection.Networks {
+			// The NetworkReference object does not provide subnet CIDRs.
+			// So you have to get the network object based on the ID to find the CIDR.
+			network, err := networkClient.Get(*ccNetwork.NetworkID)
+			if err != nil {
+				return errors.Wrap(err, "failed to get CC's network")
+			}
+
+			_, n1, err := net.ParseCIDR(*network.Cidr)
+			if err != nil {
+				return errors.Wrap(err, "failed to parse network.Cidr")
+			}
+
+			// Check each machineNetwork, typically one
+			for _, machineNetwork := range machineNetworks {
+				_, n2, err := net.ParseCIDR(machineNetwork.CIDR.String())
+				if err != nil {
+					return errors.Wrap(err, "failed to parse machineNetwork.CIDR")
+				}
+				if n2.Contains(n1.IP) || n1.Contains(n2.IP) {
+					return fmt.Errorf("cidr conflicts with existing network")
+				}
+			}
+		}
 	}
+
 	return nil
 }
 
@@ -257,7 +292,6 @@ func (c *BxClient) NewPISession() error {
 	options := &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
 		UserAccount:   c.User.Account,
-		Region:        pisv.Region,
 		Zone:          pisv.Zone,
 		Debug:         false,
 	}

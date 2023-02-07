@@ -7,7 +7,7 @@ require github.com/aliyun/terraform-provider-alicloud v1.148.0
 require (
 	cloud.google.com/go v0.65.0 // indirect
 	cloud.google.com/go/storage v1.10.0 // indirect
-	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
@@ -150,3 +150,6 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 
 // https://issues.redhat.com/browse/OCPBUGS-2498
 replace github.com/hashicorp/vault => github.com/hashicorp/vault v1.9.10
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2045880
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1

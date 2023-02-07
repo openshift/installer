@@ -96,6 +96,7 @@ We'll be providing those ourselves and don't want to involve the [machine-API op
 ```sh
 rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml
 rm -f openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+rm -f openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml
 ```
 
 ### Make control-plane nodes unschedulable

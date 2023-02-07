@@ -5,12 +5,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "github.com/openshift/api/config/v1"
+	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/types"
@@ -18,12 +21,12 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != gcp.Name {
-		return nil, fmt.Errorf("non-GCP configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non-GCP configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != gcp.Name {
-		return nil, fmt.Errorf("non-GCP machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-GCP machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.GCP
 	mpool := pool.Platform.GCP
@@ -37,11 +40,12 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 
 	var machines []machineapi.Machine
+	machineSetProvider := &machineapi.GCPMachineProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
 		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret, credentialsMode)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
+			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -64,11 +68,66 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				// we don't need to set Versions, because we control those via operators.
 			},
 		}
-
+		*machineSetProvider = *provider
 		machines = append(machines, machine)
 	}
+	replicas := int32(total)
+	failureDomains := []machinev1.GCPFailureDomain{}
+	sort.Strings(mpool.Zones)
+	for _, zone := range mpool.Zones {
+		domain := machinev1.GCPFailureDomain{
+			Zone: zone,
+		}
+		failureDomains = append(failureDomains, domain)
+	}
+	machineSetProvider.Zone = ""
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateActive,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					FailureDomains: machinev1.FailureDomains{
+						Platform: v1.GCPPlatformType,
+						GCP:      &failureDomains,
+					},
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: machineSetProvider},
+						},
+					},
+				},
+			},
+		},
+	}
 
-	return machines, nil
+	return machines, controlPlaneMachineSet, nil
 }
 
 func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string, credentialsMode types.CredentialsMode) (*machineapi.GCPMachineProviderSpec, error) {
@@ -114,7 +173,10 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			return nil, errors.New("could not find google service account")
 		}
 	}
-
+	shieldedInstanceConfig := machineapi.GCPShieldedInstanceConfig{}
+	if mpool.SecureBoot == string(machineapi.SecureBootPolicyEnabled) {
+		shieldedInstanceConfig.SecureBoot = machineapi.SecureBootPolicyEnabled
+	}
 	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -139,16 +201,17 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Email:  instanceServiceAccount,
 			Scopes: []string{"https://www.googleapis.com/auth/cloud-platform"},
 		}},
-		Tags:        append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
-		MachineType: mpool.InstanceType,
-		Region:      platform.Region,
-		Zone:        az,
-		ProjectID:   platform.ProjectID,
+		Tags:                   append(mpool.Tags, []string{fmt.Sprintf("%s-%s", clusterID, role)}...),
+		MachineType:            mpool.InstanceType,
+		Region:                 platform.Region,
+		Zone:                   az,
+		ProjectID:              platform.ProjectID,
+		ShieldedInstanceConfig: shieldedInstanceConfig,
 	}, nil
 }
 
 // ConfigMasters assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterID string, publish types.PublishingStrategy) {
+func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.ControlPlaneMachineSet, clusterID string, publish types.PublishingStrategy) error {
 	var targetPools []string
 	if publish == types.ExternalPublishingStrategy {
 		targetPools = append(targetPools, fmt.Sprintf("%s-api", clusterID))
@@ -158,6 +221,13 @@ func ConfigMasters(machines []machineapi.Machine, clusterID string, publish type
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
 		providerSpec.TargetPools = targetPools
 	}
+
+	providerSpec, ok := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machineapi.GCPMachineProviderSpec)
+	if !ok {
+		return errors.New("Unable to set target pools to control plane machine set")
+	}
+	providerSpec.TargetPools = targetPools
+	return nil
 }
 func getNetworks(platform *gcp.Platform, clusterID, role string) (string, string, error) {
 	if platform.Network == "" {

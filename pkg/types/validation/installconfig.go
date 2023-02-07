@@ -580,7 +580,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 				}
 			}
 
-			if err := validateIPinMachineCIDR(vip, n); err != nil {
+			if err := ValidateIPinMachineCIDR(vip, n); err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
 			}
 
@@ -623,7 +623,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
-			if err := validateIPinMachineCIDR(vip, n); err != nil {
+			if err := ValidateIPinMachineCIDR(vip, n); err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
@@ -659,7 +659,8 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 	return allErrs
 }
 
-func validateIPinMachineCIDR(vip string, n *types.Networking) error {
+// ValidateIPinMachineCIDR confirms if the specified VIP is in the machine CIDR.
+func ValidateIPinMachineCIDR(vip string, n *types.Networking) error {
 	var networks []string
 
 	for _, network := range n.MachineNetwork {
@@ -769,9 +770,10 @@ func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) 
 			v = strings.TrimSpace(v)
 			errDomain := validate.NoProxyDomainName(v)
 			_, _, errCIDR := net.ParseCIDR(v)
-			if errDomain != nil && errCIDR != nil {
+			ip := net.ParseIP(v)
+			if errDomain != nil && errCIDR != nil && ip == nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("noProxy"), p.NoProxy, fmt.Sprintf(
-					"each element of noProxy must be a CIDR or domain without wildcard characters, which is violated by element %d %q", idx, v)))
+					"each element of noProxy must be a IP, CIDR or domain without wildcard characters, which is violated by element %d %q", idx, v)))
 			}
 		}
 	}
@@ -997,24 +999,6 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
-
-		if c.GCP != nil {
-			if len(c.GCP.NetworkProjectID) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "networkProjectID"), errMsg))
-			}
-
-			if len(c.GCP.CreateFirewallRules) > 0 && c.GCP.CreateFirewallRules != gcp.CreateFirewallRulesEnabled {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "createFirewallRules"), errMsg))
-			}
-
-			if c.GCP.PrivateDNSZone != nil && len(c.GCP.PrivateDNSZone.ProjectID) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "privateDNSZone", "projectID"), errMsg))
-			}
-
-			if c.GCP.PublicDNSZone != nil && len(c.GCP.PublicDNSZone.ProjectID) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "publicDNSZone", "projectID"), errMsg))
-			}
-		}
 
 		if c.VSphere != nil {
 			if len(c.VSphere.FailureDomains) > 0 {

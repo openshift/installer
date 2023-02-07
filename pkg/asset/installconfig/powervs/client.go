@@ -36,6 +36,7 @@ type API interface {
 	GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentityv1.APIKey, error)
 	GetAPIKey() string
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
+	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
 }
 
 // Client makes calls to the PowerVS API.
@@ -515,4 +516,22 @@ func (c *Client) GetAuthenticatorAPIKeyDetails(ctx context.Context) (*iamidentit
 // GetAPIKey returns the PowerVS API key
 func (c *Client) GetAPIKey() string {
 	return c.APIKey
+}
+
+// GetVPCs gets all VPCs in a region.
+func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	err := c.SetVPCServiceURLForRegion(ctx, region)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to set vpc api service url")
+	}
+
+	vpcs, _, err := c.vpcAPI.ListVpcs(c.vpcAPI.NewListVpcsOptions())
+	if err != nil {
+		return nil, err
+	}
+
+	return vpcs.Vpcs, nil
 }

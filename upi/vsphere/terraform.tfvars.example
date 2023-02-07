@@ -16,15 +16,6 @@ vsphere_user = "YOUR_USER"
 // Password of the user on the vSphere server.
 vsphere_password = "YOUR_PASSWORD"
 
-// Name of the vSphere cluster. The dev cluster is "devel".
-vsphere_cluster = "devel"
-
-// Name of the vSphere data center. The dev cluster is "dc1".
-vsphere_datacenter = "dc1"
-
-// Name of the vSphere data store to use for the VMs. The dev cluster uses "nvme-ds1".
-vsphere_datastore = "nvme-ds1"
-
 // Name of the VM template to clone to create VMs for the cluster. The dev cluster has a template named "rhcos-latest".
 vm_template = "rhcos-latest"
 
@@ -68,3 +59,33 @@ ipam_token = "TOKEN_FOR_THE_IPAM_SERVER"
 // The IP addresses to assign to the compute VMs. The length of this list must
 // match the value of compute_count.
 //compute_ips = ["10.0.0.30", "10.0.0.31", "10.0.0.32"]
+
+// A list of maps where each map defines a specific failure domain.  Atleast 1 failure domain must be
+// specified.  When multiple failure domains are specified, control plane and compute nodes are distributed
+// among the defined failure domains.
+failure_domains = [
+    {
+        // Name of the vSphere data center.
+        datacenter = "dc1"
+        // Name of the vSphere cluster.
+        cluster = "devel"
+        // Name of the vSphere data store to use for the VMs.
+        datastore = "nvme-ds1"
+        // Name of the vSphere network to use for the VMs.
+        network = "ci-segment-151"
+        // UUID of the distrubted switch which is hosting the portgroup.  This can derived from the MOB.
+        distributed_virtual_switch_uuid = "50 05 1b 07 19 2b 0b 0a-eb 90 98 54 1d c5 b5 19"
+    },
+    {
+        // Name of the vSphere data center.
+        datacenter = "dc2"
+        // Name of the vSphere cluster.
+        cluster = "devel2"
+        // Name of the vSphere data store to use for the VMs.
+        datastore = "nvme-ds2"
+        // Name of the vSphere network to use for the VMs.
+        network = "ci-segment-151"
+        // UUID of the distrubted switch which is hosting the portgroup.  This can derived from the MOB.
+        distributed_virtual_switch_uuid = "50 05 1b 07 19 2b 0b 0a-eb 90 98 54 1d c5 b5 19"
+    }
+]

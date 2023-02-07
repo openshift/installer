@@ -1,0 +1,19 @@
+[Unit]
+Description=Get interactive user configuration at boot
+After=network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service
+Before=network.target network.service agent.service NetworkManager-wait-online.service
+
+[Service]
+Type=oneshot
+TTYPath=/dev/tty15
+ExecStartPre=/usr/bin/chvt 15
+ExecStart="/usr/local/bin/agent-interactive-console.sh"
+ExecStartPost=/usr/bin/chvt 1
+TimeoutStartSec=0
+StandardInput=tty
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=default.target
+RequiredBy=sshd.service systemd-logind.service getty@tty1.service

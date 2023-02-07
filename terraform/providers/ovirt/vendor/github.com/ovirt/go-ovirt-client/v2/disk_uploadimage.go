@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync"
 
@@ -621,7 +620,7 @@ func (m *mockImageUploadProgress) do() {
 		m.err = fmt.Errorf("failed to seek to start of image file (%w)", err)
 		return
 	}
-	m.disk.data, err = ioutil.ReadAll(m.reader)
+	m.disk.data, err = io.ReadAll(m.reader)
 	m.err = err
 	if err != nil {
 		m.uploadedBytes = m.size

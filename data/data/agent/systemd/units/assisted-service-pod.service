@@ -2,7 +2,7 @@
 Description=Assisted Service pod
 Wants=network.target node-zero.service
 After=network-online.target node-zero.service
-ConditionPathExists=/etc/assisted-service/node0
+ConditionPathExists=/etc/assisted/node0
 RequiresMountsFor=
 Requires=assisted-service-db.service assisted-service.service
 Before=assisted-service-db.service assisted-service.service

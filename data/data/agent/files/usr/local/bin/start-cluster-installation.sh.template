@@ -2,10 +2,11 @@
 set -e
 
 source common.sh
+source issue_status.sh
 
 wait_for_assisted_service
 
-BASE_URL="{{.ServiceBaseURL}}api/assisted-install/v2"
+BASE_URL="${SERVICE_BASE_URL}api/assisted-install/v2"
 
 cluster_id=""
 while [[ "${cluster_id}" = "" ]]
@@ -17,8 +18,7 @@ do
     fi
 done
 
-infra_env_id="{{.InfraEnvID}}"
-echo -e "\nInfra env id is $infra_env_id" 1>&2
+echo -e "\nInfra env id is ${INFRA_ENV_ID}" 1>&2
 
 required_master_nodes={{.ControlPlaneAgents}}
 required_worker_nodes={{.WorkerAgents}}
@@ -27,12 +27,12 @@ echo "Number of required master nodes: ${required_master_nodes}" 1>&2
 echo "Number of required worker nodes: ${required_worker_nodes}" 1>&2
 echo "Total number of required nodes: ${total_required_nodes}" 1>&2
 
-status_issue="/etc/issue.d/90_start-install.issue"
+status_issue="90_start-install"
 
 num_known_hosts() {
     local known_hosts=0
     local insufficient_hosts=0
-    host_status=$(curl -s -S "${BASE_URL}/infra-envs/${infra_env_id}/hosts" | jq -r .[].status)
+    host_status=$(curl -s -S "${BASE_URL}/infra-envs/${INFRA_ENV_ID}/hosts" | jq -r .[].status)
     if [[ -n ${host_status} ]]; then
         for status in ${host_status}; do
             if [[ "${status}" == "known" ]]; then
@@ -45,7 +45,7 @@ num_known_hosts() {
         echo "Hosts known and ready for cluster installation (${known_hosts}/${total_required_nodes})" 1>&2
     fi
     if (( known_hosts != total_required_nodes )); then
-        printf '\n\\e{yellow}Waiting for all hosts to be ready:\\e{reset}\n%d hosts expected\n%d hosts ready, %d hosts not validated\n' "${total_required_nodes}" "${known_hosts}" "${insufficient_hosts}" >"${status_issue}"
+        printf '\\e{yellow}Waiting for all hosts to be ready:\\e{reset}\n%d hosts expected\n%d hosts ready, %d hosts not validated' "${total_required_nodes}" "${known_hosts}" "${insufficient_hosts}" | set_issue "${status_issue}"
     fi
     echo "${known_hosts}"
 }
@@ -57,7 +57,7 @@ do
 done
 
 echo "All ${total_required_nodes} hosts are ready." 1>&2
-rm -f "${status_issue}"
+clear_issue "${status_issue}"
 
 if [[ "${APIVIP}" != "" ]]; then
     api_vip=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].api_vip)
@@ -81,12 +81,12 @@ do
                 -H 'accept: application/json' \
                 -d ''
             echo "Cluster installation started" 1>&2
-            printf '\n\\e{lightgreen}Cluster installation started\\e{reset}\n' >"${status_issue}"
-            ;;
+            ;&
         "installed" | "preparing-for-installation" | "installing")
+            printf '\\e{lightgreen}Cluster installation in progress\\e{reset}' | set_issue "${status_issue}"
             ;;
         *)
-            printf '\n\\e{lightred}Installation cannot proceed:\\e{reset} Cluster status: %s\n' "${cluster_status}" >"${status_issue}"
+            printf '\\e{lightred}Installation cannot proceed:\\e{reset} Cluster status: %s' "${cluster_status}" | set_issue "${status_issue}"
             ;;
     esac
 done

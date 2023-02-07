@@ -152,7 +152,7 @@ func (m *Metadata) SetDNSInstanceCRN(crn string) {
 
 // GetExistingVPCGateway checks if the VPC is a Permitted Network for the DNS Zone
 func (m *Metadata) GetExistingVPCGateway(ctx context.Context, vpcName string, vpcSubnet string) (string, bool, error) {
-	if vpcName == "" {
+	if vpcName == "" || vpcSubnet == "" {
 		return "", false, nil
 	}
 

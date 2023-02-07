@@ -97,3 +97,50 @@ func RegionShortNames() []string {
 	}
 	return keys
 }
+
+// ValidateVPCRegion validates that given VPC region is known/tested.
+func ValidateVPCRegion(region string) bool {
+	found := false
+	for r := range Regions {
+		if region == Regions[r].VPCRegion {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
+// ValidateZone validates that the given zone is known/tested.
+func ValidateZone(zone string) bool {
+	for r := range Regions {
+		for z := range Regions[r].Zones {
+			if zone == Regions[r].Zones[z] {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ZoneNames returns the list of zone names.
+func ZoneNames() []string {
+	zones := []string{}
+	for r := range Regions {
+		for z := range Regions[r].Zones {
+			zones = append(zones, Regions[r].Zones[z])
+		}
+	}
+	return zones
+}
+
+// RegionFromZone returns the region name for a given zone name.
+func RegionFromZone(zone string) string {
+	for r := range Regions {
+		for z := range Regions[r].Zones {
+			if zone == Regions[r].Zones[z] {
+				return r
+			}
+		}
+	}
+	return ""
+}

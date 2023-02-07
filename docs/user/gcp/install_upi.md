@@ -90,11 +90,12 @@ INFO Consuming "Install Config" from target directory
 ```
 
 ### Remove control plane machines
-Remove the control plane machines from the manifests.
+Remove the control plane machines and machinesets from the manifests.
 We'll be providing those ourselves and don't want to involve [the machine-API operator][machine-api-operator].
 
 ```sh
 rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml
+rm -f openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml
 ```
 
 ### Remove compute machinesets (optional)

@@ -7,15 +7,13 @@ import (
 	ovirtsdk4 "github.com/ovirt/go-ovirt"
 )
 
-//go:generate go run scripts/rest/rest.go -i "StorageDomain" -n "storage domain" -T StorageDomainID
-
 // StorageDomainID is a specialized type for storage domain IDs.
 type StorageDomainID string
 
 // StorageDomainClient contains the portion of the goVirt API that deals with storage domains.
 type StorageDomainClient interface {
 	// ListStorageDomains lists all storage domains.
-	ListStorageDomains(retries ...RetryStrategy) ([]StorageDomain, error)
+	ListStorageDomains(retries ...RetryStrategy) (StorageDomainList, error)
 	// GetStorageDomain returns a single storage domain, or an error if the storage domain could not be found.
 	GetStorageDomain(id StorageDomainID, retries ...RetryStrategy) (StorageDomain, error)
 	// GetDiskFromStorageDomain returns a single disk from a specific storage domain, or an error if no disk can be found.
@@ -45,6 +43,20 @@ type StorageDomainData interface {
 // StorageDomain represents a storage domain returned from the oVirt Engine API.
 type StorageDomain interface {
 	StorageDomainData
+}
+
+// StorageDomainList represents a list of storage domains.
+type StorageDomainList []StorageDomain
+
+// Filter applies the passed in filter function to all items in the current list and returns a new list with items that returned true.
+func (list StorageDomainList) Filter(apply func(StorageDomain) bool) StorageDomainList {
+	var filtered StorageDomainList
+	for _, sd := range list {
+		if apply(sd) {
+			filtered = append(filtered, sd)
+		}
+	}
+	return filtered
 }
 
 // StorageDomainType represents the type of the storage domain.

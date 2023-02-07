@@ -122,7 +122,7 @@ func (o *oVirtClient) CreateVM(clusterID ClusterID, templateID TemplateID, name 
 			if !ok {
 				return newError(EFieldMissing, "missing VM in VM create response")
 			}
-			result, err = convertSDKVM(vm, o, o.logger, "creating VM")
+			result, err = convertSDKVM(vm, o)
 			if err != nil {
 				return wrap(
 					err,

@@ -1,4 +1,4 @@
-package ovirtclient
+package ovirtclient //nolint:dupl
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ func (o *oVirtClient) GetVM(id VMID, retries ...RetryStrategy) (result VM, err e
 					id,
 				)
 			}
-			result, err = convertSDKVM(sdkObject, o, o.logger, "getting VM")
+			result, err = convertSDKVM(sdkObject, o)
 			if err != nil {
 				return wrap(
 					err,

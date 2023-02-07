@@ -5,7 +5,7 @@ go 1.18
 require (
 	cloud.google.com/go/monitoring v1.6.0
 	github.com/AlecAivazis/survey/v2 v2.3.5
-	github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
+	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.1.0
 	github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v0.4.1
@@ -36,14 +36,13 @@ require (
 	github.com/go-openapi/errors v0.20.2
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-playground/validator/v10 v10.2.0
-	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/gophercloud/gophercloud v0.24.0
-	github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
+	github.com/gophercloud/gophercloud v1.1.1
+	github.com/gophercloud/utils v0.0.0-20221207145018-e8fba78967ca
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/jongio/azidext/go/azidext v0.4.0
@@ -55,7 +54,7 @@ require (
 	github.com/microsoft/kiota-authentication-azure-go v0.5.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
-	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
+	github.com/openshift/api v0.0.0-20230110144457-3299573be149
 	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
@@ -88,7 +87,8 @@ require (
 	github.com/vmware/govmomi v0.27.4
 	golang.org/x/crypto v0.0.0-20220926161630-eccd6366d1be
 	golang.org/x/oauth2 v0.0.0-20220622183110-fd043fe589d2
-	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
+	golang.org/x/sys v0.2.0
+	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 	google.golang.org/api v0.91.0
 	google.golang.org/genproto v0.0.0-20220808131553-a91ffa7f803e
 	google.golang.org/grpc v1.48.0
@@ -113,8 +113,6 @@ require (
 	go.mongodb.org/mongo-driver v1.8.3 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
-	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
-	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	golang.org/x/tools v0.1.12 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.2.0 // indirect
@@ -235,6 +233,7 @@ require (
 	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/net v0.0.0-20221004154528-8021a29435af // indirect
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4 // indirect
+	golang.org/x/text v0.4.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.2.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
@@ -264,7 +263,7 @@ replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20
 
 // Override the OpenShift API version in hive
 
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20230110144457-3299573be149
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 
@@ -279,3 +278,12 @@ replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2100495
 replace golang.org/x/text => golang.org/x/text v0.3.7
+
+// https://issues.redhat.com/browse/OCPBUGS-5324
+replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
+
+// https://issues.redhat.com/browse/OCPBUGS-5667
+replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
+
+// https://bugzilla.redhat.com/show_bug.cgi?id=2045880
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1

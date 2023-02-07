@@ -209,6 +209,9 @@ func Test_PrintFields(t *testing.T) {
     resourceGroupName <string>
       ResourceGroupName is the name of an already existing resource group where the cluster should be installed. This resource group should only be used for this specific cluster and the cluster components will assume ownership of all resources in the resource group. Destroying the cluster using installer will delete this resource group. This resource group must be empty with no other resources when trying to use it for creating a cluster. If empty, a new resource group will created for the cluster.
 
+    userTags <object>
+      UserTags has additional keys and values that the installer will add as tags to all resources that it creates. Resources created by the cluster itself may not include these tags.
+
     virtualNetwork <string>
       VirtualNetwork specifies the name of an existing VNet for the installer to use`,
 	}, {

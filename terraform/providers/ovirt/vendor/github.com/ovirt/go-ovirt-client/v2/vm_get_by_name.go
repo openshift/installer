@@ -20,7 +20,7 @@ func (o *oVirtClient) GetVMByName(name string, retries ...RetryStrategy) (result
 				if mName, ok := sdkObject.Name(); ok {
 					// We re-scan for the name here since the search function may result other VMs too.
 					if name == mName {
-						result, err = convertSDKVM(sdkObject, o, o.logger, "getting VM by name")
+						result, err = convertSDKVM(sdkObject, o)
 						return err
 					}
 				}

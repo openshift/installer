@@ -2106,7 +2106,7 @@ func validateVMName(name string) error {
 	return nil
 }
 
-func convertSDKVM(sdkObject *ovirtsdk.Vm, client Client, logger Logger, action string) (VM, error) {
+func convertSDKVM(sdkObject *ovirtsdk.Vm, client Client) (VM, error) {
 	vmObject := &vm{
 		client: client,
 	}
@@ -2129,6 +2129,7 @@ func convertSDKVM(sdkObject *ovirtsdk.Vm, client Client, logger Logger, action s
 		vmTypeConverter,
 		vmOSConverter,
 		vmSoundcardEnabledConverter,
+		vmSerialConsoleConverter,
 	}
 	for _, converter := range vmConverters {
 		if err := converter(sdkObject, vmObject); err != nil {
@@ -2136,31 +2137,18 @@ func convertSDKVM(sdkObject *ovirtsdk.Vm, client Client, logger Logger, action s
 		}
 	}
 
-	if err := vmSerialConsoleConverter(sdkObject, vmObject, logger, action); err != nil {
-		return nil, err
-	}
-
 	return vmObject, nil
 }
 
-func vmSerialConsoleConverter(object *ovirtsdk.Vm, v *vm, logger Logger, action string) error {
+func vmSerialConsoleConverter(object *ovirtsdk.Vm, v *vm) error {
+	// console is excluded from the response from oVirt engine by default. Therefore, using the default bool value as return value
+	// see: http://ovirt.github.io/ovirt-engine-api-model/master/#services/vm/methods/get/parameters/all_content
 	console, ok := object.Console()
 	if !ok {
-		// This sometimes (?) happens, and we don't know why. We will assume the serial console does not exist,
-		// otherwise we create a flaky behavior.
-		//
-		// See these issues:
-		// - https://github.com/oVirt/terraform-provider-ovirt/issues/411
-		// - https://github.com/oVirt/go-ovirt-client/issues/211
-		logger.Warningf(
-			"If you see this message, please open a Bugzilla entry with your oVirt version! The virtual machine object was returned from the oVirt Engine while %s without a console sub-object. VM: %s status: %s",
-			action,
-			object.MustId(),
-			object.MustStatus(),
-		)
 		v.serialConsole = false
 		return nil
 	}
+
 	enabled, ok := console.Enabled()
 	if !ok {
 		return newFieldNotFound("serial console", "enabled")
@@ -2171,7 +2159,7 @@ func vmSerialConsoleConverter(object *ovirtsdk.Vm, v *vm, logger Logger, action 
 
 func vmSoundcardEnabledConverter(object *ovirtsdk.Vm, v *vm) error {
 	// soundcard_enabled is excluded from the response from oVirt engine by default. Therefore, using the default bool value as return value
-	// see: http://ovirt.github.io/ovirt-engine-api-model/master/#services/disk/methods/get/parameters/all_content
+	// see: http://ovirt.github.io/ovirt-engine-api-model/master/#services/vm/methods/get/parameters/all_content
 	soundcardEnabled, ok := object.SoundcardEnabled()
 	if !ok {
 		v.soundcardEnabled = false
@@ -2499,7 +2487,7 @@ type VMStatusList []VMStatus
 // Copy creates a separate copy of the current status list.
 func (l VMStatusList) Copy() VMStatusList {
 	result := make([]VMStatus, len(l))
-	// nolint:gosimple
+	//nolint:gosimple
 	for i, s := range l {
 		result[i] = s
 	}

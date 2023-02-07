@@ -88,15 +88,6 @@ var (
 	removeVPC                = func(ic *types.InstallConfig) { ic.GCP.Network = "" }
 	removeSubnets            = func(ic *types.InstallConfig) { ic.GCP.ComputeSubnet, ic.GCP.ControlPlaneSubnet = "", "" }
 	invalidClusterName       = func(ic *types.InstallConfig) { ic.ObjectMeta.Name = "testgoogletest" }
-	validManagedZone         = func(ic *types.InstallConfig) {
-		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = validPublicZone, validProjectName
-	}
-	invalidManagedZone = func(ic *types.InstallConfig) {
-		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = invalidPublicZone, validProjectName
-	}
-	invalidZoneProject = func(ic *types.InstallConfig) {
-		ic.GCP.PublicDNSZone.ID, ic.GCP.PublicDNSZone.ProjectID = validPublicZone, invalidProjectName
-	}
 
 	machineTypeAPIResult = map[string]*compute.MachineType{
 		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
@@ -135,13 +126,6 @@ func validInstallConfig() *types.InstallConfig {
 				Network:                validNetworkName,
 				ComputeSubnet:          validComputeSubnet,
 				ControlPlaneSubnet:     validCPSubnet,
-				PublicDNSZone: &gcp.DNSZone{
-					ID:        validPublicZone,
-					ProjectID: validProjectName,
-				},
-				PrivateDNSZone: &gcp.DNSZone{
-					ProjectID: validProjectName,
-				},
 			},
 		},
 		ControlPlane: &types.MachinePool{
@@ -289,24 +273,6 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			edits:          editFunctions{invalidateRegion},
 			expectedError:  true,
 			expectedErrMsg: "platform.gcp.region: Invalid value: \"us-east4\": invalid region",
-		},
-		{
-			name:          "Managed zone validated",
-			edits:         editFunctions{validManagedZone},
-			expectedError: false,
-		},
-		{
-			name:          "Valid project & invalid zone",
-			edits:         editFunctions{invalidManagedZone},
-			expectedError: true,
-			// slips through the switch for GCP error types and into the base domain errors
-			expectedErrMsg: fmt.Sprintf("baseDomain: Internal error: no matching DNS Zone found"),
-		},
-		{
-			name:           "Valid zone & invalid project",
-			edits:          editFunctions{invalidZoneProject},
-			expectedError:  true,
-			expectedErrMsg: fmt.Sprintf("platform.gcp.PublicDNSZone.ProjectID: Invalid value: \"%s\": invalid public zone project", invalidProjectName),
 		},
 	}
 	mockCtrl := gomock.NewController(t)

@@ -494,11 +494,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: resourceClientV2.GetInstance: %v", err)
 	}
 
-	region, err := GetRegion(serviceInstance.RegionID)
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: GetRegion: %v", err)
-	}
-
 	var authenticator core.Authenticator = &core.IamAuthenticator{
 		ApiKey: o.APIKey,
 	}
@@ -511,7 +506,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	var options *ibmpisession.IBMPIOptions = &ibmpisession.IBMPIOptions{
 		Authenticator: authenticator,
 		Debug:         false,
-		Region:        region,
 		UserAccount:   user.Account,
 		Zone:          serviceInstance.RegionID,
 	}

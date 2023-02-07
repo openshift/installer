@@ -578,14 +578,18 @@ func extractODataError(err error) error {
 }
 
 func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk.GraphServiceClient, logger logrus.FieldLogger, infraID string) error {
-	var errorList []error
-
 	tag := fmt.Sprintf("kubernetes.io_cluster.%s=owned", infraID)
 	servicePrincipals, err := getServicePrincipalsByTag(ctx, graphClient, tag, infraID)
 	if err != nil {
 		return errors.Wrap(err, "failed to gather list of Service Principals by tag")
 	}
+	// msgraphsdk can return a `nil` response even if no errors occurred
+	if servicePrincipals == nil {
+		logger.Debug("Empty response from API when listing Service Principals by tag")
+		return nil
+	}
 
+	var errorList []error
 	for _, sp := range servicePrincipals {
 		appID := *sp.GetAppId()
 		logger := logger.WithField("appID", appID)
@@ -600,6 +604,11 @@ func deleteApplicationRegistrations(ctx context.Context, graphClient *msgraphsdk
 		resp, err := graphClient.Applications().Get(ctx, &listQuery)
 		if err != nil {
 			errorList = append(errorList, err)
+			continue
+		}
+		// msgraphsdk can return a `nil` response even if no errors occurred
+		if resp == nil {
+			logger.Debugf("Empty response getting Application from Service Principal %s", *sp.GetDisplayName())
 			continue
 		}
 		apps := resp.GetValue()
@@ -626,7 +635,7 @@ func getServicePrincipalsByTag(ctx context.Context, graphClient *msgraphsdk.Grap
 		},
 	}
 	resp, err := graphClient.ServicePrincipals().Get(ctx, &listQuery)
-	if err != nil {
+	if err != nil || resp == nil {
 		return nil, err
 	}
 	return resp.GetValue(), nil

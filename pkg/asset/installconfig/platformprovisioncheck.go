@@ -141,6 +141,10 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+		err = powervsconfig.ValidateCustomVPCSetup(client, ic.Config)
+		if err != nil {
+			return err
+		}
 	case libvirt.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:

@@ -11,7 +11,7 @@ type Platform struct {
 	PowerVSResourceGroup string `json:"powervsResourceGroup"`
 
 	// Region specifies the IBM Cloud colo region where the cluster will be created.
-	Region string `json:"region"`
+	Region string `json:"region,omitempty"`
 
 	// Zone specifies the IBM Cloud colo region where the cluster will be created.
 	// At this time, only single-zone clusters are supported.

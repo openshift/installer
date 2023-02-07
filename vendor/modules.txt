@@ -9,7 +9,7 @@ cloud.google.com/go/monitoring/apiv3
 github.com/AlecAivazis/survey/v2
 github.com/AlecAivazis/survey/v2/core
 github.com/AlecAivazis/survey/v2/terminal
-# github.com/Azure/azure-sdk-for-go v51.2.0+incompatible
+# github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
 ## explicit
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute
 github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns
@@ -20,7 +20,7 @@ github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/storage/mgmt/storage
 github.com/Azure/azure-sdk-for-go/profiles/latest/compute/mgmt/compute
 github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering
 github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2017-03-30/compute
-github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2020-12-01/compute
+github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-12-01/compute
 github.com/Azure/azure-sdk-for-go/services/dns/mgmt/2016-04-01/dns
 github.com/Azure/azure-sdk-for-go/services/marketplaceordering/mgmt/2015-06-01/marketplaceordering
 github.com/Azure/azure-sdk-for-go/services/network/mgmt/2017-10-01/network
@@ -476,9 +476,6 @@ github.com/go-playground/validator/v10
 # github.com/go-stack/stack v1.8.1
 ## explicit; go 1.17
 github.com/go-stack/stack
-# github.com/go-yaml/yaml v2.1.0+incompatible
-## explicit
-github.com/go-yaml/yaml
 # github.com/gobuffalo/flect v0.2.5
 ## explicit; go 1.13
 github.com/gobuffalo/flect
@@ -539,7 +536,7 @@ github.com/googleapis/gax-go/v2
 github.com/googleapis/gax-go/v2/apierror
 github.com/googleapis/gax-go/v2/apierror/internal/proto
 github.com/googleapis/gax-go/v2/internal
-# github.com/gophercloud/gophercloud v0.24.0
+# github.com/gophercloud/gophercloud v1.1.1
 ## explicit; go 1.14
 github.com/gophercloud/gophercloud
 github.com/gophercloud/gophercloud/openstack
@@ -587,7 +584,7 @@ github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/shares
 github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots
 github.com/gophercloud/gophercloud/openstack/utils
 github.com/gophercloud/gophercloud/pagination
-# github.com/gophercloud/utils v0.0.0-20220307143606-8e7800759d16
+# github.com/gophercloud/utils v0.0.0-20221207145018-e8fba78967ca
 ## explicit; go 1.15
 github.com/gophercloud/utils/env
 github.com/gophercloud/utils/gnocchi
@@ -8681,7 +8678,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.11
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
+# github.com/openshift/api v0.0.0-20230110144457-3299573be149 => github.com/openshift/api v0.0.0-20230110144457-3299573be149
 ## explicit; go 1.18
 github.com/openshift/api/config/v1
 github.com/openshift/api/machine/v1
@@ -8810,7 +8807,7 @@ github.com/pkg/xattr
 # github.com/pmezard/go-difflib v1.0.0
 ## explicit
 github.com/pmezard/go-difflib/difflib
-# github.com/prometheus/client_golang v1.12.2
+# github.com/prometheus/client_golang v1.12.2 => github.com/prometheus/client_golang v1.12.1
 ## explicit; go 1.13
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/collectors
@@ -8986,7 +8983,6 @@ golang.org/x/crypto/pkcs12/internal/rc2
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
-golang.org/x/crypto/ssh/terminal
 # golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
 ## explicit; go 1.17
 golang.org/x/mod/internal/lazyregexp
@@ -9017,7 +9013,7 @@ golang.org/x/oauth2/jwt
 ## explicit
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec
+# golang.org/x/sys v0.2.0
 ## explicit; go 1.17
 golang.org/x/sys/cpu
 golang.org/x/sys/execabs
@@ -9028,7 +9024,7 @@ golang.org/x/sys/windows
 # golang.org/x/term v0.0.0-20210927222741-03fcf44c2211
 ## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.3.7 => golang.org/x/text v0.3.7
+# golang.org/x/text v0.4.0 => golang.org/x/text v0.3.7
 ## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
@@ -9236,7 +9232,7 @@ gopkg.in/ini.v1
 # gopkg.in/warnings.v0 v0.1.2
 ## explicit
 gopkg.in/warnings.v0
-# gopkg.in/yaml.v2 v2.4.0
+# gopkg.in/yaml.v2 v2.4.0 => gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
@@ -9603,10 +9599,13 @@ sigs.k8s.io/yaml
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 # k8s.io/client-go => k8s.io/client-go v0.25.0
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-# github.com/openshift/api => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
+# github.com/openshift/api => github.com/openshift/api v0.0.0-20230110144457-3299573be149
 # github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 # github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 # github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20220928142635-a40422bdea61
 # github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20220928142635-a40422bdea61
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
+# gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
+# github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
+# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1

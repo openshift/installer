@@ -27,6 +27,7 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/logging"
@@ -299,7 +300,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 			logrus.Fatal(err)
 		}
 		switch cmd.Name() {
-		case "cluster", "image":
+		case "cluster", "image", "pxe-files":
 		default:
 			logrus.Infof(logging.LogCreatedFiles(cmd.Name(), rootOpts.dir, targets))
 		}
@@ -376,6 +377,11 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 	silenceRemaining := logDownsample
 	previousErrorSuffix := ""
 	timer.StartTimer("API")
+
+	if assetStore, err := assetstore.NewStore(rootOpts.dir); err == nil {
+		checkIfAgentCommand(assetStore)
+	}
+
 	var lastErr error
 	wait.Until(func() {
 		version, err := discovery.ServerVersion()
@@ -475,6 +481,8 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 				timeout = 60 * time.Minute
 			}
 		}
+
+		checkIfAgentCommand(assetStore)
 	}
 
 	untilTime := time.Now().Add(timeout)
@@ -637,4 +645,10 @@ func logTroubleshootingLink() {
 The cluster should be accessible for troubleshooting as detailed in the documentation linked below,
 https://docs.openshift.com/container-platform/latest/support/troubleshooting/troubleshooting-installations.html
 The 'wait-for install-complete' subcommand can then be used to continue the installation`)
+}
+
+func checkIfAgentCommand(assetStore asset.Store) {
+	if agentConfig, err := assetStore.Load(&agentconfig.AgentConfig{}); err == nil && agentConfig != nil {
+		logrus.Warning("An agent configuration was detected but this command is not the agent wait-for command")
+	}
 }

@@ -15,6 +15,9 @@ type ErrorCode string
 // EAccessDenied signals that the provided credentials for the oVirt engine were incorrect.
 const EAccessDenied ErrorCode = "access_denied"
 
+// EUserAccountLocked signals that the provided user account for the oVirt engine has been locked.
+const EUserAccountLocked ErrorCode = "user_locked"
+
 // ENotAnOVirtEngine signals that the server did not respond with a proper oVirt response.
 const ENotAnOVirtEngine ErrorCode = "not_ovirt_engine"
 
@@ -112,6 +115,8 @@ func (e ErrorCode) CanAutoRetry() bool {
 		return false
 	case EAccessDenied:
 		return false
+	case EUserAccountLocked:
+		return false
 	case ENotAnOVirtEngine:
 		return false
 	case ETLSError:
@@ -141,14 +146,14 @@ func (e ErrorCode) CanAutoRetry() bool {
 //
 // Usage:
 //
-//   if err != nil {
-//     var realErr ovirtclient.EngineError
-//     if errors.As(err, &realErr) {
-//          // deal with EngineError
-//     } else {
-//          // deal with other errors
-//     }
-//   }
+//	if err != nil {
+//	  var realErr ovirtclient.EngineError
+//	  if errors.As(err, &realErr) {
+//	       // deal with EngineError
+//	  } else {
+//	       // deal with other errors
+//	  }
+//	}
 type EngineError interface {
 	error
 
@@ -242,7 +247,7 @@ func newError(code ErrorCode, format string, args ...interface{}) EngineError {
 // this function will attempt to identify the error deeper.
 func wrap(err error, code ErrorCode, format string, args ...interface{}) EngineError {
 	// gocritic will complain on the following line due to appendAssign, but that's legit here.
-	realArgs := append(args, err) // nolint:gocritic
+	realArgs := append(args, err) //nolint:gocritic
 	realMessage := fmt.Sprintf(fmt.Sprintf("%s (%v)", format, "%v"), realArgs...)
 	if code == EUnidentified {
 		var realErr EngineError
@@ -261,6 +266,7 @@ func wrap(err error, code ErrorCode, format string, args ...interface{}) EngineE
 	}
 }
 
+//nolint:funlen
 func realIdentify(err error) EngineError {
 	var authErr *ovirtsdk.AuthError
 	var notFoundErr *ovirtsdk.NotFoundError
@@ -318,7 +324,11 @@ func realIdentify(err error) EngineError {
 	case errors.As(err, &authErr):
 		fallthrough
 	case strings.Contains(err.Error(), "access_denied"):
-		return wrap(err, EAccessDenied, "access denied, check your credentials")
+		wrappedErr := wrap(err, EAccessDenied, "access denied, check your credentials")
+		if strings.Contains(err.Error(), "user account is disabled or locked") {
+			wrappedErr = wrap(wrappedErr, EUserAccountLocked, "access denied, user account has been locked")
+		}
+		return wrappedErr
 	default:
 		return nil
 	}

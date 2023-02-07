@@ -33,28 +33,30 @@ variable "vsphere_password" {
 
 variable "vsphere_cluster" {
   type        = string
+  default     = ""
   description = "This is the name of the vSphere cluster."
 }
 
 variable "vsphere_datacenter" {
   type        = string
+  default     = ""
   description = "This is the name of the vSphere data center."
 }
 
 variable "vsphere_datastore" {
   type        = string
+  default     = ""
   description = "This is the name of the vSphere data store."
+}
+variable "vm_network" {
+  type        = string
+  description = "This is the name of the publicly accessible network for cluster ingress and access."
+  default     = "VM Network"
 }
 
 variable "vm_template" {
   type        = string
   description = "This is the name of the VM template to clone."
-}
-
-variable "vm_network" {
-  type        = string
-  description = "This is the name of the publicly accessible network for cluster ingress and access."
-  default     = "VM Network"
 }
 
 variable "vm_dns_addresses" {
@@ -169,4 +171,24 @@ variable "compute_num_cpus" {
 variable "ssh_public_key_path" {
   type    = string
   default = "~/.ssh/id_rsa.pub"
+}
+
+///////////////////////////////////////////
+///// failure domains
+///// if not defined, a default failure domain is created which consists of:
+///// vsphere_cluster, vsphere_datacenter, vsphere_datastore, vmware_network
+/////
+///// each element in the list must consist of:
+/////{
+/////        datacenter = "the-datacenter"
+/////        cluster = "the-cluster"
+/////        datastore = "the-datastore"
+/////        network = "the-portgroup"
+/////        distributed_virtual_switch_uuid = "uuid-of-the-dvs-where-the-portgroup-attached"
+/////}
+///////////////////////////////////////////
+variable "failure_domains" {
+  type = list(map(string))
+  description = "defines a list of failure domains"
+  default = []
 }

@@ -4,7 +4,6 @@ import (
 	"os"
 	"sort"
 
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -91,19 +90,6 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		}
 		if p.ControlPlaneSubnet == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("controlPlaneSubnet"), "must provide a control plane subnet when a network is specified"))
-		}
-	}
-
-	if p.CreateFirewallRules != "" {
-		validCreateFirewallRules := sets.NewString(string(gcp.CreateFirewallRulesEnabled), string(gcp.CreateFirewallRulesDisabled))
-		if !validCreateFirewallRules.Has(string(p.CreateFirewallRules)) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("createFirewallRules"), p.CreateFirewallRules, validCreateFirewallRules.List()))
-		}
-	}
-
-	if p.PrivateDNSZone != nil {
-		if p.PrivateDNSZone.ID != "" {
-			allErrs = append(allErrs, field.Forbidden(fldPath.Child("privateDNSZone").Child("id"), "do not provide an ID for the private DNS zone."))
 		}
 	}
 

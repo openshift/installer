@@ -161,10 +161,18 @@ func validateFamily(fieldPath *field.Path, instanceType, family string) field.Er
 		"standardDCADSv5Family",
 		"standardECASv5Family",
 		"standardECADSv5Family",
+		"standardECIADSv5Family",
+		"standardECIASv5Family",
+	)
+	windowsVMFamilies := sets.NewString(
+		"standardNVSv4Family",
 	)
 	allErrs := field.ErrorList{}
 	if confidentialVMFamilies.Has(family) {
 		errMsg := fmt.Sprintf("%s is not currently supported but will be in a future release", family)
+		allErrs = append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
+	} else if windowsVMFamilies.Has(family) {
+		errMsg := fmt.Sprintf("%s is currently only supported on Windows", family)
 		allErrs = append(allErrs, field.Invalid(fieldPath, instanceType, errMsg))
 	}
 

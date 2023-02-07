@@ -1,6 +1,7 @@
 package openstack
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -28,7 +29,6 @@ import (
 	sharesnapshots "github.com/gophercloud/gophercloud/openstack/sharedfilesystems/v2/snapshots"
 	"github.com/gophercloud/gophercloud/pagination"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -750,12 +750,12 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 	allPagesPort, err := ports.List(client, portListOpts).AllPages()
 	if err != nil {
 		logger.Error(err)
-		return false, errors.Wrap(err, "failed to get ports list")
+		return false, fmt.Errorf("failed to get ports list: %w", err)
 	}
 	allPorts, err := ports.ExtractPorts(allPagesPort)
 	if err != nil {
 		logger.Error(err)
-		return false, errors.Wrap(err, "failed to extract ports list")
+		return false, fmt.Errorf("failed to extract ports list: %w", err)
 	}
 	tags := filterTags(filter)
 	SubnetlistOpts := subnets.ListOpts{
@@ -765,13 +765,13 @@ func removeRouterInterfaces(client *gophercloud.ServiceClient, filter Filter, ro
 	allSubnetsPage, err := subnets.List(client, SubnetlistOpts).AllPages()
 	if err != nil {
 		logger.Debug(err)
-		return false, errors.Wrap(err, "failed to list subnets list")
+		return false, fmt.Errorf("failed to list subnets list: %w", err)
 	}
 
 	allSubnets, err := subnets.ExtractSubnets(allSubnetsPage)
 	if err != nil {
 		logger.Debug(err)
-		return false, errors.Wrap(err, "failed to extract subnets list")
+		return false, fmt.Errorf("failed to extract subnets list: %w", err)
 	}
 
 	clusterTag := "openshiftClusterID=" + filter["openshiftClusterID"]
@@ -830,12 +830,12 @@ func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (
 		if port.DeviceID != "" {
 			page, err := routers.List(client, routers.ListOpts{ID: port.DeviceID}).AllPages()
 			if err != nil {
-				return empty, errors.Wrap(err, "failed to get router list")
+				return empty, fmt.Errorf("failed to get router list: %w", err)
 			}
 
 			routerList, err := routers.ExtractRouters(page)
 			if err != nil {
-				return empty, errors.Wrap(err, "failed to extract routers list")
+				return empty, fmt.Errorf("failed to extract routers list: %w", err)
 			}
 
 			if len(routerList) == 1 {
@@ -907,7 +907,7 @@ func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.Fi
 	}
 
 	if deleted != len(allLoadBalancers) {
-		return errors.Errorf("Only deleted %d of %d load balancers", deleted, len(allLoadBalancers))
+		return fmt.Errorf("only deleted %d of %d load balancers", deleted, len(allLoadBalancers))
 	}
 	return nil
 }
@@ -1045,20 +1045,7 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 		return false, nil
 	}
 
-	// Listing with `Full == true` so that Gophercloud sets the `Accept`
-	// header to `application/json`. If `Full` is not true, Gophercloud
-	// sets `Accept: text/plain`, to which some objectstorage instances may
-	// respond with an HTTP status code of 204 in case there are no
-	// occurrences to list. Some, but not all, of these objectstorage
-	// instances omit the `content-type` header from their 204 responses.
-	// While being perfectly correct, this case is mishandled by the
-	// currently vendored version of Gophercloud. On the other hand, the
-	// JSON response always HTTP status code 200, a JSON content (possibly
-	// `{}`), and most importantly a `content-type` header.
-	//
-	// This option can be reverted to `false` once Gophercloud learns to
-	// correctly handle empty 204 responses.
-	listOpts := containers.ListOpts{Full: true}
+	listOpts := containers.ListOpts{Full: false}
 
 	allPages, err := containers.List(conn, listOpts).AllPages()
 	if err != nil {
@@ -1106,20 +1093,7 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 			if metadata[titlekey] == val {
 				logger.Debugf("Bulk deleting container %q objects", container)
 				pager := objects.List(conn, container, &objects.ListOpts{
-					// Listing with `Full == true` so that Gophercloud sets the `Accept`
-					// header to `application/json`. If `Full` is not true, Gophercloud
-					// sets `Accept: text/plain`, to which some objectstorage instances may
-					// respond with an HTTP status code of 204 in case there are no
-					// occurrences to list. Some, but not all, of these objectstorage
-					// instances omit the `content-type` header from their 204 responses.
-					// While being perfectly correct, this case is mishandled by the
-					// currently vendored version of Gophercloud. On the other hand, the
-					// JSON response always HTTP status code 200, a JSON content (possibly
-					// `{}`), and most importantly a `content-type` header.
-					//
-					// This option can be reverted to `false` once Gophercloud learns to
-					// correctly handle empty 204 responses.
-					Full:  true,
+					Full:  false,
 					Limit: 50,
 				})
 				err = pager.EachPage(func(page pagination.Page) (bool, error) {
@@ -1137,10 +1111,10 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 						// is the object name, and the second one contains an error message.
 						errs := make([]error, len(resp.Errors))
 						for i, objectError := range resp.Errors {
-							errs[i] = errors.Errorf("cannot delete object %v: %v", objectError[0], objectError[1])
+							errs[i] = fmt.Errorf("cannot delete object %s: %s", objectError[0], objectError[1])
 						}
 
-						return false, errors.Errorf("errors occured during bulk deleting of container %v objects: %v", container, k8serrors.NewAggregate(errs))
+						return false, fmt.Errorf("errors occurred during bulk deleting of container %s objects: %w", container, k8serrors.NewAggregate(errs))
 					}
 
 					return true, nil
@@ -1743,7 +1717,7 @@ func untagRunner(opts *clientconfig.ClientOpts, infraID string, logger logrus.Fi
 		if err == wait.ErrWaitTimeout {
 			return err
 		}
-		return errors.Errorf("Unrecoverable error: %v", err)
+		return fmt.Errorf("unrecoverable error: %w", err)
 	}
 
 	return nil
@@ -1763,7 +1737,7 @@ func deleteRouterRunner(opts *clientconfig.ClientOpts, filter Filter, logger log
 		if err == wait.ErrWaitTimeout {
 			return err
 		}
-		return errors.Errorf("Unrecoverable error: %v", err)
+		return fmt.Errorf("unrecoverable error: %w", err)
 	}
 
 	return nil
@@ -1799,7 +1773,7 @@ func untagPrimaryNetwork(opts *clientconfig.ClientOpts, infraID string, logger l
 	}
 
 	if len(allNetworks) > 1 {
-		return false, errors.Errorf("More than one network with tag %v", networkTag)
+		return false, fmt.Errorf("more than one network with tag %s", networkTag)
 	}
 
 	if len(allNetworks) == 0 {

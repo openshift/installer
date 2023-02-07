@@ -18,7 +18,7 @@
   },
   "variables" : {
     "location" : "[resourceGroup().location]",
-    "imageName" : "[concat(parameters('baseName'), '-image')]"
+    "imageName" : "[parameters('baseName')]"
   },
   "resources" : [
     {

@@ -10,7 +10,7 @@ cloud.google.com/go/internal/version
 # cloud.google.com/go/storage v1.10.0
 ## explicit; go 1.11
 cloud.google.com/go/storage
-# github.com/Masterminds/goutils v1.1.0
+# github.com/Masterminds/goutils v1.1.1
 ## explicit
 github.com/Masterminds/goutils
 # github.com/Masterminds/semver v1.5.0
@@ -1007,3 +1007,4 @@ sigs.k8s.io/yaml
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
 # github.com/hashicorp/vault => github.com/hashicorp/vault v1.9.10
+# github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1

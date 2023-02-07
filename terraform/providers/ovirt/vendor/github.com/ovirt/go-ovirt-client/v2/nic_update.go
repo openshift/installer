@@ -2,6 +2,7 @@ package ovirtclient
 
 import (
 	"fmt"
+	"net"
 
 	ovirtsdk "github.com/ovirt/go-ovirt"
 )
@@ -20,6 +21,12 @@ func (o *oVirtClient) UpdateNIC(
 	}
 	if vnicProfileID := params.VNICProfileID(); vnicProfileID != nil {
 		nicBuilder.VnicProfile(ovirtsdk.NewVnicProfileBuilder().Id(string(*vnicProfileID)).MustBuild())
+	}
+	if mac := params.Mac(); mac != nil {
+		if _, err := net.ParseMAC(*mac); err != nil {
+			return nil, newError(EUnidentified, "Failed to parse MacAddress: %s", *mac)
+		}
+		nicBuilder.Mac(ovirtsdk.NewMacBuilder().Address(*mac).MustBuild())
 	}
 
 	req.Nic(nicBuilder.MustBuild())
@@ -69,6 +76,12 @@ func (m *mockClient) UpdateNIC(vmid VMID, nicID NICID, params UpdateNICParameter
 			return nil, newError(ENotFound, "VNIC profile %s not found", *vnicProfileID)
 		}
 		nic = nic.withVNICProfileID(*vnicProfileID)
+	}
+	if mac := params.Mac(); mac != nil {
+		if _, err := net.ParseMAC(*mac); err != nil {
+			return nil, newError(EUnidentified, "Failed to parse MacAddress: %s", *mac)
+		}
+		nic = nic.withMac(*mac)
 	}
 	m.nics[nicID] = nic
 

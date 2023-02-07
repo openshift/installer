@@ -48,6 +48,12 @@ variable "powervs_publish_strategy" {
 ################################################################
 # Configure storage
 ################################################################
+variable "powervs_cos_region" {
+  type        = string
+  description = "The region where your COS instance is located in"
+  default     = "eu-gb"
+}
+
 variable "powervs_cos_instance_location" {
   type        = string
   description = "The location of your COS instance"

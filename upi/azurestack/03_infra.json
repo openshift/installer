@@ -20,7 +20,7 @@
     "masterPublicIpAddressID" : "[resourceId('Microsoft.Network/publicIPAddresses', variables('masterPublicIpAddressName'))]",
     "masterLoadBalancerName" : "[concat(parameters('baseName'))]",
     "masterLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('masterLoadBalancerName'))]",
-    "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-avset')]",
+    "masterAvailabilitySetName" : "[concat(parameters('baseName'), '-cluster')]",
     "internalLoadBalancerName" : "[concat(parameters('baseName'), '-internal')]",
     "internalLoadBalancerID" : "[resourceId('Microsoft.Network/loadBalancers', variables('internalLoadBalancerName'))]",
     "skuName": "Basic"

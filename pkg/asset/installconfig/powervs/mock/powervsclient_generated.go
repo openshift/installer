@@ -172,6 +172,21 @@ func (mr *MockAPIMockRecorder) GetVPCByName(ctx, vpcName interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCByName", reflect.TypeOf((*MockAPI)(nil).GetVPCByName), ctx, vpcName)
 }
 
+// GetVPCs mocks base method.
+func (m *MockAPI) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVPCs", ctx, region)
+	ret0, _ := ret[0].([]vpcv1.VPC)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVPCs indicates an expected call of GetVPCs.
+func (mr *MockAPIMockRecorder) GetVPCs(ctx, region interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
+}
+
 // SetVPCServiceURLForRegion mocks base method.
 func (m *MockAPI) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
 	m.ctrl.T.Helper()

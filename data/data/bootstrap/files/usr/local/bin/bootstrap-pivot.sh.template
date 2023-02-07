@@ -37,6 +37,7 @@ if [ ! -f /opt/openshift/.pivot-done ]; then
     . ./pre-pivot.sh
   popd
 {{else if .IsSCOS -}}
+  chmod 0644 /etc/containers/registries.conf
   rpm-ostree rebase --experimental "ostree-unverified-registry:${MACHINE_OS_IMAGE}"
   touch /opt/openshift/.pivot-done
   record_service_stage_success

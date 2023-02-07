@@ -25,15 +25,18 @@ else
         if podman pull --quiet "$RELEASE_IMAGE"
         then
             rm -f "${release_image_issue}"
+            agetty --reload
             record_service_stage_success
             break
         else
             printf '\n\\e{lightred}Unable to pull OpenShift release image\\e{reset}\n' >"${release_image_issue}"
+            agetty --reload
             record_service_stage_failure
             echo "Pull failed. Retrying $RELEASE_IMAGE..."
         fi
     done
 fi
+
 
 # Sanity check the image metadata to see if the arches match
 record_service_stage_start "image-metadata-arches-match"
@@ -46,6 +49,7 @@ esac
 
 if [[ "$image_arch" != "$host_arch" ]]; then
     printf '\n\\e{lightred}Release image arch %s does not match host arch %s\\e{reset}\n' "${image_arch}" "${host_arch}" >"${release_image_issue}"
+    agetty --reload
     record_service_stage_failure
     echo "ERROR: release image arch $image_arch does not match host arch $host_arch"
     exit 1

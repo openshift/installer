@@ -74,6 +74,7 @@ spec:
                   - Insights
                   - Storage
                   - CSISnapshot
+                  - NodeTuning
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -84,6 +85,7 @@ spec:
                 - None
                 - v4.11
                 - v4.12
+                - v4.13
                 - vCurrent
                 type: string
             type: object
@@ -391,6 +393,17 @@ spec:
                           required:
                           - DiskSizeGB
                           type: object
+                        secureBoot:
+                          description: SecureBoot Defines whether the instance should
+                            have secure boot enabled. secure boot Verify the digital
+                            signature of all boot components, and halt the boot process
+                            if signature verification fails. If omitted, the platform
+                            chooses a default, which is subject to change over time,
+                            currently that default is false.
+                          enum:
+                          - Enabled
+                          - Disabled
+                          type: string
                         tags:
                           description: Tags defines a set of network tags which will
                             be added to instances in the machineset
@@ -1038,6 +1051,17 @@ spec:
                         required:
                         - DiskSizeGB
                         type: object
+                      secureBoot:
+                        description: SecureBoot Defines whether the instance should
+                          have secure boot enabled. secure boot Verify the digital
+                          signature of all boot components, and halt the boot process
+                          if signature verification fails. If omitted, the platform
+                          chooses a default, which is subject to change over time,
+                          currently that default is false.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
                       tags:
                         description: Tags defines a set of network tags which will
                           be added to instances in the machineset
@@ -1944,6 +1968,14 @@ spec:
                       cluster. If empty, a new resource group will created for the
                       cluster.
                     type: string
+                  userTags:
+                    additionalProperties:
+                      type: string
+                    description: UserTags has additional keys and values that the
+                      installer will add as tags to all resources that it creates.
+                      Resources created by the cluster itself may not include these
+                      tags.
+                    type: object
                   virtualNetwork:
                     description: VirtualNetwork specifies the name of an existing
                       VNet for the installer to use
@@ -2201,14 +2233,6 @@ spec:
                       control plane will be deployed. The value should be the name
                       of the subnet.
                     type: string
-                  createFirewallRules:
-                    description: CreateFirewallRules is currently TechPreview. CreateFirewallRules
-                      specifies if the installer should create the cluster firewall
-                      rules in the gcp cloud network.
-                    enum:
-                    - Enabled
-                    - Disabled
-                    type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on GCP for machine pools which do not define
@@ -2272,6 +2296,17 @@ spec:
                         required:
                         - DiskSizeGB
                         type: object
+                      secureBoot:
+                        description: SecureBoot Defines whether the instance should
+                          have secure boot enabled. secure boot Verify the digital
+                          signature of all boot components, and halt the boot process
+                          if signature verification fails. If omitted, the platform
+                          chooses a default, which is subject to change over time,
+                          currently that default is false.
+                        enum:
+                        - Enabled
+                        - Disabled
+                        type: string
                       tags:
                         description: Tags defines a set of network tags which will
                           be added to instances in the machineset
@@ -2304,44 +2339,13 @@ spec:
                       should be created rather than provisioning a new one.
                     type: string
                   networkProjectID:
-                    description: NetworkProjectID is currently TechPreview. NetworkProjectID
-                      specifies which project the network and subnets exist in when
-                      they are not in the main ProjectID.
+                    description: NetworkProjectID specifies which project the network
+                      and subnets exist in when they are not in the main ProjectID.
                     type: string
-                  privateDNSZone:
-                    description: PrivateDNSZone Technology Preview. PrivateDNSZone
-                      contains the zone ID and project where the Private DNS zone
-                      records will be created.
-                    properties:
-                      id:
-                        description: ID Technology Preview. ID or name of the zone.
-                        type: string
-                      project:
-                        description: ProjectID Technology Preview. When the ProjectID
-                          is provided, the zone will exist in this project. When the
-                          ProjectID is empty, the ProjectID defaults to the Service
-                          Project (GCP.ProjectID).
-                        type: string
-                    type: object
                   projectID:
                     description: ProjectID is the the project that will be used for
                       the cluster.
                     type: string
-                  publicDNSZone:
-                    description: PublicDNSZone Technology Preview. PublicDNSZone contains
-                      the zone ID and project where the Public DNS zone records will
-                      be created.
-                    properties:
-                      id:
-                        description: ID Technology Preview. ID or name of the zone.
-                        type: string
-                      project:
-                        description: ProjectID Technology Preview. When the ProjectID
-                          is provided, the zone will exist in this project. When the
-                          ProjectID is empty, the ProjectID defaults to the Service
-                          Project (GCP.ProjectID).
-                        type: string
-                    type: object
                   region:
                     description: Region specifies the GCP region where the cluster
                       will be created.
@@ -3096,7 +3100,6 @@ spec:
                     type: string
                 required:
                 - powervsResourceGroup
-                - region
                 - serviceInstanceID
                 - userID
                 - zone

@@ -3,20 +3,18 @@
 package openstack
 
 import (
-	"context"
+	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/pkg/errors"
-
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 // PreTerraform performs any infrastructure initialization which must
 // happen before Terraform creates the remaining infrastructure.
-func PreTerraform(ctx context.Context, clusterID string, installConfig *installconfig.InstallConfig) error {
+func PreTerraform() error {
 	// Terraform runs in a different directory but we want to allow people to
 	// use clouds.yaml files in their local directory. Emulate this by setting
 	// the necessary environment variable to point to this file if (a) the user
@@ -28,14 +26,14 @@ func PreTerraform(ctx context.Context, clusterID string, installConfig *installc
 
 	cwd, err := os.Getwd()
 	if err != nil {
-		return errors.Wrapf(err, "unable to determine working directory")
+		return fmt.Errorf("unable to determine working directory: %w", err)
 	}
 
 	cloudsYAML := filepath.Join(cwd, "clouds.yaml")
 	if _, err = os.Stat(cloudsYAML); err == nil {
 		os.Setenv("OS_CLIENT_CONFIG_FILE", cloudsYAML)
 	} else if !errors.Is(err, os.ErrNotExist) {
-		return errors.Wrapf(err, "unable to determine if clouds.yaml exists")
+		return fmt.Errorf("unable to determine if clouds.yaml exists: %w", err)
 	}
 
 	return nil
