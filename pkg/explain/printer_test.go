@@ -45,6 +45,12 @@ func Test_PrintFields(t *testing.T) {
     controlPlane <object>
       ControlPlane is the configuration for the machines that comprise the control plane.
 
+    cpuPartitioningMode <string>
+      Default: "None"
+      Valid Values: "None","AllNodes"
+      CPUPartitioning determines if a cluster should be setup for CPU workload partitioning at install time. When this field is set the cluster will be flagged for CPU Partitioning allowing users to segregate workloads to specific CPU Sets. This does not make any decisions on workloads it only configures the nodes for it.
+ This feature will alter the infrastructure nodes and prepare them for CPU Partitioning and as such can not be changed after being set.
+
     credentialsMode <string>
       Valid Values: "","Mint","Passthrough","Manual"
       CredentialsMode is used to explicitly set the mode with which CredentialRequests are satisfied. 
