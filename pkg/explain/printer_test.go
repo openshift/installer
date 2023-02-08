@@ -48,8 +48,7 @@ func Test_PrintFields(t *testing.T) {
     cpuPartitioningMode <string>
       Default: "None"
       Valid Values: "None","AllNodes"
-      CPUPartitioning determines if a cluster should be setup for CPU workload partitioning at install time. When this field is set the cluster will be flagged for CPU Partitioning allowing users to segregate workloads to specific CPU Sets. This does not make any decisions on workloads it only configures the nodes for it.
- This feature will alter the infrastructure nodes and prepare them for CPU Partitioning and as such can not be changed after being set.
+      CPUPartitioning determines if a cluster should be setup for CPU workload partitioning at install time. When this field is set the cluster will be flagged for CPU Partitioning allowing users to segregate workloads to specific CPU Sets. This does not make any decisions on workloads it only configures the nodes to allow CPU Partitioning. The "AllNodes" value will setup all nodes for CPU Partitioning, the default is "None". This feature is currently in TechPreview.
 
     credentialsMode <string>
       Valid Values: "","Mint","Passthrough","Manual"

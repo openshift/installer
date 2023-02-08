@@ -92,6 +92,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 
 	config.Status.InfrastructureTopology = infrastructureTopology
 	config.Status.ControlPlaneTopology = controlPlaneTopology
+	config.Status.CPUPartitioning = determineCPUPartitioning(installConfig.Config)
 
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:

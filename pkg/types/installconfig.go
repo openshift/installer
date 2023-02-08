@@ -158,10 +158,9 @@ type InstallConfig struct {
 	// CPUPartitioning determines if a cluster should be setup for CPU workload partitioning at install time.
 	// When this field is set the cluster will be flagged for CPU Partitioning allowing users to segregate workloads to
 	// specific CPU Sets. This does not make any decisions on workloads it only configures the nodes to allow CPU Partitioning.
+	// The "AllNodes" value will setup all nodes for CPU Partitioning, the default is "None".
+	// This feature is currently in TechPreview.
 	//
-	// The "AllNodes" value will setup all nodes for CPU Partitioning, the default is "None"
-	//
-	// This feature is currently in TechPreview
 	// +kubebuilder:default="None"
 	// +optional
 	CPUPartitioning CPUPartitioningMode `json:"cpuPartitioningMode,omitempty"`
@@ -234,9 +233,9 @@ func (c *InstallConfig) IsSingleNodeOpenShift() bool {
 type CPUPartitioningMode string
 
 const (
-	// CPUPartitioningNone means that no CPU Partitioning is on in this cluster infrastructure
+	// CPUPartitioningNone means that no CPU Partitioning is on in this cluster infrastructure.
 	CPUPartitioningNone CPUPartitioningMode = "None"
-	// CPUPartitioningAllNodes means that all nodes are configured with CPU Partitioning in this cluster
+	// CPUPartitioningAllNodes means that all nodes are configured with CPU Partitioning in this cluster.
 	CPUPartitioningAllNodes CPUPartitioningMode = "AllNodes"
 )
 
