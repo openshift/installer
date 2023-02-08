@@ -12,3 +12,37 @@ tests:
       apiVersion: config.openshift.io/v1
       kind: Infrastructure
       spec: {}
+  onUpdate:
+  - name: Status Should contain default fields
+    initial: |
+      apiVersion: config.openshift.io/v1
+      kind: Infrastructure
+      spec: {}
+      status: {}
+    updated: |
+      apiVersion: config.openshift.io/v1
+      kind: Infrastructure
+      spec: {}
+      status: {}
+    expected: |
+      apiVersion: config.openshift.io/v1
+      kind: Infrastructure
+      spec: {}
+      status:
+        cpuPartitioning: None
+        infrastructureTopology: HighlyAvailable
+        controlPlaneTopology: HighlyAvailable
+  - name: Status update cpuPartitioning should fail validation check
+    initial: |
+      apiVersion: config.openshift.io/v1
+      kind: Infrastructure
+      spec: {}
+      status:
+        cpuPartitioning: None
+    updated: |
+      apiVersion: config.openshift.io/v1
+      kind: Infrastructure
+      spec: {}
+      status:
+        cpuPartitioning: "Invalid"
+    expectedStatusError: 'status.cpuPartitioning: Unsupported value: "Invalid": supported values: "None", "AllNodes"'
