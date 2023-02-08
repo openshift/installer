@@ -113,10 +113,10 @@ func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *go
 }
 
 // GetProjectPermissions mocks base method.
-func (m *MockAPI) GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.String, error) {
+func (m *MockAPI) GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetProjectPermissions", ctx, project, permissions)
-	ret0, _ := ret[0].(sets.String)
+	ret0, _ := ret[0].(sets.Set[string])
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

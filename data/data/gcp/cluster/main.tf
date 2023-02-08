@@ -39,6 +39,9 @@ module "master" {
 
   root_volume_kms_key_link = var.gcp_root_volume_kms_key_link
 
+  confidential_compute = var.gcp_master_confidential_compute
+  on_host_maintenance  = var.gcp_master_on_host_maintenance
+
   tags   = var.gcp_control_plane_tags
   labels = local.labels
 }

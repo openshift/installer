@@ -151,3 +151,15 @@ variable "gcp_master_secure_boot" {
   description = "Verify the digital signature of all boot components."
   default = ""
 }
+
+variable "gcp_master_confidential_compute" {
+  type = string
+  description = "Defines whether the instance should have confidential compute enabled."
+  default = ""
+}
+
+variable "gcp_master_on_host_maintenance" {
+  type = string
+  description = "The behavior when a maintenance event occurs."
+  default = ""
+}
