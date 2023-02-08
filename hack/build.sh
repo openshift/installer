@@ -35,17 +35,18 @@ if [ "$(version "${current_go_version#go}")" -lt "$(version "$minimum_go_version
 fi
 
 export CGO_ENABLED=0
+MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
 make -C terraform all
 
 # Copy terraform parts to embedded mirror.
 copy_terraform_to_mirror
 
-MODE="${MODE:-release}"
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
 GIT_TAG="${BUILD_VERSION:-$(git describe --always --abbrev=40 --dirty)}"
 DEFAULT_ARCH="${DEFAULT_ARCH:-amd64}"
 GOFLAGS="${GOFLAGS:--mod=vendor}"
+GCFLAGS=""
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=${GIT_TAG} -X github.com/openshift/installer/pkg/version.Commit=${GIT_COMMIT} -X github.com/openshift/installer/pkg/version.defaultArch=${DEFAULT_ARCH}"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
@@ -54,18 +55,20 @@ case "${MODE}" in
 release)
 	LDFLAGS="${LDFLAGS} -s -w"
 	TAGS="${TAGS} release"
-	if test "${SKIP_GENERATION}" != y
-	then
-		# this step has to be run natively, even when cross-compiling
-		GOOS='' GOARCH='' go generate ./data
-	fi
 	;;
 dev)
+    GCFLAGS="${GCFLAGS} all=-N -l"
 	;;
 *)
 	echo "unrecognized mode: ${MODE}" >&2
 	exit 1
 esac
+
+if test "${SKIP_GENERATION}" != y
+then
+	# this step has to be run natively, even when cross-compiling
+	GOOS='' GOARCH='' go generate ./data
+fi
 
 if (echo "${TAGS}" | grep -q 'libvirt')
 then
@@ -73,4 +76,4 @@ then
 fi
 
 # shellcheck disable=SC2086
-go build ${GOFLAGS} -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
+go build ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
