@@ -1,8 +1,9 @@
 package vsphere
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -94,24 +95,6 @@ var machineComputePoolUndefinedZones = types.MachinePool{
 	Architecture:   types.ArchitectureAMD64,
 }
 
-var machineComputePoolNoZones = types.MachinePool{
-	Name:     "worker",
-	Replicas: &machinePoolReplicas,
-	Platform: types.MachinePoolPlatform{
-		VSphere: &vsphere.MachinePool{
-			NumCPUs:           4,
-			NumCoresPerSocket: 2,
-			MemoryMiB:         16384,
-			OSDisk: vsphere.OSDisk{
-				DiskSizeGB: 60,
-			},
-			Zones: []string{},
-		},
-	},
-	Hyperthreading: "true",
-	Architecture:   types.ArchitectureAMD64,
-}
-
 func TestConfigMachinesets(t *testing.T) {
 	clusterID := "test"
 	osImage := "test-cluster-xyzxyz-rhcos"
@@ -123,6 +106,10 @@ func TestConfigMachinesets(t *testing.T) {
 	}
 
 	defaultClusterResourcePool, err := parseInstallConfig()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	defaultClusterResourcePool.VSphere.FailureDomains[0].Topology.ResourcePool = ""
 
 	testCases := []struct {
@@ -136,23 +123,6 @@ func TestConfigMachinesets(t *testing.T) {
 		installConfig *types.InstallConfig
 	}{
 		{
-			testCase:      "machinepool with no defined zones should use legacy configuration",
-			machinePool:   &machineComputePoolNoZones,
-			minReplicas:   3,
-			maxReplicas:   3,
-			totalReplicas: 3,
-			installConfig: installConfig,
-			workspaces: []machineapi.Workspace{
-				{
-					Server:       "your.vcenter.example.com",
-					Datacenter:   "datacenter",
-					Folder:       "/datacenter/vm/test",
-					Datastore:    "datastore",
-					ResourcePool: "/datacenter/host//Resources",
-				},
-			},
-		},
-		{
 			testCase:      "zones distributed among compute machinesets(zone count matches machineset count)",
 			machinePool:   &machineComputePoolValidZones,
 			maxReplicas:   1,
@@ -164,21 +134,21 @@ func TestConfigMachinesets(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
-					Datastore:    "datastore3",
+					Datastore:    "/dc3/datastore/datastore3",
 					ResourcePool: "/dc3/host/c3/Resources/rp3",
 				},
 			},
@@ -201,14 +171,14 @@ func TestConfigMachinesets(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 			},
@@ -225,14 +195,14 @@ func TestConfigMachinesets(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 			},
@@ -249,21 +219,21 @@ func TestConfigMachinesets(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
-					Datastore:    "datastore3",
+					Datastore:    "/dc3/datastore/datastore3",
 					ResourcePool: "/dc3/host/c3/Resources/rp3",
 				},
 			},
@@ -272,7 +242,7 @@ func TestConfigMachinesets(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
 			machineSets, err := MachineSets(clusterID, tc.installConfig, tc.machinePool, osImage, "", "")
-			assertOnUnexpectedErrorState(tc.expectedError, err, t)
+			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
 				var matchCountByIndex []int
@@ -283,7 +253,7 @@ func TestConfigMachinesets(t *testing.T) {
 				for _, machineSet := range machineSets {
 					// check if replica counts match expected
 					replicas := int(*machineSet.Spec.Replicas)
-					replicaCount = replicaCount + replicas
+					replicaCount += replicas
 					if replicas > tc.maxReplicas {
 						t.Errorf("machineset %s has too many replicas[max: %d] found %d", machineSet.Name, tc.maxReplicas, replicas)
 					} else if replicas < tc.minReplicas {
@@ -293,7 +263,7 @@ func TestConfigMachinesets(t *testing.T) {
 					// check if expected workspaces are returned
 					machineWorkspace := machineSet.Spec.Template.Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec).Workspace
 					for idx, workspace := range tc.workspaces {
-						if reflect.DeepEqual(workspace, *machineWorkspace) {
+						if cmp.Equal(workspace, *machineWorkspace) {
 							matchCountByIndex[idx]++
 						}
 					}

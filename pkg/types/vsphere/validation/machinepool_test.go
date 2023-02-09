@@ -114,7 +114,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "multi-zone invalid zone name",
 			platform: func() *vsphere.Platform {
-				platform := validMultiVCenterPlatform()
+				platform := validPlatform()
 				platform.FailureDomains[0].Name = "Zone%^@112233"
 				return platform
 			}(),
@@ -131,7 +131,7 @@ func TestValidateMachinePool(t *testing.T) {
 		},
 		{
 			name:     "multi-zone valid",
-			platform: validMultiVCenterPlatform(),
+			platform: validPlatform(),
 			pool: &types.MachinePool{
 				Platform: types.MachinePoolPlatform{
 					VSphere: &vsphere.MachinePool{
@@ -144,7 +144,7 @@ func TestValidateMachinePool(t *testing.T) {
 		},
 		{
 			name:     "multi-zone no zones defined for control plane pool",
-			platform: validMultiVCenterPlatform(),
+			platform: validPlatform(),
 			pool: &types.MachinePool{
 				Name: types.MachinePoolControlPlaneRoleName,
 				Platform: types.MachinePoolPlatform{
@@ -156,7 +156,7 @@ func TestValidateMachinePool(t *testing.T) {
 		},
 		{
 			name:     "multi-zone no zones defined for compute pool",
-			platform: validMultiVCenterPlatform(),
+			platform: validPlatform(),
 			pool: &types.MachinePool{
 				Name: types.MachinePoolComputeRoleName,
 				Platform: types.MachinePoolPlatform{
@@ -168,7 +168,7 @@ func TestValidateMachinePool(t *testing.T) {
 		},
 		{
 			name:     "multi-zone undefined zone",
-			platform: validMultiVCenterPlatform(),
+			platform: validPlatform(),
 			pool: &types.MachinePool{
 				Platform: types.MachinePoolPlatform{
 					VSphere: &vsphere.MachinePool{
@@ -214,7 +214,6 @@ func TestValidateMachinePool(t *testing.T) {
 					if found == false {
 						t.Errorf("unexpected zone %s", zone)
 					}
-
 				}
 			}
 		})

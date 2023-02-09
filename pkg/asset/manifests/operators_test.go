@@ -48,11 +48,29 @@ func TestRedactedInstallConfig(t *testing.T) {
 			},
 			Platform: types.Platform{
 				VSphere: &vspheretypes.Platform{
-					VCenter:          "test-server-1",
-					Username:         "test-user-1",
-					Password:         "test-pass-1",
-					Datacenter:       "test-datacenter",
-					DefaultDatastore: "test-datastore",
+					DeprecatedUsername: "test-username",
+					DeprecatedPassword: "test-password",
+					VCenters: []vspheretypes.VCenter{{
+						Server:      "test-server-1",
+						Port:        443,
+						Username:    "",
+						Password:    "",
+						Datacenters: []string{"test-datacenter"},
+					}},
+					FailureDomains: []vspheretypes.FailureDomain{{
+						Name:   "test-failuredomain",
+						Region: "test-region",
+						Zone:   "test-zone",
+						Server: "test-server-1",
+						Topology: vspheretypes.Topology{
+							Datacenter:     "test-datacenter",
+							ComputeCluster: "test-computecluster",
+							Networks:       []string{"test-network"},
+							Datastore:      "test-datastore",
+							ResourcePool:   "test-resourcepool",
+							Folder:         "test-folder",
+						},
+					}},
 				},
 			},
 			PullSecret: "test-pull-secret",
@@ -84,11 +102,25 @@ networking:
   - 1.2.3.4/5
 platform:
   vsphere:
-    datacenter: test-datacenter
-    defaultDatastore: test-datastore
-    password: ""
-    username: ""
-    vCenter: test-server-1
+    failureDomains:
+    - name: test-failuredomain
+      region: test-region
+      server: test-server-1
+      topology:
+        computeCluster: test-computecluster
+        datacenter: test-datacenter
+        datastore: test-datastore
+        folder: test-folder
+        networks:
+        - test-network
+        resourcePool: test-resourcepool
+      zone: test-zone
+    vcenters:
+    - datacenters:
+      - test-datacenter
+      password: ""
+      server: test-server-1
+      user: ""
 pullSecret: ""
 sshKey: test-ssh-key
 `

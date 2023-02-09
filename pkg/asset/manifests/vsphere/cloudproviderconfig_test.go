@@ -1,7 +1,7 @@
 package vsphere
 
 import (
-	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,22 +10,7 @@ import (
 )
 
 var (
-	expectedInTreeConfig = `[Global]
-secret-name = "vsphere-creds"
-secret-namespace = "kube-system"
-insecure-flag = "1"
-
-[Workspace]
-server = "test-vcenter"
-datacenter = "test-datacenter"
-default-datastore = "test-datastore"
-folder = "/test-datacenter/vm/clusterID"
-
-[VirtualCenter "test-vcenter"]
-datacenters = "test-datacenter"
-`
-
-	expectedIniMultiZoneConfig = `[Global]
+	expectedIniConfig = `[Global]
 secret-name = "vsphere-creds"
 secret-namespace = "kube-system"
 insecure-flag = "1"
@@ -36,13 +21,20 @@ port = "443"
 datacenters = "test-datacenter,test-datacenter2"
 
 [Workspace]
-folder = "/test-datacenter/vm/clusterID"
+server = "test-vcenter"
+datacenter = "test-datacenter"
+default-datastore = "test-datastore"
+folder = "/test-datacenter/vm/test-folder"
+resourcepool-path = "/test-datacenter/host/cluster/Resources/test-resourcepool"
 
-[Labels]
+`
+
+	expectIniLabelsSection = `[Labels]
 region = "openshift-region"
 zone = "openshift-zone"
 `
-	expectedYamlMultiZoneConfig = `global:
+
+	expectedYamlConfig = `global:
   user: ""
   password: ""
   server: ""
@@ -68,6 +60,7 @@ vcenter:
     insecureFlag: false
     datacenters:
     - test-datacenter
+    - test-datacenter2
     soapRoundtripCount: 0
     caFile: ""
     thumbprint: ""
@@ -81,16 +74,7 @@ labels:
 `
 )
 
-func validInTreePlatform() *vsphere.Platform {
-	return &vsphere.Platform{
-		VCenter:          "test-vcenter",
-		Username:         "test-username",
-		Password:         "test-password",
-		Datacenter:       "test-datacenter",
-		DefaultDatastore: "test-datastore",
-	}
-}
-func validMultiVCenterPlatform() *vsphere.Platform {
+func validPlatform() *vsphere.Platform {
 	return &vsphere.Platform{
 		VCenters: []vsphere.VCenter{
 			{
@@ -100,6 +84,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 				Password: "test-password",
 				Datacenters: []string{
 					"test-datacenter",
+					"test-datacenter2",
 				},
 			},
 		},
@@ -151,24 +136,40 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 }
 
 func TestCloudProviderConfig(t *testing.T) {
-	folderPath := fmt.Sprintf("/%s/vm/%s", "test-datacenter", "clusterID")
 	cases := []struct {
 		name                string
 		platform            *vsphere.Platform
+		cloudProviderFunc   func(string, *vsphere.Platform) (string, error)
 		expectedCloudConfig string
-		outOfTree           bool
 	}{
 		{
-			name:                "valid in-tree cloud provider config",
-			platform:            validInTreePlatform(),
-			expectedCloudConfig: expectedInTreeConfig,
-			outOfTree:           false,
+			name:                "valid intree cloud provider config",
+			platform:            validPlatform(),
+			cloudProviderFunc:   CloudProviderConfigIni,
+			expectedCloudConfig: expectedIniConfig + expectIniLabelsSection,
 		},
 		{
-			name:                "valid out of tree cloud provider config",
-			platform:            validMultiVCenterPlatform(),
-			expectedCloudConfig: expectedIniMultiZoneConfig,
-			outOfTree:           true,
+			name: "valid single failure domain intree cloud provider config",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+
+				p.FailureDomains = p.FailureDomains[0:1]
+				p.VCenters[0].Datacenters = p.VCenters[0].Datacenters[0:1]
+
+				return p
+			}(),
+			cloudProviderFunc: CloudProviderConfigIni,
+			expectedCloudConfig: func() string {
+				// only a single datacenter would be provided to the datacenters
+				ini := strings.ReplaceAll(expectedIniConfig, ",test-datacenter2", "")
+				return ini
+			}(),
+		},
+		{
+			name:                "valid out of tree yaml cloud provider config",
+			platform:            validPlatform(),
+			cloudProviderFunc:   CloudProviderConfigYaml,
+			expectedCloudConfig: expectedYamlConfig,
 		},
 	}
 
@@ -176,12 +177,7 @@ func TestCloudProviderConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var cloudConfig string
 			var err error
-			if tc.outOfTree {
-				cloudConfig, err = MultiZoneIniCloudProviderConfig(folderPath, tc.platform)
-				fmt.Println(cloudConfig)
-			} else {
-				cloudConfig, err = InTreeCloudProviderConfig(folderPath, tc.platform)
-			}
+			cloudConfig, err = tc.cloudProviderFunc("infraID", tc.platform)
 			assert.NoError(t, err, "failed to create cloud provider config")
 			assert.Equal(t, tc.expectedCloudConfig, cloudConfig, "unexpected cloud provider config")
 		})

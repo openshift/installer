@@ -102,7 +102,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "failed to create install config: invalid \"install-config.yaml\" file: [platform.vsphere.apiVIPs: Invalid value: \"192.168.122.10\": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.vCenter: Required value: must specify the name of the vCenter, platform.vsphere.username: Required value: must specify the username, platform.vsphere.password: Required value: must specify the password, platform.vsphere.datacenter: Required value: must specify the datacenter, platform.vsphere.defaultDatastore: Required value: must specify the default datastore]",
+			expectedError: `failed to create install config: invalid "install-config.yaml" file: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.vcenters.server: Required value: must be the domain name or IP address of the vCenter, platform.vsphere.vcenters.username: Required value: must specify the username, platform.vsphere.vcenters.password: Required value: must specify the password, platform.vsphere.vcenters.datacenters: Required value: must specify at least one datacenter, platform.vsphere.failureDomains.server: Required value: must specify a vCenter server, platform.vsphere.failureDomains.topology.datacenter: Required value: must specify a datacenter, platform.vsphere.failureDomains.topology.datastore: Required value: must specify a datastore, platform.vsphere.failureDomains.topology.computeCluster: Required value: must specify a computeCluster, platform.vsphere.failureDomains.topology.resourcePool: Invalid value: "//Resources": full path of resource pool must be provided in format /<datacenter>/host/<cluster>/...]`,
 		},
 		{
 			name: "invalid configuration for none platform for sno",
@@ -505,6 +505,7 @@ platform:
     password: testPassword
     datacenter: testDataCenter
     defaultDataStore: testDefaultDataStore
+    cluster: testCluster
     apiVIP: 192.168.122.10
     ingressVIPs: 
       - 192.168.122.11
@@ -549,14 +550,36 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				Platform: types.Platform{
 					VSphere: &vsphere.Platform{
-						VCenter:          "192.168.122.30",
-						Username:         "testUsername",
-						Password:         "testPassword",
-						Datacenter:       "testDataCenter",
-						DefaultDatastore: "testDefaultDataStore",
-						DeprecatedAPIVIP: "192.168.122.10",
-						APIVIPs:          []string{"192.168.122.10"},
-						IngressVIPs:      []string{"192.168.122.11"},
+						DeprecatedVCenter:          "192.168.122.30",
+						DeprecatedUsername:         "testUsername",
+						DeprecatedPassword:         "testPassword",
+						DeprecatedDatacenter:       "testDataCenter",
+						DeprecatedCluster:          "testCluster",
+						DeprecatedDefaultDatastore: "testDefaultDataStore",
+						DeprecatedAPIVIP:           "192.168.122.10",
+						APIVIPs:                    []string{"192.168.122.10"},
+						IngressVIPs:                []string{"192.168.122.11"},
+						VCenters: []vsphere.VCenter{{
+							Server:      "192.168.122.30",
+							Port:        443,
+							Username:    "testUsername",
+							Password:    "testPassword",
+							Datacenters: []string{"testDataCenter"},
+						}},
+						FailureDomains: []vsphere.FailureDomain{{
+							Name:   "generated-failure-domain",
+							Region: "generated-region",
+							Zone:   "generated-zone",
+							Server: "192.168.122.30",
+							Topology: vsphere.Topology{
+								Datacenter:     "testDataCenter",
+								ComputeCluster: "/testDataCenter/host/testCluster",
+								Networks:       []string{""},
+								Datastore:      "/testDataCenter/datastore/testDefaultDataStore",
+								ResourcePool:   "/testDataCenter/host/testCluster//Resources",
+								Folder:         "",
+							},
+						}},
 					},
 				},
 				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,

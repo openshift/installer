@@ -459,6 +459,27 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 				Platform: types.Platform{
 					VSphere: &vsphere.Platform{
+						VCenters: []vsphere.VCenter{{
+							Server:      "",
+							Port:        443,
+							Username:    "",
+							Password:    "",
+							Datacenters: nil,
+						}},
+						FailureDomains: []vsphere.FailureDomain{{
+							Name:   "generated-failure-domain",
+							Region: "generated-region",
+							Zone:   "generated-zone",
+							Server: "",
+							Topology: vsphere.Topology{
+								Datacenter:     "",
+								ComputeCluster: "",
+								Networks:       []string{""},
+								Datastore:      "",
+								ResourcePool:   "",
+								Folder:         "",
+							},
+						}},
 						DeprecatedAPIVIP: "1.2.3.4",
 						APIVIPs:          []string{"1.2.3.4"},
 					},
@@ -483,6 +504,27 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 				Platform: types.Platform{
 					VSphere: &vsphere.Platform{
+						VCenters: []vsphere.VCenter{{
+							Server:      "",
+							Port:        443,
+							Username:    "",
+							Password:    "",
+							Datacenters: nil,
+						}},
+						FailureDomains: []vsphere.FailureDomain{{
+							Name:   "generated-failure-domain",
+							Region: "generated-region",
+							Zone:   "generated-zone",
+							Server: "",
+							Topology: vsphere.Topology{
+								Datacenter:     "",
+								ComputeCluster: "",
+								Networks:       []string{""},
+								Datastore:      "",
+								ResourcePool:   "",
+								Folder:         "",
+							},
+						}},
 						DeprecatedIngressVIP: "1.2.3.4",
 						IngressVIPs:          []string{"1.2.3.4"},
 					},
