@@ -67,6 +67,20 @@ resource "aws_route53_record" "api_internal_alias" {
   }
 }
 
+resource "aws_route53_record" "api_internal_alias" {
+  count = local.use_alias ? 1 : 0
+
+  zone_id = data.aws_route53_zone.int.zone_id
+  name    = "*.apps.${var.cluster_domain}"
+  type    = "A"
+
+  alias {
+    name                   = var.api_internal_lb_dns_name
+    zone_id                = var.api_internal_lb_zone_id
+    evaluate_target_health = false
+  }
+}
+
 resource "aws_route53_record" "api_external_internal_zone_alias" {
   count = local.use_alias ? 1 : 0
 
@@ -97,6 +111,17 @@ resource "aws_route53_record" "api_internal_cname" {
 
   zone_id = data.aws_route53_zone.int.zone_id
   name    = "api-int.${var.cluster_domain}"
+  type    = "CNAME"
+  ttl     = 10
+
+  records = [var.api_internal_lb_dns_name]
+}
+
+resource "aws_route53_record" "api_internal_cname" {
+  count = local.use_cname ? 1 : 0
+
+  zone_id = data.aws_route53_zone.int.zone_id
+  name    = "*.apps.${var.cluster_domain}"
   type    = "CNAME"
   ttl     = 10
 
