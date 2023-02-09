@@ -14,7 +14,6 @@ import (
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	installertypes "github.com/openshift/installer/pkg/types"
-	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
@@ -24,7 +23,6 @@ type ClusterUninstaller struct {
 	terraformPlatform string
 
 	Logger logrus.FieldLogger
-
 	client API
 }
 
@@ -57,15 +55,6 @@ func (o *ClusterUninstaller) deleteFolder(ctx context.Context) error {
 	folderMoList, err := o.client.ListFolders(ctx, o.InfraID)
 	if err != nil {
 		return err
-	}
-
-	// The installer should create at most one parent,
-	// the parent to the VirtualMachines.
-	// If there are more or less fail with error message.
-	if o.terraformPlatform != vspheretypes.ZoningTerraformName {
-		if len(folderMoList) > 1 {
-			return errors.Errorf("Expected 1 Folder per tag but got %d", len(folderMoList))
-		}
 	}
 
 	if len(folderMoList) == 0 {

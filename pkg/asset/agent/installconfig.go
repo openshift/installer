@@ -309,37 +309,37 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	case vsphere.Name:
 		vspherePlatform := installConfig.Platform.VSphere
 
-		if vspherePlatform.VCenter != "" {
+		if vspherePlatform.DeprecatedVCenter != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "VCenter")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.VCenter))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedVCenter))
 		}
-		if vspherePlatform.Username != "" {
+		if vspherePlatform.DeprecatedUsername != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Username")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Username))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedUsername))
 		}
-		if vspherePlatform.Password != "" {
+		if vspherePlatform.DeprecatedPassword != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Password")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Password))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedPassword))
 		}
-		if vspherePlatform.Datacenter != "" {
+		if vspherePlatform.DeprecatedDatacenter != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Datacenter")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Datacenter))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedDatacenter))
 		}
-		if vspherePlatform.DefaultDatastore != "" {
+		if vspherePlatform.DeprecatedDefaultDatastore != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "DefaultDatastore")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DefaultDatastore))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedDefaultDatastore))
 		}
-		if vspherePlatform.Folder != "" {
+		if vspherePlatform.DeprecatedFolder != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Folder")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Folder))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedFolder))
 		}
-		if vspherePlatform.Cluster != "" {
+		if vspherePlatform.DeprecatedCluster != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Cluster")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Cluster))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedCluster))
 		}
-		if vspherePlatform.ResourcePool != "" {
+		if vspherePlatform.DeprecatedResourcePool != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "ResourcePool")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.ResourcePool))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedResourcePool))
 		}
 		if vspherePlatform.ClusterOSImage != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "ClusterOSImage")
@@ -349,9 +349,9 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := field.NewPath("Platform", "VSphere", "DefaultMachinePlatform")
 			logrus.Warnf(fmt.Sprintf("%s: %v is ignored", fieldPath, vspherePlatform.DefaultMachinePlatform))
 		}
-		if vspherePlatform.Network != "" {
+		if vspherePlatform.DeprecatedNetwork != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Network")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.Network))
+			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedNetwork))
 		}
 		if vspherePlatform.DiskType != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "DiskType")

@@ -24,7 +24,6 @@ import (
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
-	typesvsphere "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (
@@ -91,12 +90,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	if azure := installConfig.Config.Platform.Azure; azure != nil && azure.CloudName == typesazure.StackCloud {
 		platform = typesazure.StackTerraformName
-	}
-
-	if vsphere := installConfig.Config.Platform.VSphere; vsphere != nil {
-		if len(vsphere.FailureDomains) != 0 {
-			platform = typesvsphere.ZoningTerraformName
-		}
 	}
 
 	stages := platformstages.StagesForPlatform(platform)

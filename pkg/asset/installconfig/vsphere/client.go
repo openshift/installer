@@ -63,7 +63,10 @@ func CreateVSphereClients(ctx context.Context, vcenter, username, password strin
 	restClient := rest.NewClient(c.Client)
 	err = restClient.Login(ctx, u.User)
 	if err != nil {
-		c.Logout(context.TODO())
+		logoutErr := c.Logout(context.TODO())
+		if logoutErr != nil {
+			err = logoutErr
+		}
 		return nil, nil, nil, err
 	}
 
