@@ -67,7 +67,7 @@ resource "aws_route53_record" "api_internal_alias" {
   }
 }
 
-resource "aws_route53_record" "api_internal_alias" {
+resource "aws_route53_record" "apps_internal_alias" {
   count = local.use_alias ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
@@ -117,7 +117,7 @@ resource "aws_route53_record" "api_internal_cname" {
   records = [var.api_internal_lb_dns_name]
 }
 
-resource "aws_route53_record" "api_internal_cname" {
+resource "aws_route53_record" "apps_internal_cname" {
   count = local.use_cname ? 1 : 0
 
   zone_id = data.aws_route53_zone.int.zone_id
