@@ -77,6 +77,16 @@ func (o *ClusterUninstaller) configureClients() error {
 	if err != nil {
 		return err
 	}
+	// This can be empty for StackCloud
+	if o.Environment.MicrosoftGraphEndpoint != "" {
+		// Set the service root to the Microsoft Graph for the appropriate
+		// cloud endpoint (e.g, GovCloud). Failing to do so results in an
+		// unhelpful `context deadline exceeded` error.
+		// NOTE: The API version must be included in the URL
+		// See https://issues.redhat.com/browse/OCPBUGS-4549
+		// See https://learn.microsoft.com/en-us/graph/sdks/national-clouds?tabs=go
+		adapter.SetBaseUrl(fmt.Sprintf("%s/v1.0", o.Environment.MicrosoftGraphEndpoint))
+	}
 	o.msgraphClient = msgraphsdk.NewGraphServiceClient(adapter)
 
 	return nil

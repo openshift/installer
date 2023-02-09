@@ -303,7 +303,15 @@ func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cl
 }
 
 func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cred azcore.TokenCredential) (*Session, error) {
-	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProvider(cred)
+	var scope []string
+	// This can be empty for StackCloud
+	if cloudEnv.MicrosoftGraphEndpoint != "" {
+		// GovClouds need a properly set scope in the authenticator, otherwise we
+		// get an 'Invalid audience' error when doing MSGraph API calls
+		// https://learn.microsoft.com/en-us/graph/sdks/national-clouds?tabs=go
+		scope = []string{endpointToScope(cloudEnv.MicrosoftGraphEndpoint)}
+	}
+	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProviderWithScopes(cred, scope)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get Azidentity authentication provider")
 	}
