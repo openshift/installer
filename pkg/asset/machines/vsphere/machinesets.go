@@ -18,11 +18,12 @@ func getMachineSetWithPlatform(
 	name string,
 	mpool *vsphere.MachinePool,
 	osImage string,
-	platform *vsphere.Platform,
+	failureDomain vsphere.FailureDomain,
+	vcenter *vsphere.VCenter,
 	replicas int32,
 	role,
 	userDataSecret string) (*machineapi.MachineSet, error) {
-	provider, err := provider(clusterID, platform, mpool, osImage, userDataSecret)
+	provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImage, userDataSecret)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create provider")
 	}
@@ -77,55 +78,11 @@ func getVCenterFromServerName(server string, platformSpec *vsphere.Platform) (*v
 	return nil, errors.Errorf("unable to find vCenter %s", server)
 }
 
-func getFailureDomain(domainName string, platformSpec *vsphere.Platform) (*vsphere.FailureDomain, error) {
-	for _, failureDomain := range platformSpec.FailureDomains {
-		if failureDomain.Name == domainName {
-			return &failureDomain, nil
-		}
+func getDefinedZonesFromTopology(p *vsphere.Platform) (map[string]vsphere.FailureDomain, error) {
+	zones := make(map[string]vsphere.FailureDomain)
+	for _, failureDomain := range p.FailureDomains {
+		zones[failureDomain.Name] = failureDomain
 	}
-	return nil, errors.Errorf("%s is not a defined failure domain", domainName)
-}
-
-func getfailureDomain(failureDomainName string, platformSpec *vsphere.Platform) (*vsphere.FailureDomain, error) {
-	for _, failureDomain := range platformSpec.FailureDomains {
-		if failureDomain.Name == failureDomainName {
-			return &failureDomain, nil
-		}
-	}
-	return nil, errors.Errorf("%s is not a defined deployment zone", failureDomainName)
-}
-
-// getDefinedZones retrieves zones and associated platform specs that are appropriate to the machine role
-func getDefinedZones(platformSpec *vsphere.Platform) (map[string]*vsphere.Platform, error) {
-	zones := make(map[string]*vsphere.Platform)
-
-	for _, failureDomain := range platformSpec.FailureDomains {
-		vCenter, err := getVCenterFromServerName(failureDomain.Server, platformSpec)
-		if err != nil {
-			return nil, err
-		}
-		failureDomain, err := getFailureDomain(failureDomain.Name, platformSpec)
-		if err != nil {
-			return nil, err
-		}
-		var vcPlatform = vsphere.Platform{
-			VCenter:          vCenter.Server,
-			Username:         vCenter.Username,
-			Password:         vCenter.Password,
-			Datacenter:       failureDomain.Topology.Datacenter,
-			DefaultDatastore: failureDomain.Topology.Datastore,
-			Folder:           failureDomain.Topology.Folder,
-			Cluster:          failureDomain.Topology.ComputeCluster,
-			ResourcePool:     failureDomain.Topology.ResourcePool,
-			APIVIPs:          platformSpec.APIVIPs,
-			IngressVIPs:      platformSpec.IngressVIPs,
-			Network:          failureDomain.Topology.Networks[0],
-			DiskType:         platformSpec.DiskType,
-			FailureDomains:   platformSpec.FailureDomains,
-		}
-		zones[failureDomain.Name] = &vcPlatform
-	}
-
 	return zones, nil
 }
 
@@ -139,58 +96,54 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 	platform := config.Platform.VSphere
 	mpool := pool.Platform.VSphere
+	// The machinepool has no zones defined, there are FailureDomains
+	// This is a vSphere zonal installation. Generate machinepool zone
+	// list.
+	if len(mpool.Zones) == 0 {
+		for _, fd := range config.VSphere.FailureDomains {
+			mpool.Zones = append(mpool.Zones, fd.Name)
+		}
+	}
 	azs := mpool.Zones
 	total := 0
 	if pool.Replicas != nil {
 		total = int(*pool.Replicas)
 	}
 	numOfAZs := len(azs)
-	var machinesets []*machineapi.MachineSet
-	if numOfAZs > 0 {
-		zones, err := getDefinedZones(platform)
+	machinesets := make([]*machineapi.MachineSet, 0, numOfAZs)
+
+	zones, err := getDefinedZonesFromTopology(platform)
+
+	if err != nil {
+		return machinesets, err
+	}
+	for idx := range azs {
+		replicas := int32(total / numOfAZs)
+		if idx < total%numOfAZs {
+			replicas++
+		}
+		desiredZone := azs[idx]
+		if _, exists := zones[desiredZone]; !exists {
+			return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
+		}
+		name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
+
+		failureDomain := zones[desiredZone]
+
+		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)
 		if err != nil {
-			return machinesets, err
+			return nil, err
 		}
-		for idx := range azs {
-			replicas := int32(total / numOfAZs)
-			if idx < total%numOfAZs {
-				replicas++
-			}
-			desiredZone := azs[idx]
-			if _, exists := zones[desiredZone]; !exists {
-				return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
-			}
-			name := fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx)
 
-			failureDomain, err := getFailureDomain(desiredZone, platform)
-			if err != nil {
-				return nil, err
-			}
-
-			osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
-			machineset, err := getMachineSetWithPlatform(
-				clusterID,
-				name,
-				mpool,
-				osImageForZone,
-				zones[desiredZone],
-				replicas,
-				role,
-				userDataSecret)
-			if err != nil {
-				return machinesets, err
-			}
-			machinesets = append(machinesets, machineset)
-		}
-	} else {
-		name := fmt.Sprintf("%s-%s", clusterID, pool.Name)
+		osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
 		machineset, err := getMachineSetWithPlatform(
 			clusterID,
 			name,
 			mpool,
-			osImage,
-			platform,
-			int32(total),
+			osImageForZone,
+			failureDomain,
+			vcenter,
+			replicas,
 			role,
 			userDataSecret)
 		if err != nil {
@@ -198,5 +151,6 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		}
 		machinesets = append(machinesets, machineset)
 	}
+
 	return machinesets, nil
 }

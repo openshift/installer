@@ -3,7 +3,6 @@ package vsphere
 
 import (
 	"fmt"
-	"regexp"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -24,42 +23,31 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		return nil, fmt.Errorf("non-VSphere machine-pool: %q", poolPlatform)
 	}
 
+	var failureDomain vsphere.FailureDomain
 	var machines []machineapi.Machine
-
 	platform := config.Platform.VSphere
 	mpool := pool.Platform.VSphere
+	replicas := int64(1)
 
-	azs := mpool.Zones
-	numOfAZs := len(azs)
-	definedZones := make(map[string]*vsphere.Platform)
+	numOfZones := len(mpool.Zones)
 
-	if numOfAZs > 0 {
-		zones, err := getDefinedZones(platform)
-		if err != nil {
-			return machines, err
-		}
-		definedZones = zones
+	zones, err := getDefinedZonesFromTopology(platform)
+	if err != nil {
+		return machines, err
 	}
 
-	replicas := int64(1)
 	if pool.Replicas != nil {
 		replicas = *pool.Replicas
 	}
 
 	for idx := int64(0); idx < replicas; idx++ {
-		var failureDomain *vsphere.FailureDomain
-		if numOfAZs > 0 {
-			desiredZone := mpool.Zones[int(idx)%numOfAZs]
-			if _, exists := definedZones[desiredZone]; !exists {
-				return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
-			}
-			platform = definedZones[desiredZone]
-			for idx, knownFailureDomain := range platform.FailureDomains {
-				if knownFailureDomain.Name == desiredZone {
-					failureDomain = &platform.FailureDomains[idx]
-				}
-			}
+		desiredZone := mpool.Zones[int(idx)%numOfZones]
+
+		if _, exists := zones[desiredZone]; !exists {
+			return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
 		}
+
+		failureDomain = zones[desiredZone]
 
 		machineLabels := map[string]string{
 			"machine.openshift.io/cluster-api-cluster":      clusterID,
@@ -67,13 +55,13 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			"machine.openshift.io/cluster-api-machine-type": role,
 		}
 
-		osImageForZone := osImage
+		osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
 
-		if failureDomain != nil {
-			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to find vCenter in failure domains")
 		}
-
-		provider, err := provider(clusterID, platform, mpool, osImageForZone, userDataSecret)
+		provider, err := provider(clusterID, vcenter, failureDomain, mpool, osImageForZone, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -100,21 +88,25 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
-	folder := fmt.Sprintf("/%s/vm/%s", platform.Datacenter, clusterID)
+func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.FailureDomain, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
+	networkDeviceSpec := make([]machineapi.NetworkDeviceSpec, len(failureDomain.Topology.Networks))
 
-	resourcePool := fmt.Sprintf("/%s/host/%s/Resources", platform.Datacenter, platform.Cluster)
-	resourcePoolPrefix := "^\\/(.*?)\\/host\\/(.*?)"
-	hasFullPath, _ := regexp.MatchString(resourcePoolPrefix, platform.Cluster)
-	if hasFullPath {
-		resourcePool = fmt.Sprintf("%s/Resources", platform.Cluster)
+	// If failureDomain.Topology.Folder is empty this will be used
+	folder := fmt.Sprintf("/%s/vm/%s", failureDomain.Topology.Datacenter, clusterID)
+
+	// If failureDomain.Topology.ResourcePool is empty this will be used
+	// computeCluster is required to be a path
+	resourcePool := fmt.Sprintf("%s/Resources", failureDomain.Topology.ComputeCluster)
+
+	if failureDomain.Topology.Folder != "" {
+		folder = failureDomain.Topology.Folder
+	}
+	if failureDomain.Topology.ResourcePool != "" {
+		resourcePool = failureDomain.Topology.ResourcePool
 	}
 
-	if platform.Folder != "" {
-		folder = platform.Folder
-	}
-	if platform.ResourcePool != "" {
-		resourcePool = platform.ResourcePool
+	for i, network := range failureDomain.Topology.Networks {
+		networkDeviceSpec[i] = machineapi.NetworkDeviceSpec{NetworkName: network}
 	}
 
 	return &machineapi.VSphereMachineProviderSpec{
@@ -126,16 +118,12 @@ func provider(clusterID string, platform *vsphere.Platform, mpool *vsphere.Machi
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "vsphere-cloud-credentials"},
 		Template:          osImage,
 		Network: machineapi.NetworkSpec{
-			Devices: []machineapi.NetworkDeviceSpec{
-				{
-					NetworkName: platform.Network,
-				},
-			},
+			Devices: networkDeviceSpec,
 		},
 		Workspace: &machineapi.Workspace{
-			Server:       platform.VCenter,
-			Datacenter:   platform.Datacenter,
-			Datastore:    platform.DefaultDatastore,
+			Server:       vcenter.Server,
+			Datacenter:   failureDomain.Topology.Datacenter,
+			Datastore:    failureDomain.Topology.Datastore,
 			Folder:       folder,
 			ResourcePool: resourcePool,
 		},
