@@ -22,18 +22,18 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 	}
 }
 
-// MultiZoneYamlCloudProviderConfig generates the yaml out of tree cloud provider config for the vSphere platform.
-func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) {
+// CloudProviderConfigYaml generates the yaml out of tree cloud provider config for the vSphere platform.
+func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, error) {
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)
 
 	for _, vCenter := range p.VCenters {
-		vCenterPort := uint(443)
+		vCenterPort := int32(443)
 		if vCenter.Port != 0 {
 			vCenterPort = vCenter.Port
 		}
 		vCenterConfig := cloudconfig.VirtualCenterConfigYAML{
 			VCenterIP:   vCenter.Server,
-			VCenterPort: vCenterPort,
+			VCenterPort: uint(vCenterPort),
 			Datacenters: vCenter.Datacenters,
 		}
 		vCenters[vCenter.Server] = &vCenterConfig
@@ -58,10 +58,10 @@ func MultiZoneYamlCloudProviderConfig(p *vspheretypes.Platform) (string, error) 
 	return string(cloudProviderConfigYaml), nil
 }
 
-// MultiZoneIniCloudProviderConfig generates the multi-zone ini cloud provider config
+// CloudProviderConfigIni generates the multi-zone ini cloud provider config
 // for the vSphere platform. folderPath is the absolute path to the VM folder that will be
 // used for installation. p is the vSphere platform struct.
-func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform) (string, error) {
+func CloudProviderConfigIni(infraID string, p *vspheretypes.Platform) (string, error) {
 	buf := new(bytes.Buffer)
 
 	fmt.Fprintln(buf, "[Global]")
@@ -76,10 +76,8 @@ func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform
 			printIfNotEmpty(buf, "port", fmt.Sprintf("%d", vcenter.Port))
 			fmt.Fprintln(buf, "")
 		}
-		var datacenters []string
-		for _, datacenter := range vcenter.Datacenters {
-			datacenters = append(datacenters, datacenter)
-		}
+		datacenters := make([]string, 0, len(vcenter.Datacenters))
+		datacenters = append(datacenters, vcenter.Datacenters...)
 		for _, failureDomain := range p.FailureDomains {
 			if failureDomain.Server == vcenter.Server {
 				failureDomainDatacenter := failureDomain.Topology.Datacenter
@@ -90,7 +88,7 @@ func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform
 						break
 					}
 				}
-				if exists == false {
+				if !exists {
 					datacenters = append(datacenters, failureDomainDatacenter)
 				}
 			}
@@ -100,42 +98,23 @@ func MultiZoneIniCloudProviderConfig(folderPath string, p *vspheretypes.Platform
 	fmt.Fprintln(buf, "")
 
 	fmt.Fprintln(buf, "[Workspace]")
-	printIfNotEmpty(buf, "server", p.VCenter)
-	printIfNotEmpty(buf, "datacenter", p.Datacenter)
-	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
+	printIfNotEmpty(buf, "server", p.FailureDomains[0].Server)
+	printIfNotEmpty(buf, "datacenter", p.FailureDomains[0].Topology.Datacenter)
+	printIfNotEmpty(buf, "default-datastore", p.FailureDomains[0].Topology.Datastore)
+
+	folderPath := fmt.Sprintf("/%s/vm/%s", p.FailureDomains[0].Topology.Datacenter, infraID)
+	if p.FailureDomains[0].Topology.Folder != "" {
+		folderPath = p.FailureDomains[0].Topology.Folder
+	}
 	printIfNotEmpty(buf, "folder", folderPath)
-	printIfNotEmpty(buf, "resourcepool-path", p.ResourcePool)
+	printIfNotEmpty(buf, "resourcepool-path", p.FailureDomains[0].Topology.ResourcePool)
 	fmt.Fprintln(buf, "")
 
-	fmt.Fprintln(buf, "[Labels]")
-	printIfNotEmpty(buf, "region", vspheretypes.TagCategoryRegion)
-	printIfNotEmpty(buf, "zone", vspheretypes.TagCategoryZone)
-
-	return buf.String(), nil
-}
-
-// InTreeCloudProviderConfig generates the in-tree cloud provider config for the vSphere platform.
-// folderPath is the absolute path to the VM folder that will be used for installation.
-// p is the vSphere platform struct.
-func InTreeCloudProviderConfig(folderPath string, p *vspheretypes.Platform) (string, error) {
-	buf := new(bytes.Buffer)
-
-	fmt.Fprintln(buf, "[Global]")
-	printIfNotEmpty(buf, "secret-name", "vsphere-creds")
-	printIfNotEmpty(buf, "secret-namespace", "kube-system")
-	printIfNotEmpty(buf, "insecure-flag", "1")
-	fmt.Fprintln(buf, "")
-
-	fmt.Fprintln(buf, "[Workspace]")
-	printIfNotEmpty(buf, "server", p.VCenter)
-	printIfNotEmpty(buf, "datacenter", p.Datacenter)
-	printIfNotEmpty(buf, "default-datastore", p.DefaultDatastore)
-	printIfNotEmpty(buf, "folder", folderPath)
-	printIfNotEmpty(buf, "resourcepool-path", p.ResourcePool)
-	fmt.Fprintln(buf, "")
-
-	fmt.Fprintf(buf, "[VirtualCenter %q]\n", p.VCenter)
-	printIfNotEmpty(buf, "datacenters", p.Datacenter)
+	if len(p.FailureDomains) > 1 {
+		fmt.Fprintln(buf, "[Labels]")
+		printIfNotEmpty(buf, "region", regionTagCategory)
+		printIfNotEmpty(buf, "zone", zoneTagCategory)
+	}
 
 	return buf.String(), nil
 }
