@@ -102,10 +102,12 @@ validate_configuration
 declare result='PASS'
 for testcase in "${tests_dir}"/* ; do
 	if [ -d "$testcase" ]; then
+		echo
+		echo "*** TEST CASE: $(basename "${testcase}")"
 		assets_dir="$(mktemp -d)"
 		temp_dirs+=("$assets_dir")
 		fill_install_config "${testcase}/install-config.yaml" > "${assets_dir}/install-config.yaml"
-		"$openshift_install" create manifests --dir "$assets_dir"
+		"$openshift_install" --log-level warn create manifests --dir "$assets_dir"
 		for t in "${testcase}"/test_*; do
 			if $t "$assets_dir"; then
 				echo "PASS: '$t'"
