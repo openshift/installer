@@ -53,12 +53,14 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	additionalFiles := []string{}
 	agentTuiFile, err := a.fetchAgentTuiBinary(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {
 		return err
 	}
+	additionalFiles = append(additionalFiles, agentTuiFile)
 
-	err = a.prepareAgentISO(baseImage.File.Filename, ignitionByte, agentTuiFile)
+	err = a.prepareAgentISO(baseImage.File.Filename, ignitionByte, additionalFiles)
 	if err != nil {
 		return err
 	}
@@ -81,11 +83,16 @@ func (a *AgentImage) fetchAgentTuiBinary(releaseImage string, pullSecret string,
 	if err != nil {
 		return "", err
 	}
+	// Make sure it could be executed
+	err = os.Chmod(filename, 0o555)
+	if err != nil {
+		return "", err
+	}
 
 	return filename, nil
 }
 
-func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, agentTuiFile string) error {
+func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, additionalFiles []string) error {
 	// Create a tmp folder to store all the pieces required to generate the agent ISO.
 	tmpPath, err := os.MkdirTemp("", "agent")
 	if err != nil {
@@ -98,19 +105,12 @@ func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, agentTuiFile s
 		return err
 	}
 
-	ca := NewCpioArchive()
-	err = ca.StoreBytes("config.ign", ignition)
+	err = a.updateIgnitionImg(ignition)
 	if err != nil {
 		return err
 	}
 
-	err = ca.StoreFile(agentTuiFile)
-	if err != nil {
-		return err
-	}
-
-	// Overwrite the default ignition.img with new enriched one
-	err = ca.Save(filepath.Join(a.tmpPath, "images", "ignition.img"))
+	err = a.appendAgentFilesToInitrd(additionalFiles)
 	if err != nil {
 		return err
 	}
@@ -120,6 +120,90 @@ func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, agentTuiFile s
 		return err
 	}
 	a.volumeID = volumeID
+
+	return nil
+}
+
+func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
+	ca := NewCpioArchive()
+	err := ca.StoreBytes("config.ign", ignition, 0o644)
+	if err != nil {
+		return err
+	}
+	ignitionBuff, err := ca.SaveBuffer()
+	if err != nil {
+		return err
+	}
+
+	ignitionImgPath := filepath.Join(a.tmpPath, "images", "ignition.img")
+	fi, err := os.Stat(ignitionImgPath)
+	if err != nil {
+		return err
+	}
+
+	// Verify that the current compressed ignition archive does not exceed the
+	// embed area (usually 256 Kb)
+	if len(ignitionBuff) > int(fi.Size()) {
+		return fmt.Errorf("ignition content length (%d) exceeds embed area size (%d)", len(ignitionBuff), fi.Size())
+	}
+
+	ignitionImg, err := os.OpenFile(ignitionImgPath, os.O_WRONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer ignitionImg.Close()
+
+	_, err = ignitionImg.Write(ignitionBuff)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *AgentImage) appendAgentFilesToInitrd(additionalFiles []string) error {
+	ca := NewCpioArchive()
+
+	dstPath := "/agent-files/"
+	err := ca.StorePath(dstPath)
+	if err != nil {
+		return err
+	}
+
+	// Add the required agent files to the archive
+	for _, f := range additionalFiles {
+		err := ca.StoreFile(f, dstPath)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Add a dracut hook to copy the files. The $NEWROOT environment variable is exported by
+	// dracut during the startup and it refers the mountpoint for the root filesystem.
+	dracutHookScript := `#!/bin/sh
+cp -R /agent-files/* $NEWROOT/usr/local/bin/`
+	err = ca.StoreBytes("/usr/lib/dracut/hooks/pre-pivot/99-agent-copy-files.sh", []byte(dracutHookScript), 0o755)
+	if err != nil {
+		return err
+	}
+
+	buff, err := ca.SaveBuffer()
+	if err != nil {
+		return err
+	}
+
+	// Append the archive to initrd.img
+	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
+	initrdImg, err := os.OpenFile(initrdImgPath, os.O_WRONLY|os.O_APPEND, 0)
+	if err != nil {
+		return err
+	}
+	defer initrdImg.Close()
+
+	_, err = initrdImg.Write(buff)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

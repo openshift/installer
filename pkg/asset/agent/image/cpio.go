@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/cavaliercoder/go-cpio"
 )
@@ -31,10 +32,10 @@ func NewCpioArchive() *CpioArchive {
 
 // StoreBytes appends to the current archive the given content using
 // the specified filename.
-func (ca *CpioArchive) StoreBytes(filename string, content []byte) error {
+func (ca *CpioArchive) StoreBytes(filename string, content []byte, mode int) error {
 	header := cpio.Header{
 		Name: filename,
-		Mode: 0o100_644,
+		Mode: cpio.FileMode(mode),
 		Size: int64(len(content)),
 	}
 
@@ -51,8 +52,24 @@ func (ca *CpioArchive) StoreBytes(filename string, content []byte) error {
 	return nil
 }
 
+// StorePath adds a new path in the archive.
+func (ca *CpioArchive) StorePath(path string) error {
+	header := cpio.Header{
+		Name: path,
+		Mode: cpio.ModeDir | 0o755,
+		Size: 0,
+	}
+
+	err := ca.cpioWriter.WriteHeader(&header)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // StoreFile appends to the current archive the specified file.
-func (ca *CpioArchive) StoreFile(filename string) error {
+func (ca *CpioArchive) StoreFile(filename string, dstPath string) error {
 	f, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -68,6 +85,8 @@ func (ca *CpioArchive) StoreFile(filename string) error {
 	if err != nil {
 		return err
 	}
+	header.Name = filepath.Join(dstPath, header.Name)
+
 	if err := ca.cpioWriter.WriteHeader(header); err != nil {
 		return err
 	}
@@ -80,25 +99,35 @@ func (ca *CpioArchive) StoreFile(filename string) error {
 	return nil
 }
 
-// Save appends persists the archive on the disk.
-func (ca *CpioArchive) Save(archivePath string) error {
+// Save the content of the current archive and returns
+// the buffer content.
+func (ca *CpioArchive) SaveBuffer() ([]byte, error) {
 	err := ca.cpioWriter.Close()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	err = ca.gzipWriter.Close()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	return ca.buffer.Bytes(), nil
+}
+
+// Save the content of the current archive on the disk.
+func (ca *CpioArchive) Save(archivePath string) error {
 	out, err := os.Create(archivePath)
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 
-	bs := ca.buffer.Bytes()
+	bs, err := ca.SaveBuffer()
+	if err != nil {
+		return err
+	}
+
 	_, err = out.Write(bs)
 	if err != nil {
 		return err

@@ -5,7 +5,6 @@ exec openshift-install agent create image --dir $WORK
 exists $WORK/agent.x86_64.iso
 
 ignitionImgContains agent.x86_64.iso config.ign
-ignitionImgContains agent.x86_64.iso agent
 
 -- install-config.yaml --
 apiVersion: v1
