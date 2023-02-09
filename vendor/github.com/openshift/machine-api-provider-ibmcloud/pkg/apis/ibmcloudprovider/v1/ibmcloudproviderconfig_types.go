@@ -61,8 +61,17 @@ type IBMCloudMachineProviderSpec struct {
 	// Zone where the virtual server instance will be created
 	Zone string `json:"zone"`
 
-	// ResourceGroup of VPC
+	// ResourceGroup of the machines. This may be the same as NetworkResourceGroup if the machines are
+	// created in the same Resource Group as the network resources.
 	ResourceGroup string `json:"resourceGroup"`
+
+	// NetworkResourceGroup is the Resource Group for network resources like the VPC and Subnets used by the cluster,
+	// where ResourceGroupName will contain the remaining resources (e.g., machines). This may be the same as
+	// ResourceGroup, if the machines are created in the same Resource Group as the network resources.
+	// If empty, the NetworkResourceGroup is considered to be the same value as ResourceGroup, which will contain
+	// the network and remaining resources of the cluster.
+	// (optional)
+	NetworkResourceGroup string `json:"networkResourceGroup,omitempty"`
 
 	// PrimaryNetworkInterface is required to specify subnet
 	PrimaryNetworkInterface NetworkInterface `json:"primaryNetworkInterface"`

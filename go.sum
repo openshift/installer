@@ -1088,8 +1088,6 @@ github.com/openshift/cloud-provider-vsphere v1.19.1-0.20211222185833-7829863d055
 github.com/openshift/cloud-provider-vsphere v1.19.1-0.20211222185833-7829863d0558/go.mod h1:bgZfB07YK1CBbJRkFE13BHG+k53Qq0IuQyrehZAbv7M=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e h1:FWzYb0sH16yVOyySUwY5yXtZFW/U2bPoK38SEGjC5D8=
 github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e/go.mod h1:Q5WzHV1JZw/XNRnXCo8JfyOSegL13a+lhV4sc44lpSI=
-github.com/openshift/cluster-api-provider-ibmcloud v0.0.1-0.20220201105455-8014e5e894b0 h1:G68R/I4HB4F4LawreWxKruqThNpmmXf5DSAsJALc9FY=
-github.com/openshift/cluster-api-provider-ibmcloud v0.0.1-0.20220201105455-8014e5e894b0/go.mod h1:CLnQ32mWHZtlQeHX0lYLMA+QTrrdXbg9K8smrWOPXMk=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230203123120-e55e92c14b2c h1:gq3EVbCFath848QkE71dMjdBTnzpRoYvD+Nnj2Wp97U=
 github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230203123120-e55e92c14b2c/go.mod h1:lApSDY9c9SRjLgLAnwMhyuENQRHR/o1yBtH6RG8GScw=
 github.com/openshift/cluster-api-provider-ovirt v0.1.1-0.20220323121149-e3f2850dd519 h1:foU7/s6DQczTFdZ/8H++pUC2Pzygqdz5ZgqUakksR5w=
@@ -1102,6 +1100,8 @@ github.com/openshift/library-go v0.0.0-20191003152030-97c62d8a2901/go.mod h1:NBt
 github.com/openshift/library-go v0.0.0-20200831114015-2ab0c61c15de/go.mod h1:6vwp+YhYOIlj8MpkQKkebTTSn2TuYyvgiAFQ206jIEQ=
 github.com/openshift/library-go v0.0.0-20220920133651-093893cf326b h1:LWwB7uN91G/JsMnZFd0+q6ZzAXlB4/oUOfpZWA585gw=
 github.com/openshift/library-go v0.0.0-20220920133651-093893cf326b/go.mod h1:KPBAXGaq7pPmA+1wUVtKr5Axg3R68IomWDkzaOxIhxM=
+github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1 h1:winAA43R7imUj8uzAF7NVs3QWIxheF+rhpRF+O+0/R8=
+github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1/go.mod h1:UDA+gKaUSWbZsKbUbzybyaIqdksOQF5iKc+OsYnHL9k=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8 h1:C4gCipkWTDp0B9jb0wZdLgB+HWC7EzVVwQOeNaKnTRA=
 github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8/go.mod h1:fjKreLaKEeUKsyIkT4wlzIQwUVJ2ZKDUh3CI73ckYIY=
 github.com/openshift/runtime-utils v0.0.0-20200415173359-c45d4ff3f912/go.mod h1:0OXNy7VoqFexkxKqyQbHJLPwn1MFp1/CxRJAgKHM+/o=
