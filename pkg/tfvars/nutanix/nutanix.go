@@ -10,20 +10,22 @@ import (
 )
 
 type config struct {
-	PrismCentralAddress            string `json:"nutanix_prism_central_address"`
-	Port                           string `json:"nutanix_prism_central_port"`
-	Username                       string `json:"nutanix_username"`
-	Password                       string `json:"nutanix_password"`
-	MemoryMiB                      int64  `json:"nutanix_control_plane_memory_mib"`
-	DiskSizeMiB                    int64  `json:"nutanix_control_plane_disk_mib"`
-	NumCPUs                        int64  `json:"nutanix_control_plane_num_cpus"`
-	NumCoresPerSocket              int64  `json:"nutanix_control_plane_cores_per_socket"`
-	PrismElementUUID               string `json:"nutanix_prism_element_uuid"`
-	SubnetUUID                     string `json:"nutanix_subnet_uuid"`
-	Image                          string `json:"nutanix_image"`
-	ImageURI                       string `json:"nutanix_image_uri"`
-	BootstrapIgnitionImage         string `json:"nutanix_bootstrap_ignition_image"`
-	BootstrapIgnitionImageFilePath string `json:"nutanix_bootstrap_ignition_image_filepath"`
+	PrismCentralAddress            string            `json:"nutanix_prism_central_address"`
+	Port                           string            `json:"nutanix_prism_central_port"`
+	Username                       string            `json:"nutanix_username"`
+	Password                       string            `json:"nutanix_password"`
+	MemoryMiB                      int64             `json:"nutanix_control_plane_memory_mib"`
+	DiskSizeMiB                    int64             `json:"nutanix_control_plane_disk_mib"`
+	NumCPUs                        int64             `json:"nutanix_control_plane_num_cpus"`
+	NumCoresPerSocket              int64             `json:"nutanix_control_plane_cores_per_socket"`
+	ProjectUUID                    string            `json:"nutanix_control_plane_project_uuid"`
+	Categories                     map[string]string `json:"nutanix_control_plane_categories"`
+	PrismElementUUID               string            `json:"nutanix_prism_element_uuid"`
+	SubnetUUID                     string            `json:"nutanix_subnet_uuid"`
+	Image                          string            `json:"nutanix_image"`
+	ImageURI                       string            `json:"nutanix_image_uri"`
+	BootstrapIgnitionImage         string            `json:"nutanix_bootstrap_ignition_image"`
+	BootstrapIgnitionImageFilePath string            `json:"nutanix_bootstrap_ignition_image_filepath"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -63,5 +65,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		BootstrapIgnitionImage:         bootstrapIgnitionImageName,
 		BootstrapIgnitionImageFilePath: bootstrapIgnitionImagePath,
 	}
+
+	if controlPlaneConfig.Project.Type == machinev1.NutanixIdentifierUUID {
+		cfg.ProjectUUID = *controlPlaneConfig.Project.UUID
+	}
+	cfg.Categories = make(map[string]string, len(controlPlaneConfig.Categories))
+	for _, category := range controlPlaneConfig.Categories {
+		cfg.Categories[category.Key] = category.Value
+	}
+
 	return json.MarshalIndent(cfg, "", "  ")
 }

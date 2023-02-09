@@ -71,3 +71,21 @@ variable "nutanix_control_plane_num_cpus" {
 variable "nutanix_control_plane_cores_per_socket" {
   type = number
 }
+
+variable "nutanix_control_plane_project_uuid" {
+  type        = string
+  default     = null
+  description = "(optional) An existing prism-central project to be applied to control-plane vms."
+}
+
+variable "nutanix_control_plane_categories" {
+  type = map(string)
+
+  description = <<EOF
+(optional) The existing prism-central categories to be applied to control-plane vms.
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
+}

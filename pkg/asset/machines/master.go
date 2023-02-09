@@ -480,6 +480,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.NumCPUs = 8
 		mpool.Set(ic.Platform.Nutanix.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Nutanix)
+		if err = mpool.ValidateConfig(ic.Platform.Nutanix); err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
 		pool.Platform.Nutanix = &mpool
 		templateName := nutanixtypes.RHCOSImageName(clusterID.InfraID)
 

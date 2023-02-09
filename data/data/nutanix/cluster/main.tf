@@ -71,6 +71,16 @@ resource "nutanix_virtual_machine" "vm_master" {
     value = nutanix_category_value.ocp_category_value_owned.value
   }
 
+  dynamic "categories" {
+    for_each = (var.nutanix_control_plane_categories == null) ? {} : var.nutanix_control_plane_categories
+    content {
+      name  = categories.key
+      value = categories.value
+    }
+  }
+
+  project_reference = (length(var.nutanix_control_plane_project_uuid) != 0) ? { kind = "project", uuid = var.nutanix_control_plane_project_uuid } : null
+
   guest_customization_cloud_init_user_data = base64encode(var.ignition_master)
   nic_list {
     subnet_uuid = var.nutanix_subnet_uuid

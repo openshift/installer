@@ -493,6 +493,47 @@ spec:
                       description: Nutanix is the configuration used when installing
                         on Nutanix.
                       properties:
+                        bootType:
+                          description: BootType indicates the boot type (Legacy, UEFI
+                            or SecureBoot) the Machine's VM uses to boot. If this
+                            field is empty or omitted, the VM will use the default
+                            boot type "Legacy" to boot. "SecureBoot" depends on "UEFI"
+                            boot, i.e., enabling "SecureBoot" means that "UEFI" boot
+                            is also enabled.
+                          enum:
+                          - ""
+                          - Legacy
+                          - UEFI
+                          - SecureBoot
+                          type: string
+                        categories:
+                          description: Categories optionally adds one or more prism
+                            categories (each with key and value) for the Machine's
+                            VM to associate with. All the category key and value pairs
+                            specified must already exist in the prism central.
+                          items:
+                            description: NutanixCategory identifies a pair of prism
+                              category key and value
+                            properties:
+                              key:
+                                description: key is the prism category key name
+                                maxLength: 64
+                                minLength: 1
+                                type: string
+                              value:
+                                description: value is the prism category value associated
+                                  with the key
+                                maxLength: 64
+                                minLength: 1
+                                type: string
+                            required:
+                            - key
+                            - value
+                            type: object
+                          type: array
+                          x-kubernetes-list-map-keys:
+                          - key
+                          x-kubernetes-list-type: map
                         coresPerSocket:
                           description: 'NumCoresPerSocket is the number of cores per
                             socket in a vm. The number of vCPUs on the vm will be
@@ -519,6 +560,27 @@ spec:
                                 GiB.
                               format: int64
                               type: integer
+                          type: object
+                        project:
+                          description: Project optionally identifies a Prism project
+                            for the Machine's VM to associate with.
+                          properties:
+                            name:
+                              description: name is the resource name in the PC
+                              type: string
+                            type:
+                              description: Type is the identifier type to use for
+                                this resource.
+                              enum:
+                              - uuid
+                              - name
+                              type: string
+                            uuid:
+                              description: uuid is the UUID of the resource in the
+                                PC.
+                              type: string
+                          required:
+                          - type
                           type: object
                       type: object
                     openstack:
@@ -1171,6 +1233,46 @@ spec:
                     description: Nutanix is the configuration used when installing
                       on Nutanix.
                     properties:
+                      bootType:
+                        description: BootType indicates the boot type (Legacy, UEFI
+                          or SecureBoot) the Machine's VM uses to boot. If this field
+                          is empty or omitted, the VM will use the default boot type
+                          "Legacy" to boot. "SecureBoot" depends on "UEFI" boot, i.e.,
+                          enabling "SecureBoot" means that "UEFI" boot is also enabled.
+                        enum:
+                        - ""
+                        - Legacy
+                        - UEFI
+                        - SecureBoot
+                        type: string
+                      categories:
+                        description: Categories optionally adds one or more prism
+                          categories (each with key and value) for the Machine's VM
+                          to associate with. All the category key and value pairs
+                          specified must already exist in the prism central.
+                        items:
+                          description: NutanixCategory identifies a pair of prism
+                            category key and value
+                          properties:
+                            key:
+                              description: key is the prism category key name
+                              maxLength: 64
+                              minLength: 1
+                              type: string
+                            value:
+                              description: value is the prism category value associated
+                                with the key
+                              maxLength: 64
+                              minLength: 1
+                              type: string
+                          required:
+                          - key
+                          - value
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - key
+                        x-kubernetes-list-type: map
                       coresPerSocket:
                         description: 'NumCoresPerSocket is the number of cores per
                           socket in a vm. The number of vCPUs on the vm will be NumCPUs
@@ -1196,6 +1298,26 @@ spec:
                             description: DiskSizeGiB defines the size of disk in GiB.
                             format: int64
                             type: integer
+                        type: object
+                      project:
+                        description: Project optionally identifies a Prism project
+                          for the Machine's VM to associate with.
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
                         type: object
                     type: object
                   openstack:
@@ -2586,6 +2708,46 @@ spec:
                       used when installing on Nutanix for machine pools which do not
                       define their own platform configuration.
                     properties:
+                      bootType:
+                        description: BootType indicates the boot type (Legacy, UEFI
+                          or SecureBoot) the Machine's VM uses to boot. If this field
+                          is empty or omitted, the VM will use the default boot type
+                          "Legacy" to boot. "SecureBoot" depends on "UEFI" boot, i.e.,
+                          enabling "SecureBoot" means that "UEFI" boot is also enabled.
+                        enum:
+                        - ""
+                        - Legacy
+                        - UEFI
+                        - SecureBoot
+                        type: string
+                      categories:
+                        description: Categories optionally adds one or more prism
+                          categories (each with key and value) for the Machine's VM
+                          to associate with. All the category key and value pairs
+                          specified must already exist in the prism central.
+                        items:
+                          description: NutanixCategory identifies a pair of prism
+                            category key and value
+                          properties:
+                            key:
+                              description: key is the prism category key name
+                              maxLength: 64
+                              minLength: 1
+                              type: string
+                            value:
+                              description: value is the prism category value associated
+                                with the key
+                              maxLength: 64
+                              minLength: 1
+                              type: string
+                          required:
+                          - key
+                          - value
+                          type: object
+                        type: array
+                        x-kubernetes-list-map-keys:
+                        - key
+                        x-kubernetes-list-type: map
                       coresPerSocket:
                         description: 'NumCoresPerSocket is the number of cores per
                           socket in a vm. The number of vCPUs on the vm will be NumCPUs
@@ -2611,6 +2773,26 @@ spec:
                             description: DiskSizeGiB defines the size of disk in GiB.
                             format: int64
                             type: integer
+                        type: object
+                      project:
+                        description: Project optionally identifies a Prism project
+                          for the Machine's VM to associate with.
+                        properties:
+                          name:
+                            description: name is the resource name in the PC
+                            type: string
+                          type:
+                            description: Type is the identifier type to use for this
+                              resource.
+                            enum:
+                            - uuid
+                            - name
+                            type: string
+                          uuid:
+                            description: uuid is the UUID of the resource in the PC.
+                            type: string
+                        required:
+                        - type
                         type: object
                     type: object
                   ingressVIP:

@@ -75,7 +75,7 @@ func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.Machi
 		subnets = append(subnets, subnet)
 	}
 
-	return &machinev1.NutanixMachineProviderConfig{
+	providerCfg := &machinev1.NutanixMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machinev1.GroupVersion.String(),
 			Kind:       "NutanixMachineProviderConfig",
@@ -95,7 +95,24 @@ func provider(clusterID string, platform *nutanix.Platform, mpool *nutanix.Machi
 			UUID: &platform.PrismElements[0].UUID,
 		},
 		SystemDiskSize: resource.MustParse(fmt.Sprintf("%dGi", mpool.OSDisk.DiskSizeGiB)),
-	}, nil
+	}
+
+	if len(mpool.BootType) != 0 {
+		providerCfg.BootType = mpool.BootType
+	}
+
+	if mpool.Project != nil && mpool.Project.Type == machinev1.NutanixIdentifierUUID {
+		providerCfg.Project = machinev1.NutanixResourceIdentifier{
+			Type: machinev1.NutanixIdentifierUUID,
+			UUID: mpool.Project.UUID,
+		}
+	}
+
+	if len(mpool.Categories) > 0 {
+		providerCfg.Categories = mpool.Categories
+	}
+
+	return providerCfg, nil
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
