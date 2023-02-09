@@ -1,33 +1,17 @@
 output "resource_pool" {
-  value = data.vsphere_resource_pool.resource_pool.id
+  value = data.vsphere_resource_pool.resource_pool
 }
 
 output "datastore" {
-  value = data.vsphere_datastore.datastore.id
-}
-
-output "folder" {
-  value = local.folder
+  value = data.vsphere_datastore.datastore
 }
 
 output "datacenter" {
-  value = data.vsphere_datacenter.datacenter.id
+  value = data.vsphere_datacenter.datacenter
 }
 
 output "template" {
-  value = data.vsphere_virtual_machine.template.id
-}
-
-output "guest_id" {
-  value = data.vsphere_virtual_machine.template.guest_id
-}
-
-output "thin_disk" {
-  value = data.vsphere_virtual_machine.template.disks.0.thin_provisioned
-}
-
-output "scrub_disk" {
-  value = data.vsphere_virtual_machine.template.disks.0.eagerly_scrub
+  value = data.vsphere_virtual_machine.template
 }
 
 output "cluster_domain" {

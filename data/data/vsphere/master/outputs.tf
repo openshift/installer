@@ -1,7 +1,7 @@
 output "control_plane_ips" {
-  value = vsphere_virtual_machine.vm_master.*.default_ip_address
+  value = [for k, v in vsphere_virtual_machine.vm_master : v.default_ip_address]
 }
 
 output "control_plane_moids" {
-  value = vsphere_virtual_machine.vm_master.*.moid
+  value = [for k, v in vsphere_virtual_machine.vm_master : v.moid]
 }

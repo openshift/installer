@@ -16,7 +16,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-// PlatformStages are the stages to run to provision the infrastructure in vsphere.
+// PlatformStages are the stages to run to provision the infrastructure in a
+// multiple region and zone vsphere environment.
 var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		"vsphere",
@@ -32,29 +33,6 @@ var PlatformStages = []terraform.Stage{
 	),
 	stages.NewStage(
 		"vsphere",
-		"master",
-		[]providers.Provider{providers.VSphere},
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
-}
-
-// ZoningPlatformStages are the stages to run to provision the infrastructure in a
-// multiple region and zone vsphere environment.
-var ZoningPlatformStages = []terraform.Stage{
-	stages.NewStage(
-		"vspherezoning",
-		"pre-bootstrap",
-		[]providers.Provider{providers.VSphere, providers.VSpherePrivate},
-	),
-	stages.NewStage(
-		"vspherezoning",
-		"bootstrap",
-		[]providers.Provider{providers.VSphere},
-		stages.WithNormalBootstrapDestroy(),
-		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
-	stages.NewStage(
-		"vspherezoning",
 		"master",
 		[]providers.Provider{providers.VSphere},
 		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
@@ -111,16 +89,15 @@ func extractOutputHostAddresses(s stages.SplitStage, directory string, config *t
 
 // hostIP returns the ip address for a host
 func hostIP(config *types.InstallConfig, moid string) (string, error) {
-	client, _, cleanup, err := vsphere.CreateVSphereClients(context.TODO(), config.VSphere.VCenter, config.VSphere.Username, config.VSphere.Password)
+	client, _, cleanup, err := vsphere.CreateVSphereClients(context.TODO(), config.VSphere.VCenters[0].Server, config.VSphere.VCenters[0].Username, config.VSphere.VCenters[0].Password)
 	if err != nil {
 		return "", err
 	}
 	defer cleanup()
 
-	var errs []error
 	ip, err := waitForVirtualMachineIP(client, moid)
 	if err != nil {
-		errs = append(errs, errors.Wrapf(err, "failed to lookup ipv4 address from given moid %s", moid))
+		return "", errors.Wrapf(err, "failed to lookup ipv4 address from given moid %s", moid)
 	}
 
 	return ip, nil
