@@ -29,7 +29,7 @@ func TestAgentConfig_LoadedFromDisk(t *testing.T) {
 		{
 			name: "valid-config-single-node",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -59,7 +59,7 @@ hosts:
 		{
 			name: "valid-config-multiple-nodes",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -126,7 +126,7 @@ hosts:
 		{
 			name: "unknown-field",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-wrong
 wrongField: wrongValue`,
@@ -137,7 +137,7 @@ wrongField: wrongValue`,
 		{
 			name: "interface-missing-mac-address-error",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -154,7 +154,7 @@ hosts:
 		{
 			name: "unsupported wwn extension root device hint",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -172,7 +172,7 @@ hosts:
 		{
 			name: "unsupported wwn vendor extension root device hint",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -190,7 +190,7 @@ hosts:
 		{
 			name: "node-hostname-and-role-are-not-required",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -208,7 +208,7 @@ hosts:
 		{
 			name: "host-roles-have-correct-values",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -231,7 +231,7 @@ hosts:
 		{
 			name: "host-roles-have-incorrect-values",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -247,7 +247,7 @@ hosts:
 		{
 			name: "different-ifaces-same-host-cannot-have-same-mac",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -264,7 +264,7 @@ hosts:
 		{
 			name: "different-hosts-cannot-have-same-mac",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -282,7 +282,7 @@ hosts:
 		{
 			name: "invalid-mac",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: 192.168.111.80
@@ -297,7 +297,7 @@ hosts:
 		{
 			name: "empty-rendezvousIP",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0`,
 
@@ -307,7 +307,7 @@ metadata:
 		{
 			name: "invalid-rendezvousIP",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 rendezvousIP: not-a-valid-ip`,
@@ -318,7 +318,7 @@ rendezvousIP: not-a-valid-ip`,
 		{
 			name: "invalid-additionalNTPSourceDomain",
 			data: `
-apiVersion: v1alpha1
+apiVersion: v1beta1
 metadata:
   name: agent-config-cluster0
 additionalNTPSources:
