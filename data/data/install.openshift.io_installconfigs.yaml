@@ -3247,7 +3247,7 @@ spec:
                     description: FailureDomains holds the VSpherePlatformFailureDomainSpec
                       which contains the definition of region, zone and the vCenter
                       topology. If this is omitted failure domains (regions and zones)
-                      will not be used. FailureDomains is available in TechPreview.
+                      will not be used.
                     items:
                       description: FailureDomain holds the region and zone failure
                         domain and the vCenter topology of that failure domain.
@@ -3375,7 +3375,7 @@ spec:
                   vcenters:
                     description: VCenters holds the connection details for services
                       to communicate with vCenter. Currently only a single vCenter
-                      is supported. VCenters is available in TechPreview.
+                      is supported.
                     items:
                       description: VCenter stores the vCenter connection fields https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
                       properties:
