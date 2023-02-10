@@ -101,6 +101,19 @@ type InfrastructureStatus struct {
 	// +kubebuilder:default=HighlyAvailable
 	// +kubebuilder:validation:Enum=HighlyAvailable;SingleReplica
 	InfrastructureTopology TopologyMode `json:"infrastructureTopology"`
+
+	// cpuPartitioning expresses if CPU partitioning is a currently enabled feature in the cluster.
+	// CPU Partitioning means that this cluster can support partitioning workloads to specific CPU Sets.
+	// Valid values are "None" and "AllNodes". When omitted, the default value is "None".
+	// The default value of "None" indicates that no nodes will be setup with CPU partitioning.
+	// The "AllNodes" value indicates that all nodes have been setup with CPU partitioning,
+	// and can then be further configured via the PerformanceProfile API.
+	// +kubebuilder:default=None
+	// +default="None"
+	// +kubebuilder:validation:Enum=None;AllNodes
+	// +openshift:enable:FeatureSets=TechPreviewNoUpgrade
+	// +optional
+	CPUPartitioning CPUPartitioningMode `json:"cpuPartitioning,omitempty"`
 }
 
 // TopologyMode defines the topology mode of the control/infra nodes.
@@ -121,6 +134,17 @@ const (
 	// that any of the control plane components such as kubernetes API server or etcd are visible within
 	// the cluster.
 	ExternalTopologyMode TopologyMode = "External"
+)
+
+// CPUPartitioningMode defines the mode for CPU partitioning
+type CPUPartitioningMode string
+
+const (
+	// CPUPartitioningNone means that no CPU Partitioning is on in this cluster infrastructure
+	CPUPartitioningNone CPUPartitioningMode = "None"
+
+	// CPUPartitioningAllNodes means that all nodes are configured with CPU Partitioning in this cluster
+	CPUPartitioningAllNodes CPUPartitioningMode = "AllNodes"
 )
 
 // PlatformType is a specific supported infrastructure provider.
@@ -460,6 +484,7 @@ type AWSResourceTag struct {
 type AzurePlatformSpec struct{}
 
 // AzurePlatformStatus holds the current status of the Azure infrastructure provider.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.resourceTags) && !has(self.resourceTags) || has(oldSelf.resourceTags) && has(self.resourceTags)",message="resourceTags may only be configured during installation"
 type AzurePlatformStatus struct {
 	// resourceGroupName is the Resource Group for new Azure resources created for the cluster.
 	ResourceGroupName string `json:"resourceGroupName"`
@@ -478,6 +503,34 @@ type AzurePlatformStatus struct {
 	// armEndpoint specifies a URL to use for resource management in non-soverign clouds such as Azure Stack.
 	// +optional
 	ARMEndpoint string `json:"armEndpoint,omitempty"`
+
+	// resourceTags is a list of additional tags to apply to Azure resources created for the cluster.
+	// See https://docs.microsoft.com/en-us/rest/api/resources/tags for information on tagging Azure resources.
+	// Due to limitations on Automation, Content Delivery Network, DNS Azure resources, a maximum of 15 tags
+	// may be applied. OpenShift reserves 5 tags for internal use, allowing 10 tags for user configuration.
+	// +kubebuilder:validation:MaxItems=10
+	// +kubebuilder:validation:XValidation:rule="self.all(x, x in oldSelf) && oldSelf.all(x, x in self)",message="resourceTags are immutable and may only be configured during installation"
+	// +optional
+	ResourceTags []AzureResourceTag `json:"resourceTags,omitempty"`
+}
+
+// AzureResourceTag is a tag to apply to Azure resources created for the cluster.
+type AzureResourceTag struct {
+	// key is the key part of the tag. A tag key can have a maximum of 128 characters and cannot be empty. Key
+	// must begin with a letter, end with a letter, number or underscore, and must contain only alphanumeric
+	// characters and the following special characters `_ . -`.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=128
+	// +kubebuilder:validation:Pattern=`^[a-zA-Z]([0-9A-Za-z_.-]*[0-9A-Za-z_])?$`
+	Key string `json:"key"`
+	// value is the value part of the tag. A tag value can have a maximum of 256 characters and cannot be empty. Value
+	// must contain only alphanumeric characters and the following special characters `_ + , - . / : ; < = > ? @`.
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=256
+	// +kubebuilder:validation:Pattern=`^[0-9A-Za-z_.=+-@]+$`
+	Value string `json:"value"`
 }
 
 // AzureCloudEnvironment is the name of the Azure cloud environment

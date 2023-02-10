@@ -154,6 +154,7 @@ func (b infraBuildNamespace) build(opts ...infraOption) *configv1.Infrastructure
 			ControlPlaneTopology:   configv1.HighlyAvailableTopologyMode,
 			InfrastructureTopology: configv1.HighlyAvailableTopologyMode,
 			PlatformStatus:         &configv1.PlatformStatus{},
+			CPUPartitioning:        configv1.CPUPartitioningNone,
 		},
 	}
 	for _, opt := range opts {
