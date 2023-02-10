@@ -58,7 +58,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	machines := make([]machineapi.Machine, 0, total)
 	providerConfigs := map[string]*machinev1alpha1.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
-		zone := mpool.Zones[int(idx)%len(mpool.Zones)]
+		zone := mpool.Zones[uint(idx)%uint(len(mpool.Zones))]
 		var provider *machinev1alpha1.OpenstackProviderSpec
 
 		if _, ok := providerConfigs[zone]; !ok {
@@ -71,7 +71,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				role,
 				userDataSecret,
 				trunkSupport,
-				volumeAZs[int(idx)%len(volumeAZs)],
+				volumeAZs[uint(idx)%uint(len(volumeAZs))],
 			)
 			if err != nil {
 				return nil, err
