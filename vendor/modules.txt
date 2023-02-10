@@ -8992,7 +8992,7 @@ golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/modfile
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.5.0
+# golang.org/x/net v0.5.0 => golang.org/x/net v0.5.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -9614,3 +9614,4 @@ sigs.k8s.io/yaml
 # gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 # github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
+# golang.org/x/net => golang.org/x/net v0.5.0
