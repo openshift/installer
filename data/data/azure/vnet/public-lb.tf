@@ -20,6 +20,7 @@ resource "azurerm_public_ip" "cluster_public_ip_v4" {
   resource_group_name = data.azurerm_resource_group.main.name
   allocation_method   = "Static"
   domain_name_label   = var.cluster_id
+  tags                = var.azure_extra_tags
 }
 
 data "azurerm_public_ip" "cluster_public_ip_v4" {
@@ -41,6 +42,7 @@ resource "azurerm_public_ip" "cluster_public_ip_v6" {
   resource_group_name = data.azurerm_resource_group.main.name
   allocation_method   = "Static"
   domain_name_label   = var.cluster_id
+  tags                = var.azure_extra_tags
 }
 
 data "azurerm_public_ip" "cluster_public_ip_v6" {
@@ -86,6 +88,8 @@ resource "azurerm_lb" "public" {
       private_ip_address_allocation = "Dynamic"
     }
   }
+
+  tags = var.azure_extra_tags
 }
 
 // The backends are only created when frontend configuration exists, because of the following error from Azure API;

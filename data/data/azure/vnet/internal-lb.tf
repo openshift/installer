@@ -30,6 +30,8 @@ resource "azurerm_lb" "internal" {
       private_ip_address            = frontend_ip_configuration.value.ipv6 ? cidrhost(local.master_subnet_cidr_v6, -2) : null
     }
   }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_lb_backend_address_pool" "internal_lb_controlplane_pool_v4" {

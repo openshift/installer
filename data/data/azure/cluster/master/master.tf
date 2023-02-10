@@ -49,6 +49,8 @@ resource "azurerm_network_interface" "master" {
       private_ip_address_allocation = "Dynamic"
     }
   }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "master_v4" {
@@ -131,4 +133,6 @@ resource "azurerm_linux_virtual_machine" "master" {
   boot_diagnostics {
     storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
   }
+
+  tags = var.azure_extra_tags
 }

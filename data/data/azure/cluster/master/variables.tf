@@ -82,14 +82,21 @@ variable "os_volume_size" {
   description = "The size of the volume in gigabytes for the root block device."
 }
 
-variable "tags" {
-  type        = map(string)
-  default     = {}
-  description = "tags to be applied to created resources."
+variable "azure_extra_tags" {
+  type = map(string)
+
+  description = <<EOF
+(optional) Extra Azure tags to be applied to created resources.
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+
+  default = {}
 }
 
 variable "storage_account_name" {
-  type        = any
+  type = any
   description = "the name of the storage account for the cluster. It can be used for boot diagnostics."
 }
 
@@ -98,27 +105,27 @@ variable "ignition" {
 }
 
 variable "availability_zones" {
-  type        = list(string)
+  type = list(string)
   description = "List of the availability zones in which to create the masters. The length of this list must match instance_count."
 }
 
 variable "private" {
-  type        = bool
+  type = bool
   description = "This value determines if this is a private cluster or not."
 }
 
 variable "use_ipv4" {
-  type        = bool
+  type = bool
   description = "This value determines if this is cluster should use IPv4 networking."
 }
 
 variable "use_ipv6" {
-  type        = bool
+  type = bool
   description = "This value determines if this is cluster should use IPv6 networking."
 }
 
 variable "outbound_udr" {
-  type    = bool
+  type = bool
   default = false
 
   description = <<EOF
@@ -131,12 +138,12 @@ EOF
 }
 
 variable "ultra_ssd_enabled" {
-  type = bool
+  type        = bool
   description = "Determines if the control plane should have UltraSSD Enabled."
 }
 
 variable "vm_networking_type" {
-  type = bool
+  type        = bool
   description = <<EOF
 networking_type specifies whether to enable accelerated networking. Accelerated networking
 enables single root I/O virtualization (SR-IOV) to a VM, greatly improving its networking performance.

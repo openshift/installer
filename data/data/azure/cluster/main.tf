@@ -1,14 +1,7 @@
 locals {
-  tags = merge(
-    {
-      "kubernetes.io_cluster.${var.cluster_id}" = "owned"
-    },
-    var.azure_extra_tags,
-  )
   description = "Created By OpenShift Installer"
   # At this time min_tls_version is only supported in the Public Cloud and US Government Cloud.
   environments_with_min_tls_version = ["public", "usgovernment"]
-
 }
 
 provider "azurerm" {
@@ -47,6 +40,7 @@ module "master" {
   outbound_udr               = var.azure_outbound_user_defined_routing
   ultra_ssd_enabled          = var.azure_control_plane_ultra_ssd_enabled
   vm_networking_type         = var.azure_control_plane_vm_networking_type
+  azure_extra_tags           = var.azure_extra_tags
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6
@@ -65,6 +59,7 @@ module "dns" {
   resource_group_name             = var.resource_group_name
   base_domain_resource_group_name = var.azure_base_domain_resource_group_name
   private                         = var.azure_private
+  azure_extra_tags                = var.azure_extra_tags
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6
