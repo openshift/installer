@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
@@ -186,58 +187,53 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 	switch installConfig.Platform.Name() {
 
 	case baremetal.Name:
+		defaultIc := &types.InstallConfig{Platform: types.Platform{BareMetal: &baremetal.Platform{}}}
+		baremetaldefaults.SetPlatformDefaults(defaultIc.Platform.BareMetal, defaultIc)
+
 		baremetal := installConfig.Platform.BareMetal
-		// +kubebuilder:default="qemu:///system". Set from generic install config code
-		if baremetal.LibvirtURI != "qemu:///system" {
+		defaultBM := defaultIc.Platform.BareMetal
+		// Compare values from generic installconfig code to check for changes
+		if baremetal.LibvirtURI != defaultBM.LibvirtURI {
 			fieldPath := field.NewPath("Platform", "Baremetal", "LibvirtURI")
 			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.LibvirtURI))
 		}
-		if baremetal.ClusterProvisioningIP != "" {
+		if baremetal.ClusterProvisioningIP != defaultBM.ClusterProvisioningIP {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ClusterProvisioningIP")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ClusterProvisioningIP))
 		}
-		if baremetal.DeprecatedProvisioningHostIP != "" {
+		if baremetal.DeprecatedProvisioningHostIP != defaultBM.DeprecatedProvisioningHostIP {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningHostIP")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.DeprecatedProvisioningHostIP))
 		}
-		if baremetal.BootstrapProvisioningIP != "" {
+		if baremetal.BootstrapProvisioningIP != defaultBM.BootstrapProvisioningIP {
 			fieldPath := field.NewPath("Platform", "Baremetal", "BootstrapProvisioningIP")
 			logrus.Debugf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.BootstrapProvisioningIP))
 		}
-		if baremetal.ExternalBridge != "" {
+		if baremetal.ExternalBridge != defaultBM.ExternalBridge {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ExternalBridge")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ExternalBridge))
 		}
-		if baremetal.ExternalMACAddress != "" {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ExternalMACAddress")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ExternalMACAddress))
-		}
-		// +kubebuilder:default=Managed
-		if baremetal.ProvisioningNetwork != "Managed" {
+		if baremetal.ProvisioningNetwork != defaultBM.ProvisioningNetwork {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningNetwork")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningNetwork))
 		}
-		if baremetal.ProvisioningBridge != "" {
+		if baremetal.ProvisioningBridge != defaultBM.ProvisioningBridge {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningBridge")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningBridge))
 		}
-		if baremetal.ProvisioningMACAddress != "" {
-			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningMACAddress")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningMACAddress))
-		}
-		if baremetal.ProvisioningNetworkInterface != "" {
+		if baremetal.ProvisioningNetworkInterface != defaultBM.ProvisioningNetworkInterface {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningNetworkInterface")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningNetworkInterface))
 		}
-		if baremetal.ProvisioningNetworkCIDR.String() != "" {
+		if baremetal.ProvisioningNetworkCIDR.String() != defaultBM.ProvisioningNetworkCIDR.String() {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningNetworkCIDR")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningNetworkCIDR))
 		}
-		if baremetal.DeprecatedProvisioningDHCPExternal {
+		if baremetal.DeprecatedProvisioningDHCPExternal != defaultBM.DeprecatedProvisioningDHCPExternal {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningDHCPExternal")
 			logrus.Warnf(fmt.Sprintf("%s: true is ignored", fieldPath))
 		}
-		if baremetal.ProvisioningDHCPRange != "" {
+		if baremetal.ProvisioningDHCPRange != defaultBM.ProvisioningDHCPRange {
 			fieldPath := field.NewPath("Platform", "Baremetal", "ProvisioningDHCPRange")
 			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, baremetal.ProvisioningDHCPRange))
 		}
