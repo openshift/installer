@@ -41,7 +41,7 @@ var (
 )
 
 // maxUserTagLimit is the maximum userTags that can be configured as defined in openshift/api.
-// https://github.com/openshift/api/blob/068483260288d83eac56053e202761b1702d46f5/config/v1/types_infrastructure.go#L482-L488
+// https://github.com/openshift/api/blob/e82a99f5bc64c2bf8549da559a6f37ccaf7d3af6/config/v1/types_infrastructure.go#L483-L490
 const maxUserTagLimit = 10
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -137,10 +137,10 @@ func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorLi
 //     windows prefixes.
 func validateTag(key, value string) error {
 	if !tagKeyRegex.MatchString(key) {
-		return fmt.Errorf("key is invalid or contains invalid characters. Key can have a maximum of 128 characters and cannot be empty. Key must begin with a letter, end with a letter, number or underscore, and can contain only letters, numbers, underscores, periods, or hyphens.")
+		return fmt.Errorf("key is invalid or contains invalid characters: key can have a maximum of 128 characters, cannot be empty and must begin with a letter, end with a letter, number or underscore, and must contain only alphanumeric characters and the following special characters `_ . -`")
 	}
 	if !tagValueRegex.MatchString(value) {
-		return fmt.Errorf("value is invalid or contains invalid characters. Value can have a maximum of 256 characters and cannot be empty. Value can contain only `a-zA-Z0-9_.=+-@` characters.")
+		return fmt.Errorf("value is invalid or contains invalid characters: value can have a maximum of 256 characters, cannot be empty and must contain only alphanumeric characters and the following special characters `_ + , - . / : ; < = > ? @`")
 	}
 	if tagKeyPrefixRegex.MatchString(key) {
 		return fmt.Errorf("key contains restricted prefix")

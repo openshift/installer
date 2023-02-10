@@ -183,8 +183,8 @@ func TestValidateUserTags(t *testing.T) {
 		{
 			name: "userTags configured",
 			userTags: map[string]string{
-				"key1": "value1", "key_2": "value_2", "key.3": "value.3", "key=4": "value=4", "key+5": "value+5",
-				"key-6": "value-6", "key@7": "value@7", "key8_": "value8-", "key9=": "value9+", "key10-": "value10@"},
+				"key1": "value1", "key_2": "value_2", "key.3": "value.3", "key-4._": "value=4", "key.5_A": "value+5",
+				"key-6": "value-6", "Key.-_7": "value@7", "key8_": "value8-", "key9A": "value9+", "key10a": "value10@"},
 			wantErr: false,
 		},
 		{
@@ -196,8 +196,18 @@ func TestValidateUserTags(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:     "userTags contains key starting a number",
+			name:     "userTags contains key starting with a number",
 			userTags: map[string]string{"1key": "1value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains key starting with a special character",
+			userTags: map[string]string{"_key": "1value"},
+			wantErr:  true,
+		},
+		{
+			name:     "userTags contains key ending with a special character",
+			userTags: map[string]string{"key@": "1value"},
 			wantErr:  true,
 		},
 		{
