@@ -95,10 +95,16 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 			return nil, err
 		}
 	}
+	var cred azcore.TokenCredential
 	if credentials.ClientCertificatePath != "" {
-		return newSessionFromCertificates(cloudEnv, credentials, cloudConfig)
+		cred, err = newTokenCredentialFromCertificates(credentials, cloudConfig)
+	} else {
+		cred, err = newTokenCredentialFromCredentials(credentials, cloudConfig)
 	}
-	return newSessionFromCredentials(cloudEnv, credentials, cloudConfig)
+	if err != nil {
+		return nil, err
+	}
+	return newSessionFromCredentials(cloudEnv, credentials, cred)
 }
 
 // credentialsFromFileOrUser returns credentials found
@@ -253,7 +259,7 @@ func saveCredentials(credentials Credentials, filePath string) error {
 	return os.WriteFile(filePath, jsonCreds, 0o600)
 }
 
-func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cloudConfig cloud.Configuration) (*Session, error) {
+func newTokenCredentialFromCredentials(credentials *Credentials, cloudConfig cloud.Configuration) (azcore.TokenCredential, error) {
 	options := azidentity.ClientSecretCredentialOptions{
 		ClientOptions: azcore.ClientOptions{
 			Cloud: cloudConfig,
@@ -264,29 +270,10 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials from secret")
 	}
-
-	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProvider(cred)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get Azidentity authentication provider")
-	}
-
-	// Use an adapter so azidentity in the Azure SDK can be used as
-	// Authorizer when calling the Azure Management Packages, which we
-	// currently use. Once the Azure SDK clients (found in /sdk) move to
-	// stable, we can update our clients and they will be able to use the
-	// creds directly without the authorizer. The schedule is here:
-	// https://azure.github.io/azure-sdk/releases/latest/index.html#go
-	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.TokenAudience)})
-
-	return &Session{
-		Authorizer:   authorizer,
-		Credentials:  *credentials,
-		Environment:  cloudEnv,
-		AuthProvider: authProvider,
-	}, nil
+	return cred, nil
 }
 
-func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Credentials, cloudConfig cloud.Configuration) (*Session, error) {
+func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cloud.Configuration) (azcore.TokenCredential, error) {
 	options := azidentity.ClientCertificateCredentialOptions{
 		ClientOptions: azcore.ClientOptions{
 			Cloud: cloudConfig,
@@ -312,8 +299,19 @@ func newSessionFromCertificates(cloudEnv azureenv.Environment, credentials *Cred
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials from certificate")
 	}
+	return cred, nil
+}
 
-	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProvider(cred)
+func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cred azcore.TokenCredential) (*Session, error) {
+	var scope []string
+	// This can be empty for StackCloud
+	if cloudEnv.MicrosoftGraphEndpoint != "" {
+		// GovClouds need a properly set scope in the authenticator, otherwise we
+		// get an 'Invalid audience' error when doing MSGraph API calls
+		// https://learn.microsoft.com/en-us/graph/sdks/national-clouds?tabs=go
+		scope = []string{endpointToScope(cloudEnv.MicrosoftGraphEndpoint)}
+	}
+	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProviderWithScopes(cred, scope)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get Azidentity authentication provider")
 	}
