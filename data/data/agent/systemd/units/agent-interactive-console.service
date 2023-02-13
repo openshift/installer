@@ -7,6 +7,7 @@ Before=network.target network.service agent.service NetworkManager-wait-online.s
 Type=oneshot
 TTYPath=/dev/tty15
 ExecStartPre=/usr/bin/chvt 15
+ExecStartPre=mkdir -p /var/log/agent
 ExecStart="/usr/local/bin/agent-interactive-console.sh"
 ExecStartPost=/usr/bin/chvt 1
 TimeoutStartSec=0
