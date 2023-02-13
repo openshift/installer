@@ -3,17 +3,17 @@ package vsphere
 import (
 	"context"
 	"fmt"
-	"github.com/sirupsen/logrus"
-	"github.com/vmware/govmomi/vim25/mo"
 	"net"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
+	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -25,7 +25,7 @@ import (
 
 //go:generate mockgen -source=./validation.go -destination=./mock/tagmanager_generated.go -package=mock
 
-// TagManager defines an interface to an implementation of the AuthorizationManager to facilitate mocking
+// TagManager defines an interface to an implementation of the AuthorizationManager to facilitate mocking.
 type TagManager interface {
 	ListCategories(ctx context.Context) ([]string, error)
 	GetCategories(ctx context.Context) ([]vapitags.Category, error)
@@ -136,12 +136,12 @@ func validateMultiZoneProvisioning(validationCtx *validationContext, failureDoma
 	vsphereField := field.NewPath("platform").Child("vsphere")
 	topologyField := vsphereField.Child("failureDomains").Child("topology")
 
-	regionTagCategoryId, zoneTagCategoryId, err := validateTagCategories(validationCtx)
+	regionTagCategoryID, zoneTagCategoryID, err := validateTagCategories(validationCtx)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(vsphereField, err))
 	}
-	validationCtx.regionTagCategoryID = regionTagCategoryId
-	validationCtx.zoneTagCategoryID = zoneTagCategoryId
+	validationCtx.regionTagCategoryID = regionTagCategoryID
+	validationCtx.zoneTagCategoryID = zoneTagCategoryID
 
 	allErrs = append(allErrs, resourcePoolExists(validationCtx, resourcePool, topologyField.Child("resourcePool"))...)
 
@@ -525,23 +525,23 @@ func validateTagCategories(validationCtx *validationContext) (string, string, er
 		return "", "", err
 	}
 
-	regionTagCategoryId := ""
-	zoneTagCategoryId := ""
+	regionTagCategoryID := ""
+	zoneTagCategoryID := ""
 	for _, category := range categories {
 		switch category.Name {
 		case vsphere.TagCategoryRegion:
-			regionTagCategoryId = category.ID
+			regionTagCategoryID = category.ID
 		case vsphere.TagCategoryZone:
-			zoneTagCategoryId = category.ID
+			zoneTagCategoryID = category.ID
 		}
-		if len(zoneTagCategoryId) > 0 && len(regionTagCategoryId) > 0 {
+		if len(zoneTagCategoryID) > 0 && len(regionTagCategoryID) > 0 {
 			break
 		}
 	}
-	if len(zoneTagCategoryId) == 0 || len(regionTagCategoryId) == 0 {
+	if len(zoneTagCategoryID) == 0 || len(regionTagCategoryID) == 0 {
 		return "", "", errors.New("tag categories openshift-zone and openshift-region must be created")
 	}
-	return regionTagCategoryId, zoneTagCategoryId, nil
+	return regionTagCategoryID, zoneTagCategoryID, nil
 }
 
 func validateTagAttachment(validationCtx *validationContext, reference vim25types.ManagedObjectReference) error {
@@ -550,8 +550,8 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 	}
 	client := validationCtx.Client
 	tagManager := validationCtx.TagManager
-	regionTagCategoryId := validationCtx.regionTagCategoryID
-	zoneTagCategoryId := validationCtx.zoneTagCategoryID
+	regionTagCategoryID := validationCtx.regionTagCategoryID
+	zoneTagCategoryID := validationCtx.zoneTagCategoryID
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
@@ -574,13 +574,13 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 	zoneTagAttached := false
 	for _, attachedTag := range attachedTags {
 		for _, tag := range attachedTag.Tags {
-			if regionTagAttached == false {
-				if tag.CategoryID == regionTagCategoryId {
+			if !regionTagAttached {
+				if tag.CategoryID == regionTagCategoryID {
 					regionTagAttached = true
 				}
 			}
-			if zoneTagAttached == false {
-				if tag.CategoryID == zoneTagCategoryId {
+			if !zoneTagAttached {
+				if tag.CategoryID == zoneTagCategoryID {
 					zoneTagAttached = true
 				}
 			}
@@ -590,10 +590,10 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 		}
 	}
 	var errs []string
-	if regionTagAttached == false {
+	if !regionTagAttached {
 		errs = append(errs, fmt.Sprintf("tag associated with tag category %s not attached to this resource or ancestor", vsphere.TagCategoryRegion))
 	}
-	if zoneTagAttached == false {
+	if !zoneTagAttached {
 		errs = append(errs, fmt.Sprintf("tag associated with tag category %s not attached to this resource or ancestor", vsphere.TagCategoryZone))
 	}
 	return errors.New(strings.Join(errs, ","))

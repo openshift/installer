@@ -10,10 +10,13 @@ import (
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/simulator"
-	_ "github.com/vmware/govmomi/vapi/rest"
-	_ "github.com/vmware/govmomi/vapi/simulator"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/soap"
+
+	// required to initialize the REST endpoint.
+	_ "github.com/vmware/govmomi/vapi/rest"
+	// required to initialize the VAPI endpoint.
+	_ "github.com/vmware/govmomi/vapi/simulator"
 )
 
 // StartSimulator starts an instance of the simulator which listens on 127.0.0.1.

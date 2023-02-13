@@ -10,10 +10,10 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/simulator"
 	"github.com/vmware/govmomi/vapi/rest"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
-	"github.com/vmware/govmomi/session"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -104,7 +104,7 @@ func teardownTagAttachmentTest(ctx context.Context, tagMgr *vapitags.Manager) er
 
 	for _, attachedMo := range attachedMos {
 		for _, mo := range attachedMo.ObjectIDs {
-			tagMgr.DetachTag(ctx, attachedMo.TagID, mo)
+			err := tagMgr.DetachTag(ctx, attachedMo.TagID, mo)
 			if err != nil {
 				return err
 			}
@@ -120,7 +120,8 @@ func teardownTagAttachmentTest(ctx context.Context, tagMgr *vapitags.Manager) er
 		return err
 	}
 	for _, category := range categories {
-		err := tagMgr.DeleteCategory(ctx, &category)
+		cat := category
+		err := tagMgr.DeleteCategory(ctx, &cat)
 		if err != nil {
 			return err
 		}
@@ -161,7 +162,7 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 		}
 	}
 	if attachmentMask&tagTestCreateZoneCategory != 0 {
-		categoryId, err := tagMgr.CreateCategory(ctx, &vapitags.Category{
+		categoryID, err := tagMgr.CreateCategory(ctx, &vapitags.Category{
 			Name:        "openshift-zone",
 			Description: "zone tag category",
 		})
@@ -169,9 +170,9 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 			return nil, err
 		}
 		if attachmentMask&tagTestAttachZoneTags != 0 {
-			tagId, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
+			tagID, err := tagMgr.CreateTag(ctx, &vapitags.Tag{
 				Name:       "us-east-1a",
-				CategoryID: categoryId,
+				CategoryID: categoryID,
 			})
 			if err != nil {
 				return nil, err
@@ -181,13 +182,12 @@ func setupTagAttachmentTest(ctx context.Context, restClient *rest.Client, finder
 				return nil, err
 			}
 			for _, cluster := range clusters {
-				err = tagMgr.AttachTag(ctx, tagId, cluster)
+				err = tagMgr.AttachTag(ctx, tagID, cluster)
 				if err != nil {
 					return nil, err
 				}
 			}
 		}
-
 	}
 
 	return tagMgr, nil
