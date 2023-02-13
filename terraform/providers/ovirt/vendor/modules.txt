@@ -1,4 +1,4 @@
-# github.com/Masterminds/goutils v1.1.1
+# github.com/Masterminds/goutils v1.1.1 => github.com/Masterminds/goutils v1.1.1
 ## explicit
 github.com/Masterminds/goutils
 # github.com/Masterminds/semver/v3 v3.1.1
@@ -379,3 +379,4 @@ google.golang.org/protobuf/types/known/emptypb
 google.golang.org/protobuf/types/known/timestamppb
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2
 # golang.org/x/text => golang.org/x/text v0.3.7
+# github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1

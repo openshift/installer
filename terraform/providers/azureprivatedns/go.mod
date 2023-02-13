@@ -26,7 +26,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/agext/levenshtein v1.2.2 // indirect
@@ -109,3 +109,6 @@ require (
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2064702
 replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20221010152910-d6f0a8c073c2
+
+// https://issues.redhat.com/browse/OCPBUGS-5665
+replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1

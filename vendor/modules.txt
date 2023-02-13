@@ -1375,3 +1375,4 @@ sigs.k8s.io/yaml
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
+# github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
