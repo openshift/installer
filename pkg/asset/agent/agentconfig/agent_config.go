@@ -50,13 +50,16 @@ func (a *AgentConfig) Generate(dependencies asset.Parents) error {
 # which fields are available to aid you in creating your
 # own agent-config.yaml file.
 #
-apiVersion: v1alpha1
+apiVersion: v1beta1
 kind: AgentConfig
 metadata:
   name: example-agent-config
   namespace: cluster0
 # All fields are optional
 rendezvousIP: your-node0-ip
+additionalNTPSources:
+- 0.rhel.pool.ntp.org
+- 1.rhel.pool.ntp.org
 hosts:
 # If a host is listed, then at least one interface
 # needs to be specified.
