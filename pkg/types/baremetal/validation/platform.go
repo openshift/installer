@@ -6,7 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/url"
-	"os"
 	"reflect"
 	"strings"
 
@@ -405,14 +404,7 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	agentBasedInstallation := false
-	if len(os.Args) > 1 {
-		for _, arg := range os.Args {
-			if arg == "agent" {
-				agentBasedInstallation = true
-			}
-		}
-	}
+	agentBasedInstallation := validate.IsAgentBasedInstallation()
 
 	if !agentBasedInstallation && p.Hosts == nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
