@@ -2,6 +2,7 @@ package gcp
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
@@ -48,16 +49,15 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	Auth                   Auth
-	CreateFirewallRules    bool
-	ImageURI               string
-	ImageLicenses          []string
-	InstanceServiceAccount string
-	MasterConfigs          []*machineapi.GCPMachineProviderSpec
-	WorkerConfigs          []*machineapi.GCPMachineProviderSpec
-	PublicZoneName         string
-	PublishStrategy        types.PublishingStrategy
-	PreexistingNetwork     bool
+	Auth                Auth
+	CreateFirewallRules bool
+	ImageURI            string
+	ImageLicenses       []string
+	MasterConfigs       []*machineapi.GCPMachineProviderSpec
+	WorkerConfigs       []*machineapi.GCPMachineProviderSpec
+	PublicZoneName      string
+	PublishStrategy     types.PublishingStrategy
+	PreexistingNetwork  bool
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -81,7 +81,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageURI:                  sources.ImageURI,
 		Image:                     masterConfig.Disks[0].Image,
 		ImageLicenses:             sources.ImageLicenses,
-		InstanceServiceAccount:    sources.InstanceServiceAccount,
 		PublicZoneName:            sources.PublicZoneName,
 		PublishStrategy:           string(sources.PublishStrategy),
 		ClusterNetwork:            masterConfig.NetworkInterfaces[0].Network,
@@ -102,6 +101,22 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if masterConfig.Disks[0].EncryptionKey != nil {
 		cfg.VolumeKMSKeyLink = generateDiskEncryptionKeyLink(masterConfig.Disks[0].EncryptionKey, masterConfig.ProjectID)
 	}
+
+	serviceAccount := make(map[string]interface{})
+	if err := json.Unmarshal([]byte(cfg.Auth.ServiceAccount), &serviceAccount); err != nil {
+		return nil, err
+	}
+
+	instanceServiceAccount := ""
+	// Passthrough service accounts are only needed for GCP XPN.
+	if len(cfg.Auth.NetworkProjectID) > 0 {
+		var found bool
+		instanceServiceAccount, found = serviceAccount["client_email"].(string)
+		if !found {
+			return nil, errors.New("could not find google service account")
+		}
+	}
+	cfg.InstanceServiceAccount = instanceServiceAccount
 
 	return json.MarshalIndent(cfg, "", "  ")
 }
