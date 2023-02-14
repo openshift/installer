@@ -2,8 +2,9 @@ package gcp
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
+
+	"github.com/pkg/errors"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -24,6 +25,7 @@ type config struct {
 	Auth                      `json:",inline"`
 	Region                    string   `json:"gcp_region,omitempty"`
 	BootstrapInstanceType     string   `json:"gcp_bootstrap_instance_type,omitempty"`
+	CreateBootstrapSA         bool     `json:"gcp_create_bootstrap_sa"`
 	CreateFirewallRules       bool     `json:"gcp_create_firewall_rules"`
 	MasterInstanceType        string   `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones   []string `json:"gcp_master_availability_zones"`
@@ -103,8 +105,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	serviceAccount := make(map[string]interface{})
-	if err := json.Unmarshal([]byte(cfg.Auth.ServiceAccount), &serviceAccount); err != nil {
-		return nil, err
+
+	if err := json.Unmarshal([]byte(cfg.Auth.ServiceAccount), &serviceAccount); len(cfg.Auth.ServiceAccount) > 0 && err != nil {
+		return nil, errors.Wrapf(err, "unmarshaling service account")
 	}
 
 	instanceServiceAccount := ""
@@ -117,6 +120,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		}
 	}
 	cfg.InstanceServiceAccount = instanceServiceAccount
+
+	// A private key is needed to sign the URL for bootstrap ignition.
+	// If there is no key in the credentials, we need to generate a new SA.
+	_, foundKey := serviceAccount["private_key"]
+	cfg.CreateBootstrapSA = !foundKey
 
 	return json.MarshalIndent(cfg, "", "  ")
 }

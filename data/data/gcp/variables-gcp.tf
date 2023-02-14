@@ -163,3 +163,9 @@ variable "gcp_master_on_host_maintenance" {
   description = "The behavior when a maintenance event occurs."
   default = ""
 }
+
+variable "gcp_create_bootstrap_sa" {
+  type = bool
+  default = false
+  description = "Whether a service account should be created to sign the ignition URL."
+}
