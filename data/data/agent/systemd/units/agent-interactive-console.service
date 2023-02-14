@@ -6,9 +6,10 @@ Before=network.target network.service agent.service NetworkManager-wait-online.s
 [Service]
 Type=oneshot
 TTYPath=/dev/tty15
+EnvironmentFile=/etc/assisted/agent-installer.env
 ExecStartPre=/usr/bin/chvt 15
 ExecStartPre=mkdir -p /var/log/agent
-ExecStart="/usr/local/bin/agent-interactive-console.sh"
+ExecStart=/usr/local/bin/agent-tui
 ExecStartPost=/usr/bin/chvt 1
 TimeoutStartSec=0
 StandardInput=tty
