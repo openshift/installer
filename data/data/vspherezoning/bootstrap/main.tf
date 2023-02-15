@@ -37,6 +37,12 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
     thin_provisioned = var.template[0].disks.0.thin_provisioned
   }
 
+  lifecycle {
+    ignore_changes = [
+      disk[0],
+    ]
+  }
+
   clone {
     template_uuid = var.template[0].uuid
   }
