@@ -19,6 +19,12 @@ const (
 
 	// DiskTypeEagerZeroedThick uses EagerZeroedThick disk provisioning type for vsphere in the cluster.
 	DiskTypeEagerZeroedThick DiskType = "eagerZeroedThick"
+
+	// TagCategoryRegion the tag category associated with regions.
+	TagCategoryRegion = "openshift-region"
+
+	// TagCategoryZone the tag category associated with zones.
+	TagCategoryZone = "openshift-zone"
 )
 
 // Platform stores any global configuration used for vsphere platforms

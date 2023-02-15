@@ -12,6 +12,11 @@ import (
 	"github.com/vmware/govmomi/simulator"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/soap"
+
+	// required to initialize the REST endpoint.
+	_ "github.com/vmware/govmomi/vapi/rest"
+	// required to initialize the VAPI endpoint.
+	_ "github.com/vmware/govmomi/vapi/simulator"
 )
 
 // StartSimulator starts an instance of the simulator which listens on 127.0.0.1.
@@ -24,7 +29,9 @@ func StartSimulator() *simulator.Server {
 	model.OpaqueNetwork = 1
 	model.Create()
 	model.Service.TLS = new(tls.Config)
+
 	model.Service.TLS.ServerName = "127.0.0.1"
+	model.Service.RegisterEndpoints = true
 	server := model.Service.NewServer()
 	return server
 }
