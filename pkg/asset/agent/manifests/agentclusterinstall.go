@@ -16,7 +16,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/defaults"
+	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/vsphere"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -141,7 +145,7 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 					ControlPlaneAgents: int(*installConfig.Config.ControlPlane.Replicas),
 					WorkerAgents:       numberOfWorkers,
 				},
-				PlatformType: hiveext.PlatformType(installConfig.Config.Platform.Name()),
+				PlatformType: agent.HivePlatformType(installConfig.Config.Platform),
 			},
 		}
 
@@ -237,6 +241,18 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	setNetworkType(agentClusterInstall, &types.InstallConfig{}, "NetworkType is not specified in AgentClusterInstall.")
+
+	// Due to OCPBUGS-7495 we previously required lowercase platform names here,
+	// even though that is incorrect. Rewrite to the correct mixed case names
+	// for backward compatibility.
+	switch string(agentClusterInstall.Spec.PlatformType) {
+	case baremetal.Name:
+		agentClusterInstall.Spec.PlatformType = hiveext.BareMetalPlatformType
+	case none.Name:
+		agentClusterInstall.Spec.PlatformType = hiveext.NonePlatformType
+	case vsphere.Name:
+		agentClusterInstall.Spec.PlatformType = hiveext.VSpherePlatformType
+	}
 
 	a.Config = agentClusterInstall
 
@@ -342,8 +358,8 @@ func (a *AgentClusterInstall) validateSupportedPlatforms() field.ErrorList {
 
 	fieldPath := field.NewPath("spec", "platformType")
 
-	if a.Config.Spec.PlatformType != "" && !agent.IsSupportedPlatform(fmt.Sprintf("%s", a.Config.Spec.PlatformType)) {
-		allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.PlatformType, agent.SupportedPlatforms))
+	if a.Config.Spec.PlatformType != "" && !agent.IsSupportedPlatform(a.Config.Spec.PlatformType) {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.PlatformType, agent.SupportedHivePlatforms()))
 	}
 	return allErrs
 }
