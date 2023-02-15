@@ -83,8 +83,8 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 
 	fieldPath := field.NewPath("Platform")
 
-	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(installConfig.Platform.Name()) {
-		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedPlatforms))
+	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(HivePlatformType(installConfig.Platform)) {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedInstallerPlatforms()))
 	}
 	return allErrs
 }
