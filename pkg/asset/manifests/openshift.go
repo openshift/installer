@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	"github.com/gophercloud/gophercloud/openstack/identity/v3/applicationcredentials"
+	"github.com/gophercloud/gophercloud/openstack/identity/v3/tokens"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 
@@ -157,6 +159,46 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		// We need to replace the local cacert path with one that is used in OpenShift
 		if cloud.CACertFile != "" {
 			cloud.CACertFile = "/etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem"
+		}
+
+		// We also replace a username/password combination with an application credential
+		if cloud.AuthInfo != nil && (cloud.AuthInfo.UserID != "" || cloud.AuthInfo.Username != "") && cloud.AuthInfo.Password != "" {
+			conn, err := clientconfig.NewServiceClient("identity", opts)
+			if err != nil {
+				return err
+			}
+
+			// If the user has stored a user ID instead of username (uncommon but possible), use it.
+			userID := ""
+			if cloud.AuthInfo.UserID != "" {
+				userID = cloud.AuthInfo.UserID
+			} else {
+				authResult := conn.ProviderClient.GetAuthResult()
+				// We only support Identity API v3. v2 is waaaay old.
+				switch authResult := authResult.(type) {
+				case tokens.CreateResult:
+					u, err := authResult.ExtractUser()
+					if err != nil {
+						return err
+					}
+					userID = u.ID
+				default:
+					return errors.Errorf("Unsupported Identity API version")
+				}
+			}
+
+			// Gimme gimme gimme 🎶
+			createOpts := applicationcredentials.CreateOpts{
+				// TODO: Generate/retrieve a unique, per-install name
+				Name: "openshift-installer",
+			}
+			applicationCredential, err := applicationcredentials.Create(conn, userID, createOpts).Extract()
+
+			cloud.AuthInfo.Username = ""
+			cloud.AuthInfo.UserID = ""
+			cloud.AuthInfo.Password = ""
+			cloud.AuthInfo.ApplicationCredentialID = applicationCredential.ID
+			cloud.AuthInfo.ApplicationCredentialSecret = applicationCredential.Secret
 		}
 
 		clouds := make(map[string]map[string]*clientconfig.Cloud)
