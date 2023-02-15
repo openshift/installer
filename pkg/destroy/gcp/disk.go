@@ -10,6 +10,39 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
+const (
+	maxGCEPDNameLength    = 63
+	estimatedPVNameLength = 40
+	// Removing an extra value (-1) for the "-" separated between the storage name and the pv name
+	storageNameLength = maxGCEPDNameLength - estimatedPVNameLength - 1
+)
+
+// formatClusterIDForStorage will format the Cluster ID as it will be used for destroying
+// GCE PDs. The maximum length is 63 characters, and can end with "-dynamic".
+// https://github.com/kubernetes/kubernetes/blob/master/pkg/volume/util/util.go, GenerateVolumeName()
+func (o *ClusterUninstaller) formatClusterIDForStorage() string {
+	storageName := o.ClusterID + "-dynamic"
+	slicedLength := storageNameLength
+	if len(storageName) < slicedLength {
+		slicedLength = len(storageName)
+	}
+	return storageName[:slicedLength]
+}
+
+func (o *ClusterUninstaller) storageIDFilter() string {
+	return fmt.Sprintf("name : \"%s-*\"", o.formatClusterIDForStorage())
+}
+
+func (o *ClusterUninstaller) storageLabelFilter() string {
+	return fmt.Sprintf("labels.kubernetes-io-cluster-%s = \"owned\"", o.formatClusterIDForStorage())
+}
+
+// storageLabelOrClusterIDFilter will perform the search for resources with the ClusterID, but
+// it will also search for specific disk name formats.
+func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
+	return fmt.Sprintf("%s OR (%s) OR (%s)", o.clusterLabelOrClusterIDFilter(), o.storageIDFilter(), o.storageLabelFilter())
+}
+
 func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
 	return o.listDisksWithFilter("items/*/disks(name,zone,type,sizeGb),nextPageToken", o.clusterLabelOrClusterIDFilter(), nil)
 }
