@@ -162,7 +162,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 
 		// We also replace a username/password combination with an application credential
-		if cloud.AuthInfo != nil && (cloud.AuthInfo.UserID != "" || cloud.AuthInfo.Username != "") && cloud.AuthInfo.Password != "" {
+		if cloud.AuthInfo != nil && ( cloud.AuthType == clientconfig.AuthPassword || cloud.AuthType == clientconfig.AuthV2Password || cloud.AuthType == clientconfig.AuthV3Password) {
 			conn, err := clientconfig.NewServiceClient("identity", opts)
 			if err != nil {
 				return err
@@ -189,16 +189,21 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 
 			// Gimme gimme gimme 🎶
 			createOpts := applicationcredentials.CreateOpts{
-				// TODO: Generate/retrieve a unique, per-install name
-				Name: "openshift-installer",
+				Name: clusterID.InfraID + "-app-credentials",
 			}
 			applicationCredential, err := applicationcredentials.Create(conn, userID, createOpts).Extract()
+			if err != nil {
+				return err
+			}
 
-			cloud.AuthInfo.Username = ""
-			cloud.AuthInfo.UserID = ""
-			cloud.AuthInfo.Password = ""
-			cloud.AuthInfo.ApplicationCredentialID = applicationCredential.ID
-			cloud.AuthInfo.ApplicationCredentialSecret = applicationCredential.Secret
+			authInfo := clientconfig.AuthInfo{
+				AuthURL:                     cloud.AuthInfo.AuthURL,
+				ApplicationCredentialID:     applicationCredential.ID,
+				ApplicationCredentialSecret: applicationCredential.Secret,
+			}
+
+			cloud.AuthType = "v3applicationcredential"
+			cloud.AuthInfo = &authInfo
 		}
 
 		clouds := make(map[string]map[string]*clientconfig.Cloud)
