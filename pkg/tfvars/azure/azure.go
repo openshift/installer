@@ -2,6 +2,7 @@ package azure
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -73,6 +74,7 @@ type TFVarsSources struct {
 	BootstrapIgnitionURLPlaceholder string
 	HyperVGeneration                string
 	VMArchitecture                  types.Architecture
+	InfrastructureName              string
 }
 
 // TFVars generates Azure-specific Terraform variables launching the cluster.
@@ -106,6 +108,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		vmarch = "Arm64"
 	}
 
+	tags := make(map[string]string, len(masterConfig.Tags)+1)
+	// add OCP default tag
+	tags[fmt.Sprintf("kubernetes.io_cluster.%s", sources.InfrastructureName)] = "owned"
+	for k, v := range masterConfig.Tags {
+		tags[k] = v
+	}
+
 	cfg := &config{
 		Auth:                            sources.Auth,
 		Environment:                     environment,
@@ -135,6 +144,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VMNetworkingType:                masterConfig.AcceleratedNetworking,
 		RandomStringPrefix:              randomStringPrefixFunction(),
 		VMArchitecture:                  vmarch,
+		ExtraTags:                       tags,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

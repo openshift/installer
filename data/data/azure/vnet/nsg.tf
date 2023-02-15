@@ -2,6 +2,7 @@ resource "azurerm_network_security_group" "cluster" {
   name                = "${var.cluster_id}-nsg"
   location            = var.azure_region
   resource_group_name = data.azurerm_resource_group.main.name
+  tags                = var.azure_extra_tags
 }
 
 resource "azurerm_subnet_network_security_group_association" "master" {

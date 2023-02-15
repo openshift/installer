@@ -5,6 +5,7 @@ resource "azurerm_virtual_network" "cluster_vnet" {
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.azure_region
   address_space       = concat(var.machine_v4_cidrs, var.machine_v6_cidrs)
+  tags                = var.azure_extra_tags
 }
 
 resource "azurerm_subnet" "master_subnet" {

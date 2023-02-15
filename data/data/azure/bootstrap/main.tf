@@ -2,12 +2,6 @@ locals {
   bootstrap_nic_ip_v4_configuration_name = "bootstrap-nic-ip-v4"
   bootstrap_nic_ip_v6_configuration_name = "bootstrap-nic-ip-v6"
   description                            = "Created By OpenShift Installer"
-  tags = merge(
-    {
-      "kubernetes.io_cluster.${var.cluster_id}" = "owned"
-    },
-    var.azure_extra_tags,
-  )
 }
 
 provider "azurerm" {
@@ -88,6 +82,7 @@ resource "azurerm_public_ip" "bootstrap_public_ip_v4" {
   name                = "${var.cluster_id}-bootstrap-pip-v4"
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
+  tags                = var.azure_extra_tags
 }
 
 data "azurerm_public_ip" "bootstrap_public_ip_v4" {
@@ -106,6 +101,7 @@ resource "azurerm_public_ip" "bootstrap_public_ip_v6" {
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
   ip_version          = "IPv6"
+  tags                = var.azure_extra_tags
 }
 
 data "azurerm_public_ip" "bootstrap_public_ip_v6" {
@@ -154,6 +150,8 @@ resource "azurerm_network_interface" "bootstrap" {
       public_ip_address_id          = ip_configuration.value.public_ip_id
     }
   }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v4" {
@@ -234,6 +232,8 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap_v4,
     azurerm_network_interface_backend_address_pool_association.internal_lb_bootstrap_v6
   ]
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_network_security_rule" "bootstrap_ssh_in" {

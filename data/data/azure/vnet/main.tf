@@ -27,7 +27,7 @@ resource "azurerm_resource_group" "main" {
 
   name     = "${var.cluster_id}-rg"
   location = var.azure_region
-  tags     = local.tags
+  tags     = var.azure_extra_tags
 }
 
 data "azurerm_resource_group" "main" {
@@ -50,13 +50,14 @@ resource "azurerm_storage_account" "cluster" {
   account_replication_type        = "LRS"
   min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
   allow_nested_items_to_be_public = false
+  tags                            = var.azure_extra_tags
 }
 
 resource "azurerm_user_assigned_identity" "main" {
   resource_group_name = data.azurerm_resource_group.main.name
   location            = data.azurerm_resource_group.main.location
-
-  name = "${var.cluster_id}-identity"
+  name                = "${var.cluster_id}-identity"
+  tags                = var.azure_extra_tags
 }
 
 resource "azurerm_role_assignment" "main" {
@@ -94,6 +95,7 @@ resource "azurerm_shared_image_gallery" "sig" {
   name                = "gallery_${replace(var.cluster_id, "-", "_")}"
   resource_group_name = data.azurerm_resource_group.main.name
   location            = var.azure_region
+  tags                = var.azure_extra_tags
 }
 
 # Creates image definition
@@ -111,6 +113,8 @@ resource "azurerm_shared_image" "cluster" {
     offer     = "rhcos"
     sku       = "basic"
   }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_shared_image" "clustergen2" {
@@ -127,6 +131,8 @@ resource "azurerm_shared_image" "clustergen2" {
     offer     = "rhcos-gen2"
     sku       = "gen2"
   }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_shared_image_version" "cluster_image_version" {
@@ -143,6 +149,8 @@ resource "azurerm_shared_image_version" "cluster_image_version" {
     name                   = azurerm_shared_image.cluster.location
     regional_replica_count = 1
   }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_shared_image_version" "clustergen2_image_version" {
@@ -159,5 +167,7 @@ resource "azurerm_shared_image_version" "clustergen2_image_version" {
     name                   = azurerm_shared_image.clustergen2.location
     regional_replica_count = 1
   }
+
+  tags = var.azure_extra_tags
 }
 
