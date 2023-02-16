@@ -128,7 +128,7 @@ require (
 	github.com/IBM/push-notifications-go-sdk v0.0.0-20210310100607-5790b96c47f5 // indirect
 	github.com/IBM/schematics-go-sdk v0.0.2 // indirect
 	github.com/IBM/secrets-manager-go-sdk v0.1.19 // indirect
-	github.com/Masterminds/goutils v1.1.0 // indirect
+	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/sprig v2.22.0+incompatible // indirect
 	github.com/Netflix/go-expect v0.0.0-20190729225929-0e00d9168667 // indirect
@@ -407,3 +407,6 @@ replace (
 )
 
 replace github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
+
+// https://issues.redhat.com/browse/OCPBUGS-5663
+replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
