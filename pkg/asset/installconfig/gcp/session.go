@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	authEnvs            = []string{"GOOGLE_CREDENTIALS", "GOOGLE_CLOUD_KEYFILE_JSON", "GCLOUD_KEYFILE_JSON"}
+	authEnvs            = []string{"GOOGLE_APPLICATION_CREDENTIALS", "GOOGLE_CREDENTIALS", "GOOGLE_CLOUD_KEYFILE_JSON", "GCLOUD_KEYFILE_JSON"}
 	defaultAuthFilePath = filepath.Join(os.Getenv("HOME"), ".gcp", "osServiceAccount.json")
 	credLoaders         = []credLoader{}
 	onceLoggers         = map[credLoader]*sync.Once{}
