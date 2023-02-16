@@ -14,7 +14,7 @@ import (
 	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
 	gomock "github.com/golang/mock/gomock"
-	ibmcloud "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud"
+	responses "github.com/openshift/installer/pkg/asset/installconfig/ibmcloud/responses"
 	types "github.com/openshift/installer/pkg/types"
 )
 
@@ -39,6 +39,20 @@ func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
 	return m.recorder
+}
+
+// GetAPIKey mocks base method.
+func (m *MockAPI) GetAPIKey() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAPIKey")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetAPIKey indicates an expected call of GetAPIKey.
+func (mr *MockAPIMockRecorder) GetAPIKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAPIKey", reflect.TypeOf((*MockAPI)(nil).GetAPIKey))
 }
 
 // GetAuthenticatorAPIKeyDetails mocks base method.
@@ -132,10 +146,10 @@ func (mr *MockAPIMockRecorder) GetDNSZoneIDByName(ctx, name, publish interface{}
 }
 
 // GetDNSZones mocks base method.
-func (m *MockAPI) GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]ibmcloud.DNSZoneResponse, error) {
+func (m *MockAPI) GetDNSZones(ctx context.Context, publish types.PublishingStrategy) ([]responses.DNSZoneResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetDNSZones", ctx, publish)
-	ret0, _ := ret[0].([]ibmcloud.DNSZoneResponse)
+	ret0, _ := ret[0].([]responses.DNSZoneResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -177,10 +191,10 @@ func (mr *MockAPIMockRecorder) GetDedicatedHostProfiles(ctx, region interface{})
 }
 
 // GetEncryptionKey mocks base method.
-func (m *MockAPI) GetEncryptionKey(ctx context.Context, keyCRN string) (*ibmcloud.EncryptionKeyResponse, error) {
+func (m *MockAPI) GetEncryptionKey(ctx context.Context, keyCRN string) (*responses.EncryptionKeyResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEncryptionKey", ctx, keyCRN)
-	ret0, _ := ret[0].(*ibmcloud.EncryptionKeyResponse)
+	ret0, _ := ret[0].(*responses.EncryptionKeyResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -501,7 +501,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 		auth := ibmcloudtfvars.Auth{
-			APIKey: client.APIKey,
+			APIKey: client.GetAPIKey(),
 		}
 
 		// Get master and worker machine info

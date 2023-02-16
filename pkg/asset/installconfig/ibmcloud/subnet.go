@@ -16,7 +16,7 @@ type Subnet struct {
 	Zone string
 }
 
-func getSubnets(ctx context.Context, client *Client, region string, subnetNames []string) (map[string]Subnet, error) {
+func getSubnets(ctx context.Context, client API, region string, subnetNames []string) (map[string]Subnet, error) {
 	subnets := map[string]Subnet{}
 
 	for _, name := range subnetNames {

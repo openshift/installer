@@ -143,7 +143,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 		cloudCreds = cloudCredsSecretData{
 			IBMCloud: &IBMCloudCredsSecretData{
-				Base64encodeAPIKey: base64.StdEncoding.EncodeToString([]byte(client.APIKey)),
+				Base64encodeAPIKey: base64.StdEncoding.EncodeToString([]byte(client.GetAPIKey())),
 			},
 		}
 	case openstacktypes.Name:
