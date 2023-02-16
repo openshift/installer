@@ -62,12 +62,18 @@ resource "openstack_networking_port_v2" "masters" {
     subnet_id = local.nodes_subnet_id
   }
 
-  allowed_address_pairs {
-    ip_address = var.openstack_api_int_ip
+  dynamic "allowed_address_pairs" {
+    for_each = var.openstack_api_int_ips
+    content {
+      ip_address = allowed_address_pairs.value
+    }
   }
 
-  allowed_address_pairs {
-    ip_address = var.openstack_ingress_ip
+  dynamic "allowed_address_pairs" {
+    for_each = var.openstack_ingress_ips
+    content {
+      ip_address = allowed_address_pairs.value
+    }
   }
 
   depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port]
@@ -84,7 +90,7 @@ resource "openstack_networking_port_v2" "api_port" {
 
   fixed_ip {
     subnet_id  = local.nodes_subnet_id
-    ip_address = var.openstack_api_int_ip
+    ip_address = var.openstack_api_int_ips[0]
   }
 }
 
@@ -99,7 +105,7 @@ resource "openstack_networking_port_v2" "ingress_port" {
 
   fixed_ip {
     subnet_id  = local.nodes_subnet_id
-    ip_address = var.openstack_ingress_ip
+    ip_address = var.openstack_ingress_ips[0]
   }
 }
 

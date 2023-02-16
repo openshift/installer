@@ -284,14 +284,14 @@ EOF
 
 }
 
-variable "openstack_api_int_ip" {
-  type        = string
-  description = "IP on the node subnet reserved for api-int VIP."
+variable "openstack_api_int_ips" {
+  type        = list(string)
+  description = "IPs on the node subnets reserved for api-int VIP."
 }
 
-variable "openstack_ingress_ip" {
-  type        = string
-  description = "IP on the nodes subnet reserved for the ingress VIP."
+variable "openstack_ingress_ips" {
+  type        = list(string)
+  description = "IPs on the nodes subnets reserved for the ingress VIP."
 }
 
 variable "openstack_external_dns" {
