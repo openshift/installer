@@ -12,10 +12,11 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 )
 
-func TestGenerateInfrastructe(t *testing.T) {
+func TestGenerateInfrastructure(t *testing.T) {
 	cases := []struct {
 		name                   string
 		installConfig          *types.InstallConfig
@@ -38,8 +39,17 @@ func TestGenerateInfrastructe(t *testing.T) {
 			infraBuild.forPlatform(configv1.AWSPlatformType),
 			infraBuild.withServiceEndpoint("service", "https://endpoint"),
 		),
-	},
-	}
+	}, {
+		name: "azure resource tags",
+		installConfig: icBuild.build(
+			icBuild.forAzure(),
+			icBuild.withResourceTags(map[string]string{"key": "value"}),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AzurePlatformType),
+			infraBuild.withResourceTags([]configv1.AzureResourceTag{{Key: "key", Value: "value"}}),
+		),
+	}}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			parents := asset.Parents{}
@@ -196,5 +206,40 @@ func (b infraBuildNamespace) withServiceEndpoint(name, url string) infraOption {
 		endpoint := configv1.AWSServiceEndpoint{Name: name, URL: url}
 		infra.Spec.PlatformSpec.AWS.ServiceEndpoints = append(infra.Spec.PlatformSpec.AWS.ServiceEndpoints, endpoint)
 		infra.Status.PlatformStatus.AWS.ServiceEndpoints = append(infra.Status.PlatformStatus.AWS.ServiceEndpoints, endpoint)
+	}
+}
+
+func (b icBuildNamespace) forAzure() icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.Azure != nil {
+			return
+		}
+		ic.Platform.Azure = &azuretypes.Platform{}
+	}
+}
+
+func (b infraBuildNamespace) withAzurePlatformStatus() infraOption {
+	return func(infra *configv1.Infrastructure) {
+		if infra.Status.PlatformStatus.Azure != nil {
+			return
+		}
+		infra.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
+			ResourceGroupName:        infra.Status.InfrastructureName + "-rg",
+			NetworkResourceGroupName: infra.Status.InfrastructureName + "-rg",
+		}
+	}
+}
+
+func (b icBuildNamespace) withResourceTags(tags map[string]string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAzure()(ic)
+		ic.Platform.Azure.UserTags = tags
+	}
+}
+
+func (b infraBuildNamespace) withResourceTags(tags []configv1.AzureResourceTag) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withAzurePlatformStatus()(infra)
+		infra.Status.PlatformStatus.Azure.ResourceTags = tags
 	}
 }
