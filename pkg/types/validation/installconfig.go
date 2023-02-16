@@ -996,5 +996,14 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		}()
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
 	}
+
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
+
+		if c.Azure != nil && len(c.Azure.UserTags) > 0 {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "azure", "userTags"), errMsg))
+		}
+	}
+
 	return allErrs
 }
