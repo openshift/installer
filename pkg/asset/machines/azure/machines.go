@@ -165,6 +165,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	var image machineapi.Image
 	if mpool.OSImage.Publisher != "" {
 		image.Type = machineapi.AzureImageTypeMarketplaceWithPlan
+		if mpool.OSImage.Plan == azure.ImageNoPurchasePlan {
+			image.Type = machineapi.AzureImageTypeMarketplaceNoPlan
+		}
 		image.Publisher = mpool.OSImage.Publisher
 		image.Offer = mpool.OSImage.Offer
 		image.SKU = mpool.OSImage.SKU

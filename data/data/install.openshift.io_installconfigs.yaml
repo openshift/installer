@@ -293,6 +293,13 @@ spec:
                             offer:
                               description: Offer is the offer of the image.
                               type: string
+                            plan:
+                              description: Plan is the purchase plan of the image.
+                                If omitted, it defaults to "WithPurchasePlan".
+                              enum:
+                              - WithPurchasePlan
+                              - NoPurchasePlan
+                              type: string
                             publisher:
                               description: Publisher is the publisher of the image.
                               type: string
@@ -1057,6 +1064,13 @@ spec:
                         properties:
                           offer:
                             description: Offer is the offer of the image.
+                            type: string
+                          plan:
+                            description: Plan is the purchase plan of the image. If
+                              omitted, it defaults to "WithPurchasePlan".
+                            enum:
+                            - WithPurchasePlan
+                            - NoPurchasePlan
                             type: string
                           publisher:
                             description: Publisher is the publisher of the image.
@@ -2166,6 +2180,13 @@ spec:
                         properties:
                           offer:
                             description: Offer is the offer of the image.
+                            type: string
+                          plan:
+                            description: Plan is the purchase plan of the image. If
+                              omitted, it defaults to "WithPurchasePlan".
+                            enum:
+                            - WithPurchasePlan
+                            - NoPurchasePlan
                             type: string
                           publisher:
                             description: Publisher is the publisher of the image.

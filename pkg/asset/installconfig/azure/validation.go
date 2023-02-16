@@ -643,6 +643,11 @@ func validateMarketplaceImage(client API, installConfig *types.InstallConfig) fi
 			continue
 		}
 
+		// Images with no purchase plan have no terms to be accepted
+		if platform.OSImage.Plan == aztypes.ImageNoPurchasePlan {
+			continue
+		}
+
 		termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), platform.OSImage.Publisher, platform.OSImage.Offer, platform.OSImage.SKU)
 		if err == nil {
 			if !termsAccepted {

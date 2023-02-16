@@ -72,6 +72,15 @@ func validateOSImage(p *azure.MachinePool, poolName string, fldPath *field.Path)
 			return allErrs
 		}
 
+		if p.OSImage.Plan != "" {
+			planOptions := sets.NewString(
+				string(azure.ImageNoPurchasePlan),
+				string(azure.ImageWithPurchasePlan),
+			)
+			if !planOptions.Has(string(p.OSImage.Plan)) {
+				allErrs = append(allErrs, field.NotSupported(osImageFldPath.Child("plan"), p.OSImage.Plan, planOptions.List()))
+			}
+		}
 		if p.OSImage.Publisher == "" {
 			allErrs = append(allErrs, field.Required(osImageFldPath.Child("publisher"), "must specify publisher for the OS image"))
 		}
