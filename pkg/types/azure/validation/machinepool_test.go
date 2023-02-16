@@ -250,7 +250,6 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.osImage: Invalid value: .* cannot specify the OS image for the master machines$`,
 		},
 		{
 			name: "OS image for default pool",
@@ -267,7 +266,6 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.osImage: Invalid value: .* cannot specify the OS image for the master machines$`,
 		},
 	}
 	for _, tc := range cases {
