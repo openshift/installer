@@ -17,7 +17,7 @@ limitations under the License.
 package apis
 
 import (
-	v1 "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
+	v1 "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
 
 func init() {

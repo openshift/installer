@@ -12,8 +12,14 @@ type Platform struct {
 	// +optional
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 
-	// VPCName is the name of an already existing VPC where the cluster should be
-	// installed.
+	// NetworkResourceGroupName is the name of an already existing resource group
+	// where an existing VPC and set of Subnets exist, to be used during cluster
+	// creation.
+	// +optional
+	NetworkResourceGroupName string `json:"networkResourceGroupName,omitempty"`
+
+	// VPCName is the name of an already existing VPC to be used during cluster
+	// creation.
 	// +optional
 	VPCName string `json:"vpcName,omitempty"`
 

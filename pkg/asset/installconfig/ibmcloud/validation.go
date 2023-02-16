@@ -39,10 +39,10 @@ func validatePlatform(client API, ic *types.InstallConfig, path *field.Path) fie
 	allErrs := field.ErrorList{}
 
 	if ic.Platform.IBMCloud.ResourceGroupName != "" {
-		allErrs = append(allErrs, validateResourceGroup(client, ic, path)...)
+		allErrs = append(allErrs, validateResourceGroup(client, ic.IBMCloud.ResourceGroupName, "resourceGroupName", path)...)
 	}
 
-	if ic.Platform.IBMCloud.VPCName != "" {
+	if ic.Platform.IBMCloud.NetworkResourceGroupName != "" || ic.Platform.IBMCloud.VPCName != "" {
 		allErrs = append(allErrs, validateExistingVPC(client, ic, path)...)
 	}
 
@@ -196,27 +196,27 @@ func validateMachinePoolBootVolume(client API, bootVolume ibmcloud.BootVolume, p
 	return allErrs
 }
 
-func validateResourceGroup(client API, ic *types.InstallConfig, path *field.Path) field.ErrorList {
+func validateResourceGroup(client API, resourceGroupName string, platformField string, path *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if ic.IBMCloud.ResourceGroupName == "" {
+	if resourceGroupName == "" {
 		return allErrs
 	}
 
 	resourceGroups, err := client.GetResourceGroups(context.TODO())
 	if err != nil {
-		return append(allErrs, field.InternalError(path.Child("resourceGroupName"), err))
+		return append(allErrs, field.InternalError(path.Child(platformField), err))
 	}
 
 	found := false
 	for _, rg := range resourceGroups {
-		if *rg.ID == ic.IBMCloud.ResourceGroupName || *rg.Name == ic.IBMCloud.ResourceGroupName {
+		if *rg.ID == resourceGroupName || *rg.Name == resourceGroupName {
 			found = true
 		}
 	}
 
 	if !found {
-		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
+		return append(allErrs, field.NotFound(path.Child(platformField), resourceGroupName))
 	}
 
 	return allErrs
@@ -226,12 +226,13 @@ func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) 
 	allErrs := field.ErrorList{}
 
 	if ic.IBMCloud.VPCName == "" {
-		return allErrs
+		return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpcName cannot be empty when providing a networkResourceGroupName: %s", ic.IBMCloud.NetworkResourceGroupName)))
 	}
 
-	if ic.IBMCloud.ResourceGroupName == "" {
-		return append(allErrs, field.NotFound(path.Child("resourceGroupName"), ic.IBMCloud.ResourceGroupName))
+	if ic.IBMCloud.NetworkResourceGroupName == "" {
+		return append(allErrs, field.Invalid(path.Child("networkResourceGroupName"), ic.IBMCloud.NetworkResourceGroupName, fmt.Sprintf("networkResourceGroupName cannot be empty when providing a vpcName: %s", ic.IBMCloud.VPCName)))
 	}
+	allErrs = append(allErrs, validateResourceGroup(client, ic.IBMCloud.NetworkResourceGroupName, "networkResourceGroupName", path)...)
 
 	vpcs, err := client.GetVPCs(context.TODO(), ic.IBMCloud.Region)
 	if err != nil {
@@ -241,8 +242,8 @@ func validateExistingVPC(client API, ic *types.InstallConfig, path *field.Path) 
 	found := false
 	for _, vpc := range vpcs {
 		if *vpc.Name == ic.IBMCloud.VPCName {
-			if *vpc.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *vpc.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
-				return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpc is not in provided ResourceGroup: %s", ic.IBMCloud.ResourceGroupName)))
+			if *vpc.ResourceGroup.ID != ic.IBMCloud.NetworkResourceGroupName && *vpc.ResourceGroup.Name != ic.IBMCloud.NetworkResourceGroupName {
+				return append(allErrs, field.Invalid(path.Child("vpcName"), ic.IBMCloud.VPCName, fmt.Sprintf("vpc is not in provided Network ResourceGroup: %s", ic.IBMCloud.NetworkResourceGroupName)))
 			}
 			found = true
 			allErrs = append(allErrs, validateExistingSubnets(client, ic, path, *vpc.ID)...)
@@ -276,8 +277,8 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 				if *subnet.VPC.ID != vpcID {
 					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected vpcID: %s", controlPlaneSubnet, vpcID)))
 				}
-				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
-					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected resourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.ResourceGroupName)))
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.NetworkResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.NetworkResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("controlPlaneSubnets"), controlPlaneSubnet, fmt.Sprintf("controlPlaneSubnets contains subnet: %s, not found in expected networkResourceGroupName: %s", controlPlaneSubnet, ic.IBMCloud.NetworkResourceGroupName)))
 				}
 				controlPlaneSubnetZones[*subnet.Zone.Name]++
 			}
@@ -323,8 +324,8 @@ func validateExistingSubnets(client API, ic *types.InstallConfig, path *field.Pa
 				if *subnet.VPC.ID != vpcID {
 					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected vpcID: %s", computeSubnet, vpcID)))
 				}
-				if *subnet.ResourceGroup.ID != ic.IBMCloud.ResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.ResourceGroupName {
-					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected resourceGroupName: %s", computeSubnet, ic.IBMCloud.ResourceGroupName)))
+				if *subnet.ResourceGroup.ID != ic.IBMCloud.NetworkResourceGroupName && *subnet.ResourceGroup.Name != ic.IBMCloud.NetworkResourceGroupName {
+					allErrs = append(allErrs, field.Invalid(path.Child("computeSubnets"), computeSubnet, fmt.Sprintf("computeSubnets contains subnet: %s, not found in expected networkResourceGroupName: %s", computeSubnet, ic.IBMCloud.NetworkResourceGroupName)))
 				}
 				computeSubnetZones[*subnet.Zone.Name]++
 			}

@@ -9,9 +9,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
+	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
 
 // Machines returns a list of machines for a machinepool.
@@ -89,6 +89,12 @@ func provider(clusterID string,
 		resourceGroup = clusterID
 	}
 
+	// Set the ProviderSpec.NetworkResourceGroup if NetworkResourceGroupName was provided
+	var networkResourceGroup string
+	if platform.NetworkResourceGroupName != "" {
+		networkResourceGroup = platform.NetworkResourceGroupName
+	}
+
 	subnet, err := getSubnet(subnets, clusterID, role, az)
 	if err != nil {
 		return nil, err
@@ -116,14 +122,15 @@ func provider(clusterID string,
 			APIVersion: "ibmcloudproviderconfig.openshift.io/v1beta1",
 			Kind:       "IBMCloudMachineProviderSpec",
 		},
-		VPC:           vpc,
-		DedicatedHost: dedicatedHost,
-		Tags:          []ibmcloudprovider.TagSpecs{},
-		Image:         fmt.Sprintf("%s-rhcos", clusterID),
-		Profile:       mpool.InstanceType,
-		Region:        platform.Region,
-		ResourceGroup: resourceGroup,
-		Zone:          az,
+		VPC:                  vpc,
+		DedicatedHost:        dedicatedHost,
+		Tags:                 []ibmcloudprovider.TagSpecs{},
+		Image:                fmt.Sprintf("%s-rhcos", clusterID),
+		NetworkResourceGroup: networkResourceGroup,
+		Profile:              mpool.InstanceType,
+		Region:               platform.Region,
+		ResourceGroup:        resourceGroup,
+		Zone:                 az,
 		PrimaryNetworkInterface: ibmcloudprovider.NetworkInterface{
 			Subnet:         subnet,
 			SecurityGroups: securityGroups,

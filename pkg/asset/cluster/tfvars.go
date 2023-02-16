@@ -20,7 +20,6 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
-	ibmcloudprovider "github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1beta1"
 	ovirtprovider "github.com/openshift/cluster-api-provider-ovirt/pkg/apis/ovirtprovider/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
@@ -67,6 +66,7 @@ import (
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
 
 const (
@@ -604,18 +604,19 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		data, err = ibmcloudtfvars.TFVars(
 			ibmcloudtfvars.TFVarsSources{
-				Auth:                 auth,
-				CISInstanceCRN:       cisCRN,
-				DNSInstanceID:        dnsID,
-				ImageURL:             string(*rhcosImage),
-				MasterConfigs:        masterConfigs,
-				MasterDedicatedHosts: masterDedicatedHosts,
-				PreexistingVPC:       preexistingVPC,
-				PublishStrategy:      installConfig.Config.Publish,
-				ResourceGroupName:    installConfig.Config.Platform.IBMCloud.ResourceGroupName,
-				VPCPermitted:         vpcPermitted,
-				WorkerConfigs:        workerConfigs,
-				WorkerDedicatedHosts: workerDedicatedHosts,
+				Auth:                     auth,
+				CISInstanceCRN:           cisCRN,
+				DNSInstanceID:            dnsID,
+				ImageURL:                 string(*rhcosImage),
+				MasterConfigs:            masterConfigs,
+				MasterDedicatedHosts:     masterDedicatedHosts,
+				NetworkResourceGroupName: installConfig.Config.Platform.IBMCloud.NetworkResourceGroupName,
+				PreexistingVPC:           preexistingVPC,
+				PublishStrategy:          installConfig.Config.Publish,
+				ResourceGroupName:        installConfig.Config.Platform.IBMCloud.ResourceGroupName,
+				VPCPermitted:             vpcPermitted,
+				WorkerConfigs:            workerConfigs,
+				WorkerDedicatedHosts:     workerDedicatedHosts,
 			},
 		)
 		if err != nil {

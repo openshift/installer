@@ -117,8 +117,18 @@ variable "ibmcloud_publish_strategy" {
   # }
 }
 
-variable "ibmcloud_resource_group_name" {
+variable "ibmcloud_network_resource_group_name" {
   type = string
+  description = <<EOF
+(optional) The name of the resource group for existing cluster network resources. If this is set, the existing network resources
+(VPC, Subnets, etc.) must exist in the resource group to be used for cluster creation. Otherwise, new network resources are
+created in the same resource group as the other cluster resources (see 'ibmcloud_resource_group_name').
+EOF
+  default = ""
+}
+
+variable "ibmcloud_resource_group_name" {
+  type        = string
   description = <<EOF
 (optional) The name of the resource group for the cluster. If this is set, the cluster is installed to that existing resource group
 otherwise a new resource group will be created using cluster id.

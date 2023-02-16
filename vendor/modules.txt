@@ -8734,10 +8734,6 @@ github.com/openshift/cloud-credential-operator/version
 ## explicit; go 1.17
 github.com/openshift/cluster-api-provider-baremetal/pkg/apis
 github.com/openshift/cluster-api-provider-baremetal/pkg/apis/baremetal/v1alpha1
-# github.com/openshift/cluster-api-provider-ibmcloud v0.0.1-0.20220201105455-8014e5e894b0
-## explicit; go 1.17
-github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis
-github.com/openshift/cluster-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
 # github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230203123120-e55e92c14b2c
 ## explicit; go 1.17
 github.com/openshift/cluster-api-provider-libvirt/pkg/apis
@@ -8766,6 +8762,10 @@ github.com/openshift/hive/apis/scheme
 ## explicit; go 1.18
 github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers
 github.com/openshift/library-go/pkg/route/routeapihelpers
+# github.com/openshift/machine-api-provider-ibmcloud v0.0.0-20230124105206-50aa171a52e1
+## explicit; go 1.19
+github.com/openshift/machine-api-provider-ibmcloud/pkg/apis
+github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1
 # github.com/openshift/machine-config-operator v0.0.0 => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 ## explicit; go 1.13
 github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1
@@ -9568,7 +9568,7 @@ sigs.k8s.io/controller-runtime/pkg/webhook
 sigs.k8s.io/controller-runtime/pkg/webhook/admission
 sigs.k8s.io/controller-runtime/pkg/webhook/conversion
 sigs.k8s.io/controller-runtime/pkg/webhook/internal/metrics
-# sigs.k8s.io/controller-tools v0.9.2 => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
+# sigs.k8s.io/controller-tools v0.10.0 => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
 ## explicit; go 1.13
 sigs.k8s.io/controller-tools/cmd/controller-gen
 sigs.k8s.io/controller-tools/pkg/crd
