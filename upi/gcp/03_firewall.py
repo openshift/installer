@@ -37,6 +37,21 @@ def GenerateConfig(context):
             'targetTags': [context.properties['infra_id'] + '-master']
         }
     }, {
+        'name': context.properties['infra_id'] + '-node-health-checks',
+        'type': 'compute.v1.firewall',
+        'properties': {
+            'network': context.properties['cluster_network'],
+            'allowed': [{
+                'IPProtocol': 'tcp',
+                'ports': ['10256']
+            }],
+            'sourceRanges': ['35.191.0.0/16', '130.211.0.0/22', '209.85.152.0/22', '209.85.204.0/22'],
+            'targetTags': [
+                context.properties['infra_id'] + '-master',
+                context.properties['infra_id'] + '-worker'
+            ]
+        }
+    }, {
         'name': context.properties['infra_id'] + '-etcd',
         'type': 'compute.v1.firewall',
         'properties': {
