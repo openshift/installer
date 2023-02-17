@@ -290,7 +290,7 @@ func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cl
 	// certificate data in PEM or PKCS12 format. It handles common scenarios
 	// but has limitations, for example it doesn't load PEM encrypted private
 	// keys.
-	certs, key, err := azidentity.ParseCertificates(data, nil)
+	certs, key, err := azidentity.ParseCertificates(data, []byte(credentials.ClientCertificatePassword))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to parse client certificate")
 	}
