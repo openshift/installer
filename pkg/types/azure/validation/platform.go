@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -118,6 +119,10 @@ func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorLi
 		allErrs = append(allErrs, field.TooMany(fldPath, len(tags), maxUserTagLimit))
 	}
 
+	if err := findDuplicateTagKeys(tags); err != nil {
+		allErrs = append(allErrs, field.Forbidden(fldPath, err.Error()))
+	}
+
 	for key, value := range tags {
 		if err := validateTag(key, value); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), value, err.Error()))
@@ -146,6 +151,30 @@ func validateTag(key, value string) error {
 		return fmt.Errorf("key contains restricted prefix")
 	}
 	return nil
+}
+
+// findDuplicateTagKeys checks for duplicate tag keys in the user-defined tagset.
+// Tag keys are case-insensitive. A tag with a key, regardless of the casing, is
+// updated or retrieved. An Azure service might keep the casing as provided for
+// the tag key. To allow user to choose the required variant of the key to add
+// return error when duplicate tag keys are present.
+func findDuplicateTagKeys(tagSet map[string]string) (err error) {
+	dupKeys := make(map[string]int)
+	for k := range tagSet {
+		dupKeys[strings.ToTitle(k)]++
+	}
+
+	var errMsg []string
+	for key, count := range dupKeys {
+		if count > 1 {
+			errMsg = append(errMsg, fmt.Sprintf("\"%s\" matches %d keys", key, count))
+		}
+	}
+	if len(errMsg) > 0 {
+		err = fmt.Errorf("found duplicate tag keys: %v", strings.Join(errMsg, ", "))
+	}
+
+	return err
 }
 
 var (

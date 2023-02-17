@@ -271,6 +271,16 @@ func TestValidateUserTags(t *testing.T) {
 			userTags: map[string]string{"resourcename": "value"},
 			wantErr:  false,
 		},
+		{
+			name: "userTags contain duplicate keys",
+			userTags: map[string]string{
+				"environment": "test",
+				"Environment": "lab",
+				"key":         "value",
+				"createdFor":  "test",
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
