@@ -1,8 +1,8 @@
 {
   "stream": "rhcos-4.11",
   "metadata": {
-    "last-modified": "2022-12-19T14:46:45Z",
-    "generator": "plume cosa2stream 7ce59d2"
+    "last-modified": "2023-02-17T22:00:09Z",
+    "generator": "plume cosa2stream f35e2c8"
   },
   "architectures": {
     "aarch64": {
@@ -122,6 +122,10 @@
               "release": "411.86.202212072103-0",
               "image": "ami-009dcc14e2e6bb40e"
             },
+            "ap-south-2": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-07d422710a07adbc4"
+            },
             "ap-southeast-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-046fcd8e445388356"
@@ -134,6 +138,10 @@
               "release": "411.86.202212072103-0",
               "image": "ami-0e2bb3808f6972af2"
             },
+            "ap-southeast-4": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-0df95572cc45209bb"
+            },
             "ca-central-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-07438b58e2327ffd7"
@@ -142,6 +150,10 @@
               "release": "411.86.202212072103-0",
               "image": "ami-00abb1b780fb731cd"
             },
+            "eu-central-2": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-088e7a72ce3bc12ff"
+            },
             "eu-north-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-005e4cff2eb12cfeb"
@@ -149,6 +161,10 @@
             "eu-south-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-0dfc0b3da1d0c9bec"
+            },
+            "eu-south-2": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-0a857157bff23198d"
             },
             "eu-west-1": {
               "release": "411.86.202212072103-0",
@@ -161,6 +177,10 @@
             "eu-west-3": {
               "release": "411.86.202212072103-0",
               "image": "ami-08c52060bc98ec414"
+            },
+            "me-central-1": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-0369a4547ab534647"
             },
             "me-south-1": {
               "release": "411.86.202212072103-0",
@@ -714,6 +734,10 @@
               "release": "411.86.202212072103-0",
               "image": "ami-088ae882d88cf29a3"
             },
+            "ap-south-2": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-0074ff58edb74f08f"
+            },
             "ap-southeast-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-0a8b124f159fb14a8"
@@ -726,6 +750,10 @@
               "release": "411.86.202212072103-0",
               "image": "ami-0182bb63fe0a9c3c1"
             },
+            "ap-southeast-4": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-080ecafe2946fdd20"
+            },
             "ca-central-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-0f08426f1901c8f12"
@@ -734,6 +762,10 @@
               "release": "411.86.202212072103-0",
               "image": "ami-032784dfa234e110e"
             },
+            "eu-central-2": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-089b65181c322129f"
+            },
             "eu-north-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-0ebe619df5c5003d2"
@@ -741,6 +773,10 @@
             "eu-south-1": {
               "release": "411.86.202212072103-0",
               "image": "ami-0d9bc2286fc74fa18"
+            },
+            "eu-south-2": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-0f5fe771f61121df3"
             },
             "eu-west-1": {
               "release": "411.86.202212072103-0",
@@ -753,6 +789,10 @@
             "eu-west-3": {
               "release": "411.86.202212072103-0",
               "image": "ami-0add59eb238c299d5"
+            },
+            "me-central-1": {
+              "release": "411.86.202212072103-0",
+              "image": "ami-08b5283b80cbe51ad"
             },
             "me-south-1": {
               "release": "411.86.202212072103-0",
