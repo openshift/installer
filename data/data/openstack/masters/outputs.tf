@@ -21,6 +21,6 @@ output "private_network_id" {
   value = local.nodes_network_id
 }
 
-output "nodes_subnet_id" {
-  value = local.nodes_subnet_id
+output "nodes_subnet_ids" {
+  value = local.nodes_subnet_ids
 }

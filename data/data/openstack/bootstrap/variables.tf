@@ -7,8 +7,8 @@ variable "private_network_id" {
   type = string
 }
 
-variable "nodes_subnet_id" {
-  type = string
+variable "nodes_subnet_ids" {
+  type = list(string)
 }
 
 variable "master_port_ids" {

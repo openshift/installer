@@ -1,7 +1,8 @@
 locals {
   # Create subnet for the first MachineNetwork CIDR if we need to
   nodes_cidr_block = var.machine_v4_cidrs[0]
-  nodes_subnet_id  = var.openstack_machines_subnet_id != "" ? var.openstack_machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id
+  nodes_subnet_id  = var.openstack_machines_subnet_id != "" ? var.openstack_machines_subnet_id : openstack_networking_subnet_v2.nodes[0].id 
+  nodes_subnet_ids = var.use_ipv6 ? [local.nodes_subnet_id, openstack_networking_subnet_v2.nodes_v6[0].id] : [local.nodes_subnet_id]
   nodes_network_id = var.openstack_machines_network_id != "" ? var.openstack_machines_network_id : openstack_networking_network_v2.openshift-private[0].id
   create_router    = (var.openstack_external_network != "" && var.openstack_machines_subnet_id == "") ? 1 : 0
 }
@@ -40,6 +41,18 @@ resource "openstack_networking_subnet_v2" "nodes" {
   }
 }
 
+resource "openstack_networking_subnet_v2" "nodes_v6" {
+  count             = var.openstack_machines_subnet_id == "" && var.use_ipv6? 1 : 0
+  name              = "${var.cluster_id}-nodes-v6"
+  description       = local.description
+  cidr              = var.machine_v6_cidrs[0]
+  ip_version        = 6
+  network_id        = local.nodes_network_id
+  ipv6_address_mode = "dhcpv6-stateful"
+  ipv6_ra_mode      = "dhcpv6-stateful"
+  tags              = ["openshiftClusterID=${var.cluster_id}"]
+}
+
 resource "openstack_networking_port_v2" "masters" {
   name        = "${var.cluster_id}-master-${count.index}"
   count       = var.master_count
@@ -58,8 +71,11 @@ resource "openstack_networking_port_v2" "masters" {
     value = var.cluster_domain
   }
 
-  fixed_ip {
-    subnet_id = local.nodes_subnet_id
+  dynamic "fixed_ip" {
+    for_each = local.nodes_subnet_ids
+    content {
+      subnet_id = fixed_ip.value
+    }
   }
 
   dynamic "allowed_address_pairs" {
@@ -88,9 +104,17 @@ resource "openstack_networking_port_v2" "api_port" {
   security_group_ids = [openstack_networking_secgroup_v2.master.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
-  fixed_ip {
-    subnet_id  = local.nodes_subnet_id
-    ip_address = var.openstack_api_int_ips[0]
+  dynamic "fixed_ip" {
+    for_each = [for index, subnet_id in local.nodes_subnet_ids :
+      {
+        subnet_id: subnet_id
+        ip_address: var.openstack_api_int_ips[index]
+      }
+    ]
+    content{
+      subnet_id = fixed_ip.value.subnet_id
+      ip_address = fixed_ip.value.ip_address
+    }
   }
 }
 
@@ -103,9 +127,17 @@ resource "openstack_networking_port_v2" "ingress_port" {
   security_group_ids = [openstack_networking_secgroup_v2.worker.id]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
-  fixed_ip {
-    subnet_id  = local.nodes_subnet_id
-    ip_address = var.openstack_ingress_ips[0]
+  dynamic "fixed_ip" {
+    for_each = [for index, subnet_id in local.nodes_subnet_ids :
+      {
+        subnet_id: subnet_id
+        ip_address: var.openstack_ingress_ips[index]
+      }
+    ]
+    content{
+      subnet_id = fixed_ip.value.subnet_id
+      ip_address = fixed_ip.value.ip_address
+    }
   }
 }
 
@@ -166,4 +198,10 @@ resource "openstack_networking_router_interface_v2" "nodes_router_interface" {
   count     = local.create_router
   router_id = join("", openstack_networking_router_v2.openshift-external-router.*.id)
   subnet_id = local.nodes_subnet_id
+}
+
+resource "openstack_networking_router_interface_v2" "nodes_router_interface_v6" {
+  count     = local.create_router == 1 && var.use_ipv6 ? 1 : 0
+  router_id = join("", openstack_networking_router_v2.openshift-external-router.*.id)
+  subnet_id = openstack_networking_subnet_v2.nodes_v6[0].id
 }

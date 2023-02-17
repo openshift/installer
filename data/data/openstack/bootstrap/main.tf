@@ -48,8 +48,11 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
     value = var.cluster_domain
   }
 
-  fixed_ip {
-    subnet_id = var.nodes_subnet_id
+  dynamic "fixed_ip" {
+    for_each = var.nodes_subnet_ids
+    content {
+      subnet_id = fixed_ip.value
+    }
   }
 
   dynamic "allowed_address_pairs" {
