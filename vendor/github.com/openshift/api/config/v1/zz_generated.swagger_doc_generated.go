@@ -1081,6 +1081,15 @@ func (AzureResourceTag) SwaggerDoc() map[string]string {
 	return map_AzureResourceTag
 }
 
+var map_BareMetalPlatformLoadBalancer = map[string]string{
+	"":     "BareMetalPlatformLoadBalancer defines the load balancer used by the cluster on BareMetal platform.",
+	"type": "type defines the type of load balancer used by the cluster on BareMetal platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+}
+
+func (BareMetalPlatformLoadBalancer) SwaggerDoc() map[string]string {
+	return map_BareMetalPlatformLoadBalancer
+}
+
 var map_BareMetalPlatformSpec = map[string]string{
 	"": "BareMetalPlatformSpec holds the desired state of the BareMetal infrastructure provider. This only includes fields that can be modified in the cluster.",
 }
@@ -1096,6 +1105,7 @@ var map_BareMetalPlatformStatus = map[string]string{
 	"ingressIP":            "ingressIP is an external IP which routes to the default ingress controller. The IP is a suitable target of a wildcard DNS record used to resolve default route host names.\n\nDeprecated: Use IngressIPs instead.",
 	"ingressIPs":           "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
 	"nodeDNSIP":            "nodeDNSIP is the IP address for the internal DNS used by the nodes. Unlike the one managed by the DNS operator, `NodeDNSIP` provides name resolution for the nodes themselves. There is no DNS-as-a-service for BareMetal deployments. In order to minimize necessary changes to the datacenter DNS, a DNS service is hosted as a static pod to serve those hostnames to the nodes in the cluster.",
+	"loadBalancer":         "loadBalancer defines how the load balancer used by the cluster is configured.",
 }
 
 func (BareMetalPlatformStatus) SwaggerDoc() map[string]string {
@@ -1249,6 +1259,15 @@ func (KubevirtPlatformStatus) SwaggerDoc() map[string]string {
 	return map_KubevirtPlatformStatus
 }
 
+var map_NutanixPlatformLoadBalancer = map[string]string{
+	"":     "NutanixPlatformLoadBalancer defines the load balancer used by the cluster on Nutanix platform.",
+	"type": "type defines the type of load balancer used by the cluster on Nutanix platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+}
+
+func (NutanixPlatformLoadBalancer) SwaggerDoc() map[string]string {
+	return map_NutanixPlatformLoadBalancer
+}
+
 var map_NutanixPlatformSpec = map[string]string{
 	"":              "NutanixPlatformSpec holds the desired state of the Nutanix infrastructure provider. This only includes fields that can be modified in the cluster.",
 	"prismCentral":  "prismCentral holds the endpoint address and port to access the Nutanix Prism Central. When a cluster-wide proxy is installed, by default, this endpoint will be accessed via the proxy. Should you wish for communication with this endpoint not to be proxied, please add the endpoint to the proxy spec.noProxy list.",
@@ -1265,6 +1284,7 @@ var map_NutanixPlatformStatus = map[string]string{
 	"apiServerInternalIPs": "apiServerInternalIPs are the IP addresses to contact the Kubernetes API server that can be used by components inside the cluster, like kubelets using the infrastructure rather than Kubernetes networking. These are the IPs for a self-hosted load balancer in front of the API servers. In dual stack clusters this list contains two IPs otherwise only one.",
 	"ingressIP":            "ingressIP is an external IP which routes to the default ingress controller. The IP is a suitable target of a wildcard DNS record used to resolve default route host names.\n\nDeprecated: Use IngressIPs instead.",
 	"ingressIPs":           "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
+	"loadBalancer":         "loadBalancer defines how the load balancer used by the cluster is configured.",
 }
 
 func (NutanixPlatformStatus) SwaggerDoc() map[string]string {
@@ -1291,6 +1311,15 @@ func (NutanixPrismEndpoint) SwaggerDoc() map[string]string {
 	return map_NutanixPrismEndpoint
 }
 
+var map_OpenStackPlatformLoadBalancer = map[string]string{
+	"":     "OpenStackPlatformLoadBalancer defines the load balancer used by the cluster on OpenStack platform.",
+	"type": "type defines the type of load balancer used by the cluster on OpenStack platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+}
+
+func (OpenStackPlatformLoadBalancer) SwaggerDoc() map[string]string {
+	return map_OpenStackPlatformLoadBalancer
+}
+
 var map_OpenStackPlatformSpec = map[string]string{
 	"": "OpenStackPlatformSpec holds the desired state of the OpenStack infrastructure provider. This only includes fields that can be modified in the cluster.",
 }
@@ -1307,10 +1336,20 @@ var map_OpenStackPlatformStatus = map[string]string{
 	"ingressIP":            "ingressIP is an external IP which routes to the default ingress controller. The IP is a suitable target of a wildcard DNS record used to resolve default route host names.\n\nDeprecated: Use IngressIPs instead.",
 	"ingressIPs":           "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
 	"nodeDNSIP":            "nodeDNSIP is the IP address for the internal DNS used by the nodes. Unlike the one managed by the DNS operator, `NodeDNSIP` provides name resolution for the nodes themselves. There is no DNS-as-a-service for OpenStack deployments. In order to minimize necessary changes to the datacenter DNS, a DNS service is hosted as a static pod to serve those hostnames to the nodes in the cluster.",
+	"loadBalancer":         "loadBalancer defines how the load balancer used by the cluster is configured.",
 }
 
 func (OpenStackPlatformStatus) SwaggerDoc() map[string]string {
 	return map_OpenStackPlatformStatus
+}
+
+var map_OvirtPlatformLoadBalancer = map[string]string{
+	"":     "OvirtPlatformLoadBalancer defines the load balancer used by the cluster on Ovirt platform.",
+	"type": "type defines the type of load balancer used by the cluster on Ovirt platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+}
+
+func (OvirtPlatformLoadBalancer) SwaggerDoc() map[string]string {
+	return map_OvirtPlatformLoadBalancer
 }
 
 var map_OvirtPlatformSpec = map[string]string{
@@ -1328,6 +1367,7 @@ var map_OvirtPlatformStatus = map[string]string{
 	"ingressIP":            "ingressIP is an external IP which routes to the default ingress controller. The IP is a suitable target of a wildcard DNS record used to resolve default route host names.\n\nDeprecated: Use IngressIPs instead.",
 	"ingressIPs":           "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
 	"nodeDNSIP":            "deprecated: as of 4.6, this field is no longer set or honored.  It will be removed in a future release.",
+	"loadBalancer":         "loadBalancer defines how the load balancer used by the cluster is configured.",
 }
 
 func (OvirtPlatformStatus) SwaggerDoc() map[string]string {
@@ -1393,6 +1433,7 @@ var map_PowerVSPlatformStatus = map[string]string{
 	"":                 "PowerVSPlatformStatus holds the current status of the IBM Power Systems Virtual Servers infrastrucutre provider.",
 	"region":           "region holds the default Power VS region for new Power VS resources created by the cluster.",
 	"zone":             "zone holds the default zone for the new Power VS resources created by the cluster. Note: Currently only single-zone OCP clusters are supported",
+	"resourceGroup":    "resourceGroup is the resource group name for new IBMCloud resources created for a cluster. The resource group specified here will be used by cluster-image-registry-operator to set up a COS Instance in IBMCloud for the cluster registry. More about resource groups can be found here: https://cloud.ibm.com/docs/account?topic=account-rgs. When omitted, the image registry operator won't be able to configure storage, which results in the image registry cluster operator not being in an available state.",
 	"serviceEndpoints": "serviceEndpoints is a list of custom endpoints which will override the default service endpoints of a Power VS service.",
 	"cisInstanceCRN":   "CISInstanceCRN is the CRN of the Cloud Internet Services instance managing the DNS zone for the cluster's base domain",
 	"dnsInstanceCRN":   "DNSInstanceCRN is the CRN of the DNS Services instance managing the DNS zone for the cluster's base domain",
@@ -1423,6 +1464,15 @@ var map_VSpherePlatformFailureDomainSpec = map[string]string{
 
 func (VSpherePlatformFailureDomainSpec) SwaggerDoc() map[string]string {
 	return map_VSpherePlatformFailureDomainSpec
+}
+
+var map_VSpherePlatformLoadBalancer = map[string]string{
+	"":     "VSpherePlatformLoadBalancer defines the load balancer used by the cluster on VSphere platform.",
+	"type": "type defines the type of load balancer used by the cluster on VSphere platform which can be a user-managed or openshift-managed load balancer that is to be used for the OpenShift API and Ingress endpoints. When set to OpenShiftManagedDefault the static pods in charge of API and Ingress traffic load-balancing defined in the machine config operator will be deployed. When set to UserManaged these static pods will not be deployed and it is expected that the load balancer is configured out of band by the deployer. When omitted, this means no opinion and the platform is left to choose a reasonable default. The default value is OpenShiftManagedDefault.",
+}
+
+func (VSpherePlatformLoadBalancer) SwaggerDoc() map[string]string {
+	return map_VSpherePlatformLoadBalancer
 }
 
 var map_VSpherePlatformNodeNetworking = map[string]string{
@@ -1464,6 +1514,7 @@ var map_VSpherePlatformStatus = map[string]string{
 	"ingressIP":            "ingressIP is an external IP which routes to the default ingress controller. The IP is a suitable target of a wildcard DNS record used to resolve default route host names.\n\nDeprecated: Use IngressIPs instead.",
 	"ingressIPs":           "ingressIPs are the external IPs which route to the default ingress controller. The IPs are suitable targets of a wildcard DNS record used to resolve default route host names. In dual stack clusters this list contains two IPs otherwise only one.",
 	"nodeDNSIP":            "nodeDNSIP is the IP address for the internal DNS used by the nodes. Unlike the one managed by the DNS operator, `NodeDNSIP` provides name resolution for the nodes themselves. There is no DNS-as-a-service for vSphere deployments. In order to minimize necessary changes to the datacenter DNS, a DNS service is hosted as a static pod to serve those hostnames to the nodes in the cluster.",
+	"loadBalancer":         "loadBalancer defines how the load balancer used by the cluster is configured.",
 }
 
 func (VSpherePlatformStatus) SwaggerDoc() map[string]string {

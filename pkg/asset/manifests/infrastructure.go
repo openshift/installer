@@ -140,6 +140,13 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		if installConfig.Config.Platform.Azure.CloudName == azure.StackCloud {
 			config.Status.PlatformStatus.Azure.ARMEndpoint = installConfig.Config.Platform.Azure.ARMEndpoint
 		}
+		if len(installConfig.Config.Azure.UserTags) > 0 {
+			resourceTags := make([]configv1.AzureResourceTag, 0, len(installConfig.Config.Azure.UserTags))
+			for k, v := range installConfig.Config.Azure.UserTags {
+				resourceTags = append(resourceTags, configv1.AzureResourceTag{Key: k, Value: v})
+			}
+			config.Status.PlatformStatus.Azure.ResourceTags = resourceTags
+		}
 	case alibabacloud.Name:
 		config.Spec.PlatformSpec.Type = configv1.AlibabaCloudPlatformType
 		config.Status.PlatformStatus.AlibabaCloud = &configv1.AlibabaCloudPlatformStatus{
