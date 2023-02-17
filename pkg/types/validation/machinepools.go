@@ -130,7 +130,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.OpenStack != nil {
 		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {
-			return openstackvalidation.ValidateMachinePool(platform.OpenStack, p.OpenStack, pool.Name, f)
+			return openstackvalidation.ValidateMachinePool(nil, p.OpenStack, pool.Name, f)
 		})
 	}
 	return allErrs

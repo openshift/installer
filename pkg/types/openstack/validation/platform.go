@@ -18,7 +18,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
+	allErrs = append(allErrs, ValidateMachinePool(c, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
 
 	return allErrs
 }

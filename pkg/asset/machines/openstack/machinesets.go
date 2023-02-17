@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	clusterapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -29,25 +30,40 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		return nil, err
 	}
 
-	volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
-	if mpool.RootVolume != nil && len(mpool.RootVolume.Zones) != 0 {
-		volumeAZs = mpool.RootVolume.Zones
-	}
-
 	total := int32(0)
 	if pool.Replicas != nil {
 		total = int32(*pool.Replicas)
 	}
 
-	numOfAZs := int32(len(mpool.Zones))
-	var machinesets []*clusterapi.MachineSet
+	numOfAZs := int32(len(mpool.FailureDomains))
+	if numOfAZs == 0 {
+		numOfAZs = int32(len(mpool.Zones))
+	}
 
-	for idx, az := range mpool.Zones {
+	var machinesets []*clusterapi.MachineSet
+	for idx := range make([]struct{}, numOfAZs) {
+		var (
+			failureDomain machinev1alpha1.FailureDomain
+			computeZone   string
+			storageZone   string
+		)
+		if len(mpool.FailureDomains) > 0 {
+			failureDomain = mpool.FailureDomains[idx]
+		} else {
+			computeZone = mpool.Zones[idx]
+
+			volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
+			if mpool.RootVolume != nil && len(mpool.RootVolume.Zones) != 0 {
+				volumeAZs = mpool.RootVolume.Zones
+			}
+			storageZone = volumeAZs[idx%len(volumeAZs)]
+		}
+
 		replicas := int32(total / numOfAZs)
 		if int32(idx) < total%numOfAZs {
 			replicas++
 		}
-		provider, err := generateProvider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunkSupport, volumeAZs[idx%len(volumeAZs)])
+		provider, err := generateProvider(clusterID, platform, mpool, osImage, failureDomain, computeZone, role, userDataSecret, trunkSupport, storageZone)
 		if err != nil {
 			return nil, err
 		}

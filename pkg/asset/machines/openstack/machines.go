@@ -56,30 +56,30 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	machines := make([]machineapi.Machine, 0, total)
-	providerConfigs := map[string]*machinev1alpha1.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
-		zone := mpool.Zones[uint(idx)%uint(len(mpool.Zones))]
-		var provider *machinev1alpha1.OpenstackProviderSpec
-
-		if _, ok := providerConfigs[zone]; !ok {
-			provider, err = generateProvider(
-				clusterID,
-				platform,
-				mpool,
-				osImage,
-				zone,
-				role,
-				userDataSecret,
-				trunkSupport,
-				volumeAZs[uint(idx)%uint(len(volumeAZs))],
-			)
-			if err != nil {
-				return nil, err
-			}
-			providerConfigs[zone] = provider
+		var failureDomain machinev1alpha1.FailureDomain
+		if len(mpool.FailureDomains) > 0 {
+			failureDomain = mpool.FailureDomains[uint(idx)%uint(len(mpool.FailureDomains))]
 		}
 
-		provider = providerConfigs[zone]
+		computeZone := mpool.Zones[uint(idx)%uint(len(mpool.Zones))]
+		var provider *machinev1alpha1.OpenstackProviderSpec
+
+		provider, err = generateProvider(
+			clusterID,
+			platform,
+			mpool,
+			osImage,
+			failureDomain,
+			computeZone,
+			role,
+			userDataSecret,
+			trunkSupport,
+			volumeAZs[uint(idx)%uint(len(volumeAZs))],
+		)
+		if err != nil {
+			return nil, err
+		}
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -108,22 +108,27 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*machinev1alpha1.OpenstackProviderSpec, error) {
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, failureDomain machinev1alpha1.FailureDomain, computeZone string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var networks []machinev1alpha1.NetworkParam //nolint:prealloc // declared here for the conditional initialization
-	if platform.MachinesSubnet != "" {
-		networks = []machinev1alpha1.NetworkParam{{
-			Subnets: []machinev1alpha1.SubnetParam{{
-				UUID: platform.MachinesSubnet,
-			}}},
-		}
-	} else {
-		networks = []machinev1alpha1.NetworkParam{{
-			Subnets: []machinev1alpha1.SubnetParam{{
-				Filter: machinev1alpha1.SubnetFilter{
-					Name: fmt.Sprintf("%s-nodes", clusterID),
-					Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+	var primarySubnet string
+	// Attach to the cluster-wide machines network if no port is defined in the failure domain
+	if len(failureDomain.Ports) == 0 {
+		primarySubnet = platform.MachinesSubnet
+		if platform.MachinesSubnet != "" {
+			networks = []machinev1alpha1.NetworkParam{{
+				Subnets: []machinev1alpha1.SubnetParam{{
+					UUID: platform.MachinesSubnet,
+				}}},
+			}
+		} else {
+			networks = []machinev1alpha1.NetworkParam{{
+				Subnets: []machinev1alpha1.SubnetParam{{
+					Filter: machinev1alpha1.SubnetFilter{
+						Name: fmt.Sprintf("%s-nodes", clusterID),
+						Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+					}},
 				}},
-			}},
+			}
 		}
 	}
 	for _, networkID := range mpool.AdditionalNetworkIDs {
@@ -145,8 +150,8 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	}
 
 	serverGroupName := clusterID + "-" + role
-	if az != "" {
-		serverGroupName += "-" + az
+	if computeZone != "" {
+		serverGroupName += "-" + computeZone
 	}
 	spec := machinev1alpha1.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -158,8 +163,9 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
 		Networks:         networks,
-		PrimarySubnet:    platform.MachinesSubnet,
-		AvailabilityZone: az,
+		PrimarySubnet:    primarySubnet,
+		AvailabilityZone: computeZone,
+		FailureDomain:    failureDomain,
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
 		Trunk:            trunkSupport,

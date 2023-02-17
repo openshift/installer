@@ -1,5 +1,7 @@
 package openstack
 
+import "github.com/openshift/api/machine/v1alpha1"
+
 // MachinePool stores the configuration for a machine pool installed
 // on OpenStack.
 type MachinePool struct {
@@ -28,9 +30,15 @@ type MachinePool struct {
 	ServerGroupPolicy ServerGroupPolicy `json:"serverGroupPolicy,omitempty"`
 
 	// Zones is the list of availability zones where the instances should be deployed.
-	// If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone
+	// If no zones are provided, all instances will be deployed on OpenStack Nova default availability zone.
+	//
+	// It is an error to set this when using failureDomains.
 	// +optional
 	Zones []string `json:"zones,omitempty"`
+
+	// FailureDomains is a list of failure domains where to distribute replicas.
+	// +optional
+	FailureDomains []v1alpha1.FailureDomain `json:"failureDomains,omitempty"`
 }
 
 // Set sets the values from `required` to `o`.
@@ -69,6 +77,10 @@ func (o *MachinePool) Set(required *MachinePool) {
 	if len(required.Zones) > 0 {
 		o.Zones = required.Zones
 	}
+
+	if len(required.FailureDomains) > 0 {
+		o.FailureDomains = required.FailureDomains
+	}
 }
 
 // RootVolume defines the storage for an instance.
@@ -81,7 +93,10 @@ type RootVolume struct {
 	Type string `json:"type"`
 
 	// Zones is the list of availability zones where the root volumes should be deployed.
-	// If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone
+	// If no zones are provided, all instances will be deployed on OpenStack Cinder default availability zone.
+	//
+	// It is an error to set this when using failureDomains in the
+	// machine-pool.
 	// +optional
 	Zones []string `json:"zones,omitempty"`
 }

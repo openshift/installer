@@ -97,22 +97,32 @@ func TFVars(
 
 	var zones []string
 	{
-		seen := make(map[string]struct{})
-		for _, config := range masterSpecs {
-			if _, ok := seen[config.AvailabilityZone]; !ok {
-				zones = append(zones, config.AvailabilityZone)
-				seen[config.AvailabilityZone] = struct{}{}
+		for _, masterSpec := range masterSpecs {
+			zones = append(zones, masterSpec.FailureDomain.ComputeAvailabilityZone)
+		}
+		if len(zones) == 0 {
+			seen := make(map[string]struct{})
+			for _, config := range masterSpecs {
+				if _, ok := seen[config.AvailabilityZone]; !ok {
+					zones = append(zones, config.AvailabilityZone)
+					seen[config.AvailabilityZone] = struct{}{}
+				}
 			}
 		}
 	}
 
 	var masterRootVolumeAvailabilityZones []string
 	{
-		if defaultmpool != nil && defaultmpool.RootVolume != nil {
-			masterRootVolumeAvailabilityZones = defaultmpool.RootVolume.Zones
+		for _, masterSpec := range masterSpecs {
+			zones = append(zones, masterSpec.FailureDomain.StorageAvailabilityZone)
 		}
-		if mastermpool != nil && mastermpool.RootVolume != nil && mastermpool.RootVolume.Zones != nil {
-			masterRootVolumeAvailabilityZones = mastermpool.RootVolume.Zones
+		if len(masterRootVolumeAvailabilityZones) == 0 {
+			if defaultmpool != nil && defaultmpool.RootVolume != nil {
+				masterRootVolumeAvailabilityZones = defaultmpool.RootVolume.Zones
+			}
+			if mastermpool != nil && mastermpool.RootVolume != nil && mastermpool.RootVolume.Zones != nil {
+				masterRootVolumeAvailabilityZones = mastermpool.RootVolume.Zones
+			}
 		}
 	}
 
@@ -185,6 +195,18 @@ func TFVars(
 			return nil, err
 		}
 	}
+	masterPortsJSON := make([]string, len(masterSpecs))
+	for i := range masterSpecs {
+		var ports []machinev1alpha1.PortOpts
+		if len(mastermpool.FailureDomains) > 0 {
+			ports = mastermpool.FailureDomains[i%len(mastermpool.FailureDomains)].Ports
+		}
+		b, err := json.Marshal(toTerraformPorts(ports))
+		if err != nil {
+			return nil, fmt.Errorf("failed to JSON-encode ports information: %w", err)
+		}
+		masterPortsJSON[i] = string(b)
+	}
 
 	return json.MarshalIndent(struct {
 		BaseImageName                     string                            `json:"openstack_base_image_name,omitempty"`
@@ -211,6 +233,7 @@ func TFVars(
 		MachinesNetwork                   string                            `json:"openstack_machines_network_id,omitempty"`
 		MasterAvailabilityZones           []string                          `json:"openstack_master_availability_zones,omitempty"`
 		MasterRootVolumeAvailabilityZones []string                          `json:"openstack_master_root_volume_availability_zones,omitempty"`
+		MasterPortsJSON                   []string                          `json:"openstack_master_ports_json"`
 	}{
 		BaseImageName:                     imageName,
 		ExternalNetwork:                   installConfig.Config.Platform.OpenStack.ExternalNetwork,
@@ -236,6 +259,7 @@ func TFVars(
 		MachinesNetwork:                   machinesNetwork,
 		MasterAvailabilityZones:           zones,
 		MasterRootVolumeAvailabilityZones: masterRootVolumeAvailabilityZones,
+		MasterPortsJSON:                   masterPortsJSON,
 	}, "", "  ")
 }
 
@@ -340,4 +364,83 @@ func getServerGroupPolicy(machinePool, defaultMachinePool *types_openstack.Machi
 		return defaultMachinePool.ServerGroupPolicy
 	}
 	return defaultPolicy
+}
+
+func toTerraformPorts(ports []machinev1alpha1.PortOpts) any {
+	toTerraformPortFixedIPs := func(fixedIPs []machinev1alpha1.FixedIPs) []any {
+		terraformFixedIPs := make([]any, len(fixedIPs))
+		for i := range fixedIPs {
+			terraformFixedIPs[i] = struct {
+				SubnetID  string `json:"subnet_id"`
+				IPAddress string `json:"ip_address"`
+			}{
+				SubnetID:  fixedIPs[i].SubnetID,
+				IPAddress: fixedIPs[i].IPAddress,
+			}
+		}
+		return terraformFixedIPs
+	}
+	toTerraformPortAllowedAddressPairs := func(allowedAddressPairs []machinev1alpha1.AddressPair) []any {
+		terraformAllowedAddressPair := make([]any, len(allowedAddressPairs))
+		for i := range allowedAddressPairs {
+			terraformAllowedAddressPair[i] = struct {
+				IPAddress  string `json:"ip_address"`
+				MACAddress string `json:"mac_address"`
+			}{
+				IPAddress:  allowedAddressPairs[i].IPAddress,
+				MACAddress: allowedAddressPairs[i].MACAddress,
+			}
+		}
+		return terraformAllowedAddressPair
+	}
+
+	terraformPorts := make([]any, len(ports))
+	var terraformTrunks []any
+	for i := range ports {
+		if trunk := ports[i].Trunk; trunk != nil && *trunk {
+			terraformTrunks = append(terraformTrunks, struct {
+				PortIndex int `json:"port_index"`
+			}{
+				PortIndex: i,
+			})
+		}
+		terraformPorts[i] = struct {
+			NameSuffix          string            `json:"name_suffix"`
+			Description         string            `json:"description"`
+			NetworkID           string            `json:"network_id"`
+			AdminStateUp        *bool             `json:"admin_state_up"`
+			MACAddress          string            `json:"mac_address"`
+			ProjectID           string            `json:"project_id"`
+			SecurityGroups      *[]string         `json:"security_group_ids"`
+			FixedIPs            []any             `json:"fixed_ip"`
+			AllowedAddressPairs []any             `json:"allowed_address_pairs"`
+			PortSecurity        *bool             `json:"port_security"`
+			Tags                []string          `json:"tags"`
+			Profile             map[string]string `json:"profile"`
+			VNICType            string            `json:"vnic_type"`
+			Trunk               *bool             `json:"trunk"`
+		}{
+			NameSuffix:          ports[i].NameSuffix,
+			Description:         ports[i].Description,
+			NetworkID:           ports[i].NetworkID,
+			AdminStateUp:        ports[i].AdminStateUp,
+			MACAddress:          ports[i].MACAddress,
+			ProjectID:           ports[i].ProjectID,
+			SecurityGroups:      ports[i].SecurityGroups,
+			FixedIPs:            toTerraformPortFixedIPs(ports[i].FixedIPs),
+			AllowedAddressPairs: toTerraformPortAllowedAddressPairs(ports[i].AllowedAddressPairs),
+			PortSecurity:        ports[i].PortSecurity,
+			Tags:                ports[i].Tags,
+			Profile:             ports[i].Profile,
+			VNICType:            ports[i].VNICType,
+			Trunk:               ports[i].Trunk,
+		}
+	}
+	return struct {
+		Ports  []any `json:"ports"`
+		Trunks []any `json:"trunks"`
+	}{
+		Ports:  terraformPorts,
+		Trunks: terraformTrunks,
+	}
 }

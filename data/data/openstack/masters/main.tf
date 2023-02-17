@@ -116,8 +116,12 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
     }
   }
 
-  network {
-    port = local.master_port_ids[0]
+  dynamic "network" {
+    for_each = length(openstack_networking_port_v2.master_0_failuredomain) > 0 ? [for port in openstack_networking_port_v2.master_0_failuredomain : port.id] : [local.master_port_ids[0]]
+
+    content {
+      port = network.value
+    }
   }
 
   scheduler_hints {
@@ -164,8 +168,12 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
     }
   }
 
-  network {
-    port = local.master_port_ids[1]
+  dynamic "network" {
+    for_each = length(openstack_networking_port_v2.master_1_failuredomain) > 0 ? [for port in openstack_networking_port_v2.master_1_failuredomain : port.id] : [local.master_port_ids[1]]
+
+    content {
+      port = network.value
+    }
   }
 
   scheduler_hints {
@@ -214,8 +222,12 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
     }
   }
 
-  network {
-    port = local.master_port_ids[2]
+  dynamic "network" {
+    for_each = length(openstack_networking_port_v2.master_2_failuredomain) > 0 ? [for port in openstack_networking_port_v2.master_2_failuredomain : port.id] : [local.master_port_ids[2]]
+
+    content {
+      port = network.value
+    }
   }
 
   scheduler_hints {
@@ -245,4 +257,137 @@ resource "openstack_compute_servergroup_v2" "server_groups" {
   for_each = var.openstack_worker_server_group_names
   name = each.key
   policies = [var.openstack_master_server_group_policy]
+}
+
+resource "openstack_networking_port_v2" "master_0_failuredomain" {
+  count = length(local.master_failuredomain_0_ports)
+
+  binding {
+    profile = local.master_failuredomain_0_ports[count.index].profile != null ? local.master_failuredomain_0_ports[count.index].profile : "{}"
+    vnic_type = local.master_failuredomain_0_ports[count.index].vnic_type != "" ? local.master_failuredomain_0_ports[count.index].vnic_type : "normal"
+  }
+
+  name = local.master_failuredomain_0_ports[count.index].name_suffix != "" ? "${var.cluster_id}-master-0-${local.master_failuredomain_0_ports[count.index].name_suffix}" : "${var.cluster_id}-master-0-${count.index}"
+  description = local.master_failuredomain_0_ports[count.index].description != "" ? local.master_failuredomain_0_ports[count.index].description : local.description
+  network_id = local.master_failuredomain_0_ports[count.index].network_id
+  admin_state_up = local.master_failuredomain_0_ports[count.index].admin_state_up != null ? local.master_failuredomain_0_ports[count.index].admin_state_up : "true"
+  mac_address = local.master_failuredomain_0_ports[count.index].mac_address
+  tenant_id = local.master_failuredomain_0_ports[count.index].project_id
+  security_group_ids = local.master_failuredomain_0_ports[count.index].security_group_ids != null ? local.master_failuredomain_0_ports[count.index].security_group_ids : concat(var.openstack_master_extra_sg_ids, [openstack_networking_secgroup_v2.master.id])
+
+  dynamic "fixed_ip" {
+    for_each = local.master_failuredomain_0_ports[count.index].fixed_ip
+    content {
+      subnet_id = fixed_ip.subnet_id
+      ip_address = fixed_ip.ip_address
+    }
+  }
+
+  dynamic "allowed_address_pairs" {
+    for_each = local.master_failuredomain_0_ports[count.index].allowed_address_pairs
+    content {
+      ip_address = allowed_address_pairs.ip_address
+      mac_address = allowed_address_pairs.mac_address
+    }
+  }
+  port_security_enabled = local.master_failuredomain_0_ports[count.index].port_security != null ? local.master_failuredomain_0_ports[count.index].port_security : "true"
+  tags = local.master_failuredomain_0_ports[count.index].tags != null ? concat(["openshiftClusterID=${var.cluster_id}"], local.master_failuredomain_0_ports[count.index].tags) : ["openshiftClusterID=${var.cluster_id}"]
+}
+
+resource "openstack_networking_port_v2" "master_1_failuredomain" {
+  count = length(local.master_failuredomain_1_ports)
+
+  binding {
+    profile = local.master_failuredomain_1_ports[count.index].profile != null ? local.master_failuredomain_1_ports[count.index].profile : "{}"
+    vnic_type = local.master_failuredomain_1_ports[count.index].vnic_type != "" ? local.master_failuredomain_1_ports[count.index].vnic_type : "normal"
+  }
+
+  name = local.master_failuredomain_1_ports[count.index].name_suffix != "" ? "${var.cluster_id}-master-0-${local.master_failuredomain_1_ports[count.index].name_suffix}" : "${var.cluster_id}-master-0-${count.index}"
+  description = local.master_failuredomain_1_ports[count.index].description != "" ? local.master_failuredomain_1_ports[count.index].description : local.description
+  network_id = local.master_failuredomain_1_ports[count.index].network_id
+  admin_state_up = local.master_failuredomain_1_ports[count.index].admin_state_up != null ? local.master_failuredomain_1_ports[count.index].admin_state_up : "true"
+  mac_address = local.master_failuredomain_1_ports[count.index].mac_address
+  tenant_id = local.master_failuredomain_1_ports[count.index].project_id
+  security_group_ids = local.master_failuredomain_1_ports[count.index].security_group_ids != null ? local.master_failuredomain_1_ports[count.index].security_group_ids : concat(var.openstack_master_extra_sg_ids, [openstack_networking_secgroup_v2.master.id])
+
+  dynamic "fixed_ip" {
+    for_each = local.master_failuredomain_1_ports[count.index].fixed_ip
+    content {
+      subnet_id = fixed_ip.subnet_id
+      ip_address = fixed_ip.ip_address
+    }
+  }
+  dynamic "allowed_address_pairs" {
+    for_each = local.master_failuredomain_1_ports[count.index].allowed_address_pairs
+    content {
+      ip_address = allowed_address_pairs.ip_address
+      mac_address = allowed_address_pairs.mac_address
+    }
+  }
+  port_security_enabled = local.master_failuredomain_1_ports[count.index].port_security != null ? local.master_failuredomain_1_ports[count.index].port_security : "true"
+  tags = local.master_failuredomain_1_ports[count.index].tags != null ? concat(["openshiftClusterID=${var.cluster_id}"], local.master_failuredomain_1_ports[count.index].tags) : ["openshiftClusterID=${var.cluster_id}"]
+}
+
+resource "openstack_networking_port_v2" "master_2_failuredomain" {
+  count = length(local.master_failuredomain_2_ports)
+
+  binding {
+    profile = local.master_failuredomain_2_ports[count.index].profile != null ? local.master_failuredomain_2_ports[count.index].profile : "{}"
+    vnic_type = local.master_failuredomain_2_ports[count.index].vnic_type != "" ? local.master_failuredomain_2_ports[count.index].vnic_type : "normal"
+  }
+
+  name = local.master_failuredomain_2_ports[count.index].name_suffix != "" ? "${var.cluster_id}-master-0-${local.master_failuredomain_2_ports[count.index].name_suffix}" : "${var.cluster_id}-master-0-${count.index}"
+  description = local.master_failuredomain_2_ports[count.index].description != "" ? local.master_failuredomain_2_ports[count.index].description : local.description
+  network_id = local.master_failuredomain_2_ports[count.index].network_id
+  admin_state_up = local.master_failuredomain_2_ports[count.index].admin_state_up != null ? local.master_failuredomain_2_ports[count.index].admin_state_up : "true"
+  mac_address = local.master_failuredomain_2_ports[count.index].mac_address
+  tenant_id = local.master_failuredomain_2_ports[count.index].project_id
+  security_group_ids = local.master_failuredomain_2_ports[count.index].security_group_ids != null ? local.master_failuredomain_2_ports[count.index].security_group_ids : concat(var.openstack_master_extra_sg_ids, [openstack_networking_secgroup_v2.master.id])
+
+  dynamic "fixed_ip" {
+    for_each = local.master_failuredomain_2_ports[count.index].fixed_ip
+    content {
+      subnet_id = fixed_ip.subnet_id
+      ip_address = fixed_ip.ip_address
+    }
+  }
+  dynamic "allowed_address_pairs" {
+    for_each = local.master_failuredomain_2_ports[count.index].allowed_address_pairs
+    content {
+      ip_address = allowed_address_pairs.ip_address
+      mac_address = allowed_address_pairs.mac_address
+    }
+  }
+  port_security_enabled = local.master_failuredomain_2_ports[count.index].port_security != null ? local.master_failuredomain_2_ports[count.index].port_security : "true"
+  tags = local.master_failuredomain_2_ports[count.index].tags != null ? concat(["openshiftClusterID=${var.cluster_id}"], local.master_failuredomain_2_ports[count.index].tags) : ["openshiftClusterID=${var.cluster_id}"]
+}
+
+resource "openstack_networking_trunk_v2" "master_0_failuredomain_ports" {
+  count = local.master_failuredomain_0_trunks != null ? length(local.master_failuredomain_0_trunks) : 0
+
+  name = openstack_networking_port_v2.master_0_failuredomain[local.master_failuredomain_0_trunks[count.index].port_index].name
+  port_id = openstack_networking_port_v2.master_0_failuredomain[local.master_failuredomain_0_trunks[count.index].port_index].id
+  admin_state_up = openstack_networking_port_v2.master_0_failuredomain[local.master_failuredomain_0_trunks[count.index].port_index].admin_state_up
+  tenant_id = openstack_networking_port_v2.master_0_failuredomain[local.master_failuredomain_0_trunks[count.index].port_index].tenant_id
+  tags = openstack_networking_port_v2.master_0_failuredomain[local.master_failuredomain_0_trunks[count.index].port_index].tags
+}
+
+resource "openstack_networking_trunk_v2" "master_1_failuredomain_ports" {
+  count = local.master_failuredomain_1_trunks != null ? length(local.master_failuredomain_1_trunks) : 0
+
+  name = openstack_networking_port_v2.master_1_failuredomain[local.master_failuredomain_1_trunks[count.index].port_index].name
+  port_id = openstack_networking_port_v2.master_1_failuredomain[local.master_failuredomain_1_trunks[count.index].port_index].id
+  admin_state_up = openstack_networking_port_v2.master_1_failuredomain[local.master_failuredomain_1_trunks[count.index].port_index].admin_state_up
+  tenant_id = openstack_networking_port_v2.master_1_failuredomain[local.master_failuredomain_1_trunks[count.index].port_index].tenant_id
+  tags = openstack_networking_port_v2.master_1_failuredomain[local.master_failuredomain_1_trunks[count.index].port_index].tags
+}
+
+resource "openstack_networking_trunk_v2" "master_2_failuredomain_ports" {
+  count = local.master_failuredomain_2_trunks != null ? length(local.master_failuredomain_2_trunks) : 0
+
+  name = openstack_networking_port_v2.master_2_failuredomain[local.master_failuredomain_2_trunks[count.index].port_index].name
+  port_id = openstack_networking_port_v2.master_2_failuredomain[local.master_failuredomain_2_trunks[count.index].port_index].id
+  admin_state_up = openstack_networking_port_v2.master_2_failuredomain[local.master_failuredomain_2_trunks[count.index].port_index].admin_state_up
+  tenant_id = openstack_networking_port_v2.master_2_failuredomain[local.master_failuredomain_2_trunks[count.index].port_index].tenant_id
+  tags = openstack_networking_port_v2.master_2_failuredomain[local.master_failuredomain_2_trunks[count.index].port_index].tags
 }

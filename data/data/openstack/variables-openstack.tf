@@ -365,6 +365,12 @@ variable "openstack_master_root_volume_availability_zones" {
   description = "List of availability Zones to Schedule the masters root volumes on."
 }
 
+variable "openstack_master_ports_json" {
+  type        = list(string)
+  default     = [""]
+  description = "JSON representation of the master ports derived from the failure domains."
+}
+
 variable "openstack_worker_server_group_names" {
   type        = set(string)
   description = "Names of the server groups for the worker nodes."
