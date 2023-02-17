@@ -110,6 +110,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var networks []machinev1alpha1.NetworkParam //nolint:prealloc // declared here for the conditional initialization
+	var subnets []machinev1alpha1.SubnetParam
 	if platform.MachinesSubnet != "" {
 		networks = []machinev1alpha1.NetworkParam{{
 			Subnets: []machinev1alpha1.SubnetParam{{
@@ -117,14 +118,24 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 			}}},
 		}
 	} else {
-		networks = []machinev1alpha1.NetworkParam{{
-			Subnets: []machinev1alpha1.SubnetParam{{
+		subnets = append(subnets, machinev1alpha1.SubnetParam{
+			Filter: machinev1alpha1.SubnetFilter{
+				Name: fmt.Sprintf("%s-nodes", clusterID),
+				Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+			},
+		})
+		if len(platform.APIVIPs) > 0 {
+			subnets = append(subnets, machinev1alpha1.SubnetParam{
 				Filter: machinev1alpha1.SubnetFilter{
-					Name: fmt.Sprintf("%s-nodes", clusterID),
+					Name: fmt.Sprintf("%s-nodes-v6", clusterID),
 					Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
-				}},
-			}},
+				},
+			})
 		}
+		networks = append(networks, machinev1alpha1.NetworkParam{
+			Filter:  machinev1alpha1.Filter{Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID)},
+			Subnets: subnets,
+		})
 	}
 	for _, networkID := range mpool.AdditionalNetworkIDs {
 		networks = append(networks, machinev1alpha1.NetworkParam{
