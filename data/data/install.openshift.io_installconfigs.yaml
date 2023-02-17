@@ -540,6 +540,149 @@ spec:
                           items:
                             type: string
                           type: array
+                        failureDomains:
+                          description: FailureDomains is a list of failure domains
+                            where to distribute replicas.
+                          items:
+                            description: 'FailureDomain defines a set of correlated
+                              fault domains across different OpenStack services: compute,
+                              storage, and network.'
+                            properties:
+                              computeAvailabilityZone:
+                                description: ComputeAvailabilityZone is the name of
+                                  a valid nova availability zone. The server will
+                                  be created in this availability zone.
+                                type: string
+                              ports:
+                                description: Ports defines a set of ports and their
+                                  attached networks. These will be prepended to any
+                                  another ports attached to the server.
+                                items:
+                                  properties:
+                                    adminStateUp:
+                                      description: adminStateUp sets the administrative
+                                        state of the created port to up (true), or
+                                        down (false).
+                                      type: boolean
+                                    allowedAddressPairs:
+                                      description: allowedAddressPairs specifies a
+                                        set of allowed address pairs to add to the
+                                        port.
+                                      items:
+                                        properties:
+                                          ipAddress:
+                                            type: string
+                                          macAddress:
+                                            type: string
+                                        type: object
+                                      type: array
+                                    description:
+                                      description: description specifies the description
+                                        of the created port.
+                                      type: string
+                                    fixedIPs:
+                                      description: fixedIPs specifies a set of fixed
+                                        IPs to assign to the port. They must all be
+                                        valid for the port's network.
+                                      items:
+                                        properties:
+                                          ipAddress:
+                                            description: ipAddress is a specific IP
+                                              address to use in the given subnet.
+                                              Port creation will fail if the address
+                                              is not available. If not specified,
+                                              an available IP from the given subnet
+                                              will be selected automatically.
+                                            type: string
+                                          subnetID:
+                                            description: subnetID specifies the ID
+                                              of the subnet where the fixed IP will
+                                              be allocated.
+                                            type: string
+                                        type: object
+                                      type: array
+                                    hostID:
+                                      description: 'The ID of the host where the port
+                                        is allocated. Do not use this field: it cannot
+                                        be used correctly. Deprecated: hostID is silently
+                                        ignored. It will be removed with no replacement.'
+                                      type: string
+                                    macAddress:
+                                      description: macAddress specifies the MAC address
+                                        of the created port.
+                                      type: string
+                                    nameSuffix:
+                                      description: If nameSuffix is specified the
+                                        created port will be named <machine name>-<nameSuffix>.
+                                        If not specified the port will be named <machine-name>-<index
+                                        of this port>.
+                                      type: string
+                                    networkID:
+                                      description: networkID is the ID of the network
+                                        the port will be created in. It is required.
+                                      type: string
+                                    portSecurity:
+                                      description: enable or disable security on a
+                                        given port incompatible with securityGroups
+                                        and allowedAddressPairs
+                                      type: boolean
+                                    profile:
+                                      additionalProperties:
+                                        type: string
+                                      description: A dictionary that enables the application
+                                        running on the specified host to pass and
+                                        receive virtual network interface (VIF) port-specific
+                                        information to the plug-in.
+                                      type: object
+                                    projectID:
+                                      description: projectID specifies the project
+                                        ID of the created port. Note that this requires
+                                        OpenShift to have administrative permissions,
+                                        which is typically not the case. Use of this
+                                        field is not recommended.
+                                      type: string
+                                    securityGroups:
+                                      description: securityGroups specifies a set
+                                        of security group UUIDs to use instead of
+                                        the machine's default security groups. The
+                                        default security groups will be used if this
+                                        is left empty or not specified.
+                                      items:
+                                        type: string
+                                      type: array
+                                    tags:
+                                      description: tags species a set of tags to add
+                                        to the port.
+                                      items:
+                                        type: string
+                                      type: array
+                                    tenantID:
+                                      description: 'tenantID specifies the tenant
+                                        ID of the created port. Note that this requires
+                                        OpenShift to have administrative permissions,
+                                        which is typically not the case. Use of this
+                                        field is not recommended. Deprecated: use
+                                        projectID instead. It will be ignored if projectID
+                                        is set.'
+                                      type: string
+                                    trunk:
+                                      description: Enables and disables trunk at port
+                                        level. If not provided, openStackMachine.Spec.Trunk
+                                        is inherited.
+                                      type: boolean
+                                    vnicType:
+                                      description: The virtual network interface card
+                                        (vNIC) type that is bound to the neutron port.
+                                      type: string
+                                  type: object
+                                type: array
+                              storageAvailabilityZone:
+                                description: StorageAvailabilityZone is the name of
+                                  a valid cinder availability zone. This will be the
+                                  availability zone of the root volume if one is specified.
+                                type: string
+                            type: object
+                          type: array
                         rootVolume:
                           description: RootVolume defines the root volume for instances
                             in the machine pool. The instances use ephemeral disks
@@ -553,10 +696,11 @@ spec:
                               description: Type defines the type of the volume. Required
                               type: string
                             zones:
-                              description: Zones is the list of availability zones
+                              description: "Zones is the list of availability zones
                                 where the root volumes should be deployed. If no zones
                                 are provided, all instances will be deployed on OpenStack
-                                Cinder default availability zone
+                                Cinder default availability zone. \n It is an error
+                                to set this when using failureDomains in the machine-pool."
                               items:
                                 type: string
                               type: array
@@ -580,10 +724,11 @@ spec:
                             eg. m1.large
                           type: string
                         zones:
-                          description: Zones is the list of availability zones where
+                          description: "Zones is the list of availability zones where
                             the instances should be deployed. If no zones are provided,
                             all instances will be deployed on OpenStack Nova default
-                            availability zone
+                            availability zone. \n It is an error to set this when
+                            using failureDomains."
                           items:
                             type: string
                           type: array
@@ -1217,6 +1362,147 @@ spec:
                         items:
                           type: string
                         type: array
+                      failureDomains:
+                        description: FailureDomains is a list of failure domains where
+                          to distribute replicas.
+                        items:
+                          description: 'FailureDomain defines a set of correlated
+                            fault domains across different OpenStack services: compute,
+                            storage, and network.'
+                          properties:
+                            computeAvailabilityZone:
+                              description: ComputeAvailabilityZone is the name of
+                                a valid nova availability zone. The server will be
+                                created in this availability zone.
+                              type: string
+                            ports:
+                              description: Ports defines a set of ports and their
+                                attached networks. These will be prepended to any
+                                another ports attached to the server.
+                              items:
+                                properties:
+                                  adminStateUp:
+                                    description: adminStateUp sets the administrative
+                                      state of the created port to up (true), or down
+                                      (false).
+                                    type: boolean
+                                  allowedAddressPairs:
+                                    description: allowedAddressPairs specifies a set
+                                      of allowed address pairs to add to the port.
+                                    items:
+                                      properties:
+                                        ipAddress:
+                                          type: string
+                                        macAddress:
+                                          type: string
+                                      type: object
+                                    type: array
+                                  description:
+                                    description: description specifies the description
+                                      of the created port.
+                                    type: string
+                                  fixedIPs:
+                                    description: fixedIPs specifies a set of fixed
+                                      IPs to assign to the port. They must all be
+                                      valid for the port's network.
+                                    items:
+                                      properties:
+                                        ipAddress:
+                                          description: ipAddress is a specific IP
+                                            address to use in the given subnet. Port
+                                            creation will fail if the address is not
+                                            available. If not specified, an available
+                                            IP from the given subnet will be selected
+                                            automatically.
+                                          type: string
+                                        subnetID:
+                                          description: subnetID specifies the ID of
+                                            the subnet where the fixed IP will be
+                                            allocated.
+                                          type: string
+                                      type: object
+                                    type: array
+                                  hostID:
+                                    description: 'The ID of the host where the port
+                                      is allocated. Do not use this field: it cannot
+                                      be used correctly. Deprecated: hostID is silently
+                                      ignored. It will be removed with no replacement.'
+                                    type: string
+                                  macAddress:
+                                    description: macAddress specifies the MAC address
+                                      of the created port.
+                                    type: string
+                                  nameSuffix:
+                                    description: If nameSuffix is specified the created
+                                      port will be named <machine name>-<nameSuffix>.
+                                      If not specified the port will be named <machine-name>-<index
+                                      of this port>.
+                                    type: string
+                                  networkID:
+                                    description: networkID is the ID of the network
+                                      the port will be created in. It is required.
+                                    type: string
+                                  portSecurity:
+                                    description: enable or disable security on a given
+                                      port incompatible with securityGroups and allowedAddressPairs
+                                    type: boolean
+                                  profile:
+                                    additionalProperties:
+                                      type: string
+                                    description: A dictionary that enables the application
+                                      running on the specified host to pass and receive
+                                      virtual network interface (VIF) port-specific
+                                      information to the plug-in.
+                                    type: object
+                                  projectID:
+                                    description: projectID specifies the project ID
+                                      of the created port. Note that this requires
+                                      OpenShift to have administrative permissions,
+                                      which is typically not the case. Use of this
+                                      field is not recommended.
+                                    type: string
+                                  securityGroups:
+                                    description: securityGroups specifies a set of
+                                      security group UUIDs to use instead of the machine's
+                                      default security groups. The default security
+                                      groups will be used if this is left empty or
+                                      not specified.
+                                    items:
+                                      type: string
+                                    type: array
+                                  tags:
+                                    description: tags species a set of tags to add
+                                      to the port.
+                                    items:
+                                      type: string
+                                    type: array
+                                  tenantID:
+                                    description: 'tenantID specifies the tenant ID
+                                      of the created port. Note that this requires
+                                      OpenShift to have administrative permissions,
+                                      which is typically not the case. Use of this
+                                      field is not recommended. Deprecated: use projectID
+                                      instead. It will be ignored if projectID is
+                                      set.'
+                                    type: string
+                                  trunk:
+                                    description: Enables and disables trunk at port
+                                      level. If not provided, openStackMachine.Spec.Trunk
+                                      is inherited.
+                                    type: boolean
+                                  vnicType:
+                                    description: The virtual network interface card
+                                      (vNIC) type that is bound to the neutron port.
+                                    type: string
+                                type: object
+                              type: array
+                            storageAvailabilityZone:
+                              description: StorageAvailabilityZone is the name of
+                                a valid cinder availability zone. This will be the
+                                availability zone of the root volume if one is specified.
+                              type: string
+                          type: object
+                        type: array
                       rootVolume:
                         description: RootVolume defines the root volume for instances
                           in the machine pool. The instances use ephemeral disks if
@@ -1230,10 +1516,11 @@ spec:
                             description: Type defines the type of the volume. Required
                             type: string
                           zones:
-                            description: Zones is the list of availability zones where
-                              the root volumes should be deployed. If no zones are
-                              provided, all instances will be deployed on OpenStack
-                              Cinder default availability zone
+                            description: "Zones is the list of availability zones
+                              where the root volumes should be deployed. If no zones
+                              are provided, all instances will be deployed on OpenStack
+                              Cinder default availability zone. \n It is an error
+                              to set this when using failureDomains in the machine-pool."
                             items:
                               type: string
                             type: array
@@ -1257,10 +1544,11 @@ spec:
                           eg. m1.large
                         type: string
                       zones:
-                        description: Zones is the list of availability zones where
+                        description: "Zones is the list of availability zones where
                           the instances should be deployed. If no zones are provided,
                           all instances will be deployed on OpenStack Nova default
-                          availability zone
+                          availability zone. \n It is an error to set this when using
+                          failureDomains."
                         items:
                           type: string
                         type: array
@@ -2781,6 +3069,147 @@ spec:
                         items:
                           type: string
                         type: array
+                      failureDomains:
+                        description: FailureDomains is a list of failure domains where
+                          to distribute replicas.
+                        items:
+                          description: 'FailureDomain defines a set of correlated
+                            fault domains across different OpenStack services: compute,
+                            storage, and network.'
+                          properties:
+                            computeAvailabilityZone:
+                              description: ComputeAvailabilityZone is the name of
+                                a valid nova availability zone. The server will be
+                                created in this availability zone.
+                              type: string
+                            ports:
+                              description: Ports defines a set of ports and their
+                                attached networks. These will be prepended to any
+                                another ports attached to the server.
+                              items:
+                                properties:
+                                  adminStateUp:
+                                    description: adminStateUp sets the administrative
+                                      state of the created port to up (true), or down
+                                      (false).
+                                    type: boolean
+                                  allowedAddressPairs:
+                                    description: allowedAddressPairs specifies a set
+                                      of allowed address pairs to add to the port.
+                                    items:
+                                      properties:
+                                        ipAddress:
+                                          type: string
+                                        macAddress:
+                                          type: string
+                                      type: object
+                                    type: array
+                                  description:
+                                    description: description specifies the description
+                                      of the created port.
+                                    type: string
+                                  fixedIPs:
+                                    description: fixedIPs specifies a set of fixed
+                                      IPs to assign to the port. They must all be
+                                      valid for the port's network.
+                                    items:
+                                      properties:
+                                        ipAddress:
+                                          description: ipAddress is a specific IP
+                                            address to use in the given subnet. Port
+                                            creation will fail if the address is not
+                                            available. If not specified, an available
+                                            IP from the given subnet will be selected
+                                            automatically.
+                                          type: string
+                                        subnetID:
+                                          description: subnetID specifies the ID of
+                                            the subnet where the fixed IP will be
+                                            allocated.
+                                          type: string
+                                      type: object
+                                    type: array
+                                  hostID:
+                                    description: 'The ID of the host where the port
+                                      is allocated. Do not use this field: it cannot
+                                      be used correctly. Deprecated: hostID is silently
+                                      ignored. It will be removed with no replacement.'
+                                    type: string
+                                  macAddress:
+                                    description: macAddress specifies the MAC address
+                                      of the created port.
+                                    type: string
+                                  nameSuffix:
+                                    description: If nameSuffix is specified the created
+                                      port will be named <machine name>-<nameSuffix>.
+                                      If not specified the port will be named <machine-name>-<index
+                                      of this port>.
+                                    type: string
+                                  networkID:
+                                    description: networkID is the ID of the network
+                                      the port will be created in. It is required.
+                                    type: string
+                                  portSecurity:
+                                    description: enable or disable security on a given
+                                      port incompatible with securityGroups and allowedAddressPairs
+                                    type: boolean
+                                  profile:
+                                    additionalProperties:
+                                      type: string
+                                    description: A dictionary that enables the application
+                                      running on the specified host to pass and receive
+                                      virtual network interface (VIF) port-specific
+                                      information to the plug-in.
+                                    type: object
+                                  projectID:
+                                    description: projectID specifies the project ID
+                                      of the created port. Note that this requires
+                                      OpenShift to have administrative permissions,
+                                      which is typically not the case. Use of this
+                                      field is not recommended.
+                                    type: string
+                                  securityGroups:
+                                    description: securityGroups specifies a set of
+                                      security group UUIDs to use instead of the machine's
+                                      default security groups. The default security
+                                      groups will be used if this is left empty or
+                                      not specified.
+                                    items:
+                                      type: string
+                                    type: array
+                                  tags:
+                                    description: tags species a set of tags to add
+                                      to the port.
+                                    items:
+                                      type: string
+                                    type: array
+                                  tenantID:
+                                    description: 'tenantID specifies the tenant ID
+                                      of the created port. Note that this requires
+                                      OpenShift to have administrative permissions,
+                                      which is typically not the case. Use of this
+                                      field is not recommended. Deprecated: use projectID
+                                      instead. It will be ignored if projectID is
+                                      set.'
+                                    type: string
+                                  trunk:
+                                    description: Enables and disables trunk at port
+                                      level. If not provided, openStackMachine.Spec.Trunk
+                                      is inherited.
+                                    type: boolean
+                                  vnicType:
+                                    description: The virtual network interface card
+                                      (vNIC) type that is bound to the neutron port.
+                                    type: string
+                                type: object
+                              type: array
+                            storageAvailabilityZone:
+                              description: StorageAvailabilityZone is the name of
+                                a valid cinder availability zone. This will be the
+                                availability zone of the root volume if one is specified.
+                              type: string
+                          type: object
+                        type: array
                       rootVolume:
                         description: RootVolume defines the root volume for instances
                           in the machine pool. The instances use ephemeral disks if
@@ -2794,10 +3223,11 @@ spec:
                             description: Type defines the type of the volume. Required
                             type: string
                           zones:
-                            description: Zones is the list of availability zones where
-                              the root volumes should be deployed. If no zones are
-                              provided, all instances will be deployed on OpenStack
-                              Cinder default availability zone
+                            description: "Zones is the list of availability zones
+                              where the root volumes should be deployed. If no zones
+                              are provided, all instances will be deployed on OpenStack
+                              Cinder default availability zone. \n It is an error
+                              to set this when using failureDomains in the machine-pool."
                             items:
                               type: string
                             type: array
@@ -2821,10 +3251,11 @@ spec:
                           eg. m1.large
                         type: string
                       zones:
-                        description: Zones is the list of availability zones where
+                        description: "Zones is the list of availability zones where
                           the instances should be deployed. If no zones are provided,
                           all instances will be deployed on OpenStack Nova default
-                          availability zone
+                          availability zone. \n It is an error to set this when using
+                          failureDomains."
                         items:
                           type: string
                         type: array

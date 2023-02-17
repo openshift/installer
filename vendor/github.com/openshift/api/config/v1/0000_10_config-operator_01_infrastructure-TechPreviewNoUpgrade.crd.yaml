@@ -807,14 +807,6 @@ spec:
                         region:
                           description: region holds the default Power VS region for new Power VS resources created by the cluster.
                           type: string
-                        resourceGroup:
-                          description: 'resourceGroup is the resource group name for new IBMCloud resources created for a cluster. The resource group specified here will be used by cluster-image-registry-operator to set up a COS Instance in IBMCloud for the cluster registry. More about resource groups can be found here: https://cloud.ibm.com/docs/account?topic=account-rgs. When omitted, the image registry operator won''t be able to configure storage, which results in the image registry cluster operator not being in an available state.'
-                          maxLength: 40
-                          pattern: ^[a-zA-Z0-9-_ ]+$
-                          type: string
-                          x-kubernetes-validations:
-                            - message: resourceGroup is immutable once set
-                              rule: oldSelf == '' || self == oldSelf
                         serviceEndpoints:
                           description: serviceEndpoints is a list of custom endpoints which will override the default service endpoints of a Power VS service.
                           items:
@@ -838,9 +830,6 @@ spec:
                           description: 'zone holds the default zone for the new Power VS resources created by the cluster. Note: Currently only single-zone OCP clusters are supported'
                           type: string
                       type: object
-                      x-kubernetes-validations:
-                        - message: cannot unset resourceGroup once set
-                          rule: '!has(oldSelf.resourceGroup) || has(self.resourceGroup)'
                     type:
                       description: "type is the underlying infrastructure provider for the cluster. This value controls whether infrastructure automation such as service load balancers, dynamic volume provisioning, machine creation and deletion, and other integrations are enabled. If None, no infrastructure automation is enabled. Allowed values are \"AWS\", \"Azure\", \"BareMetal\", \"GCP\", \"Libvirt\", \"OpenStack\", \"VSphere\", \"oVirt\", \"EquinixMetal\", \"PowerVS\", \"AlibabaCloud\", \"Nutanix\" and \"None\". Individual components may not support all platforms, and must handle unrecognized platforms as None if they do not support that platform. \n This value will be synced with to the `status.platform` and `status.platformStatus.type`. Currently this value cannot be changed once set."
                       enum:

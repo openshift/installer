@@ -65,6 +65,7 @@ type OpenstackProviderSpec struct {
 	FloatingIP string `json:"floatingIP,omitempty"`
 
 	// The availability zone from which to launch the server.
+	// It is an error to set both this and `ComputeAvailabilityZone` in `FailureDomain`.
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
 	// The names of the security groups to assign to the instance
@@ -100,6 +101,30 @@ type OpenstackProviderSpec struct {
 
 	// The subnet that a set of machines will get ingress/egress traffic from
 	PrimarySubnet string `json:"primarySubnet,omitempty"`
+
+	// FailureDomain defines the failure domain this machine will be
+	// created in.
+	FailureDomain FailureDomain `json:"failureDomain,omitempty"`
+}
+
+// FailureDomain defines a set of correlated fault domains across different
+// OpenStack services: compute, storage, and network.
+type FailureDomain struct {
+	// ComputeAvailabilityZone is the name of a valid nova availability
+	// zone. The server will be created in this availability zone.
+	// +optional
+	ComputeAvailabilityZone string `json:"computeAvailabilityZone,omitempty"`
+
+	// StorageAvailabilityZone is the name of a valid cinder availability
+	// zone. This will be the availability zone of the root volume if one is
+	// specified.
+	// +optional
+	StorageAvailabilityZone string `json:"storageAvailabilityZone,omitempty"`
+
+	// Ports defines a set of ports and their attached networks. These will
+	// be prepended to any another ports attached to the server.
+	// +optional
+	Ports []PortOpts `json:"ports,omitempty"`
 }
 
 type SecurityGroupParam struct {
@@ -356,6 +381,7 @@ type RootVolume struct {
 	// diskSize specifies the size, in GB, of the created root volume.
 	Size int `json:"diskSize,omitempty"`
 	// availabilityZone specifies the Cinder availability where the root volume will be created.
+	// It is an error to set both this and `StorageAvailabilityZone` in `FailureDomain`.
 	Zone string `json:"availabilityZone,omitempty"`
 
 	// Deprecated: sourceType will be silently ignored. There is no replacement.

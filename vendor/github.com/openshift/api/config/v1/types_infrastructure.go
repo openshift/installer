@@ -1167,7 +1167,6 @@ type PowerVSPlatformSpec struct {
 }
 
 // PowerVSPlatformStatus holds the current status of the IBM Power Systems Virtual Servers infrastrucutre provider.
-// +kubebuilder:validation:XValidation:rule="!has(oldSelf.resourceGroup) || has(self.resourceGroup)",message="cannot unset resourceGroup once set"
 type PowerVSPlatformStatus struct {
 	// region holds the default Power VS region for new Power VS resources created by the cluster.
 	Region string `json:"region"`
@@ -1175,18 +1174,6 @@ type PowerVSPlatformStatus struct {
 	// zone holds the default zone for the new Power VS resources created by the cluster.
 	// Note: Currently only single-zone OCP clusters are supported
 	Zone string `json:"zone"`
-
-	// resourceGroup is the resource group name for new IBMCloud resources created for a cluster.
-	// The resource group specified here will be used by cluster-image-registry-operator to set up a COS Instance in IBMCloud for the cluster registry.
-	// More about resource groups can be found here: https://cloud.ibm.com/docs/account?topic=account-rgs.
-	// When omitted, the image registry operator won't be able to configure storage,
-	// which results in the image registry cluster operator not being in an available state.
-	//
-	// +kubebuilder:validation:Pattern=^[a-zA-Z0-9-_ ]+$
-	// +kubebuilder:validation:MaxLength=40
-	// +kubebuilder:validation:XValidation:rule="oldSelf == '' || self == oldSelf",message="resourceGroup is immutable once set"
-	// +optional
-	ResourceGroup string `json:"resourceGroup"`
 
 	// serviceEndpoints is a list of custom endpoints which will override the default
 	// service endpoints of a Power VS service.
