@@ -82,7 +82,6 @@ aliases:
     - mtulio
   azure-reviewers:
     - jhixson74
-    - m1kola
     - mtulio
   ovirt-approvers:
     - janosdebugs
