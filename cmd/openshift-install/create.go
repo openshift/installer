@@ -28,7 +28,6 @@ import (
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
-	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/logging"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
@@ -36,6 +35,7 @@ import (
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	"github.com/openshift/installer/pkg/gather/service"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
@@ -285,7 +285,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		cleanup := setupFileHook(rootOpts.dir)
 		defer cleanup()
 
-		cluster.InstallDir = rootOpts.dir
+		types.InstallDir = rootOpts.dir
 
 		err := runner(rootOpts.dir)
 		if err != nil {

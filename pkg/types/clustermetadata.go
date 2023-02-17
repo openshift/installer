@@ -15,6 +15,11 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+var (
+	// InstallDir is the directory containing install assets.
+	InstallDir string
+)
+
 // ClusterMetadata contains information
 // regarding the cluster that was created by installer.
 type ClusterMetadata struct {

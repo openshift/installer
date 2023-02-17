@@ -3,14 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
-	"strings"
-
 	"github.com/hashicorp/terraform-exec/tfexec"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
 	"github.com/openshift/installer/pkg/asset/cluster/azure"
@@ -21,15 +14,16 @@ import (
 	"github.com/openshift/installer/pkg/metrics/timer"
 	"github.com/openshift/installer/pkg/terraform"
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
+	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	typesopenstack "github.com/openshift/installer/pkg/types/openstack"
 	typesvsphere "github.com/openshift/installer/pkg/types/vsphere"
-)
-
-var (
-	// InstallDir is the directory containing install assets.
-	InstallDir string
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 // Cluster uses the terraform executable to launch a cluster
@@ -66,7 +60,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 
 // Generate launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) Generate(parents asset.Parents) (err error) {
-	if InstallDir == "" {
+	if types.InstallDir == "" {
 		logrus.Fatalf("InstallDir has not been set for the %q asset", c.Name())
 	}
 
@@ -101,7 +95,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	stages := platformstages.StagesForPlatform(platform)
 
-	terraformDir := filepath.Join(InstallDir, "terraform")
+	terraformDir := filepath.Join(types.InstallDir, "terraform")
 	if err := os.Mkdir(terraformDir, 0777); err != nil {
 		return errors.Wrap(err, "could not create the terraform directory")
 	}
@@ -132,10 +126,12 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	tfvarsFiles := make([]*asset.File, 0, len(terraformVariables.Files())+len(stages))
 	for _, file := range terraformVariables.Files() {
+		logrus.Warnf("terraform file: %s\n", file)
 		tfvarsFiles = append(tfvarsFiles, file)
 	}
 
 	for _, stage := range stages {
+		logrus.Warnf("Loop Start: %s\n", stage.Name())
 		outputs, err := c.applyStage(platform, stage, terraformDirPath, tfvarsFiles)
 		if err != nil {
 			return errors.Wrapf(err, "failure applying terraform for %q stage", stage.Name())
@@ -215,5 +211,6 @@ func (c *Cluster) applyTerraform(tmpDir string, platform string, stage terraform
 		Filename: stage.OutputsFilename(),
 		Data:     outputs,
 	}
+
 	return outputsFile, nil
 }
