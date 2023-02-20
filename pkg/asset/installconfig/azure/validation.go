@@ -602,20 +602,22 @@ func validateMarketplaceImages(client API, installConfig *types.InstallConfig) f
 	cloudName := installConfig.Azure.CloudName
 
 	var defaultInstanceType string
+	var defaultOSImage aztypes.OSImage
 	if installConfig.Azure.DefaultMachinePlatform != nil {
 		defaultInstanceType = installConfig.Azure.DefaultMachinePlatform.InstanceType
+		defaultOSImage = installConfig.Azure.DefaultMachinePlatform.OSImage
 	}
 
 	// Validate Compute marketplace images
 	for i, compute := range installConfig.Compute {
 		platform := compute.Platform.Azure
-		if platform == nil {
-			continue
-		}
 		fldPath := field.NewPath("compute").Index(i)
 
 		// Determine instance type
-		instanceType := platform.InstanceType
+		instanceType := ""
+		if platform != nil {
+			instanceType = platform.InstanceType
+		}
 		if instanceType == "" {
 			instanceType = defaultInstanceType
 		}
@@ -635,7 +637,15 @@ func validateMarketplaceImages(client API, installConfig *types.InstallConfig) f
 			continue
 		}
 
-		imgErr := validateMarketplaceImage(client, region, generations, &platform.OSImage, fldPath)
+		// If not set, try to use the OS Image definition from the default machine pool
+		var osImage aztypes.OSImage
+		if platform != nil {
+			osImage = platform.OSImage
+		}
+		if osImage.Publisher == "" {
+			osImage = defaultOSImage
+		}
+		imgErr := validateMarketplaceImage(client, region, generations, &osImage, fldPath)
 		if imgErr != nil {
 			allErrs = append(allErrs, imgErr)
 		}
