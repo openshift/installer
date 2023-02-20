@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// ErrCodeAccessDeniedException is the access denied error code returned by IAM.
 	ErrCodeAccessDeniedException = "AccessDeniedException"
 )
 

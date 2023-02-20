@@ -12,6 +12,7 @@ import (
 
 var localLogger = logrus.New()
 
+// ConvertInstallConfig modifies a given platform spec for the new requirements.
 func ConvertInstallConfig(config *types.InstallConfig) error {
 	platform := config.Platform.VSphere
 
