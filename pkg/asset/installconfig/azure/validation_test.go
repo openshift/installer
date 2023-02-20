@@ -1085,6 +1085,26 @@ func TestAzureMarketplaceImages(t *testing.T) {
 		ic.Azure.DefaultMachinePlatform.InstanceType = "Standard_D4s_v3"
 	}
 
+	validOSImageDefaultMachine := func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.OSImage = validOSImage
+	}
+	invalidOSImageDefaultMachine := func(ic *types.InstallConfig) {
+		validOSImageDefaultMachine(ic)
+		ic.Azure.DefaultMachinePlatform.OSImage.SKU = invalidOSImageSKU
+	}
+	erroringLicenseTermsOSImageDefaultMachine := func(ic *types.InstallConfig) {
+		validOSImageDefaultMachine(ic)
+		ic.Azure.DefaultMachinePlatform.OSImage.SKU = erroringLicenseTermsOSImageSKU
+	}
+	unacceptedLicenseTermsOSImageDefaultMachine := func(ic *types.InstallConfig) {
+		validOSImageDefaultMachine(ic)
+		ic.Azure.DefaultMachinePlatform.OSImage.SKU = unacceptedLicenseTermsOSImageSKU
+	}
+	erroringGenerationOsImageDefaultMachine := func(ic *types.InstallConfig) {
+		validOSImageDefaultMachine(ic)
+		ic.Azure.DefaultMachinePlatform.OSImage.SKU = erroringOSImageSKU
+	}
+
 	cases := []struct {
 		name     string
 		edits    editFunctions
@@ -1095,8 +1115,21 @@ func TestAzureMarketplaceImages(t *testing.T) {
 			edits: editFunctions{validOSImageCompute, validInstanceTypes},
 		},
 		{
+			name:  "Valid OS Image compute from default MachinePool",
+			edits: editFunctions{validOSImageDefaultMachine, validInstanceTypes},
+		},
+		{
+			name:  "Valid OS Image compute when default MachinePool not valid",
+			edits: editFunctions{invalidOSImageDefaultMachine, validOSImageCompute, validInstanceTypes},
+		},
+		{
 			name:     "Invalid OS Image compute",
 			edits:    editFunctions{invalidOSImageCompute, validInstanceTypes},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: not found`,
+		},
+		{
+			name:     "Invalid OS Image compute from default MachinePool",
+			edits:    editFunctions{invalidOSImageDefaultMachine, validInstanceTypes},
 			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: not found`,
 		},
 		{
@@ -1105,13 +1138,28 @@ func TestAzureMarketplaceImages(t *testing.T) {
 			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: could not determine if the license terms for the marketplace image have been accepted: error`,
 		},
 		{
+			name:     "OS Image causing error determining license terms for compute from default MachinePool",
+			edits:    editFunctions{erroringLicenseTermsOSImageDefaultMachine, validInstanceTypes},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: could not determine if the license terms for the marketplace image have been accepted: error`,
+		},
+		{
 			name:     "OS Image with unaccepted license terms for compute",
 			edits:    editFunctions{unacceptedLicenseTermsOSImageCompute, validInstanceTypes},
 			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: the license terms for the marketplace image have not been accepted`,
 		},
 		{
+			name:     "OS Image with unaccepted license terms for compute from default MachinePool",
+			edits:    editFunctions{unacceptedLicenseTermsOSImageDefaultMachine, validInstanceTypes},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: the license terms for the marketplace image have not been accepted`,
+		},
+		{
 			name:     "OS Image with wrong HyperV generation for compute",
 			edits:    editFunctions{erroringGenerationOsImageCompute, validInstanceTypes},
+			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: instance type supports HyperVGenerations \[(V[12])\] but the specified image is for HyperVGeneration [^\\1].*`,
+		},
+		{
+			name:     "OS Image with wrong HyperV generation for compute from default MachinePool",
+			edits:    editFunctions{erroringGenerationOsImageDefaultMachine, validInstanceTypes},
 			errorMsg: `compute\[0\].platform.azure.osImage: Invalid value: .*: instance type supports HyperVGenerations \[(V[12])\] but the specified image is for HyperVGeneration [^\\1].*`,
 		},
 		{
