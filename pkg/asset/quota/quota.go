@@ -146,14 +146,15 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 		}
 		summarizeReport(reports)
 	case powervs.Name:
-		bxCli, err := configpowervs.NewBxClient()
+		// We need to prompt for missing variables because NewPISession requires them!
+		bxCli, err := configpowervs.NewBxClient(true)
 		if err != nil {
 			return errors.Wrap(err, "failed to create bluemix client")
 		}
 
 		err = bxCli.NewPISession()
 		if err != nil {
-			return errors.Wrap(err, "failed to get PowerVS connection details")
+			return errors.Wrap(err, "failed to create a new PISession")
 		}
 
 		// Only check that there isn't an existing Cloud connection if we're not re-using one

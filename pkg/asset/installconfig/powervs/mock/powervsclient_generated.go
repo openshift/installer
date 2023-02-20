@@ -9,6 +9,7 @@ import (
 	reflect "reflect"
 
 	iamidentityv1 "github.com/IBM/platform-services-go-sdk/iamidentityv1"
+	resourcemanagerv2 "github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
 	vpcv1 "github.com/IBM/vpc-go-sdk/vpcv1"
 	gomock "github.com/golang/mock/gomock"
 	powervs "github.com/openshift/installer/pkg/asset/installconfig/powervs"
@@ -185,6 +186,36 @@ func (m *MockAPI) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, erro
 func (mr *MockAPIMockRecorder) GetVPCs(ctx, region interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVPCs", reflect.TypeOf((*MockAPI)(nil).GetVPCs), ctx, region)
+}
+
+// ListResourceGroups mocks base method.
+func (m *MockAPI) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListResourceGroups", ctx)
+	ret0, _ := ret[0].(*resourcemanagerv2.ResourceGroupList)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListResourceGroups indicates an expected call of ListResourceGroups.
+func (mr *MockAPIMockRecorder) ListResourceGroups(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListResourceGroups", reflect.TypeOf((*MockAPI)(nil).ListResourceGroups), ctx)
+}
+
+// ListServiceInstances mocks base method.
+func (m *MockAPI) ListServiceInstances(ctx context.Context) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListServiceInstances", ctx)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListServiceInstances indicates an expected call of ListServiceInstances.
+func (mr *MockAPIMockRecorder) ListServiceInstances(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServiceInstances", reflect.TypeOf((*MockAPI)(nil).ListServiceInstances), ctx)
 }
 
 // SetVPCServiceURLForRegion mocks base method.

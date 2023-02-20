@@ -2,7 +2,10 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -182,4 +185,75 @@ func findSubnetInVPC(client API, subnets []string, region string, name string, p
 	}
 
 	return allErrs
+}
+
+// ValidateResourceGroup validates the resource group in our install config.
+func ValidateResourceGroup(client API, ic *types.InstallConfig) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	resourceGroups, err := client.ListResourceGroups(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to list resourceGroups: %w", err)
+	}
+
+	switch ic.PowerVS.PowerVSResourceGroup {
+	case "":
+		return errors.New("platform:powervs:powervsresourcegroup is empty")
+	case "Default":
+		found := false
+		for _, resourceGroup := range resourceGroups.Resources {
+			if resourceGroup.Default != nil && *resourceGroup.Default {
+				found = true
+				ic.PowerVS.PowerVSResourceGroup = *resourceGroup.Name
+				break
+			}
+		}
+		if !found {
+			return errors.New("platform:powervs:powervsresourcegroup is default but no default exists")
+		}
+	default:
+		found := false
+		for _, resourceGroup := range resourceGroups.Resources {
+			if *resourceGroup.Name == ic.PowerVS.PowerVSResourceGroup {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return errors.New("platform:powervs:powervsresourcegroup has an invalid name")
+		}
+	}
+
+	return nil
+}
+
+// ValidateServiceInstance validates the service instance in our install config.
+func ValidateServiceInstance(client API, ic *types.InstallConfig) error {
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+	defer cancel()
+
+	serviceInstances, err := client.ListServiceInstances(ctx)
+	if err != nil {
+		return err
+	}
+
+	switch ic.PowerVS.ServiceInstanceID {
+	case "":
+		return errors.New("platform:powervs:serviceinstance is empty")
+	default:
+		found := false
+		for _, serviceInstance := range serviceInstances {
+			guid := strings.SplitN(serviceInstance, " ", 2)[1]
+			if guid == ic.PowerVS.ServiceInstanceID {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return errors.New("platform:powervs:serviceinstance has an invalid guid")
+		}
+	}
+
+	return nil
 }
