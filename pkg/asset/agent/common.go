@@ -28,6 +28,8 @@ func SupportedHivePlatforms() []string {
 	return platforms
 }
 
+// HivePlatformType returns the PlatformType for the ZTP Hive API corresponding
+// to the given InstallConfig platform.
 func HivePlatformType(platform types.Platform) hiveext.PlatformType {
 	switch platform.Name() {
 	case baremetal.Name:
