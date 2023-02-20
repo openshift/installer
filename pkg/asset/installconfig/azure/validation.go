@@ -608,6 +608,48 @@ func validateMarketplaceImages(client API, installConfig *types.InstallConfig) f
 		defaultOSImage = installConfig.Azure.DefaultMachinePlatform.OSImage
 	}
 
+	// Validate ControlPlane marketplace images
+	if installConfig.ControlPlane != nil {
+		platform := installConfig.ControlPlane.Platform.Azure
+		fldPath := field.NewPath("controlPlane")
+
+		// Determine instance type
+		instanceType := ""
+		if platform != nil {
+			instanceType = platform.InstanceType
+		}
+		if instanceType == "" {
+			instanceType = defaultInstanceType
+		}
+		if instanceType == "" {
+			instanceType = defaults.ControlPlaneInstanceType(cloudName, region, installConfig.ControlPlane.Architecture)
+		}
+
+		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, region)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
+		}
+
+		generations, err := GetHyperVGenerationVersions(capabilities)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
+		}
+
+		// If not set, try to use the OS Image definition from the default machine pool
+		var osImage aztypes.OSImage
+		if platform != nil {
+			osImage = platform.OSImage
+		}
+		if osImage.Publisher == "" {
+			osImage = defaultOSImage
+		}
+
+		imgErr := validateMarketplaceImage(client, region, generations, &osImage, fldPath)
+		if imgErr != nil {
+			allErrs = append(allErrs, imgErr)
+		}
+	}
+
 	// Validate Compute marketplace images
 	for i, compute := range installConfig.Compute {
 		platform := compute.Platform.Azure

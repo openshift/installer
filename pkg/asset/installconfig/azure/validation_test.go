@@ -375,7 +375,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Undefined default instance types",
 			edits:    editFunctions{undefinedDefaultInstanceTypes},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus\]`,
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": unable to determine HyperVGeneration version\]`,
 		},
 		{
 			name:     "Invalid compute instance types",
