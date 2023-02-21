@@ -19,6 +19,10 @@ output "control_plane_subnet_zone_list" {
   value = local.control_plane_subnets[*].zone
 }
 
+output "compute_subnet_id_list" {
+  value = local.compute_subnets[*].id
+}
+
 output "lb_kubernetes_api_public_hostname" {
   value = var.public_endpoints ? ibm_is_lb.kubernetes_api_public.0.hostname : ""
 }
