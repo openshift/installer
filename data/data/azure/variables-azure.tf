@@ -217,3 +217,36 @@ variable "azure_image_release" {
   description = "RHCOS release image version - used when creating the image definition in the gallery"
 }
 
+variable "azure_use_marketplace_image" {
+  type        = bool
+  description = "Whether to use a Marketplace image for all nodes"
+}
+
+variable "azure_marketplace_image_has_plan" {
+  type        = bool
+  description = "Whether the Marketplace image has a purchase plan"
+}
+
+variable "azure_marketplace_image_publisher" {
+  type        = string
+  description = "Publisher of the marketplace image"
+  default     = ""
+}
+
+variable "azure_marketplace_image_offer" {
+  type        = string
+  description = "Offer of the marketplace image"
+  default     = ""
+}
+
+variable "azure_marketplace_image_sku" {
+  type        = string
+  description = "SKU of the marketplace image"
+  default     = ""
+}
+
+variable "azure_marketplace_image_version" {
+  type        = string
+  description = "Version of the marketplace image"
+  default     = ""
+}

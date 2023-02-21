@@ -41,6 +41,12 @@ module "master" {
   ultra_ssd_enabled          = var.azure_control_plane_ultra_ssd_enabled
   vm_networking_type         = var.azure_control_plane_vm_networking_type
   azure_extra_tags           = var.azure_extra_tags
+  use_marketplace_image      = var.azure_use_marketplace_image
+  vm_image_has_plan          = var.azure_marketplace_image_has_plan
+  vm_image_publisher         = var.azure_marketplace_image_publisher
+  vm_image_offer             = var.azure_marketplace_image_offer
+  vm_image_sku               = var.azure_marketplace_image_sku
+  vm_image_version           = var.azure_marketplace_image_version
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6
