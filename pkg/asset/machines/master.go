@@ -624,9 +624,11 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	file, err = f.FetchByName(filepath.Join(directory, controlPlaneMachineSetFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return false, nil
+			// Choosing to ignore the CPMS file if it does not exist since UPI does not need it.
+			logrus.Debugf("CPMS file missing. Ignoring it while loading machine asset.")
+			return true, nil
 		}
-		return false, err
+		return true, err
 	}
 	m.ControlPlaneMachineSet = file
 
