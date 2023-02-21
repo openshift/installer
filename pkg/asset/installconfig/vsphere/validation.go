@@ -29,12 +29,9 @@ import (
 
 // TagManager defines an interface to an implementation of the AuthorizationManager to facilitate mocking.
 type TagManager interface {
-	ListCategories(ctx context.Context) ([]string, error)
+	ListAttachedTagsOnObjects(ctx context.Context, objectID []mo.Reference) ([]vapitags.AttachedTags, error)
 	GetCategories(ctx context.Context) ([]vapitags.Category, error)
-	GetCategory(ctx context.Context, id string) (*vapitags.Category, error)
-	GetTagsForCategory(ctx context.Context, id string) ([]vapitags.Tag, error)
-	GetAttachedTags(ctx context.Context, ref mo.Reference) ([]vapitags.Tag, error)
-	GetAttachedTagsOnObjects(ctx context.Context, objectID []mo.Reference) ([]vapitags.AttachedTags, error)
+	GetTag(ctx context.Context, id string) (*vapitags.Tag, error)
 }
 
 const (
@@ -44,14 +41,15 @@ const (
 )
 
 var localLogger = logrus.New()
+var tagCache = make(map[string]*vapitags.Tag)
 
 type validationContext struct {
-	AuthManager         AuthManager
-	Finder              Finder
-	Client              *vim25.Client
-	TagManager          TagManager
-	regionTagCategoryID string
-	zoneTagCategoryID   string
+	AuthManager       AuthManager
+	Finder            Finder
+	Client            *vim25.Client
+	TagManager        TagManager
+	regionTagCategory *vapitags.Category
+	zoneTagCategory   *vapitags.Category
 }
 
 // Validate executes platform-specific validation.
@@ -149,13 +147,14 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	vsphereField := field.NewPath("platform").Child("vsphere")
 	topologyField := vsphereField.Child("failureDomains").Child("topology")
 
-	if checkTags {
-		regionTagCategoryID, zoneTagCategoryID, err := validateTagCategories(validationCtx)
+	// only pull tags associated with categories if there aren't any present
+	if checkTags &&
+		validationCtx.regionTagCategory == nil &&
+		validationCtx.zoneTagCategory == nil {
+		err := validateTagCategories(validationCtx)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(vsphereField, err))
 		}
-		validationCtx.regionTagCategoryID = regionTagCategoryID
-		validationCtx.zoneTagCategoryID = zoneTagCategoryID
 	}
 
 	allErrs = append(allErrs, resourcePoolExists(validationCtx, resourcePool, topologyField.Child("resourcePool"))...)
@@ -548,35 +547,32 @@ func ensureLoadBalancer(installConfig *types.InstallConfig) {
 	}
 }
 
-func validateTagCategories(validationCtx *validationContext) (string, string, error) {
+func validateTagCategories(validationCtx *validationContext) error {
 	if validationCtx.TagManager == nil {
-		return "", "", nil
+		return nil
 	}
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
-
 	categories, err := validationCtx.TagManager.GetCategories(ctx)
 	if err != nil {
-		return "", "", err
+		return err
 	}
-
-	regionTagCategoryID := ""
-	zoneTagCategoryID := ""
-	for _, category := range categories {
+	for idx, category := range categories {
 		switch category.Name {
-		case vsphere.TagCategoryRegion:
-			regionTagCategoryID = category.ID
 		case vsphere.TagCategoryZone:
-			zoneTagCategoryID = category.ID
-		}
-		if len(zoneTagCategoryID) > 0 && len(regionTagCategoryID) > 0 {
-			break
+			validationCtx.zoneTagCategory = &categories[idx]
+		case vsphere.TagCategoryRegion:
+			validationCtx.regionTagCategory = &categories[idx]
 		}
 	}
-	if len(zoneTagCategoryID) == 0 || len(regionTagCategoryID) == 0 {
-		return "", "", errors.New("tag categories openshift-zone and openshift-region must be created")
+	if validationCtx.regionTagCategory == nil {
+		return errors.Errorf("Tag category %v not found", vsphere.TagCategoryRegion)
+
 	}
-	return regionTagCategoryID, zoneTagCategoryID, nil
+	if validationCtx.zoneTagCategory == nil {
+		return errors.Errorf("Tag category %v not found", vsphere.TagCategoryZone)
+	}
+	return nil
 }
 
 func validateTagAttachment(validationCtx *validationContext, reference vim25types.ManagedObjectReference) error {
@@ -585,8 +581,6 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 	}
 	client := validationCtx.Client
 	tagManager := validationCtx.TagManager
-	regionTagCategoryID := validationCtx.regionTagCategoryID
-	zoneTagCategoryID := validationCtx.zoneTagCategoryID
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
@@ -601,23 +595,31 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 	for _, ancestor := range ancestors {
 		referencesToCheck = append(referencesToCheck, ancestor.Reference())
 	}
-	attachedTags, err := tagManager.GetAttachedTagsOnObjects(ctx, referencesToCheck)
+
+	attachedTags, err := tagManager.ListAttachedTagsOnObjects(ctx, referencesToCheck)
 	if err != nil {
 		return err
 	}
 	regionTagAttached := false
 	zoneTagAttached := false
 	for _, attachedTag := range attachedTags {
-		for _, tag := range attachedTag.Tags {
-			if !regionTagAttached {
-				if tag.CategoryID == regionTagCategoryID {
-					regionTagAttached = true
+		for _, tagID := range attachedTag.TagIDs {
+			var tag *vapitags.Tag
+			if cachedTag, ok := tagCache[tagID]; ok {
+				tag = cachedTag
+			} else {
+				fullTag, err := tagManager.GetTag(ctx, tagID)
+				if err != nil {
+					return err
 				}
+				tag = fullTag
+				tagCache[tagID] = tag
 			}
-			if !zoneTagAttached {
-				if tag.CategoryID == zoneTagCategoryID {
-					zoneTagAttached = true
-				}
+			switch tag.CategoryID {
+			case validationCtx.zoneTagCategory.ID:
+				zoneTagAttached = true
+			case validationCtx.regionTagCategory.ID:
+				regionTagAttached = true
 			}
 			if regionTagAttached && zoneTagAttached {
 				return nil

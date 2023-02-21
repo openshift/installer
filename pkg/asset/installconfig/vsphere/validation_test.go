@@ -391,12 +391,26 @@ func TestValidateFailureDomains(t *testing.T) {
 				tagTestAttachRegionTags,
 			expectErr: "platform.vsphere.failureDomains.topology.computeCluster: Internal error: tag associated with tag category openshift-zone not attached to this resource or ancestor",
 		}, {
-			name:             "multi-zone tag categories, missing zone and region tag categories",
+			name:             "multi-zone tag categories, missing region tag category",
+			validationMethod: validateFailureDomain,
+			failureDomain:    &validMultiVCenterPlatform().FailureDomains[0],
+			checkTags:        true,
+			tagTestMask:      tagTestCreateZoneCategory,
+			expectErr:        "platform.vsphere: Internal error: Tag category openshift-region not found",
+		}, {
+			name:             "multi-zone tag categories, missing zone tag category",
+			validationMethod: validateFailureDomain,
+			failureDomain:    &validMultiVCenterPlatform().FailureDomains[0],
+			checkTags:        true,
+			tagTestMask:      tagTestCreateRegionCategory,
+			expectErr:        "platform.vsphere: Internal error: Tag category openshift-zone not found",
+		}, {
+			name:             "multi-zone tag categories, missing zone and region tag category",
 			validationMethod: validateFailureDomain,
 			failureDomain:    &validMultiVCenterPlatform().FailureDomains[0],
 			checkTags:        true,
 			tagTestMask:      tagTestNothingCreatedOrAttached,
-			expectErr:        "platform.vsphere: Internal error: tag categories openshift-zone and openshift-region must be created",
+			expectErr:        "platform.vsphere: Internal error: Tag category openshift-region not found, platform.vsphere.failureDomains.topology.computeCluster: Internal error: tag associated with tag category openshift-region not attached to this resource or ancestor,tag associated with tag category openshift-zone not attached to this resource or ancestor",
 		},
 	}
 
@@ -411,8 +425,8 @@ func TestValidateFailureDomains(t *testing.T) {
 					if err != nil {
 						assert.NoError(t, err)
 					}
-					validationCtx.zoneTagCategoryID = ""
-					validationCtx.regionTagCategoryID = ""
+					validationCtx.zoneTagCategory = nil
+					validationCtx.regionTagCategory = nil
 					validationCtx.TagManager = tagMgr
 				}
 
@@ -422,8 +436,8 @@ func TestValidateFailureDomains(t *testing.T) {
 					if err != nil {
 						assert.NoError(t, err)
 					}
-					validationCtx.zoneTagCategoryID = ""
-					validationCtx.regionTagCategoryID = ""
+					validationCtx.zoneTagCategory = nil
+					validationCtx.regionTagCategory = nil
 					validationCtx.TagManager = nil
 				}
 			} else {
