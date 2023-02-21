@@ -20,8 +20,7 @@ COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install
 RUN dnf upgrade -y && \
     dnf install --setopt=tsflags=nodocs -y \
     libvirt-libs-$libvirt_version openssl unzip jq openssh-clients && \
-    dnf clean all && rm -rf /var/cache/yum/* && \
-    chmod g+w /etc/passwd
+    dnf clean all && rm -rf /var/cache/yum/*
 
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
