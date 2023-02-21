@@ -25,6 +25,14 @@ type Auth struct {
 	UseMSI                    bool   `json:"azure_use_msi,omitempty"`
 }
 
+// OSImage is the marketplace image to be used for RHCOS.
+type OSImage struct {
+	Publisher string `json:"azure_marketplace_image_publisher,omitempty"`
+	Offer     string `json:"azure_marketplace_image_offer,omitempty"`
+	SKU       string `json:"azure_marketplace_image_sku,omitempty"`
+	Version   string `json:"azure_marketplace_image_version,omitempty"`
+}
+
 type config struct {
 	Auth                            `json:",inline"`
 	Environment                     string            `json:"azure_environment"`
@@ -56,6 +64,9 @@ type config struct {
 	RandomStringPrefix              string            `json:"random_storage_account_suffix"`
 	VMArchitecture                  string            `json:"azure_vm_architecture"`
 	ManagedBy                       string            `json:"azure_managed_by"`
+	UseMarketplaceImage             bool              `json:"azure_use_marketplace_image"`
+	MarketplaceImageHasPlan         bool              `json:"azure_marketplace_image_has_plan"`
+	OSImage                         `json:",inline"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -118,6 +129,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		tags[k] = v
 	}
 
+	osImage := OSImage{
+		Publisher: masterConfig.Image.Publisher,
+		Offer:     masterConfig.Image.Offer,
+		SKU:       masterConfig.Image.SKU,
+		Version:   masterConfig.Image.Version,
+	}
+
 	cfg := &config{
 		Auth:                            sources.Auth,
 		Environment:                     environment,
@@ -149,6 +167,9 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VMArchitecture:                  vmarch,
 		ExtraTags:                       tags,
 		ManagedBy:                       sources.ManagedBy,
+		UseMarketplaceImage:             osImage.Publisher != "",
+		MarketplaceImageHasPlan:         masterConfig.Image.Type != machineapi.AzureImageTypeMarketplaceNoPlan,
+		OSImage:                         osImage,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
