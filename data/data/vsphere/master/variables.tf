@@ -1,9 +1,5 @@
 variable "resource_pool" {
-  type = string
-}
-
-variable "folder" {
-  type = string
+  type = list(any)
 }
 
 variable "bootstrap_moid" {
@@ -12,29 +8,18 @@ variable "bootstrap_moid" {
 }
 
 variable "datastore" {
-  type = string
+  type = list(any)
 }
 
 variable "datacenter" {
-  type = string
-}
-
-variable "template" {
-  type = string
-}
-
-variable "guest_id" {
-  type = string
+  type = list(any)
 }
 
 variable "tags" {
-  type = list
+  type = list(any)
 }
 
-variable "thin_disk" {
-  type = bool
-}
-
-variable "scrub_disk" {
-  type = bool
+variable "template" {
+  type    = list(any)
+  default = []
 }

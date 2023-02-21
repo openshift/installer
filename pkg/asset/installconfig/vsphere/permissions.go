@@ -226,11 +226,11 @@ func comparePrivileges(ctx context.Context, validationCtx *validationContext, mo
 				}
 			}
 		}
-		if hasPrivilege == false {
+		if !hasPrivilege {
 			if missingPrivileges != "" {
-				missingPrivileges = missingPrivileges + ", "
+				missingPrivileges += ", "
 			}
-			missingPrivileges = missingPrivileges + neededPrivilege
+			missingPrivileges += neededPrivilege
 		}
 	}
 	if missingPrivileges != "" {

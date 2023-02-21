@@ -8671,6 +8671,18 @@ github.com/nutanix-cloud-native/prism-go-client/v3
 # github.com/oklog/ulid v1.3.1
 ## explicit
 github.com/oklog/ulid
+# github.com/onsi/gomega v1.26.0
+## explicit; go 1.18
+github.com/onsi/gomega
+github.com/onsi/gomega/format
+github.com/onsi/gomega/internal
+github.com/onsi/gomega/internal/gutil
+github.com/onsi/gomega/matchers
+github.com/onsi/gomega/matchers/support/goraph/bipartitegraph
+github.com/onsi/gomega/matchers/support/goraph/edge
+github.com/onsi/gomega/matchers/support/goraph/node
+github.com/onsi/gomega/matchers/support/goraph/util
+github.com/onsi/gomega/types
 # github.com/opencontainers/go-digest v1.0.0
 ## explicit; go 1.13
 github.com/opencontainers/go-digest
@@ -8999,6 +9011,9 @@ golang.org/x/mod/semver
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
+golang.org/x/net/html
+golang.org/x/net/html/atom
+golang.org/x/net/html/charset
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
@@ -9034,8 +9049,20 @@ golang.org/x/term
 ## explicit; go 1.17
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
+golang.org/x/text/encoding/htmlindex
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/internal/identifier
+golang.org/x/text/encoding/japanese
+golang.org/x/text/encoding/korean
+golang.org/x/text/encoding/simplifiedchinese
+golang.org/x/text/encoding/traditionalchinese
+golang.org/x/text/encoding/unicode
+golang.org/x/text/internal/language
+golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
+golang.org/x/text/internal/utf8internal
+golang.org/x/text/language
+golang.org/x/text/runes
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi

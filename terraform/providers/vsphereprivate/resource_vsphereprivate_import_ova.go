@@ -4,11 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
-	"strconv"
 	"strings"
 
-	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/pkg/errors"
@@ -17,18 +14,11 @@ import (
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/ovf"
-	"github.com/vmware/govmomi/task"
 	"github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
-)
-
-const (
-	esxi67U3BuildNumber int    = 14320388
-	vmx15               string = "vmx-15"
-	vmx13               string = "vmx-13"
 )
 
 func resourceVSpherePrivateImportOva() *schema.Resource {
@@ -123,6 +113,7 @@ type importOvaParams struct {
 }
 
 func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool, datastore, network, folder string) (*importOvaParams, error) {
+
 	var ccrMo mo.ClusterComputeResource
 	var folderPath string
 
@@ -139,19 +130,13 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.Datacenter = dcObj
 
-	// First check if the folder contains the datacenter
-	// If so check the regex
-	if strings.Contains(folder, datacenter) {
-		folderPathRegexp := regexp.MustCompile("^\\/(.*?)\\/vm\\/(.*?)$")
-		folderPathParts := folderPathRegexp.FindStringSubmatch(folder)
+	// When finder.Datacenter is executed apparently it
+	// does not set the datacenter, why, who knows
+	// Replace finder with finder.SetDatacenter
+	finder = finder.SetDatacenter(dcObj)
 
-		if folderPathParts != nil {
-			folderPath = folder
-		} else {
-			return nil, errors.Errorf("folder path is incorrect, please provide a full path.")
-		}
-
-	} else {
+	folderPath = folder
+	if !strings.HasPrefix(folder, "/") {
 		folderPath = fmt.Sprintf("/%s/vm/%s", datacenter, folder)
 	}
 
@@ -170,15 +155,11 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.ResourcePool = resourcePoolObj
 
-	clusterPathRegexp := regexp.MustCompile("^\\/(.*?)\\/host\\/(.*?)$")
-	clusterPathParts := clusterPathRegexp.FindStringSubmatch(cluster)
-
 	clusterPath := cluster
-	if clusterPathParts == nil {
-		// Find the cluster object by the datacenter and cluster name to
-		// generate the path e.g. /datacenter/host/cluster
+	if !strings.HasPrefix(cluster, "/") {
 		clusterPath = fmt.Sprintf("/%s/host/%s", datacenter, cluster)
 	}
+
 	clusterComputeResource, err := finder.ClusterComputeResource(ctx, clusterPath)
 	if err != nil {
 		return nil, err
@@ -205,29 +186,41 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 
 	// Find all the datastores that are configured under the cluster
-	datastores, err := clusterComputeResource.Datastores(ctx)
+	clusterDatastores, err := clusterComputeResource.Datastores(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	if len(clusterDatastores) == 0 {
+		return nil, errors.Errorf("failed to find any datastore(s) in the cluster")
+	}
+
 	// Find the specific datastore by the name provided
-	for _, datastoreObj := range datastores {
-		datastoreObjName, err := datastoreObj.ObjectName(ctx)
+	for _, objectDS := range clusterDatastores {
+
+		objectDSName, err := objectDS.ObjectName(ctx)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "unable to find datastore name")
 		}
-		if datastore == datastoreObjName {
-			importOvaParams.Datastore = datastoreObj
+		// clusterComputeResource.Datastores(ctx) does not properly
+		// handle Common - which includes InventoryPath and .Name()
+		// To workaround this issue we must retrieve the Datastore
+		// object again with the method below. Do not remove this.
+		ds, err := finder.Datastore(ctx, objectDSName)
+
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to find datastore object by name")
+		}
+		datastoreName := ds.Name()
+		datastorePath := ds.InventoryPath
+
+		if datastoreName == datastore || datastorePath == datastore {
+			importOvaParams.Datastore = ds
 			break
 		}
 	}
 	if importOvaParams.Datastore == nil {
 		return nil, errors.Errorf("failed to find a host in the cluster that contains the provided datastore")
-	}
-
-	v67, err := version.NewVersion("6.7")
-	if err != nil {
-		return nil, err
 	}
 
 	// Find all the HostSystem(s) under cluster
@@ -241,38 +234,12 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	// available for use on the HostSystem we will import the
 	// OVA to.
 	for _, hostObj := range hosts {
+
 		foundDatastore := false
 		foundNetwork := false
 		err := hostObj.Properties(ctx, hostObj.Reference(), []string{"config.product", "network", "datastore", "runtime"}, &hostSystemManagedObject)
 		if err != nil {
 			return nil, err
-		}
-
-		// If HardwareVersion is 13 there is no reason to continue checking
-		// There is a ESXi host that does not support hardware 15.
-		if importOvaParams.HardwareVersion != vmx13 {
-			esxiHostVersion, err := version.NewVersion(hostSystemManagedObject.Config.Product.Version)
-			if err != nil {
-				return nil, err
-			}
-
-			importOvaParams.HardwareVersion = vmx13
-			if esxiHostVersion.Equal(v67) {
-				build, err := strconv.Atoi(hostSystemManagedObject.Config.Product.Build)
-				if err != nil {
-					return nil, err
-				}
-				// This is the ESXi 6.7 U3 build number
-				// Anything less than this version is unsupported with the
-				// out-of-tree CSI.
-				// https://kb.vmware.com/s/article/2143838
-				// https://vsphere-csi-driver.sigs.k8s.io/supported_features_matrix.html
-				if build >= esxi67U3BuildNumber {
-					importOvaParams.HardwareVersion = vmx15
-				}
-			} else if esxiHostVersion.GreaterThan(v67) {
-				importOvaParams.HardwareVersion = vmx15
-			}
 		}
 
 		// Skip all hosts that are in maintenance mode.
@@ -469,22 +436,6 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 	}
 	log.Printf("[DEBUG] %s: mark as template", vm.Name())
 
-	// https://vdc-download.vmware.com/vmwb-repository/dcr-public/b50dcbbf-051d-4204-a3e7-e1b618c1e384/538cf2ec-b34f-4bae-a332-3820ef9e7773/vim.VirtualMachine.html#upgradeVirtualHardware
-	// "Upgrades this virtual machine's virtual hardware to the latest revision that is supported by the virtual machine's current host."
-	task, err := vm.UpgradeVM(ctx, importOvaParams.HardwareVersion)
-
-	if err != nil {
-		return errors.Errorf("failed to upgrade vm to: %s, %s", importOvaParams.HardwareVersion, err)
-	}
-
-	err = task.Wait(ctx)
-
-	if err != nil {
-		if !isAlreadyUpgraded(err) {
-			return errors.Errorf("failed to upgrade vm to: %s, %s", importOvaParams.HardwareVersion, err)
-		}
-	}
-
 	err = vm.MarkAsTemplate(ctx)
 	if err != nil {
 		return errors.Errorf("failed to mark vm as template: %s", err)
@@ -540,17 +491,4 @@ func resourceVSpherePrivateImportOvaDelete(d *schema.ResourceData, meta interfac
 	log.Printf("[DEBUG] %s: Delete complete", d.Get("name").(string))
 
 	return nil
-}
-
-// Using govc vm.upgrade as the example
-// If the hardware was already upgraded err is not nil
-// https://github.com/vmware/govmomi/blob/master/govc/vm/upgrade.go
-
-func isAlreadyUpgraded(err error) bool {
-	if fault, ok := err.(task.Error); ok {
-		_, ok = fault.Fault().(*types.AlreadyUpgraded)
-		return ok
-	}
-
-	return false
 }

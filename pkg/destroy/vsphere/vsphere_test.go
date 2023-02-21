@@ -39,9 +39,6 @@ var (
 		logger.SetOutput(io.Discard)
 		return logger
 	}()
-	zoningTerraform = func(m *types.ClusterMetadata) {
-		m.VSphere.TerraformPlatform = vsphere.ZoningTerraformName
-	}
 	runningVM = func() mo.VirtualMachine {
 		vm := mo.VirtualMachine{}
 		vm.Name = "runningVM"
@@ -127,7 +124,7 @@ func TestVsphereDeleteFolder(t *testing.T) {
 		},
 		{
 			name:      "Delete non-empty folder fails",
-			editFuncs: editMetadataFuncs{zoningTerraform, manyChildrenFolder},
+			editFuncs: editMetadataFuncs{manyChildrenFolder},
 			errorMsg:  "Expected Folder .* to be empty",
 		},
 		{
@@ -137,17 +134,12 @@ func TestVsphereDeleteFolder(t *testing.T) {
 		},
 		{
 			name:      "Delete folders Zoning Terraform",
-			editFuncs: editMetadataFuncs{zoningTerraform, manyFoldersPerTag},
+			editFuncs: editMetadataFuncs{manyFoldersPerTag},
 			errorMsg:  "",
 		},
 		{
-			name:      "Delete multiple folders per tag fails in non-Zoning terraform",
-			editFuncs: editMetadataFuncs{manyFoldersPerTag},
-			errorMsg:  "Expected 1 Folder per tag but got [0-9]+",
-		},
-		{
 			name:      "Delete folder fails",
-			editFuncs: editMetadataFuncs{zoningTerraform, deleteFails},
+			editFuncs: editMetadataFuncs{deleteFails},
 			errorMsg:  "some vsphere error",
 		},
 	}

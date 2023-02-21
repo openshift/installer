@@ -1,8 +1,6 @@
 package vsphere
 
 import (
-	"fmt"
-
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
@@ -12,22 +10,17 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig) *configv1.VSpherePlat
 	var platformSpec configv1.VSpherePlatformSpec
 	icPlatformSpec := ic.Config.VSphere
 
-	if len(icPlatformSpec.FailureDomains) == 0 {
+	for _, vcenter := range icPlatformSpec.VCenters {
 		platformSpec.VCenters = append(platformSpec.VCenters, configv1.VSpherePlatformVCenterSpec{
-			Server:      icPlatformSpec.VCenter,
-			Port:        443,
-			Datacenters: []string{icPlatformSpec.Datacenter},
+			Server:      vcenter.Server,
+			Port:        vcenter.Port,
+			Datacenters: vcenter.Datacenters,
 		})
-	} else {
-		for _, vcenter := range icPlatformSpec.VCenters {
-			platformSpec.VCenters = append(platformSpec.VCenters, configv1.VSpherePlatformVCenterSpec{
-				Server:      vcenter.Server,
-				Port:        int32(vcenter.Port),
-				Datacenters: vcenter.Datacenters,
-			})
-		}
-		for _, failureDomain := range icPlatformSpec.FailureDomains {
-			topology := failureDomain.Topology
+	}
+
+	for _, failureDomain := range icPlatformSpec.FailureDomains {
+		topology := failureDomain.Topology
+		if topology.ComputeCluster != "" && topology.Networks[0] != "" {
 			platformSpec.FailureDomains = append(platformSpec.FailureDomains, configv1.VSpherePlatformFailureDomainSpec{
 				Name:   failureDomain.Name,
 				Region: failureDomain.Region,
@@ -37,7 +30,7 @@ func GetInfraPlatformSpec(ic *installconfig.InstallConfig) *configv1.VSpherePlat
 					Datacenter:     topology.Datacenter,
 					ComputeCluster: topology.ComputeCluster,
 					Networks:       topology.Networks,
-					Datastore:      fmt.Sprintf("/%s/datastore/%s", topology.Datacenter, topology.Datastore),
+					Datastore:      topology.Datastore,
 					ResourcePool:   topology.ResourcePool,
 					Folder:         topology.Folder,
 				},

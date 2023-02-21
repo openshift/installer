@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	vsphereconversion "github.com/openshift/installer/pkg/types/vsphere/conversion"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
@@ -52,6 +53,9 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 			return err
 		}
 	case vsphere.Name:
+		if err := vsphereconversion.ConvertInstallConfig(config); err != nil {
+			return err
+		}
 		if err := convertVSphere(config); err != nil {
 			return err
 		}

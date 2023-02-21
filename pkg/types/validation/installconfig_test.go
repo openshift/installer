@@ -111,11 +111,46 @@ func validLibvirtPlatform() *libvirt.Platform {
 
 func validVSpherePlatform() *vsphere.Platform {
 	return &vsphere.Platform{
-		VCenter:          "test-server",
-		Username:         "test-username",
-		Password:         "test-password",
-		Datacenter:       "test-datacenter",
-		DefaultDatastore: "test-datastore",
+		VCenters: []vsphere.VCenter{
+			{
+				Server:   "test-vcenter",
+				Port:     443,
+				Username: "test-username",
+				Password: "test-password",
+				Datacenters: []string{
+					"test-datacenter",
+				},
+			},
+		},
+		FailureDomains: []vsphere.FailureDomain{
+			{
+				Name:   "test-east-1a",
+				Region: "test-east",
+				Zone:   "test-east-1a",
+				Server: "test-vcenter",
+				Topology: vsphere.Topology{
+					Datacenter:     "test-datacenter",
+					ComputeCluster: "/test-datacenter/host/test-cluster",
+					Datastore:      "/test-datacenter/datastore/test-datastore",
+					Networks:       []string{"test-portgroup"},
+					ResourcePool:   "/test-datacenter/host/test-cluster/Resources/test-resourcepool",
+					Folder:         "/test-datacenter/vm/test-folder",
+				},
+			},
+			{
+				Name:   "test-east-2a",
+				Region: "test-east",
+				Zone:   "test-east-2a",
+				Server: "test-vcenter",
+				Topology: vsphere.Topology{
+					Datacenter:     "test-datacenter",
+					ComputeCluster: "/test-datacenter/host/test-cluster",
+					Datastore:      "/test-datacenter/datastore/test-datastore",
+					Networks:       []string{"test-portgroup"},
+					Folder:         "/test-datacenter/vm/test-folder",
+				},
+			},
+		},
 	}
 }
 
@@ -647,10 +682,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					VSphere: validVSpherePlatform(),
 				}
-				c.Platform.VSphere.VCenter = ""
+				c.Platform.VSphere.VCenters[0].Server = ""
 				return c
 			}(),
-			expectedError: `^platform\.vsphere.vCenter: Required value: must specify the name of the vCenter$`,
+			expectedError: `platform\.vsphere\.vcenters\.server: Required value: must be the domain name or IP address of the vCenter(.*)`,
 		},
 		{
 			name: "invalid vsphere folder",
@@ -659,10 +694,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					VSphere: validVSpherePlatform(),
 				}
-				c.Platform.VSphere.Folder = "my-folder"
+				c.Platform.VSphere.FailureDomains[0].Topology.Folder = "my-folder"
 				return c
 			}(),
-			expectedError: `^platform\.vsphere\.folder: Invalid value: \"my-folder\": folder must be absolute path: expected prefix /test-datacenter/vm/$`,
+			expectedError: `^platform\.vsphere\.failureDomains\.topology.folder: Invalid value: "my-folder": full path of folder must be provided in format /<datacenter>/vm/<folder>$`,
 		},
 		{
 			name: "invalid vsphere resource pool",
@@ -671,10 +706,10 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					VSphere: validVSpherePlatform(),
 				}
-				c.Platform.VSphere.ResourcePool = "my-resource-pool"
+				c.Platform.VSphere.FailureDomains[0].Topology.ResourcePool = "my-resource-pool"
 				return c
 			}(),
-			expectedError: `^platform\.vsphere\.resourcePool: Invalid value: \"my-resource-pool\": resourcePool must be absolute path: expected prefix /test-datacenter/host/<cluster>/Resources/$`,
+			expectedError: `^platform\.vsphere\.failureDomains\.topology\.resourcePool: Invalid value: "my-resource-pool": full path of resource pool must be provided in format /<datacenter>/host/<cluster>/\.\.\.$`,
 		},
 		{
 			name: "empty proxy settings",

@@ -3202,20 +3202,20 @@ spec:
                     type: array
                     uniqueItems: true
                   cluster:
-                    description: Cluster is the name of the cluster virtual machines
-                      will be cloned into.
+                    description: 'Cluster is the name of the cluster virtual machines
+                      will be cloned into. Deprecated: Use FailureDomains.Topology.Cluster'
                     type: string
                   clusterOSImage:
                     description: ClusterOSImage overrides the url provided in rhcos.json
                       to download the RHCOS OVA
                     type: string
                   datacenter:
-                    description: Datacenter is the name of the datacenter to use in
-                      the vCenter.
+                    description: 'Datacenter is the name of the datacenter to use
+                      in the vCenter. Deprecated: Use FailureDomains.Topology.Datacenter'
                     type: string
                   defaultDatastore:
-                    description: DefaultDatastore is the default datastore to use
-                      for provisioning volumes.
+                    description: 'DefaultDatastore is the default datastore to use
+                      for provisioning volumes. Deprecated: Use FailureDomains.Topology.Datastore'
                     type: string
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
@@ -3273,7 +3273,7 @@ spec:
                       properties:
                         name:
                           description: name defines the name of the FailureDomain
-                            This name is abritrary but will be used in VSpherePlatformDeploymentZone
+                            This name is arbitrary but will be used in VSpherePlatformDeploymentZone
                             for association.
                           maxLength: 256
                           minLength: 1
@@ -3352,9 +3352,10 @@ spec:
                       type: object
                     type: array
                   folder:
-                    description: Folder is the absolute path of the folder that will
+                    description: 'Folder is the absolute path of the folder that will
                       be used and/or created for virtual machines. The absolute path
-                      is of the form /<datacenter>/vm/<folder>/<subfolder>.
+                      is of the form /<datacenter>/vm/<folder>/<subfolder>. Deprecated:
+                      Use FailureDomains.Topology.Folder'
                     pattern: ^/.*?/vm/.*?
                     type: string
                   ingressVIP:
@@ -3372,24 +3373,26 @@ spec:
                     type: array
                     uniqueItems: true
                   network:
-                    description: Network specifies the name of the network to be used
-                      by the cluster.
+                    description: 'Network specifies the name of the network to be
+                      used by the cluster. Deprecated: Use FailureDomains.Topology.Network'
                     type: string
                   password:
-                    description: Password is the password for the user to use to connect
-                      to the vCenter.
+                    description: 'Password is the password for the user to use to
+                      connect to the vCenter. Deprecated: Use VCenters.Password'
                     type: string
                   resourcePool:
-                    description: ResourcePool is the absolute path of the resource
+                    description: 'ResourcePool is the absolute path of the resource
                       pool where virtual machines will be created. The absolute path
                       is of the form /<datacenter>/host/<cluster>/Resources/<resourcepool>.
+                      Deprecated: Use FailureDomains.Topology.ResourcePool'
                     type: string
                   username:
-                    description: Username is the name of the user to use to connect
-                      to the vCenter.
+                    description: 'Username is the name of the user to use to connect
+                      to the vCenter. Deprecated: Use VCenters.Username'
                     type: string
                   vCenter:
-                    description: VCenter is the domain name or IP address of the vCenter.
+                    description: 'VCenter is the domain name or IP address of the
+                      vCenter. Deprecated: Use VCenters.Server'
                     type: string
                   vcenters:
                     description: VCenters holds the connection details for services
@@ -3413,6 +3416,7 @@ spec:
                           description: port is the TCP port that will be used to communicate
                             to the vCenter endpoint. This is typically unchanged from
                             the default of HTTPS TCP/443.
+                          format: int32
                           maximum: 32767
                           minimum: 1
                           type: integer
@@ -3434,12 +3438,6 @@ spec:
                     maxItems: 1
                     minItems: 1
                     type: array
-                required:
-                - datacenter
-                - defaultDatastore
-                - password
-                - username
-                - vCenter
                 type: object
             type: object
           proxy:

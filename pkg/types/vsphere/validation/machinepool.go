@@ -65,7 +65,7 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 					zoneDefined = true
 				}
 			}
-			if zoneDefined == false {
+			if !zoneDefined {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), zone, "zone not defined in failureDomains"))
 			}
 		}

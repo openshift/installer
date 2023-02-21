@@ -15,7 +15,6 @@ import (
 	platformstages "github.com/openshift/installer/pkg/terraform/stages/platform"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/openstack"
-	typesvsphere "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // Destroy uses Terraform to remove bootstrap resources.
@@ -44,12 +43,6 @@ func Destroy(dir string) (err error) {
 	// Azure Stack uses the Azure platform but has its own Terraform configuration.
 	if platform == typesazure.Name && metadata.Azure.CloudName == typesazure.StackCloud {
 		platform = typesazure.StackTerraformName
-	}
-
-	if platform == typesvsphere.Name {
-		if metadata.VSphere.TerraformPlatform == typesvsphere.ZoningTerraformName {
-			platform = typesvsphere.ZoningTerraformName
-		}
 	}
 
 	varFiles := []string{cluster.TfVarsFileName, cluster.TfPlatformVarsFileName}

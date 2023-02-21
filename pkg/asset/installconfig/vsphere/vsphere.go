@@ -72,17 +72,34 @@ func Platform() (*vsphere.Platform, error) {
 		return nil, errors.Wrap(err, "failed to get VIPs")
 	}
 
-	platform := &vsphere.Platform{
-		Datacenter:       dc,
-		Cluster:          cluster,
-		DefaultDatastore: datastore,
-		Network:          network,
-		VCenter:          vCenter.VCenter,
-		Username:         vCenter.Username,
-		Password:         vCenter.Password,
-		APIVIPs:          []string{apiVIP},
-		IngressVIPs:      []string{ingressVIP},
+	failureDomain := vsphere.FailureDomain{
+		Name:   "generated-failure-domain",
+		Zone:   "generated-zone",
+		Region: "generated-region",
+		Server: vCenter.VCenter,
+		Topology: vsphere.Topology{
+			Datacenter:     dc,
+			ComputeCluster: cluster,
+			Datastore:      datastore,
+			Networks:       []string{network},
+		},
 	}
+
+	vcenter := vsphere.VCenter{
+		Server:      vCenter.VCenter,
+		Port:        443,
+		Username:    vCenter.Username,
+		Password:    vCenter.Password,
+		Datacenters: []string{dc},
+	}
+
+	platform := &vsphere.Platform{
+		VCenters:       []vsphere.VCenter{vcenter},
+		FailureDomains: []vsphere.FailureDomain{failureDomain},
+		APIVIPs:        []string{apiVIP},
+		IngressVIPs:    []string{ingressVIP},
+	}
+
 	return platform, nil
 }
 
@@ -140,7 +157,7 @@ func getClients() (*vCenterClient, error) {
 	// Survey does not allow validation of groups of input
 	// so we perform our own validation.
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust.", vcenter)
+		return nil, errors.Wrapf(err, "unable to connect to vCenter %s. Ensure provided information is correct and client certs have been added to system trust", vcenter)
 	}
 
 	return &vCenterClient{
@@ -176,7 +193,7 @@ func getDataCenter(ctx context.Context, finder Finder, client *vim25.Client) (st
 	}
 
 	dataCenterPaths := make(map[string]string)
-	var dataCenterChoices []string
+	dataCenterChoices := make([]string, 0, len(dataCenters))
 	for _, dc := range dataCenters {
 		name := strings.TrimPrefix(dc.InventoryPath, "/")
 		dataCenterPaths[name] = dc.InventoryPath
@@ -215,15 +232,13 @@ func getCluster(ctx context.Context, path string, finder Finder, client *vim25.C
 		return "", errors.New("did not find any clusters")
 	}
 	if len(clusters) == 1 {
-		name := strings.TrimPrefix(clusters[0].InventoryPath, path+"/host/")
-		logrus.Infof("Defaulting to only available cluster: %s", name)
-		return name, nil
+		logrus.Infof("Defaulting to only available cluster: %s", clusters[0].InventoryPath)
+		return clusters[0].InventoryPath, nil
 	}
 
-	var clusterChoices []string
+	clusterChoices := make([]string, 0, len(clusters))
 	for _, c := range clusters {
-		name := strings.TrimPrefix(c.InventoryPath, path+"/host/")
-		clusterChoices = append(clusterChoices, name)
+		clusterChoices = append(clusterChoices, c.InventoryPath)
 	}
 	sort.Strings(clusterChoices)
 
@@ -258,13 +273,13 @@ func getDataStore(ctx context.Context, path string, finder Finder, client *vim25
 		return "", errors.New("did not find any datastores")
 	}
 	if len(dataStores) == 1 {
-		logrus.Infof("Defaulting to only available datastore: %s", dataStores[0].Name())
+		logrus.Infof("Defaulting to only available datastore: %s", dataStores[0].InventoryPath)
 		return dataStores[0].Name(), nil
 	}
 
-	var dataStoreChoices []string
+	dataStoreChoices := make([]string, 0, len(dataStores))
 	for _, ds := range dataStores {
-		dataStoreChoices = append(dataStoreChoices, ds.Name())
+		dataStoreChoices = append(dataStoreChoices, ds.InventoryPath)
 	}
 	sort.Strings(dataStoreChoices)
 
@@ -317,7 +332,7 @@ func getNetwork(ctx context.Context, datacenter string, cluster string, finder F
 	var networkChoices []string
 	for _, network := range networks {
 		if validNetworkTypes.Has(network.Reference().Type) {
-			// TODO Below results in an API call. Can it be eliminated somehow?
+			// Below results in an API call. Can it be eliminated somehow?
 			n, err := GetNetworkName(ctx, client, network)
 			if err != nil {
 				return "", errors.Wrap(err, "unable to get network name")

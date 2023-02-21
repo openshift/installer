@@ -1,5 +1,6 @@
 variable "resource_pool" {
-  type = string
+  type    = list(any)
+  default = []
 }
 
 variable "bootstrap_moid" {
@@ -17,34 +18,21 @@ variable "control_plane_moids" {
   default = []
 }
 
-variable "folder" {
-  type = string
-}
-
 variable "datastore" {
-  type = string
+  type    = list(any)
+  default = []
 }
 
 variable "datacenter" {
-  type = string
+  type    = list(any)
+  default = []
 }
 
 variable "template" {
-  type = string
-}
-
-variable "guest_id" {
-  type = string
+  type    = list(any)
+  default = []
 }
 
 variable "tags" {
-  type = list
-}
-
-variable "thin_disk" {
-  type = bool
-}
-
-variable "scrub_disk" {
-  type = bool
+  type = list(any)
 }

@@ -4,6 +4,3 @@ package vsphere
 
 // Name is name for the vsphere platform.
 const Name string = "vsphere"
-
-// ZoningTerraformName is the name for the region and zone vsphere platform
-const ZoningTerraformName string = "vspherezoning"

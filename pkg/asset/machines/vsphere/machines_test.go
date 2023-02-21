@@ -1,10 +1,10 @@
 package vsphere
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/google/go-cmp/cmp"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 
@@ -49,18 +49,15 @@ metadata:
   name: test-cluster
 platform:
   vSphere:
-    vCenter: your.vcenter.example.com
-    username: username
-    password: password
-    datacenter: datacenter
-    defaultDatastore: datastore
-    network: portgroup
     vcenters:
     - server: your.vcenter.example.com
       username: username
       password: password
       datacenters: 
-      - datacenter
+      - dc1
+      - dc2
+      - dc3
+      - dc4
     failureDomains:
     - name: deployzone-us-east-1a
       server: your.vcenter.example.com
@@ -73,7 +70,7 @@ platform:
         computeCluster: /dc1/host/c1
         networks:
         - network1
-        datastore: datastore1
+        datastore: /dc1/datastore/datastore1
     - name: deployzone-us-east-2a
       server: your.vcenter.example.com
       region: us-east
@@ -85,7 +82,7 @@ platform:
         computeCluster: /dc2/host/c2
         networks:
         - network1
-        datastore: datastore2
+        datastore: /dc2/datastore/datastore2
     - name: deployzone-us-east-3a
       server: your.vcenter.example.com
       region: us-east
@@ -97,7 +94,7 @@ platform:
         computeCluster: /dc3/host/c3
         networks:
         - network1
-        datastore: datastore3
+        datastore: /dc3/datastore/datastore3
     - name: deployzone-us-east-4a
       server: your.vcenter.example.com 
       region: us-east
@@ -109,7 +106,7 @@ platform:
         computeCluster: /dc4/host/c4
         networks:
         - network1
-        datastore: datastore4
+        datastore: /dc4/datastore/datastore4
 pullSecret:
 sshKey:`
 
@@ -179,23 +176,6 @@ var machinePoolUndefinedZones = types.MachinePool{
 	Architecture:   types.ArchitectureAMD64,
 }
 
-var machinePoolNoZones = types.MachinePool{
-	Name:     "master",
-	Replicas: &machinePoolReplicas,
-	Platform: types.MachinePoolPlatform{
-		VSphere: &vsphere.MachinePool{
-			NumCPUs:           4,
-			NumCoresPerSocket: 2,
-			MemoryMiB:         16384,
-			OSDisk: vsphere.OSDisk{
-				DiskSizeGB: 60,
-			},
-		},
-	},
-	Hyperthreading: "true",
-	Architecture:   types.ArchitectureAMD64,
-}
-
 func parseInstallConfig() (*types.InstallConfig, error) {
 	config := &types.InstallConfig{}
 	if err := yaml.Unmarshal([]byte(installConfigSample), config); err != nil {
@@ -209,7 +189,8 @@ func parseInstallConfig() (*types.InstallConfig, error) {
 	return config, nil
 }
 
-func assertOnUnexpectedErrorState(expectedError string, err error, t *testing.T) {
+func assertOnUnexpectedErrorState(t *testing.T, expectedError string, err error) {
+	t.Helper()
 	if expectedError == "" && err != nil {
 		t.Errorf("unexpected error encountered: %s", err.Error())
 	} else if expectedError != "" {
@@ -231,6 +212,10 @@ func TestConfigMasters(t *testing.T) {
 		return
 	}
 	defaultClusterResourcePool, err := parseInstallConfig()
+	if err != nil {
+		t.Error(err)
+		return
+	}
 	defaultClusterResourcePool.VSphere.FailureDomains[0].Topology.ResourcePool = ""
 
 	testCases := []struct {
@@ -243,22 +228,6 @@ func TestConfigMasters(t *testing.T) {
 		minAllowedWorkspaceMatches int
 	}{
 		{
-			testCase:                   "machinepool with no defined zones should use legacy configuration",
-			machinePool:                &machinePoolNoZones,
-			minAllowedWorkspaceMatches: 3,
-			maxAllowedWorkspaceMatches: 3,
-			installConfig:              installConfig,
-			workspaces: []machineapi.Workspace{
-				{
-					Server:       "your.vcenter.example.com",
-					Datacenter:   "datacenter",
-					Folder:       "/datacenter/vm/test",
-					Datastore:    "datastore",
-					ResourcePool: "/datacenter/host//Resources",
-				},
-			},
-		},
-		{
 			testCase:                   "zones distributed among control plane machines(zone count matches machine count)",
 			machinePool:                &machinePoolValidZones,
 			maxAllowedWorkspaceMatches: 1,
@@ -268,21 +237,21 @@ func TestConfigMasters(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
-					Datastore:    "datastore3",
+					Datastore:    "/dc3/datastore/datastore3",
 					ResourcePool: "/dc3/host/c3/Resources/rp3",
 				},
 			},
@@ -304,14 +273,14 @@ func TestConfigMasters(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources/rp1",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 			},
@@ -327,21 +296,21 @@ func TestConfigMasters(t *testing.T) {
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc1",
 					Folder:       "/dc1/vm/folder1",
-					Datastore:    "datastore1",
+					Datastore:    "/dc1/datastore/datastore1",
 					ResourcePool: "/dc1/host/c1/Resources",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc2",
 					Folder:       "/dc2/vm/folder2",
-					Datastore:    "datastore2",
+					Datastore:    "/dc2/datastore/datastore2",
 					ResourcePool: "/dc2/host/c2/Resources/rp2",
 				},
 				{
 					Server:       "your.vcenter.example.com",
 					Datacenter:   "dc3",
 					Folder:       "/dc3/vm/folder3",
-					Datastore:    "datastore3",
+					Datastore:    "/dc3/datastore/datastore3",
 					ResourcePool: "/dc3/host/c3/Resources/rp3",
 				},
 			},
@@ -351,7 +320,7 @@ func TestConfigMasters(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.testCase, func(t *testing.T) {
 			machines, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", "", "")
-			assertOnUnexpectedErrorState(tc.expectedError, err, t)
+			assertOnUnexpectedErrorState(t, tc.expectedError, err)
 
 			if len(tc.workspaces) > 0 {
 				var matchCountByIndex []int
@@ -363,7 +332,7 @@ func TestConfigMasters(t *testing.T) {
 					// check if expected workspaces are returned
 					machineWorkspace := machine.Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec).Workspace
 					for idx, workspace := range tc.workspaces {
-						if reflect.DeepEqual(workspace, *machineWorkspace) {
+						if cmp.Equal(workspace, *machineWorkspace) {
 							matchCountByIndex[idx]++
 						}
 					}

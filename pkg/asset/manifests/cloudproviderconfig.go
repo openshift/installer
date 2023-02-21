@@ -285,34 +285,11 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 		}
 		cm.Data[cloudProviderConfigDataKey] = powervsConfig
 	case vspheretypes.Name:
-		vSphere := installConfig.Config.Platform.VSphere
-		if len(vSphere.VCenters) > 0 {
-			folderPath := installConfig.Config.Platform.VSphere.Folder
-			if len(folderPath) == 0 {
-				dataCenter := installConfig.Config.Platform.VSphere.Datacenter
-				folderPath = fmt.Sprintf("/%s/vm/%s", dataCenter, clusterID.InfraID)
-			}
-
-			vsphereConfig, err := vspheremanifests.MultiZoneIniCloudProviderConfig(folderPath, installConfig.Config.Platform.VSphere)
-			if err != nil {
-				return errors.Wrap(err, "could not create cloud provider config")
-			}
-			cm.Data[cloudProviderConfigDataKey] = vsphereConfig
-		} else {
-			folderPath := installConfig.Config.Platform.VSphere.Folder
-			if len(folderPath) == 0 {
-				dataCenter := installConfig.Config.Platform.VSphere.Datacenter
-				folderPath = fmt.Sprintf("/%s/vm/%s", dataCenter, clusterID.InfraID)
-			}
-			vsphereConfig, err := vspheremanifests.InTreeCloudProviderConfig(
-				folderPath,
-				installConfig.Config.Platform.VSphere,
-			)
-			if err != nil {
-				return errors.Wrap(err, "could not create cloud provider config")
-			}
-			cm.Data[cloudProviderConfigDataKey] = vsphereConfig
+		vsphereConfig, err := vspheremanifests.CloudProviderConfigIni(clusterID.InfraID, installConfig.Config.Platform.VSphere)
+		if err != nil {
+			return errors.Wrap(err, "could not create cloud provider config")
 		}
+		cm.Data[cloudProviderConfigDataKey] = vsphereConfig
 	case nutanixtypes.Name:
 		configJSON, err := nutanixmanifests.CloudConfigJSON(installConfig.Config.Nutanix)
 		if err != nil {

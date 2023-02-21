@@ -44,6 +44,7 @@ require (
 	github.com/gophercloud/gophercloud v1.1.1
 	github.com/gophercloud/utils v0.0.0-20221207145018-e8fba78967ca
 	github.com/h2non/filetype v1.0.12
+	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/jongio/azidext/go/azidext v0.4.0
 	github.com/kdomanski/iso9660 v0.2.1
@@ -54,6 +55,7 @@ require (
 	github.com/microsoft/kiota-authentication-azure-go v0.5.0
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
+	github.com/onsi/gomega v1.26.0
 	github.com/openshift/api v0.0.0-20230201213816-61d971884921
 	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
@@ -183,7 +185,6 @@ require (
 	github.com/hashicorp/go-hclog v1.2.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/hashicorp/terraform-json v0.14.0 // indirect
 	github.com/hexops/gotextdiff v1.0.3 // indirect
 	github.com/imdario/mergo v0.3.13 // indirect
