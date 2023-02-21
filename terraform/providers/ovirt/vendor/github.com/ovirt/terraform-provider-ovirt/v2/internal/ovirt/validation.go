@@ -12,7 +12,7 @@ import (
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	ovirtclient "github.com/ovirt/go-ovirt-client/v2"
+	ovirtclient "github.com/ovirt/go-ovirt-client/v3"
 )
 
 func validateDiskSize(i interface{}, path cty.Path) diag.Diagnostics {

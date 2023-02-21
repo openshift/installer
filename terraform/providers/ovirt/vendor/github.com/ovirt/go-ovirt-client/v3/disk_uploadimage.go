@@ -319,6 +319,13 @@ func (o *oVirtClient) StartUploadToNewDisk(
 
 	ctx, cancel := context.WithCancel(context.Background())
 
+	diskCreateParams := CreateDiskParams().
+		MustWithAlias(params.Alias()).
+		MustWithInitialSize(size)
+	if params.Sparse() != nil {
+		diskCreateParams.MustWithSparse(*params.Sparse())
+	}
+
 	progress := &uploadToNewDiskProgress{
 		uploadToDiskProgress: uploadToDiskProgress{
 			client:        o,
@@ -337,7 +344,7 @@ func (o *oVirtClient) StartUploadToNewDisk(
 
 		storageDomainID: storageDomainID,
 		diskFormat:      format,
-		diskParams:      params,
+		diskParams:      diskCreateParams,
 	}
 
 	go progress.Do()
