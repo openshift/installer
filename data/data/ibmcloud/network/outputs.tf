@@ -18,6 +18,10 @@ output "control_plane_subnet_zone_list" {
   value = module.vpc.control_plane_subnet_zone_list
 }
 
+output "compute_subnet_id_list" {
+  value = module.vpc.compute_subnet_id_list
+}
+
 output "cos_resource_instance_crn" {
   value = ibm_resource_instance.cos.crn
 }
