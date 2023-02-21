@@ -1,5 +1,8 @@
+//go:build !linux
+// +build !linux
+
 /*
-Copyright (c) 2015 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2022 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,30 +17,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package types
+package hgfs
 
-type HasFault interface {
-	Fault() BaseMethodFault
-}
+import (
+	"os"
+)
 
-func IsFileNotFound(err error) bool {
-	if f, ok := err.(HasFault); ok {
-		switch f.Fault().(type) {
-		case *FileNotFound:
-			return true
-		}
-	}
-
-	return false
-}
-
-func IsAlreadyExists(err error) bool {
-	if f, ok := err.(HasFault); ok {
-		switch f.Fault().(type) {
-		case *AlreadyExists:
-			return true
-		}
-	}
-
-	return false
+func (a *AttrV2) sysStat(info os.FileInfo) {
 }

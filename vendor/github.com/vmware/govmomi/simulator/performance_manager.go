@@ -81,14 +81,7 @@ func (p *PerformanceManager) QueryPerfCounter(ctx *Context, req *types.QueryPerf
 	body.Res = new(types.QueryPerfCounterResponse)
 	body.Res.Returnval = make([]types.PerfCounterInfo, len(req.CounterId))
 	for i, id := range req.CounterId {
-		if info, ok := p.perfCounterIndex[id]; !ok {
-			body.Fault_ = Fault("", &types.InvalidArgument{
-				InvalidProperty: "CounterId",
-			})
-			return body
-		} else {
-			body.Res.Returnval[i] = info
-		}
+		body.Res.Returnval[i] = p.perfCounterIndex[id]
 	}
 	return body
 }
@@ -98,7 +91,7 @@ func (p *PerformanceManager) QueryPerfProviderSummary(ctx *Context, req *types.Q
 	body.Res = new(types.QueryPerfProviderSummaryResponse)
 
 	// The entity must exist
-	if Map.Get(req.Entity) == nil {
+	if ctx.Map.Get(req.Entity) == nil {
 		body.Fault_ = Fault("", &types.InvalidArgument{
 			InvalidProperty: "Entity",
 		})
@@ -135,6 +128,8 @@ func (p *PerformanceManager) buildAvailablePerfMetricsQueryResponse(ids []types.
 			r.Returnval = append(r.Returnval, types.PerfMetricId{CounterId: id.CounterId, Instance: id.Instance})
 		}
 	}
+	// Add a CounterId without a corresponding PerfCounterInfo entry. See issue #2835
+	r.Returnval = append(r.Returnval, types.PerfMetricId{CounterId: 10042})
 	return r
 }
 

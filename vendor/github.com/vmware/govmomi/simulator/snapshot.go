@@ -74,7 +74,7 @@ func (v *VirtualMachineSnapshot) createSnapshotFiles() types.BaseMethodFault {
 func (v *VirtualMachineSnapshot) removeSnapshotFiles(ctx *Context) types.BaseMethodFault {
 	// TODO: also remove delta disks that were created when snapshot was taken
 
-	vm := Map.Get(v.Vm).(*VirtualMachine)
+	vm := ctx.Map.Get(v.Vm).(*VirtualMachine)
 
 	for idx, sLayout := range vm.Layout.Snapshot {
 		if sLayout.Key == v.Self {
@@ -92,8 +92,8 @@ func (v *VirtualMachineSnapshot) removeSnapshotFiles(ctx *Context) types.BaseMet
 						return fault
 					}
 
-					host := Map.Get(*vm.Runtime.Host).(*HostSystem)
-					datastore := Map.FindByName(p.Datastore, host.Datastore).(*Datastore)
+					host := ctx.Map.Get(*vm.Runtime.Host).(*HostSystem)
+					datastore := ctx.Map.FindByName(p.Datastore, host.Datastore).(*Datastore)
 					dFilePath := path.Join(datastore.Info.GetDatastoreInfo().Url, p.Path)
 
 					_ = os.Remove(dFilePath)
@@ -113,7 +113,7 @@ func (v *VirtualMachineSnapshot) RemoveSnapshotTask(ctx *Context, req *types.Rem
 	task := CreateTask(v, "removeSnapshot", func(t *Task) (types.AnyType, types.BaseMethodFault) {
 		var changes []types.PropertyChange
 
-		vm := Map.Get(v.Vm).(*VirtualMachine)
+		vm := ctx.Map.Get(v.Vm).(*VirtualMachine)
 		ctx.WithLock(vm, func() {
 			if vm.Snapshot.CurrentSnapshot != nil && *vm.Snapshot.CurrentSnapshot == req.This {
 				parent := findParentSnapshotInTree(vm.Snapshot.RootSnapshotList, req.This)
@@ -123,18 +123,25 @@ func (v *VirtualMachineSnapshot) RemoveSnapshotTask(ctx *Context, req *types.Rem
 			rootSnapshots := removeSnapshotInTree(vm.Snapshot.RootSnapshotList, req.This, req.RemoveChildren)
 			changes = append(changes, types.PropertyChange{Name: "snapshot.rootSnapshotList", Val: rootSnapshots})
 
+			rootSnapshotRefs := make([]types.ManagedObjectReference, len(rootSnapshots))
+			for i, rs := range rootSnapshots {
+				rootSnapshotRefs[i] = rs.Snapshot
+			}
+			changes = append(changes, types.PropertyChange{Name: "rootSnapshot", Val: rootSnapshotRefs})
+
 			if len(rootSnapshots) == 0 {
 				changes = []types.PropertyChange{
 					{Name: "snapshot", Val: nil},
+					{Name: "rootSnapshot", Val: nil},
 				}
 			}
 
-			Map.Get(req.This).(*VirtualMachineSnapshot).removeSnapshotFiles(ctx)
+			ctx.Map.Get(req.This).(*VirtualMachineSnapshot).removeSnapshotFiles(ctx)
 
-			Map.Update(vm, changes)
+			ctx.Map.Update(vm, changes)
 		})
 
-		Map.Remove(ctx, req.This)
+		ctx.Map.Remove(ctx, req.This)
 
 		return nil, nil
 	})
@@ -148,10 +155,10 @@ func (v *VirtualMachineSnapshot) RemoveSnapshotTask(ctx *Context, req *types.Rem
 
 func (v *VirtualMachineSnapshot) RevertToSnapshotTask(ctx *Context, req *types.RevertToSnapshot_Task) soap.HasFault {
 	task := CreateTask(v.Vm, "revertToSnapshot", func(t *Task) (types.AnyType, types.BaseMethodFault) {
-		vm := Map.Get(v.Vm).(*VirtualMachine)
+		vm := ctx.Map.Get(v.Vm).(*VirtualMachine)
 
 		ctx.WithLock(vm, func() {
-			Map.Update(vm, []types.PropertyChange{
+			ctx.Map.Update(vm, []types.PropertyChange{
 				{Name: "snapshot.currentSnapshot", Val: v.Self},
 			})
 		})

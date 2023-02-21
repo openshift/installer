@@ -98,8 +98,10 @@ func init() {
 type PlaceVmsXClusterSpec struct {
 	DynamicData
 
-	ResourcePools    []ManagedObjectReference              `xml:"resourcePools,omitempty"`
-	VmPlacementSpecs []PlaceVmsXClusterSpecVmPlacementSpec `xml:"vmPlacementSpecs,omitempty"`
+	ResourcePools           []ManagedObjectReference              `xml:"resourcePools,omitempty"`
+	VmPlacementSpecs        []PlaceVmsXClusterSpecVmPlacementSpec `xml:"vmPlacementSpecs,omitempty"`
+	HostRecommRequired      *bool                                 `xml:"hostRecommRequired"`
+	DatastoreRecommRequired *bool                                 `xml:"datastoreRecommRequired"`
 }
 
 func init() {
@@ -115,3 +117,5 @@ type PlaceVmsXClusterSpecVmPlacementSpec struct {
 func init() {
 	t["PlaceVmsXClusterSpecVmPlacementSpec"] = reflect.TypeOf((*PlaceVmsXClusterSpecVmPlacementSpec)(nil)).Elem()
 }
+
+const RecommendationReasonCodeXClusterPlacement = RecommendationReasonCode("xClusterPlacement")

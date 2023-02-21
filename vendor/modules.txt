@@ -8883,12 +8883,13 @@ github.com/ulikunitz/xz/lzma
 # github.com/vincent-petithory/dataurl v1.0.0
 ## explicit
 github.com/vincent-petithory/dataurl
-# github.com/vmware/govmomi v0.27.4
-## explicit; go 1.14
+# github.com/vmware/govmomi v0.30.2
+## explicit; go 1.17
 github.com/vmware/govmomi
 github.com/vmware/govmomi/find
 github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
+github.com/vmware/govmomi/internal/version
 github.com/vmware/govmomi/list
 github.com/vmware/govmomi/nfc
 github.com/vmware/govmomi/object
@@ -8908,6 +8909,7 @@ github.com/vmware/govmomi/toolbox/hgfs
 github.com/vmware/govmomi/toolbox/process
 github.com/vmware/govmomi/toolbox/vix
 github.com/vmware/govmomi/units
+github.com/vmware/govmomi/vapi
 github.com/vmware/govmomi/vapi/internal
 github.com/vmware/govmomi/vapi/library
 github.com/vmware/govmomi/vapi/rest

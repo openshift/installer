@@ -86,7 +86,7 @@ require (
 	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
 	github.com/ulikunitz/xz v0.5.10
 	github.com/vincent-petithory/dataurl v1.0.0
-	github.com/vmware/govmomi v0.27.4
+	github.com/vmware/govmomi v0.30.2
 	golang.org/x/crypto v0.1.0
 	golang.org/x/oauth2 v0.4.0
 	golang.org/x/sys v0.4.0

@@ -4,18 +4,20 @@
 
 First, fork the repository on GitHub to your personal account.
 
-Note that `GOPATH` can be any directory, the example below uses `$HOME/govmomi`.
-Change `$USER` below to your Github username if they are not the same.
+Change `$USER` in the examples below to your Github username if they are not the
+same.
 
-```console
-$ export GOPATH=$HOME/govmomi
-$ go get github.com/vmware/govmomi
+```bash
+git clone https://github.com/vmware/govmomi.git && cd govmomi
 
-$ cd $GOPATH/src/github.com/vmware/govmomi
-$ git config push.default nothing # anything to avoid pushing to vmware/govmomi by default
-$ git remote rename origin vmware
-$ git remote add $USER git@github.com:$USER/govmomi.git
-$ git fetch $USER
+# prevent accidentally pushing to vmware/govmomi
+git config push.default nothing
+git remote rename origin vmware
+
+# add your fork
+git remote add $USER git@github.com:$USER/govmomi.git
+
+git fetch -av
 ```
 
 ## Contribution Flow
@@ -32,40 +34,46 @@ This is a rough outline of what a contributor's workflow looks like:
 See [below](#format-of-the-commit-message) for details on commit best practices
 and **supported prefixes**, e.g. `govc: <message>`.
 
+> **Note:** If you are new to Git(hub) check out [Git rebase, squash...oh
+> my!](https://www.mgasch.com/2021/05/git-basics/) for more details on how to
+> successfully contribute to an open source project.
+
 ### Example 1 - Fix a Bug in `govmomi`
 
-```console
-$ git checkout -b issue-<number> vmware/master
-$ git add <files>
-$ git commit -m "fix: ..." -m "Closes: #<issue-number>"
-$ git push $USER issue-<number>
+```bash
+git checkout -b issue-<number> vmware/master
+git add <files>
+git commit -m "fix: ..." -m "Closes: #<issue-number>"
+git push $USER issue-<number>
 ```
 
 ### Example 2 - Add a new (non-breaking) API to `govmomi`
 
-```console
-$ git checkout -b issue-<number> vmware/master
-$ git add <files>
-$ git commit -m "Add API ..." -m "Closes: #<issue-number>"
-$ git push $USER issue-<number>
+```bash
+git checkout -b issue-<number> vmware/master
+git add <files>
+git commit -m "Add API ..." -m "Closes: #<issue-number>"
+git push $USER issue-<number>
 ```
 
 ### Example 3 - Add a Feature to `govc`
 
-```console
-$ git checkout -b issue-<number> vmware/master
-$ git add <files>
-$ git commit -m "govc: Add feature ..." -m "Closes: #<issue-number>"
-$ git push $USER issue-<number>
+```bash
+git checkout -b issue-<number> vmware/master
+git add <files>
+git commit -m "govc: Add feature ..." -m "Closes: #<issue-number>"
+git push $USER issue-<number>
 ```
+**Note**:  
+To register the new `govc` command package, add a blank `_` import to `govmomi/govc/main.go`.
 
 ### Example 4 - Fix a Bug in `vcsim`
 
-```console
-$ git checkout -b issue-<number> vmware/master
-$ git add <files>
-$ git commit -m "vcsim: Fix ..." -m "Closes: #<issue-number>"
-$ git push $USER issue-<number>
+```bash
+git checkout -b issue-<number> vmware/master
+git add <files>
+git commit -m "vcsim: Fix ..." -m "Closes: #<issue-number>"
+git push $USER issue-<number>
 ```
 
 ### Example 5 - Document Breaking (API) Changes
@@ -78,10 +86,10 @@ The text after `BREAKING:` is used in the corresponding highlighted section.
 Thus these details should be stated at the body of the commit message.
 Multi-line strings are supported.
 
-```console
-$ git checkout -b issue-<number> vmware/master
-$ git add <files>
-$ cat << EOF | git commit -F -
+```bash
+git checkout -b issue-<number> vmware/master
+git add <files>
+cat << EOF | git commit -F -
 Add ctx to funcXYZ
 
 This commit introduces context.Context to function XYZ
@@ -90,7 +98,7 @@ Closes: #1234
 BREAKING: Add ctx to funcXYZ()
 EOF
 
-$ git push $USER issue-<number>
+git push $USER issue-<number>
 ```
 
 ### Stay in sync with Upstream
@@ -98,38 +106,42 @@ $ git push $USER issue-<number>
 When your branch gets out of sync with the vmware/master branch, use the
 following to update (rebase):
 
-```console
-$ git checkout issue-<number>
-$ git fetch -a
-$ git rebase vmware/master
-$ git push --force-with-lease $USER issue-<number>
+```bash
+git checkout issue-<number>
+git fetch -a
+git rebase vmware/master
+git push --force-with-lease $USER issue-<number>
 ```
 
 ### Updating Pull Requests
 
-If your PR fails to pass CI or needs changes based on code review, you'll most
-likely want to squash these changes into existing commits.
+If your PR fails to pass CI or needs changes based on code review, it's ok to
+add more commits stating the changes made, e.g. "Address review comments". This
+is to assist the reviewer(s) to easily detect and review the recent changes.
 
-If your pull request contains a single commit or your changes are related to the
-most recent commit, you can simply amend the commit.
+In case of small PRs, it's ok to squash and force-push (see further below)
+directly instead.
 
-```console
-$ git add .
-$ git commit --amend
-$ git push --force-with-lease $USER issue-<number>
-```
+```bash
+# incorporate review feedback
+git add .
 
-If you need to squash changes into an earlier commit, you can use:
-
-```console
-$ git add .
-$ git commit --fixup <commit>
-$ git rebase -i --autosquash vmware/master
-$ git push --force-with-lease $USER issue-<number>
+# create a fixup commit which will be merged into your (original) <commit>
+git commit --fixup <commit>
+git push $USER issue-<number>
 ```
 
 Be sure to add a comment to the PR indicating your new changes are ready to
 review, as Github does not generate a notification when you git push.
+
+Once the review is complete, squash and push your final commit(s):
+
+```bash
+# squash all commits into one
+# --autosquash will automatically detect and merge fixup commits
+git rebase -i --autosquash vmware/master
+git push --force-with-lease $USER issue-<number>
+```
 
 ### Code Style
 
@@ -155,18 +167,22 @@ section in the `CHANGELOG`.
 The following example creates a commit referencing the `issue: 1234` and puts
 the commit message in the `govc` `CHANGELOG` section:
 
-```console
-$ git commit -s -m "govc: Add CLI command X" -m "Closes: #1234"
+```bash
+git commit -s -m "govc: Add CLI command X" -m "Closes: #1234"
 ```
 
 Currently the following prefixes are used:
 
+- `api:` - Use for API-related changes
 - `govc:` - Use for changes to `govc` CLI
 - `vcsim:` - Use for changes to vCenter Simulator
 - `chore:` - Use for repository related activities
 - `fix:` - Use for bug fixes
 - `docs:` - Use for changes to the documentation
 - `examples:` - Use for changes to examples
+
+If your contribution falls into multiple categories, e.g. `api` and `vcsim` it
+is recommended to break up your commits using distinct prefixes.
 
 ### Running CI Checks and Tests
 You can run both `make check` and `make test` from the top level of the
