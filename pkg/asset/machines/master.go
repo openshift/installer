@@ -112,6 +112,12 @@ const (
 	controlPlaneMachineSetFileName = "99_openshift-machine-api_master-control-plane-machine-set.yaml"
 )
 
+// AWS specific constants.
+const (
+	defaultAWSInstanceSize                       = "xlarge"
+	defaultAWSSingleNodeControlPlaneInstanceSize = "2xlarge"
+)
+
 var (
 	secretFileNamePattern              = fmt.Sprintf(secretFileName, "*")
 	networkConfigSecretFileNamePattern = fmt.Sprintf(networkConfigSecretFileName, "*")
@@ -230,10 +236,21 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		if mpool.InstanceType == "" {
-			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture), mpool.Zones)
+			// If the control plane is single node, we need to use a larger
+			// instance type for that node, as the minimum requirement for
+			// single-node control-plane nodes is 8 cores, and xlarge only has
+			// 4. Unfortunately 2xlarge has twice as much RAM as we need, but
+			// we default to it because AWS doesn't offer an 8-core 16GiB
+			// instance type
+			instanceSize := defaultAWSInstanceSize
+			if pool.Replicas != nil && *pool.Replicas == 1 {
+				instanceSize = defaultAWSSingleNodeControlPlaneInstanceSize
+			}
+
+			mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, instanceSize), mpool.Zones)
 			if err != nil {
 				logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
-				mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture)[0]
+				mpool.InstanceType = awsDefaultMachineTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, instanceSize)[0]
 			}
 		}
 
