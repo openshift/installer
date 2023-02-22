@@ -89,6 +89,11 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
 	}
 
+	// support for Azure user-defined tags made available through
+	// RFE-2017 is for AzurePublicCloud only.
+	if p.CloudName != azure.PublicCloud && len(p.UserTags) > 0 {
+		allErrs = append(allErrs, field.Forbidden(fldPath.Child("userTags"), fmt.Sprintf("userTags support is for %s only", azure.PublicCloud)))
+	}
 	// check if configured userTags are valid.
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
@@ -158,7 +163,7 @@ func validateTag(key, value string) error {
 // updated or retrieved. An Azure service might keep the casing as provided for
 // the tag key. To allow user to choose the required variant of the key to add
 // return error when duplicate tag keys are present.
-func findDuplicateTagKeys(tagSet map[string]string) (err error) {
+func findDuplicateTagKeys(tagSet map[string]string) error {
 	dupKeys := make(map[string]int)
 	for k := range tagSet {
 		dupKeys[strings.ToTitle(k)]++
@@ -171,10 +176,10 @@ func findDuplicateTagKeys(tagSet map[string]string) (err error) {
 		}
 	}
 	if len(errMsg) > 0 {
-		err = fmt.Errorf("found duplicate tag keys: %v", strings.Join(errMsg, ", "))
+		return fmt.Errorf("found duplicate tag keys: %v", strings.Join(errMsg, ", "))
 	}
 
-	return err
+	return nil
 }
 
 var (
