@@ -16,7 +16,7 @@ var _ AdminUsers = (*adminUsers)(nil)
 // TFE API docs: https://www.terraform.io/docs/cloud/api/admin/users.html
 type AdminUsers interface {
 	// List all the users of the given installation.
-	List(ctx context.Context, options AdminUserListOptions) (*AdminUserList, error)
+	List(ctx context.Context, options *AdminUserListOptions) (*AdminUserList, error)
 
 	// Delete a user by its ID.
 	Delete(ctx context.Context, userID string) error
@@ -27,10 +27,10 @@ type AdminUsers interface {
 	// Unsuspend a user by its ID.
 	Unsuspend(ctx context.Context, userID string) (*AdminUser, error)
 
-	// GrantAdmin grants admin privilages to a user by its ID.
+	// GrantAdmin grants admin privileges to a user by its ID.
 	GrantAdmin(ctx context.Context, userID string) (*AdminUser, error)
 
-	// RevokeAdmin revokees admin privilages to a user by its ID.
+	// RevokeAdmin revokees admin privileges to a user by its ID.
 	RevokeAdmin(ctx context.Context, userID string) (*AdminUser, error)
 
 	// Disable2FA disables a user's two-factor authentication in the situation
@@ -64,35 +64,45 @@ type AdminUserList struct {
 	Items []*AdminUser
 }
 
+// AdminUserIncludeOpt represents the available options for include query params.
+// https://www.terraform.io/docs/cloud/api/admin/users.html#available-related-resources
+type AdminUserIncludeOpt string
+
+const AdminUserOrgs AdminUserIncludeOpt = "organizations"
+
 // AdminUserListOptions represents the options for listing users.
 // https://www.terraform.io/docs/cloud/api/admin/users.html#query-parameters
 type AdminUserListOptions struct {
 	ListOptions
 
-	// A search query string. Users are searchable by username and email address.
-	Query *string `url:"q,omitempty"`
+	// Optional: A search query string. Users are searchable by username and email address.
+	Query string `url:"q,omitempty"`
 
-	// Can be "true" or "false" to show only administrators or non-administrators.
-	Administrators *string `url:"filter[admin]"`
+	// Optional: Can be "true" or "false" to show only administrators or non-administrators.
+	Administrators string `url:"filter[admin],omitempty"`
 
-	// Can be "true" or "false" to show only suspended users or users who are not suspended.
-	SuspendedUsers *string `url:"filter[suspended]"`
+	// Optional: Can be "true" or "false" to show only suspended users or users who are not suspended.
+	SuspendedUsers string `url:"filter[suspended],omitempty"`
 
-	// A list of relations to include. See available resources
+	// Optional: A list of relations to include. See available resources
 	// https://www.terraform.io/docs/cloud/api/admin/users.html#available-related-resources
-	Include *string `url:"include"`
+	Include []AdminUserIncludeOpt `url:"include,omitempty"`
 }
 
 // List all user accounts in the Terraform Enterprise installation
-func (a *adminUsers) List(ctx context.Context, options AdminUserListOptions) (*AdminUserList, error) {
-	u := fmt.Sprintf("admin/users")
-	req, err := a.client.newRequest("GET", u, &options)
+func (a *adminUsers) List(ctx context.Context, options *AdminUserListOptions) (*AdminUserList, error) {
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := "admin/users"
+	req, err := a.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	aul := &AdminUserList{}
-	err = a.client.do(ctx, req, aul)
+	err = req.Do(ctx, aul)
 	if err != nil {
 		return nil, err
 	}
@@ -107,12 +117,12 @@ func (a *adminUsers) Delete(ctx context.Context, userID string) error {
 	}
 
 	u := fmt.Sprintf("admin/users/%s", url.QueryEscape(userID))
-	req, err := a.client.newRequest("DELETE", u, nil)
+	req, err := a.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return a.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }
 
 // Suspend a user by its ID.
@@ -122,13 +132,13 @@ func (a *adminUsers) Suspend(ctx context.Context, userID string) (*AdminUser, er
 	}
 
 	u := fmt.Sprintf("admin/users/%s/actions/suspend", url.QueryEscape(userID))
-	req, err := a.client.newRequest("POST", u, nil)
+	req, err := a.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	au := &AdminUser{}
-	err = a.client.do(ctx, req, au)
+	err = req.Do(ctx, au)
 	if err != nil {
 		return nil, err
 	}
@@ -143,13 +153,13 @@ func (a *adminUsers) Unsuspend(ctx context.Context, userID string) (*AdminUser, 
 	}
 
 	u := fmt.Sprintf("admin/users/%s/actions/unsuspend", url.QueryEscape(userID))
-	req, err := a.client.newRequest("POST", u, nil)
+	req, err := a.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	au := &AdminUser{}
-	err = a.client.do(ctx, req, au)
+	err = req.Do(ctx, au)
 	if err != nil {
 		return nil, err
 	}
@@ -157,20 +167,20 @@ func (a *adminUsers) Unsuspend(ctx context.Context, userID string) (*AdminUser, 
 	return au, nil
 }
 
-// GrantAdmin grants admin privilages to a user by its ID.
+// GrantAdmin grants admin privileges to a user by its ID.
 func (a *adminUsers) GrantAdmin(ctx context.Context, userID string) (*AdminUser, error) {
 	if !validStringID(&userID) {
 		return nil, ErrInvalidUserValue
 	}
 
 	u := fmt.Sprintf("admin/users/%s/actions/grant_admin", url.QueryEscape(userID))
-	req, err := a.client.newRequest("POST", u, nil)
+	req, err := a.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	au := &AdminUser{}
-	err = a.client.do(ctx, req, au)
+	err = req.Do(ctx, au)
 	if err != nil {
 		return nil, err
 	}
@@ -178,20 +188,20 @@ func (a *adminUsers) GrantAdmin(ctx context.Context, userID string) (*AdminUser,
 	return au, nil
 }
 
-// RevokeAdmin revokes admin privilages to a user by its ID.
+// RevokeAdmin revokes admin privileges to a user by its ID.
 func (a *adminUsers) RevokeAdmin(ctx context.Context, userID string) (*AdminUser, error) {
 	if !validStringID(&userID) {
 		return nil, ErrInvalidUserValue
 	}
 
 	u := fmt.Sprintf("admin/users/%s/actions/revoke_admin", url.QueryEscape(userID))
-	req, err := a.client.newRequest("POST", u, nil)
+	req, err := a.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	au := &AdminUser{}
-	err = a.client.do(ctx, req, au)
+	err = req.Do(ctx, au)
 	if err != nil {
 		return nil, err
 	}
@@ -207,16 +217,40 @@ func (a *adminUsers) Disable2FA(ctx context.Context, userID string) (*AdminUser,
 	}
 
 	u := fmt.Sprintf("admin/users/%s/actions/disable_two_factor", url.QueryEscape(userID))
-	req, err := a.client.newRequest("POST", u, nil)
+	req, err := a.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	au := &AdminUser{}
-	err = a.client.do(ctx, req, au)
+	err = req.Do(ctx, au)
 	if err != nil {
 		return nil, err
 	}
 
 	return au, nil
+}
+
+func (o *AdminUserListOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateAdminUserIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateAdminUserIncludeParams(params []AdminUserIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case AdminUserOrgs:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+	return nil
 }

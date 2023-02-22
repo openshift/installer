@@ -99,6 +99,13 @@ func (e *Expander) SetResourceForEach(moduleAddr addrs.ModuleInstance, resourceA
 // had their expansion registered using one of the SetModule* methods before
 // calling, or this method will panic.
 func (e *Expander) ExpandModule(addr addrs.Module) []addrs.ModuleInstance {
+	return e.expandModule(addr, false)
+}
+
+// expandModule allows skipping unexpanded module addresses by setting skipUnknown to true.
+// This is used by instances.Set, which is only concerned with the expanded
+// instances, and should not panic when looking up unknown addresses.
+func (e *Expander) expandModule(addr addrs.Module, skipUnknown bool) []addrs.ModuleInstance {
 	if len(addr) == 0 {
 		// Root module is always a singleton.
 		return singletonRootModule
@@ -113,11 +120,46 @@ func (e *Expander) ExpandModule(addr addrs.Module) []addrs.ModuleInstance {
 	// (moduleInstances does plenty of allocations itself, so the benefit of
 	// pre-allocating this is marginal but it's not hard to do.)
 	parentAddr := make(addrs.ModuleInstance, 0, 4)
-	ret := e.exps.moduleInstances(addr, parentAddr)
+	ret := e.exps.moduleInstances(addr, parentAddr, skipUnknown)
 	sort.SliceStable(ret, func(i, j int) bool {
 		return ret[i].Less(ret[j])
 	})
 	return ret
+}
+
+// GetDeepestExistingModuleInstance is a funny specialized function for
+// determining how many steps we can traverse through the given module instance
+// address before encountering an undeclared instance of a declared module.
+//
+// The result is the longest prefix of the given address which steps only
+// through module instances that exist.
+//
+// All of the modules on the given path must already have had their
+// expansion registered using one of the SetModule* methods before calling,
+// or this method will panic.
+func (e *Expander) GetDeepestExistingModuleInstance(given addrs.ModuleInstance) addrs.ModuleInstance {
+	exps := e.exps // start with the root module expansions
+	for i := 0; i < len(given); i++ {
+		step := given[i]
+		callName := step.Name
+		if _, ok := exps.moduleCalls[addrs.ModuleCall{Name: callName}]; !ok {
+			// This is a bug in the caller, because it should always register
+			// expansions for an object and all of its ancestors before requesting
+			// expansion of it.
+			panic(fmt.Sprintf("no expansion has been registered for %s", given[:i].Child(callName, addrs.NoKey)))
+		}
+
+		var ok bool
+		exps, ok = exps.childInstances[step]
+		if !ok {
+			// We've found a non-existing instance, so we're done.
+			return given[:i]
+		}
+	}
+
+	// If we complete the loop above without returning early then the entire
+	// given address refers to a declared module instance.
+	return given
 }
 
 // ExpandModuleResource finds the exhaustive set of resource instances resulting from
@@ -149,6 +191,14 @@ func (e *Expander) ExpandModuleResource(moduleAddr addrs.Module, resourceAddr ad
 // All of the modules on the path to the identified resource and the resource
 // itself must already have had their expansion registered using one of the
 // SetModule*/SetResource* methods before calling, or this method will panic.
+//
+// ExpandModuleResource returns all instances of a resource across all
+// instances of its containing module, whereas this ExpandResource function
+// is more specific and only expands within a single module instance. If
+// any of the module instances selected in the module path of the given address
+// aren't valid for that module's expansion then ExpandResource returns an
+// empty result, reflecting that a non-existing module instance can never
+// contain any existing resource instances.
 func (e *Expander) ExpandResource(resourceAddr addrs.AbsResource) []addrs.AbsResourceInstance {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
@@ -197,6 +247,18 @@ func (e *Expander) GetResourceInstanceRepetitionData(addr addrs.AbsResourceInsta
 	return exp.repetitionData(addr.Resource.Key)
 }
 
+// AllInstances returns a set of all of the module and resource instances known
+// to the expander.
+//
+// It generally doesn't make sense to call this until everything has already
+// been fully expanded by calling the SetModule* and SetResource* functions.
+// After that, the returned set is a convenient small API only for querying
+// whether particular instance addresses appeared as a result of those
+// expansions.
+func (e *Expander) AllInstances() Set {
+	return Set{e}
+}
+
 func (e *Expander) findModule(moduleInstAddr addrs.ModuleInstance) *expanderModule {
 	// We expect that all of the modules on the path to our module instance
 	// should already have expansions registered.
@@ -241,6 +303,38 @@ func (e *Expander) setResourceExpansion(parentAddr addrs.ModuleInstance, resourc
 	mod.resources[resourceAddr] = exp
 }
 
+func (e *Expander) knowsModuleInstance(want addrs.ModuleInstance) bool {
+	if want.IsRoot() {
+		return true // root module instance is always present
+	}
+
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.exps.knowsModuleInstance(want)
+}
+
+func (e *Expander) knowsModuleCall(want addrs.AbsModuleCall) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.exps.knowsModuleCall(want)
+}
+
+func (e *Expander) knowsResourceInstance(want addrs.AbsResourceInstance) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.exps.knowsResourceInstance(want)
+}
+
+func (e *Expander) knowsResource(want addrs.AbsResource) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+
+	return e.exps.knowsResource(want)
+}
+
 type expanderModule struct {
 	moduleCalls    map[addrs.ModuleCall]expansion
 	resources      map[addrs.Resource]expansion
@@ -257,10 +351,16 @@ func newExpanderModule() *expanderModule {
 
 var singletonRootModule = []addrs.ModuleInstance{addrs.RootModuleInstance}
 
-func (m *expanderModule) moduleInstances(addr addrs.Module, parentAddr addrs.ModuleInstance) []addrs.ModuleInstance {
+// if moduleInstances is being used to lookup known instances after all
+// expansions have been done, set skipUnknown to true which allows addrs which
+// may not have been seen to return with no instances rather than panicking.
+func (m *expanderModule) moduleInstances(addr addrs.Module, parentAddr addrs.ModuleInstance, skipUnknown bool) []addrs.ModuleInstance {
 	callName := addr[0]
 	exp, ok := m.moduleCalls[addrs.ModuleCall{Name: callName}]
 	if !ok {
+		if skipUnknown {
+			return nil
+		}
 		// This is a bug in the caller, because it should always register
 		// expansions for an object and all of its ancestors before requesting
 		// expansion of it.
@@ -276,7 +376,7 @@ func (m *expanderModule) moduleInstances(addr addrs.Module, parentAddr addrs.Mod
 				continue
 			}
 			instAddr := append(parentAddr, step)
-			ret = append(ret, inst.moduleInstances(addr[1:], instAddr)...)
+			ret = append(ret, inst.moduleInstances(addr[1:], instAddr, skipUnknown)...)
 		}
 		return ret
 	}
@@ -336,9 +436,23 @@ func (m *expanderModule) resourceInstances(moduleAddr addrs.ModuleInstance, reso
 			panic(fmt.Sprintf("no expansion has been registered for %s", parentAddr.Child(callName, addrs.NoKey)))
 		}
 
-		inst := m.childInstances[step]
-		moduleInstAddr := append(parentAddr, step)
-		return inst.resourceInstances(moduleAddr[1:], resourceAddr, moduleInstAddr)
+		if inst, ok := m.childInstances[step]; ok {
+			moduleInstAddr := append(parentAddr, step)
+			return inst.resourceInstances(moduleAddr[1:], resourceAddr, moduleInstAddr)
+		} else {
+			// If we have the module _call_ registered (as we checked above)
+			// but we don't have the given module _instance_ registered, that
+			// suggests that the module instance key in "step" is not declared
+			// by the current definition of this module call. That means the
+			// module instance doesn't exist at all, and therefore it can't
+			// possibly declare any resource instances either.
+			//
+			// For example, if we were asked about module.foo[0].aws_instance.bar
+			// but module.foo doesn't currently have count set, then there is no
+			// module.foo[0] at all, and therefore no aws_instance.bar
+			// instances inside it.
+			return nil
+		}
 	}
 	return m.onlyResourceInstances(resourceAddr, parentAddr)
 }
@@ -358,5 +472,56 @@ func (m *expanderModule) onlyResourceInstances(resourceAddr addrs.Resource, pare
 		copy(moduleAddr, parentAddr)
 		ret = append(ret, resourceAddr.Instance(k).Absolute(moduleAddr))
 	}
+	return ret
+}
+
+func (m *expanderModule) getModuleInstance(want addrs.ModuleInstance) *expanderModule {
+	current := m
+	for _, step := range want {
+		next := current.childInstances[step]
+		if next == nil {
+			return nil
+		}
+		current = next
+	}
+	return current
+}
+
+func (m *expanderModule) knowsModuleInstance(want addrs.ModuleInstance) bool {
+	return m.getModuleInstance(want) != nil
+}
+
+func (m *expanderModule) knowsModuleCall(want addrs.AbsModuleCall) bool {
+	modInst := m.getModuleInstance(want.Module)
+	if modInst == nil {
+		return false
+	}
+	_, ret := modInst.moduleCalls[want.Call]
+	return ret
+}
+
+func (m *expanderModule) knowsResourceInstance(want addrs.AbsResourceInstance) bool {
+	modInst := m.getModuleInstance(want.Module)
+	if modInst == nil {
+		return false
+	}
+	resourceExp := modInst.resources[want.Resource.Resource]
+	if resourceExp == nil {
+		return false
+	}
+	for _, key := range resourceExp.instanceKeys() {
+		if key == want.Resource.Key {
+			return true
+		}
+	}
+	return false
+}
+
+func (m *expanderModule) knowsResource(want addrs.AbsResource) bool {
+	modInst := m.getModuleInstance(want.Module)
+	if modInst == nil {
+		return false
+	}
+	_, ret := modInst.resources[want.Resource]
 	return ret
 }

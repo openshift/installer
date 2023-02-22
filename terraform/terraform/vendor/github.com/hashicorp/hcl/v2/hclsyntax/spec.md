@@ -84,7 +84,7 @@ Comments serve as program documentation and come in two forms:
   sequence, and may have any characters within except the ending sequence.
   An inline comments is considered equivalent to a whitespace sequence.
 
-Comments and whitespace cannot begin within within other comments, or within
+Comments and whitespace cannot begin within other comments, or within
 template literals except inside an interpolation sequence or template directive.
 
 ### Identifiers
@@ -491,7 +491,7 @@ that were produced against each distinct key.
 - `[for v in ["a", "b"]: v]` returns `["a", "b"]`.
 - `[for i, v in ["a", "b"]: i]` returns `[0, 1]`.
 - `{for i, v in ["a", "b"]: v => i}` returns `{a = 0, b = 1}`.
-- `{for i, v in ["a", "a", "b"]: k => v}` produces an error, because attribute
+- `{for i, v in ["a", "a", "b"]: v => i}` produces an error, because attribute
   `a` is defined twice.
 - `{for i, v in ["a", "a", "b"]: v => i...}` returns `{a = [0, 1], b = [2]}`.
 
@@ -890,7 +890,7 @@ as templates.
 - `hello ${true}` produces the string `"hello true"`
 - `${""}${true}` produces the string `"true"` because there are two
   interpolation sequences, even though one produces an empty result.
-- `%{ for v in [true] }${v}%{ endif }` produces the string `true` because
+- `%{ for v in [true] }${v}%{ endfor }` produces the string `true` because
   the presence of the `for` directive circumvents the unwrapping even though
   the final result is a single value.
 

@@ -21,8 +21,9 @@ func (c *PlanCommand) Run(rawArgs []string) int {
 	common, rawArgs := arguments.ParseView(rawArgs)
 	c.View.Configure(common)
 
-	// Propagate -no-color for the remote backend's legacy use of Ui. This
-	// should be removed when the remote backend is migrated to views.
+	// Propagate -no-color for legacy use of Ui.  The remote backend and
+	// cloud package use this; it should be removed when/if they are
+	// migrated to views.
 	c.Meta.color = !common.NoColor
 	c.Meta.Color = c.Meta.color
 
@@ -219,7 +220,8 @@ Plan Customization Options:
   -replace=resource   Force replacement of a particular resource instance using
                       its resource address. If the plan would've normally
                       produced an update or no-op action for this instance,
-                      Terraform will plan to replace it instead.
+                      Terraform will plan to replace it instead. You can use
+                      this option multiple times to replace more than one object.
 
   -target=resource    Limit the planning operation to only the given module,
                       resource, or resource instance and all of its

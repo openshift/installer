@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 )
@@ -13,10 +12,10 @@ var _ Variables = (*variables)(nil)
 // Variables describes all the variable related methods that the Terraform
 // Enterprise API supports.
 //
-// TFE API docs: https://www.terraform.io/docs/enterprise/api/variables.html
+// TFE API docs: https://www.terraform.io/docs/cloud/api/workspace-variables.html
 type Variables interface {
 	// List all the variables associated with the given workspace.
-	List(ctx context.Context, workspaceID string, options VariableListOptions) (*VariableList, error)
+	List(ctx context.Context, workspaceID string, options *VariableListOptions) (*VariableList, error)
 
 	// Create is used to create a new variable.
 	Create(ctx context.Context, workspaceID string, options VariableCreateOptions) (*Variable, error)
@@ -39,7 +38,7 @@ type variables struct {
 // CategoryType represents a category type.
 type CategoryType string
 
-//List all available categories.
+// List all available categories.
 const (
 	CategoryEnv       CategoryType = "env"
 	CategoryPolicySet CategoryType = "policy-set"
@@ -71,27 +70,6 @@ type VariableListOptions struct {
 	ListOptions
 }
 
-// List all the variables associated with the given workspace.
-func (s *variables) List(ctx context.Context, workspaceID string, options VariableListOptions) (*VariableList, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-
-	u := fmt.Sprintf("workspaces/%s/vars", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("GET", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	vl := &VariableList{}
-	err = s.client.do(ctx, req, vl)
-	if err != nil {
-		return nil, err
-	}
-
-	return vl, nil
-}
-
 // VariableCreateOptions represents the options for creating a new variable.
 type VariableCreateOptions struct {
 	// Type is a public field utilized by JSON:API to
@@ -100,81 +78,23 @@ type VariableCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,vars"`
 
-	// The name of the variable.
+	// Required: The name of the variable.
 	Key *string `jsonapi:"attr,key"`
 
-	// The value of the variable.
+	// Optional: The value of the variable.
 	Value *string `jsonapi:"attr,value,omitempty"`
 
-	// The description of the variable.
+	// Optional: The description of the variable.
 	Description *string `jsonapi:"attr,description,omitempty"`
 
-	// Whether this is a Terraform or environment variable.
+	// Required: Whether this is a Terraform or environment variable.
 	Category *CategoryType `jsonapi:"attr,category"`
 
-	// Whether to evaluate the value of the variable as a string of HCL code.
+	// Optional: Whether to evaluate the value of the variable as a string of HCL code.
 	HCL *bool `jsonapi:"attr,hcl,omitempty"`
 
-	// Whether the value is sensitive.
+	// Optional: Whether the value is sensitive.
 	Sensitive *bool `jsonapi:"attr,sensitive,omitempty"`
-}
-
-func (o VariableCreateOptions) valid() error {
-	if !validString(o.Key) {
-		return errors.New("key is required")
-	}
-	if o.Category == nil {
-		return errors.New("category is required")
-	}
-	return nil
-}
-
-// Create is used to create a new variable.
-func (s *variables) Create(ctx context.Context, workspaceID string, options VariableCreateOptions) (*Variable, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	u := fmt.Sprintf("workspaces/%s/vars", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("POST", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	v := &Variable{}
-	err = s.client.do(ctx, req, v)
-	if err != nil {
-		return nil, err
-	}
-
-	return v, nil
-}
-
-// Read a variable by its ID.
-func (s *variables) Read(ctx context.Context, workspaceID string, variableID string) (*Variable, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-	if !validStringID(&variableID) {
-		return nil, errors.New("invalid value for variable ID")
-	}
-
-	u := fmt.Sprintf("workspaces/%s/vars/%s", url.QueryEscape(workspaceID), url.QueryEscape(variableID))
-	req, err := s.client.newRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	v := &Variable{}
-	err = s.client.do(ctx, req, v)
-	if err != nil {
-		return nil, err
-	}
-
-	return v, err
 }
 
 // VariableUpdateOptions represents the options for updating a variable.
@@ -194,6 +114,9 @@ type VariableUpdateOptions struct {
 	// The description of the variable.
 	Description *string `jsonapi:"attr,description,omitempty"`
 
+	// Whether this is a Terraform or environment variable.
+	Category *CategoryType `jsonapi:"attr,category,omitempty"`
+
 	// Whether to evaluate the value of the variable as a string of HCL code.
 	HCL *bool `jsonapi:"attr,hcl,omitempty"`
 
@@ -201,23 +124,92 @@ type VariableUpdateOptions struct {
 	Sensitive *bool `jsonapi:"attr,sensitive,omitempty"`
 }
 
-// Update values of an existing variable.
-func (s *variables) Update(ctx context.Context, workspaceID string, variableID string, options VariableUpdateOptions) (*Variable, error) {
+// List all the variables associated with the given workspace.
+func (s *variables) List(ctx context.Context, workspaceID string, options *VariableListOptions) (*VariableList, error) {
 	if !validStringID(&workspaceID) {
 		return nil, ErrInvalidWorkspaceID
 	}
-	if !validStringID(&variableID) {
-		return nil, errors.New("invalid value for variable ID")
+
+	u := fmt.Sprintf("workspaces/%s/vars", url.QueryEscape(workspaceID))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
 	}
 
-	u := fmt.Sprintf("workspaces/%s/vars/%s", url.QueryEscape(workspaceID), url.QueryEscape(variableID))
-	req, err := s.client.newRequest("PATCH", u, &options)
+	vl := &VariableList{}
+	err = req.Do(ctx, vl)
+	if err != nil {
+		return nil, err
+	}
+
+	return vl, nil
+}
+
+// Create is used to create a new variable.
+func (s *variables) Create(ctx context.Context, workspaceID string, options VariableCreateOptions) (*Variable, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("workspaces/%s/vars", url.QueryEscape(workspaceID))
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	v := &Variable{}
-	err = s.client.do(ctx, req, v)
+	err = req.Do(ctx, v)
+	if err != nil {
+		return nil, err
+	}
+
+	return v, nil
+}
+
+// Read a variable by its ID.
+func (s *variables) Read(ctx context.Context, workspaceID, variableID string) (*Variable, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if !validStringID(&variableID) {
+		return nil, ErrInvalidVariableID
+	}
+
+	u := fmt.Sprintf("workspaces/%s/vars/%s", url.QueryEscape(workspaceID), url.QueryEscape(variableID))
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	v := &Variable{}
+	err = req.Do(ctx, v)
+	if err != nil {
+		return nil, err
+	}
+
+	return v, err
+}
+
+// Update values of an existing variable.
+func (s *variables) Update(ctx context.Context, workspaceID, variableID string, options VariableUpdateOptions) (*Variable, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if !validStringID(&variableID) {
+		return nil, ErrInvalidVariableID
+	}
+
+	u := fmt.Sprintf("workspaces/%s/vars/%s", url.QueryEscape(workspaceID), url.QueryEscape(variableID))
+	req, err := s.client.NewRequest("PATCH", u, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	v := &Variable{}
+	err = req.Do(ctx, v)
 	if err != nil {
 		return nil, err
 	}
@@ -226,19 +218,29 @@ func (s *variables) Update(ctx context.Context, workspaceID string, variableID s
 }
 
 // Delete a variable by its ID.
-func (s *variables) Delete(ctx context.Context, workspaceID string, variableID string) error {
+func (s *variables) Delete(ctx context.Context, workspaceID, variableID string) error {
 	if !validStringID(&workspaceID) {
 		return ErrInvalidWorkspaceID
 	}
 	if !validStringID(&variableID) {
-		return errors.New("invalid value for variable ID")
+		return ErrInvalidVariableID
 	}
 
 	u := fmt.Sprintf("workspaces/%s/vars/%s", url.QueryEscape(workspaceID), url.QueryEscape(variableID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o VariableCreateOptions) valid() error {
+	if !validString(o.Key) {
+		return ErrRequiredKey
+	}
+	if o.Category == nil {
+		return ErrRequiredCategory
+	}
+	return nil
 }

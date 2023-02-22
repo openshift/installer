@@ -17,15 +17,15 @@ limitations under the License.
 package dynamic
 
 import (
+	"context"
 	"fmt"
-	"io"
+	"net/http"
 
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer/streaming"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/rest"
@@ -61,17 +61,30 @@ func NewForConfigOrDie(c *rest.Config) Interface {
 }
 
 // NewForConfig creates a new dynamic client or returns an error.
+// NewForConfig is equivalent to NewForConfigAndClient(c, httpClient),
+// where httpClient was generated with rest.HTTPClientFor(c).
 func NewForConfig(inConfig *rest.Config) (Interface, error) {
+	config := ConfigFor(inConfig)
+
+	httpClient, err := rest.HTTPClientFor(config)
+	if err != nil {
+		return nil, err
+	}
+	return NewForConfigAndClient(config, httpClient)
+}
+
+// NewForConfigAndClient creates a new dynamic client for the given config and http client.
+// Note the http client provided takes precedence over the configured transport values.
+func NewForConfigAndClient(inConfig *rest.Config, h *http.Client) (Interface, error) {
 	config := ConfigFor(inConfig)
 	// for serializing the options
 	config.GroupVersion = &schema.GroupVersion{}
 	config.APIPath = "/if-you-see-this-search-for-the-break"
 
-	restClient, err := rest.RESTClientFor(config)
+	restClient, err := rest.RESTClientForConfigAndClient(config, h)
 	if err != nil {
 		return nil, err
 	}
-
 	return &dynamicClient{client: restClient}, nil
 }
 
@@ -91,7 +104,7 @@ func (c *dynamicResourceClient) Namespace(ns string) ResourceInterface {
 	return &ret
 }
 
-func (c *dynamicResourceClient) Create(obj *unstructured.Unstructured, opts metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (c *dynamicResourceClient) Create(ctx context.Context, obj *unstructured.Unstructured, opts metav1.CreateOptions, subresources ...string) (*unstructured.Unstructured, error) {
 	outBytes, err := runtime.Encode(unstructured.UnstructuredJSONScheme, obj)
 	if err != nil {
 		return nil, err
@@ -111,9 +124,10 @@ func (c *dynamicResourceClient) Create(obj *unstructured.Unstructured, opts meta
 	result := c.client.client.
 		Post().
 		AbsPath(append(c.makeURLSegments(name), subresources...)...).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
 		Body(outBytes).
 		SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).
-		Do()
+		Do(ctx)
 	if err := result.Error(); err != nil {
 		return nil, err
 	}
@@ -129,7 +143,7 @@ func (c *dynamicResourceClient) Create(obj *unstructured.Unstructured, opts meta
 	return uncastObj.(*unstructured.Unstructured), nil
 }
 
-func (c *dynamicResourceClient) Update(obj *unstructured.Unstructured, opts metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (c *dynamicResourceClient) Update(ctx context.Context, obj *unstructured.Unstructured, opts metav1.UpdateOptions, subresources ...string) (*unstructured.Unstructured, error) {
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, err
@@ -146,9 +160,10 @@ func (c *dynamicResourceClient) Update(obj *unstructured.Unstructured, opts meta
 	result := c.client.client.
 		Put().
 		AbsPath(append(c.makeURLSegments(name), subresources...)...).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
 		Body(outBytes).
 		SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).
-		Do()
+		Do(ctx)
 	if err := result.Error(); err != nil {
 		return nil, err
 	}
@@ -164,7 +179,7 @@ func (c *dynamicResourceClient) Update(obj *unstructured.Unstructured, opts meta
 	return uncastObj.(*unstructured.Unstructured), nil
 }
 
-func (c *dynamicResourceClient) UpdateStatus(obj *unstructured.Unstructured, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
+func (c *dynamicResourceClient) UpdateStatus(ctx context.Context, obj *unstructured.Unstructured, opts metav1.UpdateOptions) (*unstructured.Unstructured, error) {
 	accessor, err := meta.Accessor(obj)
 	if err != nil {
 		return nil, err
@@ -182,9 +197,10 @@ func (c *dynamicResourceClient) UpdateStatus(obj *unstructured.Unstructured, opt
 	result := c.client.client.
 		Put().
 		AbsPath(append(c.makeURLSegments(name), "status")...).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
 		Body(outBytes).
 		SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).
-		Do()
+		Do(ctx)
 	if err := result.Error(); err != nil {
 		return nil, err
 	}
@@ -200,14 +216,11 @@ func (c *dynamicResourceClient) UpdateStatus(obj *unstructured.Unstructured, opt
 	return uncastObj.(*unstructured.Unstructured), nil
 }
 
-func (c *dynamicResourceClient) Delete(name string, opts *metav1.DeleteOptions, subresources ...string) error {
+func (c *dynamicResourceClient) Delete(ctx context.Context, name string, opts metav1.DeleteOptions, subresources ...string) error {
 	if len(name) == 0 {
 		return fmt.Errorf("name is required")
 	}
-	if opts == nil {
-		opts = &metav1.DeleteOptions{}
-	}
-	deleteOptionsByte, err := runtime.Encode(deleteOptionsCodec.LegacyCodec(schema.GroupVersion{Version: "v1"}), opts)
+	deleteOptionsByte, err := runtime.Encode(deleteOptionsCodec.LegacyCodec(schema.GroupVersion{Version: "v1"}), &opts)
 	if err != nil {
 		return err
 	}
@@ -215,16 +228,14 @@ func (c *dynamicResourceClient) Delete(name string, opts *metav1.DeleteOptions, 
 	result := c.client.client.
 		Delete().
 		AbsPath(append(c.makeURLSegments(name), subresources...)...).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
 		Body(deleteOptionsByte).
-		Do()
+		Do(ctx)
 	return result.Error()
 }
 
-func (c *dynamicResourceClient) DeleteCollection(opts *metav1.DeleteOptions, listOptions metav1.ListOptions) error {
-	if opts == nil {
-		opts = &metav1.DeleteOptions{}
-	}
-	deleteOptionsByte, err := runtime.Encode(deleteOptionsCodec.LegacyCodec(schema.GroupVersion{Version: "v1"}), opts)
+func (c *dynamicResourceClient) DeleteCollection(ctx context.Context, opts metav1.DeleteOptions, listOptions metav1.ListOptions) error {
+	deleteOptionsByte, err := runtime.Encode(deleteOptionsCodec.LegacyCodec(schema.GroupVersion{Version: "v1"}), &opts)
 	if err != nil {
 		return err
 	}
@@ -232,17 +243,18 @@ func (c *dynamicResourceClient) DeleteCollection(opts *metav1.DeleteOptions, lis
 	result := c.client.client.
 		Delete().
 		AbsPath(c.makeURLSegments("")...).
+		SetHeader("Content-Type", runtime.ContentTypeJSON).
 		Body(deleteOptionsByte).
 		SpecificallyVersionedParams(&listOptions, dynamicParameterCodec, versionV1).
-		Do()
+		Do(ctx)
 	return result.Error()
 }
 
-func (c *dynamicResourceClient) Get(name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (c *dynamicResourceClient) Get(ctx context.Context, name string, opts metav1.GetOptions, subresources ...string) (*unstructured.Unstructured, error) {
 	if len(name) == 0 {
 		return nil, fmt.Errorf("name is required")
 	}
-	result := c.client.client.Get().AbsPath(append(c.makeURLSegments(name), subresources...)...).SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).Do()
+	result := c.client.client.Get().AbsPath(append(c.makeURLSegments(name), subresources...)...).SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).Do(ctx)
 	if err := result.Error(); err != nil {
 		return nil, err
 	}
@@ -257,8 +269,8 @@ func (c *dynamicResourceClient) Get(name string, opts metav1.GetOptions, subreso
 	return uncastObj.(*unstructured.Unstructured), nil
 }
 
-func (c *dynamicResourceClient) List(opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	result := c.client.client.Get().AbsPath(c.makeURLSegments("")...).SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).Do()
+func (c *dynamicResourceClient) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	result := c.client.client.Get().AbsPath(c.makeURLSegments("")...).SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).Do(ctx)
 	if err := result.Error(); err != nil {
 		return nil, err
 	}
@@ -281,35 +293,14 @@ func (c *dynamicResourceClient) List(opts metav1.ListOptions) (*unstructured.Uns
 	return list, nil
 }
 
-func (c *dynamicResourceClient) Watch(opts metav1.ListOptions) (watch.Interface, error) {
-	internalGV := schema.GroupVersions{
-		{Group: c.resource.Group, Version: runtime.APIVersionInternal},
-		// always include the legacy group as a decoding target to handle non-error `Status` return types
-		{Group: "", Version: runtime.APIVersionInternal},
-	}
-	s := &rest.Serializers{
-		Encoder: watchNegotiatedSerializerInstance.EncoderForVersion(watchJsonSerializerInfo.Serializer, c.resource.GroupVersion()),
-		Decoder: watchNegotiatedSerializerInstance.DecoderToVersion(watchJsonSerializerInfo.Serializer, internalGV),
-
-		RenegotiatedDecoder: func(contentType string, params map[string]string) (runtime.Decoder, error) {
-			return watchNegotiatedSerializerInstance.DecoderToVersion(watchJsonSerializerInfo.Serializer, internalGV), nil
-		},
-		StreamingSerializer: watchJsonSerializerInfo.StreamSerializer.Serializer,
-		Framer:              watchJsonSerializerInfo.StreamSerializer.Framer,
-	}
-
-	wrappedDecoderFn := func(body io.ReadCloser) streaming.Decoder {
-		framer := s.Framer.NewFrameReader(body)
-		return streaming.NewDecoder(framer, s.StreamingSerializer)
-	}
-
+func (c *dynamicResourceClient) Watch(ctx context.Context, opts metav1.ListOptions) (watch.Interface, error) {
 	opts.Watch = true
 	return c.client.client.Get().AbsPath(c.makeURLSegments("")...).
 		SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).
-		WatchWithSpecificDecoders(wrappedDecoderFn, unstructured.UnstructuredJSONScheme)
+		Watch(ctx)
 }
 
-func (c *dynamicResourceClient) Patch(name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
+func (c *dynamicResourceClient) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts metav1.PatchOptions, subresources ...string) (*unstructured.Unstructured, error) {
 	if len(name) == 0 {
 		return nil, fmt.Errorf("name is required")
 	}
@@ -318,7 +309,7 @@ func (c *dynamicResourceClient) Patch(name string, pt types.PatchType, data []by
 		AbsPath(append(c.makeURLSegments(name), subresources...)...).
 		Body(data).
 		SpecificallyVersionedParams(&opts, dynamicParameterCodec, versionV1).
-		Do()
+		Do(ctx)
 	if err := result.Error(); err != nil {
 		return nil, err
 	}

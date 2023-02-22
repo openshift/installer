@@ -3,7 +3,6 @@ package tfe
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -16,7 +15,7 @@ var _ Plans = (*plans)(nil)
 // Plans describes all the plan related methods that the Terraform Enterprise
 // API supports.
 //
-// TFE API docs: https://www.terraform.io/docs/enterprise/api/plan.html
+// TFE API docs: https://www.terraform.io/cloud-docs/api-docs/plans
 type Plans interface {
 	// Read a plan by its ID.
 	Read(ctx context.Context, planID string) (*Plan, error)
@@ -25,7 +24,7 @@ type Plans interface {
 	Logs(ctx context.Context, planID string) (io.Reader, error)
 
 	// Retrieve the JSON execution plan
-	JSONOutput(ctx context.Context, planID string) ([]byte, error)
+	ReadJSONOutput(ctx context.Context, planID string) ([]byte, error)
 }
 
 // plans implements Plans.
@@ -36,7 +35,7 @@ type plans struct {
 // PlanStatus represents a plan state.
 type PlanStatus string
 
-//List all available plan statuses.
+// List all available plan statuses.
 const (
 	PlanCanceled    PlanStatus = "canceled"
 	PlanCreated     PlanStatus = "created"
@@ -77,17 +76,17 @@ type PlanStatusTimestamps struct {
 // Read a plan by its ID.
 func (s *plans) Read(ctx context.Context, planID string) (*Plan, error) {
 	if !validStringID(&planID) {
-		return nil, errors.New("invalid value for plan ID")
+		return nil, ErrInvalidPlanID
 	}
 
 	u := fmt.Sprintf("plans/%s", url.QueryEscape(planID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	p := &Plan{}
-	err = s.client.do(ctx, req, p)
+	err = req.Do(ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +97,7 @@ func (s *plans) Read(ctx context.Context, planID string) (*Plan, error) {
 // Logs retrieves the logs of a plan.
 func (s *plans) Logs(ctx context.Context, planID string) (io.Reader, error) {
 	if !validStringID(&planID) {
-		return nil, errors.New("invalid value for plan ID")
+		return nil, ErrInvalidPlanID
 	}
 
 	// Get the plan to make sure it exists.
@@ -114,7 +113,7 @@ func (s *plans) Logs(ctx context.Context, planID string) (io.Reader, error) {
 
 	u, err := url.Parse(p.LogReadURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid log URL: %v", err)
+		return nil, fmt.Errorf("invalid log URL: %w", err)
 	}
 
 	done := func() (bool, error) {
@@ -140,19 +139,19 @@ func (s *plans) Logs(ctx context.Context, planID string) (io.Reader, error) {
 }
 
 // Retrieve the JSON execution plan
-func (s *plans) JSONOutput(ctx context.Context, planID string) ([]byte, error) {
+func (s *plans) ReadJSONOutput(ctx context.Context, planID string) ([]byte, error) {
 	if !validStringID(&planID) {
-		return nil, errors.New("invalid value for plan ID")
+		return nil, ErrInvalidPlanID
 	}
 
 	u := fmt.Sprintf("plans/%s/json-output", url.QueryEscape(planID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	var buf bytes.Buffer
-	err = s.client.do(ctx, req, &buf)
+	err = req.Do(ctx, &buf)
 	if err != nil {
 		return nil, err
 	}

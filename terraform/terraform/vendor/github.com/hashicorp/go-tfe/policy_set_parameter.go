@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 )
@@ -13,10 +12,10 @@ var _ PolicySetParameters = (*policySetParameters)(nil)
 // PolicySetParameters describes all the parameter related methods that the Terraform
 // Enterprise API supports.
 //
-// TFE API docs: https://www.terraform.io/docs/enterprise/api/policy-set-params.html
+// TFE API docs: https://www.terraform.io/docs/cloud/api/policy-set-params.html
 type PolicySetParameters interface {
 	// List all the parameters associated with the given policy-set.
-	List(ctx context.Context, policySetID string, options PolicySetParameterListOptions) (*PolicySetParameterList, error)
+	List(ctx context.Context, policySetID string, options *PolicySetParameterListOptions) (*PolicySetParameterList, error)
 
 	// Create is used to create a new parameter.
 	Create(ctx context.Context, policySetID string, options PolicySetParameterCreateOptions) (*PolicySetParameter, error)
@@ -59,34 +58,6 @@ type PolicySetParameterListOptions struct {
 	ListOptions
 }
 
-func (o PolicySetParameterListOptions) valid() error {
-	return nil
-}
-
-// List all the parameters associated with the given policy-set.
-func (s *policySetParameters) List(ctx context.Context, policySetID string, options PolicySetParameterListOptions) (*PolicySetParameterList, error) {
-	if !validStringID(&policySetID) {
-		return nil, errors.New("invalid value for policy set ID")
-	}
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	u := fmt.Sprintf("policy-sets/%s/parameters", policySetID)
-	req, err := s.client.newRequest("GET", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	vl := &PolicySetParameterList{}
-	err = s.client.do(ctx, req, vl)
-	if err != nil {
-		return nil, err
-	}
-
-	return vl, nil
-}
-
 // PolicySetParameterCreateOptions represents the options for creating a new parameter.
 type PolicySetParameterCreateOptions struct {
 	// Type is a public field utilized by JSON:API to
@@ -95,78 +66,17 @@ type PolicySetParameterCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,vars"`
 
-	// The name of the parameter.
+	// Required: The name of the parameter.
 	Key *string `jsonapi:"attr,key"`
 
-	// The value of the parameter.
+	// Optional: The value of the parameter.
 	Value *string `jsonapi:"attr,value,omitempty"`
 
-	// The Category of the parameter, should always be "policy-set"
+	// Required: The Category of the parameter, should always be "policy-set"
 	Category *CategoryType `jsonapi:"attr,category"`
 
-	// Whether the value is sensitive.
+	// Optional: Whether the value is sensitive.
 	Sensitive *bool `jsonapi:"attr,sensitive,omitempty"`
-}
-
-func (o PolicySetParameterCreateOptions) valid() error {
-	if !validString(o.Key) {
-		return errors.New("key is required")
-	}
-	if o.Category == nil {
-		return errors.New("category is required")
-	}
-	if *o.Category != CategoryPolicySet {
-		return errors.New("category must be policy-set")
-	}
-	return nil
-}
-
-// Create is used to create a new parameter.
-func (s *policySetParameters) Create(ctx context.Context, policySetID string, options PolicySetParameterCreateOptions) (*PolicySetParameter, error) {
-	if !validStringID(&policySetID) {
-		return nil, errors.New("invalid value for policy set ID")
-	}
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	u := fmt.Sprintf("policy-sets/%s/parameters", url.QueryEscape(policySetID))
-	req, err := s.client.newRequest("POST", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	p := &PolicySetParameter{}
-	err = s.client.do(ctx, req, p)
-	if err != nil {
-		return nil, err
-	}
-
-	return p, nil
-}
-
-// Read a parameter by its ID.
-func (s *policySetParameters) Read(ctx context.Context, policySetID string, parameterID string) (*PolicySetParameter, error) {
-	if !validStringID(&policySetID) {
-		return nil, errors.New("invalid value for policy set ID")
-	}
-	if !validStringID(&parameterID) {
-		return nil, errors.New("invalid value for parameter ID")
-	}
-
-	u := fmt.Sprintf("policy-sets/%s/parameters/%s", url.QueryEscape(policySetID), url.QueryEscape(parameterID))
-	req, err := s.client.newRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	p := &PolicySetParameter{}
-	err = s.client.do(ctx, req, p)
-	if err != nil {
-		return nil, err
-	}
-
-	return p, err
 }
 
 // PolicySetParameterUpdateOptions represents the options for updating a parameter.
@@ -177,33 +87,102 @@ type PolicySetParameterUpdateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,vars"`
 
-	// The name of the parameter.
+	// Optional: The name of the parameter.
 	Key *string `jsonapi:"attr,key,omitempty"`
 
-	// The value of the parameter.
+	// Optional: The value of the parameter.
 	Value *string `jsonapi:"attr,value,omitempty"`
 
-	// Whether the value is sensitive.
+	// Optional: Whether the value is sensitive.
 	Sensitive *bool `jsonapi:"attr,sensitive,omitempty"`
 }
 
-// Update values of an existing parameter.
-func (s *policySetParameters) Update(ctx context.Context, policySetID string, parameterID string, options PolicySetParameterUpdateOptions) (*PolicySetParameter, error) {
+// List all the parameters associated with the given policy-set.
+func (s *policySetParameters) List(ctx context.Context, policySetID string, options *PolicySetParameterListOptions) (*PolicySetParameterList, error) {
 	if !validStringID(&policySetID) {
-		return nil, errors.New("invalid value for policy set ID")
-	}
-	if !validStringID(&parameterID) {
-		return nil, errors.New("invalid value for parameter ID")
+		return nil, ErrInvalidPolicySetID
 	}
 
-	u := fmt.Sprintf("policy-sets/%s/parameters/%s", url.QueryEscape(policySetID), url.QueryEscape(parameterID))
-	req, err := s.client.newRequest("PATCH", u, &options)
+	u := fmt.Sprintf("policy-sets/%s/parameters", policySetID)
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	vl := &PolicySetParameterList{}
+	err = req.Do(ctx, vl)
+	if err != nil {
+		return nil, err
+	}
+
+	return vl, nil
+}
+
+// Create is used to create a new parameter.
+func (s *policySetParameters) Create(ctx context.Context, policySetID string, options PolicySetParameterCreateOptions) (*PolicySetParameter, error) {
+	if !validStringID(&policySetID) {
+		return nil, ErrInvalidPolicySetID
+	}
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("policy-sets/%s/parameters", url.QueryEscape(policySetID))
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	p := &PolicySetParameter{}
-	err = s.client.do(ctx, req, p)
+	err = req.Do(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}
+
+// Read a parameter by its ID.
+func (s *policySetParameters) Read(ctx context.Context, policySetID, parameterID string) (*PolicySetParameter, error) {
+	if !validStringID(&policySetID) {
+		return nil, ErrInvalidPolicySetID
+	}
+	if !validStringID(&parameterID) {
+		return nil, ErrInvalidParamID
+	}
+
+	u := fmt.Sprintf("policy-sets/%s/parameters/%s", url.QueryEscape(policySetID), url.QueryEscape(parameterID))
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &PolicySetParameter{}
+	err = req.Do(ctx, p)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, err
+}
+
+// Update values of an existing parameter.
+func (s *policySetParameters) Update(ctx context.Context, policySetID, parameterID string, options PolicySetParameterUpdateOptions) (*PolicySetParameter, error) {
+	if !validStringID(&policySetID) {
+		return nil, ErrInvalidPolicySetID
+	}
+	if !validStringID(&parameterID) {
+		return nil, ErrInvalidParamID
+	}
+
+	u := fmt.Sprintf("policy-sets/%s/parameters/%s", url.QueryEscape(policySetID), url.QueryEscape(parameterID))
+	req, err := s.client.NewRequest("PATCH", u, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	p := &PolicySetParameter{}
+	err = req.Do(ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -212,19 +191,32 @@ func (s *policySetParameters) Update(ctx context.Context, policySetID string, pa
 }
 
 // Delete a parameter by its ID.
-func (s *policySetParameters) Delete(ctx context.Context, policySetID string, parameterID string) error {
+func (s *policySetParameters) Delete(ctx context.Context, policySetID, parameterID string) error {
 	if !validStringID(&policySetID) {
-		return errors.New("invalid value for policy set ID")
+		return ErrInvalidPolicySetID
 	}
 	if !validStringID(&parameterID) {
-		return errors.New("invalid value for parameter ID")
+		return ErrInvalidParamID
 	}
 
 	u := fmt.Sprintf("policy-sets/%s/parameters/%s", url.QueryEscape(policySetID), url.QueryEscape(parameterID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o PolicySetParameterCreateOptions) valid() error {
+	if !validString(o.Key) {
+		return ErrRequiredKey
+	}
+	if o.Category == nil {
+		return ErrRequiredCategory
+	}
+	if *o.Category != CategoryPolicySet {
+		return ErrInvalidCategory
+	}
+	return nil
 }

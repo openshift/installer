@@ -29,14 +29,13 @@ const opAddClientIDToOpenIDConnectProvider = "AddClientIDToOpenIDConnectProvider
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddClientIDToOpenIDConnectProviderRequest method.
+//	req, resp := client.AddClientIDToOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the AddClientIDToOpenIDConnectProviderRequest method.
-//    req, resp := client.AddClientIDToOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AddClientIDToOpenIDConnectProvider
 func (c *IAM) AddClientIDToOpenIDConnectProviderRequest(input *AddClientIDToOpenIDConnectProviderInput) (req *request.Request, output *AddClientIDToOpenIDConnectProviderOutput) {
@@ -72,22 +71,23 @@ func (c *IAM) AddClientIDToOpenIDConnectProviderRequest(input *AddClientIDToOpen
 // API operation AddClientIDToOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AddClientIDToOpenIDConnectProvider
 func (c *IAM) AddClientIDToOpenIDConnectProvider(input *AddClientIDToOpenIDConnectProviderInput) (*AddClientIDToOpenIDConnectProviderOutput, error) {
@@ -127,14 +127,13 @@ const opAddRoleToInstanceProfile = "AddRoleToInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddRoleToInstanceProfileRequest method.
+//	req, resp := client.AddRoleToInstanceProfileRequest(params)
 //
-//    // Example sending a request using the AddRoleToInstanceProfileRequest method.
-//    req, resp := client.AddRoleToInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AddRoleToInstanceProfile
 func (c *IAM) AddRoleToInstanceProfileRequest(input *AddRoleToInstanceProfileInput) (req *request.Request, output *AddRoleToInstanceProfileOutput) {
@@ -180,28 +179,29 @@ func (c *IAM) AddRoleToInstanceProfileRequest(input *AddRoleToInstanceProfileInp
 // API operation AddRoleToInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AddRoleToInstanceProfile
 func (c *IAM) AddRoleToInstanceProfile(input *AddRoleToInstanceProfileInput) (*AddRoleToInstanceProfileOutput, error) {
@@ -241,14 +241,13 @@ const opAddUserToGroup = "AddUserToGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AddUserToGroupRequest method.
+//	req, resp := client.AddUserToGroupRequest(params)
 //
-//    // Example sending a request using the AddUserToGroupRequest method.
-//    req, resp := client.AddUserToGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AddUserToGroup
 func (c *IAM) AddUserToGroupRequest(input *AddUserToGroupInput) (req *request.Request, output *AddUserToGroupOutput) {
@@ -280,18 +279,19 @@ func (c *IAM) AddUserToGroupRequest(input *AddUserToGroupInput) (req *request.Re
 // API operation AddUserToGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AddUserToGroup
 func (c *IAM) AddUserToGroup(input *AddUserToGroupInput) (*AddUserToGroupOutput, error) {
@@ -331,14 +331,13 @@ const opAttachGroupPolicy = "AttachGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AttachGroupPolicyRequest method.
+//	req, resp := client.AttachGroupPolicyRequest(params)
 //
-//    // Example sending a request using the AttachGroupPolicyRequest method.
-//    req, resp := client.AttachGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AttachGroupPolicy
 func (c *IAM) AttachGroupPolicyRequest(input *AttachGroupPolicyInput) (req *request.Request, output *AttachGroupPolicyOutput) {
@@ -381,26 +380,27 @@ func (c *IAM) AttachGroupPolicyRequest(input *AttachGroupPolicyInput) (req *requ
 // API operation AttachGroupPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodePolicyNotAttachableException "PolicyNotAttachable"
-//   The request failed because Amazon Web Services service role policies can
-//   only be attached to the service-linked role for that service.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodePolicyNotAttachableException "PolicyNotAttachable"
+//     The request failed because Amazon Web Services service role policies can
+//     only be attached to the service-linked role for that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AttachGroupPolicy
 func (c *IAM) AttachGroupPolicy(input *AttachGroupPolicyInput) (*AttachGroupPolicyOutput, error) {
@@ -440,14 +440,13 @@ const opAttachRolePolicy = "AttachRolePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AttachRolePolicyRequest method.
+//	req, resp := client.AttachRolePolicyRequest(params)
 //
-//    // Example sending a request using the AttachRolePolicyRequest method.
-//    req, resp := client.AttachRolePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AttachRolePolicy
 func (c *IAM) AttachRolePolicyRequest(input *AttachRolePolicyInput) (req *request.Request, output *AttachRolePolicyOutput) {
@@ -494,32 +493,33 @@ func (c *IAM) AttachRolePolicyRequest(input *AttachRolePolicyInput) (req *reques
 // API operation AttachRolePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodePolicyNotAttachableException "PolicyNotAttachable"
-//   The request failed because Amazon Web Services service role policies can
-//   only be attached to the service-linked role for that service.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodePolicyNotAttachableException "PolicyNotAttachable"
+//     The request failed because Amazon Web Services service role policies can
+//     only be attached to the service-linked role for that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AttachRolePolicy
 func (c *IAM) AttachRolePolicy(input *AttachRolePolicyInput) (*AttachRolePolicyOutput, error) {
@@ -559,14 +559,13 @@ const opAttachUserPolicy = "AttachUserPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the AttachUserPolicyRequest method.
+//	req, resp := client.AttachUserPolicyRequest(params)
 //
-//    // Example sending a request using the AttachUserPolicyRequest method.
-//    req, resp := client.AttachUserPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AttachUserPolicy
 func (c *IAM) AttachUserPolicyRequest(input *AttachUserPolicyInput) (req *request.Request, output *AttachUserPolicyOutput) {
@@ -609,26 +608,27 @@ func (c *IAM) AttachUserPolicyRequest(input *AttachUserPolicyInput) (req *reques
 // API operation AttachUserPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodePolicyNotAttachableException "PolicyNotAttachable"
-//   The request failed because Amazon Web Services service role policies can
-//   only be attached to the service-linked role for that service.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodePolicyNotAttachableException "PolicyNotAttachable"
+//     The request failed because Amazon Web Services service role policies can
+//     only be attached to the service-linked role for that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/AttachUserPolicy
 func (c *IAM) AttachUserPolicy(input *AttachUserPolicyInput) (*AttachUserPolicyOutput, error) {
@@ -668,14 +668,13 @@ const opChangePassword = "ChangePassword"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ChangePasswordRequest method.
+//	req, resp := client.ChangePasswordRequest(params)
 //
-//    // Example sending a request using the ChangePasswordRequest method.
-//    req, resp := client.ChangePasswordRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ChangePassword
 func (c *IAM) ChangePasswordRequest(input *ChangePasswordInput) (req *request.Request, output *ChangePasswordOutput) {
@@ -699,8 +698,9 @@ func (c *IAM) ChangePasswordRequest(input *ChangePasswordInput) (req *request.Re
 //
 // Changes the password of the IAM user who is calling this operation. This
 // operation can be performed using the CLI, the Amazon Web Services API, or
-// the My Security Credentials page in the Management Console. The account root
-// user password is not affected by this operation.
+// the My Security Credentials page in the Amazon Web Services Management Console.
+// The Amazon Web Services account root user password is not affected by this
+// operation.
 //
 // Use UpdateLoginProfile to use the CLI, the Amazon Web Services API, or the
 // Users page in the IAM console to change the password for any IAM user. For
@@ -715,32 +715,33 @@ func (c *IAM) ChangePasswordRequest(input *ChangePasswordInput) (req *request.Re
 // API operation ChangePassword for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidUserTypeException "InvalidUserType"
-//   The request was rejected because the type of user for the transaction was
-//   incorrect.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidUserTypeException "InvalidUserType"
+//     The request was rejected because the type of user for the transaction was
+//     incorrect.
 //
-//   * ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
-//   The request was rejected because it referenced an entity that is temporarily
-//   unmodifiable, such as a user name that was deleted and then recreated. The
-//   error indicates that the request is likely to succeed if you try again after
-//   waiting several minutes. The error message describes the entity.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodePasswordPolicyViolationException "PasswordPolicyViolation"
-//   The request was rejected because the provided password did not meet the requirements
-//   imposed by the account password policy.
+//   - ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
+//     The request was rejected because it referenced an entity that is temporarily
+//     unmodifiable, such as a user name that was deleted and then recreated. The
+//     error indicates that the request is likely to succeed if you try again after
+//     waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodePasswordPolicyViolationException "PasswordPolicyViolation"
+//     The request was rejected because the provided password did not meet the requirements
+//     imposed by the account password policy.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ChangePassword
 func (c *IAM) ChangePassword(input *ChangePasswordInput) (*ChangePasswordOutput, error) {
@@ -780,14 +781,13 @@ const opCreateAccessKey = "CreateAccessKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAccessKeyRequest method.
+//	req, resp := client.CreateAccessKeyRequest(params)
 //
-//    // Example sending a request using the CreateAccessKeyRequest method.
-//    req, resp := client.CreateAccessKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateAccessKey
 func (c *IAM) CreateAccessKeyRequest(input *CreateAccessKeyInput) (req *request.Request, output *CreateAccessKeyOutput) {
@@ -814,19 +814,20 @@ func (c *IAM) CreateAccessKeyRequest(input *CreateAccessKeyInput) (req *request.
 //
 // If you do not specify a user name, IAM determines the user name implicitly
 // based on the Amazon Web Services access key ID signing the request. This
-// operation works for access keys under the account. Consequently, you can
-// use this operation to manage account root user credentials. This is true
-// even if the account has no associated users.
+// operation works for access keys under the Amazon Web Services account. Consequently,
+// you can use this operation to manage Amazon Web Services account root user
+// credentials. This is true even if the Amazon Web Services account has no
+// associated users.
 //
 // For information about quotas on the number of keys you can create, see IAM
 // and STS quotas (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html)
 // in the IAM User Guide.
 //
-// To ensure the security of your account, the secret access key is accessible
-// only during key and user creation. You must save the key (for example, in
-// a text file) if you want to be able to access it again. If a secret key is
-// lost, you can delete the access keys for the associated user and then create
-// new keys.
+// To ensure the security of your Amazon Web Services account, the secret access
+// key is accessible only during key and user creation. You must save the key
+// (for example, in a text file) if you want to be able to access it again.
+// If a secret key is lost, you can delete the access keys for the associated
+// user and then create new keys.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -836,18 +837,19 @@ func (c *IAM) CreateAccessKeyRequest(input *CreateAccessKeyInput) (req *request.
 // API operation CreateAccessKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateAccessKey
 func (c *IAM) CreateAccessKey(input *CreateAccessKeyInput) (*CreateAccessKeyOutput, error) {
@@ -887,14 +889,13 @@ const opCreateAccountAlias = "CreateAccountAlias"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAccountAliasRequest method.
+//	req, resp := client.CreateAccountAliasRequest(params)
 //
-//    // Example sending a request using the CreateAccountAliasRequest method.
-//    req, resp := client.CreateAccountAliasRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateAccountAlias
 func (c *IAM) CreateAccountAliasRequest(input *CreateAccountAliasInput) (req *request.Request, output *CreateAccountAliasOutput) {
@@ -916,8 +917,9 @@ func (c *IAM) CreateAccountAliasRequest(input *CreateAccountAliasInput) (req *re
 
 // CreateAccountAlias API operation for AWS Identity and Access Management.
 //
-// Creates an alias for your account. For information about using an account
-// alias, see Using an alias for your account ID (https://docs.aws.amazon.com/IAM/latest/UserGuide/AccountAlias.html)
+// Creates an alias for your Amazon Web Services account. For information about
+// using an Amazon Web Services account alias, see Using an alias for your Amazon
+// Web Services account ID (https://docs.aws.amazon.com/IAM/latest/UserGuide/AccountAlias.html)
 // in the IAM User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -928,18 +930,19 @@ func (c *IAM) CreateAccountAliasRequest(input *CreateAccountAliasInput) (req *re
 // API operation CreateAccountAlias for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateAccountAlias
 func (c *IAM) CreateAccountAlias(input *CreateAccountAliasInput) (*CreateAccountAliasOutput, error) {
@@ -979,14 +982,13 @@ const opCreateGroup = "CreateGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateGroupRequest method.
+//	req, resp := client.CreateGroupRequest(params)
 //
-//    // Example sending a request using the CreateGroupRequest method.
-//    req, resp := client.CreateGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateGroup
 func (c *IAM) CreateGroupRequest(input *CreateGroupInput) (req *request.Request, output *CreateGroupOutput) {
@@ -1021,22 +1023,23 @@ func (c *IAM) CreateGroupRequest(input *CreateGroupInput) (req *request.Request,
 // API operation CreateGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateGroup
 func (c *IAM) CreateGroup(input *CreateGroupInput) (*CreateGroupOutput, error) {
@@ -1076,14 +1079,13 @@ const opCreateInstanceProfile = "CreateInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateInstanceProfileRequest method.
+//	req, resp := client.CreateInstanceProfileRequest(params)
 //
-//    // Example sending a request using the CreateInstanceProfileRequest method.
-//    req, resp := client.CreateInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateInstanceProfile
 func (c *IAM) CreateInstanceProfileRequest(input *CreateInstanceProfileInput) (req *request.Request, output *CreateInstanceProfileOutput) {
@@ -1121,27 +1123,28 @@ func (c *IAM) CreateInstanceProfileRequest(input *CreateInstanceProfileInput) (r
 // API operation CreateInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateInstanceProfile
 func (c *IAM) CreateInstanceProfile(input *CreateInstanceProfileInput) (*CreateInstanceProfileOutput, error) {
@@ -1181,14 +1184,13 @@ const opCreateLoginProfile = "CreateLoginProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateLoginProfileRequest method.
+//	req, resp := client.CreateLoginProfileRequest(params)
 //
-//    // Example sending a request using the CreateLoginProfileRequest method.
-//    req, resp := client.CreateLoginProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateLoginProfile
 func (c *IAM) CreateLoginProfileRequest(input *CreateLoginProfileInput) (req *request.Request, output *CreateLoginProfileOutput) {
@@ -1210,12 +1212,13 @@ func (c *IAM) CreateLoginProfileRequest(input *CreateLoginProfileInput) (req *re
 // CreateLoginProfile API operation for AWS Identity and Access Management.
 //
 // Creates a password for the specified IAM user. A password allows an IAM user
-// to access Amazon Web Services services through the Management Console.
+// to access Amazon Web Services services through the Amazon Web Services Management
+// Console.
 //
 // You can use the CLI, the Amazon Web Services API, or the Users page in the
 // IAM console to create a password for any IAM user. Use ChangePassword to
 // update your own existing password in the My Security Credentials page in
-// the Management Console.
+// the Amazon Web Services Management Console.
 //
 // For more information about managing passwords, see Managing passwords (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingLogins.html)
 // in the IAM User Guide.
@@ -1228,26 +1231,27 @@ func (c *IAM) CreateLoginProfileRequest(input *CreateLoginProfileInput) (req *re
 // API operation CreateLoginProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodePasswordPolicyViolationException "PasswordPolicyViolation"
-//   The request was rejected because the provided password did not meet the requirements
-//   imposed by the account password policy.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodePasswordPolicyViolationException "PasswordPolicyViolation"
+//     The request was rejected because the provided password did not meet the requirements
+//     imposed by the account password policy.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateLoginProfile
 func (c *IAM) CreateLoginProfile(input *CreateLoginProfileInput) (*CreateLoginProfileOutput, error) {
@@ -1287,14 +1291,13 @@ const opCreateOpenIDConnectProvider = "CreateOpenIDConnectProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateOpenIDConnectProviderRequest method.
+//	req, resp := client.CreateOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the CreateOpenIDConnectProviderRequest method.
-//    req, resp := client.CreateOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateOpenIDConnectProvider
 func (c *IAM) CreateOpenIDConnectProviderRequest(input *CreateOpenIDConnectProviderInput) (req *request.Request, output *CreateOpenIDConnectProviderOutput) {
@@ -1332,16 +1335,16 @@ func (c *IAM) CreateOpenIDConnectProviderRequest(input *CreateOpenIDConnectProvi
 //
 // When you create the IAM OIDC provider, you specify the following:
 //
-//    * The URL of the OIDC identity provider (IdP) to trust
+//   - The URL of the OIDC identity provider (IdP) to trust
 //
-//    * A list of client IDs (also known as audiences) that identify the application
-//    or applications allowed to authenticate using the OIDC provider
+//   - A list of client IDs (also known as audiences) that identify the application
+//     or applications allowed to authenticate using the OIDC provider
 //
-//    * A list of thumbprints of one or more server certificates that the IdP
-//    uses
+//   - A list of thumbprints of one or more server certificates that the IdP
+//     uses
 //
-// You get all of this information from the OIDC IdP that you want to use to
-// access Amazon Web Services.
+// You get all of this information from the OIDC IdP you want to use to access
+// Amazon Web Services.
 //
 // Amazon Web Services secures communication with some OIDC identity providers
 // (IdPs) through our library of trusted certificate authorities (CAs) instead
@@ -1362,27 +1365,28 @@ func (c *IAM) CreateOpenIDConnectProviderRequest(input *CreateOpenIDConnectProvi
 // API operation CreateOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateOpenIDConnectProvider
 func (c *IAM) CreateOpenIDConnectProvider(input *CreateOpenIDConnectProviderInput) (*CreateOpenIDConnectProviderOutput, error) {
@@ -1422,14 +1426,13 @@ const opCreatePolicy = "CreatePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePolicyRequest method.
+//	req, resp := client.CreatePolicyRequest(params)
 //
-//    // Example sending a request using the CreatePolicyRequest method.
-//    req, resp := client.CreatePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreatePolicy
 func (c *IAM) CreatePolicyRequest(input *CreatePolicyInput) (req *request.Request, output *CreatePolicyOutput) {
@@ -1450,7 +1453,7 @@ func (c *IAM) CreatePolicyRequest(input *CreatePolicyInput) (req *request.Reques
 
 // CreatePolicy API operation for AWS Identity and Access Management.
 //
-// Creates a new managed policy for your account.
+// Creates a new managed policy for your Amazon Web Services account.
 //
 // This operation creates a policy version with a version identifier of v1 and
 // sets v1 as the policy's default version. For more information about policy
@@ -1473,31 +1476,32 @@ func (c *IAM) CreatePolicyRequest(input *CreatePolicyInput) (req *request.Reques
 // API operation CreatePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreatePolicy
 func (c *IAM) CreatePolicy(input *CreatePolicyInput) (*CreatePolicyOutput, error) {
@@ -1537,14 +1541,13 @@ const opCreatePolicyVersion = "CreatePolicyVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreatePolicyVersionRequest method.
+//	req, resp := client.CreatePolicyVersionRequest(params)
 //
-//    // Example sending a request using the CreatePolicyVersionRequest method.
-//    req, resp := client.CreatePolicyVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreatePolicyVersion
 func (c *IAM) CreatePolicyVersionRequest(input *CreatePolicyVersionInput) (req *request.Request, output *CreatePolicyVersionOutput) {
@@ -1586,26 +1589,27 @@ func (c *IAM) CreatePolicyVersionRequest(input *CreatePolicyVersionInput) (req *
 // API operation CreatePolicyVersion for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreatePolicyVersion
 func (c *IAM) CreatePolicyVersion(input *CreatePolicyVersionInput) (*CreatePolicyVersionOutput, error) {
@@ -1645,14 +1649,13 @@ const opCreateRole = "CreateRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateRoleRequest method.
+//	req, resp := client.CreateRoleRequest(params)
 //
-//    // Example sending a request using the CreateRoleRequest method.
-//    req, resp := client.CreateRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateRole
 func (c *IAM) CreateRoleRequest(input *CreateRoleInput) (req *request.Request, output *CreateRoleOutput) {
@@ -1673,8 +1676,8 @@ func (c *IAM) CreateRoleRequest(input *CreateRoleInput) (req *request.Request, o
 
 // CreateRole API operation for AWS Identity and Access Management.
 //
-// Creates a new role for your account. For more information about roles, see
-// IAM roles (https://docs.aws.amazon.com/IAM/latest/UserGuide/WorkingWithRoles.html).
+// Creates a new role for your Amazon Web Services account. For more information
+// about roles, see IAM roles (https://docs.aws.amazon.com/IAM/latest/UserGuide/WorkingWithRoles.html).
 // For information about quotas for role names and the number of roles you can
 // create, see IAM and STS quotas (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html)
 // in the IAM User Guide.
@@ -1687,31 +1690,32 @@ func (c *IAM) CreateRoleRequest(input *CreateRoleInput) (req *request.Request, o
 // API operation CreateRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateRole
 func (c *IAM) CreateRole(input *CreateRoleInput) (*CreateRoleOutput, error) {
@@ -1751,14 +1755,13 @@ const opCreateSAMLProvider = "CreateSAMLProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateSAMLProviderRequest method.
+//	req, resp := client.CreateSAMLProviderRequest(params)
 //
-//    // Example sending a request using the CreateSAMLProviderRequest method.
-//    req, resp := client.CreateSAMLProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateSAMLProvider
 func (c *IAM) CreateSAMLProviderRequest(input *CreateSAMLProviderInput) (req *request.Request, output *CreateSAMLProviderOutput) {
@@ -1785,8 +1788,8 @@ func (c *IAM) CreateSAMLProviderRequest(input *CreateSAMLProviderInput) (req *re
 // The SAML provider resource that you create with this operation can be used
 // as a principal in an IAM role's trust policy. Such a policy can enable federated
 // users who sign in using the SAML IdP to assume the role. You can create an
-// IAM role that supports Web-based single sign-on (SSO) to the Management Console
-// or one that supports API access to Amazon Web Services.
+// IAM role that supports Web-based single sign-on (SSO) to the Amazon Web Services
+// Management Console or one that supports API access to Amazon Web Services.
 //
 // When you create the SAML provider resource, you upload a SAML metadata document
 // that you get from your IdP. That document includes the issuer's name, expiration
@@ -1798,7 +1801,7 @@ func (c *IAM) CreateSAMLProviderRequest(input *CreateSAMLProviderInput) (req *re
 // This operation requires Signature Version 4 (https://docs.aws.amazon.com/general/latest/gr/signature-version-4.html).
 //
 // For more information, see Enabling SAML 2.0 federated users to access the
-// Management Console (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-saml.html)
+// Amazon Web Services Management Console (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_enable-console-saml.html)
 // and About SAML 2.0-based federation (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_providers_saml.html)
 // in the IAM User Guide.
 //
@@ -1810,27 +1813,28 @@ func (c *IAM) CreateSAMLProviderRequest(input *CreateSAMLProviderInput) (req *re
 // API operation CreateSAMLProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateSAMLProvider
 func (c *IAM) CreateSAMLProvider(input *CreateSAMLProviderInput) (*CreateSAMLProviderOutput, error) {
@@ -1870,14 +1874,13 @@ const opCreateServiceLinkedRole = "CreateServiceLinkedRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateServiceLinkedRoleRequest method.
+//	req, resp := client.CreateServiceLinkedRoleRequest(params)
 //
-//    // Example sending a request using the CreateServiceLinkedRoleRequest method.
-//    req, resp := client.CreateServiceLinkedRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateServiceLinkedRole
 func (c *IAM) CreateServiceLinkedRoleRequest(input *CreateServiceLinkedRoleInput) (req *request.Request, output *CreateServiceLinkedRoleOutput) {
@@ -1918,22 +1921,23 @@ func (c *IAM) CreateServiceLinkedRoleRequest(input *CreateServiceLinkedRoleInput
 // API operation CreateServiceLinkedRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateServiceLinkedRole
 func (c *IAM) CreateServiceLinkedRole(input *CreateServiceLinkedRoleInput) (*CreateServiceLinkedRoleOutput, error) {
@@ -1973,14 +1977,13 @@ const opCreateServiceSpecificCredential = "CreateServiceSpecificCredential"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateServiceSpecificCredentialRequest method.
+//	req, resp := client.CreateServiceSpecificCredentialRequest(params)
 //
-//    // Example sending a request using the CreateServiceSpecificCredentialRequest method.
-//    req, resp := client.CreateServiceSpecificCredentialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateServiceSpecificCredential
 func (c *IAM) CreateServiceSpecificCredentialRequest(input *CreateServiceSpecificCredentialInput) (req *request.Request, output *CreateServiceSpecificCredentialOutput) {
@@ -2026,17 +2029,18 @@ func (c *IAM) CreateServiceSpecificCredentialRequest(input *CreateServiceSpecifi
 // API operation CreateServiceSpecificCredential for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceNotSupportedException "NotSupportedService"
-//   The specified service does not support service-specific credentials.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceNotSupportedException "NotSupportedService"
+//     The specified service does not support service-specific credentials.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateServiceSpecificCredential
 func (c *IAM) CreateServiceSpecificCredential(input *CreateServiceSpecificCredentialInput) (*CreateServiceSpecificCredentialOutput, error) {
@@ -2076,14 +2080,13 @@ const opCreateUser = "CreateUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateUserRequest method.
+//	req, resp := client.CreateUserRequest(params)
 //
-//    // Example sending a request using the CreateUserRequest method.
-//    req, resp := client.CreateUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateUser
 func (c *IAM) CreateUserRequest(input *CreateUserInput) (req *request.Request, output *CreateUserOutput) {
@@ -2104,7 +2107,7 @@ func (c *IAM) CreateUserRequest(input *CreateUserInput) (req *request.Request, o
 
 // CreateUser API operation for AWS Identity and Access Management.
 //
-// Creates a new IAM user for your account.
+// Creates a new IAM user for your Amazon Web Services account.
 //
 // For information about quotas for the number of IAM users you can create,
 // see IAM and STS quotas (https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_iam-quotas.html)
@@ -2118,31 +2121,32 @@ func (c *IAM) CreateUserRequest(input *CreateUserInput) (req *request.Request, o
 // API operation CreateUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateUser
 func (c *IAM) CreateUser(input *CreateUserInput) (*CreateUserOutput, error) {
@@ -2182,14 +2186,13 @@ const opCreateVirtualMFADevice = "CreateVirtualMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateVirtualMFADeviceRequest method.
+//	req, resp := client.CreateVirtualMFADeviceRequest(params)
 //
-//    // Example sending a request using the CreateVirtualMFADeviceRequest method.
-//    req, resp := client.CreateVirtualMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateVirtualMFADevice
 func (c *IAM) CreateVirtualMFADeviceRequest(input *CreateVirtualMFADeviceInput) (req *request.Request, output *CreateVirtualMFADeviceOutput) {
@@ -2210,10 +2213,10 @@ func (c *IAM) CreateVirtualMFADeviceRequest(input *CreateVirtualMFADeviceInput) 
 
 // CreateVirtualMFADevice API operation for AWS Identity and Access Management.
 //
-// Creates a new virtual MFA device for the account. After creating the virtual
-// MFA, use EnableMFADevice to attach the MFA device to an IAM user. For more
-// information about creating and working with virtual MFA devices, see Using
-// a virtual MFA device (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_VirtualMFA.html)
+// Creates a new virtual MFA device for the Amazon Web Services account. After
+// creating the virtual MFA, use EnableMFADevice to attach the MFA device to
+// an IAM user. For more information about creating and working with virtual
+// MFA devices, see Using a virtual MFA device (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_VirtualMFA.html)
 // in the IAM User Guide.
 //
 // For information about the maximum number of MFA devices you can create, see
@@ -2234,27 +2237,28 @@ func (c *IAM) CreateVirtualMFADeviceRequest(input *CreateVirtualMFADeviceInput) 
 // API operation CreateVirtualMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/CreateVirtualMFADevice
 func (c *IAM) CreateVirtualMFADevice(input *CreateVirtualMFADeviceInput) (*CreateVirtualMFADeviceOutput, error) {
@@ -2294,14 +2298,13 @@ const opDeactivateMFADevice = "DeactivateMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeactivateMFADeviceRequest method.
+//	req, resp := client.DeactivateMFADeviceRequest(params)
 //
-//    // Example sending a request using the DeactivateMFADeviceRequest method.
-//    req, resp := client.DeactivateMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeactivateMFADevice
 func (c *IAM) DeactivateMFADeviceRequest(input *DeactivateMFADeviceInput) (req *request.Request, output *DeactivateMFADeviceOutput) {
@@ -2338,24 +2341,25 @@ func (c *IAM) DeactivateMFADeviceRequest(input *DeactivateMFADeviceInput) (req *
 // API operation DeactivateMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
-//   The request was rejected because it referenced an entity that is temporarily
-//   unmodifiable, such as a user name that was deleted and then recreated. The
-//   error indicates that the request is likely to succeed if you try again after
-//   waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
+//     The request was rejected because it referenced an entity that is temporarily
+//     unmodifiable, such as a user name that was deleted and then recreated. The
+//     error indicates that the request is likely to succeed if you try again after
+//     waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeactivateMFADevice
 func (c *IAM) DeactivateMFADevice(input *DeactivateMFADeviceInput) (*DeactivateMFADeviceOutput, error) {
@@ -2395,14 +2399,13 @@ const opDeleteAccessKey = "DeleteAccessKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAccessKeyRequest method.
+//	req, resp := client.DeleteAccessKeyRequest(params)
 //
-//    // Example sending a request using the DeleteAccessKeyRequest method.
-//    req, resp := client.DeleteAccessKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteAccessKey
 func (c *IAM) DeleteAccessKeyRequest(input *DeleteAccessKeyInput) (req *request.Request, output *DeleteAccessKeyOutput) {
@@ -2428,9 +2431,9 @@ func (c *IAM) DeleteAccessKeyRequest(input *DeleteAccessKeyInput) (req *request.
 //
 // If you do not specify a user name, IAM determines the user name implicitly
 // based on the Amazon Web Services access key ID signing the request. This
-// operation works for access keys under the account. Consequently, you can
-// use this operation to manage account root user credentials even if the account
-// has no associated users.
+// operation works for access keys under the Amazon Web Services account. Consequently,
+// you can use this operation to manage Amazon Web Services account root user
+// credentials even if the Amazon Web Services account has no associated users.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2440,18 +2443,19 @@ func (c *IAM) DeleteAccessKeyRequest(input *DeleteAccessKeyInput) (req *request.
 // API operation DeleteAccessKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteAccessKey
 func (c *IAM) DeleteAccessKey(input *DeleteAccessKeyInput) (*DeleteAccessKeyOutput, error) {
@@ -2491,14 +2495,13 @@ const opDeleteAccountAlias = "DeleteAccountAlias"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAccountAliasRequest method.
+//	req, resp := client.DeleteAccountAliasRequest(params)
 //
-//    // Example sending a request using the DeleteAccountAliasRequest method.
-//    req, resp := client.DeleteAccountAliasRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteAccountAlias
 func (c *IAM) DeleteAccountAliasRequest(input *DeleteAccountAliasInput) (req *request.Request, output *DeleteAccountAliasOutput) {
@@ -2520,8 +2523,9 @@ func (c *IAM) DeleteAccountAliasRequest(input *DeleteAccountAliasInput) (req *re
 
 // DeleteAccountAlias API operation for AWS Identity and Access Management.
 //
-// Deletes the specified account alias. For information about using an Amazon
-// Web Services account alias, see Using an alias for your account ID (https://docs.aws.amazon.com/IAM/latest/UserGuide/AccountAlias.html)
+// Deletes the specified Amazon Web Services account alias. For information
+// about using an Amazon Web Services account alias, see Using an alias for
+// your Amazon Web Services account ID (https://docs.aws.amazon.com/IAM/latest/UserGuide/AccountAlias.html)
 // in the IAM User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -2532,18 +2536,19 @@ func (c *IAM) DeleteAccountAliasRequest(input *DeleteAccountAliasInput) (req *re
 // API operation DeleteAccountAlias for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteAccountAlias
 func (c *IAM) DeleteAccountAlias(input *DeleteAccountAliasInput) (*DeleteAccountAliasOutput, error) {
@@ -2583,14 +2588,13 @@ const opDeleteAccountPasswordPolicy = "DeleteAccountPasswordPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAccountPasswordPolicyRequest method.
+//	req, resp := client.DeleteAccountPasswordPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteAccountPasswordPolicyRequest method.
-//    req, resp := client.DeleteAccountPasswordPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteAccountPasswordPolicy
 func (c *IAM) DeleteAccountPasswordPolicyRequest(input *DeleteAccountPasswordPolicyInput) (req *request.Request, output *DeleteAccountPasswordPolicyOutput) {
@@ -2612,7 +2616,8 @@ func (c *IAM) DeleteAccountPasswordPolicyRequest(input *DeleteAccountPasswordPol
 
 // DeleteAccountPasswordPolicy API operation for AWS Identity and Access Management.
 //
-// Deletes the password policy for the account. There are no parameters.
+// Deletes the password policy for the Amazon Web Services account. There are
+// no parameters.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2622,18 +2627,19 @@ func (c *IAM) DeleteAccountPasswordPolicyRequest(input *DeleteAccountPasswordPol
 // API operation DeleteAccountPasswordPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteAccountPasswordPolicy
 func (c *IAM) DeleteAccountPasswordPolicy(input *DeleteAccountPasswordPolicyInput) (*DeleteAccountPasswordPolicyOutput, error) {
@@ -2673,14 +2679,13 @@ const opDeleteGroup = "DeleteGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGroupRequest method.
+//	req, resp := client.DeleteGroupRequest(params)
 //
-//    // Example sending a request using the DeleteGroupRequest method.
-//    req, resp := client.DeleteGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteGroup
 func (c *IAM) DeleteGroupRequest(input *DeleteGroupInput) (req *request.Request, output *DeleteGroupOutput) {
@@ -2713,22 +2718,23 @@ func (c *IAM) DeleteGroupRequest(input *DeleteGroupInput) (req *request.Request,
 // API operation DeleteGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteGroup
 func (c *IAM) DeleteGroup(input *DeleteGroupInput) (*DeleteGroupOutput, error) {
@@ -2768,14 +2774,13 @@ const opDeleteGroupPolicy = "DeleteGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteGroupPolicyRequest method.
+//	req, resp := client.DeleteGroupPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteGroupPolicyRequest method.
-//    req, resp := client.DeleteGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteGroupPolicy
 func (c *IAM) DeleteGroupPolicyRequest(input *DeleteGroupPolicyInput) (req *request.Request, output *DeleteGroupPolicyOutput) {
@@ -2813,18 +2818,19 @@ func (c *IAM) DeleteGroupPolicyRequest(input *DeleteGroupPolicyInput) (req *requ
 // API operation DeleteGroupPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteGroupPolicy
 func (c *IAM) DeleteGroupPolicy(input *DeleteGroupPolicyInput) (*DeleteGroupPolicyOutput, error) {
@@ -2864,14 +2870,13 @@ const opDeleteInstanceProfile = "DeleteInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteInstanceProfileRequest method.
+//	req, resp := client.DeleteInstanceProfileRequest(params)
 //
-//    // Example sending a request using the DeleteInstanceProfileRequest method.
-//    req, resp := client.DeleteInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteInstanceProfile
 func (c *IAM) DeleteInstanceProfileRequest(input *DeleteInstanceProfileInput) (req *request.Request, output *DeleteInstanceProfileOutput) {
@@ -2912,22 +2917,23 @@ func (c *IAM) DeleteInstanceProfileRequest(input *DeleteInstanceProfileInput) (r
 // API operation DeleteInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteInstanceProfile
 func (c *IAM) DeleteInstanceProfile(input *DeleteInstanceProfileInput) (*DeleteInstanceProfileOutput, error) {
@@ -2967,14 +2973,13 @@ const opDeleteLoginProfile = "DeleteLoginProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteLoginProfileRequest method.
+//	req, resp := client.DeleteLoginProfileRequest(params)
 //
-//    // Example sending a request using the DeleteLoginProfileRequest method.
-//    req, resp := client.DeleteLoginProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteLoginProfile
 func (c *IAM) DeleteLoginProfileRequest(input *DeleteLoginProfileInput) (req *request.Request, output *DeleteLoginProfileOutput) {
@@ -2996,13 +3001,13 @@ func (c *IAM) DeleteLoginProfileRequest(input *DeleteLoginProfileInput) (req *re
 
 // DeleteLoginProfile API operation for AWS Identity and Access Management.
 //
-// Deletes the password for the specified IAM user, which terminates the user's
-// ability to access Amazon Web Services services through the Management Console.
+// Deletes the password for the specified IAM user, For more information, see
+// Managing passwords for IAM users (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_admin-change-user.html).
 //
 // You can use the CLI, the Amazon Web Services API, or the Users page in the
 // IAM console to delete a password for any IAM user. You can use ChangePassword
 // to update, but not delete, your own password in the My Security Credentials
-// page in the Management Console.
+// page in the Amazon Web Services Management Console.
 //
 // Deleting a user's password does not prevent a user from accessing Amazon
 // Web Services through the command line interface or the API. To prevent all
@@ -3018,24 +3023,25 @@ func (c *IAM) DeleteLoginProfileRequest(input *DeleteLoginProfileInput) (req *re
 // API operation DeleteLoginProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
-//   The request was rejected because it referenced an entity that is temporarily
-//   unmodifiable, such as a user name that was deleted and then recreated. The
-//   error indicates that the request is likely to succeed if you try again after
-//   waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
+//     The request was rejected because it referenced an entity that is temporarily
+//     unmodifiable, such as a user name that was deleted and then recreated. The
+//     error indicates that the request is likely to succeed if you try again after
+//     waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteLoginProfile
 func (c *IAM) DeleteLoginProfile(input *DeleteLoginProfileInput) (*DeleteLoginProfileOutput, error) {
@@ -3075,14 +3081,13 @@ const opDeleteOpenIDConnectProvider = "DeleteOpenIDConnectProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteOpenIDConnectProviderRequest method.
+//	req, resp := client.DeleteOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the DeleteOpenIDConnectProviderRequest method.
-//    req, resp := client.DeleteOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteOpenIDConnectProvider
 func (c *IAM) DeleteOpenIDConnectProviderRequest(input *DeleteOpenIDConnectProviderInput) (req *request.Request, output *DeleteOpenIDConnectProviderOutput) {
@@ -3121,17 +3126,18 @@ func (c *IAM) DeleteOpenIDConnectProviderRequest(input *DeleteOpenIDConnectProvi
 // API operation DeleteOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteOpenIDConnectProvider
 func (c *IAM) DeleteOpenIDConnectProvider(input *DeleteOpenIDConnectProviderInput) (*DeleteOpenIDConnectProviderOutput, error) {
@@ -3171,14 +3177,13 @@ const opDeletePolicy = "DeletePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePolicyRequest method.
+//	req, resp := client.DeletePolicyRequest(params)
 //
-//    // Example sending a request using the DeletePolicyRequest method.
-//    req, resp := client.DeletePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeletePolicy
 func (c *IAM) DeletePolicyRequest(input *DeletePolicyInput) (req *request.Request, output *DeletePolicyOutput) {
@@ -3207,18 +3212,18 @@ func (c *IAM) DeletePolicyRequest(input *DeletePolicyInput) (req *request.Reques
 // must delete all the policy's versions. The following steps describe the process
 // for deleting a managed policy:
 //
-//    * Detach the policy from all users, groups, and roles that the policy
-//    is attached to, using DetachUserPolicy, DetachGroupPolicy, or DetachRolePolicy.
-//    To list all the users, groups, and roles that a policy is attached to,
-//    use ListEntitiesForPolicy.
+//   - Detach the policy from all users, groups, and roles that the policy
+//     is attached to, using DetachUserPolicy, DetachGroupPolicy, or DetachRolePolicy.
+//     To list all the users, groups, and roles that a policy is attached to,
+//     use ListEntitiesForPolicy.
 //
-//    * Delete all versions of the policy using DeletePolicyVersion. To list
-//    the policy's versions, use ListPolicyVersions. You cannot use DeletePolicyVersion
-//    to delete the version that is marked as the default version. You delete
-//    the policy's default version in the next step of the process.
+//   - Delete all versions of the policy using DeletePolicyVersion. To list
+//     the policy's versions, use ListPolicyVersions. You cannot use DeletePolicyVersion
+//     to delete the version that is marked as the default version. You delete
+//     the policy's default version in the next step of the process.
 //
-//    * Delete the policy (this automatically deletes the policy's default version)
-//    using this operation.
+//   - Delete the policy (this automatically deletes the policy's default version)
+//     using this operation.
 //
 // For information about managed policies, see Managed policies and inline policies
 // (https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html)
@@ -3232,26 +3237,27 @@ func (c *IAM) DeletePolicyRequest(input *DeletePolicyInput) (req *request.Reques
 // API operation DeletePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeletePolicy
 func (c *IAM) DeletePolicy(input *DeletePolicyInput) (*DeletePolicyOutput, error) {
@@ -3291,14 +3297,13 @@ const opDeletePolicyVersion = "DeletePolicyVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeletePolicyVersionRequest method.
+//	req, resp := client.DeletePolicyVersionRequest(params)
 //
-//    // Example sending a request using the DeletePolicyVersionRequest method.
-//    req, resp := client.DeletePolicyVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeletePolicyVersion
 func (c *IAM) DeletePolicyVersionRequest(input *DeletePolicyVersionInput) (req *request.Request, output *DeletePolicyVersionOutput) {
@@ -3338,26 +3343,27 @@ func (c *IAM) DeletePolicyVersionRequest(input *DeletePolicyVersionInput) (req *
 // API operation DeletePolicyVersion for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeletePolicyVersion
 func (c *IAM) DeletePolicyVersion(input *DeletePolicyVersionInput) (*DeletePolicyVersionOutput, error) {
@@ -3397,14 +3403,13 @@ const opDeleteRole = "DeleteRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRoleRequest method.
+//	req, resp := client.DeleteRoleRequest(params)
 //
-//    // Example sending a request using the DeleteRoleRequest method.
-//    req, resp := client.DeleteRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteRole
 func (c *IAM) DeleteRoleRequest(input *DeleteRoleInput) (req *request.Request, output *DeleteRoleOutput) {
@@ -3442,33 +3447,34 @@ func (c *IAM) DeleteRoleRequest(input *DeleteRoleInput) (req *request.Request, o
 // API operation DeleteRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteRole
 func (c *IAM) DeleteRole(input *DeleteRoleInput) (*DeleteRoleOutput, error) {
@@ -3508,14 +3514,13 @@ const opDeleteRolePermissionsBoundary = "DeleteRolePermissionsBoundary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRolePermissionsBoundaryRequest method.
+//	req, resp := client.DeleteRolePermissionsBoundaryRequest(params)
 //
-//    // Example sending a request using the DeleteRolePermissionsBoundaryRequest method.
-//    req, resp := client.DeleteRolePermissionsBoundaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteRolePermissionsBoundary
 func (c *IAM) DeleteRolePermissionsBoundaryRequest(input *DeleteRolePermissionsBoundaryInput) (req *request.Request, output *DeleteRolePermissionsBoundaryOutput) {
@@ -3551,19 +3556,20 @@ func (c *IAM) DeleteRolePermissionsBoundaryRequest(input *DeleteRolePermissionsB
 // API operation DeleteRolePermissionsBoundary for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteRolePermissionsBoundary
 func (c *IAM) DeleteRolePermissionsBoundary(input *DeleteRolePermissionsBoundaryInput) (*DeleteRolePermissionsBoundaryOutput, error) {
@@ -3603,14 +3609,13 @@ const opDeleteRolePolicy = "DeleteRolePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteRolePolicyRequest method.
+//	req, resp := client.DeleteRolePolicyRequest(params)
 //
-//    // Example sending a request using the DeleteRolePolicyRequest method.
-//    req, resp := client.DeleteRolePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteRolePolicy
 func (c *IAM) DeleteRolePolicyRequest(input *DeleteRolePolicyInput) (req *request.Request, output *DeleteRolePolicyOutput) {
@@ -3648,24 +3653,25 @@ func (c *IAM) DeleteRolePolicyRequest(input *DeleteRolePolicyInput) (req *reques
 // API operation DeleteRolePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteRolePolicy
 func (c *IAM) DeleteRolePolicy(input *DeleteRolePolicyInput) (*DeleteRolePolicyOutput, error) {
@@ -3705,14 +3711,13 @@ const opDeleteSAMLProvider = "DeleteSAMLProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteSAMLProviderRequest method.
+//	req, resp := client.DeleteSAMLProviderRequest(params)
 //
-//    // Example sending a request using the DeleteSAMLProviderRequest method.
-//    req, resp := client.DeleteSAMLProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteSAMLProvider
 func (c *IAM) DeleteSAMLProviderRequest(input *DeleteSAMLProviderInput) (req *request.Request, output *DeleteSAMLProviderOutput) {
@@ -3751,22 +3756,23 @@ func (c *IAM) DeleteSAMLProviderRequest(input *DeleteSAMLProviderInput) (req *re
 // API operation DeleteSAMLProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteSAMLProvider
 func (c *IAM) DeleteSAMLProvider(input *DeleteSAMLProviderInput) (*DeleteSAMLProviderOutput, error) {
@@ -3806,14 +3812,13 @@ const opDeleteSSHPublicKey = "DeleteSSHPublicKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteSSHPublicKeyRequest method.
+//	req, resp := client.DeleteSSHPublicKeyRequest(params)
 //
-//    // Example sending a request using the DeleteSSHPublicKeyRequest method.
-//    req, resp := client.DeleteSSHPublicKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteSSHPublicKey
 func (c *IAM) DeleteSSHPublicKeyRequest(input *DeleteSSHPublicKeyInput) (req *request.Request, output *DeleteSSHPublicKeyOutput) {
@@ -3851,9 +3856,9 @@ func (c *IAM) DeleteSSHPublicKeyRequest(input *DeleteSSHPublicKeyInput) (req *re
 // API operation DeleteSSHPublicKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteSSHPublicKey
 func (c *IAM) DeleteSSHPublicKey(input *DeleteSSHPublicKeyInput) (*DeleteSSHPublicKeyOutput, error) {
@@ -3893,14 +3898,13 @@ const opDeleteServerCertificate = "DeleteServerCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteServerCertificateRequest method.
+//	req, resp := client.DeleteServerCertificateRequest(params)
 //
-//    // Example sending a request using the DeleteServerCertificateRequest method.
-//    req, resp := client.DeleteServerCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteServerCertificate
 func (c *IAM) DeleteServerCertificateRequest(input *DeleteServerCertificateInput) (req *request.Request, output *DeleteServerCertificateOutput) {
@@ -3947,22 +3951,23 @@ func (c *IAM) DeleteServerCertificateRequest(input *DeleteServerCertificateInput
 // API operation DeleteServerCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteServerCertificate
 func (c *IAM) DeleteServerCertificate(input *DeleteServerCertificateInput) (*DeleteServerCertificateOutput, error) {
@@ -4002,14 +4007,13 @@ const opDeleteServiceLinkedRole = "DeleteServiceLinkedRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteServiceLinkedRoleRequest method.
+//	req, resp := client.DeleteServiceLinkedRoleRequest(params)
 //
-//    // Example sending a request using the DeleteServiceLinkedRoleRequest method.
-//    req, resp := client.DeleteServiceLinkedRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteServiceLinkedRole
 func (c *IAM) DeleteServiceLinkedRoleRequest(input *DeleteServiceLinkedRoleInput) (req *request.Request, output *DeleteServiceLinkedRoleOutput) {
@@ -4059,18 +4063,19 @@ func (c *IAM) DeleteServiceLinkedRoleRequest(input *DeleteServiceLinkedRoleInput
 // API operation DeleteServiceLinkedRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteServiceLinkedRole
 func (c *IAM) DeleteServiceLinkedRole(input *DeleteServiceLinkedRoleInput) (*DeleteServiceLinkedRoleOutput, error) {
@@ -4110,14 +4115,13 @@ const opDeleteServiceSpecificCredential = "DeleteServiceSpecificCredential"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteServiceSpecificCredentialRequest method.
+//	req, resp := client.DeleteServiceSpecificCredentialRequest(params)
 //
-//    // Example sending a request using the DeleteServiceSpecificCredentialRequest method.
-//    req, resp := client.DeleteServiceSpecificCredentialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteServiceSpecificCredential
 func (c *IAM) DeleteServiceSpecificCredentialRequest(input *DeleteServiceSpecificCredentialInput) (req *request.Request, output *DeleteServiceSpecificCredentialOutput) {
@@ -4149,9 +4153,9 @@ func (c *IAM) DeleteServiceSpecificCredentialRequest(input *DeleteServiceSpecifi
 // API operation DeleteServiceSpecificCredential for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteServiceSpecificCredential
 func (c *IAM) DeleteServiceSpecificCredential(input *DeleteServiceSpecificCredentialInput) (*DeleteServiceSpecificCredentialOutput, error) {
@@ -4191,14 +4195,13 @@ const opDeleteSigningCertificate = "DeleteSigningCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteSigningCertificateRequest method.
+//	req, resp := client.DeleteSigningCertificateRequest(params)
 //
-//    // Example sending a request using the DeleteSigningCertificateRequest method.
-//    req, resp := client.DeleteSigningCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteSigningCertificate
 func (c *IAM) DeleteSigningCertificateRequest(input *DeleteSigningCertificateInput) (req *request.Request, output *DeleteSigningCertificateOutput) {
@@ -4224,9 +4227,10 @@ func (c *IAM) DeleteSigningCertificateRequest(input *DeleteSigningCertificateInp
 //
 // If you do not specify a user name, IAM determines the user name implicitly
 // based on the Amazon Web Services access key ID signing the request. This
-// operation works for access keys under the account. Consequently, you can
-// use this operation to manage account root user credentials even if the account
-// has no associated IAM users.
+// operation works for access keys under the Amazon Web Services account. Consequently,
+// you can use this operation to manage Amazon Web Services account root user
+// credentials even if the Amazon Web Services account has no associated IAM
+// users.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4236,18 +4240,19 @@ func (c *IAM) DeleteSigningCertificateRequest(input *DeleteSigningCertificateInp
 // API operation DeleteSigningCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteSigningCertificate
 func (c *IAM) DeleteSigningCertificate(input *DeleteSigningCertificateInput) (*DeleteSigningCertificateOutput, error) {
@@ -4287,14 +4292,13 @@ const opDeleteUser = "DeleteUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserRequest method.
+//	req, resp := client.DeleteUserRequest(params)
 //
-//    // Example sending a request using the DeleteUserRequest method.
-//    req, resp := client.DeleteUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteUser
 func (c *IAM) DeleteUserRequest(input *DeleteUserInput) (req *request.Request, output *DeleteUserOutput) {
@@ -4316,28 +4320,29 @@ func (c *IAM) DeleteUserRequest(input *DeleteUserInput) (req *request.Request, o
 
 // DeleteUser API operation for AWS Identity and Access Management.
 //
-// Deletes the specified IAM user. Unlike the Management Console, when you delete
-// a user programmatically, you must delete the items attached to the user manually,
-// or the deletion fails. For more information, see Deleting an IAM user (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_manage.html#id_users_deleting_cli).
+// Deletes the specified IAM user. Unlike the Amazon Web Services Management
+// Console, when you delete a user programmatically, you must delete the items
+// attached to the user manually, or the deletion fails. For more information,
+// see Deleting an IAM user (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_users_manage.html#id_users_deleting_cli).
 // Before attempting to delete a user, remove the following items:
 //
-//    * Password (DeleteLoginProfile)
+//   - Password (DeleteLoginProfile)
 //
-//    * Access keys (DeleteAccessKey)
+//   - Access keys (DeleteAccessKey)
 //
-//    * Signing certificate (DeleteSigningCertificate)
+//   - Signing certificate (DeleteSigningCertificate)
 //
-//    * SSH public key (DeleteSSHPublicKey)
+//   - SSH public key (DeleteSSHPublicKey)
 //
-//    * Git credentials (DeleteServiceSpecificCredential)
+//   - Git credentials (DeleteServiceSpecificCredential)
 //
-//    * Multi-factor authentication (MFA) device (DeactivateMFADevice, DeleteVirtualMFADevice)
+//   - Multi-factor authentication (MFA) device (DeactivateMFADevice, DeleteVirtualMFADevice)
 //
-//    * Inline policies (DeleteUserPolicy)
+//   - Inline policies (DeleteUserPolicy)
 //
-//    * Attached managed policies (DetachUserPolicy)
+//   - Attached managed policies (DetachUserPolicy)
 //
-//    * Group memberships (RemoveUserFromGroup)
+//   - Group memberships (RemoveUserFromGroup)
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4347,27 +4352,28 @@ func (c *IAM) DeleteUserRequest(input *DeleteUserInput) (req *request.Request, o
 // API operation DeleteUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteUser
 func (c *IAM) DeleteUser(input *DeleteUserInput) (*DeleteUserOutput, error) {
@@ -4407,14 +4413,13 @@ const opDeleteUserPermissionsBoundary = "DeleteUserPermissionsBoundary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserPermissionsBoundaryRequest method.
+//	req, resp := client.DeleteUserPermissionsBoundaryRequest(params)
 //
-//    // Example sending a request using the DeleteUserPermissionsBoundaryRequest method.
-//    req, resp := client.DeleteUserPermissionsBoundaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteUserPermissionsBoundary
 func (c *IAM) DeleteUserPermissionsBoundaryRequest(input *DeleteUserPermissionsBoundaryInput) (req *request.Request, output *DeleteUserPermissionsBoundaryOutput) {
@@ -4450,13 +4455,14 @@ func (c *IAM) DeleteUserPermissionsBoundaryRequest(input *DeleteUserPermissionsB
 // API operation DeleteUserPermissionsBoundary for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteUserPermissionsBoundary
 func (c *IAM) DeleteUserPermissionsBoundary(input *DeleteUserPermissionsBoundaryInput) (*DeleteUserPermissionsBoundaryOutput, error) {
@@ -4496,14 +4502,13 @@ const opDeleteUserPolicy = "DeleteUserPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteUserPolicyRequest method.
+//	req, resp := client.DeleteUserPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteUserPolicyRequest method.
-//    req, resp := client.DeleteUserPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteUserPolicy
 func (c *IAM) DeleteUserPolicyRequest(input *DeleteUserPolicyInput) (req *request.Request, output *DeleteUserPolicyOutput) {
@@ -4541,18 +4546,19 @@ func (c *IAM) DeleteUserPolicyRequest(input *DeleteUserPolicyInput) (req *reques
 // API operation DeleteUserPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteUserPolicy
 func (c *IAM) DeleteUserPolicy(input *DeleteUserPolicyInput) (*DeleteUserPolicyOutput, error) {
@@ -4592,14 +4598,13 @@ const opDeleteVirtualMFADevice = "DeleteVirtualMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteVirtualMFADeviceRequest method.
+//	req, resp := client.DeleteVirtualMFADeviceRequest(params)
 //
-//    // Example sending a request using the DeleteVirtualMFADeviceRequest method.
-//    req, resp := client.DeleteVirtualMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteVirtualMFADevice
 func (c *IAM) DeleteVirtualMFADeviceRequest(input *DeleteVirtualMFADeviceInput) (req *request.Request, output *DeleteVirtualMFADeviceOutput) {
@@ -4634,22 +4639,23 @@ func (c *IAM) DeleteVirtualMFADeviceRequest(input *DeleteVirtualMFADeviceInput) 
 // API operation DeleteVirtualMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeDeleteConflictException "DeleteConflict"
-//   The request was rejected because it attempted to delete a resource that has
-//   attached subordinate entities. The error message describes these entities.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeDeleteConflictException "DeleteConflict"
+//     The request was rejected because it attempted to delete a resource that has
+//     attached subordinate entities. The error message describes these entities.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DeleteVirtualMFADevice
 func (c *IAM) DeleteVirtualMFADevice(input *DeleteVirtualMFADeviceInput) (*DeleteVirtualMFADeviceOutput, error) {
@@ -4689,14 +4695,13 @@ const opDetachGroupPolicy = "DetachGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetachGroupPolicyRequest method.
+//	req, resp := client.DetachGroupPolicyRequest(params)
 //
-//    // Example sending a request using the DetachGroupPolicyRequest method.
-//    req, resp := client.DetachGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DetachGroupPolicy
 func (c *IAM) DetachGroupPolicyRequest(input *DetachGroupPolicyInput) (req *request.Request, output *DetachGroupPolicyOutput) {
@@ -4733,22 +4738,23 @@ func (c *IAM) DetachGroupPolicyRequest(input *DetachGroupPolicyInput) (req *requ
 // API operation DetachGroupPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DetachGroupPolicy
 func (c *IAM) DetachGroupPolicy(input *DetachGroupPolicyInput) (*DetachGroupPolicyOutput, error) {
@@ -4788,14 +4794,13 @@ const opDetachRolePolicy = "DetachRolePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetachRolePolicyRequest method.
+//	req, resp := client.DetachRolePolicyRequest(params)
 //
-//    // Example sending a request using the DetachRolePolicyRequest method.
-//    req, resp := client.DetachRolePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DetachRolePolicy
 func (c *IAM) DetachRolePolicyRequest(input *DetachRolePolicyInput) (req *request.Request, output *DetachRolePolicyOutput) {
@@ -4832,28 +4837,29 @@ func (c *IAM) DetachRolePolicyRequest(input *DetachRolePolicyInput) (req *reques
 // API operation DetachRolePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DetachRolePolicy
 func (c *IAM) DetachRolePolicy(input *DetachRolePolicyInput) (*DetachRolePolicyOutput, error) {
@@ -4893,14 +4899,13 @@ const opDetachUserPolicy = "DetachUserPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DetachUserPolicyRequest method.
+//	req, resp := client.DetachUserPolicyRequest(params)
 //
-//    // Example sending a request using the DetachUserPolicyRequest method.
-//    req, resp := client.DetachUserPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DetachUserPolicy
 func (c *IAM) DetachUserPolicyRequest(input *DetachUserPolicyInput) (req *request.Request, output *DetachUserPolicyOutput) {
@@ -4937,22 +4942,23 @@ func (c *IAM) DetachUserPolicyRequest(input *DetachUserPolicyInput) (req *reques
 // API operation DetachUserPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/DetachUserPolicy
 func (c *IAM) DetachUserPolicy(input *DetachUserPolicyInput) (*DetachUserPolicyOutput, error) {
@@ -4992,14 +4998,13 @@ const opEnableMFADevice = "EnableMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the EnableMFADeviceRequest method.
+//	req, resp := client.EnableMFADeviceRequest(params)
 //
-//    // Example sending a request using the EnableMFADeviceRequest method.
-//    req, resp := client.EnableMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/EnableMFADevice
 func (c *IAM) EnableMFADeviceRequest(input *EnableMFADeviceInput) (req *request.Request, output *EnableMFADeviceOutput) {
@@ -5033,32 +5038,33 @@ func (c *IAM) EnableMFADeviceRequest(input *EnableMFADeviceInput) (req *request.
 // API operation EnableMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
 //
-//   * ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
-//   The request was rejected because it referenced an entity that is temporarily
-//   unmodifiable, such as a user name that was deleted and then recreated. The
-//   error indicates that the request is likely to succeed if you try again after
-//   waiting several minutes. The error message describes the entity.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeInvalidAuthenticationCodeException "InvalidAuthenticationCode"
-//   The request was rejected because the authentication code was not recognized.
-//   The error message describes the specific error.
+//   - ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
+//     The request was rejected because it referenced an entity that is temporarily
+//     unmodifiable, such as a user name that was deleted and then recreated. The
+//     error indicates that the request is likely to succeed if you try again after
+//     waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidAuthenticationCodeException "InvalidAuthenticationCode"
+//     The request was rejected because the authentication code was not recognized.
+//     The error message describes the specific error.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/EnableMFADevice
 func (c *IAM) EnableMFADevice(input *EnableMFADeviceInput) (*EnableMFADeviceOutput, error) {
@@ -5098,14 +5104,13 @@ const opGenerateCredentialReport = "GenerateCredentialReport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GenerateCredentialReportRequest method.
+//	req, resp := client.GenerateCredentialReportRequest(params)
 //
-//    // Example sending a request using the GenerateCredentialReportRequest method.
-//    req, resp := client.GenerateCredentialReportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GenerateCredentialReport
 func (c *IAM) GenerateCredentialReportRequest(input *GenerateCredentialReportInput) (req *request.Request, output *GenerateCredentialReportOutput) {
@@ -5126,8 +5131,8 @@ func (c *IAM) GenerateCredentialReportRequest(input *GenerateCredentialReportInp
 
 // GenerateCredentialReport API operation for AWS Identity and Access Management.
 //
-// Generates a credential report for the account. For more information about
-// the credential report, see Getting credential reports (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
+// Generates a credential report for the Amazon Web Services account. For more
+// information about the credential report, see Getting credential reports (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
 // in the IAM User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -5138,14 +5143,15 @@ func (c *IAM) GenerateCredentialReportRequest(input *GenerateCredentialReportInp
 // API operation GenerateCredentialReport for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GenerateCredentialReport
 func (c *IAM) GenerateCredentialReport(input *GenerateCredentialReportInput) (*GenerateCredentialReportOutput, error) {
@@ -5185,14 +5191,13 @@ const opGenerateOrganizationsAccessReport = "GenerateOrganizationsAccessReport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GenerateOrganizationsAccessReportRequest method.
+//	req, resp := client.GenerateOrganizationsAccessReportRequest(params)
 //
-//    // Example sending a request using the GenerateOrganizationsAccessReportRequest method.
-//    req, resp := client.GenerateOrganizationsAccessReportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GenerateOrganizationsAccessReport
 func (c *IAM) GenerateOrganizationsAccessReportRequest(input *GenerateOrganizationsAccessReportInput) (req *request.Request, output *GenerateOrganizationsAccessReportOutput) {
@@ -5241,13 +5246,14 @@ func (c *IAM) GenerateOrganizationsAccessReportRequest(input *GenerateOrganizati
 // in the IAM User Guide.
 //
 // The data includes all attempts to access Amazon Web Services, not just the
-// successful ones. This includes all attempts that were made using the Management
-// Console, the Amazon Web Services API through any of the SDKs, or any of the
-// command line tools. An unexpected entry in the service last accessed data
-// does not mean that an account has been compromised, because the request might
-// have been denied. Refer to your CloudTrail logs as the authoritative source
-// for information about all API calls and whether they were successful or denied
-// access. For more information, see Logging IAM events with CloudTrail (https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html)
+// successful ones. This includes all attempts that were made using the Amazon
+// Web Services Management Console, the Amazon Web Services API through any
+// of the SDKs, or any of the command line tools. An unexpected entry in the
+// service last accessed data does not mean that an account has been compromised,
+// because the request might have been denied. Refer to your CloudTrail logs
+// as the authoritative source for information about all API calls and whether
+// they were successful or denied access. For more information, see Logging
+// IAM events with CloudTrail (https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html)
 // in the IAM User Guide.
 //
 // This operation returns a JobId. Use this parameter in the GetOrganizationsAccessReport
@@ -5260,63 +5266,63 @@ func (c *IAM) GenerateOrganizationsAccessReportRequest(input *GenerateOrganizati
 // entity path without specifying the optional Organizations policy ID. The
 // type of entity that you specify determines the data returned in the report.
 //
-//    * Root – When you specify the organizations root as the entity, the
-//    resulting report lists all of the services allowed by SCPs that are attached
-//    to your root. For each service, the report includes data for all accounts
-//    in your organization except the management account, because the management
-//    account is not limited by SCPs.
+//   - Root – When you specify the organizations root as the entity, the
+//     resulting report lists all of the services allowed by SCPs that are attached
+//     to your root. For each service, the report includes data for all accounts
+//     in your organization except the management account, because the management
+//     account is not limited by SCPs.
 //
-//    * OU – When you specify an organizational unit (OU) as the entity, the
-//    resulting report lists all of the services allowed by SCPs that are attached
-//    to the OU and its parents. For each service, the report includes data
-//    for all accounts in the OU or its children. This data excludes the management
-//    account, because the management account is not limited by SCPs.
+//   - OU – When you specify an organizational unit (OU) as the entity, the
+//     resulting report lists all of the services allowed by SCPs that are attached
+//     to the OU and its parents. For each service, the report includes data
+//     for all accounts in the OU or its children. This data excludes the management
+//     account, because the management account is not limited by SCPs.
 //
-//    * management account – When you specify the management account, the
-//    resulting report lists all Amazon Web Services services, because the management
-//    account is not limited by SCPs. For each service, the report includes
-//    data for only the management account.
+//   - management account – When you specify the management account, the
+//     resulting report lists all Amazon Web Services services, because the management
+//     account is not limited by SCPs. For each service, the report includes
+//     data for only the management account.
 //
-//    * Account – When you specify another account as the entity, the resulting
-//    report lists all of the services allowed by SCPs that are attached to
-//    the account and its parents. For each service, the report includes data
-//    for only the specified account.
+//   - Account – When you specify another account as the entity, the resulting
+//     report lists all of the services allowed by SCPs that are attached to
+//     the account and its parents. For each service, the report includes data
+//     for only the specified account.
 //
 // To generate a service last accessed data report for policies, specify an
 // entity path and the optional Organizations policy ID. The type of entity
 // that you specify determines the data returned for each service.
 //
-//    * Root – When you specify the root entity and a policy ID, the resulting
-//    report lists all of the services that are allowed by the specified SCP.
-//    For each service, the report includes data for all accounts in your organization
-//    to which the SCP applies. This data excludes the management account, because
-//    the management account is not limited by SCPs. If the SCP is not attached
-//    to any entities in the organization, then the report will return a list
-//    of services with no data.
+//   - Root – When you specify the root entity and a policy ID, the resulting
+//     report lists all of the services that are allowed by the specified SCP.
+//     For each service, the report includes data for all accounts in your organization
+//     to which the SCP applies. This data excludes the management account, because
+//     the management account is not limited by SCPs. If the SCP is not attached
+//     to any entities in the organization, then the report will return a list
+//     of services with no data.
 //
-//    * OU – When you specify an OU entity and a policy ID, the resulting
-//    report lists all of the services that are allowed by the specified SCP.
-//    For each service, the report includes data for all accounts in the OU
-//    or its children to which the SCP applies. This means that other accounts
-//    outside the OU that are affected by the SCP might not be included in the
-//    data. This data excludes the management account, because the management
-//    account is not limited by SCPs. If the SCP is not attached to the OU or
-//    one of its children, the report will return a list of services with no
-//    data.
+//   - OU – When you specify an OU entity and a policy ID, the resulting
+//     report lists all of the services that are allowed by the specified SCP.
+//     For each service, the report includes data for all accounts in the OU
+//     or its children to which the SCP applies. This means that other accounts
+//     outside the OU that are affected by the SCP might not be included in the
+//     data. This data excludes the management account, because the management
+//     account is not limited by SCPs. If the SCP is not attached to the OU or
+//     one of its children, the report will return a list of services with no
+//     data.
 //
-//    * management account – When you specify the management account, the
-//    resulting report lists all Amazon Web Services services, because the management
-//    account is not limited by SCPs. If you specify a policy ID in the CLI
-//    or API, the policy is ignored. For each service, the report includes data
-//    for only the management account.
+//   - management account – When you specify the management account, the
+//     resulting report lists all Amazon Web Services services, because the management
+//     account is not limited by SCPs. If you specify a policy ID in the CLI
+//     or API, the policy is ignored. For each service, the report includes data
+//     for only the management account.
 //
-//    * Account – When you specify another account entity and a policy ID,
-//    the resulting report lists all of the services that are allowed by the
-//    specified SCP. For each service, the report includes data for only the
-//    specified account. This means that other accounts in the organization
-//    that are affected by the SCP might not be included in the data. If the
-//    SCP is not attached to the account, the report will return a list of services
-//    with no data.
+//   - Account – When you specify another account entity and a policy ID,
+//     the resulting report lists all of the services that are allowed by the
+//     specified SCP. For each service, the report includes data for only the
+//     specified account. This means that other accounts in the organization
+//     that are affected by the SCP might not be included in the data. If the
+//     SCP is not attached to the account, the report will return a list of services
+//     with no data.
 //
 // Service last accessed data does not use other policy types when determining
 // whether a principal could access a service. These other policy types include
@@ -5338,9 +5344,9 @@ func (c *IAM) GenerateOrganizationsAccessReportRequest(input *GenerateOrganizati
 // API operation GenerateOrganizationsAccessReport for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeReportGenerationLimitExceededException "ReportGenerationLimitExceeded"
-//   The request failed because the maximum number of concurrent requests for
-//   this account are already running.
+//   - ErrCodeReportGenerationLimitExceededException "ReportGenerationLimitExceeded"
+//     The request failed because the maximum number of concurrent requests for
+//     this account are already running.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GenerateOrganizationsAccessReport
 func (c *IAM) GenerateOrganizationsAccessReport(input *GenerateOrganizationsAccessReportInput) (*GenerateOrganizationsAccessReportOutput, error) {
@@ -5380,14 +5386,13 @@ const opGenerateServiceLastAccessedDetails = "GenerateServiceLastAccessedDetails
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GenerateServiceLastAccessedDetailsRequest method.
+//	req, resp := client.GenerateServiceLastAccessedDetailsRequest(params)
 //
-//    // Example sending a request using the GenerateServiceLastAccessedDetailsRequest method.
-//    req, resp := client.GenerateServiceLastAccessedDetailsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GenerateServiceLastAccessedDetails
 func (c *IAM) GenerateServiceLastAccessedDetailsRequest(input *GenerateServiceLastAccessedDetailsInput) (req *request.Request, output *GenerateServiceLastAccessedDetailsOutput) {
@@ -5411,36 +5416,36 @@ func (c *IAM) GenerateServiceLastAccessedDetailsRequest(input *GenerateServiceLa
 // Generates a report that includes details about when an IAM resource (user,
 // group, role, or policy) was last used in an attempt to access Amazon Web
 // Services services. Recent activity usually appears within four hours. IAM
-// reports activity for the last 365 days, or less if your Region began supporting
-// this feature within the last year. For more information, see Regions where
-// data is tracked (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#access-advisor_tracking-period).
+// reports activity for at least the last 400 days, or less if your Region began
+// supporting this feature within the last year. For more information, see Regions
+// where data is tracked (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#access-advisor_tracking-period).
 //
 // The service last accessed data includes all attempts to access an Amazon
 // Web Services API, not just the successful ones. This includes all attempts
-// that were made using the Management Console, the Amazon Web Services API
-// through any of the SDKs, or any of the command line tools. An unexpected
-// entry in the service last accessed data does not mean that your account has
-// been compromised, because the request might have been denied. Refer to your
-// CloudTrail logs as the authoritative source for information about all API
-// calls and whether they were successful or denied access. For more information,
-// see Logging IAM events with CloudTrail (https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html)
+// that were made using the Amazon Web Services Management Console, the Amazon
+// Web Services API through any of the SDKs, or any of the command line tools.
+// An unexpected entry in the service last accessed data does not mean that
+// your account has been compromised, because the request might have been denied.
+// Refer to your CloudTrail logs as the authoritative source for information
+// about all API calls and whether they were successful or denied access. For
+// more information, see Logging IAM events with CloudTrail (https://docs.aws.amazon.com/IAM/latest/UserGuide/cloudtrail-integration.html)
 // in the IAM User Guide.
 //
 // The GenerateServiceLastAccessedDetails operation returns a JobId. Use this
 // parameter in the following operations to retrieve the following details from
 // your report:
 //
-//    * GetServiceLastAccessedDetails – Use this operation for users, groups,
-//    roles, or policies to list every Amazon Web Services service that the
-//    resource could access using permissions policies. For each service, the
-//    response includes information about the most recent access attempt. The
-//    JobId returned by GenerateServiceLastAccessedDetail must be used by the
-//    same role within a session, or by the same user when used to call GetServiceLastAccessedDetail.
+//   - GetServiceLastAccessedDetails – Use this operation for users, groups,
+//     roles, or policies to list every Amazon Web Services service that the
+//     resource could access using permissions policies. For each service, the
+//     response includes information about the most recent access attempt. The
+//     JobId returned by GenerateServiceLastAccessedDetail must be used by the
+//     same role within a session, or by the same user when used to call GetServiceLastAccessedDetail.
 //
-//    * GetServiceLastAccessedDetailsWithEntities – Use this operation for
-//    groups and policies to list information about the associated entities
-//    (users or roles) that attempted to access a specific Amazon Web Services
-//    service.
+//   - GetServiceLastAccessedDetailsWithEntities – Use this operation for
+//     groups and policies to list information about the associated entities
+//     (users or roles) that attempted to access a specific Amazon Web Services
+//     service.
 //
 // To check the status of the GenerateServiceLastAccessedDetails request, use
 // the JobId parameter in the same operations and test the JobStatus response
@@ -5470,13 +5475,14 @@ func (c *IAM) GenerateServiceLastAccessedDetailsRequest(input *GenerateServiceLa
 // API operation GenerateServiceLastAccessedDetails for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GenerateServiceLastAccessedDetails
 func (c *IAM) GenerateServiceLastAccessedDetails(input *GenerateServiceLastAccessedDetailsInput) (*GenerateServiceLastAccessedDetailsOutput, error) {
@@ -5516,14 +5522,13 @@ const opGetAccessKeyLastUsed = "GetAccessKeyLastUsed"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAccessKeyLastUsedRequest method.
+//	req, resp := client.GetAccessKeyLastUsedRequest(params)
 //
-//    // Example sending a request using the GetAccessKeyLastUsedRequest method.
-//    req, resp := client.GetAccessKeyLastUsedRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccessKeyLastUsed
 func (c *IAM) GetAccessKeyLastUsedRequest(input *GetAccessKeyLastUsedInput) (req *request.Request, output *GetAccessKeyLastUsedOutput) {
@@ -5557,9 +5562,9 @@ func (c *IAM) GetAccessKeyLastUsedRequest(input *GetAccessKeyLastUsedInput) (req
 // API operation GetAccessKeyLastUsed for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccessKeyLastUsed
 func (c *IAM) GetAccessKeyLastUsed(input *GetAccessKeyLastUsedInput) (*GetAccessKeyLastUsedOutput, error) {
@@ -5599,14 +5604,13 @@ const opGetAccountAuthorizationDetails = "GetAccountAuthorizationDetails"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAccountAuthorizationDetailsRequest method.
+//	req, resp := client.GetAccountAuthorizationDetailsRequest(params)
 //
-//    // Example sending a request using the GetAccountAuthorizationDetailsRequest method.
-//    req, resp := client.GetAccountAuthorizationDetailsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccountAuthorizationDetails
 func (c *IAM) GetAccountAuthorizationDetailsRequest(input *GetAccountAuthorizationDetailsInput) (req *request.Request, output *GetAccountAuthorizationDetailsOutput) {
@@ -5655,9 +5659,9 @@ func (c *IAM) GetAccountAuthorizationDetailsRequest(input *GetAccountAuthorizati
 // API operation GetAccountAuthorizationDetails for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccountAuthorizationDetails
 func (c *IAM) GetAccountAuthorizationDetails(input *GetAccountAuthorizationDetailsInput) (*GetAccountAuthorizationDetailsOutput, error) {
@@ -5689,15 +5693,14 @@ func (c *IAM) GetAccountAuthorizationDetailsWithContext(ctx aws.Context, input *
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetAccountAuthorizationDetails operation.
-//    pageNum := 0
-//    err := client.GetAccountAuthorizationDetailsPages(params,
-//        func(page *iam.GetAccountAuthorizationDetailsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetAccountAuthorizationDetails operation.
+//	pageNum := 0
+//	err := client.GetAccountAuthorizationDetailsPages(params,
+//	    func(page *iam.GetAccountAuthorizationDetailsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) GetAccountAuthorizationDetailsPages(input *GetAccountAuthorizationDetailsInput, fn func(*GetAccountAuthorizationDetailsOutput, bool) bool) error {
 	return c.GetAccountAuthorizationDetailsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -5749,14 +5752,13 @@ const opGetAccountPasswordPolicy = "GetAccountPasswordPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAccountPasswordPolicyRequest method.
+//	req, resp := client.GetAccountPasswordPolicyRequest(params)
 //
-//    // Example sending a request using the GetAccountPasswordPolicyRequest method.
-//    req, resp := client.GetAccountPasswordPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccountPasswordPolicy
 func (c *IAM) GetAccountPasswordPolicyRequest(input *GetAccountPasswordPolicyInput) (req *request.Request, output *GetAccountPasswordPolicyOutput) {
@@ -5777,10 +5779,10 @@ func (c *IAM) GetAccountPasswordPolicyRequest(input *GetAccountPasswordPolicyInp
 
 // GetAccountPasswordPolicy API operation for AWS Identity and Access Management.
 //
-// Retrieves the password policy for the account. This tells you the complexity
-// requirements and mandatory rotation periods for the IAM user passwords in
-// your account. For more information about using a password policy, see Managing
-// an IAM password policy (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html).
+// Retrieves the password policy for the Amazon Web Services account. This tells
+// you the complexity requirements and mandatory rotation periods for the IAM
+// user passwords in your account. For more information about using a password
+// policy, see Managing an IAM password policy (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5790,13 +5792,14 @@ func (c *IAM) GetAccountPasswordPolicyRequest(input *GetAccountPasswordPolicyInp
 // API operation GetAccountPasswordPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccountPasswordPolicy
 func (c *IAM) GetAccountPasswordPolicy(input *GetAccountPasswordPolicyInput) (*GetAccountPasswordPolicyOutput, error) {
@@ -5836,14 +5839,13 @@ const opGetAccountSummary = "GetAccountSummary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetAccountSummaryRequest method.
+//	req, resp := client.GetAccountSummaryRequest(params)
 //
-//    // Example sending a request using the GetAccountSummaryRequest method.
-//    req, resp := client.GetAccountSummaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccountSummary
 func (c *IAM) GetAccountSummaryRequest(input *GetAccountSummaryInput) (req *request.Request, output *GetAccountSummaryOutput) {
@@ -5878,9 +5880,9 @@ func (c *IAM) GetAccountSummaryRequest(input *GetAccountSummaryInput) (req *requ
 // API operation GetAccountSummary for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetAccountSummary
 func (c *IAM) GetAccountSummary(input *GetAccountSummaryInput) (*GetAccountSummaryOutput, error) {
@@ -5920,14 +5922,13 @@ const opGetContextKeysForCustomPolicy = "GetContextKeysForCustomPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetContextKeysForCustomPolicyRequest method.
+//	req, resp := client.GetContextKeysForCustomPolicyRequest(params)
 //
-//    // Example sending a request using the GetContextKeysForCustomPolicyRequest method.
-//    req, resp := client.GetContextKeysForCustomPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetContextKeysForCustomPolicy
 func (c *IAM) GetContextKeysForCustomPolicyRequest(input *GetContextKeysForCustomPolicyInput) (req *request.Request, output *GetContextKeysForPolicyResponse) {
@@ -5968,9 +5969,9 @@ func (c *IAM) GetContextKeysForCustomPolicyRequest(input *GetContextKeysForCusto
 // API operation GetContextKeysForCustomPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetContextKeysForCustomPolicy
 func (c *IAM) GetContextKeysForCustomPolicy(input *GetContextKeysForCustomPolicyInput) (*GetContextKeysForPolicyResponse, error) {
@@ -6010,14 +6011,13 @@ const opGetContextKeysForPrincipalPolicy = "GetContextKeysForPrincipalPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetContextKeysForPrincipalPolicyRequest method.
+//	req, resp := client.GetContextKeysForPrincipalPolicyRequest(params)
 //
-//    // Example sending a request using the GetContextKeysForPrincipalPolicyRequest method.
-//    req, resp := client.GetContextKeysForPrincipalPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetContextKeysForPrincipalPolicy
 func (c *IAM) GetContextKeysForPrincipalPolicyRequest(input *GetContextKeysForPrincipalPolicyInput) (req *request.Request, output *GetContextKeysForPolicyResponse) {
@@ -6064,13 +6064,14 @@ func (c *IAM) GetContextKeysForPrincipalPolicyRequest(input *GetContextKeysForPr
 // API operation GetContextKeysForPrincipalPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetContextKeysForPrincipalPolicy
 func (c *IAM) GetContextKeysForPrincipalPolicy(input *GetContextKeysForPrincipalPolicyInput) (*GetContextKeysForPolicyResponse, error) {
@@ -6110,14 +6111,13 @@ const opGetCredentialReport = "GetCredentialReport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetCredentialReportRequest method.
+//	req, resp := client.GetCredentialReportRequest(params)
 //
-//    // Example sending a request using the GetCredentialReportRequest method.
-//    req, resp := client.GetCredentialReportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetCredentialReport
 func (c *IAM) GetCredentialReportRequest(input *GetCredentialReportInput) (req *request.Request, output *GetCredentialReportOutput) {
@@ -6138,8 +6138,8 @@ func (c *IAM) GetCredentialReportRequest(input *GetCredentialReportInput) (req *
 
 // GetCredentialReport API operation for AWS Identity and Access Management.
 //
-// Retrieves a credential report for the account. For more information about
-// the credential report, see Getting credential reports (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
+// Retrieves a credential report for the Amazon Web Services account. For more
+// information about the credential report, see Getting credential reports (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
 // in the IAM User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6150,23 +6150,24 @@ func (c *IAM) GetCredentialReportRequest(input *GetCredentialReportInput) (req *
 // API operation GetCredentialReport for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeCredentialReportNotPresentException "ReportNotPresent"
-//   The request was rejected because the credential report does not exist. To
-//   generate a credential report, use GenerateCredentialReport.
 //
-//   * ErrCodeCredentialReportExpiredException "ReportExpired"
-//   The request was rejected because the most recent credential report has expired.
-//   To generate a new credential report, use GenerateCredentialReport. For more
-//   information about credential report expiration, see Getting credential reports
-//   (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
-//   in the IAM User Guide.
+//   - ErrCodeCredentialReportNotPresentException "ReportNotPresent"
+//     The request was rejected because the credential report does not exist. To
+//     generate a credential report, use GenerateCredentialReport.
 //
-//   * ErrCodeCredentialReportNotReadyException "ReportInProgress"
-//   The request was rejected because the credential report is still being generated.
+//   - ErrCodeCredentialReportExpiredException "ReportExpired"
+//     The request was rejected because the most recent credential report has expired.
+//     To generate a new credential report, use GenerateCredentialReport. For more
+//     information about credential report expiration, see Getting credential reports
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html)
+//     in the IAM User Guide.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeCredentialReportNotReadyException "ReportInProgress"
+//     The request was rejected because the credential report is still being generated.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetCredentialReport
 func (c *IAM) GetCredentialReport(input *GetCredentialReportInput) (*GetCredentialReportOutput, error) {
@@ -6206,14 +6207,13 @@ const opGetGroup = "GetGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetGroupRequest method.
+//	req, resp := client.GetGroupRequest(params)
 //
-//    // Example sending a request using the GetGroupRequest method.
-//    req, resp := client.GetGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetGroup
 func (c *IAM) GetGroupRequest(input *GetGroupInput) (req *request.Request, output *GetGroupOutput) {
@@ -6251,13 +6251,14 @@ func (c *IAM) GetGroupRequest(input *GetGroupInput) (req *request.Request, outpu
 // API operation GetGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetGroup
 func (c *IAM) GetGroup(input *GetGroupInput) (*GetGroupOutput, error) {
@@ -6289,15 +6290,14 @@ func (c *IAM) GetGroupWithContext(ctx aws.Context, input *GetGroupInput, opts ..
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a GetGroup operation.
-//    pageNum := 0
-//    err := client.GetGroupPages(params,
-//        func(page *iam.GetGroupOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a GetGroup operation.
+//	pageNum := 0
+//	err := client.GetGroupPages(params,
+//	    func(page *iam.GetGroupOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) GetGroupPages(input *GetGroupInput, fn func(*GetGroupOutput, bool) bool) error {
 	return c.GetGroupPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -6349,14 +6349,13 @@ const opGetGroupPolicy = "GetGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetGroupPolicyRequest method.
+//	req, resp := client.GetGroupPolicyRequest(params)
 //
-//    // Example sending a request using the GetGroupPolicyRequest method.
-//    req, resp := client.GetGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetGroupPolicy
 func (c *IAM) GetGroupPolicyRequest(input *GetGroupPolicyInput) (req *request.Request, output *GetGroupPolicyOutput) {
@@ -6403,13 +6402,14 @@ func (c *IAM) GetGroupPolicyRequest(input *GetGroupPolicyInput) (req *request.Re
 // API operation GetGroupPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetGroupPolicy
 func (c *IAM) GetGroupPolicy(input *GetGroupPolicyInput) (*GetGroupPolicyOutput, error) {
@@ -6449,14 +6449,13 @@ const opGetInstanceProfile = "GetInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetInstanceProfileRequest method.
+//	req, resp := client.GetInstanceProfileRequest(params)
 //
-//    // Example sending a request using the GetInstanceProfileRequest method.
-//    req, resp := client.GetInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetInstanceProfile
 func (c *IAM) GetInstanceProfileRequest(input *GetInstanceProfileInput) (req *request.Request, output *GetInstanceProfileOutput) {
@@ -6490,13 +6489,14 @@ func (c *IAM) GetInstanceProfileRequest(input *GetInstanceProfileInput) (req *re
 // API operation GetInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetInstanceProfile
 func (c *IAM) GetInstanceProfile(input *GetInstanceProfileInput) (*GetInstanceProfileOutput, error) {
@@ -6536,14 +6536,13 @@ const opGetLoginProfile = "GetLoginProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetLoginProfileRequest method.
+//	req, resp := client.GetLoginProfileRequest(params)
 //
-//    // Example sending a request using the GetLoginProfileRequest method.
-//    req, resp := client.GetLoginProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetLoginProfile
 func (c *IAM) GetLoginProfileRequest(input *GetLoginProfileInput) (req *request.Request, output *GetLoginProfileOutput) {
@@ -6565,18 +6564,18 @@ func (c *IAM) GetLoginProfileRequest(input *GetLoginProfileInput) (req *request.
 // GetLoginProfile API operation for AWS Identity and Access Management.
 //
 // Retrieves the user name for the specified IAM user. A login profile is created
-// when you create a password for the user to access the Management Console.
-// If the user does not exist or does not have a password, the operation returns
-// a 404 (NoSuchEntity) error.
+// when you create a password for the user to access the Amazon Web Services
+// Management Console. If the user does not exist or does not have a password,
+// the operation returns a 404 (NoSuchEntity) error.
 //
 // If you create an IAM user with access to the console, the CreateDate reflects
 // the date you created the initial password for the user.
 //
 // If you create an IAM user with programmatic access, and then later add a
-// password for the user to access the Management Console, the CreateDate reflects
-// the initial password creation date. A user with programmatic access does
-// not have a login profile unless you create a password for the user to access
-// the Management Console.
+// password for the user to access the Amazon Web Services Management Console,
+// the CreateDate reflects the initial password creation date. A user with programmatic
+// access does not have a login profile unless you create a password for the
+// user to access the Amazon Web Services Management Console.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6586,13 +6585,14 @@ func (c *IAM) GetLoginProfileRequest(input *GetLoginProfileInput) (req *request.
 // API operation GetLoginProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetLoginProfile
 func (c *IAM) GetLoginProfile(input *GetLoginProfileInput) (*GetLoginProfileOutput, error) {
@@ -6632,14 +6632,13 @@ const opGetOpenIDConnectProvider = "GetOpenIDConnectProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetOpenIDConnectProviderRequest method.
+//	req, resp := client.GetOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the GetOpenIDConnectProviderRequest method.
-//    req, resp := client.GetOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetOpenIDConnectProvider
 func (c *IAM) GetOpenIDConnectProviderRequest(input *GetOpenIDConnectProviderInput) (req *request.Request, output *GetOpenIDConnectProviderOutput) {
@@ -6671,17 +6670,18 @@ func (c *IAM) GetOpenIDConnectProviderRequest(input *GetOpenIDConnectProviderInp
 // API operation GetOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetOpenIDConnectProvider
 func (c *IAM) GetOpenIDConnectProvider(input *GetOpenIDConnectProviderInput) (*GetOpenIDConnectProviderOutput, error) {
@@ -6721,14 +6721,13 @@ const opGetOrganizationsAccessReport = "GetOrganizationsAccessReport"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetOrganizationsAccessReportRequest method.
+//	req, resp := client.GetOrganizationsAccessReportRequest(params)
 //
-//    // Example sending a request using the GetOrganizationsAccessReportRequest method.
-//    req, resp := client.GetOrganizationsAccessReportRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetOrganizationsAccessReport
 func (c *IAM) GetOrganizationsAccessReportRequest(input *GetOrganizationsAccessReportInput) (req *request.Request, output *GetOrganizationsAccessReportOutput) {
@@ -6778,9 +6777,9 @@ func (c *IAM) GetOrganizationsAccessReportRequest(input *GetOrganizationsAccessR
 // API operation GetOrganizationsAccessReport for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetOrganizationsAccessReport
 func (c *IAM) GetOrganizationsAccessReport(input *GetOrganizationsAccessReportInput) (*GetOrganizationsAccessReportOutput, error) {
@@ -6820,14 +6819,13 @@ const opGetPolicy = "GetPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPolicyRequest method.
+//	req, resp := client.GetPolicyRequest(params)
 //
-//    // Example sending a request using the GetPolicyRequest method.
-//    req, resp := client.GetPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetPolicy
 func (c *IAM) GetPolicyRequest(input *GetPolicyInput) (req *request.Request, output *GetPolicyOutput) {
@@ -6871,17 +6869,18 @@ func (c *IAM) GetPolicyRequest(input *GetPolicyInput) (req *request.Request, out
 // API operation GetPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetPolicy
 func (c *IAM) GetPolicy(input *GetPolicyInput) (*GetPolicyOutput, error) {
@@ -6921,14 +6920,13 @@ const opGetPolicyVersion = "GetPolicyVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetPolicyVersionRequest method.
+//	req, resp := client.GetPolicyVersionRequest(params)
 //
-//    // Example sending a request using the GetPolicyVersionRequest method.
-//    req, resp := client.GetPolicyVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetPolicyVersion
 func (c *IAM) GetPolicyVersionRequest(input *GetPolicyVersionInput) (req *request.Request, output *GetPolicyVersionOutput) {
@@ -6980,17 +6978,18 @@ func (c *IAM) GetPolicyVersionRequest(input *GetPolicyVersionInput) (req *reques
 // API operation GetPolicyVersion for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetPolicyVersion
 func (c *IAM) GetPolicyVersion(input *GetPolicyVersionInput) (*GetPolicyVersionOutput, error) {
@@ -7030,14 +7029,13 @@ const opGetRole = "GetRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetRoleRequest method.
+//	req, resp := client.GetRoleRequest(params)
 //
-//    // Example sending a request using the GetRoleRequest method.
-//    req, resp := client.GetRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetRole
 func (c *IAM) GetRoleRequest(input *GetRoleInput) (req *request.Request, output *GetRoleOutput) {
@@ -7076,13 +7074,14 @@ func (c *IAM) GetRoleRequest(input *GetRoleInput) (req *request.Request, output 
 // API operation GetRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetRole
 func (c *IAM) GetRole(input *GetRoleInput) (*GetRoleOutput, error) {
@@ -7122,14 +7121,13 @@ const opGetRolePolicy = "GetRolePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetRolePolicyRequest method.
+//	req, resp := client.GetRolePolicyRequest(params)
 //
-//    // Example sending a request using the GetRolePolicyRequest method.
-//    req, resp := client.GetRolePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetRolePolicy
 func (c *IAM) GetRolePolicyRequest(input *GetRolePolicyInput) (req *request.Request, output *GetRolePolicyOutput) {
@@ -7179,13 +7177,14 @@ func (c *IAM) GetRolePolicyRequest(input *GetRolePolicyInput) (req *request.Requ
 // API operation GetRolePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetRolePolicy
 func (c *IAM) GetRolePolicy(input *GetRolePolicyInput) (*GetRolePolicyOutput, error) {
@@ -7225,14 +7224,13 @@ const opGetSAMLProvider = "GetSAMLProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSAMLProviderRequest method.
+//	req, resp := client.GetSAMLProviderRequest(params)
 //
-//    // Example sending a request using the GetSAMLProviderRequest method.
-//    req, resp := client.GetSAMLProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetSAMLProvider
 func (c *IAM) GetSAMLProviderRequest(input *GetSAMLProviderInput) (req *request.Request, output *GetSAMLProviderOutput) {
@@ -7266,17 +7264,18 @@ func (c *IAM) GetSAMLProviderRequest(input *GetSAMLProviderInput) (req *request.
 // API operation GetSAMLProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetSAMLProvider
 func (c *IAM) GetSAMLProvider(input *GetSAMLProviderInput) (*GetSAMLProviderOutput, error) {
@@ -7316,14 +7315,13 @@ const opGetSSHPublicKey = "GetSSHPublicKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetSSHPublicKeyRequest method.
+//	req, resp := client.GetSSHPublicKeyRequest(params)
 //
-//    // Example sending a request using the GetSSHPublicKeyRequest method.
-//    req, resp := client.GetSSHPublicKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetSSHPublicKey
 func (c *IAM) GetSSHPublicKeyRequest(input *GetSSHPublicKeyInput) (req *request.Request, output *GetSSHPublicKeyOutput) {
@@ -7360,13 +7358,14 @@ func (c *IAM) GetSSHPublicKeyRequest(input *GetSSHPublicKeyInput) (req *request.
 // API operation GetSSHPublicKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeUnrecognizedPublicKeyEncodingException "UnrecognizedPublicKeyEncoding"
-//   The request was rejected because the public key encoding format is unsupported
-//   or unrecognized.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeUnrecognizedPublicKeyEncodingException "UnrecognizedPublicKeyEncoding"
+//     The request was rejected because the public key encoding format is unsupported
+//     or unrecognized.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetSSHPublicKey
 func (c *IAM) GetSSHPublicKey(input *GetSSHPublicKeyInput) (*GetSSHPublicKeyOutput, error) {
@@ -7406,14 +7405,13 @@ const opGetServerCertificate = "GetServerCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetServerCertificateRequest method.
+//	req, resp := client.GetServerCertificateRequest(params)
 //
-//    // Example sending a request using the GetServerCertificateRequest method.
-//    req, resp := client.GetServerCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServerCertificate
 func (c *IAM) GetServerCertificateRequest(input *GetServerCertificateInput) (req *request.Request, output *GetServerCertificateOutput) {
@@ -7449,13 +7447,14 @@ func (c *IAM) GetServerCertificateRequest(input *GetServerCertificateInput) (req
 // API operation GetServerCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServerCertificate
 func (c *IAM) GetServerCertificate(input *GetServerCertificateInput) (*GetServerCertificateOutput, error) {
@@ -7495,14 +7494,13 @@ const opGetServiceLastAccessedDetails = "GetServiceLastAccessedDetails"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetServiceLastAccessedDetailsRequest method.
+//	req, resp := client.GetServiceLastAccessedDetailsRequest(params)
 //
-//    // Example sending a request using the GetServiceLastAccessedDetailsRequest method.
-//    req, resp := client.GetServiceLastAccessedDetailsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServiceLastAccessedDetails
 func (c *IAM) GetServiceLastAccessedDetailsRequest(input *GetServiceLastAccessedDetailsInput) (req *request.Request, output *GetServiceLastAccessedDetailsOutput) {
@@ -7550,15 +7548,15 @@ func (c *IAM) GetServiceLastAccessedDetailsRequest(input *GetServiceLastAccessed
 // following entity, depending on the resource ARN that you used to generate
 // the report:
 //
-//    * User – Returns the user ARN that you used to generate the report
+//   - User – Returns the user ARN that you used to generate the report
 //
-//    * Group – Returns the ARN of the group member (user) that last attempted
-//    to access the service
+//   - Group – Returns the ARN of the group member (user) that last attempted
+//     to access the service
 //
-//    * Role – Returns the role ARN that you used to generate the report
+//   - Role – Returns the role ARN that you used to generate the report
 //
-//    * Policy – Returns the ARN of the user or role that last used the policy
-//    to attempt to access the service
+//   - Policy – Returns the ARN of the user or role that last used the policy
+//     to attempt to access the service
 //
 // By default, the list is sorted by service namespace.
 //
@@ -7579,13 +7577,14 @@ func (c *IAM) GetServiceLastAccessedDetailsRequest(input *GetServiceLastAccessed
 // API operation GetServiceLastAccessedDetails for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServiceLastAccessedDetails
 func (c *IAM) GetServiceLastAccessedDetails(input *GetServiceLastAccessedDetailsInput) (*GetServiceLastAccessedDetailsOutput, error) {
@@ -7625,14 +7624,13 @@ const opGetServiceLastAccessedDetailsWithEntities = "GetServiceLastAccessedDetai
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetServiceLastAccessedDetailsWithEntitiesRequest method.
+//	req, resp := client.GetServiceLastAccessedDetailsWithEntitiesRequest(params)
 //
-//    // Example sending a request using the GetServiceLastAccessedDetailsWithEntitiesRequest method.
-//    req, resp := client.GetServiceLastAccessedDetailsWithEntitiesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServiceLastAccessedDetailsWithEntities
 func (c *IAM) GetServiceLastAccessedDetailsWithEntitiesRequest(input *GetServiceLastAccessedDetailsWithEntitiesInput) (req *request.Request, output *GetServiceLastAccessedDetailsWithEntitiesOutput) {
@@ -7659,13 +7657,13 @@ func (c *IAM) GetServiceLastAccessedDetailsWithEntitiesRequest(input *GetService
 // that could have used group or policy permissions to access the specified
 // service.
 //
-//    * Group – For a group report, this operation returns a list of users
-//    in the group that could have used the group’s policies in an attempt
-//    to access the service.
+//   - Group – For a group report, this operation returns a list of users
+//     in the group that could have used the group’s policies in an attempt
+//     to access the service.
 //
-//    * Policy – For a policy report, this operation returns a list of entities
-//    (users or roles) that could have used the policy in an attempt to access
-//    the service.
+//   - Policy – For a policy report, this operation returns a list of entities
+//     (users or roles) that could have used the policy in an attempt to access
+//     the service.
 //
 // You can also use this operation for user or role reports to retrieve details
 // about those entities.
@@ -7684,13 +7682,14 @@ func (c *IAM) GetServiceLastAccessedDetailsWithEntitiesRequest(input *GetService
 // API operation GetServiceLastAccessedDetailsWithEntities for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServiceLastAccessedDetailsWithEntities
 func (c *IAM) GetServiceLastAccessedDetailsWithEntities(input *GetServiceLastAccessedDetailsWithEntitiesInput) (*GetServiceLastAccessedDetailsWithEntitiesOutput, error) {
@@ -7730,14 +7729,13 @@ const opGetServiceLinkedRoleDeletionStatus = "GetServiceLinkedRoleDeletionStatus
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetServiceLinkedRoleDeletionStatusRequest method.
+//	req, resp := client.GetServiceLinkedRoleDeletionStatusRequest(params)
 //
-//    // Example sending a request using the GetServiceLinkedRoleDeletionStatusRequest method.
-//    req, resp := client.GetServiceLinkedRoleDeletionStatusRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServiceLinkedRoleDeletionStatus
 func (c *IAM) GetServiceLinkedRoleDeletionStatusRequest(input *GetServiceLinkedRoleDeletionStatusInput) (req *request.Request, output *GetServiceLinkedRoleDeletionStatusOutput) {
@@ -7773,17 +7771,18 @@ func (c *IAM) GetServiceLinkedRoleDeletionStatusRequest(input *GetServiceLinkedR
 // API operation GetServiceLinkedRoleDeletionStatus for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetServiceLinkedRoleDeletionStatus
 func (c *IAM) GetServiceLinkedRoleDeletionStatus(input *GetServiceLinkedRoleDeletionStatusInput) (*GetServiceLinkedRoleDeletionStatusOutput, error) {
@@ -7823,14 +7822,13 @@ const opGetUser = "GetUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetUserRequest method.
+//	req, resp := client.GetUserRequest(params)
 //
-//    // Example sending a request using the GetUserRequest method.
-//    req, resp := client.GetUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetUser
 func (c *IAM) GetUserRequest(input *GetUserInput) (req *request.Request, output *GetUserOutput) {
@@ -7866,13 +7864,14 @@ func (c *IAM) GetUserRequest(input *GetUserInput) (req *request.Request, output 
 // API operation GetUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetUser
 func (c *IAM) GetUser(input *GetUserInput) (*GetUserOutput, error) {
@@ -7912,14 +7911,13 @@ const opGetUserPolicy = "GetUserPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the GetUserPolicyRequest method.
+//	req, resp := client.GetUserPolicyRequest(params)
 //
-//    // Example sending a request using the GetUserPolicyRequest method.
-//    req, resp := client.GetUserPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetUserPolicy
 func (c *IAM) GetUserPolicyRequest(input *GetUserPolicyInput) (req *request.Request, output *GetUserPolicyOutput) {
@@ -7966,13 +7964,14 @@ func (c *IAM) GetUserPolicyRequest(input *GetUserPolicyInput) (req *request.Requ
 // API operation GetUserPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/GetUserPolicy
 func (c *IAM) GetUserPolicy(input *GetUserPolicyInput) (*GetUserPolicyOutput, error) {
@@ -8012,14 +8011,13 @@ const opListAccessKeys = "ListAccessKeys"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAccessKeysRequest method.
+//	req, resp := client.ListAccessKeysRequest(params)
 //
-//    // Example sending a request using the ListAccessKeysRequest method.
-//    req, resp := client.ListAccessKeysRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAccessKeys
 func (c *IAM) ListAccessKeysRequest(input *ListAccessKeysInput) (req *request.Request, output *ListAccessKeysOutput) {
@@ -8052,14 +8050,16 @@ func (c *IAM) ListAccessKeysRequest(input *ListAccessKeysInput) (req *request.Re
 // Although each user is limited to a small number of keys, you can still paginate
 // the results using the MaxItems and Marker parameters.
 //
-// If the UserName field is not specified, the user name is determined implicitly
+// If the UserName is not specified, the user name is determined implicitly
 // based on the Amazon Web Services access key ID used to sign the request.
-// This operation works for access keys under the account. Consequently, you
-// can use this operation to manage account root user credentials even if the
-// account has no associated users.
+// If a temporary access key is used, then UserName is required. If a long-term
+// key is assigned to the user, then UserName is not required. This operation
+// works for access keys under the Amazon Web Services account. Consequently,
+// you can use this operation to manage Amazon Web Services account root user
+// credentials even if the Amazon Web Services account has no associated users.
 //
-// To ensure the security of your account, the secret access key is accessible
-// only during key and user creation.
+// To ensure the security of your Amazon Web Services account, the secret access
+// key is accessible only during key and user creation.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -8069,13 +8069,14 @@ func (c *IAM) ListAccessKeysRequest(input *ListAccessKeysInput) (req *request.Re
 // API operation ListAccessKeys for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAccessKeys
 func (c *IAM) ListAccessKeys(input *ListAccessKeysInput) (*ListAccessKeysOutput, error) {
@@ -8107,15 +8108,14 @@ func (c *IAM) ListAccessKeysWithContext(ctx aws.Context, input *ListAccessKeysIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAccessKeys operation.
-//    pageNum := 0
-//    err := client.ListAccessKeysPages(params,
-//        func(page *iam.ListAccessKeysOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAccessKeys operation.
+//	pageNum := 0
+//	err := client.ListAccessKeysPages(params,
+//	    func(page *iam.ListAccessKeysOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListAccessKeysPages(input *ListAccessKeysInput, fn func(*ListAccessKeysOutput, bool) bool) error {
 	return c.ListAccessKeysPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8167,14 +8167,13 @@ const opListAccountAliases = "ListAccountAliases"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAccountAliasesRequest method.
+//	req, resp := client.ListAccountAliasesRequest(params)
 //
-//    // Example sending a request using the ListAccountAliasesRequest method.
-//    req, resp := client.ListAccountAliasesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAccountAliases
 func (c *IAM) ListAccountAliasesRequest(input *ListAccountAliasesInput) (req *request.Request, output *ListAccountAliasesOutput) {
@@ -8201,10 +8200,11 @@ func (c *IAM) ListAccountAliasesRequest(input *ListAccountAliasesInput) (req *re
 
 // ListAccountAliases API operation for AWS Identity and Access Management.
 //
-// Lists the account alias associated with the account (Note: you can have only
-// one). For information about using an account alias, see Using an alias for
-// your account ID (https://docs.aws.amazon.com/IAM/latest/UserGuide/AccountAlias.html)
-// in the IAM User Guide.
+// Lists the account alias associated with the Amazon Web Services account (Note:
+// you can have only one). For information about using an Amazon Web Services
+// account alias, see Using an alias for your Amazon Web Services account ID
+// (https://docs.aws.amazon.com/IAM/latest/UserGuide/AccountAlias.html) in the
+// IAM User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -8214,9 +8214,9 @@ func (c *IAM) ListAccountAliasesRequest(input *ListAccountAliasesInput) (req *re
 // API operation ListAccountAliases for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAccountAliases
 func (c *IAM) ListAccountAliases(input *ListAccountAliasesInput) (*ListAccountAliasesOutput, error) {
@@ -8248,15 +8248,14 @@ func (c *IAM) ListAccountAliasesWithContext(ctx aws.Context, input *ListAccountA
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAccountAliases operation.
-//    pageNum := 0
-//    err := client.ListAccountAliasesPages(params,
-//        func(page *iam.ListAccountAliasesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAccountAliases operation.
+//	pageNum := 0
+//	err := client.ListAccountAliasesPages(params,
+//	    func(page *iam.ListAccountAliasesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListAccountAliasesPages(input *ListAccountAliasesInput, fn func(*ListAccountAliasesOutput, bool) bool) error {
 	return c.ListAccountAliasesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8308,14 +8307,13 @@ const opListAttachedGroupPolicies = "ListAttachedGroupPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAttachedGroupPoliciesRequest method.
+//	req, resp := client.ListAttachedGroupPoliciesRequest(params)
 //
-//    // Example sending a request using the ListAttachedGroupPoliciesRequest method.
-//    req, resp := client.ListAttachedGroupPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAttachedGroupPolicies
 func (c *IAM) ListAttachedGroupPoliciesRequest(input *ListAttachedGroupPoliciesInput) (req *request.Request, output *ListAttachedGroupPoliciesOutput) {
@@ -8363,17 +8361,18 @@ func (c *IAM) ListAttachedGroupPoliciesRequest(input *ListAttachedGroupPoliciesI
 // API operation ListAttachedGroupPolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAttachedGroupPolicies
 func (c *IAM) ListAttachedGroupPolicies(input *ListAttachedGroupPoliciesInput) (*ListAttachedGroupPoliciesOutput, error) {
@@ -8405,15 +8404,14 @@ func (c *IAM) ListAttachedGroupPoliciesWithContext(ctx aws.Context, input *ListA
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAttachedGroupPolicies operation.
-//    pageNum := 0
-//    err := client.ListAttachedGroupPoliciesPages(params,
-//        func(page *iam.ListAttachedGroupPoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAttachedGroupPolicies operation.
+//	pageNum := 0
+//	err := client.ListAttachedGroupPoliciesPages(params,
+//	    func(page *iam.ListAttachedGroupPoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListAttachedGroupPoliciesPages(input *ListAttachedGroupPoliciesInput, fn func(*ListAttachedGroupPoliciesOutput, bool) bool) error {
 	return c.ListAttachedGroupPoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8465,14 +8463,13 @@ const opListAttachedRolePolicies = "ListAttachedRolePolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAttachedRolePoliciesRequest method.
+//	req, resp := client.ListAttachedRolePoliciesRequest(params)
 //
-//    // Example sending a request using the ListAttachedRolePoliciesRequest method.
-//    req, resp := client.ListAttachedRolePoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAttachedRolePolicies
 func (c *IAM) ListAttachedRolePoliciesRequest(input *ListAttachedRolePoliciesInput) (req *request.Request, output *ListAttachedRolePoliciesOutput) {
@@ -8520,17 +8517,18 @@ func (c *IAM) ListAttachedRolePoliciesRequest(input *ListAttachedRolePoliciesInp
 // API operation ListAttachedRolePolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAttachedRolePolicies
 func (c *IAM) ListAttachedRolePolicies(input *ListAttachedRolePoliciesInput) (*ListAttachedRolePoliciesOutput, error) {
@@ -8562,15 +8560,14 @@ func (c *IAM) ListAttachedRolePoliciesWithContext(ctx aws.Context, input *ListAt
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAttachedRolePolicies operation.
-//    pageNum := 0
-//    err := client.ListAttachedRolePoliciesPages(params,
-//        func(page *iam.ListAttachedRolePoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAttachedRolePolicies operation.
+//	pageNum := 0
+//	err := client.ListAttachedRolePoliciesPages(params,
+//	    func(page *iam.ListAttachedRolePoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListAttachedRolePoliciesPages(input *ListAttachedRolePoliciesInput, fn func(*ListAttachedRolePoliciesOutput, bool) bool) error {
 	return c.ListAttachedRolePoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8622,14 +8619,13 @@ const opListAttachedUserPolicies = "ListAttachedUserPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListAttachedUserPoliciesRequest method.
+//	req, resp := client.ListAttachedUserPoliciesRequest(params)
 //
-//    // Example sending a request using the ListAttachedUserPoliciesRequest method.
-//    req, resp := client.ListAttachedUserPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAttachedUserPolicies
 func (c *IAM) ListAttachedUserPoliciesRequest(input *ListAttachedUserPoliciesInput) (req *request.Request, output *ListAttachedUserPoliciesOutput) {
@@ -8677,17 +8673,18 @@ func (c *IAM) ListAttachedUserPoliciesRequest(input *ListAttachedUserPoliciesInp
 // API operation ListAttachedUserPolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListAttachedUserPolicies
 func (c *IAM) ListAttachedUserPolicies(input *ListAttachedUserPoliciesInput) (*ListAttachedUserPoliciesOutput, error) {
@@ -8719,15 +8716,14 @@ func (c *IAM) ListAttachedUserPoliciesWithContext(ctx aws.Context, input *ListAt
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListAttachedUserPolicies operation.
-//    pageNum := 0
-//    err := client.ListAttachedUserPoliciesPages(params,
-//        func(page *iam.ListAttachedUserPoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListAttachedUserPolicies operation.
+//	pageNum := 0
+//	err := client.ListAttachedUserPoliciesPages(params,
+//	    func(page *iam.ListAttachedUserPoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListAttachedUserPoliciesPages(input *ListAttachedUserPoliciesInput, fn func(*ListAttachedUserPoliciesOutput, bool) bool) error {
 	return c.ListAttachedUserPoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8779,14 +8775,13 @@ const opListEntitiesForPolicy = "ListEntitiesForPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListEntitiesForPolicyRequest method.
+//	req, resp := client.ListEntitiesForPolicyRequest(params)
 //
-//    // Example sending a request using the ListEntitiesForPolicyRequest method.
-//    req, resp := client.ListEntitiesForPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListEntitiesForPolicy
 func (c *IAM) ListEntitiesForPolicyRequest(input *ListEntitiesForPolicyInput) (req *request.Request, output *ListEntitiesForPolicyOutput) {
@@ -8831,17 +8826,18 @@ func (c *IAM) ListEntitiesForPolicyRequest(input *ListEntitiesForPolicyInput) (r
 // API operation ListEntitiesForPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListEntitiesForPolicy
 func (c *IAM) ListEntitiesForPolicy(input *ListEntitiesForPolicyInput) (*ListEntitiesForPolicyOutput, error) {
@@ -8873,15 +8869,14 @@ func (c *IAM) ListEntitiesForPolicyWithContext(ctx aws.Context, input *ListEntit
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListEntitiesForPolicy operation.
-//    pageNum := 0
-//    err := client.ListEntitiesForPolicyPages(params,
-//        func(page *iam.ListEntitiesForPolicyOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListEntitiesForPolicy operation.
+//	pageNum := 0
+//	err := client.ListEntitiesForPolicyPages(params,
+//	    func(page *iam.ListEntitiesForPolicyOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListEntitiesForPolicyPages(input *ListEntitiesForPolicyInput, fn func(*ListEntitiesForPolicyOutput, bool) bool) error {
 	return c.ListEntitiesForPolicyPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -8933,14 +8928,13 @@ const opListGroupPolicies = "ListGroupPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGroupPoliciesRequest method.
+//	req, resp := client.ListGroupPoliciesRequest(params)
 //
-//    // Example sending a request using the ListGroupPoliciesRequest method.
-//    req, resp := client.ListGroupPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListGroupPolicies
 func (c *IAM) ListGroupPoliciesRequest(input *ListGroupPoliciesInput) (req *request.Request, output *ListGroupPoliciesOutput) {
@@ -8988,13 +8982,14 @@ func (c *IAM) ListGroupPoliciesRequest(input *ListGroupPoliciesInput) (req *requ
 // API operation ListGroupPolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListGroupPolicies
 func (c *IAM) ListGroupPolicies(input *ListGroupPoliciesInput) (*ListGroupPoliciesOutput, error) {
@@ -9026,15 +9021,14 @@ func (c *IAM) ListGroupPoliciesWithContext(ctx aws.Context, input *ListGroupPoli
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGroupPolicies operation.
-//    pageNum := 0
-//    err := client.ListGroupPoliciesPages(params,
-//        func(page *iam.ListGroupPoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGroupPolicies operation.
+//	pageNum := 0
+//	err := client.ListGroupPoliciesPages(params,
+//	    func(page *iam.ListGroupPoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListGroupPoliciesPages(input *ListGroupPoliciesInput, fn func(*ListGroupPoliciesOutput, bool) bool) error {
 	return c.ListGroupPoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -9086,14 +9080,13 @@ const opListGroups = "ListGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGroupsRequest method.
+//	req, resp := client.ListGroupsRequest(params)
 //
-//    // Example sending a request using the ListGroupsRequest method.
-//    req, resp := client.ListGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListGroups
 func (c *IAM) ListGroupsRequest(input *ListGroupsInput) (req *request.Request, output *ListGroupsOutput) {
@@ -9132,9 +9125,9 @@ func (c *IAM) ListGroupsRequest(input *ListGroupsInput) (req *request.Request, o
 // API operation ListGroups for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListGroups
 func (c *IAM) ListGroups(input *ListGroupsInput) (*ListGroupsOutput, error) {
@@ -9166,15 +9159,14 @@ func (c *IAM) ListGroupsWithContext(ctx aws.Context, input *ListGroupsInput, opt
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGroups operation.
-//    pageNum := 0
-//    err := client.ListGroupsPages(params,
-//        func(page *iam.ListGroupsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGroups operation.
+//	pageNum := 0
+//	err := client.ListGroupsPages(params,
+//	    func(page *iam.ListGroupsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListGroupsPages(input *ListGroupsInput, fn func(*ListGroupsOutput, bool) bool) error {
 	return c.ListGroupsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -9226,14 +9218,13 @@ const opListGroupsForUser = "ListGroupsForUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListGroupsForUserRequest method.
+//	req, resp := client.ListGroupsForUserRequest(params)
 //
-//    // Example sending a request using the ListGroupsForUserRequest method.
-//    req, resp := client.ListGroupsForUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListGroupsForUser
 func (c *IAM) ListGroupsForUserRequest(input *ListGroupsForUserInput) (req *request.Request, output *ListGroupsForUserOutput) {
@@ -9272,13 +9263,14 @@ func (c *IAM) ListGroupsForUserRequest(input *ListGroupsForUserInput) (req *requ
 // API operation ListGroupsForUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListGroupsForUser
 func (c *IAM) ListGroupsForUser(input *ListGroupsForUserInput) (*ListGroupsForUserOutput, error) {
@@ -9310,15 +9302,14 @@ func (c *IAM) ListGroupsForUserWithContext(ctx aws.Context, input *ListGroupsFor
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListGroupsForUser operation.
-//    pageNum := 0
-//    err := client.ListGroupsForUserPages(params,
-//        func(page *iam.ListGroupsForUserOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListGroupsForUser operation.
+//	pageNum := 0
+//	err := client.ListGroupsForUserPages(params,
+//	    func(page *iam.ListGroupsForUserOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListGroupsForUserPages(input *ListGroupsForUserInput, fn func(*ListGroupsForUserOutput, bool) bool) error {
 	return c.ListGroupsForUserPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -9370,14 +9361,13 @@ const opListInstanceProfileTags = "ListInstanceProfileTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInstanceProfileTagsRequest method.
+//	req, resp := client.ListInstanceProfileTagsRequest(params)
 //
-//    // Example sending a request using the ListInstanceProfileTagsRequest method.
-//    req, resp := client.ListInstanceProfileTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListInstanceProfileTags
 func (c *IAM) ListInstanceProfileTagsRequest(input *ListInstanceProfileTagsInput) (req *request.Request, output *ListInstanceProfileTagsOutput) {
@@ -9411,13 +9401,14 @@ func (c *IAM) ListInstanceProfileTagsRequest(input *ListInstanceProfileTagsInput
 // API operation ListInstanceProfileTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListInstanceProfileTags
 func (c *IAM) ListInstanceProfileTags(input *ListInstanceProfileTagsInput) (*ListInstanceProfileTagsOutput, error) {
@@ -9457,14 +9448,13 @@ const opListInstanceProfiles = "ListInstanceProfiles"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInstanceProfilesRequest method.
+//	req, resp := client.ListInstanceProfilesRequest(params)
 //
-//    // Example sending a request using the ListInstanceProfilesRequest method.
-//    req, resp := client.ListInstanceProfilesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListInstanceProfiles
 func (c *IAM) ListInstanceProfilesRequest(input *ListInstanceProfilesInput) (req *request.Request, output *ListInstanceProfilesOutput) {
@@ -9510,9 +9500,9 @@ func (c *IAM) ListInstanceProfilesRequest(input *ListInstanceProfilesInput) (req
 // API operation ListInstanceProfiles for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListInstanceProfiles
 func (c *IAM) ListInstanceProfiles(input *ListInstanceProfilesInput) (*ListInstanceProfilesOutput, error) {
@@ -9544,15 +9534,14 @@ func (c *IAM) ListInstanceProfilesWithContext(ctx aws.Context, input *ListInstan
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListInstanceProfiles operation.
-//    pageNum := 0
-//    err := client.ListInstanceProfilesPages(params,
-//        func(page *iam.ListInstanceProfilesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListInstanceProfiles operation.
+//	pageNum := 0
+//	err := client.ListInstanceProfilesPages(params,
+//	    func(page *iam.ListInstanceProfilesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListInstanceProfilesPages(input *ListInstanceProfilesInput, fn func(*ListInstanceProfilesOutput, bool) bool) error {
 	return c.ListInstanceProfilesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -9604,14 +9593,13 @@ const opListInstanceProfilesForRole = "ListInstanceProfilesForRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListInstanceProfilesForRoleRequest method.
+//	req, resp := client.ListInstanceProfilesForRoleRequest(params)
 //
-//    // Example sending a request using the ListInstanceProfilesForRoleRequest method.
-//    req, resp := client.ListInstanceProfilesForRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListInstanceProfilesForRole
 func (c *IAM) ListInstanceProfilesForRoleRequest(input *ListInstanceProfilesForRoleInput) (req *request.Request, output *ListInstanceProfilesForRoleOutput) {
@@ -9652,13 +9640,14 @@ func (c *IAM) ListInstanceProfilesForRoleRequest(input *ListInstanceProfilesForR
 // API operation ListInstanceProfilesForRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListInstanceProfilesForRole
 func (c *IAM) ListInstanceProfilesForRole(input *ListInstanceProfilesForRoleInput) (*ListInstanceProfilesForRoleOutput, error) {
@@ -9690,15 +9679,14 @@ func (c *IAM) ListInstanceProfilesForRoleWithContext(ctx aws.Context, input *Lis
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListInstanceProfilesForRole operation.
-//    pageNum := 0
-//    err := client.ListInstanceProfilesForRolePages(params,
-//        func(page *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListInstanceProfilesForRole operation.
+//	pageNum := 0
+//	err := client.ListInstanceProfilesForRolePages(params,
+//	    func(page *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListInstanceProfilesForRolePages(input *ListInstanceProfilesForRoleInput, fn func(*ListInstanceProfilesForRoleOutput, bool) bool) error {
 	return c.ListInstanceProfilesForRolePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -9750,14 +9738,13 @@ const opListMFADeviceTags = "ListMFADeviceTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMFADeviceTagsRequest method.
+//	req, resp := client.ListMFADeviceTagsRequest(params)
 //
-//    // Example sending a request using the ListMFADeviceTagsRequest method.
-//    req, resp := client.ListMFADeviceTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListMFADeviceTags
 func (c *IAM) ListMFADeviceTagsRequest(input *ListMFADeviceTagsInput) (req *request.Request, output *ListMFADeviceTagsOutput) {
@@ -9791,17 +9778,18 @@ func (c *IAM) ListMFADeviceTagsRequest(input *ListMFADeviceTagsInput) (req *requ
 // API operation ListMFADeviceTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListMFADeviceTags
 func (c *IAM) ListMFADeviceTags(input *ListMFADeviceTagsInput) (*ListMFADeviceTagsOutput, error) {
@@ -9841,14 +9829,13 @@ const opListMFADevices = "ListMFADevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListMFADevicesRequest method.
+//	req, resp := client.ListMFADevicesRequest(params)
 //
-//    // Example sending a request using the ListMFADevicesRequest method.
-//    req, resp := client.ListMFADevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListMFADevices
 func (c *IAM) ListMFADevicesRequest(input *ListMFADevicesInput) (req *request.Request, output *ListMFADevicesOutput) {
@@ -9891,13 +9878,14 @@ func (c *IAM) ListMFADevicesRequest(input *ListMFADevicesInput) (req *request.Re
 // API operation ListMFADevices for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListMFADevices
 func (c *IAM) ListMFADevices(input *ListMFADevicesInput) (*ListMFADevicesOutput, error) {
@@ -9929,15 +9917,14 @@ func (c *IAM) ListMFADevicesWithContext(ctx aws.Context, input *ListMFADevicesIn
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListMFADevices operation.
-//    pageNum := 0
-//    err := client.ListMFADevicesPages(params,
-//        func(page *iam.ListMFADevicesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListMFADevices operation.
+//	pageNum := 0
+//	err := client.ListMFADevicesPages(params,
+//	    func(page *iam.ListMFADevicesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListMFADevicesPages(input *ListMFADevicesInput, fn func(*ListMFADevicesOutput, bool) bool) error {
 	return c.ListMFADevicesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -9989,14 +9976,13 @@ const opListOpenIDConnectProviderTags = "ListOpenIDConnectProviderTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListOpenIDConnectProviderTagsRequest method.
+//	req, resp := client.ListOpenIDConnectProviderTagsRequest(params)
 //
-//    // Example sending a request using the ListOpenIDConnectProviderTagsRequest method.
-//    req, resp := client.ListOpenIDConnectProviderTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListOpenIDConnectProviderTags
 func (c *IAM) ListOpenIDConnectProviderTagsRequest(input *ListOpenIDConnectProviderTagsInput) (req *request.Request, output *ListOpenIDConnectProviderTagsOutput) {
@@ -10032,17 +10018,18 @@ func (c *IAM) ListOpenIDConnectProviderTagsRequest(input *ListOpenIDConnectProvi
 // API operation ListOpenIDConnectProviderTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListOpenIDConnectProviderTags
 func (c *IAM) ListOpenIDConnectProviderTags(input *ListOpenIDConnectProviderTagsInput) (*ListOpenIDConnectProviderTagsOutput, error) {
@@ -10082,14 +10069,13 @@ const opListOpenIDConnectProviders = "ListOpenIDConnectProviders"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListOpenIDConnectProvidersRequest method.
+//	req, resp := client.ListOpenIDConnectProvidersRequest(params)
 //
-//    // Example sending a request using the ListOpenIDConnectProvidersRequest method.
-//    req, resp := client.ListOpenIDConnectProvidersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListOpenIDConnectProviders
 func (c *IAM) ListOpenIDConnectProvidersRequest(input *ListOpenIDConnectProvidersInput) (req *request.Request, output *ListOpenIDConnectProvidersOutput) {
@@ -10111,7 +10097,7 @@ func (c *IAM) ListOpenIDConnectProvidersRequest(input *ListOpenIDConnectProvider
 // ListOpenIDConnectProviders API operation for AWS Identity and Access Management.
 //
 // Lists information about the IAM OpenID Connect (OIDC) provider resource objects
-// defined in the account.
+// defined in the Amazon Web Services account.
 //
 // IAM resource-listing operations return a subset of the available attributes
 // for the resource. For example, this operation does not return tags, even
@@ -10126,9 +10112,9 @@ func (c *IAM) ListOpenIDConnectProvidersRequest(input *ListOpenIDConnectProvider
 // API operation ListOpenIDConnectProviders for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListOpenIDConnectProviders
 func (c *IAM) ListOpenIDConnectProviders(input *ListOpenIDConnectProvidersInput) (*ListOpenIDConnectProvidersOutput, error) {
@@ -10168,14 +10154,13 @@ const opListPolicies = "ListPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPoliciesRequest method.
+//	req, resp := client.ListPoliciesRequest(params)
 //
-//    // Example sending a request using the ListPoliciesRequest method.
-//    req, resp := client.ListPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPolicies
 func (c *IAM) ListPoliciesRequest(input *ListPoliciesInput) (req *request.Request, output *ListPoliciesOutput) {
@@ -10202,9 +10187,9 @@ func (c *IAM) ListPoliciesRequest(input *ListPoliciesInput) (req *request.Reques
 
 // ListPolicies API operation for AWS Identity and Access Management.
 //
-// Lists all the managed policies that are available in your account, including
-// your own customer-defined managed policies and all Amazon Web Services managed
-// policies.
+// Lists all the managed policies that are available in your Amazon Web Services
+// account, including your own customer-defined managed policies and all Amazon
+// Web Services managed policies.
 //
 // You can filter the list of policies that is returned using the optional OnlyAttached,
 // Scope, and PathPrefix parameters. For example, to list only the customer
@@ -10230,9 +10215,9 @@ func (c *IAM) ListPoliciesRequest(input *ListPoliciesInput) (req *request.Reques
 // API operation ListPolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPolicies
 func (c *IAM) ListPolicies(input *ListPoliciesInput) (*ListPoliciesOutput, error) {
@@ -10264,15 +10249,14 @@ func (c *IAM) ListPoliciesWithContext(ctx aws.Context, input *ListPoliciesInput,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPolicies operation.
-//    pageNum := 0
-//    err := client.ListPoliciesPages(params,
-//        func(page *iam.ListPoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPolicies operation.
+//	pageNum := 0
+//	err := client.ListPoliciesPages(params,
+//	    func(page *iam.ListPoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListPoliciesPages(input *ListPoliciesInput, fn func(*ListPoliciesOutput, bool) bool) error {
 	return c.ListPoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -10324,14 +10308,13 @@ const opListPoliciesGrantingServiceAccess = "ListPoliciesGrantingServiceAccess"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPoliciesGrantingServiceAccessRequest method.
+//	req, resp := client.ListPoliciesGrantingServiceAccessRequest(params)
 //
-//    // Example sending a request using the ListPoliciesGrantingServiceAccessRequest method.
-//    req, resp := client.ListPoliciesGrantingServiceAccessRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPoliciesGrantingServiceAccess
 func (c *IAM) ListPoliciesGrantingServiceAccessRequest(input *ListPoliciesGrantingServiceAccessInput) (req *request.Request, output *ListPoliciesGrantingServiceAccessOutput) {
@@ -10365,17 +10348,17 @@ func (c *IAM) ListPoliciesGrantingServiceAccessRequest(input *ListPoliciesGranti
 // The list of policies returned by the operation depends on the ARN of the
 // identity that you provide.
 //
-//    * User – The list of policies includes the managed and inline policies
-//    that are attached to the user directly. The list also includes any additional
-//    managed and inline policies that are attached to the group to which the
-//    user belongs.
+//   - User – The list of policies includes the managed and inline policies
+//     that are attached to the user directly. The list also includes any additional
+//     managed and inline policies that are attached to the group to which the
+//     user belongs.
 //
-//    * Group – The list of policies includes only the managed and inline
-//    policies that are attached to the group directly. Policies that are attached
-//    to the group’s user are not included.
+//   - Group – The list of policies includes only the managed and inline
+//     policies that are attached to the group directly. Policies that are attached
+//     to the group’s user are not included.
 //
-//    * Role – The list of policies includes only the managed and inline policies
-//    that are attached to the role.
+//   - Role – The list of policies includes only the managed and inline policies
+//     that are attached to the role.
 //
 // For each managed policy, this operation returns the ARN and policy name.
 // For each inline policy, it returns the policy name and the entity to which
@@ -10395,13 +10378,14 @@ func (c *IAM) ListPoliciesGrantingServiceAccessRequest(input *ListPoliciesGranti
 // API operation ListPoliciesGrantingServiceAccess for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPoliciesGrantingServiceAccess
 func (c *IAM) ListPoliciesGrantingServiceAccess(input *ListPoliciesGrantingServiceAccessInput) (*ListPoliciesGrantingServiceAccessOutput, error) {
@@ -10441,14 +10425,13 @@ const opListPolicyTags = "ListPolicyTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPolicyTagsRequest method.
+//	req, resp := client.ListPolicyTagsRequest(params)
 //
-//    // Example sending a request using the ListPolicyTagsRequest method.
-//    req, resp := client.ListPolicyTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPolicyTags
 func (c *IAM) ListPolicyTagsRequest(input *ListPolicyTagsInput) (req *request.Request, output *ListPolicyTagsOutput) {
@@ -10482,17 +10465,18 @@ func (c *IAM) ListPolicyTagsRequest(input *ListPolicyTagsInput) (req *request.Re
 // API operation ListPolicyTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPolicyTags
 func (c *IAM) ListPolicyTags(input *ListPolicyTagsInput) (*ListPolicyTagsOutput, error) {
@@ -10532,14 +10516,13 @@ const opListPolicyVersions = "ListPolicyVersions"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListPolicyVersionsRequest method.
+//	req, resp := client.ListPolicyVersionsRequest(params)
 //
-//    // Example sending a request using the ListPolicyVersionsRequest method.
-//    req, resp := client.ListPolicyVersionsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPolicyVersions
 func (c *IAM) ListPolicyVersionsRequest(input *ListPolicyVersionsInput) (req *request.Request, output *ListPolicyVersionsOutput) {
@@ -10581,17 +10564,18 @@ func (c *IAM) ListPolicyVersionsRequest(input *ListPolicyVersionsInput) (req *re
 // API operation ListPolicyVersions for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListPolicyVersions
 func (c *IAM) ListPolicyVersions(input *ListPolicyVersionsInput) (*ListPolicyVersionsOutput, error) {
@@ -10623,15 +10607,14 @@ func (c *IAM) ListPolicyVersionsWithContext(ctx aws.Context, input *ListPolicyVe
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListPolicyVersions operation.
-//    pageNum := 0
-//    err := client.ListPolicyVersionsPages(params,
-//        func(page *iam.ListPolicyVersionsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListPolicyVersions operation.
+//	pageNum := 0
+//	err := client.ListPolicyVersionsPages(params,
+//	    func(page *iam.ListPolicyVersionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListPolicyVersionsPages(input *ListPolicyVersionsInput, fn func(*ListPolicyVersionsOutput, bool) bool) error {
 	return c.ListPolicyVersionsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -10683,14 +10666,13 @@ const opListRolePolicies = "ListRolePolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRolePoliciesRequest method.
+//	req, resp := client.ListRolePoliciesRequest(params)
 //
-//    // Example sending a request using the ListRolePoliciesRequest method.
-//    req, resp := client.ListRolePoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListRolePolicies
 func (c *IAM) ListRolePoliciesRequest(input *ListRolePoliciesInput) (req *request.Request, output *ListRolePoliciesOutput) {
@@ -10737,13 +10719,14 @@ func (c *IAM) ListRolePoliciesRequest(input *ListRolePoliciesInput) (req *reques
 // API operation ListRolePolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListRolePolicies
 func (c *IAM) ListRolePolicies(input *ListRolePoliciesInput) (*ListRolePoliciesOutput, error) {
@@ -10775,15 +10758,14 @@ func (c *IAM) ListRolePoliciesWithContext(ctx aws.Context, input *ListRolePolici
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListRolePolicies operation.
-//    pageNum := 0
-//    err := client.ListRolePoliciesPages(params,
-//        func(page *iam.ListRolePoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListRolePolicies operation.
+//	pageNum := 0
+//	err := client.ListRolePoliciesPages(params,
+//	    func(page *iam.ListRolePoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListRolePoliciesPages(input *ListRolePoliciesInput, fn func(*ListRolePoliciesOutput, bool) bool) error {
 	return c.ListRolePoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -10835,14 +10817,13 @@ const opListRoleTags = "ListRoleTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRoleTagsRequest method.
+//	req, resp := client.ListRoleTagsRequest(params)
 //
-//    // Example sending a request using the ListRoleTagsRequest method.
-//    req, resp := client.ListRoleTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListRoleTags
 func (c *IAM) ListRoleTagsRequest(input *ListRoleTagsInput) (req *request.Request, output *ListRoleTagsOutput) {
@@ -10876,13 +10857,14 @@ func (c *IAM) ListRoleTagsRequest(input *ListRoleTagsInput) (req *request.Reques
 // API operation ListRoleTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListRoleTags
 func (c *IAM) ListRoleTags(input *ListRoleTagsInput) (*ListRoleTagsOutput, error) {
@@ -10922,14 +10904,13 @@ const opListRoles = "ListRoles"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListRolesRequest method.
+//	req, resp := client.ListRolesRequest(params)
 //
-//    // Example sending a request using the ListRolesRequest method.
-//    req, resp := client.ListRolesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListRoles
 func (c *IAM) ListRolesRequest(input *ListRolesInput) (req *request.Request, output *ListRolesOutput) {
@@ -10975,9 +10956,9 @@ func (c *IAM) ListRolesRequest(input *ListRolesInput) (req *request.Request, out
 // API operation ListRoles for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListRoles
 func (c *IAM) ListRoles(input *ListRolesInput) (*ListRolesOutput, error) {
@@ -11009,15 +10990,14 @@ func (c *IAM) ListRolesWithContext(ctx aws.Context, input *ListRolesInput, opts 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListRoles operation.
-//    pageNum := 0
-//    err := client.ListRolesPages(params,
-//        func(page *iam.ListRolesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListRoles operation.
+//	pageNum := 0
+//	err := client.ListRolesPages(params,
+//	    func(page *iam.ListRolesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListRolesPages(input *ListRolesInput, fn func(*ListRolesOutput, bool) bool) error {
 	return c.ListRolesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -11069,14 +11049,13 @@ const opListSAMLProviderTags = "ListSAMLProviderTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSAMLProviderTagsRequest method.
+//	req, resp := client.ListSAMLProviderTagsRequest(params)
 //
-//    // Example sending a request using the ListSAMLProviderTagsRequest method.
-//    req, resp := client.ListSAMLProviderTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSAMLProviderTags
 func (c *IAM) ListSAMLProviderTagsRequest(input *ListSAMLProviderTagsInput) (req *request.Request, output *ListSAMLProviderTagsOutput) {
@@ -11112,17 +11091,18 @@ func (c *IAM) ListSAMLProviderTagsRequest(input *ListSAMLProviderTagsInput) (req
 // API operation ListSAMLProviderTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
+//
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSAMLProviderTags
 func (c *IAM) ListSAMLProviderTags(input *ListSAMLProviderTagsInput) (*ListSAMLProviderTagsOutput, error) {
@@ -11162,14 +11142,13 @@ const opListSAMLProviders = "ListSAMLProviders"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSAMLProvidersRequest method.
+//	req, resp := client.ListSAMLProvidersRequest(params)
 //
-//    // Example sending a request using the ListSAMLProvidersRequest method.
-//    req, resp := client.ListSAMLProvidersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSAMLProviders
 func (c *IAM) ListSAMLProvidersRequest(input *ListSAMLProvidersInput) (req *request.Request, output *ListSAMLProvidersOutput) {
@@ -11206,9 +11185,9 @@ func (c *IAM) ListSAMLProvidersRequest(input *ListSAMLProvidersInput) (req *requ
 // API operation ListSAMLProviders for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSAMLProviders
 func (c *IAM) ListSAMLProviders(input *ListSAMLProvidersInput) (*ListSAMLProvidersOutput, error) {
@@ -11248,14 +11227,13 @@ const opListSSHPublicKeys = "ListSSHPublicKeys"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSSHPublicKeysRequest method.
+//	req, resp := client.ListSSHPublicKeysRequest(params)
 //
-//    // Example sending a request using the ListSSHPublicKeysRequest method.
-//    req, resp := client.ListSSHPublicKeysRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSSHPublicKeys
 func (c *IAM) ListSSHPublicKeysRequest(input *ListSSHPublicKeysInput) (req *request.Request, output *ListSSHPublicKeysOutput) {
@@ -11302,9 +11280,9 @@ func (c *IAM) ListSSHPublicKeysRequest(input *ListSSHPublicKeysInput) (req *requ
 // API operation ListSSHPublicKeys for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSSHPublicKeys
 func (c *IAM) ListSSHPublicKeys(input *ListSSHPublicKeysInput) (*ListSSHPublicKeysOutput, error) {
@@ -11336,15 +11314,14 @@ func (c *IAM) ListSSHPublicKeysWithContext(ctx aws.Context, input *ListSSHPublic
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListSSHPublicKeys operation.
-//    pageNum := 0
-//    err := client.ListSSHPublicKeysPages(params,
-//        func(page *iam.ListSSHPublicKeysOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListSSHPublicKeys operation.
+//	pageNum := 0
+//	err := client.ListSSHPublicKeysPages(params,
+//	    func(page *iam.ListSSHPublicKeysOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListSSHPublicKeysPages(input *ListSSHPublicKeysInput, fn func(*ListSSHPublicKeysOutput, bool) bool) error {
 	return c.ListSSHPublicKeysPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -11396,14 +11373,13 @@ const opListServerCertificateTags = "ListServerCertificateTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListServerCertificateTagsRequest method.
+//	req, resp := client.ListServerCertificateTagsRequest(params)
 //
-//    // Example sending a request using the ListServerCertificateTagsRequest method.
-//    req, resp := client.ListServerCertificateTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListServerCertificateTags
 func (c *IAM) ListServerCertificateTagsRequest(input *ListServerCertificateTagsInput) (req *request.Request, output *ListServerCertificateTagsOutput) {
@@ -11443,13 +11419,14 @@ func (c *IAM) ListServerCertificateTagsRequest(input *ListServerCertificateTagsI
 // API operation ListServerCertificateTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListServerCertificateTags
 func (c *IAM) ListServerCertificateTags(input *ListServerCertificateTagsInput) (*ListServerCertificateTagsOutput, error) {
@@ -11489,14 +11466,13 @@ const opListServerCertificates = "ListServerCertificates"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListServerCertificatesRequest method.
+//	req, resp := client.ListServerCertificatesRequest(params)
 //
-//    // Example sending a request using the ListServerCertificatesRequest method.
-//    req, resp := client.ListServerCertificatesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListServerCertificates
 func (c *IAM) ListServerCertificatesRequest(input *ListServerCertificatesInput) (req *request.Request, output *ListServerCertificatesOutput) {
@@ -11546,9 +11522,9 @@ func (c *IAM) ListServerCertificatesRequest(input *ListServerCertificatesInput) 
 // API operation ListServerCertificates for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListServerCertificates
 func (c *IAM) ListServerCertificates(input *ListServerCertificatesInput) (*ListServerCertificatesOutput, error) {
@@ -11580,15 +11556,14 @@ func (c *IAM) ListServerCertificatesWithContext(ctx aws.Context, input *ListServ
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListServerCertificates operation.
-//    pageNum := 0
-//    err := client.ListServerCertificatesPages(params,
-//        func(page *iam.ListServerCertificatesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListServerCertificates operation.
+//	pageNum := 0
+//	err := client.ListServerCertificatesPages(params,
+//	    func(page *iam.ListServerCertificatesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListServerCertificatesPages(input *ListServerCertificatesInput, fn func(*ListServerCertificatesOutput, bool) bool) error {
 	return c.ListServerCertificatesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -11640,14 +11615,13 @@ const opListServiceSpecificCredentials = "ListServiceSpecificCredentials"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListServiceSpecificCredentialsRequest method.
+//	req, resp := client.ListServiceSpecificCredentialsRequest(params)
 //
-//    // Example sending a request using the ListServiceSpecificCredentialsRequest method.
-//    req, resp := client.ListServiceSpecificCredentialsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListServiceSpecificCredentials
 func (c *IAM) ListServiceSpecificCredentialsRequest(input *ListServiceSpecificCredentialsInput) (req *request.Request, output *ListServiceSpecificCredentialsOutput) {
@@ -11684,12 +11658,13 @@ func (c *IAM) ListServiceSpecificCredentialsRequest(input *ListServiceSpecificCr
 // API operation ListServiceSpecificCredentials for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceNotSupportedException "NotSupportedService"
-//   The specified service does not support service-specific credentials.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceNotSupportedException "NotSupportedService"
+//     The specified service does not support service-specific credentials.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListServiceSpecificCredentials
 func (c *IAM) ListServiceSpecificCredentials(input *ListServiceSpecificCredentialsInput) (*ListServiceSpecificCredentialsOutput, error) {
@@ -11729,14 +11704,13 @@ const opListSigningCertificates = "ListSigningCertificates"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListSigningCertificatesRequest method.
+//	req, resp := client.ListSigningCertificatesRequest(params)
 //
-//    // Example sending a request using the ListSigningCertificatesRequest method.
-//    req, resp := client.ListSigningCertificatesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSigningCertificates
 func (c *IAM) ListSigningCertificatesRequest(input *ListSigningCertificatesInput) (req *request.Request, output *ListSigningCertificatesOutput) {
@@ -11771,9 +11745,10 @@ func (c *IAM) ListSigningCertificatesRequest(input *ListSigningCertificatesInput
 //
 // If the UserName field is not specified, the user name is determined implicitly
 // based on the Amazon Web Services access key ID used to sign the request for
-// this operation. This operation works for access keys under the account. Consequently,
-// you can use this operation to manage account root user credentials even if
-// the account has no associated users.
+// this operation. This operation works for access keys under the Amazon Web
+// Services account. Consequently, you can use this operation to manage Amazon
+// Web Services account root user credentials even if the Amazon Web Services
+// account has no associated users.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -11783,13 +11758,14 @@ func (c *IAM) ListSigningCertificatesRequest(input *ListSigningCertificatesInput
 // API operation ListSigningCertificates for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListSigningCertificates
 func (c *IAM) ListSigningCertificates(input *ListSigningCertificatesInput) (*ListSigningCertificatesOutput, error) {
@@ -11821,15 +11797,14 @@ func (c *IAM) ListSigningCertificatesWithContext(ctx aws.Context, input *ListSig
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListSigningCertificates operation.
-//    pageNum := 0
-//    err := client.ListSigningCertificatesPages(params,
-//        func(page *iam.ListSigningCertificatesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListSigningCertificates operation.
+//	pageNum := 0
+//	err := client.ListSigningCertificatesPages(params,
+//	    func(page *iam.ListSigningCertificatesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListSigningCertificatesPages(input *ListSigningCertificatesInput, fn func(*ListSigningCertificatesOutput, bool) bool) error {
 	return c.ListSigningCertificatesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -11881,14 +11856,13 @@ const opListUserPolicies = "ListUserPolicies"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUserPoliciesRequest method.
+//	req, resp := client.ListUserPoliciesRequest(params)
 //
-//    // Example sending a request using the ListUserPoliciesRequest method.
-//    req, resp := client.ListUserPoliciesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListUserPolicies
 func (c *IAM) ListUserPoliciesRequest(input *ListUserPoliciesInput) (req *request.Request, output *ListUserPoliciesOutput) {
@@ -11934,13 +11908,14 @@ func (c *IAM) ListUserPoliciesRequest(input *ListUserPoliciesInput) (req *reques
 // API operation ListUserPolicies for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListUserPolicies
 func (c *IAM) ListUserPolicies(input *ListUserPoliciesInput) (*ListUserPoliciesOutput, error) {
@@ -11972,15 +11947,14 @@ func (c *IAM) ListUserPoliciesWithContext(ctx aws.Context, input *ListUserPolici
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUserPolicies operation.
-//    pageNum := 0
-//    err := client.ListUserPoliciesPages(params,
-//        func(page *iam.ListUserPoliciesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUserPolicies operation.
+//	pageNum := 0
+//	err := client.ListUserPoliciesPages(params,
+//	    func(page *iam.ListUserPoliciesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListUserPoliciesPages(input *ListUserPoliciesInput, fn func(*ListUserPoliciesOutput, bool) bool) error {
 	return c.ListUserPoliciesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12032,14 +12006,13 @@ const opListUserTags = "ListUserTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUserTagsRequest method.
+//	req, resp := client.ListUserTagsRequest(params)
 //
-//    // Example sending a request using the ListUserTagsRequest method.
-//    req, resp := client.ListUserTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListUserTags
 func (c *IAM) ListUserTagsRequest(input *ListUserTagsInput) (req *request.Request, output *ListUserTagsOutput) {
@@ -12079,13 +12052,14 @@ func (c *IAM) ListUserTagsRequest(input *ListUserTagsInput) (req *request.Reques
 // API operation ListUserTags for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListUserTags
 func (c *IAM) ListUserTags(input *ListUserTagsInput) (*ListUserTagsOutput, error) {
@@ -12117,15 +12091,14 @@ func (c *IAM) ListUserTagsWithContext(ctx aws.Context, input *ListUserTagsInput,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUserTags operation.
-//    pageNum := 0
-//    err := client.ListUserTagsPages(params,
-//        func(page *iam.ListUserTagsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUserTags operation.
+//	pageNum := 0
+//	err := client.ListUserTagsPages(params,
+//	    func(page *iam.ListUserTagsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListUserTagsPages(input *ListUserTagsInput, fn func(*ListUserTagsOutput, bool) bool) error {
 	return c.ListUserTagsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12177,14 +12150,13 @@ const opListUsers = "ListUsers"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListUsersRequest method.
+//	req, resp := client.ListUsersRequest(params)
 //
-//    // Example sending a request using the ListUsersRequest method.
-//    req, resp := client.ListUsersRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListUsers
 func (c *IAM) ListUsersRequest(input *ListUsersInput) (req *request.Request, output *ListUsersOutput) {
@@ -12212,8 +12184,8 @@ func (c *IAM) ListUsersRequest(input *ListUsersInput) (req *request.Request, out
 // ListUsers API operation for AWS Identity and Access Management.
 //
 // Lists the IAM users that have the specified path prefix. If no path prefix
-// is specified, the operation returns all users in the account. If there are
-// none, the operation returns an empty list.
+// is specified, the operation returns all users in the Amazon Web Services
+// account. If there are none, the operation returns an empty list.
 //
 // IAM resource-listing operations return a subset of the available attributes
 // for the resource. For example, this operation does not return tags, even
@@ -12230,9 +12202,9 @@ func (c *IAM) ListUsersRequest(input *ListUsersInput) (req *request.Request, out
 // API operation ListUsers for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListUsers
 func (c *IAM) ListUsers(input *ListUsersInput) (*ListUsersOutput, error) {
@@ -12264,15 +12236,14 @@ func (c *IAM) ListUsersWithContext(ctx aws.Context, input *ListUsersInput, opts 
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListUsers operation.
-//    pageNum := 0
-//    err := client.ListUsersPages(params,
-//        func(page *iam.ListUsersOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListUsers operation.
+//	pageNum := 0
+//	err := client.ListUsersPages(params,
+//	    func(page *iam.ListUsersOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListUsersPages(input *ListUsersInput, fn func(*ListUsersOutput, bool) bool) error {
 	return c.ListUsersPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12324,14 +12295,13 @@ const opListVirtualMFADevices = "ListVirtualMFADevices"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListVirtualMFADevicesRequest method.
+//	req, resp := client.ListVirtualMFADevicesRequest(params)
 //
-//    // Example sending a request using the ListVirtualMFADevicesRequest method.
-//    req, resp := client.ListVirtualMFADevicesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ListVirtualMFADevices
 func (c *IAM) ListVirtualMFADevicesRequest(input *ListVirtualMFADevicesInput) (req *request.Request, output *ListVirtualMFADevicesOutput) {
@@ -12358,15 +12328,15 @@ func (c *IAM) ListVirtualMFADevicesRequest(input *ListVirtualMFADevicesInput) (r
 
 // ListVirtualMFADevices API operation for AWS Identity and Access Management.
 //
-// Lists the virtual MFA devices defined in the account by assignment status.
-// If you do not specify an assignment status, the operation returns a list
-// of all virtual MFA devices. Assignment status can be Assigned, Unassigned,
-// or Any.
+// Lists the virtual MFA devices defined in the Amazon Web Services account
+// by assignment status. If you do not specify an assignment status, the operation
+// returns a list of all virtual MFA devices. Assignment status can be Assigned,
+// Unassigned, or Any.
 //
 // IAM resource-listing operations return a subset of the available attributes
 // for the resource. For example, this operation does not return tags, even
-// though they are an attribute of the returned object. To view all of the information
-// for a virtual MFA device, see ListVirtualMFADevices.
+// though they are an attribute of the returned object. To view tag information
+// for a virtual MFA device, see ListMFADeviceTags.
 //
 // You can paginate the results using the MaxItems and Marker parameters.
 //
@@ -12406,15 +12376,14 @@ func (c *IAM) ListVirtualMFADevicesWithContext(ctx aws.Context, input *ListVirtu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListVirtualMFADevices operation.
-//    pageNum := 0
-//    err := client.ListVirtualMFADevicesPages(params,
-//        func(page *iam.ListVirtualMFADevicesOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListVirtualMFADevices operation.
+//	pageNum := 0
+//	err := client.ListVirtualMFADevicesPages(params,
+//	    func(page *iam.ListVirtualMFADevicesOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) ListVirtualMFADevicesPages(input *ListVirtualMFADevicesInput, fn func(*ListVirtualMFADevicesOutput, bool) bool) error {
 	return c.ListVirtualMFADevicesPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -12466,14 +12435,13 @@ const opPutGroupPolicy = "PutGroupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutGroupPolicyRequest method.
+//	req, resp := client.PutGroupPolicyRequest(params)
 //
-//    // Example sending a request using the PutGroupPolicyRequest method.
-//    req, resp := client.PutGroupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutGroupPolicy
 func (c *IAM) PutGroupPolicyRequest(input *PutGroupPolicyInput) (req *request.Request, output *PutGroupPolicyOutput) {
@@ -12521,22 +12489,23 @@ func (c *IAM) PutGroupPolicyRequest(input *PutGroupPolicyInput) (req *request.Re
 // API operation PutGroupPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutGroupPolicy
 func (c *IAM) PutGroupPolicy(input *PutGroupPolicyInput) (*PutGroupPolicyOutput, error) {
@@ -12576,14 +12545,13 @@ const opPutRolePermissionsBoundary = "PutRolePermissionsBoundary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutRolePermissionsBoundaryRequest method.
+//	req, resp := client.PutRolePermissionsBoundaryRequest(params)
 //
-//    // Example sending a request using the PutRolePermissionsBoundaryRequest method.
-//    req, resp := client.PutRolePermissionsBoundaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutRolePermissionsBoundary
 func (c *IAM) PutRolePermissionsBoundaryRequest(input *PutRolePermissionsBoundaryInput) (req *request.Request, output *PutRolePermissionsBoundaryOutput) {
@@ -12627,27 +12595,28 @@ func (c *IAM) PutRolePermissionsBoundaryRequest(input *PutRolePermissionsBoundar
 // API operation PutRolePermissionsBoundary for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodePolicyNotAttachableException "PolicyNotAttachable"
-//   The request failed because Amazon Web Services service role policies can
-//   only be attached to the service-linked role for that service.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodePolicyNotAttachableException "PolicyNotAttachable"
+//     The request failed because Amazon Web Services service role policies can
+//     only be attached to the service-linked role for that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutRolePermissionsBoundary
 func (c *IAM) PutRolePermissionsBoundary(input *PutRolePermissionsBoundaryInput) (*PutRolePermissionsBoundaryOutput, error) {
@@ -12687,14 +12656,13 @@ const opPutRolePolicy = "PutRolePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutRolePolicyRequest method.
+//	req, resp := client.PutRolePolicyRequest(params)
 //
-//    // Example sending a request using the PutRolePolicyRequest method.
-//    req, resp := client.PutRolePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutRolePolicy
 func (c *IAM) PutRolePolicyRequest(input *PutRolePolicyInput) (req *request.Request, output *PutRolePolicyOutput) {
@@ -12748,28 +12716,29 @@ func (c *IAM) PutRolePolicyRequest(input *PutRolePolicyInput) (req *request.Requ
 // API operation PutRolePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutRolePolicy
 func (c *IAM) PutRolePolicy(input *PutRolePolicyInput) (*PutRolePolicyOutput, error) {
@@ -12809,14 +12778,13 @@ const opPutUserPermissionsBoundary = "PutUserPermissionsBoundary"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutUserPermissionsBoundaryRequest method.
+//	req, resp := client.PutUserPermissionsBoundaryRequest(params)
 //
-//    // Example sending a request using the PutUserPermissionsBoundaryRequest method.
-//    req, resp := client.PutUserPermissionsBoundaryRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutUserPermissionsBoundary
 func (c *IAM) PutUserPermissionsBoundaryRequest(input *PutUserPermissionsBoundaryInput) (req *request.Request, output *PutUserPermissionsBoundaryOutput) {
@@ -12858,21 +12826,22 @@ func (c *IAM) PutUserPermissionsBoundaryRequest(input *PutUserPermissionsBoundar
 // API operation PutUserPermissionsBoundary for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodePolicyNotAttachableException "PolicyNotAttachable"
-//   The request failed because Amazon Web Services service role policies can
-//   only be attached to the service-linked role for that service.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodePolicyNotAttachableException "PolicyNotAttachable"
+//     The request failed because Amazon Web Services service role policies can
+//     only be attached to the service-linked role for that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutUserPermissionsBoundary
 func (c *IAM) PutUserPermissionsBoundary(input *PutUserPermissionsBoundaryInput) (*PutUserPermissionsBoundaryOutput, error) {
@@ -12912,14 +12881,13 @@ const opPutUserPolicy = "PutUserPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutUserPolicyRequest method.
+//	req, resp := client.PutUserPolicyRequest(params)
 //
-//    // Example sending a request using the PutUserPolicyRequest method.
-//    req, resp := client.PutUserPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutUserPolicy
 func (c *IAM) PutUserPolicyRequest(input *PutUserPolicyInput) (req *request.Request, output *PutUserPolicyOutput) {
@@ -12967,22 +12935,23 @@ func (c *IAM) PutUserPolicyRequest(input *PutUserPolicyInput) (req *request.Requ
 // API operation PutUserPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/PutUserPolicy
 func (c *IAM) PutUserPolicy(input *PutUserPolicyInput) (*PutUserPolicyOutput, error) {
@@ -13022,14 +12991,13 @@ const opRemoveClientIDFromOpenIDConnectProvider = "RemoveClientIDFromOpenIDConne
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveClientIDFromOpenIDConnectProviderRequest method.
+//	req, resp := client.RemoveClientIDFromOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the RemoveClientIDFromOpenIDConnectProviderRequest method.
-//    req, resp := client.RemoveClientIDFromOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/RemoveClientIDFromOpenIDConnectProvider
 func (c *IAM) RemoveClientIDFromOpenIDConnectProviderRequest(input *RemoveClientIDFromOpenIDConnectProviderInput) (req *request.Request, output *RemoveClientIDFromOpenIDConnectProviderOutput) {
@@ -13066,17 +13034,18 @@ func (c *IAM) RemoveClientIDFromOpenIDConnectProviderRequest(input *RemoveClient
 // API operation RemoveClientIDFromOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/RemoveClientIDFromOpenIDConnectProvider
 func (c *IAM) RemoveClientIDFromOpenIDConnectProvider(input *RemoveClientIDFromOpenIDConnectProviderInput) (*RemoveClientIDFromOpenIDConnectProviderOutput, error) {
@@ -13116,14 +13085,13 @@ const opRemoveRoleFromInstanceProfile = "RemoveRoleFromInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveRoleFromInstanceProfileRequest method.
+//	req, resp := client.RemoveRoleFromInstanceProfileRequest(params)
 //
-//    // Example sending a request using the RemoveRoleFromInstanceProfileRequest method.
-//    req, resp := client.RemoveRoleFromInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/RemoveRoleFromInstanceProfile
 func (c *IAM) RemoveRoleFromInstanceProfileRequest(input *RemoveRoleFromInstanceProfileInput) (req *request.Request, output *RemoveRoleFromInstanceProfileOutput) {
@@ -13164,24 +13132,25 @@ func (c *IAM) RemoveRoleFromInstanceProfileRequest(input *RemoveRoleFromInstance
 // API operation RemoveRoleFromInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/RemoveRoleFromInstanceProfile
 func (c *IAM) RemoveRoleFromInstanceProfile(input *RemoveRoleFromInstanceProfileInput) (*RemoveRoleFromInstanceProfileOutput, error) {
@@ -13221,14 +13190,13 @@ const opRemoveUserFromGroup = "RemoveUserFromGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the RemoveUserFromGroupRequest method.
+//	req, resp := client.RemoveUserFromGroupRequest(params)
 //
-//    // Example sending a request using the RemoveUserFromGroupRequest method.
-//    req, resp := client.RemoveUserFromGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/RemoveUserFromGroup
 func (c *IAM) RemoveUserFromGroupRequest(input *RemoveUserFromGroupInput) (req *request.Request, output *RemoveUserFromGroupOutput) {
@@ -13260,18 +13228,19 @@ func (c *IAM) RemoveUserFromGroupRequest(input *RemoveUserFromGroupInput) (req *
 // API operation RemoveUserFromGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/RemoveUserFromGroup
 func (c *IAM) RemoveUserFromGroup(input *RemoveUserFromGroupInput) (*RemoveUserFromGroupOutput, error) {
@@ -13311,14 +13280,13 @@ const opResetServiceSpecificCredential = "ResetServiceSpecificCredential"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ResetServiceSpecificCredentialRequest method.
+//	req, resp := client.ResetServiceSpecificCredentialRequest(params)
 //
-//    // Example sending a request using the ResetServiceSpecificCredentialRequest method.
-//    req, resp := client.ResetServiceSpecificCredentialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ResetServiceSpecificCredential
 func (c *IAM) ResetServiceSpecificCredentialRequest(input *ResetServiceSpecificCredentialInput) (req *request.Request, output *ResetServiceSpecificCredentialOutput) {
@@ -13352,9 +13320,9 @@ func (c *IAM) ResetServiceSpecificCredentialRequest(input *ResetServiceSpecificC
 // API operation ResetServiceSpecificCredential for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ResetServiceSpecificCredential
 func (c *IAM) ResetServiceSpecificCredential(input *ResetServiceSpecificCredentialInput) (*ResetServiceSpecificCredentialOutput, error) {
@@ -13394,14 +13362,13 @@ const opResyncMFADevice = "ResyncMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ResyncMFADeviceRequest method.
+//	req, resp := client.ResyncMFADeviceRequest(params)
 //
-//    // Example sending a request using the ResyncMFADeviceRequest method.
-//    req, resp := client.ResyncMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ResyncMFADevice
 func (c *IAM) ResyncMFADeviceRequest(input *ResyncMFADeviceInput) (req *request.Request, output *ResyncMFADeviceOutput) {
@@ -13438,22 +13405,23 @@ func (c *IAM) ResyncMFADeviceRequest(input *ResyncMFADeviceInput) (req *request.
 // API operation ResyncMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidAuthenticationCodeException "InvalidAuthenticationCode"
-//   The request was rejected because the authentication code was not recognized.
-//   The error message describes the specific error.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidAuthenticationCodeException "InvalidAuthenticationCode"
+//     The request was rejected because the authentication code was not recognized.
+//     The error message describes the specific error.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/ResyncMFADevice
 func (c *IAM) ResyncMFADevice(input *ResyncMFADeviceInput) (*ResyncMFADeviceOutput, error) {
@@ -13493,14 +13461,13 @@ const opSetDefaultPolicyVersion = "SetDefaultPolicyVersion"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetDefaultPolicyVersionRequest method.
+//	req, resp := client.SetDefaultPolicyVersionRequest(params)
 //
-//    // Example sending a request using the SetDefaultPolicyVersionRequest method.
-//    req, resp := client.SetDefaultPolicyVersionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SetDefaultPolicyVersion
 func (c *IAM) SetDefaultPolicyVersionRequest(input *SetDefaultPolicyVersionInput) (req *request.Request, output *SetDefaultPolicyVersionOutput) {
@@ -13541,22 +13508,23 @@ func (c *IAM) SetDefaultPolicyVersionRequest(input *SetDefaultPolicyVersionInput
 // API operation SetDefaultPolicyVersion for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SetDefaultPolicyVersion
 func (c *IAM) SetDefaultPolicyVersion(input *SetDefaultPolicyVersionInput) (*SetDefaultPolicyVersionOutput, error) {
@@ -13596,14 +13564,13 @@ const opSetSecurityTokenServicePreferences = "SetSecurityTokenServicePreferences
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SetSecurityTokenServicePreferencesRequest method.
+//	req, resp := client.SetSecurityTokenServicePreferencesRequest(params)
 //
-//    // Example sending a request using the SetSecurityTokenServicePreferencesRequest method.
-//    req, resp := client.SetSecurityTokenServicePreferencesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SetSecurityTokenServicePreferences
 func (c *IAM) SetSecurityTokenServicePreferencesRequest(input *SetSecurityTokenServicePreferencesInput) (req *request.Request, output *SetSecurityTokenServicePreferencesOutput) {
@@ -13626,7 +13593,7 @@ func (c *IAM) SetSecurityTokenServicePreferencesRequest(input *SetSecurityTokenS
 // SetSecurityTokenServicePreferences API operation for AWS Identity and Access Management.
 //
 // Sets the specified version of the global endpoint token as the token version
-// used for the account.
+// used for the Amazon Web Services account.
 //
 // By default, Security Token Service (STS) is available as a global service,
 // and all STS requests go to a single endpoint at https://sts.amazonaws.com.
@@ -13638,12 +13605,12 @@ func (c *IAM) SetSecurityTokenServicePreferencesRequest(input *SetSecurityTokenS
 //
 // If you make an STS call to the global endpoint, the resulting session tokens
 // might be valid in some Regions but not others. It depends on the version
-// that is set in this operation. Version 1 tokens are valid only in Regions
-// that are available by default. These tokens do not work in manually enabled
-// Regions, such as Asia Pacific (Hong Kong). Version 2 tokens are valid in
-// all Regions. However, version 2 tokens are longer and might affect systems
-// where you temporarily store tokens. For information, see Activating and deactivating
-// STS in an Region (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
+// that is set in this operation. Version 1 tokens are valid only in Amazon
+// Web Services Regions that are available by default. These tokens do not work
+// in manually enabled Regions, such as Asia Pacific (Hong Kong). Version 2
+// tokens are valid in all Regions. However, version 2 tokens are longer and
+// might affect systems where you temporarily store tokens. For information,
+// see Activating and deactivating STS in an Amazon Web Services Region (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
 // in the IAM User Guide.
 //
 // To view the current session token version, see the GlobalEndpointTokenVersion
@@ -13657,9 +13624,9 @@ func (c *IAM) SetSecurityTokenServicePreferencesRequest(input *SetSecurityTokenS
 // API operation SetSecurityTokenServicePreferences for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SetSecurityTokenServicePreferences
 func (c *IAM) SetSecurityTokenServicePreferences(input *SetSecurityTokenServicePreferencesInput) (*SetSecurityTokenServicePreferencesOutput, error) {
@@ -13699,14 +13666,13 @@ const opSimulateCustomPolicy = "SimulateCustomPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SimulateCustomPolicyRequest method.
+//	req, resp := client.SimulateCustomPolicyRequest(params)
 //
-//    // Example sending a request using the SimulateCustomPolicyRequest method.
-//    req, resp := client.SimulateCustomPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SimulateCustomPolicy
 func (c *IAM) SimulateCustomPolicyRequest(input *SimulateCustomPolicyInput) (req *request.Request, output *SimulatePolicyResponse) {
@@ -13766,13 +13732,14 @@ func (c *IAM) SimulateCustomPolicyRequest(input *SimulateCustomPolicyInput) (req
 // API operation SimulateCustomPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodePolicyEvaluationException "PolicyEvaluation"
-//   The request failed because a provided policy could not be successfully evaluated.
-//   An additional detailed message indicates the source of the failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodePolicyEvaluationException "PolicyEvaluation"
+//     The request failed because a provided policy could not be successfully evaluated.
+//     An additional detailed message indicates the source of the failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SimulateCustomPolicy
 func (c *IAM) SimulateCustomPolicy(input *SimulateCustomPolicyInput) (*SimulatePolicyResponse, error) {
@@ -13804,15 +13771,14 @@ func (c *IAM) SimulateCustomPolicyWithContext(ctx aws.Context, input *SimulateCu
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a SimulateCustomPolicy operation.
-//    pageNum := 0
-//    err := client.SimulateCustomPolicyPages(params,
-//        func(page *iam.SimulatePolicyResponse, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a SimulateCustomPolicy operation.
+//	pageNum := 0
+//	err := client.SimulateCustomPolicyPages(params,
+//	    func(page *iam.SimulatePolicyResponse, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) SimulateCustomPolicyPages(input *SimulateCustomPolicyInput, fn func(*SimulatePolicyResponse, bool) bool) error {
 	return c.SimulateCustomPolicyPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -13864,14 +13830,13 @@ const opSimulatePrincipalPolicy = "SimulatePrincipalPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the SimulatePrincipalPolicyRequest method.
+//	req, resp := client.SimulatePrincipalPolicyRequest(params)
 //
-//    // Example sending a request using the SimulatePrincipalPolicyRequest method.
-//    req, resp := client.SimulatePrincipalPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SimulatePrincipalPolicy
 func (c *IAM) SimulatePrincipalPolicyRequest(input *SimulatePrincipalPolicyInput) (req *request.Request, output *SimulatePolicyResponse) {
@@ -13940,17 +13905,18 @@ func (c *IAM) SimulatePrincipalPolicyRequest(input *SimulatePrincipalPolicyInput
 // API operation SimulatePrincipalPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodePolicyEvaluationException "PolicyEvaluation"
-//   The request failed because a provided policy could not be successfully evaluated.
-//   An additional detailed message indicates the source of the failure.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
+//
+//   - ErrCodePolicyEvaluationException "PolicyEvaluation"
+//     The request failed because a provided policy could not be successfully evaluated.
+//     An additional detailed message indicates the source of the failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/SimulatePrincipalPolicy
 func (c *IAM) SimulatePrincipalPolicy(input *SimulatePrincipalPolicyInput) (*SimulatePolicyResponse, error) {
@@ -13982,15 +13948,14 @@ func (c *IAM) SimulatePrincipalPolicyWithContext(ctx aws.Context, input *Simulat
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a SimulatePrincipalPolicy operation.
-//    pageNum := 0
-//    err := client.SimulatePrincipalPolicyPages(params,
-//        func(page *iam.SimulatePolicyResponse, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a SimulatePrincipalPolicy operation.
+//	pageNum := 0
+//	err := client.SimulatePrincipalPolicyPages(params,
+//	    func(page *iam.SimulatePolicyResponse, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *IAM) SimulatePrincipalPolicyPages(input *SimulatePrincipalPolicyInput, fn func(*SimulatePolicyResponse, bool) bool) error {
 	return c.SimulatePrincipalPolicyPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -14042,14 +14007,13 @@ const opTagInstanceProfile = "TagInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagInstanceProfileRequest method.
+//	req, resp := client.TagInstanceProfileRequest(params)
 //
-//    // Example sending a request using the TagInstanceProfileRequest method.
-//    req, resp := client.TagInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagInstanceProfile
 func (c *IAM) TagInstanceProfileRequest(input *TagInstanceProfileInput) (req *request.Request, output *TagInstanceProfileOutput) {
@@ -14077,27 +14041,27 @@ func (c *IAM) TagInstanceProfileRequest(input *TagInstanceProfileInput) (req *re
 // Each tag consists of a key name and an associated value. By assigning tags
 // to your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only an IAM instance profile that
-//    has a specified tag attached. For examples of policies that show how to
-//    use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only an IAM instance profile that
+//     has a specified tag attached. For examples of policies that show how to
+//     use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14107,27 +14071,28 @@ func (c *IAM) TagInstanceProfileRequest(input *TagInstanceProfileInput) (req *re
 // API operation TagInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagInstanceProfile
 func (c *IAM) TagInstanceProfile(input *TagInstanceProfileInput) (*TagInstanceProfileOutput, error) {
@@ -14167,14 +14132,13 @@ const opTagMFADevice = "TagMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagMFADeviceRequest method.
+//	req, resp := client.TagMFADeviceRequest(params)
 //
-//    // Example sending a request using the TagMFADeviceRequest method.
-//    req, resp := client.TagMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagMFADevice
 func (c *IAM) TagMFADeviceRequest(input *TagMFADeviceInput) (req *request.Request, output *TagMFADeviceOutput) {
@@ -14203,27 +14167,27 @@ func (c *IAM) TagMFADeviceRequest(input *TagMFADeviceInput) (req *request.Reques
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only an IAM virtual MFA device
-//    that has a specified tag attached. For examples of policies that show
-//    how to use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only an IAM virtual MFA device
+//     that has a specified tag attached. For examples of policies that show
+//     how to use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14233,27 +14197,28 @@ func (c *IAM) TagMFADeviceRequest(input *TagMFADeviceInput) (req *request.Reques
 // API operation TagMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagMFADevice
 func (c *IAM) TagMFADevice(input *TagMFADeviceInput) (*TagMFADeviceOutput, error) {
@@ -14293,14 +14258,13 @@ const opTagOpenIDConnectProvider = "TagOpenIDConnectProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagOpenIDConnectProviderRequest method.
+//	req, resp := client.TagOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the TagOpenIDConnectProviderRequest method.
-//    req, resp := client.TagOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagOpenIDConnectProvider
 func (c *IAM) TagOpenIDConnectProviderRequest(input *TagOpenIDConnectProviderInput) (req *request.Request, output *TagOpenIDConnectProviderOutput) {
@@ -14331,27 +14295,27 @@ func (c *IAM) TagOpenIDConnectProviderRequest(input *TagOpenIDConnectProviderInp
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only an OIDC provider that has
-//    a specified tag attached. For examples of policies that show how to use
-//    tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only an OIDC provider that has
+//     a specified tag attached. For examples of policies that show how to use
+//     tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14361,27 +14325,28 @@ func (c *IAM) TagOpenIDConnectProviderRequest(input *TagOpenIDConnectProviderInp
 // API operation TagOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagOpenIDConnectProvider
 func (c *IAM) TagOpenIDConnectProvider(input *TagOpenIDConnectProviderInput) (*TagOpenIDConnectProviderOutput, error) {
@@ -14421,14 +14386,13 @@ const opTagPolicy = "TagPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagPolicyRequest method.
+//	req, resp := client.TagPolicyRequest(params)
 //
-//    // Example sending a request using the TagPolicyRequest method.
-//    req, resp := client.TagPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagPolicy
 func (c *IAM) TagPolicyRequest(input *TagPolicyInput) (req *request.Request, output *TagPolicyOutput) {
@@ -14456,27 +14420,27 @@ func (c *IAM) TagPolicyRequest(input *TagPolicyInput) (req *request.Request, out
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only an IAM customer managed policy
-//    that has a specified tag attached. For examples of policies that show
-//    how to use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only an IAM customer managed policy
+//     that has a specified tag attached. For examples of policies that show
+//     how to use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14486,27 +14450,28 @@ func (c *IAM) TagPolicyRequest(input *TagPolicyInput) (req *request.Request, out
 // API operation TagPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagPolicy
 func (c *IAM) TagPolicy(input *TagPolicyInput) (*TagPolicyOutput, error) {
@@ -14546,14 +14511,13 @@ const opTagRole = "TagRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagRoleRequest method.
+//	req, resp := client.TagRoleRequest(params)
 //
-//    // Example sending a request using the TagRoleRequest method.
-//    req, resp := client.TagRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagRole
 func (c *IAM) TagRoleRequest(input *TagRoleInput) (req *request.Request, output *TagRoleOutput) {
@@ -14582,31 +14546,31 @@ func (c *IAM) TagRoleRequest(input *TagRoleInput) (req *request.Request, output 
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only an IAM role that has a specified
-//    tag attached. You can also restrict access to only those resources that
-//    have a certain tag attached. For examples of policies that show how to
-//    use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only an IAM role that has a specified
+//     tag attached. You can also restrict access to only those resources that
+//     have a certain tag attached. For examples of policies that show how to
+//     use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * Cost allocation - Use tags to help track which individuals and teams
-//    are using which Amazon Web Services resources.
+//   - Cost allocation - Use tags to help track which individuals and teams
+//     are using which Amazon Web Services resources.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // For more information about tagging, see Tagging IAM identities (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
 // in the IAM User Guide.
@@ -14619,27 +14583,28 @@ func (c *IAM) TagRoleRequest(input *TagRoleInput) (req *request.Request, output 
 // API operation TagRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagRole
 func (c *IAM) TagRole(input *TagRoleInput) (*TagRoleOutput, error) {
@@ -14679,14 +14644,13 @@ const opTagSAMLProvider = "TagSAMLProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagSAMLProviderRequest method.
+//	req, resp := client.TagSAMLProviderRequest(params)
 //
-//    // Example sending a request using the TagSAMLProviderRequest method.
-//    req, resp := client.TagSAMLProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagSAMLProvider
 func (c *IAM) TagSAMLProviderRequest(input *TagSAMLProviderInput) (req *request.Request, output *TagSAMLProviderOutput) {
@@ -14717,27 +14681,27 @@ func (c *IAM) TagSAMLProviderRequest(input *TagSAMLProviderInput) (req *request.
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only a SAML identity provider that
-//    has a specified tag attached. For examples of policies that show how to
-//    use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only a SAML identity provider that
+//     has a specified tag attached. For examples of policies that show how to
+//     use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14747,27 +14711,28 @@ func (c *IAM) TagSAMLProviderRequest(input *TagSAMLProviderInput) (req *request.
 // API operation TagSAMLProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagSAMLProvider
 func (c *IAM) TagSAMLProvider(input *TagSAMLProviderInput) (*TagSAMLProviderOutput, error) {
@@ -14807,14 +14772,13 @@ const opTagServerCertificate = "TagServerCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagServerCertificateRequest method.
+//	req, resp := client.TagServerCertificateRequest(params)
 //
-//    // Example sending a request using the TagServerCertificateRequest method.
-//    req, resp := client.TagServerCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagServerCertificate
 func (c *IAM) TagServerCertificateRequest(input *TagServerCertificateInput) (req *request.Request, output *TagServerCertificateOutput) {
@@ -14848,30 +14812,30 @@ func (c *IAM) TagServerCertificateRequest(input *TagServerCertificateInput) (req
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only a server certificate that
-//    has a specified tag attached. For examples of policies that show how to
-//    use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
-//    in the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only a server certificate that
+//     has a specified tag attached. For examples of policies that show how to
+//     use tags to control access, see Control access using IAM tags (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html)
+//     in the IAM User Guide.
 //
-//    * Cost allocation - Use tags to help track which individuals and teams
-//    are using which Amazon Web Services resources.
+//   - Cost allocation - Use tags to help track which individuals and teams
+//     are using which Amazon Web Services resources.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -14881,27 +14845,28 @@ func (c *IAM) TagServerCertificateRequest(input *TagServerCertificateInput) (req
 // API operation TagServerCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagServerCertificate
 func (c *IAM) TagServerCertificate(input *TagServerCertificateInput) (*TagServerCertificateOutput, error) {
@@ -14941,14 +14906,13 @@ const opTagUser = "TagUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagUserRequest method.
+//	req, resp := client.TagUserRequest(params)
 //
-//    // Example sending a request using the TagUserRequest method.
-//    req, resp := client.TagUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagUser
 func (c *IAM) TagUserRequest(input *TagUserInput) (req *request.Request, output *TagUserOutput) {
@@ -14976,32 +14940,32 @@ func (c *IAM) TagUserRequest(input *TagUserInput) (req *request.Request, output 
 // A tag consists of a key name and an associated value. By assigning tags to
 // your resources, you can do the following:
 //
-//    * Administrative grouping and discovery - Attach tags to resources to
-//    aid in organization and search. For example, you could search for all
-//    resources with the key name Project and the value MyImportantProject.
-//    Or search for all resources with the key name Cost Center and the value
-//    41200.
+//   - Administrative grouping and discovery - Attach tags to resources to
+//     aid in organization and search. For example, you could search for all
+//     resources with the key name Project and the value MyImportantProject.
+//     Or search for all resources with the key name Cost Center and the value
+//     41200.
 //
-//    * Access control - Include tags in IAM user-based and resource-based policies.
-//    You can use tags to restrict access to only an IAM requesting user that
-//    has a specified tag attached. You can also restrict access to only those
-//    resources that have a certain tag attached. For examples of policies that
-//    show how to use tags to control access, see Control access using IAM tags
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html) in
-//    the IAM User Guide.
+//   - Access control - Include tags in IAM user-based and resource-based policies.
+//     You can use tags to restrict access to only an IAM requesting user that
+//     has a specified tag attached. You can also restrict access to only those
+//     resources that have a certain tag attached. For examples of policies that
+//     show how to use tags to control access, see Control access using IAM tags
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_tags.html) in
+//     the IAM User Guide.
 //
-//    * Cost allocation - Use tags to help track which individuals and teams
-//    are using which Amazon Web Services resources.
+//   - Cost allocation - Use tags to help track which individuals and teams
+//     are using which Amazon Web Services resources.
 //
-//    * If any one of the tags is invalid or if you exceed the allowed maximum
-//    number of tags, then the entire request fails and the resource is not
-//    created. For more information about tagging, see Tagging IAM resources
-//    (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
-//    IAM User Guide.
+//   - If any one of the tags is invalid or if you exceed the allowed maximum
+//     number of tags, then the entire request fails and the resource is not
+//     created. For more information about tagging, see Tagging IAM resources
+//     (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html) in the
+//     IAM User Guide.
 //
-//    * Amazon Web Services always interprets the tag Value as a single string.
-//    If you need to store an array, you can store comma-separated values in
-//    the string. However, you must interpret the value in your code.
+//   - Amazon Web Services always interprets the tag Value as a single string.
+//     If you need to store an array, you can store comma-separated values in
+//     the string. However, you must interpret the value in your code.
 //
 // For more information about tagging, see Tagging IAM identities (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_tags.html)
 // in the IAM User Guide.
@@ -15014,27 +14978,28 @@ func (c *IAM) TagUserRequest(input *TagUserInput) (req *request.Request, output 
 // API operation TagUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/TagUser
 func (c *IAM) TagUser(input *TagUserInput) (*TagUserOutput, error) {
@@ -15074,14 +15039,13 @@ const opUntagInstanceProfile = "UntagInstanceProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagInstanceProfileRequest method.
+//	req, resp := client.UntagInstanceProfileRequest(params)
 //
-//    // Example sending a request using the UntagInstanceProfileRequest method.
-//    req, resp := client.UntagInstanceProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagInstanceProfile
 func (c *IAM) UntagInstanceProfileRequest(input *UntagInstanceProfileInput) (req *request.Request, output *UntagInstanceProfileOutput) {
@@ -15115,22 +15079,23 @@ func (c *IAM) UntagInstanceProfileRequest(input *UntagInstanceProfileInput) (req
 // API operation UntagInstanceProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagInstanceProfile
 func (c *IAM) UntagInstanceProfile(input *UntagInstanceProfileInput) (*UntagInstanceProfileOutput, error) {
@@ -15170,14 +15135,13 @@ const opUntagMFADevice = "UntagMFADevice"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagMFADeviceRequest method.
+//	req, resp := client.UntagMFADeviceRequest(params)
 //
-//    // Example sending a request using the UntagMFADeviceRequest method.
-//    req, resp := client.UntagMFADeviceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagMFADevice
 func (c *IAM) UntagMFADeviceRequest(input *UntagMFADeviceInput) (req *request.Request, output *UntagMFADeviceOutput) {
@@ -15212,22 +15176,23 @@ func (c *IAM) UntagMFADeviceRequest(input *UntagMFADeviceInput) (req *request.Re
 // API operation UntagMFADevice for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagMFADevice
 func (c *IAM) UntagMFADevice(input *UntagMFADeviceInput) (*UntagMFADeviceOutput, error) {
@@ -15267,14 +15232,13 @@ const opUntagOpenIDConnectProvider = "UntagOpenIDConnectProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagOpenIDConnectProviderRequest method.
+//	req, resp := client.UntagOpenIDConnectProviderRequest(params)
 //
-//    // Example sending a request using the UntagOpenIDConnectProviderRequest method.
-//    req, resp := client.UntagOpenIDConnectProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagOpenIDConnectProvider
 func (c *IAM) UntagOpenIDConnectProviderRequest(input *UntagOpenIDConnectProviderInput) (req *request.Request, output *UntagOpenIDConnectProviderOutput) {
@@ -15310,22 +15274,23 @@ func (c *IAM) UntagOpenIDConnectProviderRequest(input *UntagOpenIDConnectProvide
 // API operation UntagOpenIDConnectProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagOpenIDConnectProvider
 func (c *IAM) UntagOpenIDConnectProvider(input *UntagOpenIDConnectProviderInput) (*UntagOpenIDConnectProviderOutput, error) {
@@ -15365,14 +15330,13 @@ const opUntagPolicy = "UntagPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagPolicyRequest method.
+//	req, resp := client.UntagPolicyRequest(params)
 //
-//    // Example sending a request using the UntagPolicyRequest method.
-//    req, resp := client.UntagPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagPolicy
 func (c *IAM) UntagPolicyRequest(input *UntagPolicyInput) (req *request.Request, output *UntagPolicyOutput) {
@@ -15406,22 +15370,23 @@ func (c *IAM) UntagPolicyRequest(input *UntagPolicyInput) (req *request.Request,
 // API operation UntagPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagPolicy
 func (c *IAM) UntagPolicy(input *UntagPolicyInput) (*UntagPolicyOutput, error) {
@@ -15461,14 +15426,13 @@ const opUntagRole = "UntagRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagRoleRequest method.
+//	req, resp := client.UntagRoleRequest(params)
 //
-//    // Example sending a request using the UntagRoleRequest method.
-//    req, resp := client.UntagRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagRole
 func (c *IAM) UntagRoleRequest(input *UntagRoleInput) (req *request.Request, output *UntagRoleOutput) {
@@ -15502,18 +15466,19 @@ func (c *IAM) UntagRoleRequest(input *UntagRoleInput) (req *request.Request, out
 // API operation UntagRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagRole
 func (c *IAM) UntagRole(input *UntagRoleInput) (*UntagRoleOutput, error) {
@@ -15553,14 +15518,13 @@ const opUntagSAMLProvider = "UntagSAMLProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagSAMLProviderRequest method.
+//	req, resp := client.UntagSAMLProviderRequest(params)
 //
-//    // Example sending a request using the UntagSAMLProviderRequest method.
-//    req, resp := client.UntagSAMLProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagSAMLProvider
 func (c *IAM) UntagSAMLProviderRequest(input *UntagSAMLProviderInput) (req *request.Request, output *UntagSAMLProviderOutput) {
@@ -15596,22 +15560,23 @@ func (c *IAM) UntagSAMLProviderRequest(input *UntagSAMLProviderInput) (req *requ
 // API operation UntagSAMLProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagSAMLProvider
 func (c *IAM) UntagSAMLProvider(input *UntagSAMLProviderInput) (*UntagSAMLProviderOutput, error) {
@@ -15651,14 +15616,13 @@ const opUntagServerCertificate = "UntagServerCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagServerCertificateRequest method.
+//	req, resp := client.UntagServerCertificateRequest(params)
 //
-//    // Example sending a request using the UntagServerCertificateRequest method.
-//    req, resp := client.UntagServerCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagServerCertificate
 func (c *IAM) UntagServerCertificateRequest(input *UntagServerCertificateInput) (req *request.Request, output *UntagServerCertificateOutput) {
@@ -15698,22 +15662,23 @@ func (c *IAM) UntagServerCertificateRequest(input *UntagServerCertificateInput) 
 // API operation UntagServerCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagServerCertificate
 func (c *IAM) UntagServerCertificate(input *UntagServerCertificateInput) (*UntagServerCertificateOutput, error) {
@@ -15753,14 +15718,13 @@ const opUntagUser = "UntagUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagUserRequest method.
+//	req, resp := client.UntagUserRequest(params)
 //
-//    // Example sending a request using the UntagUserRequest method.
-//    req, resp := client.UntagUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagUser
 func (c *IAM) UntagUserRequest(input *UntagUserInput) (req *request.Request, output *UntagUserOutput) {
@@ -15794,18 +15758,19 @@ func (c *IAM) UntagUserRequest(input *UntagUserInput) (req *request.Request, out
 // API operation UntagUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UntagUser
 func (c *IAM) UntagUser(input *UntagUserInput) (*UntagUserOutput, error) {
@@ -15845,14 +15810,13 @@ const opUpdateAccessKey = "UpdateAccessKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAccessKeyRequest method.
+//	req, resp := client.UpdateAccessKeyRequest(params)
 //
-//    // Example sending a request using the UpdateAccessKeyRequest method.
-//    req, resp := client.UpdateAccessKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateAccessKey
 func (c *IAM) UpdateAccessKeyRequest(input *UpdateAccessKeyInput) (req *request.Request, output *UpdateAccessKeyOutput) {
@@ -15880,9 +15844,11 @@ func (c *IAM) UpdateAccessKeyRequest(input *UpdateAccessKeyInput) (req *request.
 //
 // If the UserName is not specified, the user name is determined implicitly
 // based on the Amazon Web Services access key ID used to sign the request.
-// This operation works for access keys under the account. Consequently, you
-// can use this operation to manage account root user credentials even if the
-// account has no associated users.
+// If a temporary access key is used, then UserName is required. If a long-term
+// key is assigned to the user, then UserName is not required. This operation
+// works for access keys under the Amazon Web Services account. Consequently,
+// you can use this operation to manage Amazon Web Services account root user
+// credentials even if the Amazon Web Services account has no associated users.
 //
 // For information about rotating keys, see Managing keys and certificates (https://docs.aws.amazon.com/IAM/latest/UserGuide/ManagingCredentials.html)
 // in the IAM User Guide.
@@ -15895,18 +15861,19 @@ func (c *IAM) UpdateAccessKeyRequest(input *UpdateAccessKeyInput) (req *request.
 // API operation UpdateAccessKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateAccessKey
 func (c *IAM) UpdateAccessKey(input *UpdateAccessKeyInput) (*UpdateAccessKeyOutput, error) {
@@ -15946,14 +15913,13 @@ const opUpdateAccountPasswordPolicy = "UpdateAccountPasswordPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAccountPasswordPolicyRequest method.
+//	req, resp := client.UpdateAccountPasswordPolicyRequest(params)
 //
-//    // Example sending a request using the UpdateAccountPasswordPolicyRequest method.
-//    req, resp := client.UpdateAccountPasswordPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateAccountPasswordPolicy
 func (c *IAM) UpdateAccountPasswordPolicyRequest(input *UpdateAccountPasswordPolicyInput) (req *request.Request, output *UpdateAccountPasswordPolicyOutput) {
@@ -15975,14 +15941,14 @@ func (c *IAM) UpdateAccountPasswordPolicyRequest(input *UpdateAccountPasswordPol
 
 // UpdateAccountPasswordPolicy API operation for AWS Identity and Access Management.
 //
-// Updates the password policy settings for the account.
+// Updates the password policy settings for the Amazon Web Services account.
 //
-//    * This operation does not support partial updates. No parameters are required,
-//    but if you do not specify a parameter, that parameter's value reverts
-//    to its default value. See the Request Parameters section for each parameter's
-//    default value. Also note that some parameters do not allow the default
-//    parameter to be explicitly set. Instead, to invoke the default value,
-//    do not include that parameter when you invoke the operation.
+// This operation does not support partial updates. No parameters are required,
+// but if you do not specify a parameter, that parameter's value reverts to
+// its default value. See the Request Parameters section for each parameter's
+// default value. Also note that some parameters do not allow the default parameter
+// to be explicitly set. Instead, to invoke the default value, do not include
+// that parameter when you invoke the operation.
 //
 // For more information about using a password policy, see Managing an IAM password
 // policy (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html)
@@ -15996,22 +15962,23 @@ func (c *IAM) UpdateAccountPasswordPolicyRequest(input *UpdateAccountPasswordPol
 // API operation UpdateAccountPasswordPolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateAccountPasswordPolicy
 func (c *IAM) UpdateAccountPasswordPolicy(input *UpdateAccountPasswordPolicyInput) (*UpdateAccountPasswordPolicyOutput, error) {
@@ -16051,14 +16018,13 @@ const opUpdateAssumeRolePolicy = "UpdateAssumeRolePolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateAssumeRolePolicyRequest method.
+//	req, resp := client.UpdateAssumeRolePolicyRequest(params)
 //
-//    // Example sending a request using the UpdateAssumeRolePolicyRequest method.
-//    req, resp := client.UpdateAssumeRolePolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateAssumeRolePolicy
 func (c *IAM) UpdateAssumeRolePolicyRequest(input *UpdateAssumeRolePolicyInput) (req *request.Request, output *UpdateAssumeRolePolicyOutput) {
@@ -16093,28 +16059,29 @@ func (c *IAM) UpdateAssumeRolePolicyRequest(input *UpdateAssumeRolePolicyInput) 
 // API operation UpdateAssumeRolePolicy for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
-//   The request was rejected because the policy document was malformed. The error
-//   message describes the specific error.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeMalformedPolicyDocumentException "MalformedPolicyDocument"
+//     The request was rejected because the policy document was malformed. The error
+//     message describes the specific error.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateAssumeRolePolicy
 func (c *IAM) UpdateAssumeRolePolicy(input *UpdateAssumeRolePolicyInput) (*UpdateAssumeRolePolicyOutput, error) {
@@ -16154,14 +16121,13 @@ const opUpdateGroup = "UpdateGroup"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateGroupRequest method.
+//	req, resp := client.UpdateGroupRequest(params)
 //
-//    // Example sending a request using the UpdateGroupRequest method.
-//    req, resp := client.UpdateGroupRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateGroup
 func (c *IAM) UpdateGroupRequest(input *UpdateGroupInput) (req *request.Request, output *UpdateGroupOutput) {
@@ -16204,22 +16170,23 @@ func (c *IAM) UpdateGroupRequest(input *UpdateGroupInput) (req *request.Request,
 // API operation UpdateGroup for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateGroup
 func (c *IAM) UpdateGroup(input *UpdateGroupInput) (*UpdateGroupOutput, error) {
@@ -16259,14 +16226,13 @@ const opUpdateLoginProfile = "UpdateLoginProfile"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateLoginProfileRequest method.
+//	req, resp := client.UpdateLoginProfileRequest(params)
 //
-//    // Example sending a request using the UpdateLoginProfileRequest method.
-//    req, resp := client.UpdateLoginProfileRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateLoginProfile
 func (c *IAM) UpdateLoginProfileRequest(input *UpdateLoginProfileInput) (req *request.Request, output *UpdateLoginProfileOutput) {
@@ -16291,7 +16257,8 @@ func (c *IAM) UpdateLoginProfileRequest(input *UpdateLoginProfileInput) (req *re
 // Changes the password for the specified IAM user. You can use the CLI, the
 // Amazon Web Services API, or the Users page in the IAM console to change the
 // password for any IAM user. Use ChangePassword to change your own password
-// in the My Security Credentials page in the Management Console.
+// in the My Security Credentials page in the Amazon Web Services Management
+// Console.
 //
 // For more information about modifying passwords, see Managing passwords (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingLogins.html)
 // in the IAM User Guide.
@@ -16304,28 +16271,29 @@ func (c *IAM) UpdateLoginProfileRequest(input *UpdateLoginProfileInput) (req *re
 // API operation UpdateLoginProfile for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
-//   The request was rejected because it referenced an entity that is temporarily
-//   unmodifiable, such as a user name that was deleted and then recreated. The
-//   error indicates that the request is likely to succeed if you try again after
-//   waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
+//     The request was rejected because it referenced an entity that is temporarily
+//     unmodifiable, such as a user name that was deleted and then recreated. The
+//     error indicates that the request is likely to succeed if you try again after
+//     waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodePasswordPolicyViolationException "PasswordPolicyViolation"
-//   The request was rejected because the provided password did not meet the requirements
-//   imposed by the account password policy.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodePasswordPolicyViolationException "PasswordPolicyViolation"
+//     The request was rejected because the provided password did not meet the requirements
+//     imposed by the account password policy.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateLoginProfile
 func (c *IAM) UpdateLoginProfile(input *UpdateLoginProfileInput) (*UpdateLoginProfileOutput, error) {
@@ -16365,14 +16333,13 @@ const opUpdateOpenIDConnectProviderThumbprint = "UpdateOpenIDConnectProviderThum
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateOpenIDConnectProviderThumbprintRequest method.
+//	req, resp := client.UpdateOpenIDConnectProviderThumbprintRequest(params)
 //
-//    // Example sending a request using the UpdateOpenIDConnectProviderThumbprintRequest method.
-//    req, resp := client.UpdateOpenIDConnectProviderThumbprintRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateOpenIDConnectProviderThumbprint
 func (c *IAM) UpdateOpenIDConnectProviderThumbprintRequest(input *UpdateOpenIDConnectProviderThumbprintInput) (req *request.Request, output *UpdateOpenIDConnectProviderThumbprintOutput) {
@@ -16425,17 +16392,18 @@ func (c *IAM) UpdateOpenIDConnectProviderThumbprintRequest(input *UpdateOpenIDCo
 // API operation UpdateOpenIDConnectProviderThumbprint for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateOpenIDConnectProviderThumbprint
 func (c *IAM) UpdateOpenIDConnectProviderThumbprint(input *UpdateOpenIDConnectProviderThumbprintInput) (*UpdateOpenIDConnectProviderThumbprintOutput, error) {
@@ -16475,14 +16443,13 @@ const opUpdateRole = "UpdateRole"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateRoleRequest method.
+//	req, resp := client.UpdateRoleRequest(params)
 //
-//    // Example sending a request using the UpdateRoleRequest method.
-//    req, resp := client.UpdateRoleRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateRole
 func (c *IAM) UpdateRoleRequest(input *UpdateRoleInput) (req *request.Request, output *UpdateRoleOutput) {
@@ -16514,19 +16481,20 @@ func (c *IAM) UpdateRoleRequest(input *UpdateRoleInput) (req *request.Request, o
 // API operation UpdateRole for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateRole
 func (c *IAM) UpdateRole(input *UpdateRoleInput) (*UpdateRoleOutput, error) {
@@ -16566,14 +16534,13 @@ const opUpdateRoleDescription = "UpdateRoleDescription"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateRoleDescriptionRequest method.
+//	req, resp := client.UpdateRoleDescriptionRequest(params)
 //
-//    // Example sending a request using the UpdateRoleDescriptionRequest method.
-//    req, resp := client.UpdateRoleDescriptionRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateRoleDescription
 func (c *IAM) UpdateRoleDescriptionRequest(input *UpdateRoleDescriptionInput) (req *request.Request, output *UpdateRoleDescriptionOutput) {
@@ -16607,19 +16574,20 @@ func (c *IAM) UpdateRoleDescriptionRequest(input *UpdateRoleDescriptionInput) (r
 // API operation UpdateRoleDescription for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
-//   The request was rejected because only the service that depends on the service-linked
-//   role can modify or delete the role on your behalf. The error message includes
-//   the name of the service that depends on this service-linked role. You must
-//   request the change through that service.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeUnmodifiableEntityException "UnmodifiableEntity"
+//     The request was rejected because only the service that depends on the service-linked
+//     role can modify or delete the role on your behalf. The error message includes
+//     the name of the service that depends on this service-linked role. You must
+//     request the change through that service.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateRoleDescription
 func (c *IAM) UpdateRoleDescription(input *UpdateRoleDescriptionInput) (*UpdateRoleDescriptionOutput, error) {
@@ -16659,14 +16627,13 @@ const opUpdateSAMLProvider = "UpdateSAMLProvider"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSAMLProviderRequest method.
+//	req, resp := client.UpdateSAMLProviderRequest(params)
 //
-//    // Example sending a request using the UpdateSAMLProviderRequest method.
-//    req, resp := client.UpdateSAMLProviderRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateSAMLProvider
 func (c *IAM) UpdateSAMLProviderRequest(input *UpdateSAMLProviderInput) (req *request.Request, output *UpdateSAMLProviderOutput) {
@@ -16699,22 +16666,23 @@ func (c *IAM) UpdateSAMLProviderRequest(input *UpdateSAMLProviderInput) (req *re
 // API operation UpdateSAMLProvider for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateSAMLProvider
 func (c *IAM) UpdateSAMLProvider(input *UpdateSAMLProviderInput) (*UpdateSAMLProviderOutput, error) {
@@ -16754,14 +16722,13 @@ const opUpdateSSHPublicKey = "UpdateSSHPublicKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSSHPublicKeyRequest method.
+//	req, resp := client.UpdateSSHPublicKeyRequest(params)
 //
-//    // Example sending a request using the UpdateSSHPublicKeyRequest method.
-//    req, resp := client.UpdateSSHPublicKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateSSHPublicKey
 func (c *IAM) UpdateSSHPublicKeyRequest(input *UpdateSSHPublicKeyInput) (req *request.Request, output *UpdateSSHPublicKeyOutput) {
@@ -16802,9 +16769,9 @@ func (c *IAM) UpdateSSHPublicKeyRequest(input *UpdateSSHPublicKeyInput) (req *re
 // API operation UpdateSSHPublicKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateSSHPublicKey
 func (c *IAM) UpdateSSHPublicKey(input *UpdateSSHPublicKeyInput) (*UpdateSSHPublicKeyOutput, error) {
@@ -16844,14 +16811,13 @@ const opUpdateServerCertificate = "UpdateServerCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateServerCertificateRequest method.
+//	req, resp := client.UpdateServerCertificateRequest(params)
 //
-//    // Example sending a request using the UpdateServerCertificateRequest method.
-//    req, resp := client.UpdateServerCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateServerCertificate
 func (c *IAM) UpdateServerCertificateRequest(input *UpdateServerCertificateInput) (req *request.Request, output *UpdateServerCertificateOutput) {
@@ -16902,22 +16868,23 @@ func (c *IAM) UpdateServerCertificateRequest(input *UpdateServerCertificateInput
 // API operation UpdateServerCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateServerCertificate
 func (c *IAM) UpdateServerCertificate(input *UpdateServerCertificateInput) (*UpdateServerCertificateOutput, error) {
@@ -16957,14 +16924,13 @@ const opUpdateServiceSpecificCredential = "UpdateServiceSpecificCredential"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateServiceSpecificCredentialRequest method.
+//	req, resp := client.UpdateServiceSpecificCredentialRequest(params)
 //
-//    // Example sending a request using the UpdateServiceSpecificCredentialRequest method.
-//    req, resp := client.UpdateServiceSpecificCredentialRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateServiceSpecificCredential
 func (c *IAM) UpdateServiceSpecificCredentialRequest(input *UpdateServiceSpecificCredentialInput) (req *request.Request, output *UpdateServiceSpecificCredentialOutput) {
@@ -16999,9 +16965,9 @@ func (c *IAM) UpdateServiceSpecificCredentialRequest(input *UpdateServiceSpecifi
 // API operation UpdateServiceSpecificCredential for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateServiceSpecificCredential
 func (c *IAM) UpdateServiceSpecificCredential(input *UpdateServiceSpecificCredentialInput) (*UpdateServiceSpecificCredentialOutput, error) {
@@ -17041,14 +17007,13 @@ const opUpdateSigningCertificate = "UpdateSigningCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateSigningCertificateRequest method.
+//	req, resp := client.UpdateSigningCertificateRequest(params)
 //
-//    // Example sending a request using the UpdateSigningCertificateRequest method.
-//    req, resp := client.UpdateSigningCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateSigningCertificate
 func (c *IAM) UpdateSigningCertificateRequest(input *UpdateSigningCertificateInput) (req *request.Request, output *UpdateSigningCertificateOutput) {
@@ -17076,9 +17041,10 @@ func (c *IAM) UpdateSigningCertificateRequest(input *UpdateSigningCertificateInp
 //
 // If the UserName field is not specified, the user name is determined implicitly
 // based on the Amazon Web Services access key ID used to sign the request.
-// This operation works for access keys under the account. Consequently, you
-// can use this operation to manage account root user credentials even if the
-// account has no associated users.
+// This operation works for access keys under the Amazon Web Services account.
+// Consequently, you can use this operation to manage Amazon Web Services account
+// root user credentials even if the Amazon Web Services account has no associated
+// users.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -17088,18 +17054,19 @@ func (c *IAM) UpdateSigningCertificateRequest(input *UpdateSigningCertificateInp
 // API operation UpdateSigningCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateSigningCertificate
 func (c *IAM) UpdateSigningCertificate(input *UpdateSigningCertificateInput) (*UpdateSigningCertificateOutput, error) {
@@ -17139,14 +17106,13 @@ const opUpdateUser = "UpdateUser"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateUserRequest method.
+//	req, resp := client.UpdateUserRequest(params)
 //
-//    // Example sending a request using the UpdateUserRequest method.
-//    req, resp := client.UpdateUserRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateUser
 func (c *IAM) UpdateUserRequest(input *UpdateUserInput) (req *request.Request, output *UpdateUserOutput) {
@@ -17189,33 +17155,34 @@ func (c *IAM) UpdateUserRequest(input *UpdateUserInput) (req *request.Request, o
 // API operation UpdateUser for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
 //
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
-//   The request was rejected because it referenced an entity that is temporarily
-//   unmodifiable, such as a user name that was deleted and then recreated. The
-//   error indicates that the request is likely to succeed if you try again after
-//   waiting several minutes. The error message describes the entity.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeEntityTemporarilyUnmodifiableException "EntityTemporarilyUnmodifiable"
+//     The request was rejected because it referenced an entity that is temporarily
+//     unmodifiable, such as a user name that was deleted and then recreated. The
+//     error indicates that the request is likely to succeed if you try again after
+//     waiting several minutes. The error message describes the entity.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UpdateUser
 func (c *IAM) UpdateUser(input *UpdateUserInput) (*UpdateUserOutput, error) {
@@ -17255,14 +17222,13 @@ const opUploadSSHPublicKey = "UploadSSHPublicKey"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UploadSSHPublicKeyRequest method.
+//	req, resp := client.UploadSSHPublicKeyRequest(params)
 //
-//    // Example sending a request using the UploadSSHPublicKeyRequest method.
-//    req, resp := client.UploadSSHPublicKeyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UploadSSHPublicKey
 func (c *IAM) UploadSSHPublicKeyRequest(input *UploadSSHPublicKeyInput) (req *request.Request, output *UploadSSHPublicKeyOutput) {
@@ -17299,26 +17265,27 @@ func (c *IAM) UploadSSHPublicKeyRequest(input *UploadSSHPublicKeyInput) (req *re
 // API operation UploadSSHPublicKey for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeInvalidPublicKeyException "InvalidPublicKey"
-//   The request was rejected because the public key is malformed or otherwise
-//   invalid.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
 //
-//   * ErrCodeDuplicateSSHPublicKeyException "DuplicateSSHPublicKey"
-//   The request was rejected because the SSH public key is already associated
-//   with the specified IAM user.
+//   - ErrCodeInvalidPublicKeyException "InvalidPublicKey"
+//     The request was rejected because the public key is malformed or otherwise
+//     invalid.
 //
-//   * ErrCodeUnrecognizedPublicKeyEncodingException "UnrecognizedPublicKeyEncoding"
-//   The request was rejected because the public key encoding format is unsupported
-//   or unrecognized.
+//   - ErrCodeDuplicateSSHPublicKeyException "DuplicateSSHPublicKey"
+//     The request was rejected because the SSH public key is already associated
+//     with the specified IAM user.
+//
+//   - ErrCodeUnrecognizedPublicKeyEncodingException "UnrecognizedPublicKeyEncoding"
+//     The request was rejected because the public key encoding format is unsupported
+//     or unrecognized.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UploadSSHPublicKey
 func (c *IAM) UploadSSHPublicKey(input *UploadSSHPublicKeyInput) (*UploadSSHPublicKeyOutput, error) {
@@ -17358,14 +17325,13 @@ const opUploadServerCertificate = "UploadServerCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UploadServerCertificateRequest method.
+//	req, resp := client.UploadServerCertificateRequest(params)
 //
-//    // Example sending a request using the UploadServerCertificateRequest method.
-//    req, resp := client.UploadServerCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UploadServerCertificate
 func (c *IAM) UploadServerCertificateRequest(input *UploadServerCertificateInput) (req *request.Request, output *UploadServerCertificateOutput) {
@@ -17386,9 +17352,9 @@ func (c *IAM) UploadServerCertificateRequest(input *UploadServerCertificateInput
 
 // UploadServerCertificate API operation for AWS Identity and Access Management.
 //
-// Uploads a server certificate entity for the account. The server certificate
-// entity includes a public key certificate, a private key, and an optional
-// certificate chain, which should all be PEM-encoded.
+// Uploads a server certificate entity for the Amazon Web Services account.
+// The server certificate entity includes a public key certificate, a private
+// key, and an optional certificate chain, which should all be PEM-encoded.
 //
 // We recommend that you use Certificate Manager (https://docs.aws.amazon.com/acm/)
 // to provision, manage, and deploy your server certificates. With ACM you can
@@ -17423,35 +17389,36 @@ func (c *IAM) UploadServerCertificateRequest(input *UploadServerCertificateInput
 // API operation UploadServerCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeInvalidInputException "InvalidInput"
-//   The request was rejected because an invalid or out-of-range value was supplied
-//   for an input parameter.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeInvalidInputException "InvalidInput"
+//     The request was rejected because an invalid or out-of-range value was supplied
+//     for an input parameter.
 //
-//   * ErrCodeMalformedCertificateException "MalformedCertificate"
-//   The request was rejected because the certificate was malformed or expired.
-//   The error message describes the specific error.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeKeyPairMismatchException "KeyPairMismatch"
-//   The request was rejected because the public key certificate and the private
-//   key do not match.
+//   - ErrCodeMalformedCertificateException "MalformedCertificate"
+//     The request was rejected because the certificate was malformed or expired.
+//     The error message describes the specific error.
 //
-//   * ErrCodeConcurrentModificationException "ConcurrentModification"
-//   The request was rejected because multiple requests to change this object
-//   were submitted simultaneously. Wait a few minutes and submit your request
-//   again.
+//   - ErrCodeKeyPairMismatchException "KeyPairMismatch"
+//     The request was rejected because the public key certificate and the private
+//     key do not match.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeConcurrentModificationException "ConcurrentModification"
+//     The request was rejected because multiple requests to change this object
+//     were submitted simultaneously. Wait a few minutes and submit your request
+//     again.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UploadServerCertificate
 func (c *IAM) UploadServerCertificate(input *UploadServerCertificateInput) (*UploadServerCertificateOutput, error) {
@@ -17491,14 +17458,13 @@ const opUploadSigningCertificate = "UploadSigningCertificate"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UploadSigningCertificateRequest method.
+//	req, resp := client.UploadSigningCertificateRequest(params)
 //
-//    // Example sending a request using the UploadSigningCertificateRequest method.
-//    req, resp := client.UploadSigningCertificateRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UploadSigningCertificate
 func (c *IAM) UploadSigningCertificateRequest(input *UploadSigningCertificateInput) (req *request.Request, output *UploadSigningCertificateOutput) {
@@ -17530,9 +17496,10 @@ func (c *IAM) UploadSigningCertificateRequest(input *UploadSigningCertificateInp
 //
 // If the UserName is not specified, the IAM user name is determined implicitly
 // based on the Amazon Web Services access key ID used to sign the request.
-// This operation works for access keys under the account. Consequently, you
-// can use this operation to manage account root user credentials even if the
-// account has no associated users.
+// This operation works for access keys under the Amazon Web Services account.
+// Consequently, you can use this operation to manage Amazon Web Services account
+// root user credentials even if the Amazon Web Services account has no associated
+// users.
 //
 // Because the body of an X.509 certificate can be large, you should use POST
 // rather than GET when calling UploadSigningCertificate. For information about
@@ -17550,33 +17517,34 @@ func (c *IAM) UploadSigningCertificateRequest(input *UploadSigningCertificateInp
 // API operation UploadSigningCertificate for usage and error information.
 //
 // Returned Error Codes:
-//   * ErrCodeLimitExceededException "LimitExceeded"
-//   The request was rejected because it attempted to create resources beyond
-//   the current Amazon Web Services account limits. The error message describes
-//   the limit exceeded.
 //
-//   * ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
-//   The request was rejected because it attempted to create a resource that already
-//   exists.
+//   - ErrCodeLimitExceededException "LimitExceeded"
+//     The request was rejected because it attempted to create resources beyond
+//     the current Amazon Web Services account limits. The error message describes
+//     the limit exceeded.
 //
-//   * ErrCodeMalformedCertificateException "MalformedCertificate"
-//   The request was rejected because the certificate was malformed or expired.
-//   The error message describes the specific error.
+//   - ErrCodeEntityAlreadyExistsException "EntityAlreadyExists"
+//     The request was rejected because it attempted to create a resource that already
+//     exists.
 //
-//   * ErrCodeInvalidCertificateException "InvalidCertificate"
-//   The request was rejected because the certificate is invalid.
+//   - ErrCodeMalformedCertificateException "MalformedCertificate"
+//     The request was rejected because the certificate was malformed or expired.
+//     The error message describes the specific error.
 //
-//   * ErrCodeDuplicateCertificateException "DuplicateCertificate"
-//   The request was rejected because the same certificate is associated with
-//   an IAM user in the account.
+//   - ErrCodeInvalidCertificateException "InvalidCertificate"
+//     The request was rejected because the certificate is invalid.
 //
-//   * ErrCodeNoSuchEntityException "NoSuchEntity"
-//   The request was rejected because it referenced a resource entity that does
-//   not exist. The error message describes the resource.
+//   - ErrCodeDuplicateCertificateException "DuplicateCertificate"
+//     The request was rejected because the same certificate is associated with
+//     an IAM user in the account.
 //
-//   * ErrCodeServiceFailureException "ServiceFailure"
-//   The request processing has failed because of an unknown error, exception
-//   or failure.
+//   - ErrCodeNoSuchEntityException "NoSuchEntity"
+//     The request was rejected because it referenced a resource entity that does
+//     not exist. The error message describes the resource.
+//
+//   - ErrCodeServiceFailureException "ServiceFailure"
+//     The request processing has failed because of an unknown error, exception
+//     or failure.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/iam-2010-05-08/UploadSigningCertificate
 func (c *IAM) UploadSigningCertificate(input *UploadSigningCertificateInput) (*UploadSigningCertificateOutput, error) {
@@ -17616,7 +17584,7 @@ type AccessDetail struct {
 	//
 	// This field is null if no principals (IAM users, IAM roles, or root users)
 	// in the reported Organizations entity attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	EntityPath *string `min:"19" type:"string"`
 
 	// The date and time, in ISO 8601 date-time format (http://www.iso.org/iso/iso8601),
@@ -17624,13 +17592,13 @@ type AccessDetail struct {
 	// Amazon Web Services does not report unauthenticated requests.
 	//
 	// This field is null if no principals in the reported Organizations entity
-	// attempted to access the service within the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// attempted to access the service within the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAuthenticatedTime *time.Time `type:"timestamp"`
 
 	// The Region where the last service access attempt occurred.
 	//
 	// This field is null if no principals in the reported Organizations entity
-	// attempted to access the service within the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// attempted to access the service within the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	Region *string `type:"string"`
 
 	// The name of the service in which access was attempted.
@@ -17652,16 +17620,24 @@ type AccessDetail struct {
 	ServiceNamespace *string `min:"1" type:"string" required:"true"`
 
 	// The number of accounts with authenticated principals (root users, IAM users,
-	// and IAM roles) that attempted to access the service in the reporting period.
+	// and IAM roles) that attempted to access the service in the tracking period.
 	TotalAuthenticatedEntities *int64 `type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessDetail) GoString() string {
 	return s.String()
 }
@@ -17724,6 +17700,10 @@ type AccessKey struct {
 
 	// The secret key used to sign requests.
 	//
+	// SecretAccessKey is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by AccessKey's
+	// String and GoString methods.
+	//
 	// SecretAccessKey is a required field
 	SecretAccessKey *string `type:"string" required:"true" sensitive:"true"`
 
@@ -17739,12 +17719,20 @@ type AccessKey struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessKey) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessKey) GoString() string {
 	return s.String()
 }
@@ -17801,8 +17789,8 @@ type AccessKeyLastUsed struct {
 	// LastUsedDate is a required field
 	LastUsedDate *time.Time `type:"timestamp" required:"true"`
 
-	// The Region where this access key was most recently used. The value for this
-	// field is "N/A" in the following situations:
+	// The Amazon Web Services Region where this access key was most recently used.
+	// The value for this field is "N/A" in the following situations:
 	//
 	//    * The user does not have an access key.
 	//
@@ -17811,8 +17799,9 @@ type AccessKeyLastUsed struct {
 	//
 	//    * There is no sign-in data associated with the user.
 	//
-	// For more information about Regions, see Regions and endpoints (https://docs.aws.amazon.com/general/latest/gr/rande.html)
-	// in the Amazon Web Services General Reference.
+	// For more information about Amazon Web Services Regions, see Regions and endpoints
+	// (https://docs.aws.amazon.com/general/latest/gr/rande.html) in the Amazon
+	// Web Services General Reference.
 	//
 	// Region is a required field
 	Region *string `type:"string" required:"true"`
@@ -17831,12 +17820,20 @@ type AccessKeyLastUsed struct {
 	ServiceName *string `type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessKeyLastUsed) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessKeyLastUsed) GoString() string {
 	return s.String()
 }
@@ -17880,12 +17877,20 @@ type AccessKeyMetadata struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessKeyMetadata) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AccessKeyMetadata) GoString() string {
 	return s.String()
 }
@@ -17931,12 +17936,20 @@ type AddClientIDToOpenIDConnectProviderInput struct {
 	OpenIDConnectProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddClientIDToOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddClientIDToOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -17979,12 +17992,20 @@ type AddClientIDToOpenIDConnectProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddClientIDToOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddClientIDToOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -18011,12 +18032,20 @@ type AddRoleToInstanceProfileInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddRoleToInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddRoleToInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -18059,12 +18088,20 @@ type AddRoleToInstanceProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddRoleToInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddRoleToInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -18091,12 +18128,20 @@ type AddUserToGroupInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddUserToGroupInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddUserToGroupInput) GoString() string {
 	return s.String()
 }
@@ -18139,12 +18184,20 @@ type AddUserToGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddUserToGroupOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AddUserToGroupOutput) GoString() string {
 	return s.String()
 }
@@ -18170,12 +18223,20 @@ type AttachGroupPolicyInput struct {
 	PolicyArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachGroupPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachGroupPolicyInput) GoString() string {
 	return s.String()
 }
@@ -18218,12 +18279,20 @@ type AttachGroupPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachGroupPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachGroupPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -18249,12 +18318,20 @@ type AttachRolePolicyInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachRolePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachRolePolicyInput) GoString() string {
 	return s.String()
 }
@@ -18297,12 +18374,20 @@ type AttachRolePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachRolePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachRolePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -18328,12 +18413,20 @@ type AttachUserPolicyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachUserPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachUserPolicyInput) GoString() string {
 	return s.String()
 }
@@ -18376,12 +18469,20 @@ type AttachUserPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachUserPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachUserPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -18407,12 +18508,20 @@ type AttachedPermissionsBoundary struct {
 	PermissionsBoundaryType *string `type:"string" enum:"PermissionsBoundaryAttachmentType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachedPermissionsBoundary) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachedPermissionsBoundary) GoString() string {
 	return s.String()
 }
@@ -18453,12 +18562,20 @@ type AttachedPolicy struct {
 	PolicyName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachedPolicy) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s AttachedPolicy) GoString() string {
 	return s.String()
 }
@@ -18478,33 +18595,49 @@ func (s *AttachedPolicy) SetPolicyName(v string) *AttachedPolicy {
 type ChangePasswordInput struct {
 	_ struct{} `type:"structure"`
 
-	// The new password. The new password must conform to the account's password
-	// policy, if one exists.
+	// The new password. The new password must conform to the Amazon Web Services
+	// account's password policy, if one exists.
 	//
 	// The regex pattern (http://wikipedia.org/wiki/regex) that is used to validate
 	// this parameter is a string of characters. That string can include almost
 	// any printable ASCII character from the space (\u0020) through the end of
 	// the ASCII character range (\u00FF). You can also include the tab (\u0009),
 	// line feed (\u000A), and carriage return (\u000D) characters. Any of these
-	// characters are valid in a password. However, many tools, such as the Management
-	// Console, might restrict the ability to type certain characters because they
-	// have special meaning within that tool.
+	// characters are valid in a password. However, many tools, such as the Amazon
+	// Web Services Management Console, might restrict the ability to type certain
+	// characters because they have special meaning within that tool.
+	//
+	// NewPassword is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by ChangePasswordInput's
+	// String and GoString methods.
 	//
 	// NewPassword is a required field
 	NewPassword *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
 	// The IAM user's current password.
 	//
+	// OldPassword is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by ChangePasswordInput's
+	// String and GoString methods.
+	//
 	// OldPassword is a required field
 	OldPassword *string `min:"1" type:"string" required:"true" sensitive:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ChangePasswordInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ChangePasswordInput) GoString() string {
 	return s.String()
 }
@@ -18547,12 +18680,20 @@ type ChangePasswordOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ChangePasswordOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ChangePasswordOutput) GoString() string {
 	return s.String()
 }
@@ -18581,12 +18722,20 @@ type ContextEntry struct {
 	ContextKeyValues []*string `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ContextEntry) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ContextEntry) GoString() string {
 	return s.String()
 }
@@ -18633,12 +18782,20 @@ type CreateAccessKeyInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccessKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccessKeyInput) GoString() string {
 	return s.String()
 }
@@ -18672,12 +18829,20 @@ type CreateAccessKeyOutput struct {
 	AccessKey *AccessKey `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccessKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccessKeyOutput) GoString() string {
 	return s.String()
 }
@@ -18702,12 +18867,20 @@ type CreateAccountAliasInput struct {
 	AccountAlias *string `min:"3" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccountAliasInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccountAliasInput) GoString() string {
 	return s.String()
 }
@@ -18738,12 +18911,20 @@ type CreateAccountAliasOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccountAliasOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateAccountAliasOutput) GoString() string {
 	return s.String()
 }
@@ -18776,12 +18957,20 @@ type CreateGroupInput struct {
 	Path *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateGroupInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateGroupInput) GoString() string {
 	return s.String()
 }
@@ -18827,12 +19016,20 @@ type CreateGroupOutput struct {
 	Group *Group `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateGroupOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateGroupOutput) GoString() string {
 	return s.String()
 }
@@ -18880,12 +19077,20 @@ type CreateInstanceProfileInput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -18947,12 +19152,20 @@ type CreateInstanceProfileOutput struct {
 	InstanceProfile *InstanceProfile `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -18973,9 +19186,13 @@ type CreateLoginProfileInput struct {
 	// any printable ASCII character from the space (\u0020) through the end of
 	// the ASCII character range (\u00FF). You can also include the tab (\u0009),
 	// line feed (\u000A), and carriage return (\u000D) characters. Any of these
-	// characters are valid in a password. However, many tools, such as the Management
-	// Console, might restrict the ability to type certain characters because they
-	// have special meaning within that tool.
+	// characters are valid in a password. However, many tools, such as the Amazon
+	// Web Services Management Console, might restrict the ability to type certain
+	// characters because they have special meaning within that tool.
+	//
+	// Password is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by CreateLoginProfileInput's
+	// String and GoString methods.
 	//
 	// Password is a required field
 	Password *string `min:"1" type:"string" required:"true" sensitive:"true"`
@@ -18994,12 +19211,20 @@ type CreateLoginProfileInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateLoginProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateLoginProfileInput) GoString() string {
 	return s.String()
 }
@@ -19054,12 +19279,20 @@ type CreateLoginProfileOutput struct {
 	LoginProfile *LoginProfile `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateLoginProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateLoginProfileOutput) GoString() string {
 	return s.String()
 }
@@ -19073,10 +19306,10 @@ func (s *CreateLoginProfileOutput) SetLoginProfile(v *LoginProfile) *CreateLogin
 type CreateOpenIDConnectProviderInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of client IDs (also known as audiences). When a mobile or web app
-	// registers with an OpenID Connect provider, they establish a value that identifies
-	// the application. (This is the value that's sent as the client_id parameter
-	// on OAuth requests.)
+	// Provides a list of client IDs, also known as audiences. When a mobile or
+	// web app registers with an OpenID Connect provider, they establish a value
+	// that identifies the application. This is the value that's sent as the client_id
+	// parameter on OAuth requests.
 	//
 	// You can register multiple client IDs with the same provider. For example,
 	// you might have multiple applications that use the same OIDC provider. You
@@ -19111,8 +19344,8 @@ type CreateOpenIDConnectProviderInput struct {
 	// In that case, the thumbprint string would be the hex-encoded SHA-1 hash value
 	// of the certificate used by https://keys.server.example.com.
 	//
-	// For more information about obtaining the OIDC provider's thumbprint, see
-	// Obtaining the thumbprint for an OpenID Connect provider (https://docs.aws.amazon.com/IAM/latest/UserGuide/identity-providers-oidc-obtain-thumbprint.html)
+	// For more information about obtaining the OIDC provider thumbprint, see Obtaining
+	// the thumbprint for an OpenID Connect provider (https://docs.aws.amazon.com/IAM/latest/UserGuide/identity-providers-oidc-obtain-thumbprint.html)
 	// in the IAM User Guide.
 	//
 	// ThumbprintList is a required field
@@ -19122,22 +19355,31 @@ type CreateOpenIDConnectProviderInput struct {
 	// correspond to the iss claim in the provider's OpenID Connect ID tokens. Per
 	// the OIDC standard, path components are allowed but query parameters are not.
 	// Typically the URL consists of only a hostname, like https://server.example.org
-	// or https://example.com.
+	// or https://example.com. The URL should not contain a port number.
 	//
-	// You cannot register the same provider multiple times in a single account.
-	// If you try to submit a URL that has already been used for an OpenID Connect
-	// provider in the account, you will get an error.
+	// You cannot register the same provider multiple times in a single Amazon Web
+	// Services account. If you try to submit a URL that has already been used for
+	// an OpenID Connect provider in the Amazon Web Services account, you will get
+	// an error.
 	//
 	// Url is a required field
 	Url *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -19210,12 +19452,20 @@ type CreateOpenIDConnectProviderOutput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -19258,6 +19508,8 @@ type CreatePolicyInput struct {
 	// can contain any ASCII character from the ! (\u0021) through the DEL character
 	// (\u007F), including most punctuation characters, digits, and upper and lowercased
 	// letters.
+	//
+	// You cannot use an asterisk (*) in the path name.
 	Path *string `min:"1" type:"string"`
 
 	// The JSON policy document that you want to use as the content for the new
@@ -19311,12 +19563,20 @@ type CreatePolicyInput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyInput) GoString() string {
 	return s.String()
 }
@@ -19394,12 +19654,20 @@ type CreatePolicyOutput struct {
 	Policy *Policy `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -19462,12 +19730,20 @@ type CreatePolicyVersionInput struct {
 	SetAsDefault *bool `type:"boolean"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyVersionInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyVersionInput) GoString() string {
 	return s.String()
 }
@@ -19520,12 +19796,20 @@ type CreatePolicyVersionOutput struct {
 	PolicyVersion *PolicyVersion `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyVersionOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreatePolicyVersionOutput) GoString() string {
 	return s.String()
 }
@@ -19568,8 +19852,8 @@ type CreateRoleInput struct {
 	Description *string `type:"string"`
 
 	// The maximum session duration (in seconds) that you want to set for the specified
-	// role. If you do not specify a value for this setting, the default maximum
-	// of one hour is applied. This setting can have a value from 1 hour to 12 hours.
+	// role. If you do not specify a value for this setting, the default value of
+	// one hour is applied. This setting can have a value from 1 hour to 12 hours.
 	//
 	// Anyone who assumes the role from the or API can use the DurationSeconds API
 	// parameter or the duration-seconds CLI parameter to request a longer session.
@@ -19621,12 +19905,20 @@ type CreateRoleInput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateRoleInput) GoString() string {
 	return s.String()
 }
@@ -19724,12 +20016,20 @@ type CreateRoleOutput struct {
 	Role *Role `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateRoleOutput) GoString() string {
 	return s.String()
 }
@@ -19774,12 +20074,20 @@ type CreateSAMLProviderInput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateSAMLProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateSAMLProviderInput) GoString() string {
 	return s.String()
 }
@@ -19848,12 +20156,20 @@ type CreateSAMLProviderOutput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateSAMLProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateSAMLProviderOutput) GoString() string {
 	return s.String()
 }
@@ -19902,12 +20218,20 @@ type CreateServiceLinkedRoleInput struct {
 	Description *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceLinkedRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceLinkedRoleInput) GoString() string {
 	return s.String()
 }
@@ -19956,12 +20280,20 @@ type CreateServiceLinkedRoleOutput struct {
 	Role *Role `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceLinkedRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceLinkedRoleOutput) GoString() string {
 	return s.String()
 }
@@ -19994,12 +20326,20 @@ type CreateServiceSpecificCredentialInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceSpecificCredentialInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceSpecificCredentialInput) GoString() string {
 	return s.String()
 }
@@ -20046,12 +20386,20 @@ type CreateServiceSpecificCredentialOutput struct {
 	ServiceSpecificCredential *ServiceSpecificCredential `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceSpecificCredentialOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateServiceSpecificCredentialOutput) GoString() string {
 	return s.String()
 }
@@ -20103,12 +20451,20 @@ type CreateUserInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateUserInput) GoString() string {
 	return s.String()
 }
@@ -20177,12 +20533,20 @@ type CreateUserOutput struct {
 	User *User `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateUserOutput) GoString() string {
 	return s.String()
 }
@@ -20231,12 +20595,20 @@ type CreateVirtualMFADeviceInput struct {
 	VirtualMFADeviceName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateVirtualMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateVirtualMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -20298,12 +20670,20 @@ type CreateVirtualMFADeviceOutput struct {
 	VirtualMFADevice *VirtualMFADevice `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateVirtualMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s CreateVirtualMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -20337,12 +20717,20 @@ type DeactivateMFADeviceInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeactivateMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeactivateMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -20385,12 +20773,20 @@ type DeactivateMFADeviceOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeactivateMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeactivateMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -20416,12 +20812,20 @@ type DeleteAccessKeyInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccessKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccessKeyInput) GoString() string {
 	return s.String()
 }
@@ -20461,12 +20865,20 @@ type DeleteAccessKeyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccessKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccessKeyOutput) GoString() string {
 	return s.String()
 }
@@ -20485,12 +20897,20 @@ type DeleteAccountAliasInput struct {
 	AccountAlias *string `min:"3" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountAliasInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountAliasInput) GoString() string {
 	return s.String()
 }
@@ -20521,12 +20941,20 @@ type DeleteAccountAliasOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountAliasOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountAliasOutput) GoString() string {
 	return s.String()
 }
@@ -20535,12 +20963,20 @@ type DeleteAccountPasswordPolicyInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountPasswordPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountPasswordPolicyInput) GoString() string {
 	return s.String()
 }
@@ -20549,12 +20985,20 @@ type DeleteAccountPasswordPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountPasswordPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteAccountPasswordPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -20572,12 +21016,20 @@ type DeleteGroupInput struct {
 	GroupName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupInput) GoString() string {
 	return s.String()
 }
@@ -20608,12 +21060,20 @@ type DeleteGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupOutput) GoString() string {
 	return s.String()
 }
@@ -20641,12 +21101,20 @@ type DeleteGroupPolicyInput struct {
 	PolicyName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupPolicyInput) GoString() string {
 	return s.String()
 }
@@ -20689,12 +21157,20 @@ type DeleteGroupPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteGroupPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -20712,12 +21188,20 @@ type DeleteInstanceProfileInput struct {
 	InstanceProfileName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -20748,12 +21232,20 @@ type DeleteInstanceProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -20771,12 +21263,20 @@ type DeleteLoginProfileInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteLoginProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteLoginProfileInput) GoString() string {
 	return s.String()
 }
@@ -20807,12 +21307,20 @@ type DeleteLoginProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteLoginProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteLoginProfileOutput) GoString() string {
 	return s.String()
 }
@@ -20828,12 +21336,20 @@ type DeleteOpenIDConnectProviderInput struct {
 	OpenIDConnectProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -20864,12 +21380,20 @@ type DeleteOpenIDConnectProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -20886,12 +21410,20 @@ type DeletePolicyInput struct {
 	PolicyArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyInput) GoString() string {
 	return s.String()
 }
@@ -20922,12 +21454,20 @@ type DeletePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -20959,12 +21499,20 @@ type DeletePolicyVersionInput struct {
 	VersionId *string `type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyVersionInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyVersionInput) GoString() string {
 	return s.String()
 }
@@ -21004,12 +21552,20 @@ type DeletePolicyVersionOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyVersionOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletePolicyVersionOutput) GoString() string {
 	return s.String()
 }
@@ -21027,12 +21583,20 @@ type DeleteRoleInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRoleInput) GoString() string {
 	return s.String()
 }
@@ -21063,12 +21627,20 @@ type DeleteRoleOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRoleOutput) GoString() string {
 	return s.String()
 }
@@ -21083,12 +21655,20 @@ type DeleteRolePermissionsBoundaryInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePermissionsBoundaryInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePermissionsBoundaryInput) GoString() string {
 	return s.String()
 }
@@ -21119,12 +21699,20 @@ type DeleteRolePermissionsBoundaryOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePermissionsBoundaryOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePermissionsBoundaryOutput) GoString() string {
 	return s.String()
 }
@@ -21152,12 +21740,20 @@ type DeleteRolePolicyInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePolicyInput) GoString() string {
 	return s.String()
 }
@@ -21200,12 +21796,20 @@ type DeleteRolePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteRolePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -21219,12 +21823,20 @@ type DeleteSAMLProviderInput struct {
 	SAMLProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSAMLProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSAMLProviderInput) GoString() string {
 	return s.String()
 }
@@ -21255,12 +21867,20 @@ type DeleteSAMLProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSAMLProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSAMLProviderOutput) GoString() string {
 	return s.String()
 }
@@ -21287,12 +21907,20 @@ type DeleteSSHPublicKeyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSSHPublicKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSSHPublicKeyInput) GoString() string {
 	return s.String()
 }
@@ -21335,12 +21963,20 @@ type DeleteSSHPublicKeyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSSHPublicKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSSHPublicKeyOutput) GoString() string {
 	return s.String()
 }
@@ -21358,12 +21994,20 @@ type DeleteServerCertificateInput struct {
 	ServerCertificateName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServerCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServerCertificateInput) GoString() string {
 	return s.String()
 }
@@ -21394,12 +22038,20 @@ type DeleteServerCertificateOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServerCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServerCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -21413,12 +22065,20 @@ type DeleteServiceLinkedRoleInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceLinkedRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceLinkedRoleInput) GoString() string {
 	return s.String()
 }
@@ -21455,12 +22115,20 @@ type DeleteServiceLinkedRoleOutput struct {
 	DeletionTaskId *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceLinkedRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceLinkedRoleOutput) GoString() string {
 	return s.String()
 }
@@ -21494,12 +22162,20 @@ type DeleteServiceSpecificCredentialInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceSpecificCredentialInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceSpecificCredentialInput) GoString() string {
 	return s.String()
 }
@@ -21539,12 +22215,20 @@ type DeleteServiceSpecificCredentialOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceSpecificCredentialOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteServiceSpecificCredentialOutput) GoString() string {
 	return s.String()
 }
@@ -21569,12 +22253,20 @@ type DeleteSigningCertificateInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSigningCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSigningCertificateInput) GoString() string {
 	return s.String()
 }
@@ -21614,12 +22306,20 @@ type DeleteSigningCertificateOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSigningCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteSigningCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -21637,12 +22337,20 @@ type DeleteUserInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserInput) GoString() string {
 	return s.String()
 }
@@ -21673,12 +22381,20 @@ type DeleteUserOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserOutput) GoString() string {
 	return s.String()
 }
@@ -21693,12 +22409,20 @@ type DeleteUserPermissionsBoundaryInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPermissionsBoundaryInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPermissionsBoundaryInput) GoString() string {
 	return s.String()
 }
@@ -21729,12 +22453,20 @@ type DeleteUserPermissionsBoundaryOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPermissionsBoundaryOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPermissionsBoundaryOutput) GoString() string {
 	return s.String()
 }
@@ -21762,12 +22494,20 @@ type DeleteUserPolicyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPolicyInput) GoString() string {
 	return s.String()
 }
@@ -21810,12 +22550,20 @@ type DeleteUserPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteUserPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -21834,12 +22582,20 @@ type DeleteVirtualMFADeviceInput struct {
 	SerialNumber *string `min:"9" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteVirtualMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteVirtualMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -21870,12 +22626,20 @@ type DeleteVirtualMFADeviceOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteVirtualMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeleteVirtualMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -21899,12 +22663,20 @@ type DeletionTaskFailureReasonType struct {
 	RoleUsageList []*RoleUsageType `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletionTaskFailureReasonType) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DeletionTaskFailureReasonType) GoString() string {
 	return s.String()
 }
@@ -21942,12 +22714,20 @@ type DetachGroupPolicyInput struct {
 	PolicyArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachGroupPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachGroupPolicyInput) GoString() string {
 	return s.String()
 }
@@ -21990,12 +22770,20 @@ type DetachGroupPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachGroupPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachGroupPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -22021,12 +22809,20 @@ type DetachRolePolicyInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachRolePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachRolePolicyInput) GoString() string {
 	return s.String()
 }
@@ -22069,12 +22865,20 @@ type DetachRolePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachRolePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachRolePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -22100,12 +22904,20 @@ type DetachUserPolicyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachUserPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachUserPolicyInput) GoString() string {
 	return s.String()
 }
@@ -22148,12 +22960,20 @@ type DetachUserPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachUserPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s DetachUserPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -22209,12 +23029,20 @@ type EnableMFADeviceInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EnableMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EnableMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -22281,12 +23109,20 @@ type EnableMFADeviceOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EnableMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EnableMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -22310,16 +23146,24 @@ type EntityDetails struct {
 	// Amazon Web Services does not report unauthenticated requests.
 	//
 	// This field is null if no IAM entities attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAuthenticated *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EntityDetails) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EntityDetails) GoString() string {
 	return s.String()
 }
@@ -22372,12 +23216,20 @@ type EntityInfo struct {
 	Type *string `type:"string" required:"true" enum:"PolicyOwnerEntityType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EntityInfo) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EntityInfo) GoString() string {
 	return s.String()
 }
@@ -22431,12 +23283,20 @@ type ErrorDetails struct {
 	Message *string `type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ErrorDetails) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ErrorDetails) GoString() string {
 	return s.String()
 }
@@ -22523,12 +23383,20 @@ type EvaluationResult struct {
 	ResourceSpecificResults []*ResourceSpecificResult `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EvaluationResult) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s EvaluationResult) GoString() string {
 	return s.String()
 }
@@ -22591,12 +23459,20 @@ type GenerateCredentialReportInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateCredentialReportInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateCredentialReportInput) GoString() string {
 	return s.String()
 }
@@ -22612,12 +23488,20 @@ type GenerateCredentialReportOutput struct {
 	State *string `type:"string" enum:"ReportStateType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateCredentialReportOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateCredentialReportOutput) GoString() string {
 	return s.String()
 }
@@ -22654,12 +23538,20 @@ type GenerateOrganizationsAccessReportInput struct {
 	OrganizationsPolicyId *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateOrganizationsAccessReportInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateOrganizationsAccessReportInput) GoString() string {
 	return s.String()
 }
@@ -22699,12 +23591,20 @@ type GenerateOrganizationsAccessReportOutput struct {
 	JobId *string `min:"36" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateOrganizationsAccessReportOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateOrganizationsAccessReportOutput) GoString() string {
 	return s.String()
 }
@@ -22734,12 +23634,20 @@ type GenerateServiceLastAccessedDetailsInput struct {
 	Granularity *string `type:"string" enum:"AccessAdvisorUsageGranularityType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateServiceLastAccessedDetailsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateServiceLastAccessedDetailsInput) GoString() string {
 	return s.String()
 }
@@ -22782,12 +23690,20 @@ type GenerateServiceLastAccessedDetailsOutput struct {
 	JobId *string `min:"36" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateServiceLastAccessedDetailsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GenerateServiceLastAccessedDetailsOutput) GoString() string {
 	return s.String()
 }
@@ -22811,12 +23727,20 @@ type GetAccessKeyLastUsedInput struct {
 	AccessKeyId *string `min:"16" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccessKeyLastUsedInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccessKeyLastUsedInput) GoString() string {
 	return s.String()
 }
@@ -22856,12 +23780,20 @@ type GetAccessKeyLastUsedOutput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccessKeyLastUsedOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccessKeyLastUsedOutput) GoString() string {
 	return s.String()
 }
@@ -22888,7 +23820,7 @@ type GetAccountAuthorizationDetailsInput struct {
 	// The format for this parameter is a comma-separated (if more than one) list
 	// of strings. Each string value in the list must be one of the valid values
 	// listed below.
-	Filter []*string `type:"list"`
+	Filter []*string `type:"list" enum:"EntityType"`
 
 	// Use this parameter only when paginating results and only after you receive
 	// a response indicating that the results are truncated. Set it to the value
@@ -22908,12 +23840,20 @@ type GetAccountAuthorizationDetailsInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountAuthorizationDetailsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountAuthorizationDetailsInput) GoString() string {
 	return s.String()
 }
@@ -22981,12 +23921,20 @@ type GetAccountAuthorizationDetailsOutput struct {
 	UserDetailList []*UserDetail `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountAuthorizationDetailsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountAuthorizationDetailsOutput) GoString() string {
 	return s.String()
 }
@@ -23031,12 +23979,20 @@ type GetAccountPasswordPolicyInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountPasswordPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountPasswordPolicyInput) GoString() string {
 	return s.String()
 }
@@ -23051,12 +24007,20 @@ type GetAccountPasswordPolicyOutput struct {
 	PasswordPolicy *PasswordPolicy `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountPasswordPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountPasswordPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -23071,12 +24035,20 @@ type GetAccountSummaryInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountSummaryInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountSummaryInput) GoString() string {
 	return s.String()
 }
@@ -23090,12 +24062,20 @@ type GetAccountSummaryOutput struct {
 	SummaryMap map[string]*int64 `type:"map"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountSummaryOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetAccountSummaryOutput) GoString() string {
 	return s.String()
 }
@@ -23129,12 +24109,20 @@ type GetContextKeysForCustomPolicyInput struct {
 	PolicyInputList []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetContextKeysForCustomPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetContextKeysForCustomPolicyInput) GoString() string {
 	return s.String()
 }
@@ -23167,12 +24155,20 @@ type GetContextKeysForPolicyResponse struct {
 	ContextKeyNames []*string `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetContextKeysForPolicyResponse) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetContextKeysForPolicyResponse) GoString() string {
 	return s.String()
 }
@@ -23218,12 +24214,20 @@ type GetContextKeysForPrincipalPolicyInput struct {
 	PolicySourceArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetContextKeysForPrincipalPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetContextKeysForPrincipalPolicyInput) GoString() string {
 	return s.String()
 }
@@ -23260,12 +24264,20 @@ type GetCredentialReportInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetCredentialReportInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetCredentialReportInput) GoString() string {
 	return s.String()
 }
@@ -23275,7 +24287,6 @@ type GetCredentialReportOutput struct {
 	_ struct{} `type:"structure"`
 
 	// Contains the credential report. The report is Base64-encoded.
-	//
 	// Content is automatically base64 encoded/decoded by the SDK.
 	Content []byte `type:"blob"`
 
@@ -23287,12 +24298,20 @@ type GetCredentialReportOutput struct {
 	ReportFormat *string `type:"string" enum:"ReportFormatType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetCredentialReportOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetCredentialReportOutput) GoString() string {
 	return s.String()
 }
@@ -23345,12 +24364,20 @@ type GetGroupInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupInput) GoString() string {
 	return s.String()
 }
@@ -23422,12 +24449,20 @@ type GetGroupOutput struct {
 	Users []*User `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupOutput) GoString() string {
 	return s.String()
 }
@@ -23478,12 +24513,20 @@ type GetGroupPolicyInput struct {
 	PolicyName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupPolicyInput) GoString() string {
 	return s.String()
 }
@@ -23546,12 +24589,20 @@ type GetGroupPolicyOutput struct {
 	PolicyName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetGroupPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -23587,12 +24638,20 @@ type GetInstanceProfileInput struct {
 	InstanceProfileName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -23629,12 +24688,20 @@ type GetInstanceProfileOutput struct {
 	InstanceProfile *InstanceProfile `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -23658,12 +24725,20 @@ type GetLoginProfileInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetLoginProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetLoginProfileInput) GoString() string {
 	return s.String()
 }
@@ -23701,12 +24776,20 @@ type GetLoginProfileOutput struct {
 	LoginProfile *LoginProfile `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetLoginProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetLoginProfileOutput) GoString() string {
 	return s.String()
 }
@@ -23731,12 +24814,20 @@ type GetOpenIDConnectProviderInput struct {
 	OpenIDConnectProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -23772,7 +24863,7 @@ type GetOpenIDConnectProviderOutput struct {
 	ClientIDList []*string `type:"list"`
 
 	// The date and time when the IAM OIDC provider resource object was created
-	// in the account.
+	// in the Amazon Web Services account.
 	CreateDate *time.Time `type:"timestamp"`
 
 	// A list of tags that are attached to the specified IAM OIDC provider. The
@@ -23790,12 +24881,20 @@ type GetOpenIDConnectProviderOutput struct {
 	Url *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -23862,12 +24961,20 @@ type GetOrganizationsAccessReportInput struct {
 	SortKey *string `type:"string" enum:"SortKeyType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOrganizationsAccessReportInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOrganizationsAccessReportInput) GoString() string {
 	return s.String()
 }
@@ -23971,12 +25078,20 @@ type GetOrganizationsAccessReportOutput struct {
 	NumberOfServicesNotAccessed *int64 `type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOrganizationsAccessReportOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetOrganizationsAccessReportOutput) GoString() string {
 	return s.String()
 }
@@ -24048,12 +25163,20 @@ type GetPolicyInput struct {
 	PolicyArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyInput) GoString() string {
 	return s.String()
 }
@@ -24088,12 +25211,20 @@ type GetPolicyOutput struct {
 	Policy *Policy `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -24127,12 +25258,20 @@ type GetPolicyVersionInput struct {
 	VersionId *string `type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyVersionInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyVersionInput) GoString() string {
 	return s.String()
 }
@@ -24176,12 +25315,20 @@ type GetPolicyVersionOutput struct {
 	PolicyVersion *PolicyVersion `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyVersionOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetPolicyVersionOutput) GoString() string {
 	return s.String()
 }
@@ -24205,12 +25352,20 @@ type GetRoleInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRoleInput) GoString() string {
 	return s.String()
 }
@@ -24247,12 +25402,20 @@ type GetRoleOutput struct {
 	Role *Role `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRoleOutput) GoString() string {
 	return s.String()
 }
@@ -24285,12 +25448,20 @@ type GetRolePolicyInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRolePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRolePolicyInput) GoString() string {
 	return s.String()
 }
@@ -24353,12 +25524,20 @@ type GetRolePolicyOutput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRolePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetRolePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -24394,12 +25573,20 @@ type GetSAMLProviderInput struct {
 	SAMLProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSAMLProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSAMLProviderInput) GoString() string {
 	return s.String()
 }
@@ -24446,12 +25633,20 @@ type GetSAMLProviderOutput struct {
 	ValidUntil *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSAMLProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSAMLProviderOutput) GoString() string {
 	return s.String()
 }
@@ -24509,12 +25704,20 @@ type GetSSHPublicKeyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSSHPublicKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSSHPublicKeyInput) GoString() string {
 	return s.String()
 }
@@ -24570,12 +25773,20 @@ type GetSSHPublicKeyOutput struct {
 	SSHPublicKey *SSHPublicKey `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSSHPublicKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetSSHPublicKeyOutput) GoString() string {
 	return s.String()
 }
@@ -24599,12 +25810,20 @@ type GetServerCertificateInput struct {
 	ServerCertificateName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServerCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServerCertificateInput) GoString() string {
 	return s.String()
 }
@@ -24641,12 +25860,20 @@ type GetServerCertificateOutput struct {
 	ServerCertificate *ServerCertificate `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServerCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServerCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -24686,12 +25913,20 @@ type GetServiceLastAccessedDetailsInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsInput) GoString() string {
 	return s.String()
 }
@@ -24786,12 +26021,20 @@ type GetServiceLastAccessedDetailsOutput struct {
 	ServicesLastAccessed []*ServiceLastAccessed `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsOutput) GoString() string {
 	return s.String()
 }
@@ -24886,12 +26129,20 @@ type GetServiceLastAccessedDetailsWithEntitiesInput struct {
 	ServiceNamespace *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsWithEntitiesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsWithEntitiesInput) GoString() string {
 	return s.String()
 }
@@ -24994,12 +26245,20 @@ type GetServiceLastAccessedDetailsWithEntitiesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsWithEntitiesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLastAccessedDetailsWithEntitiesOutput) GoString() string {
 	return s.String()
 }
@@ -25056,12 +26315,20 @@ type GetServiceLinkedRoleDeletionStatusInput struct {
 	DeletionTaskId *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLinkedRoleDeletionStatusInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLinkedRoleDeletionStatusInput) GoString() string {
 	return s.String()
 }
@@ -25100,12 +26367,20 @@ type GetServiceLinkedRoleDeletionStatusOutput struct {
 	Status *string `type:"string" required:"true" enum:"DeletionTaskStatusType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLinkedRoleDeletionStatusOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetServiceLinkedRoleDeletionStatusOutput) GoString() string {
 	return s.String()
 }
@@ -25134,12 +26409,20 @@ type GetUserInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserInput) GoString() string {
 	return s.String()
 }
@@ -25191,12 +26474,20 @@ type GetUserOutput struct {
 	User *User `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserOutput) GoString() string {
 	return s.String()
 }
@@ -25229,12 +26520,20 @@ type GetUserPolicyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserPolicyInput) GoString() string {
 	return s.String()
 }
@@ -25297,12 +26596,20 @@ type GetUserPolicyOutput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GetUserPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -25329,11 +26636,11 @@ func (s *GetUserPolicyOutput) SetUserName(v string) *GetUserPolicyOutput {
 //
 // This data type is used as a response element in the following operations:
 //
-//    * CreateGroup
+//   - CreateGroup
 //
-//    * GetGroup
+//   - GetGroup
 //
-//    * ListGroups
+//   - ListGroups
 type Group struct {
 	_ struct{} `type:"structure"`
 
@@ -25370,12 +26677,20 @@ type Group struct {
 	Path *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Group) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Group) GoString() string {
 	return s.String()
 }
@@ -25448,12 +26763,20 @@ type GroupDetail struct {
 	Path *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GroupDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s GroupDetail) GoString() string {
 	return s.String()
 }
@@ -25504,13 +26827,13 @@ func (s *GroupDetail) SetPath(v string) *GroupDetail {
 //
 // This data type is used as a response element in the following operations:
 //
-//    * CreateInstanceProfile
+//   - CreateInstanceProfile
 //
-//    * GetInstanceProfile
+//   - GetInstanceProfile
 //
-//    * ListInstanceProfiles
+//   - ListInstanceProfiles
 //
-//    * ListInstanceProfilesForRole
+//   - ListInstanceProfilesForRole
 type InstanceProfile struct {
 	_ struct{} `type:"structure"`
 
@@ -25557,12 +26880,20 @@ type InstanceProfile struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s InstanceProfile) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s InstanceProfile) GoString() string {
 	return s.String()
 }
@@ -25637,12 +26968,20 @@ type ListAccessKeysInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccessKeysInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccessKeysInput) GoString() string {
 	return s.String()
 }
@@ -25706,12 +27045,20 @@ type ListAccessKeysOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccessKeysOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccessKeysOutput) GoString() string {
 	return s.String()
 }
@@ -25755,12 +27102,20 @@ type ListAccountAliasesInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccountAliasesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccountAliasesInput) GoString() string {
 	return s.String()
 }
@@ -25816,12 +27171,20 @@ type ListAccountAliasesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccountAliasesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAccountAliasesOutput) GoString() string {
 	return s.String()
 }
@@ -25886,12 +27249,20 @@ type ListAttachedGroupPoliciesInput struct {
 	PathPrefix *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedGroupPoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedGroupPoliciesInput) GoString() string {
 	return s.String()
 }
@@ -25965,12 +27336,20 @@ type ListAttachedGroupPoliciesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedGroupPoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedGroupPoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -26034,12 +27413,20 @@ type ListAttachedRolePoliciesInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedRolePoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedRolePoliciesInput) GoString() string {
 	return s.String()
 }
@@ -26113,12 +27500,20 @@ type ListAttachedRolePoliciesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedRolePoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedRolePoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -26182,12 +27577,20 @@ type ListAttachedUserPoliciesInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedUserPoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedUserPoliciesInput) GoString() string {
 	return s.String()
 }
@@ -26261,12 +27664,20 @@ type ListAttachedUserPoliciesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedUserPoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListAttachedUserPoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -26346,12 +27757,20 @@ type ListEntitiesForPolicyInput struct {
 	PolicyUsageFilter *string `type:"string" enum:"PolicyUsageType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListEntitiesForPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListEntitiesForPolicyInput) GoString() string {
 	return s.String()
 }
@@ -26443,12 +27862,20 @@ type ListEntitiesForPolicyOutput struct {
 	PolicyUsers []*PolicyUser `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListEntitiesForPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListEntitiesForPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -26513,12 +27940,20 @@ type ListGroupPoliciesInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupPoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupPoliciesInput) GoString() string {
 	return s.String()
 }
@@ -26589,12 +28024,20 @@ type ListGroupPoliciesOutput struct {
 	PolicyNames []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupPoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupPoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -26647,12 +28090,20 @@ type ListGroupsForUserInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsForUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsForUserInput) GoString() string {
 	return s.String()
 }
@@ -26719,12 +28170,20 @@ type ListGroupsForUserOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsForUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsForUserOutput) GoString() string {
 	return s.String()
 }
@@ -26780,12 +28239,20 @@ type ListGroupsInput struct {
 	PathPrefix *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsInput) GoString() string {
 	return s.String()
 }
@@ -26849,12 +28316,20 @@ type ListGroupsOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListGroupsOutput) GoString() string {
 	return s.String()
 }
@@ -26907,12 +28382,20 @@ type ListInstanceProfileTagsInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfileTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfileTagsInput) GoString() string {
 	return s.String()
 }
@@ -26980,12 +28463,20 @@ type ListInstanceProfileTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfileTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfileTagsOutput) GoString() string {
 	return s.String()
 }
@@ -27038,12 +28529,20 @@ type ListInstanceProfilesForRoleInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesForRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesForRoleInput) GoString() string {
 	return s.String()
 }
@@ -27110,12 +28609,20 @@ type ListInstanceProfilesForRoleOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesForRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesForRoleOutput) GoString() string {
 	return s.String()
 }
@@ -27171,12 +28678,20 @@ type ListInstanceProfilesInput struct {
 	PathPrefix *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesInput) GoString() string {
 	return s.String()
 }
@@ -27240,12 +28755,20 @@ type ListInstanceProfilesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListInstanceProfilesOutput) GoString() string {
 	return s.String()
 }
@@ -27299,12 +28822,20 @@ type ListMFADeviceTagsInput struct {
 	SerialNumber *string `min:"9" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADeviceTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADeviceTagsInput) GoString() string {
 	return s.String()
 }
@@ -27372,12 +28903,20 @@ type ListMFADeviceTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADeviceTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADeviceTagsOutput) GoString() string {
 	return s.String()
 }
@@ -27428,12 +28967,20 @@ type ListMFADevicesInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADevicesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADevicesInput) GoString() string {
 	return s.String()
 }
@@ -27497,12 +29044,20 @@ type ListMFADevicesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADevicesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListMFADevicesOutput) GoString() string {
 	return s.String()
 }
@@ -27556,12 +29111,20 @@ type ListOpenIDConnectProviderTagsInput struct {
 	OpenIDConnectProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProviderTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProviderTagsInput) GoString() string {
 	return s.String()
 }
@@ -27630,12 +29193,20 @@ type ListOpenIDConnectProviderTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProviderTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProviderTagsOutput) GoString() string {
 	return s.String()
 }
@@ -27662,12 +29233,20 @@ type ListOpenIDConnectProvidersInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProvidersInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProvidersInput) GoString() string {
 	return s.String()
 }
@@ -27676,16 +29255,25 @@ func (s ListOpenIDConnectProvidersInput) GoString() string {
 type ListOpenIDConnectProvidersOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The list of IAM OIDC provider resource objects defined in the account.
+	// The list of IAM OIDC provider resource objects defined in the Amazon Web
+	// Services account.
 	OpenIDConnectProviderList []*OpenIDConnectProviderListEntry `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProvidersOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListOpenIDConnectProvidersOutput) GoString() string {
 	return s.String()
 }
@@ -27720,12 +29308,20 @@ type ListPoliciesGrantingServiceAccessEntry struct {
 	ServiceNamespace *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesGrantingServiceAccessEntry) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesGrantingServiceAccessEntry) GoString() string {
 	return s.String()
 }
@@ -27772,12 +29368,20 @@ type ListPoliciesGrantingServiceAccessInput struct {
 	ServiceNamespaces []*string `min:"1" type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesGrantingServiceAccessInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesGrantingServiceAccessInput) GoString() string {
 	return s.String()
 }
@@ -27846,12 +29450,20 @@ type ListPoliciesGrantingServiceAccessOutput struct {
 	PoliciesGrantingServiceAccess []*ListPoliciesGrantingServiceAccessEntry `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesGrantingServiceAccessOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesGrantingServiceAccessOutput) GoString() string {
 	return s.String()
 }
@@ -27923,19 +29535,28 @@ type ListPoliciesInput struct {
 	// The scope to use for filtering the results.
 	//
 	// To list only Amazon Web Services managed policies, set Scope to AWS. To list
-	// only the customer managed policies in your account, set Scope to Local.
+	// only the customer managed policies in your Amazon Web Services account, set
+	// Scope to Local.
 	//
 	// This parameter is optional. If it is not included, or if it is set to All,
 	// all policies are returned.
 	Scope *string `type:"string" enum:"PolicyScopeType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesInput) GoString() string {
 	return s.String()
 }
@@ -28015,12 +29636,20 @@ type ListPoliciesOutput struct {
 	Policies []*Policy `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -28073,12 +29702,20 @@ type ListPolicyTagsInput struct {
 	PolicyArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyTagsInput) GoString() string {
 	return s.String()
 }
@@ -28146,12 +29783,20 @@ type ListPolicyTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyTagsOutput) GoString() string {
 	return s.String()
 }
@@ -28203,12 +29848,20 @@ type ListPolicyVersionsInput struct {
 	PolicyArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyVersionsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyVersionsInput) GoString() string {
 	return s.String()
 }
@@ -28277,12 +29930,20 @@ type ListPolicyVersionsOutput struct {
 	Versions []*PolicyVersion `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyVersionsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListPolicyVersionsOutput) GoString() string {
 	return s.String()
 }
@@ -28335,12 +29996,20 @@ type ListRolePoliciesInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolePoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolePoliciesInput) GoString() string {
 	return s.String()
 }
@@ -28407,12 +30076,20 @@ type ListRolePoliciesOutput struct {
 	PolicyNames []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolePoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolePoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -28465,12 +30142,20 @@ type ListRoleTagsInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRoleTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRoleTagsInput) GoString() string {
 	return s.String()
 }
@@ -28538,12 +30223,20 @@ type ListRoleTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRoleTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRoleTagsOutput) GoString() string {
 	return s.String()
 }
@@ -28599,12 +30292,20 @@ type ListRolesInput struct {
 	PathPrefix *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolesInput) GoString() string {
 	return s.String()
 }
@@ -28668,12 +30369,20 @@ type ListRolesOutput struct {
 	Roles []*Role `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListRolesOutput) GoString() string {
 	return s.String()
 }
@@ -28727,12 +30436,20 @@ type ListSAMLProviderTagsInput struct {
 	SAMLProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProviderTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProviderTagsInput) GoString() string {
 	return s.String()
 }
@@ -28801,12 +30518,20 @@ type ListSAMLProviderTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProviderTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProviderTagsOutput) GoString() string {
 	return s.String()
 }
@@ -28833,12 +30558,20 @@ type ListSAMLProvidersInput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProvidersInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProvidersInput) GoString() string {
 	return s.String()
 }
@@ -28852,12 +30585,20 @@ type ListSAMLProvidersOutput struct {
 	SAMLProviderList []*SAMLProviderListEntry `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProvidersOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSAMLProvidersOutput) GoString() string {
 	return s.String()
 }
@@ -28898,12 +30639,20 @@ type ListSSHPublicKeysInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSSHPublicKeysInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSSHPublicKeysInput) GoString() string {
 	return s.String()
 }
@@ -28965,12 +30714,20 @@ type ListSSHPublicKeysOutput struct {
 	SSHPublicKeys []*SSHPublicKeyMetadata `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSSHPublicKeysOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSSHPublicKeysOutput) GoString() string {
 	return s.String()
 }
@@ -29023,12 +30780,20 @@ type ListServerCertificateTagsInput struct {
 	ServerCertificateName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificateTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificateTagsInput) GoString() string {
 	return s.String()
 }
@@ -29096,12 +30861,20 @@ type ListServerCertificateTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificateTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificateTagsOutput) GoString() string {
 	return s.String()
 }
@@ -29157,12 +30930,20 @@ type ListServerCertificatesInput struct {
 	PathPrefix *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificatesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificatesInput) GoString() string {
 	return s.String()
 }
@@ -29226,12 +31007,20 @@ type ListServerCertificatesOutput struct {
 	ServerCertificateMetadataList []*ServerCertificateMetadata `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificatesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServerCertificatesOutput) GoString() string {
 	return s.String()
 }
@@ -29272,12 +31061,20 @@ type ListServiceSpecificCredentialsInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServiceSpecificCredentialsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServiceSpecificCredentialsInput) GoString() string {
 	return s.String()
 }
@@ -29314,12 +31111,20 @@ type ListServiceSpecificCredentialsOutput struct {
 	ServiceSpecificCredentials []*ServiceSpecificCredentialMetadata `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServiceSpecificCredentialsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListServiceSpecificCredentialsOutput) GoString() string {
 	return s.String()
 }
@@ -29358,12 +31163,20 @@ type ListSigningCertificatesInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSigningCertificatesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSigningCertificatesInput) GoString() string {
 	return s.String()
 }
@@ -29427,12 +31240,20 @@ type ListSigningCertificatesOutput struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSigningCertificatesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListSigningCertificatesOutput) GoString() string {
 	return s.String()
 }
@@ -29485,12 +31306,20 @@ type ListUserPoliciesInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserPoliciesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserPoliciesInput) GoString() string {
 	return s.String()
 }
@@ -29557,12 +31386,20 @@ type ListUserPoliciesOutput struct {
 	PolicyNames []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserPoliciesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserPoliciesOutput) GoString() string {
 	return s.String()
 }
@@ -29615,12 +31452,20 @@ type ListUserTagsInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserTagsInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserTagsInput) GoString() string {
 	return s.String()
 }
@@ -29688,12 +31533,20 @@ type ListUserTagsOutput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserTagsOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUserTagsOutput) GoString() string {
 	return s.String()
 }
@@ -29749,12 +31602,20 @@ type ListUsersInput struct {
 	PathPrefix *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUsersInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUsersInput) GoString() string {
 	return s.String()
 }
@@ -29818,12 +31679,20 @@ type ListUsersOutput struct {
 	Users []*User `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUsersOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListUsersOutput) GoString() string {
 	return s.String()
 }
@@ -29872,12 +31741,20 @@ type ListVirtualMFADevicesInput struct {
 	MaxItems *int64 `min:"1" type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListVirtualMFADevicesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListVirtualMFADevicesInput) GoString() string {
 	return s.String()
 }
@@ -29939,12 +31816,20 @@ type ListVirtualMFADevicesOutput struct {
 	VirtualMFADevices []*VirtualMFADevice `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListVirtualMFADevicesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ListVirtualMFADevicesOutput) GoString() string {
 	return s.String()
 }
@@ -29982,19 +31867,27 @@ type LoginProfile struct {
 	// Specifies whether the user is required to set a new password on next sign-in.
 	PasswordResetRequired *bool `type:"boolean"`
 
-	// The name of the user, which can be used for signing in to the Management
-	// Console.
+	// The name of the user, which can be used for signing in to the Amazon Web
+	// Services Management Console.
 	//
 	// UserName is a required field
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s LoginProfile) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s LoginProfile) GoString() string {
 	return s.String()
 }
@@ -30040,12 +31933,20 @@ type MFADevice struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s MFADevice) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s MFADevice) GoString() string {
 	return s.String()
 }
@@ -30146,12 +32047,20 @@ type ManagedPolicyDetail struct {
 	UpdateDate *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ManagedPolicyDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ManagedPolicyDetail) GoString() string {
 	return s.String()
 }
@@ -30240,12 +32149,20 @@ type OpenIDConnectProviderListEntry struct {
 	Arn *string `min:"20" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s OpenIDConnectProviderListEntry) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s OpenIDConnectProviderListEntry) GoString() string {
 	return s.String()
 }
@@ -30266,12 +32183,20 @@ type OrganizationsDecisionDetail struct {
 	AllowedByOrganizations *bool `type:"boolean"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s OrganizationsDecisionDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s OrganizationsDecisionDetail) GoString() string {
 	return s.String()
 }
@@ -30289,7 +32214,11 @@ func (s *OrganizationsDecisionDetail) SetAllowedByOrganizations(v bool) *Organiz
 type PasswordPolicy struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies whether IAM users are allowed to change their own password.
+	// Specifies whether IAM users are allowed to change their own password. Gives
+	// IAM users permissions to iam:ChangePassword for only their user and to the
+	// iam:GetAccountPasswordPolicy action. This option does not attach a permissions
+	// policy to each user, rather the permissions are applied at the account-level
+	// for all users by IAM.
 	AllowUsersToChangePassword *bool `type:"boolean"`
 
 	// Indicates whether passwords in the account expire. Returns true if MaxPasswordAge
@@ -30297,8 +32226,11 @@ type PasswordPolicy struct {
 	// not present.
 	ExpirePasswords *bool `type:"boolean"`
 
-	// Specifies whether IAM users are prevented from setting a new password after
-	// their password has expired.
+	// Specifies whether IAM users are prevented from setting a new password via
+	// the Amazon Web Services Management Console after their password has expired.
+	// The IAM user cannot access the console until an administrator resets the
+	// password. IAM users with iam:ChangePassword permission and active access
+	// keys can reset their own expired console password using the CLI or API.
 	HardExpiry *bool `type:"boolean"`
 
 	// The number of days that an IAM user password is valid.
@@ -30330,12 +32262,20 @@ type PasswordPolicy struct {
 	RequireUppercaseCharacters *bool `type:"boolean"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PasswordPolicy) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PasswordPolicy) GoString() string {
 	return s.String()
 }
@@ -30416,12 +32356,20 @@ type PermissionsBoundaryDecisionDetail struct {
 	AllowedByPermissionsBoundary *bool `type:"boolean"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PermissionsBoundaryDecisionDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PermissionsBoundaryDecisionDetail) GoString() string {
 	return s.String()
 }
@@ -30508,12 +32456,20 @@ type Policy struct {
 	UpdateDate *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Policy) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Policy) GoString() string {
 	return s.String()
 }
@@ -30604,12 +32560,20 @@ type PolicyDetail struct {
 	PolicyName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyDetail) GoString() string {
 	return s.String()
 }
@@ -30669,12 +32633,20 @@ type PolicyGrantingServiceAccess struct {
 	PolicyType *string `type:"string" required:"true" enum:"PolicyType"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyGrantingServiceAccess) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyGrantingServiceAccess) GoString() string {
 	return s.String()
 }
@@ -30729,12 +32701,20 @@ type PolicyGroup struct {
 	GroupName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyGroup) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyGroup) GoString() string {
 	return s.String()
 }
@@ -30771,12 +32751,20 @@ type PolicyRole struct {
 	RoleName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyRole) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyRole) GoString() string {
 	return s.String()
 }
@@ -30813,12 +32801,20 @@ type PolicyUser struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyUser) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyUser) GoString() string {
 	return s.String()
 }
@@ -30874,12 +32870,20 @@ type PolicyVersion struct {
 	VersionId *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyVersion) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PolicyVersion) GoString() string {
 	return s.String()
 }
@@ -30922,12 +32926,20 @@ type Position struct {
 	Line *int64 `type:"integer"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Position) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Position) GoString() string {
 	return s.String()
 }
@@ -30988,12 +33000,20 @@ type PutGroupPolicyInput struct {
 	PolicyName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutGroupPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutGroupPolicyInput) GoString() string {
 	return s.String()
 }
@@ -31048,12 +33068,20 @@ type PutGroupPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutGroupPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutGroupPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -31074,12 +33102,20 @@ type PutRolePermissionsBoundaryInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePermissionsBoundaryInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePermissionsBoundaryInput) GoString() string {
 	return s.String()
 }
@@ -31122,12 +33158,20 @@ type PutRolePermissionsBoundaryOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePermissionsBoundaryOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePermissionsBoundaryOutput) GoString() string {
 	return s.String()
 }
@@ -31176,12 +33220,20 @@ type PutRolePolicyInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePolicyInput) GoString() string {
 	return s.String()
 }
@@ -31236,12 +33288,20 @@ type PutRolePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutRolePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -31262,12 +33322,20 @@ type PutUserPermissionsBoundaryInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPermissionsBoundaryInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPermissionsBoundaryInput) GoString() string {
 	return s.String()
 }
@@ -31310,12 +33378,20 @@ type PutUserPermissionsBoundaryOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPermissionsBoundaryOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPermissionsBoundaryOutput) GoString() string {
 	return s.String()
 }
@@ -31364,12 +33440,20 @@ type PutUserPolicyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPolicyInput) GoString() string {
 	return s.String()
 }
@@ -31424,12 +33508,20 @@ type PutUserPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s PutUserPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -31454,12 +33546,20 @@ type RemoveClientIDFromOpenIDConnectProviderInput struct {
 	OpenIDConnectProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveClientIDFromOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveClientIDFromOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -31502,12 +33602,20 @@ type RemoveClientIDFromOpenIDConnectProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveClientIDFromOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveClientIDFromOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -31534,12 +33642,20 @@ type RemoveRoleFromInstanceProfileInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveRoleFromInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveRoleFromInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -31582,12 +33698,20 @@ type RemoveRoleFromInstanceProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveRoleFromInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveRoleFromInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -31614,12 +33738,20 @@ type RemoveUserFromGroupInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveUserFromGroupInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveUserFromGroupInput) GoString() string {
 	return s.String()
 }
@@ -31662,12 +33794,20 @@ type RemoveUserFromGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveUserFromGroupOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RemoveUserFromGroupOutput) GoString() string {
 	return s.String()
 }
@@ -31694,12 +33834,20 @@ type ResetServiceSpecificCredentialInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResetServiceSpecificCredentialInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResetServiceSpecificCredentialInput) GoString() string {
 	return s.String()
 }
@@ -31746,12 +33894,20 @@ type ResetServiceSpecificCredentialOutput struct {
 	ServiceSpecificCredential *ServiceSpecificCredential `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResetServiceSpecificCredentialOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResetServiceSpecificCredentialOutput) GoString() string {
 	return s.String()
 }
@@ -31808,12 +33964,20 @@ type ResourceSpecificResult struct {
 	PermissionsBoundaryDecisionDetail *PermissionsBoundaryDecisionDetail `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResourceSpecificResult) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResourceSpecificResult) GoString() string {
 	return s.String()
 }
@@ -31890,12 +34054,20 @@ type ResyncMFADeviceInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResyncMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResyncMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -31962,12 +34134,20 @@ type ResyncMFADeviceOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResyncMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ResyncMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -32042,12 +34222,20 @@ type Role struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Role) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Role) GoString() string {
 	return s.String()
 }
@@ -32185,12 +34373,20 @@ type RoleDetail struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RoleDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RoleDetail) GoString() string {
 	return s.String()
 }
@@ -32289,16 +34485,24 @@ type RoleLastUsed struct {
 	// in the IAM User Guide.
 	LastUsedDate *time.Time `type:"timestamp"`
 
-	// The name of the Region in which the role was last used.
+	// The name of the Amazon Web Services Region in which the role was last used.
 	Region *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RoleLastUsed) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RoleLastUsed) GoString() string {
 	return s.String()
 }
@@ -32330,12 +34534,20 @@ type RoleUsageType struct {
 	Resources []*string `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RoleUsageType) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s RoleUsageType) GoString() string {
 	return s.String()
 }
@@ -32366,12 +34578,20 @@ type SAMLProviderListEntry struct {
 	ValidUntil *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SAMLProviderListEntry) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SAMLProviderListEntry) GoString() string {
 	return s.String()
 }
@@ -32433,12 +34653,20 @@ type SSHPublicKey struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SSHPublicKey) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SSHPublicKey) GoString() string {
 	return s.String()
 }
@@ -32509,12 +34737,20 @@ type SSHPublicKeyMetadata struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SSHPublicKeyMetadata) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SSHPublicKeyMetadata) GoString() string {
 	return s.String()
 }
@@ -32570,12 +34806,20 @@ type ServerCertificate struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServerCertificate) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServerCertificate) GoString() string {
 	return s.String()
 }
@@ -32646,12 +34890,20 @@ type ServerCertificateMetadata struct {
 	UploadDate *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServerCertificateMetadata) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServerCertificateMetadata) GoString() string {
 	return s.String()
 }
@@ -32704,14 +34956,14 @@ type ServiceLastAccessed struct {
 	// Amazon Web Services does not report unauthenticated requests.
 	//
 	// This field is null if no IAM entities attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAuthenticated *time.Time `type:"timestamp"`
 
 	// The ARN of the authenticated entity (user or role) that last attempted to
 	// access the service. Amazon Web Services does not report unauthenticated requests.
 	//
 	// This field is null if no IAM entities attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAuthenticatedEntity *string `min:"20" type:"string"`
 
 	// The Region from which the authenticated entity (user or role) last attempted
@@ -32719,7 +34971,7 @@ type ServiceLastAccessed struct {
 	// requests.
 	//
 	// This field is null if no IAM entities attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAuthenticatedRegion *string `type:"string"`
 
 	// The name of the service in which access was attempted.
@@ -32744,26 +34996,34 @@ type ServiceLastAccessed struct {
 	// roles) that have attempted to access the service.
 	//
 	// This field is null if no principals attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	TotalAuthenticatedEntities *int64 `type:"integer"`
 
 	// An object that contains details about the most recent attempt to access a
 	// tracked action within the service.
 	//
 	// This field is null if there no tracked actions or if the principal did not
-	// use the tracked actions within the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// use the tracked actions within the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	// This field is also null if the report was generated at the service level
 	// and not the action level. For more information, see the Granularity field
 	// in GenerateServiceLastAccessedDetails.
 	TrackedActionsLastAccessed []*TrackedActionLastAccessed `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServiceLastAccessed) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServiceLastAccessed) GoString() string {
 	return s.String()
 }
@@ -32827,6 +35087,10 @@ type ServiceSpecificCredential struct {
 
 	// The generated password for the service-specific credential.
 	//
+	// ServicePassword is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by ServiceSpecificCredential's
+	// String and GoString methods.
+	//
 	// ServicePassword is a required field
 	ServicePassword *string `type:"string" required:"true" sensitive:"true"`
 
@@ -32855,12 +35119,20 @@ type ServiceSpecificCredential struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServiceSpecificCredential) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServiceSpecificCredential) GoString() string {
 	return s.String()
 }
@@ -32944,12 +35216,20 @@ type ServiceSpecificCredentialMetadata struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServiceSpecificCredentialMetadata) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s ServiceSpecificCredentialMetadata) GoString() string {
 	return s.String()
 }
@@ -33012,12 +35292,20 @@ type SetDefaultPolicyVersionInput struct {
 	VersionId *string `type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetDefaultPolicyVersionInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetDefaultPolicyVersionInput) GoString() string {
 	return s.String()
 }
@@ -33057,12 +35345,20 @@ type SetDefaultPolicyVersionOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetDefaultPolicyVersionOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetDefaultPolicyVersionOutput) GoString() string {
 	return s.String()
 }
@@ -33071,24 +35367,33 @@ type SetSecurityTokenServicePreferencesInput struct {
 	_ struct{} `type:"structure"`
 
 	// The version of the global endpoint token. Version 1 tokens are valid only
-	// in Regions that are available by default. These tokens do not work in manually
-	// enabled Regions, such as Asia Pacific (Hong Kong). Version 2 tokens are valid
-	// in all Regions. However, version 2 tokens are longer and might affect systems
-	// where you temporarily store tokens.
+	// in Amazon Web Services Regions that are available by default. These tokens
+	// do not work in manually enabled Regions, such as Asia Pacific (Hong Kong).
+	// Version 2 tokens are valid in all Regions. However, version 2 tokens are
+	// longer and might affect systems where you temporarily store tokens.
 	//
-	// For information, see Activating and deactivating STS in an Region (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
+	// For information, see Activating and deactivating STS in an Amazon Web Services
+	// Region (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
 	// in the IAM User Guide.
 	//
 	// GlobalEndpointTokenVersion is a required field
 	GlobalEndpointTokenVersion *string `type:"string" required:"true" enum:"GlobalEndpointTokenVersion"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetSecurityTokenServicePreferencesInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetSecurityTokenServicePreferencesInput) GoString() string {
 	return s.String()
 }
@@ -33116,12 +35421,20 @@ type SetSecurityTokenServicePreferencesOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetSecurityTokenServicePreferencesOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SetSecurityTokenServicePreferencesOutput) GoString() string {
 	return s.String()
 }
@@ -33158,12 +35471,20 @@ type SigningCertificate struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SigningCertificate) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SigningCertificate) GoString() string {
 	return s.String()
 }
@@ -33323,37 +35644,33 @@ type SimulateCustomPolicyInput struct {
 	// values and the resources that you must define to run the simulation.
 	//
 	// Each of the EC2 scenarios requires that you specify instance, image, and
-	// security-group resources. If your scenario includes an EBS volume, then you
+	// security group resources. If your scenario includes an EBS volume, then you
 	// must specify that volume as a resource. If the EC2 scenario includes VPC,
-	// then you must supply the network-interface resource. If it includes an IP
+	// then you must supply the network interface resource. If it includes an IP
 	// subnet, then you must specify the subnet resource. For more information on
 	// the EC2 scenario options, see Supported platforms (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-supported-platforms.html)
 	// in the Amazon EC2 User Guide.
 	//
-	//    * EC2-Classic-InstanceStore instance, image, security-group
+	//    * EC2-VPC-InstanceStore instance, image, security group, network interface
 	//
-	//    * EC2-Classic-EBS instance, image, security-group, volume
+	//    * EC2-VPC-InstanceStore-Subnet instance, image, security group, network
+	//    interface, subnet
 	//
-	//    * EC2-VPC-InstanceStore instance, image, security-group, network-interface
+	//    * EC2-VPC-EBS instance, image, security group, network interface, volume
 	//
-	//    * EC2-VPC-InstanceStore-Subnet instance, image, security-group, network-interface,
-	//    subnet
-	//
-	//    * EC2-VPC-EBS instance, image, security-group, network-interface, volume
-	//
-	//    * EC2-VPC-EBS-Subnet instance, image, security-group, network-interface,
+	//    * EC2-VPC-EBS-Subnet instance, image, security group, network interface,
 	//    subnet, volume
 	ResourceHandlingOption *string `min:"1" type:"string"`
 
-	// An ARN representing the account ID that specifies the owner of any simulated
-	// resource that does not identify its owner in the resource ARN. Examples of
-	// resource ARNs include an S3 bucket or object. If ResourceOwner is specified,
-	// it is also used as the account owner of any ResourcePolicy included in the
-	// simulation. If the ResourceOwner parameter is not specified, then the owner
-	// of the resources and the resource policy defaults to the account of the identity
-	// provided in CallerArn. This parameter is required only if you specify a resource-based
-	// policy and account that owns the resource is different from the account that
-	// owns the simulated calling user CallerArn.
+	// An ARN representing the Amazon Web Services account ID that specifies the
+	// owner of any simulated resource that does not identify its owner in the resource
+	// ARN. Examples of resource ARNs include an S3 bucket or object. If ResourceOwner
+	// is specified, it is also used as the account owner of any ResourcePolicy
+	// included in the simulation. If the ResourceOwner parameter is not specified,
+	// then the owner of the resources and the resource policy defaults to the account
+	// of the identity provided in CallerArn. This parameter is required only if
+	// you specify a resource-based policy and account that owns the resource is
+	// different from the account that owns the simulated calling user CallerArn.
 	//
 	// The ARN for an account uses the following syntax: arn:aws:iam::AWS-account-ID:root.
 	// For example, to represent the account with the 112233445566 ID, use the following
@@ -33383,12 +35700,20 @@ type SimulateCustomPolicyInput struct {
 	ResourcePolicy *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SimulateCustomPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SimulateCustomPolicyInput) GoString() string {
 	return s.String()
 }
@@ -33524,12 +35849,20 @@ type SimulatePolicyResponse struct {
 	Marker *string `type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SimulatePolicyResponse) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SimulatePolicyResponse) GoString() string {
 	return s.String()
 }
@@ -33697,10 +36030,6 @@ type SimulatePrincipalPolicyInput struct {
 	// the EC2 scenario options, see Supported platforms (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-supported-platforms.html)
 	// in the Amazon EC2 User Guide.
 	//
-	//    * EC2-Classic-InstanceStore instance, image, security group
-	//
-	//    * EC2-Classic-EBS instance, image, security group, volume
-	//
 	//    * EC2-VPC-InstanceStore instance, image, security group, network interface
 	//
 	//    * EC2-VPC-InstanceStore-Subnet instance, image, security group, network
@@ -33712,13 +36041,13 @@ type SimulatePrincipalPolicyInput struct {
 	//    subnet, volume
 	ResourceHandlingOption *string `min:"1" type:"string"`
 
-	// An account ID that specifies the owner of any simulated resource that does
-	// not identify its owner in the resource ARN. Examples of resource ARNs include
-	// an S3 bucket or object. If ResourceOwner is specified, it is also used as
-	// the account owner of any ResourcePolicy included in the simulation. If the
-	// ResourceOwner parameter is not specified, then the owner of the resources
-	// and the resource policy defaults to the account of the identity provided
-	// in CallerArn. This parameter is required only if you specify a resource-based
+	// An Amazon Web Services account ID that specifies the owner of any simulated
+	// resource that does not identify its owner in the resource ARN. Examples of
+	// resource ARNs include an S3 bucket or object. If ResourceOwner is specified,
+	// it is also used as the account owner of any ResourcePolicy included in the
+	// simulation. If the ResourceOwner parameter is not specified, then the owner
+	// of the resources and the resource policy defaults to the account of the identity
+	// provided in CallerArn. This parameter is required only if you specify a resource-based
 	// policy and account that owns the resource is different from the account that
 	// owns the simulated calling user CallerArn.
 	ResourceOwner *string `min:"1" type:"string"`
@@ -33746,12 +36075,20 @@ type SimulatePrincipalPolicyInput struct {
 	ResourcePolicy *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SimulatePrincipalPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s SimulatePrincipalPolicyInput) GoString() string {
 	return s.String()
 }
@@ -33896,12 +36233,20 @@ type Statement struct {
 	StartPosition *Position `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Statement) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Statement) GoString() string {
 	return s.String()
 }
@@ -33957,12 +36302,20 @@ type Tag struct {
 	Value *string `type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Tag) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s Tag) GoString() string {
 	return s.String()
 }
@@ -34017,12 +36370,20 @@ type TagInstanceProfileInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -34072,12 +36433,20 @@ type TagInstanceProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -34102,12 +36471,20 @@ type TagMFADeviceInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -34157,12 +36534,20 @@ type TagMFADeviceOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -34186,12 +36571,20 @@ type TagOpenIDConnectProviderInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -34241,12 +36634,20 @@ type TagOpenIDConnectProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -34270,12 +36671,20 @@ type TagPolicyInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagPolicyInput) GoString() string {
 	return s.String()
 }
@@ -34325,12 +36734,20 @@ type TagPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -34354,12 +36771,20 @@ type TagRoleInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagRoleInput) GoString() string {
 	return s.String()
 }
@@ -34409,12 +36834,20 @@ type TagRoleOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagRoleOutput) GoString() string {
 	return s.String()
 }
@@ -34438,12 +36871,20 @@ type TagSAMLProviderInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagSAMLProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagSAMLProviderInput) GoString() string {
 	return s.String()
 }
@@ -34493,12 +36934,20 @@ type TagSAMLProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagSAMLProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagSAMLProviderOutput) GoString() string {
 	return s.String()
 }
@@ -34522,12 +36971,20 @@ type TagServerCertificateInput struct {
 	Tags []*Tag `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagServerCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagServerCertificateInput) GoString() string {
 	return s.String()
 }
@@ -34577,12 +37034,20 @@ type TagServerCertificateOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagServerCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagServerCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -34606,12 +37071,20 @@ type TagUserInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagUserInput) GoString() string {
 	return s.String()
 }
@@ -34661,12 +37134,20 @@ type TagUserOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TagUserOutput) GoString() string {
 	return s.String()
 }
@@ -34695,7 +37176,7 @@ type TrackedActionLastAccessed struct {
 	// requests.
 	//
 	// This field is null if no IAM entities attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAccessedRegion *string `type:"string"`
 
 	// The date and time, in ISO 8601 date-time format (http://www.iso.org/iso/iso8601),
@@ -34703,16 +37184,24 @@ type TrackedActionLastAccessed struct {
 	// service. Amazon Web Services does not report unauthenticated requests.
 	//
 	// This field is null if no IAM entities attempted to access the service within
-	// the reporting period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
+	// the tracking period (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_access-advisor.html#service-last-accessed-reporting-period).
 	LastAccessedTime *time.Time `type:"timestamp"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TrackedActionLastAccessed) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s TrackedActionLastAccessed) GoString() string {
 	return s.String()
 }
@@ -34760,12 +37249,20 @@ type UntagInstanceProfileInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagInstanceProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagInstanceProfileInput) GoString() string {
 	return s.String()
 }
@@ -34805,12 +37302,20 @@ type UntagInstanceProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagInstanceProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagInstanceProfileOutput) GoString() string {
 	return s.String()
 }
@@ -34836,12 +37341,20 @@ type UntagMFADeviceInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagMFADeviceInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagMFADeviceInput) GoString() string {
 	return s.String()
 }
@@ -34881,12 +37394,20 @@ type UntagMFADeviceOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagMFADeviceOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagMFADeviceOutput) GoString() string {
 	return s.String()
 }
@@ -34910,12 +37431,20 @@ type UntagOpenIDConnectProviderInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagOpenIDConnectProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagOpenIDConnectProviderInput) GoString() string {
 	return s.String()
 }
@@ -34955,12 +37484,20 @@ type UntagOpenIDConnectProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagOpenIDConnectProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagOpenIDConnectProviderOutput) GoString() string {
 	return s.String()
 }
@@ -34985,12 +37522,20 @@ type UntagPolicyInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagPolicyInput) GoString() string {
 	return s.String()
 }
@@ -35030,12 +37575,20 @@ type UntagPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -35059,12 +37612,20 @@ type UntagRoleInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagRoleInput) GoString() string {
 	return s.String()
 }
@@ -35104,12 +37665,20 @@ type UntagRoleOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagRoleOutput) GoString() string {
 	return s.String()
 }
@@ -35134,12 +37703,20 @@ type UntagSAMLProviderInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagSAMLProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagSAMLProviderInput) GoString() string {
 	return s.String()
 }
@@ -35179,12 +37756,20 @@ type UntagSAMLProviderOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagSAMLProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagSAMLProviderOutput) GoString() string {
 	return s.String()
 }
@@ -35208,12 +37793,20 @@ type UntagServerCertificateInput struct {
 	TagKeys []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagServerCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagServerCertificateInput) GoString() string {
 	return s.String()
 }
@@ -35253,12 +37846,20 @@ type UntagServerCertificateOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagServerCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagServerCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -35282,12 +37883,20 @@ type UntagUserInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagUserInput) GoString() string {
 	return s.String()
 }
@@ -35327,12 +37936,20 @@ type UntagUserOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UntagUserOutput) GoString() string {
 	return s.String()
 }
@@ -35364,12 +37981,20 @@ type UpdateAccessKeyInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccessKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccessKeyInput) GoString() string {
 	return s.String()
 }
@@ -35418,12 +38043,20 @@ type UpdateAccessKeyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccessKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccessKeyOutput) GoString() string {
 	return s.String()
 }
@@ -35431,9 +38064,9 @@ func (s UpdateAccessKeyOutput) GoString() string {
 type UpdateAccountPasswordPolicyInput struct {
 	_ struct{} `type:"structure"`
 
-	// Allows all IAM users in your account to use the Management Console to change
-	// their own passwords. For more information, see Letting IAM users change their
-	// own passwords (https://docs.aws.amazon.com/IAM/latest/UserGuide/HowToPwdIAMUser.html)
+	// Allows all IAM users in your account to use the Amazon Web Services Management
+	// Console to change their own passwords. For more information, see Permitting
+	// IAM users to change their own passwords (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_enable-user-change.html)
 	// in the IAM User Guide.
 	//
 	// If you do not specify a value for this parameter, then the operation uses
@@ -35441,12 +38074,22 @@ type UpdateAccountPasswordPolicyInput struct {
 	// not automatically have permissions to change their own password.
 	AllowUsersToChangePassword *bool `type:"boolean"`
 
-	// Prevents IAM users from setting a new password after their password has expired.
-	// The IAM user cannot be accessed until an administrator resets the password.
+	// Prevents IAM users who are accessing the account via the Amazon Web Services
+	// Management Console from setting a new console password after their password
+	// has expired. The IAM user cannot access the console until an administrator
+	// resets the password.
 	//
 	// If you do not specify a value for this parameter, then the operation uses
 	// the default value of false. The result is that IAM users can change their
 	// passwords after they expire and continue to sign in as the user.
+	//
+	// In the Amazon Web Services Management Console, the custom password policy
+	// option Allow users to change their own password gives IAM users permissions
+	// to iam:ChangePassword for only their user and to the iam:GetAccountPasswordPolicy
+	// action. This option does not attach a permissions policy to each user, rather
+	// the permissions are applied at the account-level for all users by IAM. IAM
+	// users with iam:ChangePassword permission and active access keys can reset
+	// their own expired console password using the CLI or API.
 	HardExpiry *bool `type:"boolean"`
 
 	// The number of days that an IAM user password is valid.
@@ -35504,12 +38147,20 @@ type UpdateAccountPasswordPolicyInput struct {
 	RequireUppercaseCharacters *bool `type:"boolean"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccountPasswordPolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccountPasswordPolicyInput) GoString() string {
 	return s.String()
 }
@@ -35591,12 +38242,20 @@ type UpdateAccountPasswordPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccountPasswordPolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAccountPasswordPolicyOutput) GoString() string {
 	return s.String()
 }
@@ -35636,12 +38295,20 @@ type UpdateAssumeRolePolicyInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAssumeRolePolicyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAssumeRolePolicyInput) GoString() string {
 	return s.String()
 }
@@ -35684,12 +38351,20 @@ type UpdateAssumeRolePolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAssumeRolePolicyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateAssumeRolePolicyOutput) GoString() string {
 	return s.String()
 }
@@ -35725,12 +38400,20 @@ type UpdateGroupInput struct {
 	NewPath *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateGroupInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateGroupInput) GoString() string {
 	return s.String()
 }
@@ -35779,12 +38462,20 @@ type UpdateGroupOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateGroupOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateGroupOutput) GoString() string {
 	return s.String()
 }
@@ -35807,7 +38498,12 @@ type UpdateLoginProfileInput struct {
 	//    return (\u000D)
 	//
 	// However, the format can be further restricted by the account administrator
-	// by setting a password policy on the account. For more information, see UpdateAccountPasswordPolicy.
+	// by setting a password policy on the Amazon Web Services account. For more
+	// information, see UpdateAccountPasswordPolicy.
+	//
+	// Password is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by UpdateLoginProfileInput's
+	// String and GoString methods.
 	Password *string `min:"1" type:"string" sensitive:"true"`
 
 	// Allows this new password to be used only once by requiring the specified
@@ -35824,12 +38520,20 @@ type UpdateLoginProfileInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateLoginProfileInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateLoginProfileInput) GoString() string {
 	return s.String()
 }
@@ -35875,12 +38579,20 @@ type UpdateLoginProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateLoginProfileOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateLoginProfileOutput) GoString() string {
 	return s.String()
 }
@@ -35905,12 +38617,20 @@ type UpdateOpenIDConnectProviderThumbprintInput struct {
 	ThumbprintList []*string `type:"list" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateOpenIDConnectProviderThumbprintInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateOpenIDConnectProviderThumbprintInput) GoString() string {
 	return s.String()
 }
@@ -35950,12 +38670,20 @@ type UpdateOpenIDConnectProviderThumbprintOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateOpenIDConnectProviderThumbprintOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateOpenIDConnectProviderThumbprintOutput) GoString() string {
 	return s.String()
 }
@@ -35974,12 +38702,20 @@ type UpdateRoleDescriptionInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleDescriptionInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleDescriptionInput) GoString() string {
 	return s.String()
 }
@@ -36022,12 +38758,20 @@ type UpdateRoleDescriptionOutput struct {
 	Role *Role `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleDescriptionOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleDescriptionOutput) GoString() string {
 	return s.String()
 }
@@ -36045,8 +38789,8 @@ type UpdateRoleInput struct {
 	Description *string `type:"string"`
 
 	// The maximum session duration (in seconds) that you want to set for the specified
-	// role. If you do not specify a value for this setting, the default maximum
-	// of one hour is applied. This setting can have a value from 1 hour to 12 hours.
+	// role. If you do not specify a value for this setting, the default value of
+	// one hour is applied. This setting can have a value from 1 hour to 12 hours.
 	//
 	// Anyone who assumes the role from the CLI or API can use the DurationSeconds
 	// API parameter or the duration-seconds CLI parameter to request a longer session.
@@ -36066,12 +38810,20 @@ type UpdateRoleInput struct {
 	RoleName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleInput) GoString() string {
 	return s.String()
 }
@@ -36117,12 +38869,20 @@ type UpdateRoleOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateRoleOutput) GoString() string {
 	return s.String()
 }
@@ -36148,12 +38908,20 @@ type UpdateSAMLProviderInput struct {
 	SAMLProviderArn *string `min:"20" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSAMLProviderInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSAMLProviderInput) GoString() string {
 	return s.String()
 }
@@ -36200,12 +38968,20 @@ type UpdateSAMLProviderOutput struct {
 	SAMLProviderArn *string `min:"20" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSAMLProviderOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSAMLProviderOutput) GoString() string {
 	return s.String()
 }
@@ -36245,12 +39021,20 @@ type UpdateSSHPublicKeyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSSHPublicKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSSHPublicKeyInput) GoString() string {
 	return s.String()
 }
@@ -36302,12 +39086,20 @@ type UpdateSSHPublicKeyOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSSHPublicKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSSHPublicKeyOutput) GoString() string {
 	return s.String()
 }
@@ -36345,12 +39137,20 @@ type UpdateServerCertificateInput struct {
 	ServerCertificateName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServerCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServerCertificateInput) GoString() string {
 	return s.String()
 }
@@ -36399,12 +39199,20 @@ type UpdateServerCertificateOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServerCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServerCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -36436,12 +39244,20 @@ type UpdateServiceSpecificCredentialInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServiceSpecificCredentialInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServiceSpecificCredentialInput) GoString() string {
 	return s.String()
 }
@@ -36490,12 +39306,20 @@ type UpdateServiceSpecificCredentialOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServiceSpecificCredentialOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateServiceSpecificCredentialOutput) GoString() string {
 	return s.String()
 }
@@ -36527,12 +39351,20 @@ type UpdateSigningCertificateInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSigningCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSigningCertificateInput) GoString() string {
 	return s.String()
 }
@@ -36581,12 +39413,20 @@ type UpdateSigningCertificateOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSigningCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateSigningCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -36624,12 +39464,20 @@ type UpdateUserInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateUserInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateUserInput) GoString() string {
 	return s.String()
 }
@@ -36678,12 +39526,20 @@ type UpdateUserOutput struct {
 	_ struct{} `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateUserOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UpdateUserOutput) GoString() string {
 	return s.String()
 }
@@ -36721,12 +39577,20 @@ type UploadSSHPublicKeyInput struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSSHPublicKeyInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSSHPublicKeyInput) GoString() string {
 	return s.String()
 }
@@ -36773,12 +39637,20 @@ type UploadSSHPublicKeyOutput struct {
 	SSHPublicKey *SSHPublicKey `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSSHPublicKeyOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSSHPublicKeyOutput) GoString() string {
 	return s.String()
 }
@@ -36857,6 +39729,10 @@ type UploadServerCertificateInput struct {
 	//    * The special characters tab (\u0009), line feed (\u000A), and carriage
 	//    return (\u000D)
 	//
+	// PrivateKey is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by UploadServerCertificateInput's
+	// String and GoString methods.
+	//
 	// PrivateKey is a required field
 	PrivateKey *string `min:"1" type:"string" required:"true" sensitive:"true"`
 
@@ -36880,12 +39756,20 @@ type UploadServerCertificateInput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadServerCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadServerCertificateInput) GoString() string {
 	return s.String()
 }
@@ -36985,12 +39869,20 @@ type UploadServerCertificateOutput struct {
 	Tags []*Tag `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadServerCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadServerCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -37035,12 +39927,20 @@ type UploadSigningCertificateInput struct {
 	UserName *string `min:"1" type:"string"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSigningCertificateInput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSigningCertificateInput) GoString() string {
 	return s.String()
 }
@@ -37086,12 +39986,20 @@ type UploadSigningCertificateOutput struct {
 	Certificate *SigningCertificate `type:"structure" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSigningCertificateOutput) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UploadSigningCertificateOutput) GoString() string {
 	return s.String()
 }
@@ -37106,11 +40014,11 @@ func (s *UploadSigningCertificateOutput) SetCertificate(v *SigningCertificate) *
 //
 // This data type is used as a response element in the following operations:
 //
-//    * CreateUser
+//   - CreateUser
 //
-//    * GetUser
+//   - GetUser
 //
-//    * ListUsers
+//   - ListUsers
 type User struct {
 	_ struct{} `type:"structure"`
 
@@ -37180,12 +40088,20 @@ type User struct {
 	UserName *string `min:"1" type:"string" required:"true"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s User) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s User) GoString() string {
 	return s.String()
 }
@@ -37292,12 +40208,20 @@ type UserDetail struct {
 	UserPolicyList []*PolicyDetail `type:"list"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UserDetail) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s UserDetail) GoString() string {
 	return s.String()
 }
@@ -37369,6 +40293,10 @@ type VirtualMFADevice struct {
 	// The base32 seed defined as specified in RFC3548 (https://tools.ietf.org/html/rfc3548.txt).
 	// The Base32StringSeed is base64-encoded.
 	//
+	// Base32StringSeed is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by VirtualMFADevice's
+	// String and GoString methods.
+	//
 	// Base32StringSeed is automatically base64 encoded/decoded by the SDK.
 	Base32StringSeed []byte `type:"blob" sensitive:"true"`
 
@@ -37379,6 +40307,10 @@ type VirtualMFADevice struct {
 	// where $virtualMFADeviceName is one of the create call arguments. AccountName
 	// is the user name if set (otherwise, the account ID otherwise), and Base32String
 	// is the seed in base32 format. The Base32String value is base64-encoded.
+	//
+	// QRCodePNG is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by VirtualMFADevice's
+	// String and GoString methods.
 	//
 	// QRCodePNG is automatically base64 encoded/decoded by the SDK.
 	QRCodePNG []byte `type:"blob" sensitive:"true"`
@@ -37397,12 +40329,20 @@ type VirtualMFADevice struct {
 	User *User `type:"structure"`
 }
 
-// String returns the string representation
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s VirtualMFADevice) String() string {
 	return awsutil.Prettify(s)
 }
 
-// GoString returns the string representation
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
 func (s VirtualMFADevice) GoString() string {
 	return s.String()
 }

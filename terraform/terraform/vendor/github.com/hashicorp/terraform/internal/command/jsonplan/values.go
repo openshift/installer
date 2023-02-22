@@ -57,7 +57,7 @@ func marshalPlannedOutputs(changes *plans.Changes) (map[string]output, error) {
 			continue
 		}
 
-		var after []byte
+		var after, afterType []byte
 		changeV, err := oc.Decode()
 		if err != nil {
 			return ret, err
@@ -68,7 +68,12 @@ func marshalPlannedOutputs(changes *plans.Changes) (map[string]output, error) {
 		changeV.After, _ = changeV.After.UnmarkDeep()
 
 		if changeV.After != cty.NilVal && changeV.After.IsWhollyKnown() {
-			after, err = ctyjson.Marshal(changeV.After, changeV.After.Type())
+			ty := changeV.After.Type()
+			after, err = ctyjson.Marshal(changeV.After, ty)
+			if err != nil {
+				return ret, err
+			}
+			afterType, err = ctyjson.MarshalType(ty)
 			if err != nil {
 				return ret, err
 			}
@@ -76,6 +81,7 @@ func marshalPlannedOutputs(changes *plans.Changes) (map[string]output, error) {
 
 		ret[oc.Addr.OutputValue.Name] = output{
 			Value:     json.RawMessage(after),
+			Type:      json.RawMessage(afterType),
 			Sensitive: oc.Sensitive,
 		}
 	}
@@ -273,29 +279,4 @@ func marshalPlanModules(
 	}
 
 	return ret, nil
-}
-
-// marshalSensitiveValues returns a map of sensitive attributes, with the value
-// set to true. It returns nil if the value is nil or if there are no sensitive
-// vals.
-func marshalSensitiveValues(value cty.Value) map[string]bool {
-	if value.RawEquals(cty.NilVal) || value.IsNull() {
-		return nil
-	}
-
-	ret := make(map[string]bool)
-
-	it := value.ElementIterator()
-	for it.Next() {
-		k, v := it.Element()
-		s := jsonstate.SensitiveAsBool(v)
-		if !s.RawEquals(cty.False) {
-			ret[k.AsString()] = true
-		}
-	}
-
-	if len(ret) == 0 {
-		return nil
-	}
-	return ret
 }

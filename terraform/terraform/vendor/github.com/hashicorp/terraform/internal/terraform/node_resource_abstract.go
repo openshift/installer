@@ -68,6 +68,9 @@ type NodeAbstractResource struct {
 
 	// The address of the provider this resource will use
 	ResolvedProvider addrs.AbsProviderConfig
+
+	// This resource may expand into instances which need to be imported.
+	importTargets []*ImportTarget
 }
 
 var (
@@ -124,6 +127,10 @@ func (n *NodeAbstractResource) ReferenceableAddrs() []addrs.Referenceable {
 	return []addrs.Referenceable{n.Addr.Resource}
 }
 
+func (n *NodeAbstractResource) Import(addr *ImportTarget) {
+
+}
+
 // GraphNodeReferencer
 func (n *NodeAbstractResource) References() []*addrs.Reference {
 	// If we have a config then we prefer to use that.
@@ -143,12 +150,17 @@ func (n *NodeAbstractResource) References() []*addrs.Reference {
 		refs, _ = lang.ReferencesInExpr(c.ForEach)
 		result = append(result, refs...)
 
+		for _, expr := range c.TriggersReplacement {
+			refs, _ = lang.ReferencesInExpr(expr)
+			result = append(result, refs...)
+		}
+
 		// ReferencesInBlock() requires a schema
 		if n.Schema != nil {
 			refs, _ = lang.ReferencesInBlock(c.Config, n.Schema)
+			result = append(result, refs...)
 		}
 
-		result = append(result, refs...)
 		if c.Managed != nil {
 			if c.Managed.Connection != nil {
 				refs, _ = lang.ReferencesInBlock(c.Managed.Connection.Config, connectionBlockSupersetSchema)
@@ -172,6 +184,20 @@ func (n *NodeAbstractResource) References() []*addrs.Reference {
 				result = append(result, refs...)
 			}
 		}
+
+		for _, check := range c.Preconditions {
+			refs, _ := lang.ReferencesInExpr(check.Condition)
+			result = append(result, refs...)
+			refs, _ = lang.ReferencesInExpr(check.ErrorMessage)
+			result = append(result, refs...)
+		}
+		for _, check := range c.Postconditions {
+			refs, _ := lang.ReferencesInExpr(check.Condition)
+			result = append(result, refs...)
+			refs, _ = lang.ReferencesInExpr(check.ErrorMessage)
+			result = append(result, refs...)
+		}
+
 		return result
 	}
 
@@ -375,10 +401,6 @@ func (n *NodeAbstractResource) readResourceInstanceState(ctx EvalContext, addr a
 	}
 	diags = diags.Append(upgradeDiags)
 	if diags.HasErrors() {
-		// Note that we don't have any channel to return warnings here. We'll
-		// accept that for now since warnings during a schema upgrade would
-		// be pretty weird anyway, since this operation is supposed to seem
-		// invisible to the user.
 		return nil, diags
 	}
 
@@ -444,16 +466,16 @@ func (n *NodeAbstractResource) readResourceInstanceStateDeposed(ctx EvalContext,
 // graphNodesAreResourceInstancesInDifferentInstancesOfSameModule is an
 // annoyingly-task-specific helper function that returns true if and only if
 // the following conditions hold:
-// - Both of the given vertices represent specific resource instances, as
-//   opposed to unexpanded resources or any other non-resource-related object.
-// - The module instance addresses for both of the resource instances belong
-//   to the same static module.
-// - The module instance addresses for both of the resource instances are
-//   not equal, indicating that they belong to different instances of the
-//   same module.
+//   - Both of the given vertices represent specific resource instances, as
+//     opposed to unexpanded resources or any other non-resource-related object.
+//   - The module instance addresses for both of the resource instances belong
+//     to the same static module.
+//   - The module instance addresses for both of the resource instances are
+//     not equal, indicating that they belong to different instances of the
+//     same module.
 //
 // This result can be used as a way to compensate for the effects of
-// conservative analyses passes in our graph builders which make their
+// conservative analysis passes in our graph builders which make their
 // decisions based only on unexpanded addresses, often so that they can behave
 // correctly for interactions between expanded and not-yet-expanded objects.
 //

@@ -14,7 +14,7 @@ var _ Applies = (*applies)(nil)
 // Applies describes all the apply related methods that the Terraform
 // Enterprise API supports.
 //
-// TFE API docs: https://www.terraform.io/docs/enterprise/api/apply.html
+// TFE API docs: https://www.terraform.io/docs/cloud/api/applies.html
 type Applies interface {
 	// Read an apply by its ID.
 	Read(ctx context.Context, applyID string) (*Apply, error)
@@ -23,7 +23,7 @@ type Applies interface {
 	Logs(ctx context.Context, applyID string) (io.Reader, error)
 }
 
-// applies implements Applys.
+// applies implements Applies interface.
 type applies struct {
 	client *Client
 }
@@ -31,7 +31,7 @@ type applies struct {
 // ApplyStatus represents an apply state.
 type ApplyStatus string
 
-//List all available apply statuses.
+// List all available apply statuses.
 const (
 	ApplyCanceled    ApplyStatus = "canceled"
 	ApplyCreated     ApplyStatus = "created"
@@ -72,13 +72,13 @@ func (s *applies) Read(ctx context.Context, applyID string) (*Apply, error) {
 	}
 
 	u := fmt.Sprintf("applies/%s", url.QueryEscape(applyID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	a := &Apply{}
-	err = s.client.do(ctx, req, a)
+	err = req.Do(ctx, a)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (s *applies) Logs(ctx context.Context, applyID string) (io.Reader, error) {
 
 	u, err := url.Parse(a.LogReadURL)
 	if err != nil {
-		return nil, fmt.Errorf("invalid log URL: %v", err)
+		return nil, fmt.Errorf("invalid log URL: %w", err)
 	}
 
 	done := func() (bool, error) {

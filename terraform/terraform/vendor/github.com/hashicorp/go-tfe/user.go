@@ -10,13 +10,13 @@ var _ Users = (*users)(nil)
 // Users describes all the user related methods that the Terraform
 // Enterprise API supports.
 //
-// TFE API docs: https://www.terraform.io/docs/enterprise/api/user.html
+// TFE API docs: https://www.terraform.io/docs/cloud/api/account.html
 type Users interface {
 	// ReadCurrent reads the details of the currently authenticated user.
 	ReadCurrent(ctx context.Context) (*User, error)
 
 	// Update attributes of the currently authenticated user.
-	Update(ctx context.Context, options UserUpdateOptions) (*User, error)
+	UpdateCurrent(ctx context.Context, options UserUpdateOptions) (*User, error)
 }
 
 // users implements Users.
@@ -45,22 +45,6 @@ type TwoFactor struct {
 	Verified bool `jsonapi:"attr,verified"`
 }
 
-// ReadCurrent reads the details of the currently authenticated user.
-func (s *users) ReadCurrent(ctx context.Context) (*User, error) {
-	req, err := s.client.newRequest("GET", "account/details", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	u := &User{}
-	err = s.client.do(ctx, req, u)
-	if err != nil {
-		return nil, err
-	}
-
-	return u, nil
-}
-
 // UserUpdateOptions represents the options for updating a user.
 type UserUpdateOptions struct {
 	// Type is a public field utilized by JSON:API to
@@ -69,22 +53,38 @@ type UserUpdateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,users"`
 
-	// New username.
+	// Optional: New username.
 	Username *string `jsonapi:"attr,username,omitempty"`
 
-	// New email address (must be consumed afterwards to take effect).
+	// Optional: New email address (must be consumed afterwards to take effect).
 	Email *string `jsonapi:"attr,email,omitempty"`
 }
 
-// Update attributes of the currently authenticated user.
-func (s *users) Update(ctx context.Context, options UserUpdateOptions) (*User, error) {
-	req, err := s.client.newRequest("PATCH", "account/update", &options)
+// ReadCurrent reads the details of the currently authenticated user.
+func (s *users) ReadCurrent(ctx context.Context) (*User, error) {
+	req, err := s.client.NewRequest("GET", "account/details", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	u := &User{}
-	err = s.client.do(ctx, req, u)
+	err = req.Do(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
+}
+
+// UpdateCurrent updates attributes of the currently authenticated user.
+func (s *users) UpdateCurrent(ctx context.Context, options UserUpdateOptions) (*User, error) {
+	req, err := s.client.NewRequest("PATCH", "account/update", &options)
+	if err != nil {
+		return nil, err
+	}
+
+	u := &User{}
+	err = req.Do(ctx, u)
 	if err != nil {
 		return nil, err
 	}

@@ -21,7 +21,6 @@ import (
 )
 
 // AssumeRole invokes the sts.AssumeRole API synchronously
-// api document: https://help.aliyun.com/api/sts/assumerole.html
 func (client *Client) AssumeRole(request *AssumeRoleRequest) (response *AssumeRoleResponse, err error) {
 	response = CreateAssumeRoleResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) AssumeRole(request *AssumeRoleRequest) (response *AssumeRo
 }
 
 // AssumeRoleWithChan invokes the sts.AssumeRole API asynchronously
-// api document: https://help.aliyun.com/api/sts/assumerole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) AssumeRoleWithChan(request *AssumeRoleRequest) (<-chan *AssumeRoleResponse, <-chan error) {
 	responseChan := make(chan *AssumeRoleResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) AssumeRoleWithChan(request *AssumeRoleRequest) (<-chan *As
 }
 
 // AssumeRoleWithCallback invokes the sts.AssumeRole API asynchronously
-// api document: https://help.aliyun.com/api/sts/assumerole.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) AssumeRoleWithCallback(request *AssumeRoleRequest, callback func(response *AssumeRoleResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -76,18 +71,18 @@ func (client *Client) AssumeRoleWithCallback(request *AssumeRoleRequest, callbac
 // AssumeRoleRequest is the request struct for api AssumeRole
 type AssumeRoleRequest struct {
 	*requests.RpcRequest
-	RoleArn         string           `position:"Query" name:"RoleArn"`
 	RoleSessionName string           `position:"Query" name:"RoleSessionName"`
-	DurationSeconds requests.Integer `position:"Query" name:"DurationSeconds"`
 	Policy          string           `position:"Query" name:"Policy"`
+	RoleArn         string           `position:"Query" name:"RoleArn"`
+	DurationSeconds requests.Integer `position:"Query" name:"DurationSeconds"`
 }
 
 // AssumeRoleResponse is the response struct for api AssumeRole
 type AssumeRoleResponse struct {
 	*responses.BaseResponse
 	RequestId       string          `json:"RequestId" xml:"RequestId"`
-	Credentials     Credentials     `json:"Credentials" xml:"Credentials"`
 	AssumedRoleUser AssumedRoleUser `json:"AssumedRoleUser" xml:"AssumedRoleUser"`
+	Credentials     Credentials     `json:"Credentials" xml:"Credentials"`
 }
 
 // CreateAssumeRoleRequest creates a request to invoke AssumeRole API
@@ -95,7 +90,8 @@ func CreateAssumeRoleRequest() (request *AssumeRoleRequest) {
 	request = &AssumeRoleRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Sts", "2015-04-01", "AssumeRole", "sts", "openAPI")
+	request.InitWithApiInfo("Sts", "2015-04-01", "AssumeRole", "", "")
+	request.Method = requests.POST
 	return
 }
 

@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform/internal/lang/marks"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -16,8 +17,8 @@ func FormatValue(v cty.Value, indent int) string {
 	if !v.IsKnown() {
 		return "(known after apply)"
 	}
-	if v.IsMarked() {
-		return "(sensitive)"
+	if v.HasMark(marks.Sensitive) {
+		return "(sensitive value)"
 	}
 	if v.IsNull() {
 		ty := v.Type()

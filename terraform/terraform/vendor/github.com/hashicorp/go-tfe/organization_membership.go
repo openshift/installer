@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 )
@@ -17,7 +16,7 @@ var _ OrganizationMemberships = (*organizationMemberships)(nil)
 // https://www.terraform.io/docs/cloud/api/organization-memberships.html
 type OrganizationMemberships interface {
 	// List all the organization memberships of the given organization.
-	List(ctx context.Context, organization string, options OrganizationMembershipListOptions) (*OrganizationMembershipList, error)
+	List(ctx context.Context, organization string, options *OrganizationMembershipListOptions) (*OrganizationMembershipList, error)
 
 	// Create a new organization membership with the given options.
 	Create(ctx context.Context, organization string, options OrganizationMembershipCreateOptions) (*OrganizationMembership, error)
@@ -40,10 +39,9 @@ type organizationMemberships struct {
 // OrganizationMembershipStatus represents an organization membership status.
 type OrganizationMembershipStatus string
 
-// List all available organization membership statuses.
 const (
-	OrganizationMembershipActive  = "active"
-	OrganizationMembershipInvited = "invited"
+	OrganizationMembershipActive  OrganizationMembershipStatus = "active"
+	OrganizationMembershipInvited OrganizationMembershipStatus = "invited"
 )
 
 // OrganizationMembershipList represents a list of organization memberships.
@@ -64,32 +62,24 @@ type OrganizationMembership struct {
 	Teams        []*Team       `jsonapi:"relation,teams"`
 }
 
+// OrgMembershipIncludeOpt represents the available options for include query params.
+// https://www.terraform.io/cloud-docs/api-docs/organization-memberships#available-related-resources
+type OrgMembershipIncludeOpt string
+
+const (
+	OrgMembershipUser OrgMembershipIncludeOpt = "user"
+	OrgMembershipTeam OrgMembershipIncludeOpt = "teams"
+)
+
 // OrganizationMembershipListOptions represents the options for listing organization memberships.
 type OrganizationMembershipListOptions struct {
 	ListOptions
+	// Optional: A list of relations to include. See available resources
+	// https://www.terraform.io/cloud-docs/api-docs/organization-memberships#available-related-resources
+	Include []OrgMembershipIncludeOpt `url:"include,omitempty"`
 
-	Include string `url:"include"`
-}
-
-// List all the organization memberships of the given organization.
-func (s *organizationMemberships) List(ctx context.Context, organization string, options OrganizationMembershipListOptions) (*OrganizationMembershipList, error) {
-	if !validStringID(&organization) {
-		return nil, ErrInvalidOrg
-	}
-
-	u := fmt.Sprintf("organizations/%s/organization-memberships", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	ml := &OrganizationMembershipList{}
-	err = s.client.do(ctx, req, ml)
-	if err != nil {
-		return nil, err
-	}
-
-	return ml, nil
+	// Optional: A list of organization member emails to filter by.
+	Emails []string `url:"filter[email],omitempty"`
 }
 
 // OrganizationMembershipCreateOptions represents the options for creating an organization membership.
@@ -100,15 +90,39 @@ type OrganizationMembershipCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,organization-memberships"`
 
-	// User's email address.
+	// Required: User's email address.
 	Email *string `jsonapi:"attr,email"`
 }
 
-func (o OrganizationMembershipCreateOptions) valid() error {
-	if o.Email == nil {
-		return errors.New("email is required")
+// OrganizationMembershipReadOptions represents the options for reading organization memberships.
+type OrganizationMembershipReadOptions struct {
+	// Optional: A list of relations to include. See available resources
+	// https://www.terraform.io/cloud-docs/api-docs/organization-memberships#available-related-resources
+	Include []OrgMembershipIncludeOpt `url:"include,omitempty"`
+}
+
+// List all the organization memberships of the given organization.
+func (s *organizationMemberships) List(ctx context.Context, organization string, options *OrganizationMembershipListOptions) (*OrganizationMembershipList, error) {
+	if !validStringID(&organization) {
+		return nil, ErrInvalidOrg
 	}
-	return nil
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("organizations/%s/organization-memberships", url.QueryEscape(organization))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	ml := &OrganizationMembershipList{}
+	err = req.Do(ctx, ml)
+	if err != nil {
+		return nil, err
+	}
+
+	return ml, nil
 }
 
 // Create an organization membership with the given options.
@@ -121,13 +135,13 @@ func (s *organizationMemberships) Create(ctx context.Context, organization strin
 	}
 
 	u := fmt.Sprintf("organizations/%s/organization-memberships", url.QueryEscape(organization))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	m := &OrganizationMembership{}
-	err = s.client.do(ctx, req, m)
+	err = req.Do(ctx, m)
 	if err != nil {
 		return nil, err
 	}
@@ -140,25 +154,23 @@ func (s *organizationMemberships) Read(ctx context.Context, organizationMembersh
 	return s.ReadWithOptions(ctx, organizationMembershipID, OrganizationMembershipReadOptions{})
 }
 
-// OrganizationMembershipReadOptions represents the options for reading organization memberships.
-type OrganizationMembershipReadOptions struct {
-	Include string `url:"include"`
-}
-
 // Read an organization membership by ID with options
 func (s *organizationMemberships) ReadWithOptions(ctx context.Context, organizationMembershipID string, options OrganizationMembershipReadOptions) (*OrganizationMembership, error) {
 	if !validStringID(&organizationMembershipID) {
-		return nil, errors.New("invalid value for membership")
+		return nil, ErrInvalidMembership
+	}
+	if err := options.valid(); err != nil {
+		return nil, err
 	}
 
 	u := fmt.Sprintf("organization-memberships/%s", url.QueryEscape(organizationMembershipID))
-	req, err := s.client.newRequest("GET", u, &options)
+	req, err := s.client.NewRequest("GET", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	mem := &OrganizationMembership{}
-	err = s.client.do(ctx, req, mem)
+	err = req.Do(ctx, mem)
 	if err != nil {
 		return nil, err
 	}
@@ -169,14 +181,68 @@ func (s *organizationMemberships) ReadWithOptions(ctx context.Context, organizat
 // Delete an organization membership by its ID.
 func (s *organizationMemberships) Delete(ctx context.Context, organizationMembershipID string) error {
 	if !validStringID(&organizationMembershipID) {
-		return errors.New("invalid value for membership")
+		return ErrInvalidMembership
 	}
 
 	u := fmt.Sprintf("organization-memberships/%s", url.QueryEscape(organizationMembershipID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o OrganizationMembershipCreateOptions) valid() error {
+	if o.Email == nil {
+		return ErrRequiredEmail
+	}
+	return nil
+}
+
+func (o *OrganizationMembershipListOptions) valid() error {
+	if o == nil {
+		return nil
+	}
+
+	if err := validateOrgMembershipIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	if err := validateOrgMembershipEmailParams(o.Emails); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o OrganizationMembershipReadOptions) valid() error {
+	if err := validateOrgMembershipIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateOrgMembershipIncludeParams(params []OrgMembershipIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case OrgMembershipUser, OrgMembershipTeam:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
+}
+
+func validateOrgMembershipEmailParams(emails []string) error {
+	for _, email := range emails {
+		if !validEmail(email) {
+			return ErrInvalidEmail
+		}
+	}
+
+	return nil
 }

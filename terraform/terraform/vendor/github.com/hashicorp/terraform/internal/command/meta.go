@@ -15,9 +15,10 @@ import (
 	"time"
 
 	plugin "github.com/hashicorp/go-plugin"
-	"github.com/hashicorp/hcl/v2"
-	"github.com/hashicorp/hcl/v2/hclsyntax"
 	"github.com/hashicorp/terraform-svchost/disco"
+	"github.com/mitchellh/cli"
+	"github.com/mitchellh/colorstring"
+
 	"github.com/hashicorp/terraform/internal/addrs"
 	"github.com/hashicorp/terraform/internal/backend"
 	"github.com/hashicorp/terraform/internal/backend/local"
@@ -25,17 +26,17 @@ import (
 	"github.com/hashicorp/terraform/internal/command/format"
 	"github.com/hashicorp/terraform/internal/command/views"
 	"github.com/hashicorp/terraform/internal/command/webbrowser"
+	"github.com/hashicorp/terraform/internal/command/workdir"
+	"github.com/hashicorp/terraform/internal/configs"
 	"github.com/hashicorp/terraform/internal/configs/configload"
 	"github.com/hashicorp/terraform/internal/getproviders"
+	legacy "github.com/hashicorp/terraform/internal/legacy/terraform"
 	"github.com/hashicorp/terraform/internal/providers"
 	"github.com/hashicorp/terraform/internal/provisioners"
+	"github.com/hashicorp/terraform/internal/states"
 	"github.com/hashicorp/terraform/internal/terminal"
 	"github.com/hashicorp/terraform/internal/terraform"
 	"github.com/hashicorp/terraform/internal/tfdiags"
-	"github.com/mitchellh/cli"
-	"github.com/mitchellh/colorstring"
-
-	legacy "github.com/hashicorp/terraform/internal/legacy/terraform"
 )
 
 // Meta are the meta-options that are available on all or most commands.
@@ -44,16 +45,19 @@ type Meta struct {
 	// command with a Meta field. These are expected to be set externally
 	// (not from within the command itself).
 
-	// OriginalWorkingDir, if set, is the actual working directory where
-	// Terraform was run from. This might not be the _actual_ current working
-	// directory, because users can add the -chdir=... option to the beginning
-	// of their command line to ask Terraform to switch.
+	// WorkingDir is an object representing the "working directory" where we're
+	// running commands. In the normal case this literally refers to the
+	// working directory of the Terraform process, though this can take on
+	// a more symbolic meaning when the user has overridden default behavior
+	// to specify a different working directory or to override the special
+	// data directory where we'll persist settings that must survive between
+	// consecutive commands.
 	//
-	// Most things should just use the current working directory in order to
-	// respect the user's override, but we retain this for exceptional
-	// situations where we need to refer back to the original working directory
-	// for some reason.
-	OriginalWorkingDir string
+	// We're currently gradually migrating the various bits of state that
+	// must persist between consecutive commands in a session to be encapsulated
+	// in here, but we're not there yet and so there are also some methods on
+	// Meta which directly read and modify paths inside the data directory.
+	WorkingDir *workdir.Dir
 
 	// Streams tracks the raw Stdout, Stderr, and Stdin handles along with
 	// some basic metadata about them, such as whether each is connected to
@@ -104,11 +108,6 @@ type Meta struct {
 	// provider version can be obtained.
 	ProviderSource getproviders.Source
 
-	// OverrideDataDir, if non-empty, overrides the return value of the
-	// DataDir method for situations where the local .terraform/ directory
-	// is not suitable, e.g. because of a read-only filesystem.
-	OverrideDataDir string
-
 	// BrowserLauncher is used by commands that need to open a URL in a
 	// web browser.
 	BrowserLauncher webbrowser.Launcher
@@ -133,13 +132,27 @@ type Meta struct {
 	// just trusting that someone else did it before running Terraform.
 	UnmanagedProviders map[addrs.Provider]*plugin.ReattachConfig
 
+	// AllowExperimentalFeatures controls whether a command that embeds this
+	// Meta is permitted to make use of experimental Terraform features.
+	//
+	// Set this field only during the initial creation of Meta. If you change
+	// this field after calling methods of type Meta then the resulting
+	// behavior is undefined.
+	//
+	// In normal code this would be set by package main only in builds
+	// explicitly marked as being alpha releases or development snapshots,
+	// making experimental features unavailable otherwise. Test code may
+	// choose to set this if it needs to exercise experimental features.
+	//
+	// Some experiments predated the addition of this setting, and may
+	// therefore still be available even if this flag is false. Our intent
+	// is that all/most _future_ experiments will be unavailable unless this
+	// flag is set, to reinforce that experiments are not for production use.
+	AllowExperimentalFeatures bool
+
 	//----------------------------------------------------------
 	// Protected: commands can set these
 	//----------------------------------------------------------
-
-	// Modify the data directory location. This should be accessed through the
-	// DataDir method.
-	dataDir string
 
 	// pluginPath is a user defined set of directories to look for plugins.
 	// This is set during init with the `-plugin-dir` flag, saved to a file in
@@ -220,9 +233,6 @@ type Meta struct {
 	migrateState     bool
 	compactWarnings  bool
 
-	// Used with the import command to allow import of state when no matching config exists.
-	allowMissingConfig bool
-
 	// Used with commands which write state to allow users to write remote
 	// state even if the remote and local Terraform versions don't match.
 	ignoreRemoteVersion bool
@@ -267,13 +277,25 @@ func (m *Meta) Colorize() *colorstring.Colorize {
 	}
 }
 
+// fixupMissingWorkingDir is a compensation for various existing tests which
+// directly construct incomplete "Meta" objects. Specifically, it deals with
+// a test that omits a WorkingDir value by constructing one just-in-time.
+//
+// We shouldn't ever rely on this in any real codepath, because it doesn't
+// take into account the various ways users can override our default
+// directory selection behaviors.
+func (m *Meta) fixupMissingWorkingDir() {
+	if m.WorkingDir == nil {
+		log.Printf("[WARN] This 'Meta' object is missing its WorkingDir, so we're creating a default one suitable only for tests")
+		m.WorkingDir = workdir.NewDir(".")
+	}
+}
+
 // DataDir returns the directory where local data will be stored.
 // Defaults to DefaultDataDir in the current working directory.
 func (m *Meta) DataDir() string {
-	if m.OverrideDataDir != "" {
-		return m.OverrideDataDir
-	}
-	return DefaultDataDir
+	m.fixupMissingWorkingDir()
+	return m.WorkingDir.DataDir()
 }
 
 const (
@@ -444,7 +466,6 @@ func (m *Meta) contextOpts() (*terraform.ContextOpts, error) {
 
 	var opts terraform.ContextOpts
 
-	opts.Targets = m.targets
 	opts.UIInput = m.UIInput()
 	opts.Parallelism = m.parallelism
 
@@ -455,57 +476,18 @@ func (m *Meta) contextOpts() (*terraform.ContextOpts, error) {
 		opts.Providers = m.testingOverrides.Providers
 		opts.Provisioners = m.testingOverrides.Provisioners
 	} else {
-		providerFactories, err := m.providerFactories()
-		if err != nil {
-			// providerFactories can fail if the plugin selections file is
-			// invalid in some way, but we don't have any way to report that
-			// from here so we'll just behave as if no providers are available
-			// in that case. However, we will produce a warning in case this
-			// shows up unexpectedly and prompts a bug report.
-			// This situation shouldn't arise commonly in practice because
-			// the selections file is generated programmatically.
-			log.Printf("[WARN] Failed to determine selected providers: %s", err)
-
-			// variable providerFactories may now be incomplete, which could
-			// lead to errors reported downstream from here. providerFactories
-			// tries to populate as many providers as possible even in an
-			// error case, so that operations not using problematic providers
-			// can still succeed.
-		}
+		var providerFactories map[addrs.Provider]providers.Factory
+		providerFactories, err = m.providerFactories()
 		opts.Providers = providerFactories
 		opts.Provisioners = m.provisionerFactories()
-
-		// Read the dependency locks so that they can be verified against the
-		// provider requirements in the configuration
-		lockedDependencies, diags := m.lockedDependencies()
-
-		// If the locks file is invalid, we should fail early rather than
-		// ignore it. A missing locks file will return no error.
-		if diags.HasErrors() {
-			return nil, diags.Err()
-		}
-		opts.LockedDependencies = lockedDependencies
-
-		// If any unmanaged providers or dev overrides are enabled, they must
-		// be listed in the context so that they can be ignored when verifying
-		// the locks against the configuration
-		opts.ProvidersInDevelopment = make(map[addrs.Provider]struct{})
-		for provider := range m.UnmanagedProviders {
-			opts.ProvidersInDevelopment[provider] = struct{}{}
-		}
-		for provider := range m.ProviderDevOverrides {
-			opts.ProvidersInDevelopment[provider] = struct{}{}
-		}
 	}
-
-	opts.ProviderSHA256s = m.providerPluginsLock().Read()
 
 	opts.Meta = &terraform.ContextMeta{
 		Env:                workspace,
-		OriginalWorkingDir: m.OriginalWorkingDir,
+		OriginalWorkingDir: m.WorkingDir.OriginalWorkingDir(),
 	}
 
-	return &opts, nil
+	return &opts, err
 }
 
 // defaultFlagSet creates a default flag set for commands.
@@ -553,43 +535,6 @@ func (m *Meta) extendedFlagSet(n string) *flag.FlagSet {
 	m.stateLock = true
 
 	return f
-}
-
-// parseTargetFlags must be called for any commands supporting -target
-// arguments. This method attempts to parse each -target flag into an
-// addrs.Target, storing in the Meta.targets slice.
-//
-// If any flags cannot be parsed, we rewrap the first error diagnostic with a
-// custom title to clarify the source of the error. The normal approach of
-// directly returning the diags from HCL or the addrs package results in
-// confusing incorrect "source" results when presented.
-func (m *Meta) parseTargetFlags() tfdiags.Diagnostics {
-	var diags tfdiags.Diagnostics
-	m.targets = nil
-	for _, tf := range m.targetFlags {
-		traversal, syntaxDiags := hclsyntax.ParseTraversalAbs([]byte(tf), "", hcl.Pos{Line: 1, Column: 1})
-		if syntaxDiags.HasErrors() {
-			diags = diags.Append(tfdiags.Sourceless(
-				tfdiags.Error,
-				fmt.Sprintf("Invalid target %q", tf),
-				syntaxDiags[0].Detail,
-			))
-			continue
-		}
-
-		target, targetDiags := addrs.ParseTarget(traversal)
-		if targetDiags.HasErrors() {
-			diags = diags.Append(tfdiags.Sourceless(
-				tfdiags.Error,
-				fmt.Sprintf("Invalid target %q", tf),
-				targetDiags[0].Description().Detail,
-			))
-			continue
-		}
-
-		m.targets = append(m.targets, target.Subject)
-	}
-	return diags
 }
 
 // process will process any -no-color entries out of the arguments. This
@@ -803,4 +748,81 @@ func (m *Meta) applyStateArguments(args *arguments.State) {
 	m.statePath = args.StatePath
 	m.stateOutPath = args.StateOutPath
 	m.backupPath = args.BackupPath
+}
+
+// checkRequiredVersion loads the config and check if the
+// core version requirements are satisfied.
+func (m *Meta) checkRequiredVersion() tfdiags.Diagnostics {
+	var diags tfdiags.Diagnostics
+
+	loader, err := m.initConfigLoader()
+	if err != nil {
+		diags = diags.Append(err)
+		return diags
+	}
+
+	pwd, err := os.Getwd()
+	if err != nil {
+		diags = diags.Append(fmt.Errorf("Error getting pwd: %s", err))
+		return diags
+	}
+
+	config, configDiags := loader.LoadConfig(pwd)
+	if configDiags.HasErrors() {
+		diags = diags.Append(configDiags)
+		return diags
+	}
+
+	versionDiags := terraform.CheckCoreVersionRequirements(config)
+	if versionDiags.HasErrors() {
+		diags = diags.Append(versionDiags)
+		return diags
+	}
+
+	return nil
+}
+
+// MaybeGetSchemas attempts to load and return the schemas
+// If there is not enough information to return the schemas,
+// it could potentially return nil without errors. It is the
+// responsibility of the caller to handle the lack of schema
+// information accordingly
+func (c *Meta) MaybeGetSchemas(state *states.State, config *configs.Config) (*terraform.Schemas, tfdiags.Diagnostics) {
+	var diags tfdiags.Diagnostics
+
+	path, err := os.Getwd()
+	if err != nil {
+		diags.Append(tfdiags.SimpleWarning(failedToLoadSchemasMessage))
+		return nil, diags
+	}
+
+	if config == nil {
+		config, diags = c.loadConfig(path)
+		if diags.HasErrors() {
+			diags.Append(tfdiags.SimpleWarning(failedToLoadSchemasMessage))
+			return nil, diags
+		}
+	}
+
+	if config != nil || state != nil {
+		opts, err := c.contextOpts()
+		if err != nil {
+			diags = diags.Append(err)
+			return nil, diags
+		}
+		tfCtx, ctxDiags := terraform.NewContext(opts)
+		diags = diags.Append(ctxDiags)
+		if ctxDiags.HasErrors() {
+			return nil, diags
+		}
+		var schemaDiags tfdiags.Diagnostics
+		schemas, schemaDiags := tfCtx.Schemas(config, state)
+		diags = diags.Append(schemaDiags)
+		if schemaDiags.HasErrors() {
+			return nil, diags
+		}
+		return schemas, diags
+
+	}
+	return nil, diags
 }

@@ -16,8 +16,14 @@ type KeyringResponse struct {
 	// Segment has the network segment this request corresponds to.
 	Segment string
 
+	// Messages has information or errors from serf
+	Messages map[string]string `json:",omitempty"`
+
 	// A map of the encryption keys to the number of nodes they're installed on
 	Keys map[string]int
+
+	// A map of the encryption primary keys to the number of nodes they're installed on
+	PrimaryKeys map[string]int
 
 	// The total number of nodes in this ring
 	NumNodes int
@@ -34,7 +40,7 @@ func (op *Operator) KeyringInstall(key string, q *WriteOptions) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	closeResponseBody(resp)
 	return nil
 }
 
@@ -46,7 +52,7 @@ func (op *Operator) KeyringList(q *QueryOptions) ([]*KeyringResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	var out []*KeyringResponse
 	if err := decodeBody(resp, &out); err != nil {
@@ -66,7 +72,7 @@ func (op *Operator) KeyringRemove(key string, q *WriteOptions) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	closeResponseBody(resp)
 	return nil
 }
 
@@ -81,6 +87,6 @@ func (op *Operator) KeyringUse(key string, q *WriteOptions) error {
 	if err != nil {
 		return err
 	}
-	resp.Body.Close()
+	closeResponseBody(resp)
 	return nil
 }

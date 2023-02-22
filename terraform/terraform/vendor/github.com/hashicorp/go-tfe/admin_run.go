@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"strings"
@@ -19,17 +18,13 @@ var _ AdminRuns = (*adminRuns)(nil)
 // TFE API docs: https://www.terraform.io/docs/cloud/api/admin/runs.html
 type AdminRuns interface {
 	// List all the runs of the given installation.
-	List(ctx context.Context, options AdminRunsListOptions) (*AdminRunsList, error)
+	List(ctx context.Context, options *AdminRunsListOptions) (*AdminRunsList, error)
 
 	// Force-cancel a run by its ID.
 	ForceCancel(ctx context.Context, runID string, options AdminRunForceCancelOptions) error
 }
 
-// adminRuns implements the AdminRuns interface.
-type adminRuns struct {
-	client *Client
-}
-
+// AdminRun represents AdminRuns interface.
 type AdminRun struct {
 	ID               string               `jsonapi:"primary,runs"`
 	CreatedAt        time.Time            `jsonapi:"attr,created-at,iso8601"`
@@ -48,31 +43,48 @@ type AdminRunsList struct {
 	Items []*AdminRun
 }
 
+// AdminRunIncludeOpt represents the available options for include query params.
+// https://www.terraform.io/cloud-docs/api-docs/admin/runs#available-related-resources
+type AdminRunIncludeOpt string
+
+const (
+	AdminRunWorkspace          AdminRunIncludeOpt = "workspace"
+	AdminRunWorkspaceOrg       AdminRunIncludeOpt = "workspace.organization"
+	AdminRunWorkspaceOrgOwners AdminRunIncludeOpt = "workspace.organization.owners"
+)
+
 // AdminRunsListOptions represents the options for listing runs.
 // https://www.terraform.io/docs/cloud/api/admin/runs.html#query-parameters
 type AdminRunsListOptions struct {
 	ListOptions
 
-	RunStatus *string `url:"filter[status],omitempty"`
-	Query     *string `url:"q,omitempty"`
-	Include   *string `url:"include,omitempty"`
+	RunStatus string `url:"filter[status],omitempty"`
+	Query     string `url:"q,omitempty"`
+	// Optional: A list of relations to include. See available resources
+	// https://www.terraform.io/cloud-docs/api-docs/admin/runs#available-related-resources
+	Include []AdminRunIncludeOpt `url:"include,omitempty"`
+}
+
+// adminRuns implements the AdminRuns interface.
+type adminRuns struct {
+	client *Client
 }
 
 // List all the runs of the terraform enterprise installation.
 // https://www.terraform.io/docs/cloud/api/admin/runs.html#list-all-runs
-func (s *adminRuns) List(ctx context.Context, options AdminRunsListOptions) (*AdminRunsList, error) {
+func (s *adminRuns) List(ctx context.Context, options *AdminRunsListOptions) (*AdminRunsList, error) {
 	if err := options.valid(); err != nil {
 		return nil, err
 	}
 
 	u := "admin/runs"
-	req, err := s.client.newRequest("GET", u, &options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	rl := &AdminRunsList{}
-	err = s.client.do(ctx, req, rl)
+	err = req.Do(ctx, rl)
 	if err != nil {
 		return nil, err
 	}
@@ -91,48 +103,80 @@ type AdminRunForceCancelOptions struct {
 // https://www.terraform.io/docs/cloud/api/admin/runs.html#force-a-run-into-the-quot-cancelled-quot-state
 func (s *adminRuns) ForceCancel(ctx context.Context, runID string, options AdminRunForceCancelOptions) error {
 	if !validStringID(&runID) {
-		return errors.New("invalid value for run ID")
+		return ErrInvalidRunID
 	}
 
 	u := fmt.Sprintf("admin/runs/%s/actions/force-cancel", url.QueryEscape(runID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }
 
-func (o AdminRunsListOptions) valid() error {
-	if validString(o.RunStatus) {
-		validRunStatus := map[string]int{
-			string(RunApplied):            1,
-			string(RunApplyQueued):        1,
-			string(RunApplying):           1,
-			string(RunCanceled):           1,
-			string(RunConfirmed):          1,
-			string(RunCostEstimated):      1,
-			string(RunCostEstimating):     1,
-			string(RunDiscarded):          1,
-			string(RunErrored):            1,
-			string(RunPending):            1,
-			string(RunPlanQueued):         1,
-			string(RunPlanned):            1,
-			string(RunPlannedAndFinished): 1,
-			string(RunPlanning):           1,
-			string(RunPolicyChecked):      1,
-			string(RunPolicyChecking):     1,
-			string(RunPolicyOverride):     1,
-			string(RunPolicySoftFailed):   1,
-		}
-		runStatus := strings.Split(*o.RunStatus, ",")
+func (o *AdminRunsListOptions) valid() error {
+	if o == nil { // nothing to validate
+		return nil
+	}
 
+	if err := validateAdminRunFilterParams(o.RunStatus); err != nil {
+		return err
+	}
+
+	if err := validateAdminRunIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateAdminRunFilterParams(runStatus string) error {
+	// For the platform, an invalid filter value is a semantically understood query that returns an empty set, no error, no warning. But for go-tfe, an invalid value is good enough reason to error prior to a network call to the platform:
+	if validString(&runStatus) {
+		sanitizedRunstatus := strings.TrimSpace(runStatus)
+		runStatuses := strings.Split(sanitizedRunstatus, ",")
 		// iterate over our statuses, and ensure it is valid.
-		for _, status := range runStatus {
-			if _, present := validRunStatus[status]; !present {
-				return fmt.Errorf("invalid value %s for run status", status)
+		for _, status := range runStatuses {
+			switch status {
+			case string(RunApplied),
+				string(RunApplyQueued),
+				string(RunApplying),
+				string(RunCanceled),
+				string(RunConfirmed),
+				string(RunCostEstimate),
+				string(RunCostEstimating),
+				string(RunDiscarded),
+				string(RunErrored),
+				string(RunPending),
+				string(RunPlanQueued),
+				string(RunPlanned),
+				string(RunPlannedAndFinished),
+				string(RunPlanning),
+				string(RunPolicyChecked),
+				string(RunPolicyChecking),
+				string(RunPolicyOverride),
+				string(RunPolicySoftFailed),
+				"":
+				// do nothing
+			default:
+				return fmt.Errorf(`invalid value "%s" for run status`, status)
 			}
 		}
 	}
+
+	return nil
+}
+
+func validateAdminRunIncludeParams(params []AdminRunIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case AdminRunWorkspace, AdminRunWorkspaceOrg, AdminRunWorkspaceOrgOwners:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
 	return nil
 }

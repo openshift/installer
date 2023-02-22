@@ -33,11 +33,22 @@ func (m Module) String() string {
 	if len(m) == 0 {
 		return ""
 	}
-	var steps []string
-	for _, s := range m {
-		steps = append(steps, "module", s)
+	// Calculate necessary space.
+	l := 0
+	for _, step := range m {
+		l += len(step)
 	}
-	return strings.Join(steps, ".")
+	buf := strings.Builder{}
+	// 8 is len(".module.") which separates entries.
+	buf.Grow(l + len(m)*8)
+	sep := ""
+	for _, step := range m {
+		buf.WriteString(sep)
+		buf.WriteString("module.")
+		buf.WriteString(step)
+		sep = "."
+	}
+	return buf.String()
 }
 
 func (m Module) Equal(other Module) bool {
@@ -95,6 +106,10 @@ func (m Module) TargetContains(other Targetable) bool {
 	}
 }
 
+func (m Module) AddrType() TargetableAddrType {
+	return ModuleAddrType
+}
+
 // Child returns the address of a child call in the receiver, identified by the
 // given name.
 func (m Module) Child(name string) Module {
@@ -145,4 +160,8 @@ func (m Module) Ancestors() []Module {
 		ret = append(ret, m[:i])
 	}
 	return ret
+}
+
+func (m Module) configMoveableSigil() {
+	// ModuleInstance is moveable
 }

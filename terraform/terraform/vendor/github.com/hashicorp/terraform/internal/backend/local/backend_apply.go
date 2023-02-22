@@ -2,12 +2,13 @@ package local
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform/internal/backend"
 	"github.com/hashicorp/terraform/internal/command/views"
+	"github.com/hashicorp/terraform/internal/logging"
 	"github.com/hashicorp/terraform/internal/plans"
 	"github.com/hashicorp/terraform/internal/states"
 	"github.com/hashicorp/terraform/internal/states/statefile"
@@ -16,6 +17,9 @@ import (
 	"github.com/hashicorp/terraform/internal/tfdiags"
 )
 
+// test hook called between plan+apply during opApply
+var testHookStopPlanApply func()
+
 func (b *Local) opApply(
 	stopCtx context.Context,
 	cancelCtx context.Context,
@@ -23,7 +27,7 @@ func (b *Local) opApply(
 	runningOp *backend.RunningOperation) {
 	log.Printf("[INFO] backend/local: starting Apply operation")
 
-	var diags tfdiags.Diagnostics
+	var diags, moreDiags tfdiags.Diagnostics
 
 	// If we have a nil module at this point, then set it to an empty tree
 	// to avoid any potential crashes.
@@ -43,13 +47,13 @@ func (b *Local) opApply(
 	op.Hooks = append(op.Hooks, stateHook)
 
 	// Get our context
-	tfCtx, _, opState, contextDiags := b.context(op)
+	lr, _, opState, contextDiags := b.localRun(op)
 	diags = diags.Append(contextDiags)
 	if contextDiags.HasErrors() {
 		op.ReportResult(runningOp, diags)
 		return
 	}
-	// the state was locked during succesfull context creation; unlock the state
+	// the state was locked during successful context creation; unlock the state
 	// when the operation completes
 	defer func() {
 		diags := op.StateLocker.Unlock()
@@ -59,15 +63,26 @@ func (b *Local) opApply(
 		}
 	}()
 
-	runningOp.State = tfCtx.State()
+	// We'll start off with our result being the input state, and replace it
+	// with the result state only if we eventually complete the apply
+	// operation.
+	runningOp.State = lr.InputState
 
+	schemas, moreDiags := lr.Core.Schemas(lr.Config, lr.InputState)
+	diags = diags.Append(moreDiags)
+	if moreDiags.HasErrors() {
+		op.ReportResult(runningOp, diags)
+		return
+	}
+
+	var plan *plans.Plan
 	// If we weren't given a plan, then we refresh/plan
 	if op.PlanFile == nil {
 		// Perform the plan
 		log.Printf("[INFO] backend/local: apply calling Plan")
-		plan, planDiags := tfCtx.Plan()
-		diags = diags.Append(planDiags)
-		if planDiags.HasErrors() {
+		plan, moreDiags = lr.Core.Plan(lr.Config, lr.InputState, lr.PlanOpts)
+		diags = diags.Append(moreDiags)
+		if moreDiags.HasErrors() {
 			op.ReportResult(runningOp, diags)
 			return
 		}
@@ -75,7 +90,23 @@ func (b *Local) opApply(
 		trivialPlan := !plan.CanApply()
 		hasUI := op.UIOut != nil && op.UIIn != nil
 		mustConfirm := hasUI && !op.AutoApprove && !trivialPlan
-		op.View.Plan(plan, tfCtx.Schemas())
+		op.View.Plan(plan, schemas)
+
+		if testHookStopPlanApply != nil {
+			testHookStopPlanApply()
+		}
+
+		// Check if we've been stopped before going through confirmation, or
+		// skipping confirmation in the case of -auto-approve.
+		// This can currently happen if a single stop request was received
+		// during the final batch of resource plan calls, so no operations were
+		// forced to abort, and no errors were returned from Plan.
+		if stopCtx.Err() != nil {
+			diags = diags.Append(errors.New("execution halted"))
+			runningOp.Result = backend.OperationFailure
+			op.ReportResult(runningOp, diags)
+			return
+		}
 
 		if mustConfirm {
 			var desc, query string
@@ -119,7 +150,7 @@ func (b *Local) opApply(
 				Description: desc,
 			})
 			if err != nil {
-				diags = diags.Append(errwrap.Wrapf("Error asking for approval: {{err}}", err))
+				diags = diags.Append(fmt.Errorf("error asking for approval: %w", err))
 				op.ReportResult(runningOp, diags)
 				return
 			}
@@ -130,16 +161,7 @@ func (b *Local) opApply(
 			}
 		}
 	} else {
-		plan, err := op.PlanFile.ReadPlan()
-		if err != nil {
-			diags = diags.Append(tfdiags.Sourceless(
-				tfdiags.Error,
-				"Invalid plan file",
-				fmt.Sprintf("Failed to read plan from plan file: %s.", err),
-			))
-			op.ReportResult(runningOp, diags)
-			return
-		}
+		plan = lr.Plan
 		for _, change := range plan.Changes.Resources {
 			if change.Action != plans.NoOp {
 				op.View.PlannedChange(change)
@@ -155,21 +177,28 @@ func (b *Local) opApply(
 	var applyDiags tfdiags.Diagnostics
 	doneCh := make(chan struct{})
 	go func() {
+		defer logging.PanicHandler()
 		defer close(doneCh)
 		log.Printf("[INFO] backend/local: apply calling Apply")
-		_, applyDiags = tfCtx.Apply()
-		// we always want the state, even if apply failed
-		applyState = tfCtx.State()
+		applyState, applyDiags = lr.Core.Apply(plan, lr.Config)
 	}()
 
-	if b.opWait(doneCh, stopCtx, cancelCtx, tfCtx, opState, op.View) {
+	if b.opWait(doneCh, stopCtx, cancelCtx, lr.Core, opState, op.View) {
 		return
 	}
 	diags = diags.Append(applyDiags)
 
+	// Even on error with an empty state, the state value should not be nil.
+	// Return early here to prevent corrupting any existing state.
+	if diags.HasErrors() && applyState == nil {
+		log.Printf("[ERROR] backend/local: apply returned nil state")
+		op.ReportResult(runningOp, diags)
+		return
+	}
+
 	// Store the final state
 	runningOp.State = applyState
-	err := statemgr.WriteAndPersist(opState, applyState)
+	err := statemgr.WriteAndPersist(opState, applyState, schemas)
 	if err != nil {
 		// Export the state file from the state manager and assign the new
 		// state. This is needed to preserve the existing serial and lineage.

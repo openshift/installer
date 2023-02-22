@@ -7,7 +7,8 @@ import (
 // Compile-time proof of interface implementation.
 var _ GeneralSettings = (*adminGeneralSettings)(nil)
 
-// GeneralSettings describes the general admin settings.
+// GeneralSettings describes the general admin settings for the Admin Setting API.
+// https://www.terraform.io/cloud-docs/api-docs/admin/settings
 type GeneralSettings interface {
 	// Read returns the general settings
 	Read(ctx context.Context) (*AdminGeneralSetting, error)
@@ -39,22 +40,6 @@ type AdminGeneralSetting struct {
 	DefaultRemoteStateAccess         bool   `jsonapi:"attr,default-remote-state-access"`
 }
 
-// Read returns the general settings.
-func (a *adminGeneralSettings) Read(ctx context.Context) (*AdminGeneralSetting, error) {
-	req, err := a.client.newRequest("GET", "admin/general-settings", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	ags := &AdminGeneralSetting{}
-	err = a.client.do(ctx, req, ags)
-	if err != nil {
-		return nil, err
-	}
-
-	return ags, nil
-}
-
 // AdminGeneralSettingsUpdateOptions represents the admin options for updating
 // general settings.
 // https://www.terraform.io/docs/cloud/api/admin/settings.html#request-body
@@ -67,15 +52,31 @@ type AdminGeneralSettingsUpdateOptions struct {
 	DefaultRemoteStateAccess          *bool `jsonapi:"attr,default-remote-state-access,omitempty"`
 }
 
-// Update updates the general settings.
-func (a *adminGeneralSettings) Update(ctx context.Context, options AdminGeneralSettingsUpdateOptions) (*AdminGeneralSetting, error) {
-	req, err := a.client.newRequest("PATCH", "admin/general-settings", &options)
+// Read returns the general settings.
+func (a *adminGeneralSettings) Read(ctx context.Context) (*AdminGeneralSetting, error) {
+	req, err := a.client.NewRequest("GET", "admin/general-settings", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ags := &AdminGeneralSetting{}
-	err = a.client.do(ctx, req, ags)
+	err = req.Do(ctx, ags)
+	if err != nil {
+		return nil, err
+	}
+
+	return ags, nil
+}
+
+// Update updates the general settings.
+func (a *adminGeneralSettings) Update(ctx context.Context, options AdminGeneralSettingsUpdateOptions) (*AdminGeneralSetting, error) {
+	req, err := a.client.NewRequest("PATCH", "admin/general-settings", &options)
+	if err != nil {
+		return nil, err
+	}
+
+	ags := &AdminGeneralSetting{}
+	err = req.Do(ctx, ags)
 	if err != nil {
 		return nil, err
 	}

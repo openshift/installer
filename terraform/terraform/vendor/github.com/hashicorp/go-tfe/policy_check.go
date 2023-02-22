@@ -3,7 +3,6 @@ package tfe
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -17,10 +16,10 @@ var _ PolicyChecks = (*policyChecks)(nil)
 // Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/policy-checks.html
+// https://www.terraform.io/docs/cloud/api/policy-checks.html
 type PolicyChecks interface {
 	// List all policy checks of the given run.
-	List(ctx context.Context, runID string, options PolicyCheckListOptions) (*PolicyCheckList, error)
+	List(ctx context.Context, runID string, options *PolicyCheckListOptions) (*PolicyCheckList, error)
 
 	// Read a policy check by its ID.
 	Read(ctx context.Context, policyCheckID string) (*PolicyCheck, error)
@@ -49,7 +48,7 @@ const (
 // PolicyStatus represents a policy check state.
 type PolicyStatus string
 
-//List all available policy check statuses.
+// List all available policy check statuses.
 const (
 	PolicyCanceled    PolicyStatus = "canceled"
 	PolicyErrored     PolicyStatus = "errored"
@@ -111,25 +110,41 @@ type PolicyStatusTimestamps struct {
 	SoftFailedAt time.Time `jsonapi:"attr,soft-failed-at,rfc3339"`
 }
 
+// A list of relations to include
+// https://www.terraform.io/cloud-docs/api-docs/policy-checks#available-related-resources
+type PolicyCheckIncludeOpt string
+
+const (
+	PolicyCheckRunWorkspace PolicyCheckIncludeOpt = "run.workspace"
+	PolicyCheckRun          PolicyCheckIncludeOpt = "run"
+)
+
 // PolicyCheckListOptions represents the options for listing policy checks.
 type PolicyCheckListOptions struct {
 	ListOptions
+
+	// Optional: A list of relations to include. See available resources
+	// https://www.terraform.io/cloud-docs/api-docs/policy-checks#available-related-resources
+	Include []PolicyCheckIncludeOpt `url:"include,omitempty"`
 }
 
 // List all policy checks of the given run.
-func (s *policyChecks) List(ctx context.Context, runID string, options PolicyCheckListOptions) (*PolicyCheckList, error) {
+func (s *policyChecks) List(ctx context.Context, runID string, options *PolicyCheckListOptions) (*PolicyCheckList, error) {
 	if !validStringID(&runID) {
 		return nil, ErrInvalidRunID
 	}
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
 
 	u := fmt.Sprintf("runs/%s/policy-checks", url.QueryEscape(runID))
-	req, err := s.client.newRequest("GET", u, &options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	pcl := &PolicyCheckList{}
-	err = s.client.do(ctx, req, pcl)
+	err = req.Do(ctx, pcl)
 	if err != nil {
 		return nil, err
 	}
@@ -140,17 +155,17 @@ func (s *policyChecks) List(ctx context.Context, runID string, options PolicyChe
 // Read a policy check by its ID.
 func (s *policyChecks) Read(ctx context.Context, policyCheckID string) (*PolicyCheck, error) {
 	if !validStringID(&policyCheckID) {
-		return nil, errors.New("invalid value for policy check ID")
+		return nil, ErrInvalidPolicyCheckID
 	}
 
 	u := fmt.Sprintf("policy-checks/%s", url.QueryEscape(policyCheckID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	pc := &PolicyCheck{}
-	err = s.client.do(ctx, req, pc)
+	err = req.Do(ctx, pc)
 	if err != nil {
 		return nil, err
 	}
@@ -161,17 +176,17 @@ func (s *policyChecks) Read(ctx context.Context, policyCheckID string) (*PolicyC
 // Override a soft-mandatory or warning policy.
 func (s *policyChecks) Override(ctx context.Context, policyCheckID string) (*PolicyCheck, error) {
 	if !validStringID(&policyCheckID) {
-		return nil, errors.New("invalid value for policy check ID")
+		return nil, ErrInvalidPolicyCheckID
 	}
 
 	u := fmt.Sprintf("policy-checks/%s/actions/override", url.QueryEscape(policyCheckID))
-	req, err := s.client.newRequest("POST", u, nil)
+	req, err := s.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	pc := &PolicyCheck{}
-	err = s.client.do(ctx, req, pc)
+	err = req.Do(ctx, pc)
 	if err != nil {
 		return nil, err
 	}
@@ -182,7 +197,7 @@ func (s *policyChecks) Override(ctx context.Context, policyCheckID string) (*Pol
 // Logs retrieves the logs of a policy check.
 func (s *policyChecks) Logs(ctx context.Context, policyCheckID string) (io.Reader, error) {
 	if !validStringID(&policyCheckID) {
-		return nil, errors.New("invalid value for policy check ID")
+		return nil, ErrInvalidPolicyCheckID
 	}
 
 	// Loop until the context is canceled or the policy check is finished
@@ -205,17 +220,42 @@ func (s *policyChecks) Logs(ctx context.Context, policyCheckID string) (io.Reade
 		}
 
 		u := fmt.Sprintf("policy-checks/%s/output", url.QueryEscape(policyCheckID))
-		req, err := s.client.newRequest("GET", u, nil)
+		req, err := s.client.NewRequest("GET", u, nil)
 		if err != nil {
 			return nil, err
 		}
 
 		logs := bytes.NewBuffer(nil)
-		err = s.client.do(ctx, req, logs)
+		err = req.Do(ctx, logs)
 		if err != nil {
 			return nil, err
 		}
 
 		return logs, nil
 	}
+}
+
+func (o *PolicyCheckListOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validatePolicyCheckIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validatePolicyCheckIncludeParams(params []PolicyCheckIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case PolicyCheckRunWorkspace, PolicyCheckRun:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
 }

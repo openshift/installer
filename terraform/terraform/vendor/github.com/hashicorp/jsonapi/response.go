@@ -475,11 +475,23 @@ func visitModelNode(model interface{}, included *map[string]*Node,
 	return node, nil
 }
 
+// toShallowNode takes a node and returns a shallow version of the node.
+// If the ID is empty, we include attributes into the shallow version.
+//
+// An example of where this is useful would be if an object
+// within a relationship can be created at the same time as
+// the root node.
+//
+// This is not 1.0 jsonapi spec compliant--it's a bespoke variation on
+// resource object identifiers discussed in the pending 1.1 spec.
 func toShallowNode(node *Node) *Node {
-	return &Node{
-		ID:   node.ID,
-		Type: node.Type,
+	ret := &Node{Type: node.Type}
+	if node.ID == "" {
+		ret.Attributes = node.Attributes
+	} else {
+		ret.ID = node.ID
 	}
+	return ret
 }
 
 func visitModelNodeRelationships(models reflect.Value, included *map[string]*Node,

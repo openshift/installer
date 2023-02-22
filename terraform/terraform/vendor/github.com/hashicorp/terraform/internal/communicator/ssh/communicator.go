@@ -18,7 +18,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hashicorp/errwrap"
+	"github.com/apparentlymart/go-shquot/shquot"
 	"github.com/hashicorp/terraform/internal/communicator/remote"
 	"github.com/hashicorp/terraform/internal/provisioners"
 	"github.com/zclconf/go-cty/cty"
@@ -170,6 +170,20 @@ func (c *Communicator) Connect(o provisioners.UIOutput) (err error) {
 				c.connInfo.BastionHostKey != "",
 			))
 		}
+
+		if c.connInfo.ProxyHost != "" {
+			o.Output(fmt.Sprintf(
+				"Using configured proxy host...\n"+
+					"  ProxyHost: %s\n"+
+					"  ProxyPort: %d\n"+
+					"  ProxyUserName: %s\n"+
+					"  ProxyUserPassword: %t",
+				c.connInfo.ProxyHost,
+				c.connInfo.ProxyPort,
+				c.connInfo.ProxyUserName,
+				c.connInfo.ProxyUserPassword != "",
+			))
+		}
 	}
 
 	hostAndPort := fmt.Sprintf("%s:%d", c.connInfo.Host, c.connInfo.Port)
@@ -191,7 +205,7 @@ func (c *Communicator) Connect(o provisioners.UIOutput) (err error) {
 	log.Printf("[DEBUG] Connection established. Handshaking for user %v", c.connInfo.User)
 	sshConn, sshChan, req, err := ssh.NewClientConn(c.conn, hostAndPort, c.config.config)
 	if err != nil {
-		err = errwrap.Wrapf(fmt.Sprintf("SSH authentication failed (%s@%s): {{err}}", c.connInfo.User, hostAndPort), err)
+		err = fmt.Errorf("SSH authentication failed (%s@%s): %w", c.connInfo.User, hostAndPort, err)
 
 		// While in theory this should be a fatal error, some hosts may start
 		// the ssh service before it is properly configured, or before user
@@ -404,7 +418,7 @@ func (c *Communicator) Upload(path string, input io.Reader) error {
 	switch src := input.(type) {
 	case *os.File:
 		fi, err := src.Stat()
-		if err != nil {
+		if err == nil {
 			size = fi.Size()
 		}
 	case *bytes.Buffer:
@@ -419,7 +433,11 @@ func (c *Communicator) Upload(path string, input io.Reader) error {
 		return scpUploadFile(targetFile, input, w, stdoutR, size)
 	}
 
-	return c.scpSession("scp -vt "+targetDir, scpFunc)
+	cmd, err := quoteShell([]string{"scp", "-vt", targetDir}, c.connInfo.TargetPlatform)
+	if err != nil {
+		return err
+	}
+	return c.scpSession(cmd, scpFunc)
 }
 
 // UploadScript implementation of communicator.Communicator interface
@@ -488,7 +506,11 @@ func (c *Communicator) UploadDir(dst string, src string) error {
 		return uploadEntries()
 	}
 
-	return c.scpSession("scp -rvt "+dst, scpFunc)
+	cmd, err := quoteShell([]string{"scp", "-rvt", dst}, c.connInfo.TargetPlatform)
+	if err != nil {
+		return err
+	}
+	return c.scpSession(cmd, scpFunc)
 }
 
 func (c *Communicator) newSession() (session *ssh.Session, err error) {
@@ -619,7 +641,13 @@ func checkSCPStatus(r *bufio.Reader) error {
 	return nil
 }
 
+var testUploadSizeHook func(size int64)
+
 func scpUploadFile(dst string, src io.Reader, w io.Writer, r *bufio.Reader, size int64) error {
+	if testUploadSizeHook != nil {
+		testUploadSizeHook(size)
+	}
+
 	if size == 0 {
 		// Create a temporary file where we can copy the contents of the src
 		// so that we can determine the length, since SCP is length-prefixed.
@@ -762,9 +790,19 @@ func scpUploadDir(root string, fs []os.FileInfo, w io.Writer, r *bufio.Reader) e
 // ConnectFunc is a convenience method for returning a function
 // that just uses net.Dial to communicate with the remote end that
 // is suitable for use with the SSH communicator configuration.
-func ConnectFunc(network, addr string) func() (net.Conn, error) {
+func ConnectFunc(network, addr string, p *proxyInfo) func() (net.Conn, error) {
 	return func() (net.Conn, error) {
-		c, err := net.DialTimeout(network, addr, 15*time.Second)
+		var c net.Conn
+		var err error
+
+		// Wrap connection to host if proxy server is configured
+		if p != nil {
+			RegisterDialerType()
+			c, err = newHttpProxyConn(p, addr)
+		} else {
+			c, err = net.DialTimeout(network, addr, 15*time.Second)
+		}
+
 		if err != nil {
 			return nil, err
 		}
@@ -784,10 +822,38 @@ func BastionConnectFunc(
 	bAddr string,
 	bConf *ssh.ClientConfig,
 	proto string,
-	addr string) func() (net.Conn, error) {
+	addr string,
+	p *proxyInfo) func() (net.Conn, error) {
 	return func() (net.Conn, error) {
 		log.Printf("[DEBUG] Connecting to bastion: %s", bAddr)
-		bastion, err := ssh.Dial(bProto, bAddr, bConf)
+		var bastion *ssh.Client
+		var err error
+
+		// Wrap connection to bastion server if proxy server is configured
+		if p != nil {
+			var pConn net.Conn
+			var bConn ssh.Conn
+			var bChans <-chan ssh.NewChannel
+			var bReq <-chan *ssh.Request
+
+			RegisterDialerType()
+			pConn, err = newHttpProxyConn(p, bAddr)
+
+			if err != nil {
+				return nil, fmt.Errorf("Error connecting to proxy: %s", err)
+			}
+
+			bConn, bChans, bReq, err = ssh.NewClientConn(pConn, bAddr, bConf)
+
+			if err != nil {
+				return nil, fmt.Errorf("Error creating new client connection via proxy: %s", err)
+			}
+
+			bastion = ssh.NewClient(bConn, bChans, bReq)
+		} else {
+			bastion, err = ssh.Dial(bProto, bAddr, bConf)
+		}
+
 		if err != nil {
 			return nil, fmt.Errorf("Error connecting to bastion: %s", err)
 		}
@@ -815,4 +881,16 @@ type bastionConn struct {
 func (c *bastionConn) Close() error {
 	c.Conn.Close()
 	return c.Bastion.Close()
+}
+
+func quoteShell(args []string, targetPlatform string) (string, error) {
+	if targetPlatform == TargetPlatformUnix {
+		return shquot.POSIXShell(args), nil
+	}
+	if targetPlatform == TargetPlatformWindows {
+		return shquot.WindowsArgv(args), nil
+	}
+
+	return "", fmt.Errorf("Cannot quote shell command, target platform unknown: %s", targetPlatform)
+
 }

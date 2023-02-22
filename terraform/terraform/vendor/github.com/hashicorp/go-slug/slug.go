@@ -19,6 +19,94 @@ type Meta struct {
 	Size int64
 }
 
+// IllegalSlugError indicates the provided slug (io.Writer for Pack, io.Reader
+// for Unpack) violates a rule about its contents. For example, an absolute or
+// external symlink. It implements the error interface.
+type IllegalSlugError struct {
+	Err error
+}
+
+func (e *IllegalSlugError) Error() string {
+	return fmt.Sprintf("illegal slug error: %v", e.Err)
+}
+
+// Unwrap returns the underlying issue with the provided Slug into the error
+// chain.
+func (e *IllegalSlugError) Unwrap() error { return e.Err }
+
+// PackerOption is a functional option that can configure non-default Packers.
+type PackerOption func(*Packer) error
+
+// ApplyTerraformIgnore is a PackerOption that will apply the .terraformignore
+// rules and skip packing files it specifies.
+func ApplyTerraformIgnore() PackerOption {
+	return func(p *Packer) error {
+		p.applyTerraformIgnore = true
+		return nil
+	}
+}
+
+// DereferenceSymlinks is a PackerOption that will allow symlinks that
+// reference a target outside of the source directory by copying the link
+// target, turning it into a normal file within the archive.
+func DereferenceSymlinks() PackerOption {
+	return func(p *Packer) error {
+		p.dereference = true
+		return nil
+	}
+}
+
+// AllowSymlinkTarget relaxes safety checks on symlinks with targets matching
+// path. Specifically, absolute symlink targets (e.g. "/foo/bar") and relative
+// targets (e.g. "../foo/bar") which resolve to a path outside of the
+// source/destination directories for pack/unpack operations respectively, may
+// be expressly permitted, whereas they are forbidden by default. Exercise
+// caution when using this option. A symlink matches path if its target
+// resolves to path exactly, or if path is a parent directory of target.
+func AllowSymlinkTarget(path string) PackerOption {
+	return func(p *Packer) error {
+		p.allowSymlinkTargets = append(p.allowSymlinkTargets, path)
+		return nil
+	}
+}
+
+// Packer holds options for the Pack function.
+type Packer struct {
+	dereference          bool
+	applyTerraformIgnore bool
+	allowSymlinkTargets  []string
+}
+
+// NewPacker is a constructor for Packer.
+func NewPacker(options ...PackerOption) (*Packer, error) {
+	p := &Packer{
+		dereference:          false,
+		applyTerraformIgnore: false,
+	}
+
+	for _, opt := range options {
+		if err := opt(p); err != nil {
+			return nil, fmt.Errorf("option failed: %w", err)
+		}
+	}
+
+	return p, nil
+}
+
+// Pack at the package level is used to maintain compatibility with existing
+// code that relies on this function signature. New options related to packing
+// slugs should be added to the Packer struct instead.
+func Pack(src string, w io.Writer, dereference bool) (*Meta, error) {
+	p := Packer{
+		dereference: dereference,
+
+		// This defaults to false in NewPacker, but is true here. This matches
+		// the old behavior of Pack, which always used .terraformignore.
+		applyTerraformIgnore: true,
+	}
+	return p.Pack(src, w)
+}
+
 // Pack creates a slug from a src directory, and writes the new slug
 // to w. Returns metadata about the slug and any errors.
 //
@@ -26,7 +114,7 @@ type Meta struct {
 // the src directory will be dereferenced. When dereference is set to
 // false symlinks with a target outside the src directory are omitted
 // from the slug.
-func Pack(src string, w io.Writer, dereference bool) (*Meta, error) {
+func (p *Packer) Pack(src string, w io.Writer) (*Meta, error) {
 	// Gzip compress all the output data.
 	gzipW := gzip.NewWriter(w)
 
@@ -35,31 +123,34 @@ func Pack(src string, w io.Writer, dereference bool) (*Meta, error) {
 
 	// Load the ignore rule configuration, which will use
 	// defaults if no .terraformignore is configured
-	ignoreRules := parseIgnoreFile(src)
+	var ignoreRules []rule
+	if p.applyTerraformIgnore {
+		ignoreRules = parseIgnoreFile(src)
+	}
 
 	// Track the metadata details as we go.
 	meta := &Meta{}
 
 	// Walk the tree of files.
-	err := filepath.Walk(src, packWalkFn(src, src, src, tarW, meta, dereference, ignoreRules))
+	err := filepath.Walk(src, p.packWalkFn(src, src, src, tarW, meta, ignoreRules))
 	if err != nil {
 		return nil, err
 	}
 
 	// Flush the tar writer.
 	if err := tarW.Close(); err != nil {
-		return nil, fmt.Errorf("Failed to close the tar archive: %v", err)
+		return nil, fmt.Errorf("failed to close the tar archive: %w", err)
 	}
 
 	// Flush the gzip writer.
 	if err := gzipW.Close(); err != nil {
-		return nil, fmt.Errorf("Failed to close the gzip writer: %v", err)
+		return nil, fmt.Errorf("failed to close the gzip writer: %w", err)
 	}
 
 	return meta, nil
 }
 
-func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference bool, ignoreRules []rule) filepath.WalkFunc {
+func (p *Packer) packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, ignoreRules []rule) filepath.WalkFunc {
 	return func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -68,7 +159,7 @@ func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference
 		// Get the relative path from the current src directory.
 		subpath, err := filepath.Rel(src, path)
 		if err != nil {
-			return fmt.Errorf("Failed to get relative path for file %q: %v", path, err)
+			return fmt.Errorf("failed to get relative path for file %q: %w", path, err)
 		}
 		if subpath == "." {
 			return nil
@@ -89,7 +180,7 @@ func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference
 		// Get the relative path from the initial root directory.
 		subpath, err = filepath.Rel(root, strings.Replace(path, src, dst, 1))
 		if err != nil {
-			return fmt.Errorf("Failed to get relative path for file %q: %v", path, err)
+			return fmt.Errorf("failed to get relative path for file %q: %w", path, err)
 		}
 		if subpath == "." {
 			return nil
@@ -118,43 +209,44 @@ func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference
 			header.Size = info.Size()
 
 		case fm&os.ModeSymlink != 0:
-			target, err := filepath.EvalSymlinks(path)
+			// First read the symlink file to find the destination.
+			target, err := os.Readlink(path)
 			if err != nil {
-				return fmt.Errorf("Failed to get symbolic link destination for %q: %v", path, err)
+				return fmt.Errorf("failed to read symlink %q: %w", path, err)
 			}
 
-			// If the target is within the current source, we
-			// create the symlink using a relative path.
-			if strings.Contains(target, src) {
-				link, err := filepath.Rel(filepath.Dir(path), target)
-				if err != nil {
-					return fmt.Errorf("Failed to get relative path for symlink destination %q: %v", target, err)
+			// Ensure the target is acceptable per the Packer's configuration.
+			if err := p.checkSymlink(root, path, target); err != nil {
+				// Check if dereferencing is enabled. If so, we're going to
+				// try copying the symlink's data. If not, this is an error.
+				if !p.dereference {
+					return err
 				}
-
+			} else {
 				header.Typeflag = tar.TypeSymlink
-				header.Linkname = filepath.ToSlash(link)
-
-				// Break out of the case as a symlink
-				// doesn't need any additional config.
+				header.Linkname = filepath.ToSlash(target)
 				break
 			}
 
-			if !dereference {
-				// Return early as the symlink has a target outside of the
-				// src directory and we don't want to dereference symlinks.
-				return nil
+			// Get the absolute path of the symlink target.
+			absTarget := target
+			if !filepath.IsAbs(absTarget) {
+				absTarget = filepath.Join(filepath.Dir(path), target)
+			}
+			if !filepath.IsAbs(absTarget) {
+				absTarget = filepath.Join(root, absTarget)
 			}
 
 			// Get the file info for the target.
-			info, err = os.Lstat(target)
+			info, err = os.Lstat(absTarget)
 			if err != nil {
-				return fmt.Errorf("Failed to get file info from file %q: %v", target, err)
+				return fmt.Errorf("failed to get file info from file %q: %w", target, err)
 			}
 
 			// If the target is a directory we can recurse into the target
 			// directory by calling the packWalkFn with updated arguments.
 			if info.IsDir() {
-				return filepath.Walk(target, packWalkFn(root, target, path, tarW, meta, dereference, ignoreRules))
+				return filepath.Walk(absTarget, p.packWalkFn(root, target, path, tarW, meta, ignoreRules))
 			}
 
 			// Dereference this symlink by updating the header with the target file
@@ -166,12 +258,12 @@ func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference
 			writeBody = true
 
 		default:
-			return fmt.Errorf("Unexpected file mode %v", fm)
+			return fmt.Errorf("unexpected file mode %v", fm)
 		}
 
 		// Write the header first to the archive.
 		if err := tarW.WriteHeader(header); err != nil {
-			return fmt.Errorf("Failed writing archive header for file %q: %v", path, err)
+			return fmt.Errorf("failed writing archive header for file %q: %w", path, err)
 		}
 
 		// Account for the file in the list.
@@ -184,13 +276,13 @@ func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference
 
 		f, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("Failed opening file %q for archiving: %v", path, err)
+			return fmt.Errorf("failed opening file %q for archiving: %w", path, err)
 		}
 		defer f.Close()
 
 		size, err := io.Copy(tarW, f)
 		if err != nil {
-			return fmt.Errorf("Failed copying file %q to archive: %v", path, err)
+			return fmt.Errorf("failed copying file %q to archive: %w", path, err)
 		}
 
 		// Add the size we copied to the body.
@@ -200,13 +292,20 @@ func packWalkFn(root, src, dst string, tarW *tar.Writer, meta *Meta, dereference
 	}
 }
 
-// Unpack is used to read and extract the contents of a slug to
-// the dst directory. Returns any errors.
+// Unpack is used to read and extract the contents of a slug to the dst
+// directory. Symlinks within the slug are supported, provided their targets
+// are relative and point to paths within the destination directory.
 func Unpack(r io.Reader, dst string) error {
+	p := &Packer{}
+	return p.Unpack(r, dst)
+}
+
+// Unpack unpacks the archive data in r into directory dst.
+func (p *Packer) Unpack(r io.Reader, dst string) error {
 	// Decompress as we read.
 	uncompressed, err := gzip.NewReader(r)
 	if err != nil {
-		return fmt.Errorf("Failed to uncompress slug: %v", err)
+		return fmt.Errorf("failed to uncompress slug: %w", err)
 	}
 
 	// Untar as we read.
@@ -219,7 +318,7 @@ func Unpack(r io.Reader, dst string) error {
 			break
 		}
 		if err != nil {
-			return fmt.Errorf("Failed to untar slug: %v", err)
+			return fmt.Errorf("failed to untar slug: %w", err)
 		}
 
 		// Get rid of absolute paths.
@@ -229,26 +328,74 @@ func Unpack(r io.Reader, dst string) error {
 		}
 		path = filepath.Join(dst, path)
 
+		// Check for paths outside our directory, they are forbidden
+		target := filepath.Clean(path)
+		if !strings.HasPrefix(target, dst) {
+			return &IllegalSlugError{
+				Err: fmt.Errorf("invalid filename, traversal with \"..\" outside of current directory"),
+			}
+		}
+
+		// Ensure the destination is not through any symlinks. This prevents
+		// any files from being deployed through symlinks defined in the slug.
+		// There are malicious cases where this could be used to escape the
+		// slug's boundaries (zipslip), and any legitimate use is questionable
+		// and likely indicates a hand-crafted tar file, which we are not in
+		// the business of supporting here.
+		//
+		// The strategy is to Lstat each path  component from dst up to the
+		// immediate parent directory of the file name in the tarball, checking
+		// the mode on each to ensure we wouldn't be passing through any
+		// symlinks.
+		currentPath := dst // Start at the root of the unpacked tarball.
+		components := strings.Split(header.Name, "/")
+
+		for i := 0; i < len(components)-1; i++ {
+			currentPath = filepath.Join(currentPath, components[i])
+			fi, err := os.Lstat(currentPath)
+			if os.IsNotExist(err) {
+				// Parent directory structure is incomplete. Technically this
+				// means from here upward cannot be a symlink, so we cancel the
+				// remaining path tests.
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("failed to evaluate path %q: %w", header.Name, err)
+			}
+			if fi.Mode()&os.ModeSymlink != 0 {
+				return &IllegalSlugError{
+					Err: fmt.Errorf("cannot extract %q through symlink", header.Name),
+				}
+			}
+		}
+
 		// Make the directories to the path.
 		dir := filepath.Dir(path)
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			return fmt.Errorf("Failed to create directory %q: %v", dir, err)
+			return fmt.Errorf("failed to create directory %q: %w", dir, err)
 		}
 
-		// If we have a symlink, just link it.
+		// Handle symlinks.
 		if header.Typeflag == tar.TypeSymlink {
-			if err := os.Symlink(header.Linkname, path); err != nil {
-				return fmt.Errorf("Failed creating symlink %q => %q: %v",
-					path, header.Linkname, err)
+			err := p.checkSymlink(dst, header.Name, header.Linkname)
+			if err != nil {
+				return err
 			}
+
+			// Create the symlink.
+			if err := os.Symlink(header.Linkname, path); err != nil {
+				return fmt.Errorf("failed creating symlink (%q -> %q): %w",
+					header.Name, header.Linkname, err)
+			}
+
 			continue
 		}
 
 		// Only unpack regular files from this point on.
-		if header.Typeflag == tar.TypeDir {
+		if header.Typeflag == tar.TypeDir || header.Typeflag == tar.TypeXGlobalHeader || header.Typeflag == tar.TypeXHeader {
 			continue
 		} else if header.Typeflag != tar.TypeReg && header.Typeflag != tar.TypeRegA {
-			return fmt.Errorf("Failed creating %q: unsupported type %c", path,
+			return fmt.Errorf("failed creating %q: unsupported type %c", path,
 				header.Typeflag)
 		}
 
@@ -264,7 +411,7 @@ func Unpack(r io.Reader, dst string) error {
 			}
 
 			if err != nil {
-				return fmt.Errorf("Failed creating file %q: %v", path, err)
+				return fmt.Errorf("failed creating file %q: %w", path, err)
 			}
 		}
 
@@ -272,17 +419,75 @@ func Unpack(r io.Reader, dst string) error {
 		_, err = io.Copy(fh, untar)
 		fh.Close()
 		if err != nil {
-			return fmt.Errorf("Failed to copy slug file %q: %v", path, err)
+			return fmt.Errorf("failed to copy slug file %q: %w", path, err)
 		}
 
 		// Restore the file mode. We have to do this after writing the file,
 		// since it is possible we have a read-only mode.
 		mode := header.FileInfo().Mode()
 		if err := os.Chmod(path, mode); err != nil {
-			return fmt.Errorf("Failed setting permissions on %q: %v", path, err)
+			return fmt.Errorf("failed setting permissions on %q: %w", path, err)
 		}
 	}
 	return nil
+}
+
+// Given a "root" directory, the path to a symlink within said root, and the
+// target of said symlink, checkSymlink checks that the target either falls
+// into root somewhere, or is explicitly allowed per the Packer's config.
+func (p *Packer) checkSymlink(root, path, target string) error {
+	// Get the absolute path to root.
+	absRoot, err := filepath.Abs(root)
+	if err != nil {
+		return fmt.Errorf("failed making path %q absolute: %w", root, err)
+	}
+
+	// Get the absolute path to the file path.
+	absPath := path
+	if !filepath.IsAbs(absPath) {
+		absPath = filepath.Join(absRoot, path)
+	}
+
+	// Get the absolute path of the symlink target.
+	var absTarget string
+	if filepath.IsAbs(target) {
+		absTarget = filepath.Clean(target)
+	} else {
+		absTarget = filepath.Join(filepath.Dir(absPath), target)
+	}
+
+	// Target falls within root.
+	if strings.HasPrefix(absTarget, absRoot) {
+		return nil
+	}
+
+	// The link target is outside of root. Check if it is allowed.
+	for _, prefix := range p.allowSymlinkTargets {
+		// Ensure prefix is absolute.
+		if !filepath.IsAbs(prefix) {
+			prefix = filepath.Join(absRoot, prefix)
+		}
+
+		// Exact match is allowed.
+		if absTarget == prefix {
+			return nil
+		}
+
+		// Prefix match of a directory is allowed.
+		if !strings.HasSuffix(prefix, "/") {
+			prefix += "/"
+		}
+		if strings.HasPrefix(absTarget, prefix) {
+			return nil
+		}
+	}
+
+	return &IllegalSlugError{
+		Err: fmt.Errorf(
+			"invalid symlink (%q -> %q) has external target",
+			path, target,
+		),
+	}
 }
 
 // checkFileMode is used to examine an os.FileMode and determine if it should

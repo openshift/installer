@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -15,10 +14,10 @@ var _ Organizations = (*organizations)(nil)
 // Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/organizations.html
+// https://www.terraform.io/docs/cloud/api/organizations.html
 type Organizations interface {
 	// List all the organizations visible to the current user.
-	List(ctx context.Context, options OrganizationListOptions) (*OrganizationList, error)
+	List(ctx context.Context, options *OrganizationListOptions) (*OrganizationList, error)
 
 	// Create a new organization with the given options.
 	Create(ctx context.Context, options OrganizationCreateOptions) (*Organization, error)
@@ -32,14 +31,14 @@ type Organizations interface {
 	// Delete an organization by its name.
 	Delete(ctx context.Context, organization string) error
 
-	// Capacity shows the current run capacity of an organization.
-	Capacity(ctx context.Context, organization string) (*Capacity, error)
+	// ReadCapacity shows the current run capacity of an organization.
+	ReadCapacity(ctx context.Context, organization string) (*Capacity, error)
 
-	// Entitlements shows the entitlements of an organization.
-	Entitlements(ctx context.Context, organization string) (*Entitlements, error)
+	// ReadEntitlements shows the entitlements of an organization.
+	ReadEntitlements(ctx context.Context, organization string) (*Entitlements, error)
 
-	// RunQueue shows the current run queue of an organization.
-	RunQueue(ctx context.Context, organization string, options RunQueueOptions) (*RunQueue, error)
+	// ReadRunQueue shows the current run queue of an organization.
+	ReadRunQueue(ctx context.Context, organization string, options ReadRunQueueOptions) (*RunQueue, error)
 }
 
 // organizations implements Organizations.
@@ -56,17 +55,6 @@ const (
 	AuthPolicyTwoFactor AuthPolicyType = "two_factor_mandatory"
 )
 
-// EnterprisePlanType represents an enterprise plan type.
-type EnterprisePlanType string
-
-// List of available enterprise plan types.
-const (
-	EnterprisePlanDisabled EnterprisePlanType = "disabled"
-	EnterprisePlanPremium  EnterprisePlanType = "premium"
-	EnterprisePlanPro      EnterprisePlanType = "pro"
-	EnterprisePlanTrial    EnterprisePlanType = "trial"
-)
-
 // OrganizationList represents a list of organizations.
 type OrganizationList struct {
 	*Pagination
@@ -75,20 +63,20 @@ type OrganizationList struct {
 
 // Organization represents a Terraform Enterprise organization.
 type Organization struct {
-	Name                   string                   `jsonapi:"primary,organizations"`
-	CollaboratorAuthPolicy AuthPolicyType           `jsonapi:"attr,collaborator-auth-policy"`
-	CostEstimationEnabled  bool                     `jsonapi:"attr,cost-estimation-enabled"`
-	CreatedAt              time.Time                `jsonapi:"attr,created-at,iso8601"`
-	Email                  string                   `jsonapi:"attr,email"`
-	EnterprisePlan         EnterprisePlanType       `jsonapi:"attr,enterprise-plan"`
-	ExternalID             string                   `jsonapi:"attr,external-id"`
-	OwnersTeamSAMLRoleID   string                   `jsonapi:"attr,owners-team-saml-role-id"`
-	Permissions            *OrganizationPermissions `jsonapi:"attr,permissions"`
-	SAMLEnabled            bool                     `jsonapi:"attr,saml-enabled"`
-	SessionRemember        int                      `jsonapi:"attr,session-remember"`
-	SessionTimeout         int                      `jsonapi:"attr,session-timeout"`
-	TrialExpiresAt         time.Time                `jsonapi:"attr,trial-expires-at,iso8601"`
-	TwoFactorConformant    bool                     `jsonapi:"attr,two-factor-conformant"`
+	Name                                              string                   `jsonapi:"primary,organizations"`
+	CollaboratorAuthPolicy                            AuthPolicyType           `jsonapi:"attr,collaborator-auth-policy"`
+	CostEstimationEnabled                             bool                     `jsonapi:"attr,cost-estimation-enabled"`
+	CreatedAt                                         time.Time                `jsonapi:"attr,created-at,iso8601"`
+	Email                                             string                   `jsonapi:"attr,email"`
+	ExternalID                                        string                   `jsonapi:"attr,external-id"`
+	OwnersTeamSAMLRoleID                              string                   `jsonapi:"attr,owners-team-saml-role-id"`
+	Permissions                                       *OrganizationPermissions `jsonapi:"attr,permissions"`
+	SAMLEnabled                                       bool                     `jsonapi:"attr,saml-enabled"`
+	SessionRemember                                   int                      `jsonapi:"attr,session-remember"`
+	SessionTimeout                                    int                      `jsonapi:"attr,session-timeout"`
+	TrialExpiresAt                                    time.Time                `jsonapi:"attr,trial-expires-at,iso8601"`
+	TwoFactorConformant                               bool                     `jsonapi:"attr,two-factor-conformant"`
+	SendPassingStatusesForUntriggeredSpeculativePlans bool                     `jsonapi:"attr,send-passing-statuses-for-untriggered-speculative-plans"`
 }
 
 // Capacity represents the current run capacity of an organization.
@@ -106,6 +94,7 @@ type Entitlements struct {
 	CostEstimation        bool   `jsonapi:"attr,cost-estimation"`
 	Operations            bool   `jsonapi:"attr,operations"`
 	PrivateModuleRegistry bool   `jsonapi:"attr,private-module-registry"`
+	RunTasks              bool   `jsonapi:"attr,run-tasks"`
 	SSO                   bool   `jsonapi:"attr,sso"`
 	Sentinel              bool   `jsonapi:"attr,sentinel"`
 	StateStorage          bool   `jsonapi:"attr,state-storage"`
@@ -125,6 +114,7 @@ type OrganizationPermissions struct {
 	CanCreateWorkspace          bool `jsonapi:"attr,can-create-workspace"`
 	CanCreateWorkspaceMigration bool `jsonapi:"attr,can-create-workspace-migration"`
 	CanDestroy                  bool `jsonapi:"attr,can-destroy"`
+	CanManageRunTasks           bool `jsonapi:"attr,can-manage-run-tasks"`
 	CanTraverse                 bool `jsonapi:"attr,can-traverse"`
 	CanUpdate                   bool `jsonapi:"attr,can-update"`
 	CanUpdateAPIToken           bool `jsonapi:"attr,can-update-api-token"`
@@ -137,22 +127,6 @@ type OrganizationListOptions struct {
 	ListOptions
 }
 
-// List all the organizations visible to the current user.
-func (s *organizations) List(ctx context.Context, options OrganizationListOptions) (*OrganizationList, error) {
-	req, err := s.client.newRequest("GET", "organizations", &options)
-	if err != nil {
-		return nil, err
-	}
-
-	orgl := &OrganizationList{}
-	err = s.client.do(ctx, req, orgl)
-	if err != nil {
-		return nil, err
-	}
-
-	return orgl, nil
-}
-
 // OrganizationCreateOptions represents the options for creating an organization.
 type OrganizationCreateOptions struct {
 	// Type is a public field utilized by JSON:API to
@@ -161,80 +135,29 @@ type OrganizationCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,organizations"`
 
-	// Name of the organization.
+	// Required: Name of the organization.
 	Name *string `jsonapi:"attr,name"`
 
-	// Admin email address.
+	// Required: Admin email address.
 	Email *string `jsonapi:"attr,email"`
 
-	// Session expiration (minutes).
+	// Optional: Session expiration (minutes).
 	SessionRemember *int `jsonapi:"attr,session-remember,omitempty"`
 
-	// Session timeout after inactivity (minutes).
+	// Optional: Session timeout after inactivity (minutes).
 	SessionTimeout *int `jsonapi:"attr,session-timeout,omitempty"`
 
-	// Authentication policy.
+	// Optional: Authentication policy.
 	CollaboratorAuthPolicy *AuthPolicyType `jsonapi:"attr,collaborator-auth-policy,omitempty"`
 
-	// Enable Cost Estimation
+	// Optional: Enable Cost Estimation
 	CostEstimationEnabled *bool `jsonapi:"attr,cost-estimation-enabled,omitempty"`
 
-	// The name of the "owners" team
+	// Optional: The name of the "owners" team
 	OwnersTeamSAMLRoleID *string `jsonapi:"attr,owners-team-saml-role-id,omitempty"`
-}
 
-func (o OrganizationCreateOptions) valid() error {
-	if !validString(o.Name) {
-		return ErrRequiredName
-	}
-	if !validStringID(o.Name) {
-		return ErrInvalidName
-	}
-	if !validString(o.Email) {
-		return errors.New("email is required")
-	}
-	return nil
-}
-
-// Create a new organization with the given options.
-func (s *organizations) Create(ctx context.Context, options OrganizationCreateOptions) (*Organization, error) {
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	req, err := s.client.newRequest("POST", "organizations", &options)
-	if err != nil {
-		return nil, err
-	}
-
-	org := &Organization{}
-	err = s.client.do(ctx, req, org)
-	if err != nil {
-		return nil, err
-	}
-
-	return org, nil
-}
-
-// Read an organization by its name.
-func (s *organizations) Read(ctx context.Context, organization string) (*Organization, error) {
-	if !validStringID(&organization) {
-		return nil, ErrInvalidOrg
-	}
-
-	u := fmt.Sprintf("organizations/%s", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	org := &Organization{}
-	err = s.client.do(ctx, req, org)
-	if err != nil {
-		return nil, err
-	}
-
-	return org, nil
+	// Optional: SendPassingStatusesForUntriggeredSpeculativePlans toggles behavior of untriggered speculative plans to send status updates to version control systems like GitHub.
+	SendPassingStatusesForUntriggeredSpeculativePlans *bool `jsonapi:"attr,send-passing-statuses-for-untriggered-speculative-plans,omitempty"`
 }
 
 // OrganizationUpdateOptions represents the options for updating an organization.
@@ -265,6 +188,71 @@ type OrganizationUpdateOptions struct {
 
 	// The name of the "owners" team
 	OwnersTeamSAMLRoleID *string `jsonapi:"attr,owners-team-saml-role-id,omitempty"`
+
+	// SendPassingStatusesForUntriggeredSpeculativePlans toggles behavior of untriggered speculative plans to send status updates to version control systems like GitHub.
+	SendPassingStatusesForUntriggeredSpeculativePlans *bool `jsonapi:"attr,send-passing-statuses-for-untriggered-speculative-plans,omitempty"`
+}
+
+// ReadRunQueueOptions represents the options for showing the queue.
+type ReadRunQueueOptions struct {
+	ListOptions
+}
+
+// List all the organizations visible to the current user.
+func (s *organizations) List(ctx context.Context, options *OrganizationListOptions) (*OrganizationList, error) {
+	req, err := s.client.NewRequest("GET", "organizations", options)
+	if err != nil {
+		return nil, err
+	}
+
+	orgl := &OrganizationList{}
+	err = req.Do(ctx, orgl)
+	if err != nil {
+		return nil, err
+	}
+
+	return orgl, nil
+}
+
+// Create a new organization with the given options.
+func (s *organizations) Create(ctx context.Context, options OrganizationCreateOptions) (*Organization, error) {
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	req, err := s.client.NewRequest("POST", "organizations", &options)
+	if err != nil {
+		return nil, err
+	}
+
+	org := &Organization{}
+	err = req.Do(ctx, org)
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
+}
+
+// Read an organization by its name.
+func (s *organizations) Read(ctx context.Context, organization string) (*Organization, error) {
+	if !validStringID(&organization) {
+		return nil, ErrInvalidOrg
+	}
+
+	u := fmt.Sprintf("organizations/%s", url.QueryEscape(organization))
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	org := &Organization{}
+	err = req.Do(ctx, org)
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
 }
 
 // Update attributes of an existing organization.
@@ -274,13 +262,13 @@ func (s *organizations) Update(ctx context.Context, organization string, options
 	}
 
 	u := fmt.Sprintf("organizations/%s", url.QueryEscape(organization))
-	req, err := s.client.newRequest("PATCH", u, &options)
+	req, err := s.client.NewRequest("PATCH", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	org := &Organization{}
-	err = s.client.do(ctx, req, org)
+	err = req.Do(ctx, org)
 	if err != nil {
 		return nil, err
 	}
@@ -295,28 +283,28 @@ func (s *organizations) Delete(ctx context.Context, organization string) error {
 	}
 
 	u := fmt.Sprintf("organizations/%s", url.QueryEscape(organization))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }
 
-// Capacity shows the currently used capacity of an organization.
-func (s *organizations) Capacity(ctx context.Context, organization string) (*Capacity, error) {
+// ReadCapacity shows the currently used capacity of an organization.
+func (s *organizations) ReadCapacity(ctx context.Context, organization string) (*Capacity, error) {
 	if !validStringID(&organization) {
 		return nil, ErrInvalidOrg
 	}
 
 	u := fmt.Sprintf("organizations/%s/capacity", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	c := &Capacity{}
-	err = s.client.do(ctx, req, c)
+	err = req.Do(ctx, c)
 	if err != nil {
 		return nil, err
 	}
@@ -324,20 +312,20 @@ func (s *organizations) Capacity(ctx context.Context, organization string) (*Cap
 	return c, nil
 }
 
-// Entitlements shows the entitlements of an organization.
-func (s *organizations) Entitlements(ctx context.Context, organization string) (*Entitlements, error) {
+// ReadEntitlements shows the entitlements of an organization.
+func (s *organizations) ReadEntitlements(ctx context.Context, organization string) (*Entitlements, error) {
 	if !validStringID(&organization) {
 		return nil, ErrInvalidOrg
 	}
 
 	u := fmt.Sprintf("organizations/%s/entitlement-set", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	e := &Entitlements{}
-	err = s.client.do(ctx, req, e)
+	err = req.Do(ctx, e)
 	if err != nil {
 		return nil, err
 	}
@@ -345,28 +333,36 @@ func (s *organizations) Entitlements(ctx context.Context, organization string) (
 	return e, nil
 }
 
-// RunQueueOptions represents the options for showing the queue.
-type RunQueueOptions struct {
-	ListOptions
-}
-
-// RunQueue shows the current run queue of an organization.
-func (s *organizations) RunQueue(ctx context.Context, organization string, options RunQueueOptions) (*RunQueue, error) {
+// ReadRunQueue shows the current run queue of an organization.
+func (s *organizations) ReadRunQueue(ctx context.Context, organization string, options ReadRunQueueOptions) (*RunQueue, error) {
 	if !validStringID(&organization) {
 		return nil, ErrInvalidOrg
 	}
 
 	u := fmt.Sprintf("organizations/%s/runs/queue", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, &options)
+	req, err := s.client.NewRequest("GET", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	rq := &RunQueue{}
-	err = s.client.do(ctx, req, rq)
+	err = req.Do(ctx, rq)
 	if err != nil {
 		return nil, err
 	}
 
 	return rq, nil
+}
+
+func (o OrganizationCreateOptions) valid() error {
+	if !validString(o.Name) {
+		return ErrRequiredName
+	}
+	if !validStringID(o.Name) {
+		return ErrInvalidName
+	}
+	if !validString(o.Email) {
+		return ErrRequiredEmail
+	}
+	return nil
 }

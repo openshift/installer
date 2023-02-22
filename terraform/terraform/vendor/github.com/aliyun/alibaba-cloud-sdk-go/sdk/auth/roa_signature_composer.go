@@ -34,15 +34,17 @@ func init() {
 }
 
 func signRoaRequest(request requests.AcsRequest, signer Signer, regionId string) (err error) {
+	// 先获取 accesskey，确保刷新 credential
+	accessKeyId, err := signer.GetAccessKeyId()
+	if err != nil {
+		return err
+	}
+
 	completeROASignParams(request, signer, regionId)
 	stringToSign := buildRoaStringToSign(request)
 	request.SetStringToSign(stringToSign)
-	signature := signer.Sign(stringToSign, "")
-	accessKeyId, err := signer.GetAccessKeyId()
-	if err != nil {
-		return nil
-	}
 
+	signature := signer.Sign(stringToSign, "")
 	request.GetHeaders()["Authorization"] = "acs " + accessKeyId + ":" + signature
 
 	return
@@ -77,7 +79,9 @@ func completeROASignParams(request requests.AcsRequest, signer Signer, regionId 
 	if request.GetFormParams() != nil && len(request.GetFormParams()) > 0 {
 		formString := utils.GetUrlFormedMap(request.GetFormParams())
 		request.SetContent([]byte(formString))
-		headerParams["Content-Type"] = requests.Form
+		if headerParams["Content-Type"] == "" {
+			headerParams["Content-Type"] = requests.Form
+		}
 	}
 	contentMD5 := utils.GetMD5Base64(request.GetContent())
 	headerParams["Content-MD5"] = contentMD5

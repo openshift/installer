@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -14,10 +13,10 @@ var _ Runs = (*runs)(nil)
 // Runs describes all the run related methods that the Terraform Enterprise
 // API supports.
 //
-// TFE API docs: https://www.terraform.io/docs/enterprise/api/run.html
+// TFE API docs: https://www.terraform.io/docs/cloud/api/run.html
 type Runs interface {
 	// List all the runs of the given workspace.
-	List(ctx context.Context, workspaceID string, options RunListOptions) (*RunList, error)
+	List(ctx context.Context, workspaceID string, options *RunListOptions) (*RunList, error)
 
 	// Create a new run with the given options.
 	Create(ctx context.Context, options RunCreateOptions) (*Run, error)
@@ -49,26 +48,33 @@ type runs struct {
 // RunStatus represents a run state.
 type RunStatus string
 
-//List all available run statuses.
+// List all available run statuses.
 const (
 	RunApplied            RunStatus = "applied"
-	RunApplyQueued        RunStatus = "apply_queued"
 	RunApplying           RunStatus = "applying"
+	RunApplyQueued        RunStatus = "apply_queued"
 	RunCanceled           RunStatus = "canceled"
 	RunConfirmed          RunStatus = "confirmed"
 	RunCostEstimated      RunStatus = "cost_estimated"
 	RunCostEstimating     RunStatus = "cost_estimating"
 	RunDiscarded          RunStatus = "discarded"
 	RunErrored            RunStatus = "errored"
+	RunFetching           RunStatus = "fetching"
+	RunFetchingCompleted  RunStatus = "fetching_completed"
 	RunPending            RunStatus = "pending"
-	RunPlanQueued         RunStatus = "plan_queued"
 	RunPlanned            RunStatus = "planned"
 	RunPlannedAndFinished RunStatus = "planned_and_finished"
 	RunPlanning           RunStatus = "planning"
+	RunPlanQueued         RunStatus = "plan_queued"
 	RunPolicyChecked      RunStatus = "policy_checked"
 	RunPolicyChecking     RunStatus = "policy_checking"
 	RunPolicyOverride     RunStatus = "policy_override"
 	RunPolicySoftFailed   RunStatus = "policy_soft_failed"
+	RunPostPlanCompleted  RunStatus = "post_plan_completed"
+	RunPostPlanRunning    RunStatus = "post_plan_running"
+	RunPrePlanCompleted   RunStatus = "pre_plan_completed"
+	RunPrePlanRunning     RunStatus = "pre_plan_running"
+	RunQueuing            RunStatus = "queuing"
 )
 
 // RunSource represents a source type of a run.
@@ -81,6 +87,18 @@ const (
 	RunSourceUI                   RunSource = "tfe-ui"
 )
 
+// RunOperation represents an operation type of run.
+type RunOperation string
+
+// List all available run operations.
+const (
+	RunOperationPlanApply   RunOperation = "plan_and_apply"
+	RunOperationPlanOnly    RunOperation = "plan_only"
+	RunOperationRefreshOnly RunOperation = "refresh_only"
+	RunOperationDestroy     RunOperation = "destroy"
+	RunOperationEmptyApply  RunOperation = "empty_apply"
+)
+
 // RunList represents a list of runs.
 type RunList struct {
 	*Pagination
@@ -91,6 +109,8 @@ type RunList struct {
 type Run struct {
 	ID                     string               `jsonapi:"primary,runs"`
 	Actions                *RunActions          `jsonapi:"attr,actions"`
+	AutoApply              bool                 `jsonapi:"attr,auto-apply,omitempty"`
+	AllowEmptyApply        bool                 `jsonapi:"attr,allow-empty-apply"`
 	CreatedAt              time.Time            `jsonapi:"attr,created-at,iso8601"`
 	ForceCancelAvailableAt time.Time            `jsonapi:"attr,force-cancel-available-at,iso8601"`
 	HasChanges             bool                 `jsonapi:"attr,has-changes"`
@@ -98,6 +118,7 @@ type Run struct {
 	Message                string               `jsonapi:"attr,message"`
 	Permissions            *RunPermissions      `jsonapi:"attr,permissions"`
 	PositionInQueue        int                  `jsonapi:"attr,position-in-queue"`
+	PlanOnly               bool                 `jsonapi:"attr,plan-only"`
 	Refresh                bool                 `jsonapi:"attr,refresh"`
 	RefreshOnly            bool                 `jsonapi:"attr,refresh-only"`
 	ReplaceAddrs           []string             `jsonapi:"attr,replace-addrs,omitempty"`
@@ -105,6 +126,8 @@ type Run struct {
 	Status                 RunStatus            `jsonapi:"attr,status"`
 	StatusTimestamps       *RunStatusTimestamps `jsonapi:"attr,status-timestamps"`
 	TargetAddrs            []string             `jsonapi:"attr,target-addrs,omitempty"`
+	TerraformVersion       string               `jsonapi:"attr,terraform-version"`
+	Variables              []*RunVariable       `jsonapi:"attr,variables"`
 
 	// Relations
 	Apply                *Apply                `jsonapi:"relation,apply"`
@@ -113,7 +136,9 @@ type Run struct {
 	CreatedBy            *User                 `jsonapi:"relation,created-by"`
 	Plan                 *Plan                 `jsonapi:"relation,plan"`
 	PolicyChecks         []*PolicyCheck        `jsonapi:"relation,policy-checks"`
+	TaskStages           []*TaskStage          `jsonapi:"relation,task-stages,omitempty"`
 	Workspace            *Workspace            `jsonapi:"relation,workspace"`
+	Comments             []*Comment            `jsonapi:"relation,comments"`
 }
 
 // RunActions represents the run actions.
@@ -135,46 +160,83 @@ type RunPermissions struct {
 
 // RunStatusTimestamps holds the timestamps for individual run statuses.
 type RunStatusTimestamps struct {
-	ErroredAt            time.Time `jsonapi:"attr,errored-at,rfc3339"`
-	FinishedAt           time.Time `jsonapi:"attr,finished-at,rfc3339"`
-	QueuedAt             time.Time `jsonapi:"attr,queued-at,rfc3339"`
-	StartedAt            time.Time `jsonapi:"attr,started-at,rfc3339"`
-	ApplyingAt           time.Time `jsonapi:"attr,applying-at,rfc3339"`
 	AppliedAt            time.Time `jsonapi:"attr,applied-at,rfc3339"`
-	PlanningAt           time.Time `jsonapi:"attr,planning-at,rfc3339"`
-	PlannedAt            time.Time `jsonapi:"attr,planned-at,rfc3339"`
+	ApplyingAt           time.Time `jsonapi:"attr,applying-at,rfc3339"`
+	ApplyQueuedAt        time.Time `jsonapi:"attr,apply-queued-at,rfc3339"`
+	CanceledAt           time.Time `jsonapi:"attr,canceled-at,rfc3339"`
+	ConfirmedAt          time.Time `jsonapi:"attr,confirmed-at,rfc3339"`
+	CostEstimatedAt      time.Time `jsonapi:"attr,cost-estimated-at,rfc3339"`
+	CostEstimatingAt     time.Time `jsonapi:"attr,cost-estimating-at,rfc3339"`
+	DiscardedAt          time.Time `jsonapi:"attr,discarded-at,rfc3339"`
+	ErroredAt            time.Time `jsonapi:"attr,errored-at,rfc3339"`
+	FetchedAt            time.Time `jsonapi:"attr,fetched-at,rfc3339"`
+	FetchingAt           time.Time `jsonapi:"attr,fetching-at,rfc3339"`
+	ForceCanceledAt      time.Time `jsonapi:"attr,force-canceled-at,rfc3339"`
 	PlannedAndFinishedAt time.Time `jsonapi:"attr,planned-and-finished-at,rfc3339"`
-	PlanQueuabledAt      time.Time `jsonapi:"attr,plan-queueable-at,rfc3339"`
+	PlannedAt            time.Time `jsonapi:"attr,planned-at,rfc3339"`
+	PlanningAt           time.Time `jsonapi:"attr,planning-at,rfc3339"`
+	PlanQueueableAt      time.Time `jsonapi:"attr,plan-queueable-at,rfc3339"`
+	PlanQueuedAt         time.Time `jsonapi:"attr,plan-queued-at,rfc3339"`
+	PolicyCheckedAt      time.Time `jsonapi:"attr,policy-checked-at,rfc3339"`
+	PolicySoftFailedAt   time.Time `jsonapi:"attr,policy-soft-failed-at,rfc3339"`
+	PostPlanCompletedAt  time.Time `jsonapi:"attr,post-plan-completed-at,rfc3339"`
+	PostPlanRunningAt    time.Time `jsonapi:"attr,post-plan-running-at,rfc3339"`
+	PrePlanCompletedAt   time.Time `jsonapi:"attr,pre-plan-completed-at,rfc3339"`
+	PrePlanRunningAt     time.Time `jsonapi:"attr,pre-plan-running-at,rfc3339"`
+	QueuingAt            time.Time `jsonapi:"attr,queuing-at,rfc3339"`
 }
+
+// RunIncludeOpt represents the available options for include query params.
+// https://www.terraform.io/docs/cloud/api/run.html#available-related-resources
+type RunIncludeOpt string
+
+const (
+	RunPlan             RunIncludeOpt = "plan"
+	RunApply            RunIncludeOpt = "apply"
+	RunCreatedBy        RunIncludeOpt = "created_by"
+	RunCostEstimate     RunIncludeOpt = "cost_estimate"
+	RunConfigVer        RunIncludeOpt = "configuration_version"
+	RunConfigVerIngress RunIncludeOpt = "configuration_version.ingress_attributes"
+	RunWorkspace        RunIncludeOpt = "workspace"
+	RunTaskStages       RunIncludeOpt = "task_stages"
+)
 
 // RunListOptions represents the options for listing runs.
 type RunListOptions struct {
 	ListOptions
 
-	// A list of relations to include. See available resources:
+	// Optional: Searches runs that matches the supplied VCS username.
+	User string `url:"search[user],omitempty"`
+
+	// Optional: Searches runs that matches the supplied commit sha.
+	Commit string `url:"search[commit],omitempty"`
+
+	// Optional: Searches runs that matches the supplied VCS username, commit sha, run_id, and run message.
+	// The presence of search[commit] or search[user] takes priority over this parameter and will be omitted.
+	Search string `url:"search[basic],omitempty"`
+
+	// Optional: Current status of the run.
+	// Options are listed at https://www.terraform.io/cloud-docs/api-docs/run#run-states
+	Status string `url:"filter[status],omitempty"`
+
+	// Optional: Source that triggered the run.
+	// Options are listed at https://www.terraform.io/cloud-docs/api-docs/run#run-sources
+	Source string `url:"filter[source],omitempty"`
+
+	// Optional: Operation type for the run.
+	// Options are listed at https://www.terraform.io/cloud-docs/api-docs/run#run-operations
+	Operation string `url:"filter[operation],omitempty"`
+
+	// Optional: A list of relations to include. See available resources:
 	// https://www.terraform.io/docs/cloud/api/run.html#available-related-resources
-	Include *string `url:"include"`
+	Include []RunIncludeOpt `url:"include,omitempty"`
 }
 
-// List all the runs of the given workspace.
-func (s *runs) List(ctx context.Context, workspaceID string, options RunListOptions) (*RunList, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-
-	u := fmt.Sprintf("workspaces/%s/runs", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("GET", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	rl := &RunList{}
-	err = s.client.do(ctx, req, rl)
-	if err != nil {
-		return nil, err
-	}
-
-	return rl, nil
+// RunReadOptions represents the options for reading a run.
+type RunReadOptions struct {
+	// Optional: A list of relations to include. See available resources:
+	// https://www.terraform.io/docs/cloud/api/run.html#available-related-resources
+	Include []RunIncludeOpt `url:"include,omitempty"`
 }
 
 // RunCreateOptions represents the options for creating a new run.
@@ -184,6 +246,18 @@ type RunCreateOptions struct {
 	// It is not a user-defined value and does not need to be set.
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,runs"`
+
+	// AllowEmptyApply specifies whether Terraform can apply the run even when the plan contains no changes.
+	// Often used to upgrade state after upgrading a workspace to a new terraform version.
+	AllowEmptyApply *bool `jsonapi:"attr,allow-empty-apply,omitempty"`
+
+	// TerraformVersion specifies the Terraform version to use in this run.
+	// Only valid for plan-only runs; must be a valid Terraform version available to the organization.
+	TerraformVersion *string `jsonapi:"attr,terraform-version,omitempty"`
+
+	// PlanOnly specifies if this is a speculative, plan-only run that Terraform cannot apply.
+	// Often used in conjunction with terraform-version in order to test whether an upgrade would succeed.
+	PlanOnly *bool `jsonapi:"attr,plan-only,omitempty"`
 
 	// Specifies if this plan is a destroy plan, which will destroy all
 	// provisioned resources.
@@ -225,13 +299,70 @@ type RunCreateOptions struct {
 	// (destroys and then re-creates) the objects specified by the given
 	// resource addresses.
 	ReplaceAddrs []string `jsonapi:"attr,replace-addrs,omitempty"`
+
+	// AutoApply determines if the run should be applied automatically without
+	// user confirmation. It defaults to the Workspace.AutoApply setting.
+	AutoApply *bool `jsonapi:"attr,auto-apply,omitempty"`
+
+	// RunVariables allows you to specify terraform input variables for
+	// a particular run, prioritized over variables defined on the workspace.
+	Variables []*RunVariable `jsonapi:"attr,variables,omitempty"`
 }
 
-func (o RunCreateOptions) valid() error {
-	if o.Workspace == nil {
-		return errors.New("workspace is required")
+// RunApplyOptions represents the options for applying a run.
+type RunApplyOptions struct {
+	// An optional comment about the run.
+	Comment *string `json:"comment,omitempty"`
+}
+
+// RunCancelOptions represents the options for canceling a run.
+type RunCancelOptions struct {
+	// An optional explanation for why the run was canceled.
+	Comment *string `json:"comment,omitempty"`
+}
+
+// RunVariable represents a variable that can be applied to a run. All values must be expressed as an HCL literal
+// in the same syntax you would use when writing terraform code. See https://www.terraform.io/docs/language/expressions/types.html#types
+// for more details.
+type RunVariable struct {
+	Key   string `jsonapi:"attr,key"`
+	Value string `jsonapi:"attr,value"`
+}
+
+// RunForceCancelOptions represents the options for force-canceling a run.
+type RunForceCancelOptions struct {
+	// An optional comment explaining the reason for the force-cancel.
+	Comment *string `json:"comment,omitempty"`
+}
+
+// RunDiscardOptions represents the options for discarding a run.
+type RunDiscardOptions struct {
+	// An optional explanation for why the run was discarded.
+	Comment *string `json:"comment,omitempty"`
+}
+
+// List all the runs of the given workspace.
+func (s *runs) List(ctx context.Context, workspaceID string, options *RunListOptions) (*RunList, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
 	}
-	return nil
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("workspaces/%s/runs", url.QueryEscape(workspaceID))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	rl := &RunList{}
+	err = req.Do(ctx, rl)
+	if err != nil {
+		return nil, err
+	}
+
+	return rl, nil
 }
 
 // Create a new run with the given options.
@@ -240,13 +371,13 @@ func (s *runs) Create(ctx context.Context, options RunCreateOptions) (*Run, erro
 		return nil, err
 	}
 
-	req, err := s.client.newRequest("POST", "runs", &options)
+	req, err := s.client.NewRequest("POST", "runs", &options)
 	if err != nil {
 		return nil, err
 	}
 
 	r := &Run{}
-	err = s.client.do(ctx, req, r)
+	err = req.Do(ctx, r)
 	if err != nil {
 		return nil, err
 	}
@@ -259,36 +390,28 @@ func (s *runs) Read(ctx context.Context, runID string) (*Run, error) {
 	return s.ReadWithOptions(ctx, runID, nil)
 }
 
-// RunReadOptions represents the options for reading a run.
-type RunReadOptions struct {
-	Include string `url:"include"`
-}
-
 // Read a run by its ID with the given options.
 func (s *runs) ReadWithOptions(ctx context.Context, runID string, options *RunReadOptions) (*Run, error) {
 	if !validStringID(&runID) {
 		return nil, ErrInvalidRunID
 	}
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
 
 	u := fmt.Sprintf("runs/%s", url.QueryEscape(runID))
-	req, err := s.client.newRequest("GET", u, options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	r := &Run{}
-	err = s.client.do(ctx, req, r)
+	err = req.Do(ctx, r)
 	if err != nil {
 		return nil, err
 	}
 
 	return r, nil
-}
-
-// RunApplyOptions represents the options for applying a run.
-type RunApplyOptions struct {
-	// An optional comment about the run.
-	Comment *string `jsonapi:"attr,comment,omitempty"`
 }
 
 // Apply a run by its ID.
@@ -298,18 +421,12 @@ func (s *runs) Apply(ctx context.Context, runID string, options RunApplyOptions)
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/apply", url.QueryEscape(runID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
-}
-
-// RunCancelOptions represents the options for canceling a run.
-type RunCancelOptions struct {
-	// An optional explanation for why the run was canceled.
-	Comment *string `jsonapi:"attr,comment,omitempty"`
+	return req.Do(ctx, nil)
 }
 
 // Cancel a run by its ID.
@@ -319,18 +436,12 @@ func (s *runs) Cancel(ctx context.Context, runID string, options RunCancelOption
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/cancel", url.QueryEscape(runID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
-}
-
-// RunForceCancelOptions represents the options for force-canceling a run.
-type RunForceCancelOptions struct {
-	// An optional comment explaining the reason for the force-cancel.
-	Comment *string `jsonapi:"attr,comment,omitempty"`
+	return req.Do(ctx, nil)
 }
 
 // ForceCancel is used to forcefully cancel a run by its ID.
@@ -340,18 +451,12 @@ func (s *runs) ForceCancel(ctx context.Context, runID string, options RunForceCa
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/force-cancel", url.QueryEscape(runID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
-}
-
-// RunDiscardOptions represents the options for discarding a run.
-type RunDiscardOptions struct {
-	// An optional explanation for why the run was discarded.
-	Comment *string `jsonapi:"attr,comment,omitempty"`
+	return req.Do(ctx, nil)
 }
 
 // Discard a run by its ID.
@@ -361,10 +466,57 @@ func (s *runs) Discard(ctx context.Context, runID string, options RunDiscardOpti
 	}
 
 	u := fmt.Sprintf("runs/%s/actions/discard", url.QueryEscape(runID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o RunCreateOptions) valid() error {
+	if o.Workspace == nil {
+		return ErrRequiredWorkspace
+	}
+
+	if validString(o.TerraformVersion) && (o.PlanOnly == nil || !*o.PlanOnly) {
+		return ErrTerraformVersionValidForPlanOnly
+	}
+
+	return nil
+}
+
+func (o *RunReadOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateRunIncludeParam(o.Include); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *RunListOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateRunIncludeParam(o.Include); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateRunIncludeParam(params []RunIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case RunPlan, RunApply, RunCreatedBy, RunCostEstimate, RunConfigVer, RunConfigVerIngress, RunWorkspace, RunTaskStages:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
 }

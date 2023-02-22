@@ -19,8 +19,8 @@ type AgentTokens interface {
 	// List all the agent tokens of the given agent pool.
 	List(ctx context.Context, agentPoolID string) (*AgentTokenList, error)
 
-	// Generate a new agent token with the given options.
-	Generate(ctx context.Context, agentPoolID string, options AgentTokenGenerateOptions) (*AgentToken, error)
+	// Create a new agent token with the given options.
+	Create(ctx context.Context, agentPoolID string, options AgentTokenCreateOptions) (*AgentToken, error)
 
 	// Read an agent token by its ID.
 	Read(ctx context.Context, agentTokenID string) (*AgentToken, error)
@@ -34,12 +34,6 @@ type agentTokens struct {
 	client *Client
 }
 
-// AgentTokenList represents a list of agent tokens.
-type AgentTokenList struct {
-	*Pagination
-	Items []*AgentToken
-}
-
 // AgentToken represents a Terraform Cloud agent token.
 type AgentToken struct {
 	ID          string    `jsonapi:"primary,authentication-tokens"`
@@ -49,29 +43,14 @@ type AgentToken struct {
 	Token       string    `jsonapi:"attr,token"`
 }
 
-// List all the agent tokens of the given agent pool.
-func (s *agentTokens) List(ctx context.Context, agentPoolID string) (*AgentTokenList, error) {
-	if !validStringID(&agentPoolID) {
-		return nil, ErrInvalidAgentPoolID
-	}
-
-	u := fmt.Sprintf("agent-pools/%s/authentication-tokens", url.QueryEscape(agentPoolID))
-	req, err := s.client.newRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	tokenList := &AgentTokenList{}
-	err = s.client.do(ctx, req, tokenList)
-	if err != nil {
-		return nil, err
-	}
-
-	return tokenList, nil
+// AgentTokenList represents a list of agent tokens.
+type AgentTokenList struct {
+	*Pagination
+	Items []*AgentToken
 }
 
-// AgentTokenGenerateOptions represents the options for creating an agent token.
-type AgentTokenGenerateOptions struct {
+// AgentTokenCreateOptions represents the options for creating an agent token.
+type AgentTokenCreateOptions struct {
 	// Type is a public field utilized by JSON:API to
 	// set the resource type via the field tag.
 	// It is not a user-defined value and does not need to be set.
@@ -82,8 +61,29 @@ type AgentTokenGenerateOptions struct {
 	Description *string `jsonapi:"attr,description"`
 }
 
-// Generate a new agent token with the given options.
-func (s *agentTokens) Generate(ctx context.Context, agentPoolID string, options AgentTokenGenerateOptions) (*AgentToken, error) {
+// List all the agent tokens of the given agent pool.
+func (s *agentTokens) List(ctx context.Context, agentPoolID string) (*AgentTokenList, error) {
+	if !validStringID(&agentPoolID) {
+		return nil, ErrInvalidAgentPoolID
+	}
+
+	u := fmt.Sprintf("agent-pools/%s/authentication-tokens", url.QueryEscape(agentPoolID))
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenList := &AgentTokenList{}
+	err = req.Do(ctx, tokenList)
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenList, nil
+}
+
+// Create a new agent token with the given options.
+func (s *agentTokens) Create(ctx context.Context, agentPoolID string, options AgentTokenCreateOptions) (*AgentToken, error) {
 	if !validStringID(&agentPoolID) {
 		return nil, ErrInvalidAgentPoolID
 	}
@@ -93,13 +93,13 @@ func (s *agentTokens) Generate(ctx context.Context, agentPoolID string, options 
 	}
 
 	u := fmt.Sprintf("agent-pools/%s/authentication-tokens", url.QueryEscape(agentPoolID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	at := &AgentToken{}
-	err = s.client.do(ctx, req, at)
+	err = req.Do(ctx, at)
 	if err != nil {
 		return nil, err
 	}
@@ -114,13 +114,13 @@ func (s *agentTokens) Read(ctx context.Context, agentTokenID string) (*AgentToke
 	}
 
 	u := fmt.Sprintf("authentication-tokens/%s", url.QueryEscape(agentTokenID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	at := &AgentToken{}
-	err = s.client.do(ctx, req, at)
+	err = req.Do(ctx, at)
 	if err != nil {
 		return nil, err
 	}
@@ -135,10 +135,10 @@ func (s *agentTokens) Delete(ctx context.Context, agentTokenID string) error {
 	}
 
 	u := fmt.Sprintf("authentication-tokens/%s", url.QueryEscape(agentTokenID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }
