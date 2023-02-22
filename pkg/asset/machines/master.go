@@ -621,15 +621,6 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 	m.MachineFiles = fileList
 
-	file, err = f.FetchByName(filepath.Join(directory, controlPlaneMachineSetFileName))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	m.ControlPlaneMachineSet = file
-
 	return true, nil
 }
 
@@ -653,7 +644,6 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
 		&machinev1.PowerVSMachineProviderConfig{},
-		&machinev1.ControlPlaneMachineSet{},
 	)
 
 	machinev1beta1.AddToScheme(scheme)
@@ -695,7 +685,7 @@ func IsMachineManifest(file *asset.File) bool {
 		return false
 	}
 	filename := filepath.Base(file.Filename)
-	if filename == masterUserDataFileName || filename == workerUserDataFileName || filename == controlPlaneMachineSetFileName {
+	if filename == masterUserDataFileName || filename == workerUserDataFileName {
 		return true
 	}
 	if matched, err := machineconfig.IsManifest(filename); err != nil {
