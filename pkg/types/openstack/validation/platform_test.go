@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -33,6 +34,7 @@ func validNetworking() *types.Networking {
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name                  string
+		config                *types.InstallConfig
 		platform              *openstack.Platform
 		networking            *types.Networking
 		noClouds              bool
@@ -41,12 +43,82 @@ func TestValidatePlatform(t *testing.T) {
 		validMachinesSubnet   bool
 		invalidMachinesSubnet bool
 		valid                 bool
+		expectedError         string
 	}{
 		{
 			name:       "minimal",
 			platform:   validPlatform(),
 			networking: validNetworking(),
 			valid:      true,
+		},
+		{
+			name:     "forbidden load balancer field",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				Platform: types.Platform{
+					OpenStack: func() *openstack.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+						}
+						return p
+					}(),
+				},
+			},
+			valid:         false,
+			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
+		},
+		{
+			name:     "allowed load balancer field with OpenShift managed default",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					OpenStack: func() *openstack.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+						}
+						return p
+					}(),
+				},
+			},
+			valid: true,
+		},
+		{
+			name:     "allowed load balancer field with user-managed",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					OpenStack: func() *openstack.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
+							Type: configv1.LoadBalancerTypeUserManaged,
+						}
+						return p
+					}(),
+				},
+			},
+			valid: true,
+		},
+		{
+			name:     "allowed load balancer field invalid type",
+			platform: validPlatform(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					OpenStack: func() *openstack.Platform {
+						p := validPlatform()
+						p.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
+							Type: "FooBar",
+						}
+						return p
+					}(),
+				},
+			},
+			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
+			valid:         false,
 		},
 		{
 			name: "non IP external dns",
@@ -57,8 +129,9 @@ func TestValidatePlatform(t *testing.T) {
 				}
 				return p
 			}(),
-			networking: validNetworking(),
-			valid:      false,
+			networking:    validNetworking(),
+			valid:         false,
+			expectedError: `\"invalid\" is not a valid IP`,
 		},
 		{
 			name: "valid external dns",
@@ -75,15 +148,32 @@ func TestValidatePlatform(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			testConfig := types.InstallConfig{}
-			testConfig.ObjectMeta.Name = "test"
+			// Build default wrapping installConfig
+			if tc.config == nil {
+				tc.config = installConfig().build()
+				tc.config.OpenStack = tc.platform
+			}
 
-			err := ValidatePlatform(tc.platform, tc.networking, field.NewPath("test-path"), &testConfig).ToAggregate()
-			if tc.valid {
+			err := ValidatePlatform(tc.platform, tc.networking, field.NewPath("test-path"), tc.config).ToAggregate()
+			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {
-				assert.Error(t, err)
+				assert.Regexp(t, tc.expectedError, err)
 			}
 		})
 	}
+}
+
+type installConfigBuilder struct {
+	types.InstallConfig
+}
+
+func installConfig() *installConfigBuilder {
+	return &installConfigBuilder{
+		InstallConfig: types.InstallConfig{},
+	}
+}
+
+func (icb *installConfigBuilder) build() *types.InstallConfig {
+	return &icb.InstallConfig
 }

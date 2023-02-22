@@ -27,7 +27,7 @@ func Validate(ic *types.InstallConfig) error {
 
 	allErrs = append(
 		allErrs,
-		validation.ValidatePlatform(ic.Platform.Ovirt, ovirtPlatformPath)...)
+		validation.ValidatePlatform(ic.Platform.Ovirt, ovirtPlatformPath, ic)...)
 
 	con, err := NewConnection()
 	if err != nil {

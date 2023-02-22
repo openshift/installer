@@ -1,5 +1,9 @@
 package vsphere
 
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
 // DiskType is a disk provisioning type for vsphere.
 // +kubebuilder:validation:Enum="";thin;thick;eagerZeroedThick
 type DiskType string
@@ -116,6 +120,11 @@ type Platform struct {
 	// If this is omitted failure domains (regions and zones) will not be used.
 	// +kubebuilder:validation:Optional
 	FailureDomains []FailureDomain `json:"failureDomains,omitempty"`
+
+	// LoadBalancer defines how the load balancer used by the cluster is configured.
+	// LoadBalancer is available in TechPreview.
+	// +optional
+	LoadBalancer *configv1.VSpherePlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }
 
 // FailureDomain holds the region and zone failure domain and

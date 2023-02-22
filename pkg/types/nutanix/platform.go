@@ -1,5 +1,9 @@
 package nutanix
 
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
 // Platform stores any global configuration used for Nutanix platforms.
 type Platform struct {
 	// PrismCentral is the endpoint (address and port) and credentials to
@@ -56,6 +60,11 @@ type Platform struct {
 	// SubnetUUIDs identifies the network subnets to be used by the cluster.
 	// Currently we only support one subnet for an OpenShift cluster.
 	SubnetUUIDs []string `json:"subnetUUIDs"`
+
+	// LoadBalancer defines how the load balancer used by the cluster is configured.
+	// LoadBalancer is available in TechPreview.
+	// +optional
+	LoadBalancer *configv1.NutanixPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }
 
 // PrismCentral holds the endpoint and credentials data used to connect to the Prism Central

@@ -1,5 +1,9 @@
 package ovirt
 
+import (
+	configv1 "github.com/openshift/api/config/v1"
+)
+
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -66,6 +70,11 @@ type Platform struct {
 	// AffinityGroups contains the RHV affinity groups that the installer will create.
 	// +optional
 	AffinityGroups []AffinityGroup `json:"affinityGroups"`
+
+	// LoadBalancer defines how the load balancer used by the cluster is configured.
+	// LoadBalancer is available in TechPreview.
+	// +optional
+	LoadBalancer *configv1.OvirtPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }
 
 // AffinityGroup defines the affinity group that the installer will create

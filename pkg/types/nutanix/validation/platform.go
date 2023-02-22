@@ -3,13 +3,15 @@ package validation
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
 // TODO(nutanix): Revisit for further expanding the validation logic
-func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(p.PrismCentral.Endpoint.Address) == 0 {
@@ -69,5 +71,28 @@ func ValidatePlatform(p *nutanix.Platform, fldPath *field.Path) field.ErrorList 
 		allErrs = append(allErrs, field.Required(fldPath.Child("subnet"), "must specify the subnet"))
 	}
 
+	// Platform fields only allowed in TechPreviewNoUpgrade
+	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
+		if c.Nutanix.LoadBalancer != nil {
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("loadBalancer"), "load balancer is not supported in this feature set"))
+		}
+	}
+
+	if c.Nutanix.LoadBalancer != nil {
+		if !validateLoadBalancer(c.Nutanix.LoadBalancer.Type) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.Nutanix.LoadBalancer.Type, "invalid load balancer type"))
+		}
+	}
+
 	return allErrs
+}
+
+// validateLoadBalancer returns an error if the load balancer is not valid.
+func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
+	switch lbType {
+	case configv1.LoadBalancerTypeOpenShiftManagedDefault, configv1.LoadBalancerTypeUserManaged:
+		return true
+	default:
+		return false
+	}
 }
