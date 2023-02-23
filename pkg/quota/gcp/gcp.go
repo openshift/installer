@@ -91,7 +91,7 @@ func newQuotas(usages []record, limits []record) []quota.Quota {
 		return record{}, false
 	}
 
-	var quotas []quota.Quota
+	quotas := make([]quota.Quota, 0, len(limits))
 	for _, l := range limits {
 		q := quota.Quota{
 			Service: l.Service,
