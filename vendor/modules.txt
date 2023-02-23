@@ -8877,6 +8877,9 @@ github.com/vincent-petithory/dataurl
 # github.com/vmware/govmomi v0.27.4
 ## explicit; go 1.14
 github.com/vmware/govmomi
+github.com/vmware/govmomi/cns
+github.com/vmware/govmomi/cns/methods
+github.com/vmware/govmomi/cns/types
 github.com/vmware/govmomi/find
 github.com/vmware/govmomi/history
 github.com/vmware/govmomi/internal
@@ -8914,6 +8917,7 @@ github.com/vmware/govmomi/vim25/progress
 github.com/vmware/govmomi/vim25/soap
 github.com/vmware/govmomi/vim25/types
 github.com/vmware/govmomi/vim25/xml
+github.com/vmware/govmomi/vsan/vsanfs/types
 # github.com/yosida95/uritemplate/v3 v3.0.2
 ## explicit; go 1.14
 github.com/yosida95/uritemplate/v3

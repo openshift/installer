@@ -29,6 +29,7 @@ require (
 	github.com/coreos/ignition/v2 v2.14.0
 	github.com/coreos/stream-metadata-go v0.1.8
 	github.com/daixiang0/gci v0.9.0
+	github.com/davecgh/go-spew v1.1.1
 	github.com/diskfs/go-diskfs v1.2.1-0.20210727185522-a769efacd235
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/ghodss/yaml v1.0.1-0.20190212211648-25d852aebe32
@@ -151,6 +152,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.3.2 // indirect
 	github.com/coreos/vcontext v0.0.0-20211021162308-f1dbbca7bef4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/dimchansky/utfbom v1.1.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/evanphx/json-patch/v5 v5.6.0 // indirect
 	github.com/fatih/color v1.13.0 // indirect
