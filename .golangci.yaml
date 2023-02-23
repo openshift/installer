@@ -128,3 +128,7 @@ linters-settings:
     # It's a comma-separated list of prefixes.
     # Default: ""
     local-prefixes: github.com/openshift
+issues:
+  include:
+  - EXC0012 # EXC0012 revive: issue about not having a comment on exported.
+  - EXC0014 # EXC0014 revive: issue about not having a comment in the right format.

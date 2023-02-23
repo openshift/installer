@@ -99,7 +99,7 @@ func (ca *CpioArchive) StoreFile(filename string, dstPath string) error {
 	return nil
 }
 
-// Save the content of the current archive and returns
+// SaveBuffer saves the content of the current archive and returns
 // the buffer content.
 func (ca *CpioArchive) SaveBuffer() ([]byte, error) {
 	err := ca.cpioWriter.Close()

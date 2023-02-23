@@ -8,7 +8,7 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 )
 
-// Config of Nutanix cloud provider
+// CloudConfig is the config of Nutanix cloud provider
 // ref: https://github.com/nutanix-cloud-native/cloud-provider-nutanix/blob/main/pkg/provider/config/config.go
 type CloudConfig struct {
 	PrismCentral         PrismEndpoint     `json:"prismCentral"`
@@ -16,29 +16,36 @@ type CloudConfig struct {
 	EnableCustomLabeling bool              `json:"enableCustomLabeling"`
 }
 
+// TopologyDiscovery of the cloud provider.
 type TopologyDiscovery struct {
 	// Default type will be set to Prism via the newConfig function
 	Type               TopologyDiscoveryType `json:"type"`
 	TopologyCategories *TopologyCategories   `json:"topologyCategories"`
 }
 
+// TopologyDiscoveryType type alias.
 type TopologyDiscoveryType string
 
 const (
-	PrismTopologyDiscoveryType      = TopologyDiscoveryType("Prism")
+	// PrismTopologyDiscoveryType is the DiscoveryType for Prism provider.
+	PrismTopologyDiscoveryType = TopologyDiscoveryType("Prism")
+	// CategoriesTopologyDiscoveryType is the DiscoveryType for Categories provider.
 	CategoriesTopologyDiscoveryType = TopologyDiscoveryType("Categories")
 )
 
+// TopologyInfo contains topology information.
 type TopologyInfo struct {
 	Zone   string `json:"zone"`
 	Region string `json:"region"`
 }
 
+// TopologyCategories contains topology categories.
 type TopologyCategories struct {
 	ZoneCategory   string `json:"zoneCategory"`
 	RegionCategory string `json:"regionCategory"`
 }
 
+// PrismEndpoint contains endpoint details for Prism provider.
 type PrismEndpoint struct {
 	// address is the endpoint address (DNS name or IP address) of the Nutanix Prism Central or Element (cluster)
 	Address string `json:"address"`
@@ -51,10 +58,13 @@ type PrismEndpoint struct {
 	CredentialRef *CredentialReference `json:"credentialRef,omitempty"`
 }
 
+// CredentialKind type alias.
 type CredentialKind string
 
+// SecretKind a credential of type "Secret".
 var SecretKind = CredentialKind("Secret")
 
+// CredentialReference holds details of a credential.
 type CredentialReference struct {
 	// Kind of the Nutanix credential
 	Kind CredentialKind `json:"kind"`
