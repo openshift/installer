@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"sort"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -88,6 +89,11 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
 	}
 
+	// support for Azure user-defined tags made available through
+	// RFE-2017 is for AzurePublicCloud only.
+	if p.CloudName != azure.PublicCloud && len(p.UserTags) > 0 {
+		allErrs = append(allErrs, field.Forbidden(fldPath.Child("userTags"), fmt.Sprintf("userTags support is for %s only", azure.PublicCloud)))
+	}
 	// check if configured userTags are valid.
 	allErrs = append(allErrs, validateUserTags(p.UserTags, fldPath.Child("userTags"))...)
 
@@ -118,6 +124,10 @@ func validateUserTags(tags map[string]string, fldPath *field.Path) field.ErrorLi
 		allErrs = append(allErrs, field.TooMany(fldPath, len(tags), maxUserTagLimit))
 	}
 
+	if err := findDuplicateTagKeys(tags); err != nil {
+		allErrs = append(allErrs, field.Forbidden(fldPath, err.Error()))
+	}
+
 	for key, value := range tags {
 		if err := validateTag(key, value); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Key(key), value, err.Error()))
@@ -145,6 +155,30 @@ func validateTag(key, value string) error {
 	if tagKeyPrefixRegex.MatchString(key) {
 		return fmt.Errorf("key contains restricted prefix")
 	}
+	return nil
+}
+
+// findDuplicateTagKeys checks for duplicate tag keys in the user-defined tagset.
+// Tag keys are case-insensitive. A tag with a key, regardless of the casing, is
+// updated or retrieved. An Azure service might keep the casing as provided for
+// the tag key. To allow user to choose the required variant of the key to add
+// return error when duplicate tag keys are present.
+func findDuplicateTagKeys(tagSet map[string]string) error {
+	dupKeys := make(map[string]int)
+	for k := range tagSet {
+		dupKeys[strings.ToTitle(k)]++
+	}
+
+	var errMsg []string
+	for key, count := range dupKeys {
+		if count > 1 {
+			errMsg = append(errMsg, fmt.Sprintf("\"%s\" matches %d keys", key, count))
+		}
+	}
+	if len(errMsg) > 0 {
+		return fmt.Errorf("found duplicate tag keys: %v", strings.Join(errMsg, ", "))
+	}
+
 	return nil
 }
 

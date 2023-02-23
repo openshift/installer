@@ -13,7 +13,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, userTags map[string]string) ([]*clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, fmt.Errorf("non-azure configuration: %q", configPlatform)
 	}
@@ -41,7 +41,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		if int64(idx) < total%numOfAZs {
 			replicas++
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery, userTags)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &idx, capabilities, useImageGallery)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}

@@ -88,10 +88,10 @@ type Platform struct {
 	ResourceGroupName string `json:"resourceGroupName,omitempty"`
 
 	// UserTags has additional keys and values that the installer will add
-	// as tags to all resources that it creates. Resources created by the
-	// cluster itself may not include these tags. This is a TechPreview
-	// feature and requires setting featureSet to TechPreviewNoUpgrade to
-	// configure the tags.
+	// as tags to all resources that it creates on AzurePublicCloud alone.
+	// Resources created by the cluster itself may not include these tags.
+	// This is a TechPreview feature and requires setting featureSet to
+	// TechPreviewNoUpgrade to configure the tags.
 	// +optional
 	UserTags map[string]string `json:"userTags,omitempty"`
 }
