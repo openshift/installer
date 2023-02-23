@@ -7,6 +7,8 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"github.com/vmware/govmomi/cns"
+	cnstypes "github.com/vmware/govmomi/cns/types"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/pbm"
 	pbmtypes "github.com/vmware/govmomi/pbm/types"
@@ -34,12 +36,15 @@ type API interface {
 	DeleteStoragePolicy(ctx context.Context, policyName string) error
 	DeleteTag(ctx context.Context, id string) error
 	DeleteTagCategory(ctx context.Context, id string) error
+	DeleteCnsVolumes(ctx context.Context, volume cnstypes.CnsVolume) error
+	GetCnsVolumes(ctx context.Context, infraID string) ([]cnstypes.CnsVolume, error)
 }
 
 // Client makes calls to the Azure API.
 type Client struct {
 	client     *vim25.Client
 	restClient *rest.Client
+	cnsClient  *cns.Client
 	cleanup    vsphere.ClientLogout
 }
 
@@ -56,10 +61,15 @@ func NewClient(vCenter, username, password string) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	cnsClient, err := cns.NewClient(context.TODO(), vim25Client)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Client{
 		client:     vim25Client,
 		restClient: restClient,
+		cnsClient:  cnsClient,
 		cleanup:    cleanup,
 	}, nil
 }
@@ -279,4 +289,58 @@ func (c *Client) DeleteTagCategory(ctx context.Context, id string) error {
 	}
 
 	return utilerrors.NewAggregate(errs)
+}
+
+// GetCnsVolumes retrieves all CNS volumes that were used in infraID.
+func (c *Client) GetCnsVolumes(ctx context.Context, infraID string) ([]cnstypes.CnsVolume, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	// Only return the volumes created with the cluster
+	// being destroyed
+	cnsQueryFilter := cnstypes.CnsQueryFilter{
+		ContainerClusterIds: []string{infraID},
+	}
+	cnsQuerySelection := cnstypes.CnsQuerySelection{}
+
+	volumes, err := c.cnsClient.QueryAllVolume(ctx, cnsQueryFilter, cnsQuerySelection)
+	if err != nil {
+		return nil, err
+	}
+
+	cnsVolumes := make([]cnstypes.CnsVolume, 0, len(volumes.Volumes))
+
+	for _, v := range volumes.Volumes {
+		// This must be called to retrieve the ClusterId
+		result, err := c.cnsClient.QueryVolume(ctx, cnstypes.CnsQueryFilter{VolumeIds: []cnstypes.CnsVolumeId{v.VolumeId}})
+		if err != nil {
+			return nil, err
+		}
+
+		// Confirm that the cluster id matches the infraid
+		for _, rv := range result.Volumes {
+			if rv.Metadata.ContainerCluster.ClusterId == infraID {
+				cnsVolumes = append(cnsVolumes, rv)
+			}
+		}
+	}
+	return cnsVolumes, nil
+}
+
+// DeleteCnsVolumes deletes the CNS volume.
+func (c *Client) DeleteCnsVolumes(ctx context.Context, volume cnstypes.CnsVolume) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	// More odd VMware APIs. This is a slice but it can only take a single volume
+	task, err := c.cnsClient.DeleteVolume(ctx, []cnstypes.CnsVolumeId{volume.VolumeId}, true)
+	if err != nil {
+		return err
+	}
+
+	err = task.Wait(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }

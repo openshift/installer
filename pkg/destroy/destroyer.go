@@ -9,7 +9,7 @@ import (
 )
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
-func New(logger logrus.FieldLogger, rootDir string) (providers.Destroyer, error) {
+func New(logger logrus.FieldLogger, rootDir string, deleteVolumes bool) (providers.Destroyer, error) {
 	metadata, err := cluster.LoadMetadata(rootDir)
 	if err != nil {
 		return nil, err
@@ -18,6 +18,10 @@ func New(logger logrus.FieldLogger, rootDir string) (providers.Destroyer, error)
 	platform := metadata.Platform()
 	if platform == "" {
 		return nil, errors.New("no platform configured in metadata")
+	}
+
+	if platform == "vsphere" {
+		metadata.VSphere.DeleteCnsVolumes = deleteVolumes
 	}
 
 	creator, ok := providers.Registry[platform]

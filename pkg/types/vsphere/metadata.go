@@ -10,4 +10,6 @@ type Metadata struct {
 	Password string `json:"password"`
 	// TerraformPlatform is the type...
 	TerraformPlatform string `json:"terraform_platform"`
+	// Delete Volumes
+	DeleteCnsVolumes bool `json:"delete_cns_volumes"`
 }

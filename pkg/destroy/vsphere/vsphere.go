@@ -21,6 +21,7 @@ type ClusterUninstaller struct {
 	ClusterID         string
 	InfraID           string
 	terraformPlatform string
+	deleteVolumes     bool
 
 	Logger logrus.FieldLogger
 	client API
@@ -40,6 +41,7 @@ func newWithClient(logger logrus.FieldLogger, metadata *installertypes.ClusterMe
 		ClusterID:         metadata.ClusterID,
 		InfraID:           metadata.InfraID,
 		terraformPlatform: metadata.VSphere.TerraformPlatform,
+		deleteVolumes:     metadata.VSphere.DeleteCnsVolumes,
 
 		Logger: logger,
 		client: client,
@@ -92,6 +94,7 @@ func (o *ClusterUninstaller) deleteStoragePolicy(ctx context.Context) error {
 	policyName := fmt.Sprintf("openshift-storage-policy-%s", o.InfraID)
 	policyLogger := o.Logger.WithField("StoragePolicy", policyName)
 	policyLogger.Debug("Delete")
+
 	err := o.client.DeleteStoragePolicy(ctx, policyName)
 	if err != nil {
 		policyLogger.Debug(err)
@@ -203,6 +206,28 @@ func (o *ClusterUninstaller) deleteVirtualMachines(ctx context.Context) error {
 	return utilerrors.NewAggregate(errs)
 }
 
+func (o *ClusterUninstaller) deleteCnsVolumes(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Minute*30)
+	defer cancel()
+	o.Logger.Debug("Delete CNS Volumes")
+
+	cnsVolumes, err := o.client.GetCnsVolumes(ctx, o.InfraID)
+	if err != nil {
+		return err
+	}
+
+	for _, cv := range cnsVolumes {
+		cnsVolumeLogger := o.Logger.WithField("CNS Volume", cv.VolumeId.Id)
+		err := o.client.DeleteCnsVolumes(ctx, cv)
+		if err != nil {
+			return err
+		}
+		cnsVolumeLogger.Info("Destroyed")
+	}
+
+	return nil
+}
+
 func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	stagedFuncs := [][]struct {
 		name    string
@@ -214,6 +239,7 @@ func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	}, {
 		{name: "Folder", execute: o.deleteFolder},
 	}, {
+		{name: "CNS Volume", execute: o.deleteCnsVolumes},
 		{name: "Storage Policy", execute: o.deleteStoragePolicy},
 		{name: "Tag", execute: o.deleteTag},
 		{name: "Tag Category", execute: o.deleteTagCategory},
