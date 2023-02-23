@@ -53,20 +53,15 @@ aliases:
     - jcpowermac
     - patrickdillon
   baremetal-approvers:
-    - andfasano
     - dtantsur
     - elfosardo
-    - hardys
+    - honza
     - iurygregory
-    - sadasu
   baremetal-reviewers:
-    - andfasano
-    - celebdor
     - dtantsur
     - elfosardo
-    - hardys
+    - honza
     - iurygregory
-    - sadasu
   aws-approvers:
     - mtulio
     - patrickdillon
