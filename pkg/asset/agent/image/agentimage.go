@@ -53,14 +53,12 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	additionalFiles := []string{}
-	agentTuiFile, err := a.fetchAgentTuiBinary(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
+	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {
 		return err
 	}
-	additionalFiles = append(additionalFiles, agentTuiFile)
 
-	err = a.prepareAgentISO(baseImage.File.Filename, ignitionByte, additionalFiles)
+	err = a.prepareAgentISO(baseImage.File.Filename, ignitionByte, agentTuiFiles)
 	if err != nil {
 		return err
 	}
@@ -71,25 +69,28 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func (a *AgentImage) fetchAgentTuiBinary(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) (string, error) {
-	r := NewRelease(&executer.CommonExecuter{},
+func (a *AgentImage) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
+	release := NewRelease(&executer.CommonExecuter{},
 		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
 		releaseImage, pullSecret, mirrorConfig)
 
-	// TODO: This is just a temporary placeholder to test the entire workflow.
-	// As soon as https://github.com/openshift/assisted-installer-agent/pull/482 will land, then
-	// the following line should be fixed to extract the agent-tui binary
-	filename, err := r.ExtractFile("agent-installer-node-agent", "/usr/bin/agent")
-	if err != nil {
-		return "", err
-	}
-	// Make sure it could be executed
-	err = os.Chmod(filename, 0o555)
-	if err != nil {
-		return "", err
+	agentTuiFilenames := []string{"/usr/bin/agent-tui", "/usr/lib64/libnmstate.so.1.3.3"}
+	files := []string{}
+
+	for _, srcFile := range agentTuiFilenames {
+		f, err := release.ExtractFile("agent-installer-node-agent", srcFile)
+		if err != nil {
+			return nil, err
+		}
+		// Make sure it could be executed
+		err = os.Chmod(f, 0o555)
+		if err != nil {
+			return nil, err
+		}
+		files = append(files, f)
 	}
 
-	return filename, nil
+	return files, nil
 }
 
 func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, additionalFiles []string) error {
@@ -181,7 +182,10 @@ func (a *AgentImage) appendAgentFilesToInitrd(additionalFiles []string) error {
 	// Add a dracut hook to copy the files. The $NEWROOT environment variable is exported by
 	// dracut during the startup and it refers the mountpoint for the root filesystem.
 	dracutHookScript := `#!/bin/sh
-cp -R /agent-files/* $NEWROOT/usr/local/bin/`
+cp -R /agent-files/* $NEWROOT/usr/local/bin/
+# Fix the selinux label
+for i in $(find /agent-files/ -printf "%P\n"); do chcon system_u:object_r:bin_t:s0 $NEWROOT/usr/local/bin/$i; done`
+
 	err = ca.StoreBytes("/usr/lib/dracut/hooks/pre-pivot/99-agent-copy-files.sh", []byte(dracutHookScript), 0o755)
 	if err != nil {
 		return err
