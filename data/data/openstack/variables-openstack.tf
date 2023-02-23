@@ -306,6 +306,18 @@ variable "openstack_additional_network_ids" {
   default     = []
 }
 
+variable "openstack_additional_ports" {
+  type = list(list(object({
+    network_id = string
+    fixed_ips = list(object({
+      subnet_id  = string
+      ip_address = string
+    }))
+  })))
+  description = "Additional ports for each master node."
+  default     = [[], [], []]
+}
+
 variable "openstack_master_flavor_name" {
   type        = string
   description = "Instance size for the master node(s). Example: `m1.medium`."
@@ -341,16 +353,28 @@ variable "openstack_master_server_group_policy" {
   description = "Policy of the server group for the master nodes."
 }
 
-variable "openstack_machines_subnet_id" {
-  type        = string
-  default     = ""
-  description = "ID of the subnet to use for cluster machines. If empty, the installer will create a subnet to use as machinesSubnet."
+variable "openstack_default_machines_port" {
+  type = object({
+    network_id = string
+    fixed_ips = list(object({
+      subnet_id  = string
+      ip_address = string
+    }))
+  })
+  default     = null
+  description = "The masters' default control-plane port. If empty, the installer will create a new network."
 }
 
-variable "openstack_machines_network_id" {
-  type        = string
-  default     = ""
-  description = "ID of the network the machines subnet is on. If empty, the installer will create a network to use as machinesNetwork."
+variable "openstack_machines_ports" {
+  type = list(object({
+    network_id = string
+    fixed_ips = list(object({
+      subnet_id  = string
+      ip_address = string
+    }))
+  }))
+  description = "The control-plane port for each machine. If null, the default is used."
+  default     = [null, null, null]
 }
 
 variable "openstack_master_availability_zones" {
