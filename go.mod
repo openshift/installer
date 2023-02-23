@@ -3,7 +3,7 @@ module github.com/openshift/installer
 go 1.18
 
 require (
-	cloud.google.com/go/monitoring v1.6.0
+	cloud.google.com/go/monitoring v1.12.0
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/Azure/azure-sdk-for-go v63.1.0+incompatible
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.2.0
@@ -89,9 +89,9 @@ require (
 	golang.org/x/oauth2 v0.4.0
 	golang.org/x/sys v0.6.0
 	golang.org/x/term v0.4.0
-	google.golang.org/api v0.91.0
-	google.golang.org/genproto v0.0.0-20220808131553-a91ffa7f803e
-	google.golang.org/grpc v1.48.0
+	google.golang.org/api v0.107.0
+	google.golang.org/genproto v0.0.0-20230112194545-e10362b5ecf9
+	google.golang.org/grpc v1.51.0
 	gopkg.in/ini.v1 v1.66.6
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.26.1
@@ -107,7 +107,8 @@ require (
 )
 
 require (
-	cloud.google.com/go/compute v1.7.0 // indirect
+	cloud.google.com/go/compute v1.14.0 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.0.1 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.21 // indirect
@@ -152,8 +153,8 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/gnostic v0.6.9 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
-	github.com/googleapis/gax-go/v2 v2.4.0 // indirect
+	github.com/googleapis/enterprise-certificate-proxy v0.2.1 // indirect
+	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-hclog v1.2.0 // indirect
@@ -204,7 +205,7 @@ require (
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
 	github.com/zclconf/go-cty v1.11.0 // indirect
 	go.mongodb.org/mongo-driver v1.8.3 // indirect
-	go.opencensus.io v0.23.0 // indirect
+	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.11.1 // indirect
 	go.opentelemetry.io/otel/trace v1.11.1 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
