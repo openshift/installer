@@ -259,6 +259,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			return errors.New("unknown publishing strategy")
 		}
 		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
+			ResourceGroup:  installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			Region:         installConfig.Config.Platform.PowerVS.Region,
 			Zone:           installConfig.Config.Platform.PowerVS.Zone,
 			CISInstanceCRN: cisInstanceCRN,
