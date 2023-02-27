@@ -127,6 +127,9 @@ func (o *oVirtClient) buildDiskObjectForCreation(
 		if alias := params.Alias(); alias != "" {
 			diskBuilder.Alias(alias)
 		}
+		if initialSize := params.InitialSize(); initialSize != nil {
+			diskBuilder.InitialSize(int64(*initialSize))
+		}
 	}
 	return diskBuilder.Build()
 }

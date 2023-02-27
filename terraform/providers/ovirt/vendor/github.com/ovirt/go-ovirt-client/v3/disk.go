@@ -339,6 +339,9 @@ type CreateDiskOptionalParameters interface {
 
 	// Sparse indicates that the disk should be sparse-provisioned.If it returns nil, the default will be used.
 	Sparse() *bool
+
+	// InitialSize is the initially reserved disk space when creating the disk.
+	InitialSize() *uint64
 }
 
 // BuildableCreateDiskParameters is a buildable version of CreateDiskOptionalParameters.
@@ -354,6 +357,11 @@ type BuildableCreateDiskParameters interface {
 	WithSparse(sparse bool) (BuildableCreateDiskParameters, error)
 	// MustWithSparse is the same as WithSparse, but panics instead of returning an error.
 	MustWithSparse(sparse bool) BuildableCreateDiskParameters
+
+	// WithInitialSize sets initial size for the disk.
+	WithInitialSize(size uint64) (BuildableCreateDiskParameters, error)
+	// MustWithInitialSize is the same as WithInitialSize, but panics instead of returning an error.
+	MustWithInitialSize(size uint64) BuildableCreateDiskParameters
 }
 
 // CreateDiskParams creates a buildable set of CreateDiskOptionalParameters for use with
@@ -363,8 +371,9 @@ func CreateDiskParams() BuildableCreateDiskParameters {
 }
 
 type createDiskParams struct {
-	alias  string
-	sparse *bool
+	alias       string
+	sparse      *bool
+	initialSize *uint64
 }
 
 func (c *createDiskParams) Alias() string {
@@ -395,6 +404,23 @@ func (c *createDiskParams) WithSparse(sparse bool) (BuildableCreateDiskParameter
 
 func (c *createDiskParams) MustWithSparse(sparse bool) BuildableCreateDiskParameters {
 	builder, err := c.WithSparse(sparse)
+	if err != nil {
+		panic(err)
+	}
+	return builder
+}
+
+func (c *createDiskParams) InitialSize() *uint64 {
+	return c.initialSize
+}
+
+func (c *createDiskParams) WithInitialSize(size uint64) (BuildableCreateDiskParameters, error) {
+	c.initialSize = &size
+	return c, nil
+}
+
+func (c *createDiskParams) MustWithInitialSize(size uint64) BuildableCreateDiskParameters {
+	builder, err := c.WithInitialSize(size)
 	if err != nil {
 		panic(err)
 	}

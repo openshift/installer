@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	ovirtclientlog "github.com/ovirt/go-ovirt-client-log/v3"
-	ovirtclient "github.com/ovirt/go-ovirt-client/v2"
+	ovirtclient "github.com/ovirt/go-ovirt-client/v3"
 )
 
 func init() {
