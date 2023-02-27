@@ -332,13 +332,15 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 
 		zoneID := ""
 		for _, zone := range dzResult.Dnszones {
-			if strings.Contains(o.BaseDomain, *zone.Name) {
+			if o.BaseDomain == *zone.Name {
 				zoneID = *zone.ID
+				break
 			}
 		}
 		if zoneID == "" {
 			return errors.Errorf("Could not determine DNS Services DNS zone ID from base domain %q", o.BaseDomain)
 		}
+		o.Logger.Debugf("Found DNS Services DNS zone ID for base domain %q: %s", o.BaseDomain, zoneID)
 		o.zoneID = zoneID
 	}
 
