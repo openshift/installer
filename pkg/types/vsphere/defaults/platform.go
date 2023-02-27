@@ -15,7 +15,7 @@ func SetPlatformDefaults(p *vsphere.Platform, installConfig *types.InstallConfig
 	// are not defined we must use the default for the datacenter
 	// and cluster.
 	for i := range p.FailureDomains {
-		if p.FailureDomains[i].Topology.ResourcePool == "" {
+		if p.FailureDomains[i].Topology.ResourcePool == "" && p.FailureDomains[i].Topology.ComputeCluster != "" {
 			p.FailureDomains[i].Topology.ResourcePool = fmt.Sprintf("%s/%s", p.FailureDomains[i].Topology.ComputeCluster, "/Resources")
 		}
 	}
