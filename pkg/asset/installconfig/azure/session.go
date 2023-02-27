@@ -43,8 +43,8 @@ type Credentials struct {
 	ClientID                  string `json:"clientId,omitempty"`
 	ClientSecret              string `json:"clientSecret,omitempty"`
 	TenantID                  string `json:"tenantId,omitempty"`
-	ClientCertificatePath     string `json:"certificatePath,omitempty"`
-	ClientCertificatePassword string `json:"certificatePassword,omitempty"`
+	ClientCertificatePath     string `json:"clientCertificate,omitempty"`
+	ClientCertificatePassword string `json:"clientCertificatePassword,omitempty"`
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
