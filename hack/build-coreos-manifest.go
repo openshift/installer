@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	corev1 "k8s.io/api/core/v1"
@@ -18,12 +19,17 @@ import (
 )
 
 const (
-	// FIXME - Add an OKD conditional here
-	streamJSON = "data/data/coreos/rhcos.json"
-	dest       = "bin/manifests/coreos-bootimages.yaml"
+	streamRHCOSJSON = "data/data/coreos/rhcos.json"
+	streamFCOSJSON  = "data/data/coreos/fcos.json"
+	fcosTAG         = "okd"
+	dest            = "bin/manifests/coreos-bootimages.yaml"
 )
 
 func run() error {
+	streamJSON := streamRHCOSJSON
+	if tags, _ := os.LookupEnv("TAGS"); strings.Contains(tags, fcosTAG) {
+		streamJSON = streamFCOSJSON
+	}
 	bootimages, err := ioutil.ReadFile(streamJSON)
 	if err != nil {
 		return err
