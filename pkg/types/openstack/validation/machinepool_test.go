@@ -6,6 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -69,7 +70,7 @@ func TestValidateMachinePool(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			errs := ValidateMachinePool(nil, tc.machinePool, "", nil)
+			errs := ValidateMachinePool(configv1.Default, tc.machinePool, "", nil)
 			for _, check := range tc.checks {
 				if e := check(errs); e != nil {
 					t.Error(e)

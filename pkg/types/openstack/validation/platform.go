@@ -19,7 +19,7 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
-	allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
+	allErrs = append(allErrs, ValidateMachinePool(c.FeatureSet, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
 
 	// Platform fields only allowed in TechPreviewNoUpgrade
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {

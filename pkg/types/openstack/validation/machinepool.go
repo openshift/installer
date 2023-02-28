@@ -3,6 +3,7 @@ package validation
 import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -14,7 +15,7 @@ var validServerGroupPolicies = []string{
 }
 
 // ValidateMachinePool validates Control plane and Compute MachinePools
-func ValidateMachinePool(_ *openstack.Platform, machinePool *openstack.MachinePool, _ string, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(_ configv1.FeatureSet, machinePool *openstack.MachinePool, _ string, fldPath *field.Path) field.ErrorList {
 	if machinePool == nil {
 		return nil
 	}

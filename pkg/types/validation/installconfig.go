@@ -116,11 +116,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 	allErrs = append(allErrs, validatePlatform(&c.Platform, usingAgentMethod, field.NewPath("platform"), c.Networking, c)...)
 	if c.ControlPlane != nil {
-		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
+		allErrs = append(allErrs, validateControlPlane(c.FeatureSet, &c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
-	allErrs = append(allErrs, validateCompute(&c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"))...)
+	allErrs = append(allErrs, validateCompute(c.FeatureSet, &c.Platform, c.ControlPlane, c.Compute, field.NewPath("compute"))...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -418,7 +418,7 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 	return allErrs
 }
 
-func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateControlPlane(featureSet configv1.FeatureSet, platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if pool.Name != types.MachinePoolControlPlaneRoleName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{types.MachinePoolControlPlaneRoleName}))
@@ -426,11 +426,11 @@ func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fld
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
-	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
+	allErrs = append(allErrs, ValidateMachinePool(featureSet, platform, pool, fldPath)...)
 	return allErrs
 }
 
-func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateCompute(featureSet configv1.FeatureSet, platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
 	for i, p := range pools {
@@ -445,7 +445,7 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		if control != nil && control.Architecture != p.Architecture {
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
-		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
+		allErrs = append(allErrs, ValidateMachinePool(featureSet, platform, &p, poolFldPath)...)
 	}
 	return allErrs
 }

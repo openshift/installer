@@ -5,6 +5,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
@@ -59,7 +60,7 @@ var (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func ValidateMachinePool(featureSet configv1.FeatureSet, platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.Replicas != nil {
 		if *p.Replicas < 0 {
@@ -77,11 +78,11 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 	if platform.AWS != nil {
 		allErrs = append(allErrs, awsvalidation.ValidateMachinePoolArchitecture(p, fldPath.Child("architecture"))...)
 	}
-	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, p, fldPath.Child("platform"))...)
+	allErrs = append(allErrs, validateMachinePoolPlatform(featureSet, platform, &p.Platform, p, fldPath.Child("platform"))...)
 	return allErrs
 }
 
-func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolPlatform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
+func validateMachinePoolPlatform(featureSet configv1.FeatureSet, platform *types.Platform, p *types.MachinePoolPlatform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	platformName := platform.Name()
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
@@ -130,7 +131,7 @@ func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolP
 	}
 	if p.OpenStack != nil {
 		validate(openstack.Name, p.OpenStack, func(f *field.Path) field.ErrorList {
-			return openstackvalidation.ValidateMachinePool(platform.OpenStack, p.OpenStack, pool.Name, f)
+			return openstackvalidation.ValidateMachinePool(featureSet, p.OpenStack, pool.Name, f)
 		})
 	}
 	return allErrs

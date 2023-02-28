@@ -7,6 +7,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -193,7 +194,7 @@ func TestValidateMachinePool(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(tc.platform, tc.pool, field.NewPath("test-path")).ToAggregate()
+			err := ValidateMachinePool(configv1.Default, tc.platform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {
