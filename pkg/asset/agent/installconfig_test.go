@@ -86,7 +86,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "failed to create install config: invalid \"install-config.yaml\" file: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
+			expectedError: "invalid install-config configuration: [platform.baremetal.apiVIPs: Required value: must specify at least one VIP for the API, platform.baremetal.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set]",
 		},
 		{
 			name: "Required values not set for vsphere platform",
@@ -102,7 +102,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `failed to create install config: invalid "install-config.yaml" file: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set, platform.vsphere.vcenters.server: Required value: must be the domain name or IP address of the vCenter, platform.vsphere.vcenters.username: Required value: must specify the username, platform.vsphere.vcenters.password: Required value: must specify the password, platform.vsphere.vcenters.datacenters: Required value: must specify at least one datacenter, platform.vsphere.failureDomains.server: Required value: must specify a vCenter server, platform.vsphere.failureDomains.topology.datacenter: Required value: must specify a datacenter, platform.vsphere.failureDomains.topology.datastore: Required value: must specify a datastore, platform.vsphere.failureDomains.topology.computeCluster: Required value: must specify a computeCluster, platform.vsphere.failureDomains.topology.resourcePool: Invalid value: "//Resources": full path of resource pool must be provided in format /<datacenter>/host/<cluster>/...]`,
+			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set]`,
 		},
 		{
 			name: "invalid configuration for none platform for sno",

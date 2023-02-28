@@ -288,7 +288,7 @@ func TestValidatePlatform(t *testing.T) {
 				tc.config = installConfig().build()
 				tc.config.VSphere = tc.platform
 			}
-			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), tc.config).ToAggregate()
+			err := ValidatePlatform(tc.platform, false, field.NewPath("test-path"), tc.config).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

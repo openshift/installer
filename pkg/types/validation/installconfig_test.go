@@ -2040,7 +2040,7 @@ func TestValidateInstallConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateInstallConfig(tc.installConfig).ToAggregate()
+			err := ValidateInstallConfig(tc.installConfig, false).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

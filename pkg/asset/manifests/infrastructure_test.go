@@ -58,7 +58,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 					UUID:    "test-uuid",
 					InfraID: "test-infra-id",
 				},
-				&installconfig.InstallConfig{Config: tc.installConfig},
+				installconfig.MakeAsset(tc.installConfig),
 				&CloudProviderConfig{},
 				&AdditionalTrustBundleConfig{},
 			)

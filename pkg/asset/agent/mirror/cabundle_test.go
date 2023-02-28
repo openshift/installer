@@ -35,7 +35,7 @@ func TestCaBundle_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{
 					Supplied: true,
-					InstallConfig: installconfig.InstallConfig{
+					AssetBase: installconfig.AssetBase{
 						Config: &types.InstallConfig{
 							ObjectMeta: v1.ObjectMeta{
 								Namespace: "cluster-0",
@@ -50,7 +50,7 @@ func TestCaBundle_Generate(t *testing.T) {
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{
 					Supplied: true,
-					InstallConfig: installconfig.InstallConfig{
+					AssetBase: installconfig.AssetBase{
 						Config: &types.InstallConfig{
 							ObjectMeta: v1.ObjectMeta{
 								Namespace: "cluster-0",

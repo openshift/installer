@@ -35,8 +35,10 @@ func TestLogFilesChanged(t *testing.T) {
 			name: "test asset with one file",
 			assets: []asset.WritableAsset{
 				&installconfig.InstallConfig{
-					File: &asset.File{
-						Filename: "a.yaml",
+					AssetBase: installconfig.AssetBase{
+						File: &asset.File{
+							Filename: "a.yaml",
+						},
 					},
 				},
 			},

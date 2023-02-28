@@ -382,7 +382,7 @@ func validateProvisioningNetworkDisabledSupported(hosts []*baremetal.Host, fldPa
 }
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
+func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *types.Networking, fldPath *field.Path, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	provisioningNetwork := sets.NewString(string(baremetal.ManagedProvisioningNetwork),
@@ -404,8 +404,6 @@ func ValidatePlatform(p *baremetal.Platform, n *types.Networking, fldPath *field
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, err.Error()))
 		}
 	}
-
-	agentBasedInstallation := validate.IsAgentBasedInstallation()
 
 	if !agentBasedInstallation && p.Hosts == nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))

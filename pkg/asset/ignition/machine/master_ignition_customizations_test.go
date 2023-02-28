@@ -35,8 +35,8 @@ func TestMasterIgnitionCustomizationsGenerate(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			installConfig := &installconfig.InstallConfig{
-				Config: &types.InstallConfig{
+			installConfig := installconfig.MakeAsset(
+				&types.InstallConfig{
 					Networking: &types.Networking{
 						ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("10.0.1.0/24")},
 					},
@@ -45,8 +45,7 @@ func TestMasterIgnitionCustomizationsGenerate(t *testing.T) {
 							Region: "us-east",
 						},
 					},
-				},
-			}
+				})
 
 			rootCA := &tls.RootCA{}
 			err := rootCA.Generate(nil)

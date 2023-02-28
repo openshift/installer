@@ -59,7 +59,7 @@ func Validate(ic *types.InstallConfig) error {
 	if ic.Platform.VSphere == nil {
 		return errors.New(field.Required(field.NewPath("platform", "vsphere"), "vSphere validation requires a vSphere platform configuration").Error())
 	}
-	return validation.ValidatePlatform(ic.Platform.VSphere, field.NewPath("platform").Child("vsphere"), ic).ToAggregate()
+	return validation.ValidatePlatform(ic.Platform.VSphere, false, field.NewPath("platform").Child("vsphere"), ic).ToAggregate()
 }
 
 func getVCenterClient(failureDomain vsphere.FailureDomain, ic *types.InstallConfig) (*validationContext, ClientLogout, error) {

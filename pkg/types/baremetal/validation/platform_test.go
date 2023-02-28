@@ -348,7 +348,7 @@ interfaces:
 				tc.config.BareMetal = tc.platform
 			}
 
-			err := ValidatePlatform(tc.config.BareMetal, network(), field.NewPath("baremetal"), tc.config).ToAggregate()
+			err := ValidatePlatform(tc.config.BareMetal, false, network(), field.NewPath("baremetal"), tc.config).ToAggregate()
 
 			if tc.expected == "" {
 				assert.NoError(t, err)

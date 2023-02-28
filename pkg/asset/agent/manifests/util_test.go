@@ -72,7 +72,7 @@ func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	_, machineNetCidr, _ := net.ParseCIDR("10.10.11.0/24")
 
 	return &agent.OptionalInstallConfig{
-		InstallConfig: installconfig.InstallConfig{
+		AssetBase: installconfig.AssetBase{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ocp-edge-cluster-0",
@@ -133,7 +133,7 @@ func getValidOptionalInstallConfigDualStack() *agent.OptionalInstallConfig {
 	_, machineNetCidrIPv6, _ := net.ParseCIDR("2001:db8:5dd8:c956::/64")
 
 	return &agent.OptionalInstallConfig{
-		InstallConfig: installconfig.InstallConfig{
+		AssetBase: installconfig.AssetBase{
 			Config: &types.InstallConfig{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:      "ocp-edge-cluster-0",
@@ -202,7 +202,7 @@ func getValidOptionalInstallConfigDualStackDualVIPs() *agent.OptionalInstallConf
 // getProxyValidOptionalInstallConfig returns a valid optional install config for proxied installation
 func getProxyValidOptionalInstallConfig() *agent.OptionalInstallConfig {
 	validIC := getValidOptionalInstallConfig()
-	validIC.InstallConfig.Config.Proxy = &types.Proxy{
+	validIC.Config.Proxy = &types.Proxy{
 		HTTPProxy:  "http://10.10.10.11:80",
 		HTTPSProxy: "http://my-lab-proxy.org:443",
 		NoProxy:    "internal.com",

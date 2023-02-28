@@ -54,7 +54,7 @@ import (
 var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOpenShiftSDN), string(operv1.NetworkTypeOVNKubernetes))
 
 // ValidateInstallConfig checks that the specified install config is valid.
-func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
+func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if c.TypeMeta.APIVersion == "" {
 		return field.ErrorList{field.Required(field.NewPath("apiVersion"), "install-config version required")}
@@ -114,7 +114,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
-	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), c.Networking, c)...)
+	allErrs = append(allErrs, validatePlatform(&c.Platform, usingAgentMethod, field.NewPath("platform"), c.Networking, c)...)
 	if c.ControlPlane != nil {
 		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
@@ -673,7 +673,7 @@ func ValidateIPinMachineCIDR(vip string, n *types.Networking) error {
 	return fmt.Errorf("IP expected to be in one of the machine networks: %s", strings.Join(networks, ","))
 }
 
-func validatePlatform(platform *types.Platform, fldPath *field.Path, network *types.Networking, c *types.InstallConfig) field.ErrorList {
+func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *field.Path, network *types.Networking, c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	activePlatform := platform.Name()
 	platforms := make([]string, len(types.PlatformNames))
@@ -722,12 +722,12 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, network *ty
 	}
 	if platform.VSphere != nil {
 		validate(vsphere.Name, platform.VSphere, func(f *field.Path) field.ErrorList {
-			return vspherevalidation.ValidatePlatform(platform.VSphere, f, c)
+			return vspherevalidation.ValidatePlatform(platform.VSphere, usingAgentMethod, f, c)
 		})
 	}
 	if platform.BareMetal != nil {
 		validate(baremetal.Name, platform.BareMetal, func(f *field.Path) field.ErrorList {
-			return baremetalvalidation.ValidatePlatform(platform.BareMetal, network, f, c)
+			return baremetalvalidation.ValidatePlatform(platform.BareMetal, usingAgentMethod, network, f, c)
 		})
 	}
 	if platform.Ovirt != nil {
