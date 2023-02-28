@@ -4,6 +4,8 @@
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.19-openshift-4.13 AS builder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
+RUN printenv
+RUN exit -1
 COPY . .
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN go run -mod=vendor hack/build-coreos-manifest.go
