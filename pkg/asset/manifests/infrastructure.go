@@ -32,7 +32,8 @@ import (
 )
 
 var (
-	infraCfgFilename           = filepath.Join(manifestDir, "cluster-infrastructure-02-config.yml")
+	InfraConfigBase            = "cluster-infrastructure-02-config.yml"
+	infraCfgFilename           = filepath.Join(manifestDir, InfraConfigBase)
 	cloudControllerUIDFilename = filepath.Join(manifestDir, "cloud-controller-uid-config.yml")
 )
 
@@ -94,6 +95,23 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	config.Status.ControlPlaneTopology = controlPlaneTopology
 	config.Status.CPUPartitioning = determineCPUPartitioning(installConfig.Config)
 
+	// Custom DNS solution is expected, add placeholders to the manifest. The
+	// placeholders will be replaced later when the IP Addresses of API and API-Int are known
+	//clusterDNSConfig := configv1.ClusterDNSConfig{
+	//	APIServerDNSConfig: []configv1.DNSConfig{
+	//		configv1.DNSConfig{
+	//			RecordType:  "A",
+	//			LBIPAddress: "API_LB_Placeholder",
+	//		},
+	//	},
+	//	InternalAPIServerDNSConfig: []configv1.DNSConfig{
+	//		configv1.DNSConfig{
+	//			RecordType:  "A",
+	//			LBIPAddress: "API_INT_LB_Placeholder",
+	//		},
+	//	},
+	//}
+
 	switch installConfig.Config.Platform.Name() {
 	case aws.Name:
 		config.Spec.PlatformSpec.Type = configv1.AWSPlatformType
@@ -110,6 +128,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Region:       installConfig.Config.Platform.AWS.Region,
 			ResourceTags: resourceTags,
 		}
+
+		//if installConfig.Config.UserConfiguredDNS == types.EnableUserDNS {
+		//	config.Status.PlatformStatus.AWS.AWSClusterDNSConfig = &clusterDNSConfig
+		//}
 
 		for _, service := range installConfig.Config.Platform.AWS.ServiceEndpoints {
 			config.Spec.PlatformSpec.AWS.ServiceEndpoints = append(config.Spec.PlatformSpec.AWS.ServiceEndpoints, configv1.AWSServiceEndpoint{

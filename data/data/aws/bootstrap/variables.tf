@@ -25,3 +25,11 @@ variable "master_sg_id" {
 variable "ami_id" {
   type = string
 }
+
+variable "aws_lb_api_external_dns_name" {
+    type = string
+}
+
+variable "aws_lb_api_internal_dns_name" {
+  type = string
+}

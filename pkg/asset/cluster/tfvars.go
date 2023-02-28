@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -145,6 +146,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "unable to inject installation info")
 	}
 
+	bootstrapIgn, decodedInfrastructure, err := injectInfraPlaceholder(bootstrapIgn)
+	if err != nil {
+		return err
+	}
+
 	var useIPv4, useIPv6 bool
 	for _, network := range installConfig.Config.Networking.ServiceNetwork {
 		if network.IP.To4() != nil {
@@ -189,6 +195,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		masterIgn,
 		masterCount,
 		mastersSchedulable,
+		decodedInfrastructure,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")
@@ -1089,4 +1096,42 @@ func injectInstallInfo(bootstrap []byte) (string, error) {
 	}
 
 	return string(ign), nil
+}
+
+// injectInfraPlaceholder edits the bootstrap struct by replacing the infrastructure manifest source with
+// a placeholder. The function returns the original manifest string data.
+func injectInfraPlaceholder(bootstrapStr string) (string, string, error) {
+	config := &igntypes.Config{}
+	if err := json.Unmarshal([]byte(bootstrapStr), &config); err != nil {
+		return "", "", errors.Wrap(err, "failed to unmarshal bootstrap Ignition config")
+	}
+
+	decodedInfrastructure := ""
+	var editedFile int
+	placeholderString := "INFRA_PLACEHOLDER"
+	for i, file := range config.Storage.Files {
+		if strings.Contains(file.Path, manifests.InfraConfigBase) {
+			splitContents := strings.Split(*file.Contents.Source, ",")
+			if len(splitContents) != 2 {
+				return "", "", errors.New("failed to parse infrastructure manifest from ignition")
+			}
+			rawDecodedText, err := base64.StdEncoding.DecodeString(splitContents[1])
+			if err != nil {
+				return "", "", err
+			}
+			decodedInfrastructure = string(rawDecodedText[:])
+			editedFile = i
+			placeholderString = fmt.Sprintf("%s,%s", splitContents[0], placeholderString)
+			break
+		}
+	}
+	// edit the contents of the "file source"
+	config.Storage.Files[editedFile].Contents.Source = &placeholderString
+
+	ign, err := ignition.Marshal(config)
+	if err != nil {
+		return "", "", errors.Wrap(err, "failed to marshal bootstrap Ignition config")
+	}
+
+	return string(ign), decodedInfrastructure, nil
 }
