@@ -138,3 +138,12 @@ Should the cluster be created with ipv6 networking.
 EOF
 
 }
+
+variable "infrastructure_manifest" {
+  type = string
+
+  description = <<EOF
+The decoded string containing the contents of the infrastructure manifest. The manifest may be updated
+in the event that a custom DNS solution was selected during installation.
+EOF
+}

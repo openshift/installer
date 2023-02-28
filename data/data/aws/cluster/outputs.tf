@@ -29,3 +29,11 @@ output "master_sg_id" {
 output "ami_id" {
   value = var.aws_region == var.aws_ami_region ? var.aws_ami : aws_ami_copy.imported[0].id
 }
+
+output "aws_lb_api_external_dns_name" {
+  value = module.vpc.aws_lb_api_external_dns_name
+}
+
+output "aws_lb_api_internal_dns_name" {
+  value = module.vpc.aws_lb_api_internal_dns_name
+}

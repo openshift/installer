@@ -23,6 +23,31 @@ locals {
     },
     local.sliced_tag_map,
   )
+
+  // Convert the manifest from a yaml string to a map structure
+  infrastructure_yaml = yamldecode(var.infrastructure_manifest)
+  updated_infrastructure = merge(
+    local.infrastructure_yaml,
+    lookup(local.infrastructure_yaml["status"]["platformStatus"], "clusterDNSConfig", "") != "" ?
+    {
+        "status": { "platformStatus": { "clusterDNSConfig": {
+            "APIServerDNSConfig": [
+              {
+                RecordType: "A"
+                LBIPAddress: var.aws_lb_api_external_dns_name
+              }
+            ],
+            "InternalAPIServerDNSConfig": [
+              {
+                RecordType: "A"
+                LBIPAddress: var.aws_lb_api_internal_dns_name
+              }
+            ]
+        }}}
+    } : {}
+  )
+
+  encoded_manifest = base64encode(yamlencode(local.updated_infrastructure))
 }
 
 provider "aws" {
@@ -43,6 +68,11 @@ provider "aws" {
 data "aws_partition" "current" {}
 
 data "aws_ebs_default_kms_key" "current" {}
+
+resource "local_file" "ignition_bootstrap" {
+  content  = replace(var.ignition_bootstrap, "INFRA_PLACEHOLDER", local.encoded_manifest)
+  filename = "${path.module}/ignition_bootstrap.ign"
+}
 
 resource "aws_s3_bucket" "ignition" {
   bucket = var.aws_ignition_bucket
@@ -67,7 +97,7 @@ resource "aws_s3_bucket_acl" ignition {
 resource "aws_s3_object" "ignition" {
   bucket = aws_s3_bucket.ignition.id
   key    = "bootstrap.ign"
-  source = var.ignition_bootstrap_file
+  source = local_file.ignition_bootstrap.filename
   acl    = "private"
 
   server_side_encryption = "AES256"
