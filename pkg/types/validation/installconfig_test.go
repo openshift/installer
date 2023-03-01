@@ -1931,6 +1931,20 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "platform.openstack.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
 		},
 		{
+			name: "should reject load balancer on OpenStack if not TechPreviewNoUpgrade",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					OpenStack: validOpenStackPlatform(),
+				}
+				c.Platform.OpenStack.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
+					Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
+				}
+				return c
+			}(),
+			expectedError: `platform.openstack.loadBalancer: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field`,
+		},
+		{
 			name: "should not validate vips on VSphere if not set (vips are not required on VSphere)",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

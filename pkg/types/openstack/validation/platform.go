@@ -21,13 +21,6 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 
 	allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, "default", fldPath.Child("defaultMachinePlatform"))...)
 
-	// Platform fields only allowed in TechPreviewNoUpgrade
-	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
-		if c.OpenStack.LoadBalancer != nil {
-			allErrs = append(allErrs, field.Forbidden(fldPath.Child("loadBalancer"), "load balancer is not supported in this feature set"))
-		}
-	}
-
 	if c.OpenStack.LoadBalancer != nil {
 		if !validateLoadBalancer(c.OpenStack.LoadBalancer.Type) {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("loadBalancer", "type"), c.OpenStack.LoadBalancer.Type, "invalid load balancer type"))

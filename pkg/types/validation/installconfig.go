@@ -1003,6 +1003,12 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		if c.Azure != nil && len(c.Azure.UserTags) > 0 {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "azure", "userTags"), errMsg))
 		}
+
+		if c.OpenStack != nil {
+			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
+				allErrs = append(allErrs, field.Forbidden(f, errMsg))
+			}
+		}
 	}
 
 	return allErrs
