@@ -64,6 +64,7 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
 - [Deploying OpenShift with OVS-DPDK](ovs-dpdk.md)
+- [Deploying OpenShift with an external load balancer](external_load_balancer.md)
 - [Provider Networks](provider_networks.md)
 - [Migrate the Image Registry from Cinder to Swift](image-registry-storage-swift.md)
 
