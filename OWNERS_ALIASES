@@ -43,13 +43,11 @@ aliases:
     - Prashanth684
     - mjturek
   vsphere-approvers:
-    - bostrt
     - dav1x
     - jcpowermac
     - patrickdillon
     - rvanderp3
   vsphere-reviewers:
-    - bostrt
     - jcpowermac
     - patrickdillon
   baremetal-approvers:
