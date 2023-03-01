@@ -52,23 +52,6 @@ func TestValidatePlatform(t *testing.T) {
 			valid:      true,
 		},
 		{
-			name:     "forbidden load balancer field",
-			platform: validPlatform(),
-			config: &types.InstallConfig{
-				Platform: types.Platform{
-					OpenStack: func() *openstack.Platform {
-						p := validPlatform()
-						p.LoadBalancer = &configv1.OpenStackPlatformLoadBalancer{
-							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
-						}
-						return p
-					}(),
-				},
-			},
-			valid:         false,
-			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
-		},
-		{
 			name:     "allowed load balancer field with OpenShift managed default",
 			platform: validPlatform(),
 			config: &types.InstallConfig{
