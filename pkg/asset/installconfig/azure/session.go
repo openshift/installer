@@ -2,6 +2,7 @@ package azure
 
 import (
 	"encoding/json"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
-	"github.com/Azure/go-autorest/autorest/azure/auth"
 	"github.com/jongio/azidext/go/azidext"
 	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
 	"github.com/pkg/errors"
@@ -43,8 +43,8 @@ type Credentials struct {
 	ClientID                  string `json:"clientId,omitempty"`
 	ClientSecret              string `json:"clientSecret,omitempty"`
 	TenantID                  string `json:"tenantId,omitempty"`
-	ClientCertificatePath     string `json:"certificatePath,omitempty"`
-	ClientCertificatePassword string `json:"certificatePassword,omitempty"`
+	ClientCertificatePath     string `json:"clientCertificate,omitempty"`
+	ClientCertificatePassword string `json:"clientCertificatePassword,omitempty"`
 }
 
 // GetSession returns an azure session by using credentials found in ~/.azure/osServicePrincipal.json
@@ -90,13 +90,14 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	}
 
 	if credentials == nil {
-		credentials, err = credentialsFromFileOrUser(&cloudEnv)
+		credentials, err = credentialsFromFileOrUser()
 		if err != nil {
 			return nil, err
 		}
 	}
 	var cred azcore.TokenCredential
 	if credentials.ClientCertificatePath != "" {
+		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
 		cred, err = newTokenCredentialFromCertificates(credentials, cloudConfig)
 	} else {
 		cred, err = newTokenCredentialFromCredentials(credentials, cloudConfig)
@@ -110,37 +111,41 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 // credentialsFromFileOrUser returns credentials found
 // in ~/.azure/osServicePrincipal.json and, if no creds are found,
 // asks for them and stores them on disk in a config file
-func credentialsFromFileOrUser(cloudEnv *azureenv.Environment) (*Credentials, error) {
+func credentialsFromFileOrUser() (*Credentials, error) {
 	authFilePath := defaultAuthFilePath
 	if f := os.Getenv(azureAuthEnv); len(f) > 0 {
 		authFilePath = f
 	}
-	// NewAuthorizerFromFileWithResource uses `auth.GetSettingsFromFile`, which uses the `azureAuthEnv` to fetch the auth credentials.
-	// therefore setting the local env here to authFilePath allows NewAuthorizerFromFileWithResource to load credentials.
-	os.Setenv(azureAuthEnv, authFilePath)
-	_, err := auth.NewAuthorizerFromFileWithResource(cloudEnv.ResourceManagerEndpoint)
+
+	var authFile Credentials
+
+	contents, err := os.ReadFile(authFilePath)
 	if err != nil {
-		logrus.Infof("Could not get an azure authorizer from file: %s", err.Error())
-		logrus.Infof("Asking user to provide authentication info")
-		credentials, err := askForCredentials()
+		// If the file with creds was not found, ask user for auth info
+		if errors.Is(err, fs.ErrNotExist) {
+			logrus.Infof("Asking user to provide authentication info")
+			credentials, cerr := askForCredentials()
+			if cerr != nil {
+				return nil, errors.Wrap(cerr, "failed to retrieve credentials from user")
+			}
+			logrus.Infof("Saving user credentials to %q", authFilePath)
+			if cerr = saveCredentials(*credentials, authFilePath); cerr != nil {
+				return nil, errors.Wrap(cerr, "failed to save credentials")
+			}
+			authFile = *credentials
+		} else {
+			// File was found but we failed to read it, just error out and let the user handle it
+			return nil, err
+		}
+	} else {
+		err = json.Unmarshal(contents, &authFile)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to retrieve credentials from user")
-		}
-		logrus.Infof("Saving user credentials to %q", authFilePath)
-		if err = saveCredentials(*credentials, authFilePath); err != nil {
-			return nil, errors.Wrap(err, "failed to save credentials")
+			return nil, err
 		}
 	}
 
-	//If the authorizer worked right away, we need to read credentials details
-	authSettings, err := auth.GetSettingsFromFile()
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get settings from file")
-	}
-
-	credentials, err := getCredentials(authSettings)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to map authsettings to credentials")
+	if err := checkCredentials(authFile); err != nil {
+		return nil, err
 	}
 
 	if _, has := onceLoggers[authFilePath]; !has {
@@ -150,40 +155,23 @@ func credentialsFromFileOrUser(cloudEnv *azureenv.Environment) (*Credentials, er
 		logrus.Infof("Credentials loaded from file %q", authFilePath)
 	})
 
-	return credentials, nil
+	return &authFile, nil
 }
 
-func getCredentials(fs auth.FileSettings) (*Credentials, error) {
-	subscriptionID := fs.GetSubscriptionID()
-	if subscriptionID == "" {
-		return nil, errors.New("could not retrieve subscriptionId from auth file")
+func checkCredentials(creds Credentials) error {
+	if creds.SubscriptionID == "" {
+		return errors.New("could not retrieve subscriptionId from auth file")
 	}
-
-	clientID := fs.Values[auth.ClientID]
-	if clientID == "" {
-		return nil, errors.New("could not retrieve clientId from auth file")
+	if creds.ClientID == "" {
+		return errors.New("could not retrieve clientId from auth file")
 	}
-	clientSecret := fs.Values[auth.ClientSecret]
-	tenantID := fs.Values[auth.TenantID]
-	if tenantID == "" {
-		return nil, errors.New("could not retrieve tenantId from auth file")
+	if creds.TenantID == "" {
+		return errors.New("could not retrieve tenantId from auth file")
 	}
-	clientCertificatePassword := fs.Values[auth.CertificatePassword]
-	clientCertificatePath := fs.Values[auth.CertificatePath]
-	if clientSecret == "" {
-		if clientCertificatePath == "" {
-			return nil, errors.New("could not retrieve either client secret or client certs from auth file")
-		}
-		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
+	if creds.ClientSecret == "" && creds.ClientCertificatePath == "" {
+		return errors.New("could not retrieve either client secret or client certs from auth file")
 	}
-	return &Credentials{
-		SubscriptionID:            subscriptionID,
-		ClientID:                  clientID,
-		ClientSecret:              clientSecret,
-		TenantID:                  tenantID,
-		ClientCertificatePath:     clientCertificatePath,
-		ClientCertificatePassword: clientCertificatePassword,
-	}, nil
+	return nil
 }
 
 func askForCredentials() (*Credentials, error) {
