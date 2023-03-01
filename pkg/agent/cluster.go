@@ -2,8 +2,10 @@ package agent
 
 import (
 	"context"
+	"net"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/installer/pkg/gather/ssh"
 )
 
 // Cluster is a struct designed to help interact with the cluster that is
@@ -56,6 +59,7 @@ type clusterInstallStatusHistory struct {
 	ClusterInstallComplete                              bool
 	NotReadyTime                                        time.Time
 	ValidationResults                                   *validationResults
+	ClusterInitTime                                     time.Time
 }
 
 // NewCluster initializes a Cluster object
@@ -94,6 +98,7 @@ func NewCluster(ctx context.Context, assetDir string) (*Cluster, error) {
 		ClusterConsoleRouteCreated:    false,
 		ClusterConsoleRouteURLCreated: false,
 		ClusterInstallComplete:        false,
+		ClusterInitTime:               time.Now(),
 	}
 
 	cvalidationresults := &validationResults{
@@ -136,7 +141,14 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 		logrus.Trace("Current API Status: Agent Rest API: down, Bootstrap Kube API: down")
 		if !czero.installHistory.RestAPISeen && !czero.installHistory.ClusterKubeAPISeen {
 			logrus.Debug("Agent Rest API never initialized. Bootstrap Kube API never initialized")
-			logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
+			elapsedSinceInit := time.Since(czero.installHistory.ClusterInitTime)
+			// After allowing time for the interface to come up, check if Node0 can be accessed via ssh
+			if elapsedSinceInit > 2*time.Minute && !czero.CanSSHToNodeZero() {
+				logrus.Info("Cannot access Rendezvous Host. There may be a network configuration problem, check console for additional info")
+			} else {
+				logrus.Info("Waiting for cluster install to initialize. Sleeping for 30 seconds")
+			}
+
 			time.Sleep(30 * time.Second)
 			return false, false, nil
 		}
@@ -423,6 +435,18 @@ func (czero *Cluster) PrintInstallStatus(cluster *models.Cluster) error {
 	}
 
 	return nil
+}
+
+// CanSSHToNodeZero Checks if ssh to NodeZero succeeds.
+func (czero *Cluster) CanSSHToNodeZero() bool {
+	ip := czero.API.Rest.NodeZeroIP
+	port := 22
+
+	_, err := ssh.NewClient("core", net.JoinHostPort(ip, strconv.Itoa(port)), czero.API.Rest.NodeSSHKey)
+	if err != nil {
+		logrus.Debugf("Failed to connect to the Rendezvous Host: %s", err)
+	}
+	return err == nil
 }
 
 // Human friendly install status strings mapped to the Agent Rest API cluster statuses

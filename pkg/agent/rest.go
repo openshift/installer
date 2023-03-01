@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/types/agent"
 )
@@ -27,6 +28,7 @@ type NodeZeroRestClient struct {
 	ctx        context.Context
 	config     client.Config
 	NodeZeroIP string
+	NodeSSHKey []string
 }
 
 // NewNodeZeroRestClient Initialize a new rest client to interact with the Agent Rest API on node zero.
@@ -34,6 +36,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	restClient := &NodeZeroRestClient{}
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentManifestsAsset := &manifests.AgentManifests{}
+	installConfigAsset := &installconfig.InstallConfig{}
 
 	assetStore, err := assetstore.NewStore(assetDir)
 	if err != nil {
@@ -42,6 +45,7 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 
 	agentConfig, agentConfigError := assetStore.Load(agentConfigAsset)
 	agentManifests, manifestError := assetStore.Load(agentManifestsAsset)
+	installConfig, installConfigError := assetStore.Load(installConfigAsset)
 
 	if agentConfigError != nil {
 		logrus.Debug(errors.Wrapf(agentConfigError, "failed to load %s", agentConfigAsset.Name()))
@@ -49,8 +53,11 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	if manifestError != nil {
 		logrus.Debug(errors.Wrapf(manifestError, "failed to load %s", agentManifestsAsset.Name()))
 	}
-	if agentConfigError != nil || manifestError != nil {
-		return nil, errors.New("failed to load AgentConfig or NMStateConfig")
+	if installConfigError != nil {
+		logrus.Debug(errors.Wrapf(installConfigError, "failed to load %s", installConfigAsset.Name()))
+	}
+	if agentConfigError != nil || manifestError != nil || installConfigError != nil {
+		return nil, errors.New("failed to load AgentConfig, NMStateConfig, or InstallConfig")
 	}
 
 	var RendezvousIP string
@@ -68,6 +75,11 @@ func NewNodeZeroRestClient(ctx context.Context, assetDir string) (*NodeZeroRestC
 	}
 	if rendezvousIPError != nil {
 		return nil, rendezvousIPError
+	}
+
+	// Get SSH Keys which can be used to determine if Rest API failures are due to network connectivity issues
+	if installConfig != nil {
+		restClient.NodeSSHKey = append(restClient.NodeSSHKey, installConfig.(*installconfig.InstallConfig).Config.SSHKey)
 	}
 
 	config := client.Config{}
