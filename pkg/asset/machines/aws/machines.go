@@ -247,6 +247,7 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
 		providerSpec.LoadBalancers = lbrefs
+		providerSpec.PublicIP = pointer.Bool(false)
 	}
 
 	providerSpec := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
