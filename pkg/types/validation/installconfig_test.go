@@ -1665,6 +1665,23 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "platform.baremetal.ingressVIPs: Invalid value: \"2001::1\": IP expected to be in one of the machine networks: 10.0.0.0/16,fe80::/10",
 		},
 		{
+			name: "vsphere_ingressvip_v4_not_in_machinenetwork_cidr",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					{CIDR: *ipnet.MustParseCIDR("fe80::/10")},
+				}
+				c.Platform = types.Platform{
+					VSphere: validVSpherePlatform(),
+				}
+				c.Platform.VSphere.IngressVIPs = []string{"192.168.222.4"}
+				c.Platform.VSphere.APIVIPs = []string{"192.168.1.0"}
+
+				return c
+			}(),
+		},
+		{
 			name: "too_many_ingressvips",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
