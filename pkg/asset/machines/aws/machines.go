@@ -98,7 +98,7 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			}}
 		} else {
 			domain.Subnet.Type = machinev1.AWSIDReferenceType
-			domain.Subnet.ID = pointer.StringPtr(subnet)
+			domain.Subnet.ID = pointer.String(subnet)
 		}
 		failureDomains = append(failureDomains, domain)
 	}
@@ -167,16 +167,16 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 		BlockDevices: []machineapi.BlockDeviceMappingSpec{
 			{
 				EBS: &machineapi.EBSBlockDeviceSpec{
-					VolumeType: pointer.StringPtr(root.Type),
-					VolumeSize: pointer.Int64Ptr(int64(root.Size)),
-					Iops:       pointer.Int64Ptr(int64(root.IOPS)),
-					Encrypted:  pointer.BoolPtr(true),
-					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.StringPtr(root.KMSKeyARN)},
+					VolumeType: pointer.String(root.Type),
+					VolumeSize: pointer.Int64(int64(root.Size)),
+					Iops:       pointer.Int64(int64(root.IOPS)),
+					Encrypted:  pointer.Bool(true),
+					KMSKey:     machineapi.AWSResourceReference{ARN: pointer.String(root.KMSKeyARN)},
 				},
 			},
 		},
 		Tags:               tags,
-		IAMInstanceProfile: &machineapi.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
+		IAMInstanceProfile: &machineapi.AWSResourceReference{ID: pointer.String(fmt.Sprintf("%s-%s-profile", clusterID, role))},
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
 		CredentialsSecret:  &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
 		Placement:          machineapi.Placement{Region: region, AvailabilityZone: zone},
@@ -194,7 +194,7 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 			Values: []string{fmt.Sprintf("%s-private-%s", clusterID, zone)},
 		}}
 	} else {
-		config.Subnet.ID = pointer.StringPtr(subnet)
+		config.Subnet.ID = pointer.String(subnet)
 	}
 
 	if osImage == "" {
@@ -203,7 +203,7 @@ func provider(clusterID string, region string, subnet string, instanceType strin
 			Values: []string{fmt.Sprintf("%s-ami-%s", clusterID, region)},
 		}}
 	} else {
-		config.AMI.ID = pointer.StringPtr(osImage)
+		config.AMI.ID = pointer.String(osImage)
 	}
 
 	if imds.Authentication != "" {
