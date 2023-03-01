@@ -433,19 +433,19 @@ func validateControlPlane(featureSet configv1.FeatureSet, platform *types.Platfo
 func validateCompute(featureSet configv1.FeatureSet, platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
-	for i, p := range pools {
+	for i := range pools {
 		poolFldPath := fldPath.Index(i)
-		if p.Name != types.MachinePoolComputeRoleName {
-			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{"worker"}))
+		if pools[i].Name != types.MachinePoolComputeRoleName {
+			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), pools[i].Name, []string{"worker"}))
 		}
-		if poolNames[p.Name] {
-			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))
+		if poolNames[pools[i].Name] {
+			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), pools[i].Name))
 		}
-		poolNames[p.Name] = true
-		if control != nil && control.Architecture != p.Architecture {
-			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
+		poolNames[pools[i].Name] = true
+		if control != nil && control.Architecture != pools[i].Architecture {
+			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), pools[i].Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
-		allErrs = append(allErrs, ValidateMachinePool(featureSet, platform, &p, poolFldPath)...)
+		allErrs = append(allErrs, ValidateMachinePool(featureSet, platform, &pools[i], poolFldPath)...)
 	}
 	return allErrs
 }
