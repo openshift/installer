@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -23,6 +25,7 @@ type config struct {
 	Auth                      `json:",inline"`
 	Region                    string   `json:"gcp_region,omitempty"`
 	BootstrapInstanceType     string   `json:"gcp_bootstrap_instance_type,omitempty"`
+	CreateBootstrapSA         bool     `json:"gcp_create_bootstrap_sa"`
 	CreateFirewallRules       bool     `json:"gcp_create_firewall_rules"`
 	MasterInstanceType        string   `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones   []string `json:"gcp_master_availability_zones"`
@@ -48,16 +51,15 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	Auth                   Auth
-	CreateFirewallRules    bool
-	ImageURI               string
-	ImageLicenses          []string
-	InstanceServiceAccount string
-	MasterConfigs          []*machineapi.GCPMachineProviderSpec
-	WorkerConfigs          []*machineapi.GCPMachineProviderSpec
-	PublicZoneName         string
-	PublishStrategy        types.PublishingStrategy
-	PreexistingNetwork     bool
+	Auth                Auth
+	CreateFirewallRules bool
+	ImageURI            string
+	ImageLicenses       []string
+	MasterConfigs       []*machineapi.GCPMachineProviderSpec
+	WorkerConfigs       []*machineapi.GCPMachineProviderSpec
+	PublicZoneName      string
+	PublishStrategy     types.PublishingStrategy
+	PreexistingNetwork  bool
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -81,7 +83,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageURI:                  sources.ImageURI,
 		Image:                     masterConfig.Disks[0].Image,
 		ImageLicenses:             sources.ImageLicenses,
-		InstanceServiceAccount:    sources.InstanceServiceAccount,
 		PublicZoneName:            sources.PublicZoneName,
 		PublishStrategy:           string(sources.PublishStrategy),
 		ClusterNetwork:            masterConfig.NetworkInterfaces[0].Network,
@@ -102,6 +103,28 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	if masterConfig.Disks[0].EncryptionKey != nil {
 		cfg.VolumeKMSKeyLink = generateDiskEncryptionKeyLink(masterConfig.Disks[0].EncryptionKey, masterConfig.ProjectID)
 	}
+
+	serviceAccount := make(map[string]interface{})
+
+	if err := json.Unmarshal([]byte(cfg.Auth.ServiceAccount), &serviceAccount); len(cfg.Auth.ServiceAccount) > 0 && err != nil {
+		return nil, errors.Wrapf(err, "unmarshaling service account")
+	}
+
+	instanceServiceAccount := ""
+	// Passthrough service accounts are only needed for GCP XPN.
+	if len(cfg.Auth.NetworkProjectID) > 0 {
+		var found bool
+		instanceServiceAccount, found = serviceAccount["client_email"].(string)
+		if !found {
+			return nil, errors.New("could not find google service account")
+		}
+	}
+	cfg.InstanceServiceAccount = instanceServiceAccount
+
+	// A private key is needed to sign the URL for bootstrap ignition.
+	// If there is no key in the credentials, we need to generate a new SA.
+	_, foundKey := serviceAccount["private_key"]
+	cfg.CreateBootstrapSA = !foundKey
 
 	return json.MarshalIndent(cfg, "", "  ")
 }
