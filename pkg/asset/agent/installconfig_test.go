@@ -221,13 +221,13 @@ baseDomain: test-domain
 networking:
   networkType: OVNKubernetes
 compute:
-  - architecture: arm64
+  - architecture: s390x
     hyperthreading: Enabled
     name: worker
     platform: {}
     replicas: 0
 controlPlane:
-  architecture: arm64
+  architecture: s390x
   hyperthreading: Enabled
   name: master
   platform: {}
@@ -237,7 +237,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"arm64\": supported values: \"amd64\", Compute[0].Architecture: Unsupported value: \"arm64\": supported values: \"amd64\"]",
+			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", Compute[0].Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\"]",
 		},
 		{
 			name: "valid configuration for none platform for sno",

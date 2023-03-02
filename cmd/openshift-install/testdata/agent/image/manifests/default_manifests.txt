@@ -111,6 +111,7 @@ spec:
   clusterRef:
     name: ostest
     namespace: cluster0
+  cpuArchitecture: x86_64
   ipxeScriptType: ""
   nmStateConfigLabelSelector:
     matchLabels:

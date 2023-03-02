@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -16,17 +17,13 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // BaseIso generates the base ISO file for the image
 type BaseIso struct {
 	File *asset.File
 }
-
-const (
-	// TODO - add support for other architectures
-	archName = "x86_64"
-)
 
 var (
 	baseIsoFilename = ""
@@ -40,7 +37,7 @@ func (i *BaseIso) Name() string {
 }
 
 // getIsoFile is a pluggable function that gets the base ISO file
-type getIsoFile func() (string, error)
+type getIsoFile func(archName string) (string, error)
 
 type getIso struct {
 	getter getIsoFile
@@ -54,8 +51,7 @@ func newGetIso(getter getIsoFile) *getIso {
 var GetIsoPluggable = downloadIso
 
 // Download the ISO using the URL in rhcos.json
-func downloadIso() (string, error) {
-
+func downloadIso(archName string) (string, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 	defer cancel()
 
@@ -64,9 +60,6 @@ func downloadIso() (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	// Defaults to using the x86_64 baremetal ISO for all platforms
-	// archName := arch.RpmArch(string(config.ControlPlane.Architecture))
 	streamArch, err := st.GetArchitecture(archName)
 	if err != nil {
 		return "", err
@@ -107,10 +100,17 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 	// use the GetIso function to get the BaseIso from the release payload
 	agentManifests := &manifests.AgentManifests{}
 	dependencies.Get(agentManifests)
-
 	var baseIsoFileName string
 	var err error
+
+	// Default iso archName to x86_64.
+	archName := arch.RpmArch(types.ArchitectureAMD64)
+
 	if agentManifests.ClusterImageSet != nil {
+		// If specified, use InfraEnv.Spec.CpuArchitecture for iso archName
+		if agentManifests.InfraEnv.Spec.CpuArchitecture != "" {
+			archName = agentManifests.InfraEnv.Spec.CpuArchitecture
+		}
 		releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
 		pullSecret := agentManifests.GetPullSecretData()
 		registriesConf := &mirror.RegistriesConf{}
@@ -135,7 +135,7 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 	logrus.Info("Downloading base ISO")
 	isoGetter := newGetIso(GetIsoPluggable)
-	baseIsoFileName, err2 := isoGetter.getter()
+	baseIsoFileName, err2 := isoGetter.getter(archName)
 	if err2 == nil {
 		logrus.Debugf("Using base ISO image %s", baseIsoFileName)
 		i.File = &asset.File{Filename: baseIsoFileName}
