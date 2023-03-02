@@ -1,7 +1,7 @@
 [Unit]
 Description=Get interactive user configuration at boot
 After=network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service
-Before=network.target network.service agent.service NetworkManager-wait-online.service
+Before=network.target network.service agent.service node-zero.service NetworkManager-wait-online.service
 
 [Service]
 Type=oneshot
