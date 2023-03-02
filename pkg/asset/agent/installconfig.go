@@ -257,7 +257,7 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			}
 			if host.BMC.Password != "" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Password")
-				logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, host.BMC.Password))
+				logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
 			}
 			if host.BMC.Address != "" {
 				fieldPath := field.NewPath("Platform", "Baremetal", fmt.Sprintf("Hosts[%d]", i), "BMC", "Address")
@@ -325,7 +325,7 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		}
 		if vspherePlatform.DeprecatedPassword != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Password")
-			logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, vspherePlatform.DeprecatedPassword))
+			logrus.Warnf(fmt.Sprintf("%s is ignored", fieldPath))
 		}
 		if vspherePlatform.DeprecatedDatacenter != "" {
 			fieldPath := field.NewPath("Platform", "VSphere", "Datacenter")
