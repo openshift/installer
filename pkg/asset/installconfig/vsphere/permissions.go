@@ -5,6 +5,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
@@ -20,6 +21,11 @@ type AuthManager interface {
 	FetchUserPrivilegeOnEntities(ctx context.Context, entities []vim25types.ManagedObjectReference, userName string) ([]vim25types.UserPrivilegeResult, error)
 	Properties(ctx context.Context, r vim25types.ManagedObjectReference, ps []string, dst interface{}) error
 	Reference() vim25types.ManagedObjectReference
+}
+
+// SessionManager defines an interface to an implementation of the SessionManager to facilitate mocking
+type SessionManager interface {
+	UserSession(ctx context.Context) (*vim25types.UserSession, error)
 }
 
 // permissionGroup is the group of permissions needed by cluster creation, operation, or teardown.
@@ -201,8 +207,12 @@ func newAuthManager(client *vim25.Client) AuthManager {
 
 func comparePrivileges(ctx context.Context, validationCtx *validationContext, moRef vim25types.ManagedObjectReference, permissionGroup PermissionGroupDefinition) error {
 	authManager := validationCtx.AuthManager
-	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, validationCtx.User)
-
+	sessionMgr := session.NewManager(validationCtx.Client)
+	user, err := sessionMgr.UserSession(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to get user session")
+	}
+	derived, err := authManager.FetchUserPrivilegeOnEntities(ctx, []vim25types.ManagedObjectReference{moRef}, user.UserName)
 	if err != nil {
 		return errors.Wrap(err, "unable to retrieve privileges")
 	}
