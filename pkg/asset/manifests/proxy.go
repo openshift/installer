@@ -158,9 +158,12 @@ func createNoProxy(installConfig *installconfig.InstallConfig, network *Networki
 
 	// TODO: IBM[#95]: proxy
 
-	if platform == azure.Name && installConfig.Azure.CloudName == azure.StackCloud {
+	if platform == azure.Name && installConfig.Azure.CloudName != azure.PublicCloud {
+		// https://learn.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16
 		set.Insert("168.63.129.16")
-		set.Insert(installConfig.Config.Azure.ARMEndpoint)
+		if installConfig.Azure.CloudName == azure.StackCloud {
+			set.Insert(installConfig.Config.Azure.ARMEndpoint)
+		}
 	}
 
 	// From https://cloud.google.com/vpc/docs/special-configurations add GCP metadata.
