@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 
 	"github.com/golang/mock/gomock"
+	configv1 "github.com/openshift/api/config/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
@@ -43,6 +44,19 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodACIDualStackVIPs := getGoodACIDualStack()
 	goodACIDualStackVIPs.SetAnnotations(map[string]string{
 		installConfigOverrides: `{"platform":{"baremetal":{"apiVIPs":["192.168.122.10","2001:db8:1111:2222:ffff:ffff:ffff:cafe"],"ingressVIPs":["192.168.122.11","2001:db8:1111:2222:ffff:ffff:ffff:dead"]}}}`,
+	})
+
+	installConfigWithCapabilities := getValidOptionalInstallConfig()
+	installConfigWithCapabilities.Config.Capabilities = &types.Capabilities{
+		BaselineCapabilitySet: configv1.ClusterVersionCapabilitySetNone,
+		AdditionalEnabledCapabilities: []configv1.ClusterVersionCapability{
+			configv1.ClusterVersionCapabilityMarketplace,
+		},
+	}
+
+	goodCapabilitiesACI := getGoodACI()
+	goodCapabilitiesACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"capabilities":{"baselineCapabilitySet":"None","additionalEnabledCapabilities":["marketplace"]}}`,
 	})
 
 	cases := []struct {
@@ -99,6 +113,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				getValidOptionalInstallConfigDualStackDualVIPs(),
 			},
 			expectedConfig: goodACIDualStackVIPs,
+		},
+		{
+			name: "valid configuration with capabilities",
+			dependencies: []asset.Asset{
+				installConfigWithCapabilities,
+			},
+			expectedConfig: goodCapabilitiesACI,
 		},
 	}
 	for _, tc := range cases {
