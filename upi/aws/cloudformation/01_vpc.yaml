@@ -286,3 +286,6 @@ Outputs:
         ",",
         [!Ref PrivateSubnet, !If [DoAz2, !Ref PrivateSubnet2, !Ref "AWS::NoValue"], !If [DoAz3, !Ref PrivateSubnet3, !Ref "AWS::NoValue"]]
       ]
+  PublicRouteTableId:
+    Description: Public Route table ID
+    Value: !Ref PublicRouteTable

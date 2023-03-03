@@ -44,6 +44,12 @@ func defaultInstallConfig() *types.InstallConfig {
 	}
 }
 
+func defaultInstallConfigWithEdge() *types.InstallConfig {
+	c := defaultInstallConfig()
+	c.Compute = append(c.Compute, *defaultMachinePool("edge"))
+	return c
+}
+
 func defaultAWSInstallConfig() *types.InstallConfig {
 	c := defaultInstallConfig()
 	c.Platform.AWS = &aws.Platform{}
@@ -219,11 +225,25 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 		{
 			name: "Compute present",
 			config: &types.InstallConfig{
-				Compute: []types.MachinePool{{Name: "test-compute"}},
+				Compute: []types.MachinePool{{Name: "worker"}},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Compute = []types.MachinePool{*defaultMachinePool("test-compute")}
+				c.Compute = []types.MachinePool{*defaultMachinePool("worker")}
+				return c
+			}(),
+		},
+		{
+			name: "Edge Compute present",
+			config: &types.InstallConfig{
+				Compute: []types.MachinePool{{Name: "worker"}, {Name: "edge"}},
+			},
+			expected: func() *types.InstallConfig {
+				c := defaultInstallConfigWithEdge()
+				c.Compute = []types.MachinePool{
+					*defaultMachinePool("worker"),
+					*defaultEdgeMachinePool("edge"),
+				}
 				return c
 			}(),
 		},

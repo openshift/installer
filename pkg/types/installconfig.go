@@ -27,8 +27,7 @@ const (
 	// InstallConfigVersion is the version supported by this package.
 	// If you bump this, you must also update the list of convertable values in
 	// pkg/types/conversion/installconfig.go
-	InstallConfigVersion  = "v1"
-	workerMachinePoolName = "worker"
+	InstallConfigVersion = "v1"
 )
 
 var (
@@ -478,7 +477,8 @@ type Capabilities struct {
 // WorkerMachinePool retrieves the worker MachinePool from InstallConfig.Compute
 func (c *InstallConfig) WorkerMachinePool() *MachinePool {
 	for _, machinePool := range c.Compute {
-		if machinePool.Name == workerMachinePoolName {
+		switch machinePool.Name {
+		case MachinePoolComputeRoleName, MachinePoolEdgeRoleName:
 			return &machinePool
 		}
 	}

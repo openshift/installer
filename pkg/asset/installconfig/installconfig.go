@@ -2,6 +2,7 @@ package installconfig
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -124,9 +125,32 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	return found, err
 }
 
+// finishAWS set defaults for AWS Platform before the config validation.
+func (a *InstallConfig) finishAWS() error {
+	// Set the Default Edge Compute pool when the subnets are defined.
+	// Edge Compute Pool/AWS Local Zones is supported only when installing in existing VPC.
+	if len(a.Config.Platform.AWS.Subnets) > 0 {
+		edgeSubnets, err := a.AWS.EdgeSubnets(context.TODO())
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("unable to load edge subnets: %v", err))
+		}
+		totalEdgeSubnets := int64(len(edgeSubnets))
+		if totalEdgeSubnets == 0 {
+			return nil
+		}
+		if edgePool := defaults.CreateEdgeMachinePoolDefaults(a.Config.Compute, a.Config.Platform.Name(), totalEdgeSubnets); edgePool != nil {
+			a.Config.Compute = append(a.Config.Compute, *edgePool)
+		}
+	}
+	return nil
+}
+
 func (a *InstallConfig) finish(filename string) error {
 	if a.Config.AWS != nil {
 		a.AWS = aws.NewMetadata(a.Config.Platform.AWS.Region, a.Config.Platform.AWS.Subnets, a.Config.AWS.ServiceEndpoints)
+		if err := a.finishAWS(); err != nil {
+			return err
+		}
 	}
 	if a.Config.AlibabaCloud != nil {
 		a.AlibabaCloud = alibabacloud.NewMetadata(a.Config.AlibabaCloud.Region, a.Config.AlibabaCloud.VSwitchIDs)
