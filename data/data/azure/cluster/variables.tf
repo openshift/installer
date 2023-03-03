@@ -62,11 +62,6 @@ variable "resource_group_name" {
   description = "The resource group name for the deployment."
 }
 
-variable "storage_account_name" {
-  type        = string
-  description = "the name of the storage account for the cluster. It can be used for boot diagnostics."
-}
-
 variable "vm_image" {
   type        = string
   description = "The resource id of the vm image used for bootstrap."

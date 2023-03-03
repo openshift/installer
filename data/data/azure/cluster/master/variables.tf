@@ -95,11 +95,6 @@ EOF
   default = {}
 }
 
-variable "storage_account_name" {
-  type = any
-  description = "the name of the storage account for the cluster. It can be used for boot diagnostics."
-}
-
 variable "ignition" {
   type = string
 }

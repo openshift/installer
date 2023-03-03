@@ -223,7 +223,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   custom_data   = base64encode(data.ignition_config.redirect.rendered)
 
   boot_diagnostics {
-    storage_account_uri = data.azurerm_storage_account.storage_account.primary_blob_endpoint
+    storage_account_uri = null # null enables managed storage account for boot diagnostics
   }
 
   depends_on = [
