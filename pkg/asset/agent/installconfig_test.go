@@ -102,7 +102,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: [platform.vsphere.apiVIPs: Invalid value: "192.168.122.10": IP expected to be in one of the machine networks: 10.0.0.0/16, platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set]`,
+			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
 		},
 		{
 			name: "invalid configuration for none platform for sno",
