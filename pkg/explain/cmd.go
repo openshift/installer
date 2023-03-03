@@ -41,7 +41,7 @@ func runCmd(cmd *cobra.Command, args []string) error {
 		return errors.Errorf("We accept only this format: explain RESOURCE\n")
 	}
 
-	file, err := data.Assets.Open(installConfigCRDFileName)
+	file, err := data.Assets.Open(installConfigCRDFilePath)
 	if err != nil {
 		return errors.Wrap(err, "failed to load InstallConfig CRD")
 	}

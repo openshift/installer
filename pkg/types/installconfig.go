@@ -83,7 +83,7 @@ const (
 	PolicyAlways PolicyType = "Always"
 )
 
-//go:generate go run ../../vendor/sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 paths=. output:dir=../../data/data/
+//go:generate go run ../../vendor/sigs.k8s.io/controller-tools/cmd/controller-gen crd:crdVersions=v1 paths=. output:dir=../../data/data/installconfig
 
 // InstallConfig is the configuration for an OpenShift install.
 type InstallConfig struct {

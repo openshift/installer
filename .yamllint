@@ -14,5 +14,5 @@ rules:
 
 ignore: |
   vendor/
-  data/data/install.openshift.io_installconfigs.yaml
+  data/data/installconfig/install.openshift.io_installconfigs.yaml
   data/data/manifests/openshift/cluster-networkconfig-crd.yaml

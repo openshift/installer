@@ -1,5 +1,5 @@
 package explain
 
 const (
-	installConfigCRDFileName = "install.openshift.io_installconfigs.yaml"
+	installConfigCRDFilePath = "installconfig/install.openshift.io_installconfigs.yaml"
 )
