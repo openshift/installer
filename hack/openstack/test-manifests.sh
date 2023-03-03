@@ -108,8 +108,11 @@ for testcase in "${tests_dir}"/* ; do
 	if [ -d "$testcase" ] && [[ "$testcase" =~ $run ]]; then
 		echo
 		echo "*** TEST CASE: $(basename "${testcase}")"
-		((test_counter+=1))
 		assets_dir="$(mktemp -d)"
+		if [[ "$persist" != 'NO' ]]; then
+			echo "Generated assets for this test can be found in ${assets_dir}"
+		fi
+		((test_counter+=1))
 		temp_dirs+=("$assets_dir")
 		fill_install_config "${testcase}/install-config.yaml" > "${assets_dir}/install-config.yaml"
 		"$openshift_install" --log-level warn create manifests --dir "$assets_dir"
