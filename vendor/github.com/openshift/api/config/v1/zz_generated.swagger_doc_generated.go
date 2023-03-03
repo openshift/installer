@@ -1112,15 +1112,6 @@ func (BareMetalPlatformStatus) SwaggerDoc() map[string]string {
 	return map_BareMetalPlatformStatus
 }
 
-var map_CloudControllerManagerSpec = map[string]string{
-	"":      "CloudControllerManagerSpec holds Cloud Controller Manager (a.k.a. CCM or CPI) related settings",
-	"state": "state determines whether or not an external Cloud Controller Manager is expected to be installed within the cluster. https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/#running-cloud-controller-manager\n\nWhen set to \"External\", new nodes will be tainted as uninitialized when created, preventing them from running workloads until they are initialized by the cloud controller manager. When omitted or set to \"None\", new nodes will be not tainted and no extra initialization from the cloud controller manager is expected.",
-}
-
-func (CloudControllerManagerSpec) SwaggerDoc() map[string]string {
-	return map_CloudControllerManagerSpec
-}
-
 var map_EquinixMetalPlatformSpec = map[string]string{
 	"": "EquinixMetalPlatformSpec holds the desired state of the Equinix Metal infrastructure provider. This only includes fields that can be modified in the cluster.",
 }
@@ -1140,9 +1131,8 @@ func (EquinixMetalPlatformStatus) SwaggerDoc() map[string]string {
 }
 
 var map_ExternalPlatformSpec = map[string]string{
-	"":                       "ExternalPlatformSpec holds the desired state for the generic External infrastructure provider.",
-	"platformName":           "PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time. This field is solely for informational and reporting purposes and is not expected to be used for decision-making.",
-	"cloudControllerManager": "CloudControllerManager contains settings specific to the external Cloud Controller Manager (a.k.a. CCM or CPI)",
+	"":             "ExternalPlatformSpec holds the desired state for the generic External infrastructure provider.",
+	"platformName": "PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time. This field is solely for informational and reporting purposes and is not expected to be used for decision-making.",
 }
 
 func (ExternalPlatformSpec) SwaggerDoc() map[string]string {

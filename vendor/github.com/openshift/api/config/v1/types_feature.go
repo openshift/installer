@@ -115,10 +115,10 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		with("NodeSwap").                          // sig-node, ehashman, Kubernetes feature gate
 		with("MachineAPIProviderOpenStack").       // openstack, egarcia (#forum-openstack), OCP specific
 		with("InsightsConfigAPI").                 // insights, tremes (#ccx), OCP specific
-		with("CSIInlineVolumeAdmission").          // sig-storage, jdobson, OCP specific
 		with("MatchLabelKeysInPodTopologySpread"). // sig-scheduling, ingvagabund (#forum-workloads), Kubernetes feature gate
 		with("RetroactiveDefaultStorageClass").    // sig-storage, RomanBednar, Kubernetes feature gate
 		with("PDBUnhealthyPodEvictionPolicy").     // sig-apps, atiratree (#forum-workloads), Kubernetes feature gate
+		with("DynamicResourceAllocation").         // sig-scheduling, jchaloup (#forum-workloads), Kubernetes feature gate
 		toFeatures(),
 	LatencySensitive: newDefaultFeatures().
 		with(

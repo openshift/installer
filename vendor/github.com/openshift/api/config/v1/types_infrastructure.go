@@ -227,36 +227,6 @@ const (
 	IBMCloudProviderTypeUPI IBMCloudProviderType = "UPI"
 )
 
-// CloudControllerManagerState defines whether Cloud Controller Manager presence is expected or not
-type CloudControllerManagerState string
-
-const (
-	// Cloud Controller Manager is enabled and expected to be installed.
-	// This value indicates that new nodes should be tainted as uninitialized when created,
-	// preventing them from running workloads until they are initialized by the cloud controller manager.
-	CloudControllerManagerExternal CloudControllerManagerState = "External"
-
-	// Cloud Controller Manager is disabled and not expected to be installed.
-	// This value indicates that new nodes should not be tainted
-	// and no extra node initialization is expected from the cloud controller manager.
-	CloudControllerManagerNone CloudControllerManagerState = "None"
-)
-
-// CloudControllerManagerSpec holds Cloud Controller Manager (a.k.a. CCM or CPI) related settings
-type CloudControllerManagerSpec struct {
-	// state determines whether or not an external Cloud Controller Manager is expected to
-	// be installed within the cluster.
-	// https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/#running-cloud-controller-manager
-	//
-	// When set to "External", new nodes will be tainted as uninitialized when created,
-	// preventing them from running workloads until they are initialized by the cloud controller manager.
-	// When omitted or set to "None", new nodes will be not tainted
-	// and no extra initialization from the cloud controller manager is expected.
-	// +kubebuilder:validation:Enum="";External;None
-	// +optional
-	State CloudControllerManagerState `json:"state"`
-}
-
 // ExternalPlatformSpec holds the desired state for the generic External infrastructure provider.
 type ExternalPlatformSpec struct {
 	// PlatformName holds the arbitrary string representing the infrastructure provider name, expected to be set at the installation time.
@@ -266,9 +236,6 @@ type ExternalPlatformSpec struct {
 	// +kubebuilder:validation:XValidation:rule="oldSelf == 'Unknown' || self == oldSelf",message="platform name cannot be changed once set"
 	// +optional
 	PlatformName string `json:"platformName,omitempty"`
-	// CloudControllerManager contains settings specific to the external Cloud Controller Manager (a.k.a. CCM or CPI)
-	// +optional
-	CloudControllerManager CloudControllerManagerSpec `json:"cloudControllerManager"`
 }
 
 // PlatformSpec holds the desired state specific to the underlying infrastructure provider
