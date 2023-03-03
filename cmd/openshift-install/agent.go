@@ -69,6 +69,7 @@ var (
 		},
 	}
 
+	//nolint:varcheck,deadcode
 	agentPXEFilesTarget = target{
 		name: "Agent PXE Files",
 		command: &cobra.Command{
@@ -83,7 +84,7 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget}
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget}
 )
 
 func newAgentCreateCmd() *cobra.Command {
