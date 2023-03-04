@@ -18,6 +18,7 @@ type Metadata struct {
 	availabilityZones []string
 	privateSubnets    map[string]Subnet
 	publicSubnets     map[string]Subnet
+	edgeSubnets       map[string]Subnet
 	vpc               string
 	instanceTypes     map[string]InstanceType
 
@@ -25,7 +26,8 @@ type Metadata struct {
 	Subnets  []string                   `json:"subnets,omitempty"`
 	Services []typesaws.ServiceEndpoint `json:"services,omitempty"`
 
-	mutex sync.Mutex
+	mutex        sync.Mutex
+	mutexSubnets sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
@@ -74,13 +76,22 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	return m.availabilityZones, nil
 }
 
+// EdgeSubnets retrieves subnet metadata indexed by subnet ID, for
+// subnets that the cloud-provider logic considers to be edge
+// (i.e. Local Zone).
+func (m *Metadata) EdgeSubnets(ctx context.Context) (map[string]Subnet, error) {
+	err := m.populateSubnets(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return m.edgeSubnets, nil
+}
+
 // PrivateSubnets retrieves subnet metadata indexed by subnet ID, for
 // subnets that the cloud-provider logic considers to be private
 // (i.e. not public).
 func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
 	err := m.populateSubnets(ctx)
 	if err != nil {
 		return nil, err
@@ -93,9 +104,6 @@ func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error
 // subnets that the cloud-provider logic considers to be public
 // (e.g. with suitable routing for hosting public load balancers).
 func (m *Metadata) PublicSubnets(ctx context.Context) (map[string]Subnet, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
 	err := m.populateSubnets(ctx)
 	if err != nil {
 		return nil, err
@@ -113,12 +121,19 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 		return errors.New("no subnets configured")
 	}
 
-	session, err := m.unlockedSession(ctx)
+	m.mutexSubnets.Lock()
+	defer m.mutexSubnets.Unlock()
+
+	session, err := m.Session(ctx)
 	if err != nil {
 		return err
 	}
 
-	m.vpc, m.privateSubnets, m.publicSubnets, err = subnets(ctx, session, m.Region, m.Subnets)
+	sb, err := subnets(ctx, session, m.Region, m.Subnets)
+	m.vpc = sb.VPC
+	m.privateSubnets = sb.Private
+	m.publicSubnets = sb.Public
+	m.edgeSubnets = sb.Edge
 	return err
 }
 

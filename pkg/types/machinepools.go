@@ -16,9 +16,11 @@ import (
 )
 
 const (
-	// MachinePoolComputeRoleName name associated with the compute machinepool
+	// MachinePoolComputeRoleName name associated with the compute machinepool.
 	MachinePoolComputeRoleName = "worker"
-	// MachinePoolControlPlaneRoleName name associated with the control plane machinepool
+	// MachinePoolEdgeRoleName name associated with the compute edge machinepool.
+	MachinePoolEdgeRoleName = "edge"
+	// MachinePoolControlPlaneRoleName name associated with the control plane machinepool.
 	MachinePoolControlPlaneRoleName = "master"
 )
 

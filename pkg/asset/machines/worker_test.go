@@ -233,3 +233,52 @@ func TestComputeIsNotModified(t *testing.T) {
 		t.Fatalf("compute in the install config has been modified")
 	}
 }
+
+func TestDefaultAWSMachinePoolPlatform(t *testing.T) {
+	type testCase struct {
+		name                string
+		poolName            string
+		expectedMachinePool awstypes.MachinePool
+		assert              func(tc *testCase)
+	}
+	cases := []testCase{
+		{
+			name:     "default EBS type for compute pool",
+			poolName: types.MachinePoolComputeRoleName,
+			expectedMachinePool: awstypes.MachinePool{
+				EC2RootVolume: awstypes.EC2RootVolume{
+					Type: awstypes.VolumeTypeGp3,
+					Size: decimalRootVolumeSize,
+				},
+			},
+			assert: func(tc *testCase) {
+				mp := defaultAWSMachinePoolPlatform(tc.poolName)
+				want := tc.expectedMachinePool.EC2RootVolume.Type
+				got := mp.EC2RootVolume.Type
+				assert.Equal(t, want, got, "unexepcted EBS type")
+			},
+		},
+		{
+			name:     "default EBS type for edge pool",
+			poolName: types.MachinePoolEdgeRoleName,
+			expectedMachinePool: awstypes.MachinePool{
+				EC2RootVolume: awstypes.EC2RootVolume{
+					Type: awstypes.VolumeTypeGp2,
+					Size: decimalRootVolumeSize,
+				},
+			},
+			assert: func(tc *testCase) {
+				mp := defaultAWSMachinePoolPlatform(tc.poolName)
+				want := tc.expectedMachinePool.EC2RootVolume.Type
+				got := mp.EC2RootVolume.Type
+				assert.Equal(t, want, got, "unexepcted EBS type")
+			},
+		},
+	}
+	for i := range cases {
+		tc := cases[i]
+		t.Run(tc.name, func(t *testing.T) {
+			tc.assert(&tc)
+		})
+	}
+}
