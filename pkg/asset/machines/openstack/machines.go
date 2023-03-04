@@ -56,30 +56,32 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	machines := make([]machineapi.Machine, 0, total)
-	providerConfigs := map[string]*machinev1alpha1.OpenstackProviderSpec{}
 	for idx := int64(0); idx < total; idx++ {
-		zone := mpool.Zones[uint(idx)%uint(len(mpool.Zones))]
-		var provider *machinev1alpha1.OpenstackProviderSpec
+		var failureDomain openstack.FailureDomain
 
-		if _, ok := providerConfigs[zone]; !ok {
-			provider, err = generateProvider(
-				clusterID,
-				platform,
-				mpool,
-				osImage,
-				zone,
-				role,
-				userDataSecret,
-				trunkSupport,
-				volumeAZs[uint(idx)%uint(len(volumeAZs))],
-			)
-			if err != nil {
-				return nil, err
-			}
-			providerConfigs[zone] = provider
+		if len(mpool.FailureDomains) > 0 {
+			failureDomain = mpool.FailureDomains[uint(idx)%uint(len(mpool.FailureDomains))]
+		} else {
+			// Zones have length at least one
+			failureDomain.ComputeAvailabilityZone = mpool.Zones[uint(idx)%uint(len(mpool.Zones))]
+			failureDomain.StorageAvailabilityZone = volumeAZs[uint(idx)%uint(len(volumeAZs))]
 		}
 
-		provider = providerConfigs[zone]
+		var provider *machinev1alpha1.OpenstackProviderSpec
+
+		provider, err := generateProvider(
+			clusterID,
+			platform,
+			mpool,
+			osImage,
+			role,
+			userDataSecret,
+			trunkSupport,
+			failureDomain,
+		)
+		if err != nil {
+			return nil, err
+		}
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -108,26 +110,49 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunkSupport bool, rootVolumeAZ string) (*machinev1alpha1.OpenstackProviderSpec, error) {
-	var networks []machinev1alpha1.NetworkParam //nolint:prealloc // declared here for the conditional initialization
+func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain openstack.FailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
+	var controlPlaneNetwork machinev1alpha1.NetworkParam
+	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(failureDomain.PortTargets)+len(mpool.AdditionalNetworkIDs))
+
 	if platform.MachinesSubnet != "" {
-		networks = []machinev1alpha1.NetworkParam{{
+		controlPlaneNetwork = machinev1alpha1.NetworkParam{
 			Subnets: []machinev1alpha1.SubnetParam{{
 				UUID: platform.MachinesSubnet,
-			}}},
-		}
-	} else {
-		networks = []machinev1alpha1.NetworkParam{{
-			Subnets: []machinev1alpha1.SubnetParam{{
-				Filter: machinev1alpha1.SubnetFilter{
-					Name: fmt.Sprintf("%s-nodes", clusterID),
-					Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
-				}},
 			}},
 		}
+	} else {
+		controlPlaneNetwork = machinev1alpha1.NetworkParam{
+			Subnets: []machinev1alpha1.SubnetParam{
+				{
+					Filter: machinev1alpha1.SubnetFilter{
+						Name: fmt.Sprintf("%s-nodes", clusterID),
+						Tags: fmt.Sprintf("openshiftClusterID=%s", clusterID),
+					},
+				},
+			},
+		}
 	}
+
+	for _, portTarget := range failureDomain.PortTargets {
+		networkParam := machinev1alpha1.NetworkParam{
+			UUID: portTarget.Network.ID,
+			Filter: machinev1alpha1.Filter{
+				Name: portTarget.Network.Name,
+			},
+		}
+		for i := range portTarget.FixedIPs {
+			networkParam.Subnets = append(networkParam.Subnets, machinev1alpha1.SubnetParam{Filter: portTarget.FixedIPs[i].Subnet})
+		}
+		if portTarget.ID == "control-plane" {
+			controlPlaneNetwork = networkParam
+		} else {
+			networkParam.NoAllowedAddressPairs = true
+			additionalNetworks = append(additionalNetworks, networkParam)
+		}
+	}
+
 	for _, networkID := range mpool.AdditionalNetworkIDs {
-		networks = append(networks, machinev1alpha1.NetworkParam{
+		additionalNetworks = append(additionalNetworks, machinev1alpha1.NetworkParam{
 			UUID:                  networkID,
 			NoAllowedAddressPairs: true,
 		})
@@ -145,8 +170,8 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	}
 
 	serverGroupName := clusterID + "-" + role
-	if az != "" {
-		serverGroupName += "-" + az
+	if failureDomain.ComputeAvailabilityZone != "" {
+		serverGroupName += "-" + failureDomain.ComputeAvailabilityZone
 	}
 	spec := machinev1alpha1.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -157,9 +182,9 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		CloudName:        CloudName,
 		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
-		Networks:         networks,
+		Networks:         append([]machinev1alpha1.NetworkParam{controlPlaneNetwork}, additionalNetworks...),
 		PrimarySubnet:    platform.MachinesSubnet,
-		AvailabilityZone: az,
+		AvailabilityZone: failureDomain.ComputeAvailabilityZone,
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
 		Trunk:            trunkSupport,
@@ -176,7 +201,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 			Size:       mpool.RootVolume.Size,
 			SourceUUID: osImage,
 			VolumeType: mpool.RootVolume.Type,
-			Zone:       rootVolumeAZ,
+			Zone:       failureDomain.StorageAvailabilityZone,
 		}
 	} else {
 		spec.Image = osImage

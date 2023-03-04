@@ -67,7 +67,7 @@ resource "openstack_blockstorage_volume_v3" "master_volume" {
   volume_type = var.openstack_master_root_volume_type
   image_id = data.openstack_images_image_v2.base_image.id
 
-  availability_zone = var.openstack_master_root_volume_availability_zones[count.index % length(var.openstack_master_root_volume_availability_zones)]
+  availability_zone = var.openstack_master_root_volume_availability_zones[count.index]
 }
 
 resource "openstack_compute_servergroup_v2" "master_group" {
@@ -99,7 +99,7 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
   image_id = var.openstack_master_root_volume_size == null ? data.openstack_images_image_v2.base_image.id : null
   security_groups = local.master_sg_ids
-  availability_zone = var.openstack_master_availability_zones[0 % length(var.openstack_master_availability_zones)]
+  availability_zone = var.openstack_master_availability_zones[0]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     0,
@@ -125,6 +125,14 @@ resource "openstack_compute_instance_v2" "master_conf_0" {
   }
 
   dynamic "network" {
+    for_each = [for port in openstack_networking_port_v2.master_0_failuredomain : port.id]
+
+    content {
+      port = network.value
+    }
+  }
+
+  dynamic "network" {
     for_each = var.openstack_additional_network_ids
 
     content {
@@ -147,7 +155,7 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
   image_id = var.openstack_master_root_volume_size == null ? data.openstack_images_image_v2.base_image.id : null
   security_groups = local.master_sg_ids
-  availability_zone = var.openstack_master_availability_zones[1 % length(var.openstack_master_availability_zones)]
+  availability_zone = var.openstack_master_availability_zones[1]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     1,
@@ -170,6 +178,14 @@ resource "openstack_compute_instance_v2" "master_conf_1" {
 
   scheduler_hints {
     group = openstack_compute_servergroup_v2.master_group.id
+  }
+
+  dynamic "network" {
+    for_each = [for port in openstack_networking_port_v2.master_1_failuredomain : port.id]
+
+    content {
+      port = network.value
+    }
   }
 
   dynamic "network" {
@@ -197,7 +213,7 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
   flavor_id = data.openstack_compute_flavor_v2.masters_flavor.id
   image_id = var.openstack_master_root_volume_size == null ? data.openstack_images_image_v2.base_image.id : null
   security_groups = local.master_sg_ids
-  availability_zone = var.openstack_master_availability_zones[2 % length(var.openstack_master_availability_zones)]
+  availability_zone = var.openstack_master_availability_zones[2]
   user_data = element(
     data.ignition_config.master_ignition_config.*.rendered,
     2,
@@ -223,6 +239,14 @@ resource "openstack_compute_instance_v2" "master_conf_2" {
   }
 
   dynamic "network" {
+    for_each = [for port in openstack_networking_port_v2.master_2_failuredomain : port.id]
+
+    content {
+      port = network.value
+    }
+  }
+
+  dynamic "network" {
     for_each = var.openstack_additional_network_ids
 
     content {
@@ -245,4 +269,61 @@ resource "openstack_compute_servergroup_v2" "server_groups" {
   for_each = var.openstack_worker_server_group_names
   name = each.key
   policies = [var.openstack_master_server_group_policy]
+}
+
+resource "openstack_networking_port_v2" "master_0_failuredomain" {
+  count = var.master_count > 0 ? length(var.openstack_additional_ports[0]) : 0
+
+  name = "${var.cluster_id}-master-0-${count.index}"
+  description = local.description
+  network_id = var.openstack_additional_ports[0][count.index].network_id
+  security_group_ids = concat(var.openstack_master_extra_sg_ids, [openstack_networking_secgroup_v2.master.id])
+  tags = ["openshiftClusterID=${var.cluster_id}"]
+
+  dynamic "fixed_ip" {
+    for_each = var.openstack_additional_ports[0][count.index].fixed_ips
+
+    content {
+      subnet_id = fixed_ip.value["subnet_id"]
+      ip_address = fixed_ip.value["ip_address"]
+    }
+  }
+}
+
+resource "openstack_networking_port_v2" "master_1_failuredomain" {
+  count = var.master_count > 1 ? length(var.openstack_additional_ports[1]) : 0
+
+  name = "${var.cluster_id}-master-1-${count.index}"
+  description = local.description
+  network_id = var.openstack_additional_ports[1][count.index].network_id
+  security_group_ids = concat(var.openstack_master_extra_sg_ids, [openstack_networking_secgroup_v2.master.id])
+  tags = ["openshiftClusterID=${var.cluster_id}"]
+
+  dynamic "fixed_ip" {
+    for_each = var.openstack_additional_ports[1][count.index].fixed_ips
+
+    content {
+      subnet_id = fixed_ip.value["subnet_id"]
+      ip_address = fixed_ip.value["ip_address"]
+    }
+  }
+}
+
+resource "openstack_networking_port_v2" "master_2_failuredomain" {
+  count = var.master_count > 2 ? length(var.openstack_additional_ports[2]) : 0
+
+  name = "${var.cluster_id}-master-2-${count.index}"
+  description = local.description
+  network_id = var.openstack_additional_ports[2][count.index].network_id
+  security_group_ids = concat(var.openstack_master_extra_sg_ids, [openstack_networking_secgroup_v2.master.id])
+  tags = ["openshiftClusterID=${var.cluster_id}"]
+
+  dynamic "fixed_ip" {
+    for_each = var.openstack_additional_ports[2][count.index].fixed_ips
+
+    content {
+      subnet_id = fixed_ip.value["subnet_id"]
+      ip_address = fixed_ip.value["ip_address"]
+    }
+  }
 }
