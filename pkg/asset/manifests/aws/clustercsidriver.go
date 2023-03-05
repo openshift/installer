@@ -1,8 +1,8 @@
 package aws
 
 import (
-	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/yaml"
 
 	operatorv1 "github.com/openshift/api/operator/v1"
 )
