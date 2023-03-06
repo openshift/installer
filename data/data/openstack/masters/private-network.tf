@@ -71,16 +71,16 @@ resource "openstack_networking_port_v2" "masters" {
   }
 
   dynamic "allowed_address_pairs" {
-    for_each = var.openstack_user_managed_load_balancer ? [] : [1]
+    for_each = var.openstack_user_managed_load_balancer ? [] : var.openstack_api_int_ips
     content {
-      ip_address = var.openstack_api_int_ip
+      ip_address = allowed_address_pairs.value
     }
   }
 
   dynamic "allowed_address_pairs" {
-    for_each = var.openstack_user_managed_load_balancer ? [] : [1]
+    for_each = var.openstack_user_managed_load_balancer ? [] : var.openstack_ingress_ips
     content {
-      ip_address = var.openstack_ingress_ip
+      ip_address = allowed_address_pairs.value
     }
   }
 
@@ -102,7 +102,7 @@ resource "openstack_networking_port_v2" "api_port" {
 
     content {
       subnet_id  = fixed_ip.value["subnet_id"]
-      ip_address = var.openstack_api_int_ip
+      ip_address = var.openstack_api_int_ips[0]
     }
   }
 }
@@ -122,7 +122,7 @@ resource "openstack_networking_port_v2" "ingress_port" {
 
     content {
       subnet_id  = fixed_ip.value["subnet_id"]
-      ip_address = var.openstack_ingress_ip
+      ip_address = var.openstack_ingress_ips[0]
     }
   }
 }

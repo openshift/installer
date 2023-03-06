@@ -232,8 +232,8 @@ func TFVars(
 		FlavorName                        string                            `json:"openstack_master_flavor_name,omitempty"`
 		APIFloatingIP                     string                            `json:"openstack_api_floating_ip,omitempty"`
 		IngressFloatingIP                 string                            `json:"openstack_ingress_floating_ip,omitempty"`
-		APIVIP                            string                            `json:"openstack_api_int_ip,omitempty"`
-		IngressVIP                        string                            `json:"openstack_ingress_ip,omitempty"`
+		APIVIPs                           []string                          `json:"openstack_api_int_ips,omitempty"`
+		IngressVIPs                       []string                          `json:"openstack_ingress_ips,omitempty"`
 		TrunkSupport                      bool                              `json:"openstack_trunk_support,omitempty"`
 		OctaviaSupport                    bool                              `json:"openstack_octavia_support,omitempty"`
 		RootVolumeSize                    int                               `json:"openstack_master_root_volume_size,omitempty"`
@@ -259,8 +259,8 @@ func TFVars(
 		FlavorName:                        masterSpecs[0].Flavor,
 		APIFloatingIP:                     installConfig.Config.Platform.OpenStack.APIFloatingIP,
 		IngressFloatingIP:                 installConfig.Config.Platform.OpenStack.IngressFloatingIP,
-		APIVIP:                            installConfig.Config.Platform.OpenStack.APIVIPs[0],
-		IngressVIP:                        installConfig.Config.Platform.OpenStack.IngressVIPs[0],
+		APIVIPs:                           installConfig.Config.Platform.OpenStack.APIVIPs,
+		IngressVIPs:                       installConfig.Config.Platform.OpenStack.IngressVIPs,
 		TrunkSupport:                      masterSpecs[0].Trunk,
 		OctaviaSupport:                    octaviaSupport,
 		RootVolumeSize:                    rootVolumeSize,
