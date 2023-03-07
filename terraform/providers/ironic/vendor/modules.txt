@@ -237,7 +237,7 @@ github.com/modern-go/reflect2
 # github.com/oklog/run v1.0.0
 ## explicit
 github.com/oklog/run
-# github.com/openshift-metal3/terraform-provider-ironic v0.3.0
+# github.com/openshift-metal3/terraform-provider-ironic v0.3.0 => github.com/dtantsur/terraform-provider-ironic v0.2.7-0.20230306164428-20a0226eb685
 ## explicit; go 1.18
 github.com/openshift-metal3/terraform-provider-ironic
 github.com/openshift-metal3/terraform-provider-ironic/ironic
@@ -749,6 +749,7 @@ sigs.k8s.io/structured-merge-diff/v4/value
 sigs.k8s.io/yaml
 # github.com/metal3-io/baremetal-operator/apis => github.com/metal3-io/baremetal-operator/apis v0.0.0-20220310151803-2b47127ed7ae
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0-20220310151803-2b47127ed7ae
+# github.com/openshift-metal3/terraform-provider-ironic => github.com/dtantsur/terraform-provider-ironic v0.2.7-0.20230306164428-20a0226eb685
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
