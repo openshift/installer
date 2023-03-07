@@ -241,6 +241,20 @@ func simulatorHelper(t *testing.T, setVersionToSupported bool) (*validationConte
 		return nil, nil, nil, err
 	}
 
+	// Create cluster w/ no hosts for the ComputeResource failure case.  Cluster will have name Cluster1
+	dc, err := finder.Datacenter(ctx, "/DC0")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	folders, err := dc.Folders(ctx)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	_, err = folders.HostFolder.CreateCluster(ctx, "Cluster1", vim25types.ClusterConfigSpecEx{})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
 	sessionMgr := session.NewManager(client)
 	userSession, err := sessionMgr.UserSession(ctx)
 	if err != nil {
@@ -303,7 +317,7 @@ func TestValidateFailureDomains(t *testing.T) {
 			}(),
 			validationMethod: validateFailureDomain,
 			checkTags:        false,
-			expectErr:        `\[platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found, platform.vsphere.failureDomains.topology: Invalid value: "DC0_DVPG0": could not find vSphere cluster at /DC0/host/invalid-cluster: cluster '/DC0/host/invalid-cluster' not found\]`,
+			expectErr:        `\[platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found, platform.vsphere.failureDomains.topology.computeCluster: Internal error: cluster '/DC0/host/invalid-cluster' not found, platform.vsphere.failureDomains.topology: Invalid value: "DC0_DVPG0": could not find vSphere cluster at /DC0/host/invalid-cluster: cluster '/DC0/host/invalid-cluster' not found\]`,
 		},
 		{
 			name: "multi-zone validation - missing cluster",
@@ -676,6 +690,48 @@ func Test_ensureLoadBalancer(t *testing.T) {
 				}
 			}
 			hook.Reset()
+		})
+	}
+}
+
+// Test_validateCheckClusterComputeResource test the various paths for the
+// validateClusterComputeResourceHasHosts method.
+func Test_validateCheckClusterComputeResource(t *testing.T) {
+	validationCtx, server, _, err := simulatorHelper(t, true)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer server.Close()
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	tests := []struct {
+		name          string
+		installConfig *types.InstallConfig
+		dataCenter    string
+		cluster       string
+		expectErr     string
+	}{{
+		name:       "validateClusterComputeResourceHasHosts valid",
+		dataCenter: "DC0",
+		cluster:    "DC0_C0",
+	}, {
+		name:       "validateClusterComputeResourceHasHosts no ComputeResources",
+		dataCenter: "DC0",
+		cluster:    "Cluster1",
+		expectErr:  `^no hosts found in cluster Cluster1$`,
+	}}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			err := validateClusterComputeResourceHasHosts(ctx, test.dataCenter, test.cluster, validationCtx.Finder)
+			if test.expectErr == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, test.expectErr, err)
+			}
 		})
 	}
 }

@@ -179,6 +179,11 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	allErrs = append(allErrs, datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"), checkDatacenterPrivileges)...)
 	allErrs = append(allErrs, datastoreExists(validationCtx, failureDomain.Topology.Datacenter, failureDomain.Topology.Datastore, topologyField.Child("datastore"))...)
 
+	err := validateClusterComputeResourceHasHosts(context.TODO(), failureDomain.Topology.Datacenter, computeClusterName, validationCtx.Finder)
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(topologyField.Child("computeCluster"), err))
+	}
+
 	for _, network := range failureDomain.Topology.Networks {
 		allErrs = append(allErrs, validateNetwork(validationCtx, failureDomain.Topology.Datacenter, computeClusterName, network, topologyField)...)
 	}
@@ -632,4 +637,33 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 		errs = append(errs, fmt.Sprintf("tag associated with tag category %s not attached to this resource or ancestor", vsphere.TagCategoryZone))
 	}
 	return errors.New(strings.Join(errs, ","))
+}
+
+// validateClusterComputeResourceHasHosts checks the ClusterComputeResource to see if there are any attached hosts.  Without
+// hosts, the check for networks will fail.  We want the message to be clear if this is the cause so
+// users know what to address.  This only returns an error if unable to verify or if no ComputeResources
+// are found.
+func validateClusterComputeResourceHasHosts(ctx context.Context, datacenter string, cluster string, finder Finder) error {
+	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+
+	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	ccr, err := finder.ClusterComputeResource(ctx, path)
+	if err != nil {
+		return err
+	}
+
+	var ccrMo mo.ComputeResource
+	logrus.Debugf("Checking for ComputeResources belonging to ClusterComputeResource: %v", ccr)
+
+	err = ccr.Properties(ctx, ccr.Reference(), []string{"host"}, &ccrMo)
+	logrus.Debugf("Found the following Hosts: %v", ccrMo.Host)
+	if err != nil {
+		return err
+	}
+	if len(ccrMo.Host) == 0 {
+		return fmt.Errorf("no hosts found in cluster %v", cluster)
+	}
+
+	return nil
 }

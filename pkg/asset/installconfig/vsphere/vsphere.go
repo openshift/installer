@@ -57,6 +57,13 @@ func Platform() (*vsphere.Platform, error) {
 		return nil, err
 	}
 
+	// Check for ComputeResources under the ClusterComputeResource.  If none, then getNetwork
+	// will fail.  Return helpful error message for installer user
+	err = validateClusterComputeResourceHasHosts(ctx, dc, cluster, finder)
+	if err != nil {
+		return nil, err
+	}
+
 	datastore, err := getDataStore(ctx, dcPath, finder, vCenter.Client)
 	if err != nil {
 		return nil, err
