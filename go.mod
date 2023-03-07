@@ -22,7 +22,7 @@ require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.8+incompatible
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
-	github.com/aws/aws-sdk-go v1.44.51
+	github.com/aws/aws-sdk-go v1.44.215
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
 	github.com/clarketm/json v1.14.1
 	github.com/containers/image v3.0.2+incompatible
