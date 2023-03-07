@@ -73,6 +73,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	// Platform is the configuration for the specific platform upon which to
 	// perform the installation.
 	Platform *agentClusterInstallPlatform `json:"platform,omitempty"`
+	// Capabilities selects the managed set of optional, core cluster components.
+	Capabilities *types.Capabilities `json:"capabilities,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -188,6 +190,10 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 
 		setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
 
+		if installConfig.Config.Capabilities != nil {
+			icOverrides.Capabilities = installConfig.Config.Capabilities
+			icOverridden = true
+		}
 		if icOverridden {
 			overrides, err := json.Marshal(icOverrides)
 			if err != nil {
