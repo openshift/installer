@@ -244,7 +244,7 @@ github.com/awalterschulze/gographviz/internal/errors
 github.com/awalterschulze/gographviz/internal/lexer
 github.com/awalterschulze/gographviz/internal/parser
 github.com/awalterschulze/gographviz/internal/token
-# github.com/aws/aws-sdk-go v1.44.51
+# github.com/aws/aws-sdk-go v1.44.215
 ## explicit; go 1.11
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
