@@ -12,12 +12,11 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/ghodss/yaml"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"sigs.k8s.io/controller-runtime/pkg/scheme"
+	"sigs.k8s.io/yaml"
 
 	machinev1 "github.com/openshift/api/machine/v1beta1"
 )
