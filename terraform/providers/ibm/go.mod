@@ -148,3 +148,6 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
 replace golang.org/x/net => golang.org/x/net v0.5.0
+
+// https://issues.redhat.com/browse/OCPBUGS-8540
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.10.0
