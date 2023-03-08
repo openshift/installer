@@ -156,3 +156,6 @@ replace github.com/prometheus/client_golang => github.com/prometheus/client_gola
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
 replace golang.org/x/net => golang.org/x/net v0.5.0
+
+// https://issues.redhat.com/browse/OCPBUGS-8119
+replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
