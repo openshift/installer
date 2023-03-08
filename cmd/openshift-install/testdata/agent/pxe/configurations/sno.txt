@@ -1,5 +1,7 @@
 # Verify a default configuration for the SNO topology
 
+skip 'pxe-files generation is disabled'
+
 exec openshift-install agent create pxe-files --dir $WORK
 
 stderr 'The rendezvous host IP \(node0 IP\) is 192.168.111.20'
