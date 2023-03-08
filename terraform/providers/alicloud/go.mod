@@ -109,7 +109,7 @@ require (
 	github.com/zclconf/go-cty v1.1.0 // indirect
 	github.com/zclconf/go-cty-yaml v1.0.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20220208050332-20e1d8d225ab // indirect
+	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/lint v0.0.0-20210508222113-6edffad5e616 // indirect
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.5.0 // indirect
@@ -130,7 +130,7 @@ require (
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0 // indirect
 	gopkg.in/resty.v1 v1.12.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/api v0.22.2 // indirect
 	k8s.io/apimachinery v0.22.2 // indirect
 	k8s.io/client-go v0.22.2 // indirect
@@ -159,3 +159,6 @@ replace golang.org/x/net => golang.org/x/net v0.5.0
 
 // https://issues.redhat.com/browse/OCPBUGS-8119
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
+
+// https://issues.redhat.com/browse/OCPBUGS-8540
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.10.0

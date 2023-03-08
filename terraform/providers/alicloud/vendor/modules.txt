@@ -570,7 +570,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20220208050332-20e1d8d225ab => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+# golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -790,7 +790,7 @@ gopkg.in/resty.v1
 # gopkg.in/yaml.v2 v2.4.0
 ## explicit; go 1.15
 gopkg.in/yaml.v2
-# gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+# gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
 # k8s.io/api v0.22.2
@@ -1010,3 +1010,4 @@ sigs.k8s.io/yaml
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 # golang.org/x/net => golang.org/x/net v0.5.0
 # github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
+# go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.10.0
