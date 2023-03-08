@@ -6,7 +6,7 @@ require github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-
 
 require (
 	4d63.com/gochecknoglobals v0.0.0-20201008074935-acfc0b28355a // indirect
-	bitbucket.org/creachadair/stringset v0.0.8 // indirect
+	bitbucket.org/creachadair/stringset v0.0.11 // indirect
 	cloud.google.com/go v0.97.0 // indirect
 	cloud.google.com/go/bigtable v1.10.1 // indirect
 	cloud.google.com/go/storage v1.10.0 // indirect
@@ -220,3 +220,5 @@ replace github.com/prometheus/client_golang => github.com/prometheus/client_gola
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
 replace golang.org/x/net => golang.org/x/net v0.5.0
+
+replace bitbucket.org/creachadair/stringset => bitbucket.org/creachadair/stringset v0.0.11

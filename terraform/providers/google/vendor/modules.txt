@@ -1,8 +1,8 @@
 # 4d63.com/gochecknoglobals v0.0.0-20201008074935-acfc0b28355a
 ## explicit; go 1.15
 4d63.com/gochecknoglobals/checknoglobals
-# bitbucket.org/creachadair/stringset v0.0.8
-## explicit; go 1.12
+# bitbucket.org/creachadair/stringset v0.0.11 => bitbucket.org/creachadair/stringset v0.0.11
+## explicit; go 1.18
 bitbucket.org/creachadair/stringset
 # cloud.google.com/go v0.97.0
 ## explicit; go 1.11
@@ -1200,3 +1200,4 @@ mvdan.cc/unparam/check
 # github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 # golang.org/x/net => golang.org/x/net v0.5.0
+# bitbucket.org/creachadair/stringset => bitbucket.org/creachadair/stringset v0.0.11
