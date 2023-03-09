@@ -10,6 +10,18 @@ variable "elb_backend_pool_v6_id" {
   description = "The external load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
 }
 
+variable "elb_backend_pool_v4_outbound_id" {
+  type        = string
+  default     = null
+  description = "The external load balancer bakend pool id. used to attach the bootstrap NIC"
+}
+
+variable "elb_backend_pool_v6_outbound_id" {
+  type        = string
+  default     = null
+  description = "The external load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
+}
+
 variable "ilb_backend_pool_v4_id" {
   type        = string
   default     = null
@@ -28,6 +40,16 @@ variable "public_lb_pip_v4_fqdn" {
 }
 
 variable "public_lb_pip_v6_fqdn" {
+  type    = string
+  default = null
+}
+
+variable "public_lb_pip_v4_fqdn_outbound" {
+  type    = string
+  default = null
+}
+
+variable "public_lb_pip_v6_fqdn_outbound" {
   type    = string
   default = null
 }

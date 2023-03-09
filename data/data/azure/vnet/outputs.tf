@@ -6,6 +6,14 @@ output "elb_backend_pool_v6_id" {
   value = local.need_public_ipv6 ? azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id : null
 }
 
+output "elb_backend_pool_v4_outbound_id" {
+  value = local.need_public_ipv4 ? azurerm_lb_backend_address_pool.public_lb_pool_v4_outbound[0].id : null
+}
+
+output "elb_backend_pool_v6_outbound_id" {
+  value = local.need_public_ipv6 ? azurerm_lb_backend_address_pool.public_lb_pool_v6_outbound[0].id : null
+}
+
 output "ilb_backend_pool_v4_id" {
   value = var.use_ipv4 ? azurerm_lb_backend_address_pool.internal_lb_controlplane_pool_v4[0].id : null
 }
@@ -20,6 +28,14 @@ output "public_lb_pip_v4_fqdn" {
 
 output "public_lb_pip_v6_fqdn" {
   value = local.need_public_ipv6 ? data.azurerm_public_ip.cluster_public_ip_v6[0].fqdn : null
+}
+
+output "public_lb_pip_v4_fqdn_outbound" {
+  value = local.need_public_ipv4 ? data.azurerm_public_ip.cluster_public_ip_v4_outbound[0].fqdn : null
+}
+
+output "public_lb_pip_v6_fqdn_outbound" {
+  value = local.need_public_ipv6 ? data.azurerm_public_ip.cluster_public_ip_v6_outbound[0].fqdn : null
 }
 
 output "internal_lb_ip_v4_address" {

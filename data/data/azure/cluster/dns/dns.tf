@@ -6,7 +6,7 @@ locals {
 resource "azurerm_private_dns_zone" "private" {
   name                = var.cluster_domain
   resource_group_name = var.resource_group_name
-  depends_on          = [azurerm_dns_cname_record.api_external_v4, azurerm_dns_cname_record.api_external_v6]
+  depends_on          = [azurerm_dns_cname_record.api_external_v4, azurerm_dns_cname_record.api_external_v6, azurerm_dns_cname_record.api_external_v4_outbound, azurerm_dns_cname_record.api_external_v6_outbound]
   tags                = var.azure_extra_tags
 }
 
@@ -91,4 +91,24 @@ resource "azurerm_dns_cname_record" "api_external_v6" {
   tags                = var.azure_extra_tags
 }
 
+resource "azurerm_dns_cname_record" "api_external_v4_outbound" {
+  count = var.private || ! var.use_ipv4 ? 0 : 1
 
+  name                = "${local.api_external_name}-ob"
+  zone_name           = var.base_domain
+  resource_group_name = var.base_domain_resource_group_name
+  ttl                 = 300
+  record              = var.external_lb_fqdn_v4_outbound
+  tags                = var.azure_extra_tags
+}
+
+resource "azurerm_dns_cname_record" "api_external_v6_outbound" {
+  count = var.private || ! var.use_ipv6 ? 0 : 1
+
+  name                = "v6-${local.api_external_name}-ob"
+  zone_name           = var.base_domain
+  resource_group_name = var.base_domain_resource_group_name
+  ttl                 = 300
+  record              = var.external_lb_fqdn_v6_outbound
+  tags                = var.azure_extra_tags
+}

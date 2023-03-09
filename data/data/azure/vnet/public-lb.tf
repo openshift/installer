@@ -1,6 +1,8 @@
 locals {
-  public_lb_frontend_ip_v4_configuration_name = "public-lb-ip-v4"
-  public_lb_frontend_ip_v6_configuration_name = "public-lb-ip-v6"
+  public_lb_frontend_ip_v4_configuration_name          = "public-lb-ip-v4"
+  public_lb_frontend_ip_v6_configuration_name          = "public-lb-ip-v6"
+  public_lb_frontend_ip_v4_outbound_configuration_name = "public-lb-ip-v4-ob"
+  public_lb_frontend_ip_v6_outbound_configuration_name = "public-lb-ip-v6-ob"
 }
 
 locals {
@@ -31,6 +33,25 @@ data "azurerm_public_ip" "cluster_public_ip_v4" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 
+resource "azurerm_public_ip" "cluster_public_ip_v4_outbound" {
+  count = local.need_public_ipv4 ? 1 : 0
+
+  sku                 = "Standard"
+  location            = var.azure_region
+  name                = "${var.cluster_id}-pip-v4-ob"
+  resource_group_name = data.azurerm_resource_group.main.name
+  allocation_method   = "Static"
+  domain_name_label   = "${var.cluster_id}-ob"
+  tags                = var.azure_extra_tags
+}
+
+data "azurerm_public_ip" "cluster_public_ip_v4_outbound" {
+  // DEBUG: Azure apparently requires dual stack LB for v6
+  count = local.need_public_ipv4 ? 1 : 0
+
+  name                = azurerm_public_ip.cluster_public_ip_v4_outbound[0].name
+  resource_group_name = data.azurerm_resource_group.main.name
+}
 
 resource "azurerm_public_ip" "cluster_public_ip_v6" {
   count = local.need_public_ipv6 ? 1 : 0
@@ -52,6 +73,26 @@ data "azurerm_public_ip" "cluster_public_ip_v6" {
   resource_group_name = data.azurerm_resource_group.main.name
 }
 
+resource "azurerm_public_ip" "cluster_public_ip_v6_outbound" {
+  count = local.need_public_ipv6 ? 1 : 0
+
+  ip_version          = "IPv6"
+  sku                 = "Standard"
+  location            = var.azure_region
+  name                = "${var.cluster_id}-pip-v6-ob"
+  resource_group_name = data.azurerm_resource_group.main.name
+  allocation_method   = "Static"
+  domain_name_label   = "${var.cluster_id}-ob"
+  tags                = var.azure_extra_tags
+}
+
+data "azurerm_public_ip" "cluster_public_ip_v6_outbound" {
+  count = local.need_public_ipv6 ? 1 : 0
+
+  name                = azurerm_public_ip.cluster_public_ip_v6_outbound[0].name
+  resource_group_name = data.azurerm_resource_group.main.name
+}
+
 resource "azurerm_lb" "public" {
   sku                 = "Standard"
   name                = var.cluster_id
@@ -70,6 +111,18 @@ resource "azurerm_lb" "public" {
       {
         name : local.public_lb_frontend_ip_v6_configuration_name,
         value : local.need_public_ipv6 ? azurerm_public_ip.cluster_public_ip_v6[0].id : null,
+        include : local.need_public_ipv6,
+        ipv6 : true,
+      },
+      {
+        name : local.public_lb_frontend_ip_v4_outbound_configuration_name,
+        value : local.need_public_ipv4 ? azurerm_public_ip.cluster_public_ip_v4_outbound[0].id : null,
+        include : local.need_public_ipv4,
+        ipv6 : false,
+      },
+      {
+        name : local.public_lb_frontend_ip_v6_outbound_configuration_name,
+        value : local.need_public_ipv6 ? azurerm_public_ip.cluster_public_ip_v6_outbound[0].id : null,
         include : local.need_public_ipv6,
         ipv6 : true,
       },
@@ -109,6 +162,20 @@ resource "azurerm_lb_backend_address_pool" "public_lb_pool_v6" {
 
   loadbalancer_id = azurerm_lb.public.id
   name            = "${var.cluster_id}-IPv6"
+}
+
+resource "azurerm_lb_backend_address_pool" "public_lb_pool_v4_outbound" {
+  count = local.need_public_ipv4 ? 1 : 0
+
+  loadbalancer_id = azurerm_lb.public.id
+  name            = "${var.cluster_id}-ob"
+}
+
+resource "azurerm_lb_backend_address_pool" "public_lb_pool_v6_outbound" {
+  count = local.need_public_ipv6 ? 1 : 0
+
+  loadbalancer_id = azurerm_lb.public.id
+  name            = "${var.cluster_id}-IPv6-ob"
 }
 
 resource "azurerm_lb_rule" "public_lb_rule_api_internal_v4" {
@@ -166,6 +233,32 @@ resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6" {
 
   frontend_ip_configuration {
     name = local.public_lb_frontend_ip_v6_configuration_name
+  }
+}
+
+resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v4_outbound" {
+  count = var.use_ipv4 && var.azure_private && ! var.azure_outbound_user_defined_routing ? 1 : 0
+
+  name                    = "outbound-rule-v4-ob"
+  loadbalancer_id         = azurerm_lb.public.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v4_outbound[0].id
+  protocol                = "All"
+
+  frontend_ip_configuration {
+    name = local.public_lb_frontend_ip_v4_outbound_configuration_name
+  }
+}
+
+resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6_outbound" {
+  count = var.use_ipv6 && var.azure_private && ! var.azure_outbound_user_defined_routing ? 1 : 0
+
+  name                    = "outbound-rule-v6-ob"
+  loadbalancer_id         = azurerm_lb.public.id
+  backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v6_outbound[0].id
+  protocol                = "All"
+
+  frontend_ip_configuration {
+    name = local.public_lb_frontend_ip_v6_outbound_configuration_name
   }
 }
 

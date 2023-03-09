@@ -41,6 +41,9 @@ module "master" {
   vm_networking_type         = var.azure_control_plane_vm_networking_type
   azure_extra_tags           = var.azure_extra_tags
 
+  elb_backend_pool_v4_outbound_id = var.elb_backend_pool_v4_outbound_id
+  elb_backend_pool_v6_outbound_id = var.elb_backend_pool_v6_outbound_id
+
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6
 }
@@ -53,6 +56,8 @@ module "dns" {
   virtual_network_id              = var.virtual_network_id
   external_lb_fqdn_v4             = var.public_lb_pip_v4_fqdn
   external_lb_fqdn_v6             = var.public_lb_pip_v6_fqdn
+  external_lb_fqdn_v4_outbound    = var.public_lb_pip_v4_fqdn_outbound
+  external_lb_fqdn_v6_outbound    = var.public_lb_pip_v6_fqdn_outbound
   internal_lb_ipaddress_v4        = var.internal_lb_ip_v4_address
   internal_lb_ipaddress_v6        = var.internal_lb_ip_v6_address
   resource_group_name             = var.resource_group_name

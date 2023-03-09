@@ -41,6 +41,16 @@ variable "external_lb_fqdn_v6" {
   type = string
 }
 
+variable "external_lb_fqdn_v4_outbound" {
+  description = "External API's LB fqdn for IPv4"
+  type = string
+}
+
+variable "external_lb_fqdn_v6_outbound" {
+  description = "External API's LB fqdn for IPv6"
+  type = string
+}
+
 variable "internal_lb_ipaddress_v4" {
   description = "External API's LB IP v4 address"
   type = string

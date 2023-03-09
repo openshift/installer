@@ -49,6 +49,14 @@ variable "elb_backend_pool_v6_id" {
   type = string
 }
 
+variable "elb_backend_pool_v4_outbound_id" {
+  type = string
+}
+
+variable "elb_backend_pool_v6_outbound_id" {
+  type = string
+}
+
 variable "ilb_backend_pool_v4_id" {
   type = string
 }
