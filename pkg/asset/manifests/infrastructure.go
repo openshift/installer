@@ -261,6 +261,7 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		config.Status.PlatformStatus.PowerVS = &configv1.PowerVSPlatformStatus{
 			Region:         installConfig.Config.Platform.PowerVS.Region,
 			Zone:           installConfig.Config.Platform.PowerVS.Zone,
+			ResourceGroup:  installConfig.Config.Platform.PowerVS.PowerVSResourceGroup,
 			CISInstanceCRN: cisInstanceCRN,
 			DNSInstanceCRN: dnsInstanceCRN,
 		}
