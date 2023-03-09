@@ -27,19 +27,34 @@ locals {
   // Convert the manifest from a yaml string to a map structure
   infrastructure_yaml = yamldecode(var.infrastructure_manifest)
 
+<<<<<<< HEAD
   extra_infra_data = var.custom_dns ? {
     "status" = {
       "platformStatus" = {
         "aws" = {
           "awsClusterDNSConfig" = {
             "apiServerDNSConfig": [
+=======
+  // Add to the yaml data the load balancer IP addresses when the manifest is
+  // expected to contain these values (custom DNS solution is selected).
+  updated_infrastructure = merge(
+    local.infrastructure_yaml,
+    lookup(local.infrastructure_yaml["status"]["platformStatus"], "clusterDNSConfig", "") != "" ?
+    {
+        "status": { "platformStatus": { "clusterDNSConfig": {
+            "APIServerDNSConfig": [
+>>>>>>> 54439ea28c (** Created the New DNS Provider)
               for ip in data.dns_a_record_set.external_lb.addrs :
               {
                 RecordType: "A"
                 LBIPAddress: ip
               }
             ],
+<<<<<<< HEAD
             "internalAPIServerDNSConfig": [
+=======
+            "InternalAPIServerDNSConfig": [
+>>>>>>> 54439ea28c (** Created the New DNS Provider)
               for ip in data.dns_a_record_set.internal_lb.addrs :
               {
                 RecordType: "A"
@@ -60,6 +75,14 @@ module "deepmerge" {
     local.infrastructure_yaml,
     local.extra_infra_data
   ]
+}
+
+data "dns_a_record_set" "external_lb" {
+  host = var.aws_lb_api_external_dns_name
+}
+
+data "dns_a_record_set" "internal_lb" {
+  host = var.aws_lb_api_internal_dns_name
 }
 
 data "dns_a_record_set" "external_lb" {
