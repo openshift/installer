@@ -16,7 +16,7 @@ var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		"aws",
 		"bootstrap",
-		[]providers.Provider{providers.AWS, providers.Local},
-		//stages.WithNormalBootstrapDestroy(),
+		[]providers.Provider{providers.AWS, providers.Local, providers.DNS},
+		stages.WithNormalBootstrapDestroy(),
 	),
 }

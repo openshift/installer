@@ -26,21 +26,26 @@ locals {
 
   // Convert the manifest from a yaml string to a map structure
   infrastructure_yaml = yamldecode(var.infrastructure_manifest)
+
+  // Add to the yaml data the load balancer IP addresses when the manifest is
+  // expected to contain these values (custom DNS solution is selected).
   updated_infrastructure = merge(
     local.infrastructure_yaml,
     lookup(local.infrastructure_yaml["status"]["platformStatus"], "clusterDNSConfig", "") != "" ?
     {
         "status": { "platformStatus": { "clusterDNSConfig": {
             "APIServerDNSConfig": [
+              for ip in data.dns_a_record_set.external_lb.addrs :
               {
                 RecordType: "A"
-                LBIPAddress: var.aws_lb_api_external_dns_name
+                LBIPAddress: ip
               }
             ],
             "InternalAPIServerDNSConfig": [
+              for ip in data.dns_a_record_set.internal_lb.addrs :
               {
                 RecordType: "A"
-                LBIPAddress: var.aws_lb_api_internal_dns_name
+                LBIPAddress: ip
               }
             ]
         }}}
@@ -48,6 +53,14 @@ locals {
   )
 
   encoded_manifest = base64encode(yamlencode(local.updated_infrastructure))
+}
+
+data "dns_a_record_set" "external_lb" {
+  host = var.aws_lb_api_external_dns_name
+}
+
+data "dns_a_record_set" "internal_lb" {
+  host = var.aws_lb_api_internal_dns_name
 }
 
 provider "aws" {

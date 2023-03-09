@@ -21,6 +21,9 @@ var (
 	AzureRM = provider("azurerm")
 	// AzureStack is the provider for creating resources in Azure Stack.
 	AzureStack = provider("azurestack")
+	// DNS is the provider that supports resources that perform DNS updates and
+	//data sources for reading DNS information.
+	DNS = provider("dns")
 	// Google is the provider for creating resources in GCP.
 	Google = provider("google")
 	// IBM is the provider for creating resources in IBM Cloud.
