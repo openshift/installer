@@ -2,6 +2,9 @@ locals {
   bootstrap_nic_ip_v4_configuration_name = "bootstrap-nic-ip-v4"
   bootstrap_nic_ip_v6_configuration_name = "bootstrap-nic-ip-v6"
   description                            = "Created By OpenShift Installer"
+
+  # At this time min_tls_version is only supported in the Public Cloud and US Government Cloud.
+  environments_with_min_tls_version = ["public", "usgovernment"]
 }
 
 provider "azurerm" {
@@ -15,13 +18,112 @@ provider "azurerm" {
   environment                 = var.azure_environment
 }
 
-data "azurerm_storage_account" "storage_account" {
-  name                = var.storage_account_name
+resource "azurerm_storage_account" "cluster" {
+  name                            = "cluster${var.random_storage_account_suffix}"
+  resource_group_name             = var.resource_group_name
+  location                        = var.azure_region
+  account_tier                    = "Standard"
+  account_replication_type        = "LRS"
+  min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
+  allow_nested_items_to_be_public = false
+  tags                            = var.azure_extra_tags
+}
+
+# copy over the vhd to cluster resource group and create an image using that
+resource "azurerm_storage_container" "vhd" {
+  name                 = "vhd"
+  storage_account_name = azurerm_storage_account.cluster.name
+}
+
+resource "azurerm_storage_blob" "rhcos_image" {
+  name                   = "rhcos${var.random_storage_account_suffix}.vhd"
+  storage_account_name   = azurerm_storage_account.cluster.name
+  storage_container_name = azurerm_storage_container.vhd.name
+  type                   = "Page"
+  source_uri             = var.azure_image_url
+  metadata               = tomap({ source_uri = var.azure_image_url })
+}
+
+# Creates Shared Image Gallery
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/shared_image_gallery
+resource "azurerm_shared_image_gallery" "sig" {
+  name                = "gallery_${replace(var.cluster_id, "-", "_")}"
   resource_group_name = var.resource_group_name
+  location            = var.azure_region
+  tags                = var.azure_extra_tags
+}
+
+# Creates image definition
+# https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/shared_image
+resource "azurerm_shared_image" "cluster" {
+  name                = var.cluster_id
+  gallery_name        = azurerm_shared_image_gallery.sig.name
+  resource_group_name = var.resource_group_name
+  location            = var.azure_region
+  os_type             = "Linux"
+  architecture        = var.azure_vm_architecture
+
+  identifier {
+    publisher = "RedHat"
+    offer     = "rhcos"
+    sku       = "basic"
+  }
+
+  tags = var.azure_extra_tags
+}
+
+resource "azurerm_shared_image" "clustergen2" {
+  name                = "${var.cluster_id}-gen2"
+  gallery_name        = azurerm_shared_image_gallery.sig.name
+  resource_group_name = var.resource_group_name
+  location            = var.azure_region
+  os_type             = "Linux"
+  hyper_v_generation  = "V2"
+  architecture        = var.azure_vm_architecture
+
+  identifier {
+    publisher = "RedHat-gen2"
+    offer     = "rhcos-gen2"
+    sku       = "gen2"
+  }
+
+  tags = var.azure_extra_tags
+}
+
+resource "azurerm_shared_image_version" "cluster_image_version" {
+  name                = var.azure_image_release
+  gallery_name        = azurerm_shared_image.cluster.gallery_name
+  image_name          = azurerm_shared_image.cluster.name
+  resource_group_name = azurerm_shared_image.cluster.resource_group_name
+  location            = azurerm_shared_image.cluster.location
+
+  blob_uri           = azurerm_storage_blob.rhcos_image.url
+  storage_account_id = azurerm_storage_account.cluster.id
+
+  target_region {
+    name                   = azurerm_shared_image.cluster.location
+    regional_replica_count = 1
+  }
+}
+
+resource "azurerm_shared_image_version" "clustergen2_image_version" {
+  name                = var.azure_image_release
+  gallery_name        = azurerm_shared_image.clustergen2.gallery_name
+  image_name          = azurerm_shared_image.clustergen2.name
+  resource_group_name = azurerm_shared_image.clustergen2.resource_group_name
+  location            = azurerm_shared_image.clustergen2.location
+
+  blob_uri           = azurerm_storage_blob.rhcos_image.url
+  storage_account_id = azurerm_storage_account.cluster.id
+
+  target_region {
+    name                   = azurerm_shared_image.clustergen2.location
+    regional_replica_count = 1
+  }
 }
 
 data "azurerm_storage_account_sas" "ignition" {
-  connection_string = data.azurerm_storage_account.storage_account.primary_connection_string
+  connection_string = azurerm_storage_account.cluster.primary_connection_string
   https_only        = true
 
   resource_types {
@@ -56,14 +158,14 @@ data "azurerm_storage_account_sas" "ignition" {
 
 resource "azurerm_storage_container" "ignition" {
   name                  = "ignition"
-  storage_account_name  = var.storage_account_name
+  storage_account_name  = azurerm_storage_account.cluster.name
   container_access_type = "private"
 }
 
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = var.ignition_bootstrap_file
-  storage_account_name   = var.storage_account_name
+  storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
 }
@@ -217,7 +319,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     disk_encryption_set_id = var.azure_master_disk_encryption_set_id
   }
 
-  source_image_id = var.vm_image
+  source_image_id = var.azure_hypervgeneration_version == "V2" ? azurerm_shared_image_version.clustergen2_image_version.id : azurerm_shared_image_version.cluster_image_version.id
 
   computer_name = "${var.cluster_id}-bootstrap-vm"
   custom_data   = base64encode(data.ignition_config.redirect.rendered)
