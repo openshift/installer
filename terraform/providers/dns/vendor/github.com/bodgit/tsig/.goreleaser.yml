@@ -1,0 +1,10 @@
+---
+before:
+  hooks:
+    - go mod tidy
+builds:
+  - skip: true
+release:
+  prerelease: auto
+changelog:
+  use: github-native
