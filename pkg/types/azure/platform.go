@@ -9,13 +9,17 @@ import (
 var aro bool
 
 // OutboundType is a strategy for how egress from cluster is achieved.
-// +kubebuilder:validation:Enum="";Loadbalancer;UserDefinedRouting
+// +kubebuilder:validation:Enum="";Loadbalancer;NatGateway;UserDefinedRouting
 type OutboundType string
 
 const (
 	// LoadbalancerOutboundType uses Standard loadbalancer for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/load-balancer/load-balancer-outbound-connections#lb
 	LoadbalancerOutboundType OutboundType = "Loadbalancer"
+
+	// NatGatewayOutboundType uses NAT gateway for egress from the cluster
+	// see https://learn.microsoft.com/en-us/azure/virtual-network/nat-gateway/nat-gateway-resource
+	NatGatewayOutboundType OutboundType = "NatGateway"
 
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview

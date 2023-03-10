@@ -2191,6 +2191,7 @@ spec:
                     enum:
                     - ""
                     - Loadbalancer
+                    - NatGateway
                     - UserDefinedRouting
                     type: string
                   region:
