@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/ghodss/yaml"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
+	"sigs.k8s.io/yaml"
 
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )

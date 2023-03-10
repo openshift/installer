@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	clientcmd "k8s.io/client-go/tools/clientcmd/api/v1"
+	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/tls"
