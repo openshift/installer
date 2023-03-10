@@ -509,6 +509,25 @@ else
             /usr/bin/cluster-etcd-operator \
             wait-for-ceo \
             --kubeconfig /assets/auth/kubeconfig
+        echo "Creating etcd namespace"
+        until \
+            oc create namespace openshift-etcd \
+                --kubeconfig=/opt/openshift/auth/kubeconfig
+        do
+            sleep 10
+            echo "Trying again to create openshift-etcd namespace"
+        done
+        echo "Saving etcd pod to configmap"
+        until \
+            oc create configmap \
+                etcd-pod \
+                --from-file=pod.yaml=/etc/kubernetes/manifests/etcd-bootstrap-pod.yaml \
+                --namespace openshift-etcd \
+                --kubeconfig=/opt/openshift/auth/kubeconfig
+        do
+            sleep 10
+            echo "Trying again to save bootstrap etcd pod in the configmap"
+        done
         record_service_stage_success
     fi
 fi
