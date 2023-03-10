@@ -1,6 +1,16 @@
 {{if .IsOKD -}}
 #!/usr/bin/env bash
 set -euo pipefail
+
+# Exit early if pivot is attempted on SCOS Live ISO
+{{if .IsSCOS -}}
+source /etc/os-release
+if [[ ! $(touch /usr/.test) ]] && [[ ${ID} =~ ^(centos)$ ]]; then
+  touch /opt/openshift/.pivot-done
+  exit 0
+fi
+{{end -}}
+
 # Rebase to OKD's OSTree container image.
 # This is required in OKD as the node is first provisioned with plain Fedora CoreOS.
 
