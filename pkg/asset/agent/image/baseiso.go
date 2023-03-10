@@ -3,6 +3,7 @@ package image
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"time"
@@ -127,6 +128,11 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
 			i.File = &asset.File{Filename: baseIsoFileName}
 			return nil
+		}
+
+		if errors.Is(err, fs.ErrNotExist) {
+			// if image extract failed to extract the iso that architecture may be missing from release image
+			return fmt.Errorf("base ISO for %s not found in release image, check release image architecture", archName)
 		}
 		if !errors.Is(err, &exec.Error{}) { // Already warned about missing oc binary
 			logrus.Warning("Failed to extract base ISO from release payload - check registry configuration")
