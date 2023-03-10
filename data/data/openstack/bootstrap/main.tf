@@ -53,9 +53,9 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   }
 
   dynamic "allowed_address_pairs" {
-    for_each = var.openstack_user_managed_load_balancer ? [] : [1]
+    for_each = var.openstack_user_managed_load_balancer ? [] : var.openstack_api_int_ips
     content {
-      ip_address = var.openstack_api_int_ip
+      ip_address = allowed_address_pairs.value
     }
   }
 
