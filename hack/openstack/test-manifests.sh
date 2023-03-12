@@ -89,6 +89,14 @@ while getopts a:c:e:f:i:t:pr:h o; do
 done
 readonly api_fip os_cloud external_network compute_flavor openshift_install tests_dir persist run
 
+declare python_venv
+if [[ -w './bin' ]]; then
+	python_venv="$(realpath './bin/venv')"
+else
+	python_venv="$(mktemp -d)"
+fi
+readonly python_venv
+
 declare -a temp_dirs
 cleanup() {
 	if [[ "$persist" == 'NO' ]]; then
@@ -101,7 +109,15 @@ trap cleanup EXIT
 
 validate_configuration
 
+python -m venv "$python_venv"
+# shellcheck source=/dev/null
+source "${python_venv}/bin/activate"
+pip install unittest-xml-reporting pyyaml
+
 >&2 echo "Running the tests from '${tests_dir}' against the Installer binary '${openshift_install}'."
+
+export JUNIT_DIR="${ARTIFACT_DIR:-.}/junit"
+mkdir -p "$JUNIT_DIR"
 
 declare result='PASS'
 for testcase in "${tests_dir}"/* ; do
@@ -117,6 +133,12 @@ for testcase in "${tests_dir}"/* ; do
 		fill_install_config "${testcase}/install-config.yaml" > "${assets_dir}/install-config.yaml"
 		"$openshift_install" --log-level warn create manifests --dir "$assets_dir"
 		for t in "${testcase}"/test_*; do
+			declare JUNIT_FILE test_name
+			test_name="$(basename -- "$t")"
+			test_name="${test_name#test_}"
+			test_name="${test_name%.*}"
+			JUNIT_FILE="${JUNIT_DIR}/$(basename -- "${testcase}")_${test_name}.xml"
+			export JUNIT_FILE
 			if $t "$assets_dir"; then
 				echo "PASS: '$t'"
 			else
