@@ -9,10 +9,10 @@ import glob
 import yaml
 
 ASSETS_DIR = ""
-INSTALLCONFIG_PATH = ""
+INSTALLCONFIG_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'install-config.yaml')
 
 
-class TestMachines(unittest.TestCase):
+class FailureDomainsMachines(unittest.TestCase):
     def setUp(self):
         """Parse the expected values from install-config and collect Machine resources."""
         self.machines = []

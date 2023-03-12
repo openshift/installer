@@ -107,7 +107,7 @@ declare result='PASS'
 for testcase in "${tests_dir}"/* ; do
 	if [ -d "$testcase" ] && [[ "$testcase" =~ $run ]]; then
 		echo
-		echo "*** TEST CASE: $(basename "${testcase}")"
+		echo "*** TEST CASE: $(basename -- "$testcase")"
 		assets_dir="$(mktemp -d)"
 		if [[ "$persist" != 'NO' ]]; then
 			echo "Generated assets for this test can be found in ${assets_dir}"

@@ -9,7 +9,7 @@ import yaml
 
 ASSETS_DIR = ""
 
-class TestClusterInfraObject(unittest.TestCase):
+class DefaultTechPreviewLoadBalancerClusterInfraObject(unittest.TestCase):
     def setUp(self):
         """Parse the Cluster Infrastructure object into a Python data structure."""
         self.machines = []
@@ -18,13 +18,8 @@ class TestClusterInfraObject(unittest.TestCase):
             self.cluster_infra = yaml.load(f, Loader=yaml.FullLoader)
 
     def test_load_balancer(self):
-        """Assert that the Cluster infrastructure object contains the LoadBalancer configuration."""
-        self.assertIn("loadBalancer", self.cluster_infra["status"]["platformStatus"]["openstack"])
-
-        loadBalancer = self.cluster_infra["status"]["platformStatus"]["openstack"]["loadBalancer"]
-
-        self.assertIn("type", loadBalancer)
-        self.assertEqual("UserManaged", loadBalancer["type"])
+        """Assert that the Cluster infrastructure object does not contain the LoadBalancer configuration."""
+        self.assertNotIn("loadBalancer", self.cluster_infra["status"]["platformStatus"]["openstack"])
 
 
 if __name__ == '__main__':
