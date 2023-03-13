@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/coreos/ignition/v2/config/util"
@@ -135,7 +134,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
 
-	releaseImageMirror := getMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
+	releaseImageMirror := mirror.GetMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
 
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
@@ -479,23 +478,6 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 		err = errors.New("missing rendezvousIP in agent-config or at least one NMStateConfig manifest")
 	}
 	return rendezvousIP, err
-}
-
-func getMirrorFromRelease(releaseImage string, registriesConfig *mirror.RegistriesConf) string {
-	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(releaseImage)
-	for _, config := range registriesConfig.MirrorConfig {
-		if config.Location == source[1] {
-			// include the tag with the build release image
-			if len(source) == 4 {
-				// Has Sha256
-				return fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
-			} else if len(source) == 3 {
-				return fmt.Sprintf("%s:%s", config.Mirror, source[2])
-			}
-		}
-	}
-
-	return ""
 }
 
 func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) string {

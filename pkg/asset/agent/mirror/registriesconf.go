@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
+	"regexp"
 
 	"github.com/containers/image/pkg/sysregistriesv2"
 	"github.com/openshift/installer/pkg/asset"
@@ -161,9 +161,8 @@ func (i *RegistriesConf) Generate(dependencies asset.Parents) error {
 	i.Config = registries
 	i.setMirrorConfig(i.Config)
 
-	releaseImagePath := strings.Split(releaseImage.PullSpec, ":")[0]
-	if found := i.validateReleaseImageIsSameInRegistriesConf(releaseImagePath); !found {
-		logrus.Warnf(fmt.Sprintf("The ImageContentSources configuration in install-config.yaml should have at-least one source field matching the releaseImage value %s", releaseImagePath))
+	if !i.releaseImageIsSameInRegistriesConf(releaseImage.PullSpec) {
+		logrus.Warnf(fmt.Sprintf("The ImageContentSources configuration in install-config.yaml should have at least one source field matching the releaseImage value %s", releaseImage.PullSpec))
 	}
 
 	registriesData, err := toml.Marshal(registries)
@@ -210,10 +209,9 @@ func (i *RegistriesConf) Load(f asset.FileFetcher) (bool, error) {
 	i.setMirrorConfig(i.Config)
 
 	if string(i.File.Data) != defaultRegistriesConf {
-		if valid := i.validateRegistriesConf(); valid {
-			releaseImagePath := strings.Split(releaseImage.PullSpec, ":")[0]
-			if found := i.validateReleaseImageIsSameInRegistriesConf(releaseImagePath); !found {
-				logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImagePath))
+		if i.validateRegistriesConf() {
+			if !i.releaseImageIsSameInRegistriesConf(releaseImage.PullSpec) {
+				logrus.Warnf(fmt.Sprintf("%s should have an entry matching the releaseImage %s", RegistriesConfFilename, releaseImage.PullSpec))
 			}
 		}
 	}
@@ -231,18 +229,8 @@ func (i *RegistriesConf) validateRegistriesConf() bool {
 	return true
 }
 
-func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf(releaseImagePath string) bool {
-
-	var found bool
-
-	for _, registry := range i.Config.Registries {
-		source := registry.Endpoint.Location
-		if source == releaseImagePath {
-			found = true
-			break
-		}
-	}
-	return found
+func (i *RegistriesConf) releaseImageIsSameInRegistriesConf(releaseImage string) bool {
+	return GetMirrorFromRelease(releaseImage, i) != ""
 }
 
 func (i *RegistriesConf) generateDefaultRegistriesConf() error {
@@ -267,4 +255,23 @@ func (i *RegistriesConf) setMirrorConfig(registriesConf *sysregistriesv2.V2Regis
 		}
 	}
 	i.MirrorConfig = mirrorConfig
+}
+
+// GetMirrorFromRelease gets the matching mirror configured for the releaseImage.
+func GetMirrorFromRelease(releaseImage string, registriesConfig *RegistriesConf) string {
+	source := regexp.MustCompile(`^(.+?)(@sha256)?:(.+)`).FindStringSubmatch(releaseImage)
+	for _, config := range registriesConfig.MirrorConfig {
+		if config.Location == source[1] {
+			// include the tag with the build release image
+			switch len(source) {
+			case 4:
+				// Has Sha256
+				return fmt.Sprintf("%s%s:%s", config.Mirror, source[2], source[3])
+			case 3:
+				return fmt.Sprintf("%s:%s", config.Mirror, source[2])
+			}
+		}
+	}
+
+	return ""
 }

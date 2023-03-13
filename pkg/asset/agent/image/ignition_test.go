@@ -668,7 +668,7 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 
-			mirror := getMirrorFromRelease(tc.release, &tc.registriesConf)
+			mirror := mirror.GetMirrorFromRelease(tc.release, &tc.registriesConf)
 
 			assert.Equal(t, tc.expectedMirror, mirror)
 
