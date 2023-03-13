@@ -29,14 +29,13 @@ const opCreateAccessPoint = "CreateAccessPoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateAccessPointRequest method.
+//	req, resp := client.CreateAccessPointRequest(params)
 //
-//    // Example sending a request using the CreateAccessPointRequest method.
-//    req, resp := client.CreateAccessPointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateAccessPoint
 func (c *EFS) CreateAccessPointRequest(input *CreateAccessPointInput) (req *request.Request, output *CreateAccessPointOutput) {
@@ -66,6 +65,12 @@ func (c *EFS) CreateAccessPointRequest(input *CreateAccessPointInput) (req *requ
 // data in the application's own directory and any subdirectories. To learn
 // more, see Mounting a file system using EFS access points (https://docs.aws.amazon.com/efs/latest/ug/efs-access-points.html).
 //
+// If multiple requests to create access points on the same file system are
+// sent in quick succession, and the file system is near the limit of 1000 access
+// points, you may experience a throttling response for these requests. This
+// is to ensure that the file system does not exceed the stated access point
+// limit.
+//
 // This operation requires permissions for the elasticfilesystem:CreateAccessPoint
 // action.
 //
@@ -77,33 +82,35 @@ func (c *EFS) CreateAccessPointRequest(input *CreateAccessPointInput) (req *requ
 // API operation CreateAccessPoint for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * AccessPointAlreadyExists
-//   Returned if the access point that you are trying to create already exists,
-//   with the creation token you provided in the request.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - AccessPointAlreadyExists
+//     Returned if the access point that you are trying to create already exists,
+//     with the creation token you provided in the request.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * AccessPointLimitExceeded
-//   Returned if the Amazon Web Services account has already created the maximum
-//   number of access points allowed per file system. For more informaton, see
-//   https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region
-//   (https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region).
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * ThrottlingException
-//   Returned when the CreateAccessPoint API action is called too quickly and
-//   the number of Access Points in the account is nearing the limit of 120.
+//   - AccessPointLimitExceeded
+//     Returned if the Amazon Web Services account has already created the maximum
+//     number of access points allowed per file system. For more informaton, see
+//     https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region
+//     (https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region).
+//
+//   - ThrottlingException
+//     Returned when the CreateAccessPoint API action is called too quickly and
+//     the number of Access Points on the file system is nearing the limit of 120
+//     (https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateAccessPoint
 func (c *EFS) CreateAccessPoint(input *CreateAccessPointInput) (*CreateAccessPointOutput, error) {
@@ -143,14 +150,13 @@ const opCreateFileSystem = "CreateFileSystem"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateFileSystemRequest method.
+//	req, resp := client.CreateFileSystemRequest(params)
 //
-//    // Example sending a request using the CreateFileSystemRequest method.
-//    req, resp := client.CreateFileSystemRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateFileSystem
 func (c *EFS) CreateFileSystemRequest(input *CreateFileSystemInput) (req *request.Request, output *FileSystemDescription) {
@@ -177,10 +183,10 @@ func (c *EFS) CreateFileSystemRequest(input *CreateFileSystemInput) (req *reques
 // not currently exist that is owned by the caller's Amazon Web Services account
 // with the specified creation token, this operation does the following:
 //
-//    * Creates a new, empty file system. The file system will have an Amazon
-//    EFS assigned ID, and an initial lifecycle state creating.
+//   - Creates a new, empty file system. The file system will have an Amazon
+//     EFS assigned ID, and an initial lifecycle state creating.
 //
-//    * Returns with the description of the created file system.
+//   - Returns with the description of the created file system.
 //
 // Otherwise, this operation returns a FileSystemAlreadyExists error with the
 // ID of the existing file system.
@@ -233,36 +239,37 @@ func (c *EFS) CreateFileSystemRequest(input *CreateFileSystemInput) (req *reques
 // API operation CreateFileSystem for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemAlreadyExists
-//   Returned if the file system you are trying to create already exists, with
-//   the creation token you provided.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * FileSystemLimitExceeded
-//   Returned if the Amazon Web Services account has already created the maximum
-//   number of file systems allowed per account.
+//   - FileSystemAlreadyExists
+//     Returned if the file system you are trying to create already exists, with
+//     the creation token you provided.
 //
-//   * InsufficientThroughputCapacity
-//   Returned if there's not enough capacity to provision additional throughput.
-//   This value might be returned when you try to create a file system in provisioned
-//   throughput mode, when you attempt to increase the provisioned throughput
-//   of an existing file system, or when you attempt to change an existing file
-//   system from Bursting Throughput to Provisioned Throughput mode. Try again
-//   later.
+//   - FileSystemLimitExceeded
+//     Returned if the Amazon Web Services account has already created the maximum
+//     number of file systems allowed per account.
 //
-//   * ThroughputLimitExceeded
-//   Returned if the throughput mode or amount of provisioned throughput can't
-//   be changed because the throughput limit of 1024 MiB/s has been reached.
+//   - InsufficientThroughputCapacity
+//     Returned if there's not enough capacity to provision additional throughput.
+//     This value might be returned when you try to create a file system in provisioned
+//     throughput mode, when you attempt to increase the provisioned throughput
+//     of an existing file system, or when you attempt to change an existing file
+//     system from Bursting Throughput to Provisioned Throughput mode. Try again
+//     later.
 //
-//   * UnsupportedAvailabilityZone
-//   Returned if the requested Amazon EFS functionality is not available in the
-//   specified Availability Zone.
+//   - ThroughputLimitExceeded
+//     Returned if the throughput mode or amount of provisioned throughput can't
+//     be changed because the throughput limit of 1024 MiB/s has been reached.
+//
+//   - UnsupportedAvailabilityZone
+//     Returned if the requested Amazon EFS functionality is not available in the
+//     specified Availability Zone.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateFileSystem
 func (c *EFS) CreateFileSystem(input *CreateFileSystemInput) (*FileSystemDescription, error) {
@@ -302,14 +309,13 @@ const opCreateMountTarget = "CreateMountTarget"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateMountTargetRequest method.
+//	req, resp := client.CreateMountTargetRequest(params)
 //
-//    // Example sending a request using the CreateMountTargetRequest method.
-//    req, resp := client.CreateMountTargetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateMountTarget
 func (c *EFS) CreateMountTargetRequest(input *CreateMountTargetInput) (req *request.Request, output *MountTargetDescription) {
@@ -354,13 +360,13 @@ func (c *EFS) CreateMountTargetRequest(input *CreateMountTargetInput) (req *requ
 //
 // In the request, provide the following:
 //
-//    * The file system ID for which you are creating the mount target.
+//   - The file system ID for which you are creating the mount target.
 //
-//    * A subnet ID, which determines the following: The VPC in which Amazon
-//    EFS creates the mount target The Availability Zone in which Amazon EFS
-//    creates the mount target The IP address range from which Amazon EFS selects
-//    the IP address of the mount target (if you don't specify an IP address
-//    in the request)
+//   - A subnet ID, which determines the following: The VPC in which Amazon
+//     EFS creates the mount target The Availability Zone in which Amazon EFS
+//     creates the mount target The IP address range from which Amazon EFS selects
+//     the IP address of the mount target (if you don't specify an IP address
+//     in the request)
 //
 // After creating the mount target, Amazon EFS returns a response that includes,
 // a MountTargetId and an IpAddress. You use this IP address when mounting the
@@ -376,31 +382,31 @@ func (c *EFS) CreateMountTargetRequest(input *CreateMountTargetInput) (req *requ
 // subnet specified in the request to add another mount target must meet the
 // following requirements:
 //
-//    * Must belong to the same VPC as the subnets of the existing mount targets
+//   - Must belong to the same VPC as the subnets of the existing mount targets
 //
-//    * Must not be in the same Availability Zone as any of the subnets of the
-//    existing mount targets
+//   - Must not be in the same Availability Zone as any of the subnets of the
+//     existing mount targets
 //
 // If the request satisfies the requirements, Amazon EFS does the following:
 //
-//    * Creates a new mount target in the specified subnet.
+//   - Creates a new mount target in the specified subnet.
 //
-//    * Also creates a new network interface in the subnet as follows: If the
-//    request provides an IpAddress, Amazon EFS assigns that IP address to the
-//    network interface. Otherwise, Amazon EFS assigns a free address in the
-//    subnet (in the same way that the Amazon EC2 CreateNetworkInterface call
-//    does when a request does not specify a primary private IP address). If
-//    the request provides SecurityGroups, this network interface is associated
-//    with those security groups. Otherwise, it belongs to the default security
-//    group for the subnet's VPC. Assigns the description Mount target fsmt-id
-//    for file system fs-id where fsmt-id is the mount target ID, and fs-id
-//    is the FileSystemId. Sets the requesterManaged property of the network
-//    interface to true, and the requesterId value to EFS. Each Amazon EFS mount
-//    target has one corresponding requester-managed EC2 network interface.
-//    After the network interface is created, Amazon EFS sets the NetworkInterfaceId
-//    field in the mount target's description to the network interface ID, and
-//    the IpAddress field to its address. If network interface creation fails,
-//    the entire CreateMountTarget operation fails.
+//   - Also creates a new network interface in the subnet as follows: If the
+//     request provides an IpAddress, Amazon EFS assigns that IP address to the
+//     network interface. Otherwise, Amazon EFS assigns a free address in the
+//     subnet (in the same way that the Amazon EC2 CreateNetworkInterface call
+//     does when a request does not specify a primary private IP address). If
+//     the request provides SecurityGroups, this network interface is associated
+//     with those security groups. Otherwise, it belongs to the default security
+//     group for the subnet's VPC. Assigns the description Mount target fsmt-id
+//     for file system fs-id where fsmt-id is the mount target ID, and fs-id
+//     is the FileSystemId. Sets the requesterManaged property of the network
+//     interface to true, and the requesterId value to EFS. Each Amazon EFS mount
+//     target has one corresponding requester-managed EC2 network interface.
+//     After the network interface is created, Amazon EFS sets the NetworkInterfaceId
+//     field in the mount target's description to the network interface ID, and
+//     the IpAddress field to its address. If network interface creation fails,
+//     the entire CreateMountTarget operation fails.
 //
 // The CreateMountTarget call returns only after creating the network interface,
 // but while the mount target state is still creating, you can check the mount
@@ -419,15 +425,15 @@ func (c *EFS) CreateMountTargetRequest(input *CreateMountTargetInput) (req *requ
 // This operation requires permissions for the following action on the file
 // system:
 //
-//    * elasticfilesystem:CreateMountTarget
+//   - elasticfilesystem:CreateMountTarget
 //
 // This operation also requires permissions for the following Amazon EC2 actions:
 //
-//    * ec2:DescribeSubnets
+//   - ec2:DescribeSubnets
 //
-//    * ec2:DescribeNetworkInterfaces
+//   - ec2:DescribeNetworkInterfaces
 //
-//    * ec2:CreateNetworkInterface
+//   - ec2:CreateNetworkInterface
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -437,59 +443,60 @@ func (c *EFS) CreateMountTargetRequest(input *CreateMountTargetInput) (req *requ
 // API operation CreateMountTarget for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * MountTargetConflict
-//   Returned if the mount target would violate one of the specified restrictions
-//   based on the file system's existing mount targets.
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
-//   * SubnetNotFound
-//   Returned if there is no subnet with ID SubnetId provided in the request.
+//   - MountTargetConflict
+//     Returned if the mount target would violate one of the specified restrictions
+//     based on the file system's existing mount targets.
 //
-//   * NoFreeAddressesInSubnet
-//   Returned if IpAddress was not specified in the request and there are no free
-//   IP addresses in the subnet.
+//   - SubnetNotFound
+//     Returned if there is no subnet with ID SubnetId provided in the request.
 //
-//   * IpAddressInUse
-//   Returned if the request specified an IpAddress that is already in use in
-//   the subnet.
+//   - NoFreeAddressesInSubnet
+//     Returned if IpAddress was not specified in the request and there are no free
+//     IP addresses in the subnet.
 //
-//   * NetworkInterfaceLimitExceeded
-//   The calling account has reached the limit for elastic network interfaces
-//   for the specific Amazon Web Services Region. Either delete some network interfaces
-//   or request that the account quota be raised. For more information, see Amazon
-//   VPC Quotas (https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_Limits.html)
-//   in the Amazon VPC User Guide (see the Network interfaces per Region entry
-//   in the Network interfaces table).
+//   - IpAddressInUse
+//     Returned if the request specified an IpAddress that is already in use in
+//     the subnet.
 //
-//   * SecurityGroupLimitExceeded
-//   Returned if the size of SecurityGroups specified in the request is greater
-//   than five.
+//   - NetworkInterfaceLimitExceeded
+//     The calling account has reached the limit for elastic network interfaces
+//     for the specific Amazon Web Services Region. Either delete some network interfaces
+//     or request that the account quota be raised. For more information, see Amazon
+//     VPC Quotas (https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Appendix_Limits.html)
+//     in the Amazon VPC User Guide (see the Network interfaces per Region entry
+//     in the Network interfaces table).
 //
-//   * SecurityGroupNotFound
-//   Returned if one of the specified security groups doesn't exist in the subnet's
-//   virtual private cloud (VPC).
+//   - SecurityGroupLimitExceeded
+//     Returned if the size of SecurityGroups specified in the request is greater
+//     than five.
 //
-//   * UnsupportedAvailabilityZone
-//   Returned if the requested Amazon EFS functionality is not available in the
-//   specified Availability Zone.
+//   - SecurityGroupNotFound
+//     Returned if one of the specified security groups doesn't exist in the subnet's
+//     virtual private cloud (VPC).
 //
-//   * AvailabilityZonesMismatch
-//   Returned if the Availability Zone that was specified for a mount target is
-//   different from the Availability Zone that was specified for One Zone storage.
-//   For more information, see Regional and One Zone storage redundancy (https://docs.aws.amazon.com/efs/latest/ug/availability-durability.html).
+//   - UnsupportedAvailabilityZone
+//     Returned if the requested Amazon EFS functionality is not available in the
+//     specified Availability Zone.
+//
+//   - AvailabilityZonesMismatch
+//     Returned if the Availability Zone that was specified for a mount target is
+//     different from the Availability Zone that was specified for One Zone storage.
+//     For more information, see Regional and One Zone storage redundancy (https://docs.aws.amazon.com/efs/latest/ug/availability-durability.html).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateMountTarget
 func (c *EFS) CreateMountTarget(input *CreateMountTargetInput) (*MountTargetDescription, error) {
@@ -529,14 +536,13 @@ const opCreateReplicationConfiguration = "CreateReplicationConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateReplicationConfigurationRequest method.
+//	req, resp := client.CreateReplicationConfigurationRequest(params)
 //
-//    // Example sending a request using the CreateReplicationConfigurationRequest method.
-//    req, resp := client.CreateReplicationConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateReplicationConfiguration
 func (c *EFS) CreateReplicationConfigurationRequest(input *CreateReplicationConfigurationInput) (req *request.Request, output *CreateReplicationConfigurationOutput) {
@@ -563,50 +569,50 @@ func (c *EFS) CreateReplicationConfigurationRequest(input *CreateReplicationConf
 // in the Amazon EFS User Guide. The replication configuration specifies the
 // following:
 //
-//    * Source file system - An existing EFS file system that you want replicated.
-//    The source file system cannot be a destination file system in an existing
-//    replication configuration.
+//   - Source file system - An existing EFS file system that you want replicated.
+//     The source file system cannot be a destination file system in an existing
+//     replication configuration.
 //
-//    * Destination file system configuration - The configuration of the destination
-//    file system to which the source file system will be replicated. There
-//    can only be one destination file system in a replication configuration.
-//    The destination file system configuration consists of the following properties:
-//    Amazon Web Services Region - The Amazon Web Services Region in which the
-//    destination file system is created. Amazon EFS replication is available
-//    in all Amazon Web Services Regions that Amazon EFS is available in, except
-//    Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Jakarta),
-//    Europe (Milan), and Middle East (Bahrain). Availability Zone - If you
-//    want the destination file system to use EFS One Zone availability and
-//    durability, you must specify the Availability Zone to create the file
-//    system in. For more information about EFS storage classes, see Amazon
-//    EFS storage classes (https://docs.aws.amazon.com/efs/latest/ug/storage-classes.html)
-//    in the Amazon EFS User Guide. Encryption - All destination file systems
-//    are created with encryption at rest enabled. You can specify the Key Management
-//    Service (KMS) key that is used to encrypt the destination file system.
-//    If you don't specify a KMS key, your service-managed KMS key for Amazon
-//    EFS is used. After the file system is created, you cannot change the KMS
-//    key.
+//   - Destination file system configuration - The configuration of the destination
+//     file system to which the source file system will be replicated. There
+//     can only be one destination file system in a replication configuration.
+//     The destination file system configuration consists of the following properties:
+//     Amazon Web Services Region - The Amazon Web Services Region in which the
+//     destination file system is created. Amazon EFS replication is available
+//     in all Amazon Web Services Regions that Amazon EFS is available in, except
+//     Africa (Cape Town), Asia Pacific (Hong Kong), Asia Pacific (Jakarta),
+//     Europe (Milan), and Middle East (Bahrain). Availability Zone - If you
+//     want the destination file system to use EFS One Zone availability and
+//     durability, you must specify the Availability Zone to create the file
+//     system in. For more information about EFS storage classes, see Amazon
+//     EFS storage classes (https://docs.aws.amazon.com/efs/latest/ug/storage-classes.html)
+//     in the Amazon EFS User Guide. Encryption - All destination file systems
+//     are created with encryption at rest enabled. You can specify the Key Management
+//     Service (KMS) key that is used to encrypt the destination file system.
+//     If you don't specify a KMS key, your service-managed KMS key for Amazon
+//     EFS is used. After the file system is created, you cannot change the KMS
+//     key.
 //
 // The following properties are set by default:
 //
-//    * Performance mode - The destination file system's performance mode matches
-//    that of the source file system, unless the destination file system uses
-//    EFS One Zone storage. In that case, the General Purpose performance mode
-//    is used. The performance mode cannot be changed.
+//   - Performance mode - The destination file system's performance mode matches
+//     that of the source file system, unless the destination file system uses
+//     EFS One Zone storage. In that case, the General Purpose performance mode
+//     is used. The performance mode cannot be changed.
 //
-//    * Throughput mode - The destination file system uses the Bursting Throughput
-//    mode by default. After the file system is created, you can modify the
-//    throughput mode.
+//   - Throughput mode - The destination file system's throughput mode matches
+//     that of the source file system. After the file system is created, you
+//     can modify the throughput mode.
 //
 // The following properties are turned off by default:
 //
-//    * Lifecycle management - EFS lifecycle management and EFS Intelligent-Tiering
-//    are not enabled on the destination file system. After the destination
-//    file system is created, you can enable EFS lifecycle management and EFS
-//    Intelligent-Tiering.
+//   - Lifecycle management - EFS lifecycle management and EFS Intelligent-Tiering
+//     are not enabled on the destination file system. After the destination
+//     file system is created, you can enable EFS lifecycle management and EFS
+//     Intelligent-Tiering.
 //
-//    * Automatic backups - Automatic daily backups not enabled on the destination
-//    file system. After the file system is created, you can change this setting.
+//   - Automatic backups - Automatic daily backups not enabled on the destination
+//     file system. After the file system is created, you can change this setting.
 //
 // For more information, see Amazon EFS replication (https://docs.aws.amazon.com/efs/latest/ug/efs-replication.html)
 // in the Amazon EFS User Guide.
@@ -619,46 +625,47 @@ func (c *EFS) CreateReplicationConfigurationRequest(input *CreateReplicationConf
 // API operation CreateReplicationConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * ValidationException
-//   Returned if the Backup service is not available in the Amazon Web Services
-//   Region in which the request was made.
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
-//   * ReplicationNotFound
-//   Returned if the specified file system does not have a replication configuration.
+//   - ValidationException
+//     Returned if the Backup service is not available in the Amazon Web Services
+//     Region in which the request was made.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - ReplicationNotFound
+//     Returned if the specified file system does not have a replication configuration.
 //
-//   * UnsupportedAvailabilityZone
-//   Returned if the requested Amazon EFS functionality is not available in the
-//   specified Availability Zone.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * FileSystemLimitExceeded
-//   Returned if the Amazon Web Services account has already created the maximum
-//   number of file systems allowed per account.
+//   - UnsupportedAvailabilityZone
+//     Returned if the requested Amazon EFS functionality is not available in the
+//     specified Availability Zone.
 //
-//   * InsufficientThroughputCapacity
-//   Returned if there's not enough capacity to provision additional throughput.
-//   This value might be returned when you try to create a file system in provisioned
-//   throughput mode, when you attempt to increase the provisioned throughput
-//   of an existing file system, or when you attempt to change an existing file
-//   system from Bursting Throughput to Provisioned Throughput mode. Try again
-//   later.
+//   - FileSystemLimitExceeded
+//     Returned if the Amazon Web Services account has already created the maximum
+//     number of file systems allowed per account.
 //
-//   * ThroughputLimitExceeded
-//   Returned if the throughput mode or amount of provisioned throughput can't
-//   be changed because the throughput limit of 1024 MiB/s has been reached.
+//   - InsufficientThroughputCapacity
+//     Returned if there's not enough capacity to provision additional throughput.
+//     This value might be returned when you try to create a file system in provisioned
+//     throughput mode, when you attempt to increase the provisioned throughput
+//     of an existing file system, or when you attempt to change an existing file
+//     system from Bursting Throughput to Provisioned Throughput mode. Try again
+//     later.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - ThroughputLimitExceeded
+//     Returned if the throughput mode or amount of provisioned throughput can't
+//     be changed because the throughput limit of 1024 MiB/s has been reached.
+//
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateReplicationConfiguration
 func (c *EFS) CreateReplicationConfiguration(input *CreateReplicationConfigurationInput) (*CreateReplicationConfigurationOutput, error) {
@@ -698,14 +705,13 @@ const opCreateTags = "CreateTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the CreateTagsRequest method.
+//	req, resp := client.CreateTagsRequest(params)
 //
-//    // Example sending a request using the CreateTagsRequest method.
-//    req, resp := client.CreateTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateTags
 //
@@ -732,7 +738,6 @@ func (c *EFS) CreateTagsRequest(input *CreateTagsInput) (req *request.Request, o
 
 // CreateTags API operation for Amazon Elastic File System.
 //
-//
 // DEPRECATED - CreateTags is deprecated and not maintained. To create tags
 // for EFS resources, use the API action.
 //
@@ -752,16 +757,17 @@ func (c *EFS) CreateTagsRequest(input *CreateTagsInput) (req *request.Request, o
 // API operation CreateTags for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
+//
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateTags
 //
@@ -805,14 +811,13 @@ const opDeleteAccessPoint = "DeleteAccessPoint"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteAccessPointRequest method.
+//	req, resp := client.DeleteAccessPointRequest(params)
 //
-//    // Example sending a request using the DeleteAccessPointRequest method.
-//    req, resp := client.DeleteAccessPointRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteAccessPoint
 func (c *EFS) DeleteAccessPointRequest(input *DeleteAccessPointInput) (req *request.Request, output *DeleteAccessPointOutput) {
@@ -850,16 +855,17 @@ func (c *EFS) DeleteAccessPointRequest(input *DeleteAccessPointInput) (req *requ
 // API operation DeleteAccessPoint for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * AccessPointNotFound
-//   Returned if the specified AccessPointId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
+//
+//   - AccessPointNotFound
+//     Returned if the specified AccessPointId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteAccessPoint
 func (c *EFS) DeleteAccessPoint(input *DeleteAccessPointInput) (*DeleteAccessPointOutput, error) {
@@ -899,14 +905,13 @@ const opDeleteFileSystem = "DeleteFileSystem"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFileSystemRequest method.
+//	req, resp := client.DeleteFileSystemRequest(params)
 //
-//    // Example sending a request using the DeleteFileSystemRequest method.
-//    req, resp := client.DeleteFileSystemRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteFileSystem
 func (c *EFS) DeleteFileSystemRequest(input *DeleteFileSystemInput) (req *request.Request, output *DeleteFileSystemOutput) {
@@ -960,19 +965,20 @@ func (c *EFS) DeleteFileSystemRequest(input *DeleteFileSystemInput) (req *reques
 // API operation DeleteFileSystem for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * FileSystemInUse
-//   Returned if a file system has mount targets.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - FileSystemInUse
+//     Returned if a file system has mount targets.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteFileSystem
 func (c *EFS) DeleteFileSystem(input *DeleteFileSystemInput) (*DeleteFileSystemOutput, error) {
@@ -1012,14 +1018,13 @@ const opDeleteFileSystemPolicy = "DeleteFileSystemPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteFileSystemPolicyRequest method.
+//	req, resp := client.DeleteFileSystemPolicyRequest(params)
 //
-//    // Example sending a request using the DeleteFileSystemPolicyRequest method.
-//    req, resp := client.DeleteFileSystemPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteFileSystemPolicy
 func (c *EFS) DeleteFileSystemPolicyRequest(input *DeleteFileSystemPolicyInput) (req *request.Request, output *DeleteFileSystemPolicyOutput) {
@@ -1057,19 +1062,20 @@ func (c *EFS) DeleteFileSystemPolicyRequest(input *DeleteFileSystemPolicyInput) 
 // API operation DeleteFileSystemPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteFileSystemPolicy
 func (c *EFS) DeleteFileSystemPolicy(input *DeleteFileSystemPolicyInput) (*DeleteFileSystemPolicyOutput, error) {
@@ -1109,14 +1115,13 @@ const opDeleteMountTarget = "DeleteMountTarget"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteMountTargetRequest method.
+//	req, resp := client.DeleteMountTargetRequest(params)
 //
-//    // Example sending a request using the DeleteMountTargetRequest method.
-//    req, resp := client.DeleteMountTargetRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteMountTarget
 func (c *EFS) DeleteMountTargetRequest(input *DeleteMountTargetInput) (req *request.Request, output *DeleteMountTargetOutput) {
@@ -1152,7 +1157,7 @@ func (c *EFS) DeleteMountTargetRequest(input *DeleteMountTargetInput) (req *requ
 // This operation requires permissions for the following action on the file
 // system:
 //
-//    * elasticfilesystem:DeleteMountTarget
+//   - elasticfilesystem:DeleteMountTarget
 //
 // The DeleteMountTarget call returns while the mount target state is still
 // deleting. You can check the mount target deletion by calling the DescribeMountTargets
@@ -1162,7 +1167,7 @@ func (c *EFS) DeleteMountTargetRequest(input *DeleteMountTargetInput) (req *requ
 // The operation also requires permissions for the following Amazon EC2 action
 // on the mount target's network interface:
 //
-//    * ec2:DeleteNetworkInterface
+//   - ec2:DeleteNetworkInterface
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1172,20 +1177,21 @@ func (c *EFS) DeleteMountTargetRequest(input *DeleteMountTargetInput) (req *requ
 // API operation DeleteMountTarget for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * DependencyTimeout
-//   The service timed out trying to fulfill the request, and the client should
-//   try the call again.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * MountTargetNotFound
-//   Returned if there is no mount target with the specified ID found in the caller's
-//   Amazon Web Services account.
+//   - DependencyTimeout
+//     The service timed out trying to fulfill the request, and the client should
+//     try the call again.
+//
+//   - MountTargetNotFound
+//     Returned if there is no mount target with the specified ID found in the caller's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteMountTarget
 func (c *EFS) DeleteMountTarget(input *DeleteMountTargetInput) (*DeleteMountTargetOutput, error) {
@@ -1225,14 +1231,13 @@ const opDeleteReplicationConfiguration = "DeleteReplicationConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteReplicationConfigurationRequest method.
+//	req, resp := client.DeleteReplicationConfigurationRequest(params)
 //
-//    // Example sending a request using the DeleteReplicationConfigurationRequest method.
-//    req, resp := client.DeleteReplicationConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteReplicationConfiguration
 func (c *EFS) DeleteReplicationConfigurationRequest(input *DeleteReplicationConfigurationInput) (req *request.Request, output *DeleteReplicationConfigurationOutput) {
@@ -1269,19 +1274,20 @@ func (c *EFS) DeleteReplicationConfigurationRequest(input *DeleteReplicationConf
 // API operation DeleteReplicationConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * ReplicationNotFound
-//   Returned if the specified file system does not have a replication configuration.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - ReplicationNotFound
+//     Returned if the specified file system does not have a replication configuration.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteReplicationConfiguration
 func (c *EFS) DeleteReplicationConfiguration(input *DeleteReplicationConfigurationInput) (*DeleteReplicationConfigurationOutput, error) {
@@ -1321,14 +1327,13 @@ const opDeleteTags = "DeleteTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DeleteTagsRequest method.
+//	req, resp := client.DeleteTagsRequest(params)
 //
-//    // Example sending a request using the DeleteTagsRequest method.
-//    req, resp := client.DeleteTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteTags
 //
@@ -1355,7 +1360,6 @@ func (c *EFS) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Request, o
 
 // DeleteTags API operation for Amazon Elastic File System.
 //
-//
 // DEPRECATED - DeleteTags is deprecated and not maintained. To remove tags
 // from EFS resources, use the API action.
 //
@@ -1376,16 +1380,17 @@ func (c *EFS) DeleteTagsRequest(input *DeleteTagsInput) (req *request.Request, o
 // API operation DeleteTags for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
+//
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DeleteTags
 //
@@ -1429,14 +1434,13 @@ const opDescribeAccessPoints = "DescribeAccessPoints"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAccessPointsRequest method.
+//	req, resp := client.DescribeAccessPointsRequest(params)
 //
-//    // Example sending a request using the DescribeAccessPointsRequest method.
-//    req, resp := client.DescribeAccessPointsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeAccessPoints
 func (c *EFS) DescribeAccessPointsRequest(input *DescribeAccessPointsInput) (req *request.Request, output *DescribeAccessPointsOutput) {
@@ -1479,20 +1483,21 @@ func (c *EFS) DescribeAccessPointsRequest(input *DescribeAccessPointsInput) (req
 // API operation DescribeAccessPoints for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * AccessPointNotFound
-//   Returned if the specified AccessPointId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - AccessPointNotFound
+//     Returned if the specified AccessPointId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeAccessPoints
 func (c *EFS) DescribeAccessPoints(input *DescribeAccessPointsInput) (*DescribeAccessPointsOutput, error) {
@@ -1524,15 +1529,14 @@ func (c *EFS) DescribeAccessPointsWithContext(ctx aws.Context, input *DescribeAc
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeAccessPoints operation.
-//    pageNum := 0
-//    err := client.DescribeAccessPointsPages(params,
-//        func(page *efs.DescribeAccessPointsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeAccessPoints operation.
+//	pageNum := 0
+//	err := client.DescribeAccessPointsPages(params,
+//	    func(page *efs.DescribeAccessPointsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *EFS) DescribeAccessPointsPages(input *DescribeAccessPointsInput, fn func(*DescribeAccessPointsOutput, bool) bool) error {
 	return c.DescribeAccessPointsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -1584,14 +1588,13 @@ const opDescribeAccountPreferences = "DescribeAccountPreferences"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeAccountPreferencesRequest method.
+//	req, resp := client.DescribeAccountPreferencesRequest(params)
 //
-//    // Example sending a request using the DescribeAccountPreferencesRequest method.
-//    req, resp := client.DescribeAccountPreferencesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeAccountPreferences
 func (c *EFS) DescribeAccountPreferencesRequest(input *DescribeAccountPreferencesInput) (req *request.Request, output *DescribeAccountPreferencesOutput) {
@@ -1624,8 +1627,8 @@ func (c *EFS) DescribeAccountPreferencesRequest(input *DescribeAccountPreference
 // API operation DescribeAccountPreferences for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeAccountPreferences
 func (c *EFS) DescribeAccountPreferences(input *DescribeAccountPreferencesInput) (*DescribeAccountPreferencesOutput, error) {
@@ -1665,14 +1668,13 @@ const opDescribeBackupPolicy = "DescribeBackupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeBackupPolicyRequest method.
+//	req, resp := client.DescribeBackupPolicyRequest(params)
 //
-//    // Example sending a request using the DescribeBackupPolicyRequest method.
-//    req, resp := client.DescribeBackupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeBackupPolicy
 func (c *EFS) DescribeBackupPolicyRequest(input *DescribeBackupPolicyInput) (req *request.Request, output *DescribeBackupPolicyOutput) {
@@ -1703,24 +1705,25 @@ func (c *EFS) DescribeBackupPolicyRequest(input *DescribeBackupPolicyInput) (req
 // API operation DescribeBackupPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * PolicyNotFound
-//   Returned if the default file system policy is in effect for the EFS file
-//   system specified.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * ValidationException
-//   Returned if the Backup service is not available in the Amazon Web Services
-//   Region in which the request was made.
+//   - PolicyNotFound
+//     Returned if the default file system policy is in effect for the EFS file
+//     system specified.
+//
+//   - ValidationException
+//     Returned if the Backup service is not available in the Amazon Web Services
+//     Region in which the request was made.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeBackupPolicy
 func (c *EFS) DescribeBackupPolicy(input *DescribeBackupPolicyInput) (*DescribeBackupPolicyOutput, error) {
@@ -1760,14 +1763,13 @@ const opDescribeFileSystemPolicy = "DescribeFileSystemPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFileSystemPolicyRequest method.
+//	req, resp := client.DescribeFileSystemPolicyRequest(params)
 //
-//    // Example sending a request using the DescribeFileSystemPolicyRequest method.
-//    req, resp := client.DescribeFileSystemPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeFileSystemPolicy
 func (c *EFS) DescribeFileSystemPolicyRequest(input *DescribeFileSystemPolicyInput) (req *request.Request, output *DescribeFileSystemPolicyOutput) {
@@ -1801,20 +1803,21 @@ func (c *EFS) DescribeFileSystemPolicyRequest(input *DescribeFileSystemPolicyInp
 // API operation DescribeFileSystemPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * PolicyNotFound
-//   Returned if the default file system policy is in effect for the EFS file
-//   system specified.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - PolicyNotFound
+//     Returned if the default file system policy is in effect for the EFS file
+//     system specified.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeFileSystemPolicy
 func (c *EFS) DescribeFileSystemPolicy(input *DescribeFileSystemPolicyInput) (*DescribeFileSystemPolicyOutput, error) {
@@ -1854,14 +1857,13 @@ const opDescribeFileSystems = "DescribeFileSystems"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeFileSystemsRequest method.
+//	req, resp := client.DescribeFileSystemsRequest(params)
 //
-//    // Example sending a request using the DescribeFileSystemsRequest method.
-//    req, resp := client.DescribeFileSystemsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeFileSystems
 func (c *EFS) DescribeFileSystemsRequest(input *DescribeFileSystemsInput) (req *request.Request, output *DescribeFileSystemsOutput) {
@@ -1896,7 +1898,7 @@ func (c *EFS) DescribeFileSystemsRequest(input *DescribeFileSystemsInput) (req *
 //
 // When retrieving all file system descriptions, you can optionally specify
 // the MaxItems parameter to limit the number of descriptions in a response.
-// Currently, this number is automatically set to 10. If more file system descriptions
+// This number is automatically set to 100. If more file system descriptions
 // remain, Amazon EFS returns a NextMarker, an opaque token, in the response.
 // In this case, you should send a subsequent request with the Marker request
 // parameter set to the value of NextMarker.
@@ -1922,16 +1924,17 @@ func (c *EFS) DescribeFileSystemsRequest(input *DescribeFileSystemsInput) (req *
 // API operation DescribeFileSystems for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
+//
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeFileSystems
 func (c *EFS) DescribeFileSystems(input *DescribeFileSystemsInput) (*DescribeFileSystemsOutput, error) {
@@ -1963,15 +1966,14 @@ func (c *EFS) DescribeFileSystemsWithContext(ctx aws.Context, input *DescribeFil
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeFileSystems operation.
-//    pageNum := 0
-//    err := client.DescribeFileSystemsPages(params,
-//        func(page *efs.DescribeFileSystemsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeFileSystems operation.
+//	pageNum := 0
+//	err := client.DescribeFileSystemsPages(params,
+//	    func(page *efs.DescribeFileSystemsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *EFS) DescribeFileSystemsPages(input *DescribeFileSystemsInput, fn func(*DescribeFileSystemsOutput, bool) bool) error {
 	return c.DescribeFileSystemsPagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2023,14 +2025,13 @@ const opDescribeLifecycleConfiguration = "DescribeLifecycleConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeLifecycleConfigurationRequest method.
+//	req, resp := client.DescribeLifecycleConfigurationRequest(params)
 //
-//    // Example sending a request using the DescribeLifecycleConfigurationRequest method.
-//    req, resp := client.DescribeLifecycleConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeLifecycleConfiguration
 func (c *EFS) DescribeLifecycleConfigurationRequest(input *DescribeLifecycleConfigurationInput) (req *request.Request, output *DescribeLifecycleConfigurationOutput) {
@@ -2071,16 +2072,17 @@ func (c *EFS) DescribeLifecycleConfigurationRequest(input *DescribeLifecycleConf
 // API operation DescribeLifecycleConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
 //
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
+//
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeLifecycleConfiguration
 func (c *EFS) DescribeLifecycleConfiguration(input *DescribeLifecycleConfigurationInput) (*DescribeLifecycleConfigurationOutput, error) {
@@ -2120,14 +2122,13 @@ const opDescribeMountTargetSecurityGroups = "DescribeMountTargetSecurityGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeMountTargetSecurityGroupsRequest method.
+//	req, resp := client.DescribeMountTargetSecurityGroupsRequest(params)
 //
-//    // Example sending a request using the DescribeMountTargetSecurityGroupsRequest method.
-//    req, resp := client.DescribeMountTargetSecurityGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeMountTargetSecurityGroups
 func (c *EFS) DescribeMountTargetSecurityGroupsRequest(input *DescribeMountTargetSecurityGroupsInput) (req *request.Request, output *DescribeMountTargetSecurityGroupsOutput) {
@@ -2154,11 +2155,11 @@ func (c *EFS) DescribeMountTargetSecurityGroupsRequest(input *DescribeMountTarge
 //
 // This operation requires permissions for the following actions:
 //
-//    * elasticfilesystem:DescribeMountTargetSecurityGroups action on the mount
-//    target's file system.
+//   - elasticfilesystem:DescribeMountTargetSecurityGroups action on the mount
+//     target's file system.
 //
-//    * ec2:DescribeNetworkInterfaceAttribute action on the mount target's network
-//    interface.
+//   - ec2:DescribeNetworkInterfaceAttribute action on the mount target's network
+//     interface.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2168,19 +2169,20 @@ func (c *EFS) DescribeMountTargetSecurityGroupsRequest(input *DescribeMountTarge
 // API operation DescribeMountTargetSecurityGroups for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * MountTargetNotFound
-//   Returned if there is no mount target with the specified ID found in the caller's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * IncorrectMountTargetState
-//   Returned if the mount target is not in the correct state for the operation.
+//   - MountTargetNotFound
+//     Returned if there is no mount target with the specified ID found in the caller's
+//     Amazon Web Services account.
+//
+//   - IncorrectMountTargetState
+//     Returned if the mount target is not in the correct state for the operation.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeMountTargetSecurityGroups
 func (c *EFS) DescribeMountTargetSecurityGroups(input *DescribeMountTargetSecurityGroupsInput) (*DescribeMountTargetSecurityGroupsOutput, error) {
@@ -2220,14 +2222,13 @@ const opDescribeMountTargets = "DescribeMountTargets"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeMountTargetsRequest method.
+//	req, resp := client.DescribeMountTargetsRequest(params)
 //
-//    // Example sending a request using the DescribeMountTargetsRequest method.
-//    req, resp := client.DescribeMountTargetsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeMountTargets
 func (c *EFS) DescribeMountTargetsRequest(input *DescribeMountTargetsInput) (req *request.Request, output *DescribeMountTargetsOutput) {
@@ -2264,24 +2265,25 @@ func (c *EFS) DescribeMountTargetsRequest(input *DescribeMountTargetsInput) (req
 // API operation DescribeMountTargets for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * MountTargetNotFound
-//   Returned if there is no mount target with the specified ID found in the caller's
-//   Amazon Web Services account.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * AccessPointNotFound
-//   Returned if the specified AccessPointId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - MountTargetNotFound
+//     Returned if there is no mount target with the specified ID found in the caller's
+//     Amazon Web Services account.
+//
+//   - AccessPointNotFound
+//     Returned if the specified AccessPointId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeMountTargets
 func (c *EFS) DescribeMountTargets(input *DescribeMountTargetsInput) (*DescribeMountTargetsOutput, error) {
@@ -2321,14 +2323,13 @@ const opDescribeReplicationConfigurations = "DescribeReplicationConfigurations"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeReplicationConfigurationsRequest method.
+//	req, resp := client.DescribeReplicationConfigurationsRequest(params)
 //
-//    // Example sending a request using the DescribeReplicationConfigurationsRequest method.
-//    req, resp := client.DescribeReplicationConfigurationsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeReplicationConfigurations
 func (c *EFS) DescribeReplicationConfigurationsRequest(input *DescribeReplicationConfigurationsInput) (req *request.Request, output *DescribeReplicationConfigurationsOutput) {
@@ -2361,23 +2362,24 @@ func (c *EFS) DescribeReplicationConfigurationsRequest(input *DescribeReplicatio
 // API operation DescribeReplicationConfigurations for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * ReplicationNotFound
-//   Returned if the specified file system does not have a replication configuration.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * ValidationException
-//   Returned if the Backup service is not available in the Amazon Web Services
-//   Region in which the request was made.
+//   - ReplicationNotFound
+//     Returned if the specified file system does not have a replication configuration.
+//
+//   - ValidationException
+//     Returned if the Backup service is not available in the Amazon Web Services
+//     Region in which the request was made.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeReplicationConfigurations
 func (c *EFS) DescribeReplicationConfigurations(input *DescribeReplicationConfigurationsInput) (*DescribeReplicationConfigurationsOutput, error) {
@@ -2417,14 +2419,13 @@ const opDescribeTags = "DescribeTags"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the DescribeTagsRequest method.
+//	req, resp := client.DescribeTagsRequest(params)
 //
-//    // Example sending a request using the DescribeTagsRequest method.
-//    req, resp := client.DescribeTagsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeTags
 //
@@ -2456,7 +2457,6 @@ func (c *EFS) DescribeTagsRequest(input *DescribeTagsInput) (req *request.Reques
 
 // DescribeTags API operation for Amazon Elastic File System.
 //
-//
 // DEPRECATED - The DescribeTags action is deprecated and not maintained. To
 // view tags associated with EFS resources, use the ListTagsForResource API
 // action.
@@ -2476,16 +2476,17 @@ func (c *EFS) DescribeTagsRequest(input *DescribeTagsInput) (req *request.Reques
 // API operation DescribeTags for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
+//
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/DescribeTags
 //
@@ -2521,15 +2522,14 @@ func (c *EFS) DescribeTagsWithContext(ctx aws.Context, input *DescribeTagsInput,
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a DescribeTags operation.
-//    pageNum := 0
-//    err := client.DescribeTagsPages(params,
-//        func(page *efs.DescribeTagsOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a DescribeTags operation.
+//	pageNum := 0
+//	err := client.DescribeTagsPages(params,
+//	    func(page *efs.DescribeTagsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 //
 // Deprecated: Use ListTagsForResource.
 func (c *EFS) DescribeTagsPages(input *DescribeTagsInput, fn func(*DescribeTagsOutput, bool) bool) error {
@@ -2585,14 +2585,13 @@ const opListTagsForResource = "ListTagsForResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ListTagsForResourceRequest method.
+//	req, resp := client.ListTagsForResourceRequest(params)
 //
-//    // Example sending a request using the ListTagsForResourceRequest method.
-//    req, resp := client.ListTagsForResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/ListTagsForResource
 func (c *EFS) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *request.Request, output *ListTagsForResourceOutput) {
@@ -2633,20 +2632,21 @@ func (c *EFS) ListTagsForResourceRequest(input *ListTagsForResourceInput) (req *
 // API operation ListTagsForResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * AccessPointNotFound
-//   Returned if the specified AccessPointId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - AccessPointNotFound
+//     Returned if the specified AccessPointId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/ListTagsForResource
 func (c *EFS) ListTagsForResource(input *ListTagsForResourceInput) (*ListTagsForResourceOutput, error) {
@@ -2678,15 +2678,14 @@ func (c *EFS) ListTagsForResourceWithContext(ctx aws.Context, input *ListTagsFor
 //
 // Note: This operation can generate multiple requests to a service.
 //
-//    // Example iterating over at most 3 pages of a ListTagsForResource operation.
-//    pageNum := 0
-//    err := client.ListTagsForResourcePages(params,
-//        func(page *efs.ListTagsForResourceOutput, lastPage bool) bool {
-//            pageNum++
-//            fmt.Println(page)
-//            return pageNum <= 3
-//        })
-//
+//	// Example iterating over at most 3 pages of a ListTagsForResource operation.
+//	pageNum := 0
+//	err := client.ListTagsForResourcePages(params,
+//	    func(page *efs.ListTagsForResourceOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
 func (c *EFS) ListTagsForResourcePages(input *ListTagsForResourceInput, fn func(*ListTagsForResourceOutput, bool) bool) error {
 	return c.ListTagsForResourcePagesWithContext(aws.BackgroundContext(), input, fn)
 }
@@ -2738,14 +2737,13 @@ const opModifyMountTargetSecurityGroups = "ModifyMountTargetSecurityGroups"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the ModifyMountTargetSecurityGroupsRequest method.
+//	req, resp := client.ModifyMountTargetSecurityGroupsRequest(params)
 //
-//    // Example sending a request using the ModifyMountTargetSecurityGroupsRequest method.
-//    req, resp := client.ModifyMountTargetSecurityGroupsRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/ModifyMountTargetSecurityGroups
 func (c *EFS) ModifyMountTargetSecurityGroupsRequest(input *ModifyMountTargetSecurityGroupsInput) (req *request.Request, output *ModifyMountTargetSecurityGroupsOutput) {
@@ -2778,11 +2776,11 @@ func (c *EFS) ModifyMountTargetSecurityGroupsRequest(input *ModifyMountTargetSec
 //
 // The operation requires permissions for the following actions:
 //
-//    * elasticfilesystem:ModifyMountTargetSecurityGroups action on the mount
-//    target's file system.
+//   - elasticfilesystem:ModifyMountTargetSecurityGroups action on the mount
+//     target's file system.
 //
-//    * ec2:ModifyNetworkInterfaceAttribute action on the mount target's network
-//    interface.
+//   - ec2:ModifyNetworkInterfaceAttribute action on the mount target's network
+//     interface.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2792,27 +2790,28 @@ func (c *EFS) ModifyMountTargetSecurityGroupsRequest(input *ModifyMountTargetSec
 // API operation ModifyMountTargetSecurityGroups for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * MountTargetNotFound
-//   Returned if there is no mount target with the specified ID found in the caller's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * IncorrectMountTargetState
-//   Returned if the mount target is not in the correct state for the operation.
+//   - MountTargetNotFound
+//     Returned if there is no mount target with the specified ID found in the caller's
+//     Amazon Web Services account.
 //
-//   * SecurityGroupLimitExceeded
-//   Returned if the size of SecurityGroups specified in the request is greater
-//   than five.
+//   - IncorrectMountTargetState
+//     Returned if the mount target is not in the correct state for the operation.
 //
-//   * SecurityGroupNotFound
-//   Returned if one of the specified security groups doesn't exist in the subnet's
-//   virtual private cloud (VPC).
+//   - SecurityGroupLimitExceeded
+//     Returned if the size of SecurityGroups specified in the request is greater
+//     than five.
+//
+//   - SecurityGroupNotFound
+//     Returned if one of the specified security groups doesn't exist in the subnet's
+//     virtual private cloud (VPC).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/ModifyMountTargetSecurityGroups
 func (c *EFS) ModifyMountTargetSecurityGroups(input *ModifyMountTargetSecurityGroupsInput) (*ModifyMountTargetSecurityGroupsOutput, error) {
@@ -2852,14 +2851,13 @@ const opPutAccountPreferences = "PutAccountPreferences"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutAccountPreferencesRequest method.
+//	req, resp := client.PutAccountPreferencesRequest(params)
 //
-//    // Example sending a request using the PutAccountPreferencesRequest method.
-//    req, resp := client.PutAccountPreferencesRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutAccountPreferences
 func (c *EFS) PutAccountPreferencesRequest(input *PutAccountPreferencesInput) (req *request.Request, output *PutAccountPreferencesOutput) {
@@ -2900,12 +2898,13 @@ func (c *EFS) PutAccountPreferencesRequest(input *PutAccountPreferencesInput) (r
 // API operation PutAccountPreferences for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
+//
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutAccountPreferences
 func (c *EFS) PutAccountPreferences(input *PutAccountPreferencesInput) (*PutAccountPreferencesOutput, error) {
@@ -2945,14 +2944,13 @@ const opPutBackupPolicy = "PutBackupPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutBackupPolicyRequest method.
+//	req, resp := client.PutBackupPolicyRequest(params)
 //
-//    // Example sending a request using the PutBackupPolicyRequest method.
-//    req, resp := client.PutBackupPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutBackupPolicy
 func (c *EFS) PutBackupPolicyRequest(input *PutBackupPolicyInput) (req *request.Request, output *PutBackupPolicyOutput) {
@@ -2984,23 +2982,24 @@ func (c *EFS) PutBackupPolicyRequest(input *PutBackupPolicyInput) (req *request.
 // API operation PutBackupPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
-//   * ValidationException
-//   Returned if the Backup service is not available in the Amazon Web Services
-//   Region in which the request was made.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
+//
+//   - ValidationException
+//     Returned if the Backup service is not available in the Amazon Web Services
+//     Region in which the request was made.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutBackupPolicy
 func (c *EFS) PutBackupPolicy(input *PutBackupPolicyInput) (*PutBackupPolicyOutput, error) {
@@ -3040,14 +3039,13 @@ const opPutFileSystemPolicy = "PutFileSystemPolicy"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutFileSystemPolicyRequest method.
+//	req, resp := client.PutFileSystemPolicyRequest(params)
 //
-//    // Example sending a request using the PutFileSystemPolicyRequest method.
-//    req, resp := client.PutFileSystemPolicyRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutFileSystemPolicy
 func (c *EFS) PutFileSystemPolicyRequest(input *PutFileSystemPolicyInput) (req *request.Request, output *PutFileSystemPolicyOutput) {
@@ -3090,24 +3088,25 @@ func (c *EFS) PutFileSystemPolicyRequest(input *PutFileSystemPolicyInput) (req *
 // API operation PutFileSystemPolicy for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * InvalidPolicyException
-//   Returned if the FileSystemPolicy is malformed or contains an error such as
-//   a parameter value that is not valid or a missing required parameter. Returned
-//   in the case of a policy lockout safety check error.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - InvalidPolicyException
+//     Returned if the FileSystemPolicy is malformed or contains an error such as
+//     a parameter value that is not valid or a missing required parameter. Returned
+//     in the case of a policy lockout safety check error.
+//
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutFileSystemPolicy
 func (c *EFS) PutFileSystemPolicy(input *PutFileSystemPolicyInput) (*PutFileSystemPolicyOutput, error) {
@@ -3147,14 +3146,13 @@ const opPutLifecycleConfiguration = "PutLifecycleConfiguration"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the PutLifecycleConfigurationRequest method.
+//	req, resp := client.PutLifecycleConfigurationRequest(params)
 //
-//    // Example sending a request using the PutLifecycleConfigurationRequest method.
-//    req, resp := client.PutLifecycleConfigurationRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutLifecycleConfiguration
 func (c *EFS) PutLifecycleConfigurationRequest(input *PutLifecycleConfigurationInput) (req *request.Request, output *PutLifecycleConfigurationOutput) {
@@ -3175,19 +3173,19 @@ func (c *EFS) PutLifecycleConfigurationRequest(input *PutLifecycleConfigurationI
 
 // PutLifecycleConfiguration API operation for Amazon Elastic File System.
 //
-// Use this action to manage EFS lifecycle management and intelligent tiering.
+// Use this action to manage EFS lifecycle management and EFS Intelligent-Tiering.
 // A LifecycleConfiguration consists of one or more LifecyclePolicy objects
 // that define the following:
 //
-//    * EFS Lifecycle management - When Amazon EFS automatically transitions
-//    files in a file system into the lower-cost Infrequent Access (IA) storage
-//    class. To enable EFS Lifecycle management, set the value of TransitionToIA
-//    to one of the available options.
+//   - EFS Lifecycle management - When Amazon EFS automatically transitions
+//     files in a file system into the lower-cost EFS Infrequent Access (IA)
+//     storage class. To enable EFS Lifecycle management, set the value of TransitionToIA
+//     to one of the available options.
 //
-//    * EFS Intelligent tiering - When Amazon EFS automatically transitions
-//    files from IA back into the file system's primary storage class (Standard
-//    or One Zone Standard. To enable EFS Intelligent Tiering, set the value
-//    of TransitionToPrimaryStorageClass to AFTER_1_ACCESS.
+//   - EFS Intelligent-Tiering - When Amazon EFS automatically transitions
+//     files from IA back into the file system's primary storage class (EFS Standard
+//     or EFS One Zone Standard). To enable EFS Intelligent-Tiering, set the
+//     value of TransitionToPrimaryStorageClass to AFTER_1_ACCESS.
 //
 // For more information, see EFS Lifecycle Management (https://docs.aws.amazon.com/efs/latest/ug/lifecycle-management-efs.html).
 //
@@ -3196,19 +3194,20 @@ func (c *EFS) PutLifecycleConfigurationRequest(input *PutLifecycleConfigurationI
 // exists for the specified file system, a PutLifecycleConfiguration call modifies
 // the existing configuration. A PutLifecycleConfiguration call with an empty
 // LifecyclePolicies array in the request body deletes any existing LifecycleConfiguration
-// and turns off lifecycle management and intelligent tiering for the file system.
+// and turns off lifecycle management and EFS Intelligent-Tiering for the file
+// system.
 //
 // In the request, specify the following:
 //
-//    * The ID for the file system for which you are enabling, disabling, or
-//    modifying lifecycle management and intelligent tiering.
+//   - The ID for the file system for which you are enabling, disabling, or
+//     modifying lifecycle management and EFS Intelligent-Tiering.
 //
-//    * A LifecyclePolicies array of LifecyclePolicy objects that define when
-//    files are moved into IA storage, and when they are moved back to Standard
-//    storage. Amazon EFS requires that each LifecyclePolicy object have only
-//    have a single transition, so the LifecyclePolicies array needs to be structured
-//    with separate LifecyclePolicy objects. See the example requests in the
-//    following section for more information.
+//   - A LifecyclePolicies array of LifecyclePolicy objects that define when
+//     files are moved into IA storage, and when they are moved back to Standard
+//     storage. Amazon EFS requires that each LifecyclePolicy object have only
+//     have a single transition, so the LifecyclePolicies array needs to be structured
+//     with separate LifecyclePolicy objects. See the example requests in the
+//     following section for more information.
 //
 // This operation requires permissions for the elasticfilesystem:PutLifecycleConfiguration
 // operation.
@@ -3225,19 +3224,20 @@ func (c *EFS) PutLifecycleConfigurationRequest(input *PutLifecycleConfigurationI
 // API operation PutLifecycleConfiguration for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/PutLifecycleConfiguration
 func (c *EFS) PutLifecycleConfiguration(input *PutLifecycleConfigurationInput) (*PutLifecycleConfigurationOutput, error) {
@@ -3277,14 +3277,13 @@ const opTagResource = "TagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the TagResourceRequest method.
+//	req, resp := client.TagResourceRequest(params)
 //
-//    // Example sending a request using the TagResourceRequest method.
-//    req, resp := client.TagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/TagResource
 func (c *EFS) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
@@ -3320,20 +3319,21 @@ func (c *EFS) TagResourceRequest(input *TagResourceInput) (req *request.Request,
 // API operation TagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * AccessPointNotFound
-//   Returned if the specified AccessPointId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - AccessPointNotFound
+//     Returned if the specified AccessPointId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/TagResource
 func (c *EFS) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
@@ -3373,14 +3373,13 @@ const opUntagResource = "UntagResource"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UntagResourceRequest method.
+//	req, resp := client.UntagResourceRequest(params)
 //
-//    // Example sending a request using the UntagResourceRequest method.
-//    req, resp := client.UntagResourceRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/UntagResource
 func (c *EFS) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
@@ -3416,20 +3415,21 @@ func (c *EFS) UntagResourceRequest(input *UntagResourceInput) (req *request.Requ
 // API operation UntagResource for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * AccessPointNotFound
-//   Returned if the specified AccessPointId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
+//
+//   - AccessPointNotFound
+//     Returned if the specified AccessPointId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/UntagResource
 func (c *EFS) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
@@ -3469,14 +3469,13 @@ const opUpdateFileSystem = "UpdateFileSystem"
 // This method is useful when you want to inject custom logic or configuration
 // into the SDK's request lifecycle. Such as custom headers, or retry logic.
 //
+//	// Example sending a request using the UpdateFileSystemRequest method.
+//	req, resp := client.UpdateFileSystemRequest(params)
 //
-//    // Example sending a request using the UpdateFileSystemRequest method.
-//    req, resp := client.UpdateFileSystemRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/UpdateFileSystem
 func (c *EFS) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *request.Request, output *UpdateFileSystemOutput) {
@@ -3508,35 +3507,36 @@ func (c *EFS) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 // API operation UpdateFileSystem for usage and error information.
 //
 // Returned Error Types:
-//   * BadRequest
-//   Returned if the request is malformed or contains an error such as an invalid
-//   parameter value or a missing required parameter.
 //
-//   * FileSystemNotFound
-//   Returned if the specified FileSystemId value doesn't exist in the requester's
-//   Amazon Web Services account.
+//   - BadRequest
+//     Returned if the request is malformed or contains an error such as an invalid
+//     parameter value or a missing required parameter.
 //
-//   * IncorrectFileSystemLifeCycleState
-//   Returned if the file system's lifecycle state is not "available".
+//   - FileSystemNotFound
+//     Returned if the specified FileSystemId value doesn't exist in the requester's
+//     Amazon Web Services account.
 //
-//   * InsufficientThroughputCapacity
-//   Returned if there's not enough capacity to provision additional throughput.
-//   This value might be returned when you try to create a file system in provisioned
-//   throughput mode, when you attempt to increase the provisioned throughput
-//   of an existing file system, or when you attempt to change an existing file
-//   system from Bursting Throughput to Provisioned Throughput mode. Try again
-//   later.
+//   - IncorrectFileSystemLifeCycleState
+//     Returned if the file system's lifecycle state is not "available".
 //
-//   * InternalServerError
-//   Returned if an error occurred on the server side.
+//   - InsufficientThroughputCapacity
+//     Returned if there's not enough capacity to provision additional throughput.
+//     This value might be returned when you try to create a file system in provisioned
+//     throughput mode, when you attempt to increase the provisioned throughput
+//     of an existing file system, or when you attempt to change an existing file
+//     system from Bursting Throughput to Provisioned Throughput mode. Try again
+//     later.
 //
-//   * ThroughputLimitExceeded
-//   Returned if the throughput mode or amount of provisioned throughput can't
-//   be changed because the throughput limit of 1024 MiB/s has been reached.
+//   - InternalServerError
+//     Returned if an error occurred on the server side.
 //
-//   * TooManyRequests
-//   Returned if you don’t wait at least 24 hours before either changing the
-//   throughput mode, or decreasing the Provisioned Throughput value.
+//   - ThroughputLimitExceeded
+//     Returned if the throughput mode or amount of provisioned throughput can't
+//     be changed because the throughput limit of 1024 MiB/s has been reached.
+//
+//   - TooManyRequests
+//     Returned if you don’t wait at least 24 hours before either changing the
+//     throughput mode, or decreasing the Provisioned Throughput value.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/UpdateFileSystem
 func (c *EFS) UpdateFileSystem(input *UpdateFileSystemInput) (*UpdateFileSystemOutput, error) {
@@ -3663,7 +3663,7 @@ type AccessPointDescription struct {
 	// The name of the access point. This is the value of the Name tag.
 	Name *string `type:"string"`
 
-	// Identified the Amazon Web Services account that owns the access point resource.
+	// Identifies the Amazon Web Services account that owns the access point resource.
 	OwnerId *string `type:"string"`
 
 	// The full POSIX identity, including the user ID, group ID, and secondary group
@@ -4270,7 +4270,7 @@ type CreateAccessPointOutput struct {
 	// The name of the access point. This is the value of the Name tag.
 	Name *string `type:"string"`
 
-	// Identified the Amazon Web Services account that owns the access point resource.
+	// Identifies the Amazon Web Services account that owns the access point resource.
 	OwnerId *string `type:"string"`
 
 	// The full POSIX identity, including the user ID, group ID, and secondary group
@@ -4446,13 +4446,12 @@ type CreateFileSystemInput struct {
 	// in the Amazon Web Services General Reference Guide.
 	Tags []*Tag `type:"list"`
 
-	// Specifies the throughput mode for the file system, either bursting or provisioned.
-	// If you set ThroughputMode to provisioned, you must also set a value for ProvisionedThroughputInMibps.
-	// After you create the file system, you can decrease your file system's throughput
-	// in Provisioned Throughput mode or change between the throughput modes, as
-	// long as it’s been more than 24 hours since the last decrease or throughput
-	// mode change. For more information, see Specifying throughput with provisioned
-	// mode (https://docs.aws.amazon.com/efs/latest/ug/performance.html#provisioned-throughput)
+	// Specifies the throughput mode for the file system. The mode can be bursting,
+	// provisioned, or elastic. If you set ThroughputMode to provisioned, you must
+	// also set a value for ProvisionedThroughputInMibps. After you create the file
+	// system, you can decrease your file system's throughput in Provisioned Throughput
+	// mode or change between the throughput modes, with certain time restrictions.
+	// For more information, see Specifying throughput with provisioned mode (https://docs.aws.amazon.com/efs/latest/ug/performance.html#provisioned-throughput)
 	// in the Amazon EFS User Guide.
 	//
 	// Default is bursting.
@@ -6895,9 +6894,7 @@ type FileSystemDescription struct {
 	// NumberOfMountTargets is a required field
 	NumberOfMountTargets *int64 `type:"integer" required:"true"`
 
-	// The Amazon Web Services account that created the file system. If the file
-	// system was created by an IAM user, the parent account to which the user belongs
-	// is the owner.
+	// The Amazon Web Services account that created the file system.
 	//
 	// OwnerId is a required field
 	OwnerId *string `type:"string" required:"true"`
@@ -9769,7 +9766,8 @@ func (s TagResourceOutput) GoString() string {
 }
 
 // Returned when the CreateAccessPoint API action is called too quickly and
-// the number of Access Points in the account is nearing the limit of 120.
+// the number of Access Points on the file system is nearing the limit of 120
+// (https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region).
 type ThrottlingException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -10300,9 +10298,7 @@ type UpdateFileSystemOutput struct {
 	// NumberOfMountTargets is a required field
 	NumberOfMountTargets *int64 `type:"integer" required:"true"`
 
-	// The Amazon Web Services account that created the file system. If the file
-	// system was created by an IAM user, the parent account to which the user belongs
-	// is the owner.
+	// The Amazon Web Services account that created the file system.
 	//
 	// OwnerId is a required field
 	OwnerId *string `type:"string" required:"true"`
@@ -10675,6 +10671,9 @@ const (
 
 	// ThroughputModeProvisioned is a ThroughputMode enum value
 	ThroughputModeProvisioned = "provisioned"
+
+	// ThroughputModeElastic is a ThroughputMode enum value
+	ThroughputModeElastic = "elastic"
 )
 
 // ThroughputMode_Values returns all elements of the ThroughputMode enum
@@ -10682,6 +10681,7 @@ func ThroughputMode_Values() []string {
 	return []string{
 		ThroughputModeBursting,
 		ThroughputModeProvisioned,
+		ThroughputModeElastic,
 	}
 }
 
@@ -10700,6 +10700,9 @@ const (
 
 	// TransitionToIARulesAfter90Days is a TransitionToIARules enum value
 	TransitionToIARulesAfter90Days = "AFTER_90_DAYS"
+
+	// TransitionToIARulesAfter1Day is a TransitionToIARules enum value
+	TransitionToIARulesAfter1Day = "AFTER_1_DAY"
 )
 
 // TransitionToIARules_Values returns all elements of the TransitionToIARules enum
@@ -10710,6 +10713,7 @@ func TransitionToIARules_Values() []string {
 		TransitionToIARulesAfter30Days,
 		TransitionToIARulesAfter60Days,
 		TransitionToIARulesAfter90Days,
+		TransitionToIARulesAfter1Day,
 	}
 }
 
