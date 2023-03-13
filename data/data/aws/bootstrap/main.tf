@@ -27,32 +27,39 @@ locals {
   // Convert the manifest from a yaml string to a map structure
   infrastructure_yaml = yamldecode(var.infrastructure_manifest)
 
-  // Add to the yaml data the load balancer IP addresses when the manifest is
-  // expected to contain these values (custom DNS solution is selected).
-  updated_infrastructure = merge(
-    local.infrastructure_yaml,
-    lookup(local.infrastructure_yaml["status"]["platformStatus"], "clusterDNSConfig", "") != "" ?
-    {
-        "status": { "platformStatus": { "clusterDNSConfig": {
-            "APIServerDNSConfig": [
+  extra_infra_data = var.custom_dns ? {
+    "status" = {
+      "platformStatus" = {
+        "aws" = {
+          "awsClusterDNSConfig" = {
+            "apiServerDNSConfig": [
               for ip in data.dns_a_record_set.external_lb.addrs :
               {
                 RecordType: "A"
                 LBIPAddress: ip
               }
             ],
-            "InternalAPIServerDNSConfig": [
+            "internalAPIServerDNSConfig": [
               for ip in data.dns_a_record_set.internal_lb.addrs :
               {
                 RecordType: "A"
                 LBIPAddress: ip
               }
             ]
-        }}}
-    } : {}
-  )
+          }
+        }
+      }
+    }
+  } : {}
+}
 
-  encoded_manifest = base64encode(yamlencode(local.updated_infrastructure))
+module "deepmerge" {
+  source = "github.com/Invicton-Labs/terraform-null-deepmerge"
+
+  maps = [
+    local.infrastructure_yaml,
+    local.extra_infra_data
+  ]
 }
 
 data "dns_a_record_set" "external_lb" {
@@ -83,7 +90,7 @@ data "aws_partition" "current" {}
 data "aws_ebs_default_kms_key" "current" {}
 
 resource "local_file" "ignition_bootstrap" {
-  content  = replace(var.ignition_bootstrap, "INFRA_PLACEHOLDER", local.encoded_manifest)
+  content  = replace(var.ignition_bootstrap, "INFRA_PLACEHOLDER", base64encode(yamlencode(module.deepmerge.merged)))
   filename = "${path.module}/ignition_bootstrap.ign"
 }
 

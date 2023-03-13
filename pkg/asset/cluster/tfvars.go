@@ -196,6 +196,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		masterCount,
 		mastersSchedulable,
 		decodedInfrastructure,
+		false, // Temp - Needs to be removed when userConfiguredDNS is added to the install config
+		//installConfig.Config.userConfiguredDNS == types.EnableUserDNS,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")

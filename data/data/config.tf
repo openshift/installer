@@ -147,3 +147,13 @@ The decoded string containing the contents of the infrastructure manifest. The m
 in the event that a custom DNS solution was selected during installation.
 EOF
 }
+
+variable "custom_dns" {
+  type = bool
+
+  default = false
+
+  description = <<EOF
+When true, the user has selected to configure a custom DNS solution.
+EOF
+}

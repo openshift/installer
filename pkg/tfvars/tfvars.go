@@ -25,10 +25,11 @@ type config struct {
 	IgnitionBootstrapFile string `json:"ignition_bootstrap_file,omitempty"`
 	IgnitionMaster        string `json:"ignition_master,omitempty"`
 	InfraManifest         string `json:"infrastructure_manifest,omitempty"`
+	CustomDNS             bool   `json:"custom_dns,omitempty"`
 }
 
 // TFVars generates terraform.tfvar JSON for launching the cluster.
-func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4CIDRs []string, machineV6CIDRs []string, useIPv4, useIPv6 bool, bootstrapIgn string, masterIgn string, masterCount int, mastersSchedulable bool, infraManifest string) ([]byte, error) {
+func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4CIDRs []string, machineV6CIDRs []string, useIPv4, useIPv6 bool, bootstrapIgn string, masterIgn string, masterCount int, mastersSchedulable bool, infraManifest string, customDNS bool) ([]byte, error) {
 	f, err := os.CreateTemp("", "openshift-install-bootstrap-*.ign")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create tmp file for bootstrap ignition")
@@ -53,6 +54,7 @@ func TFVars(clusterID string, clusterDomain string, baseDomain string, machineV4
 		IgnitionBootstrapFile: f.Name(),
 		IgnitionMaster:        masterIgn,
 		InfraManifest:         infraManifest,
+		CustomDNS:             customDNS,
 	}
 
 	return json.MarshalIndent(config, "", "  ")
