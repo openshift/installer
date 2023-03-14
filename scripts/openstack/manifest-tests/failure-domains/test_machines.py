@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import unittest
+import xmlrunner
 
 import os
 import sys
@@ -9,10 +10,10 @@ import glob
 import yaml
 
 ASSETS_DIR = ""
-INSTALLCONFIG_PATH = ""
+INSTALLCONFIG_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'install-config.yaml')
 
 
-class TestMachines(unittest.TestCase):
+class FailureDomainsMachines(unittest.TestCase):
     def setUp(self):
         """Parse the expected values from install-config and collect Machine resources."""
         self.machines = []
@@ -123,5 +124,5 @@ class TestMachines(unittest.TestCase):
 
 if __name__ == '__main__':
     ASSETS_DIR = sys.argv.pop()
-    INSTALLCONFIG_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'install-config.yaml')
-    unittest.main(verbosity=2)
+    with open(os.environ.get('JUNIT_FILE', '/dev/null'), 'wb') as output:
+        unittest.main(testRunner=xmlrunner.XMLTestRunner(output=output), failfast=False, buffer=False, catchbreak=False, verbosity=2)
