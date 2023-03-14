@@ -90,11 +90,21 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	}
 
 	if credentials == nil {
+		if cred, cerr := newDefaultAzureCredential(cloudConfig); cerr == nil {
+			return newSessionFromCredentials(cloudEnv, credentials, cred)
+		}
+		// This is needed to keep compatibility with the old behaviour of using
+		// a json file (or creating one if it's not found). Even though the
+		// DefaultAzureCredential supports Client Secret and Certificate
+		// authentications, it does so by means of environment variables. To
+		// support values coming from a file we call the functions ourselves
+		// and pass the values to them.
 		credentials, err = credentialsFromFileOrUser()
 		if err != nil {
 			return nil, err
 		}
 	}
+
 	var cred azcore.TokenCredential
 	if credentials.ClientCertificatePath != "" {
 		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
@@ -239,7 +249,7 @@ func saveCredentials(credentials Credentials, filePath string) error {
 		return err
 	}
 
-	err = os.MkdirAll(filepath.Dir(filePath), 0700)
+	err = os.MkdirAll(filepath.Dir(filePath), 0o700)
 	if err != nil {
 		return err
 	}
@@ -286,6 +296,19 @@ func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cl
 	cred, err := azidentity.NewClientCertificateCredential(credentials.TenantID, credentials.ClientID, certs, key, &options)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials from certificate")
+	}
+	return cred, nil
+}
+
+func newDefaultAzureCredential(cloudConfig cloud.Configuration) (azcore.TokenCredential, error) {
+	options := azidentity.DefaultAzureCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cloudConfig,
+		},
+	}
+	cred, err := azidentity.NewDefaultAzureCredential(&options)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get default Azure credentials")
 	}
 	return cred, nil
 }
