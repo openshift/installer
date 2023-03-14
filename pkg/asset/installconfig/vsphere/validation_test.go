@@ -314,7 +314,7 @@ func TestValidateFailureDomains(t *testing.T) {
 			}(),
 			validationMethod: validateFailureDomain,
 			checkTags:        false,
-			expectErr:        `^platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "": full path of cluster is required$`,
+			expectErr:        `[platform.vsphere: Internal error: please specify a datacenter, platform.vsphere.failureDomains.topology.computeCluster: Required value: must specify the cluster]`,
 		},
 		{
 			name: "multi-zone validation - missing datastore",
