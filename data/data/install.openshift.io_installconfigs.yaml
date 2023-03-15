@@ -258,6 +258,7 @@ spec:
                               required:
                               - name
                               - resourceGroup
+                              - subscriptionId
                               type: object
                             diskSizeGB:
                               description: DiskSizeGB defines the size of disk in
@@ -1164,6 +1165,7 @@ spec:
                             required:
                             - name
                             - resourceGroup
+                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -2373,6 +2375,7 @@ spec:
                             required:
                             - name
                             - resourceGroup
+                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
