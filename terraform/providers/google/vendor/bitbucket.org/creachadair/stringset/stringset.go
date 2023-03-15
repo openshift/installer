@@ -19,22 +19,9 @@ import (
 	"strings"
 )
 
-func toString(x string) string {
-	return strconv.Quote(x)
-}
-
 // A Set represents a set of string values.  A nil Set is a valid
 // representation of an empty set.
 type Set map[string]struct{}
-
-// byElement satisfies sort.Interface to order values of type string.
-type byElement []string
-
-func (e byElement) Len() int      { return len(e) }
-func (e byElement) Swap(i, j int) { e[i], e[j] = e[j], e[i] }
-func (e byElement) Less(i, j int) bool {
-	return e[i] < e[j]
-}
 
 // String implements the fmt.Stringer interface.  It renders s in standard set
 // notation, e.g., ø for an empty set, {a, b, c} for a nonempty one.
@@ -44,7 +31,7 @@ func (s Set) String() string {
 	}
 	elts := make([]string, len(s))
 	for i, elt := range s.Elements() {
-		elts[i] = toString(elt)
+		elts[i] = strconv.Quote(elt)
 	}
 	return "{" + strings.Join(elts, ", ") + "}"
 }
@@ -69,7 +56,7 @@ func (s Set) Len() int { return len(s) }
 // Elements returns an ordered slice of the elements in s.
 func (s Set) Elements() []string {
 	elts := s.Unordered()
-	sort.Sort(byElement(elts))
+	sort.Strings(elts)
 	return elts
 }
 
@@ -94,7 +81,9 @@ func (s Set) Clone() Set {
 
 // ContainsAny reports whether s contains one or more of the given elements.
 // It is equivalent in meaning to
-//   s.Intersects(stringset.New(elts...))
+//
+//	s.Intersects(stringset.New(elts...))
+//
 // but does not construct an intermediate set.
 func (s Set) ContainsAny(elts ...string) bool {
 	for _, key := range elts {
@@ -107,7 +96,9 @@ func (s Set) ContainsAny(elts ...string) bool {
 
 // Contains reports whether s contains (all) the given elements.
 // It is equivalent in meaning to
-//   New(elts...).IsSubset(s)
+//
+//	New(elts...).IsSubset(s)
+//
 // but does not construct an intermediate set.
 func (s Set) Contains(elts ...string) bool {
 	for _, elt := range elts {
@@ -323,10 +314,7 @@ func FromKeys(v interface{}) Set {
 		}
 		return result
 	case Keyer:
-		for _, key := range t.Keys() {
-			result.Add(key)
-		}
-		return result
+		return New(t.Keys()...)
 	case nil:
 		return nil
 	}
