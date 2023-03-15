@@ -3,6 +3,7 @@ package aws
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -245,11 +246,18 @@ func tagsFromUserTags(clusterID string, usertags map[string]string) ([]machineap
 	for idx := range tags {
 		forbiddenTags.Insert(tags[idx].Name)
 	}
-	for k, v := range usertags {
+
+	userTagKeys := make([]string, 0, len(usertags))
+	for key := range usertags {
+		userTagKeys = append(userTagKeys, key)
+	}
+	sort.Strings(userTagKeys)
+
+	for _, k := range userTagKeys {
 		if forbiddenTags.Has(k) {
 			return nil, fmt.Errorf("user tags may not clobber %s", k)
 		}
-		tags = append(tags, machineapi.TagSpecification{Name: k, Value: v})
+		tags = append(tags, machineapi.TagSpecification{Name: k, Value: usertags[k]})
 	}
 	return tags, nil
 }
