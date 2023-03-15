@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -140,19 +139,8 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.Datacenter = dcObj
 
-	// First check if the folder contains the datacenter
-	// If so check the regex
-	if strings.Contains(folder, datacenter) {
-		folderPathRegexp := regexp.MustCompile("^\\/(.*?)\\/vm\\/(.*?)$")
-		folderPathParts := folderPathRegexp.FindStringSubmatch(folder)
-
-		if folderPathParts != nil {
-			folderPath = folder
-		} else {
-			return nil, errors.Errorf("folder path is incorrect, please provide a full path.")
-		}
-
-	} else {
+	folderPath = folder
+	if !strings.HasPrefix(folder, "/") {
 		folderPath = fmt.Sprintf("/%s/vm/%s", datacenter, folder)
 	}
 
@@ -163,7 +151,10 @@ func findImportOvaParams(client *vim25.Client, datacenter, cluster, resourcePool
 	}
 	importOvaParams.Folder = folderObj
 
-	clusterPath := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	clusterPath := cluster
+	if !strings.HasPrefix(cluster, "/") {
+		clusterPath = fmt.Sprintf("/%s/host/%s", datacenter, cluster)
+	}
 
 	// Find the resource pool object by using its path provided by install-config,
 	// or generated in pkg/asset/machines/vsphere/machines.go
