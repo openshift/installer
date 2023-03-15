@@ -2,9 +2,12 @@
 Description=Get interactive user configuration at boot
 After=network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service
 Before=getty@tty1.service network.target network.service agent.service node-zero.service NetworkManager-wait-online.service
+ConditionPathExists=/usr/local/bin/agent-tui
+ConditionPathExists=!/etc/assisted/node0
 
 [Service]
 Type=oneshot
+RemainAfterExit=true
 TTYPath=/dev/tty15
 EnvironmentFile=/etc/assisted/agent-installer.env
 ExecStartPre=/usr/bin/kill -s SIGRTMIN+21 1
