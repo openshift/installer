@@ -57,6 +57,62 @@ func validPlatform() *vsphere.Platform {
 	}
 }
 
+func validHosts() []*vsphere.Host {
+	return []*vsphere.Host{
+		{
+			Role: "bootstrap",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.240",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "control-plane",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.241",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "control-plane",
+			FailureDomain: "test-east-2a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.242",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "control-plane",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.243",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+	}
+}
+
 func TestValidatePlatform(t *testing.T) {
 	cases := []struct {
 		name          string
@@ -279,6 +335,112 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
+		},
+		{
+			name: "Static IP - valid",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+		},
+		{
+			name: "Static IP - invalid Role",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].Role = "crazy-uncle"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.role: Invalid value: "crazy-uncle": role must be one of \[bootstrap control-plane worker]$`,
+		},
+		{
+			name: "Static IP - invalid FailureDomain",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].FailureDomain = "north-pole"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.failureDomain: Invalid value: "north-pole": failure domain not found$`,
+		},
+		{
+			name: "Static IP - missing NetworkDevice",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice = nil
+				return p
+			}(),
+			expectedError: `^test-path.hosts.networkDevice: Required value: must specify networkDevice configuration$`,
+		},
+		{
+			name: "Static IP - missing IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs = nil
+				return p
+			}(),
+			expectedError: `^test-path.hosts.ipAddrs: Required value: must specify a IP$`,
+		},
+		{
+			name: "Static IP - invalid IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309": "86.7.5.309" is not a valid IP$`,
+		},
+		{
+			name: "Static IP - valid Gateway4 IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway4 = "192.168.100.125"
+				return p
+			}(),
+		},
+		{
+			name: "Static IP - invalid Gateway4 IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway4 = "86.7.5.309"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.gateway4: Invalid value: "86.7.5.309": "86.7.5.309" is not a valid IP$`,
+		},
+		{
+			name: "Static IP - valid Gateway6 IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway6 = "2001:db8:3333:4444:5555:6666:7777:8888"
+				return p
+			}(),
+		},
+		{
+			name: "Static IP - invalid Gateway6 IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway6 = "8888:666:7777:5555:3333:0000:9999:JENNY"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.gateway6: Invalid value: "8888:666:7777:5555:3333:0000:9999:JENNY": "8888:666:7777:5555:3333:0000:9999:JENNY" is not a valid IP$`,
+		},
+		{
+			name: "Static IP - More than 3 nameservers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Nameservers = []string{"86.75.30.9", "86.75.30.8", "86.75.30.7", "86.75.30.6"}
+				return p
+			}(),
+			expectedError: `^test-path.hosts.nameservers: Too many: 4: must have at most 3 items$`,
 		},
 	}
 	for _, tc := range cases {

@@ -31,6 +31,15 @@ const (
 	TagCategoryZone = "openshift-zone"
 )
 
+const (
+	// ControlPlaneRole represents control-plane nodes
+	ControlPlaneRole = "control-plane"
+	// WorkerRole represents worker nodes
+	WorkerRole = "worker"
+	// BootstrapRole represents bootstrap nodes
+	BootstrapRole = "bootstrap"
+)
+
 // Platform stores any global configuration used for vsphere platforms.
 type Platform struct {
 	// VCenter is the domain name or IP address of the vCenter.
@@ -125,6 +134,8 @@ type Platform struct {
 	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.VSpherePlatformLoadBalancer `json:"loadBalancer,omitempty"`
+	// Hosts defines `Host` configurations to be applied to nodes deployed by the installer
+	Hosts []*Host `json:"hosts,omitempty"`
 }
 
 // FailureDomain holds the region and zone failure domain and
@@ -221,4 +232,43 @@ type VCenter struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	Datacenters []string `json:"datacenters"`
+}
+
+// Host defines host VMs to generate as part of the installation.
+type Host struct {
+	// FailureDomain refers to the name of a FailureDomain as described in https://github.com/openshift/enhancements/blob/master/enhancements/installer/vsphere-ipi-zonal.md
+	// +optional
+	FailureDomain string `json:"failureDomain"`
+	// Slice of NetworkDeviceSpecs to be applied
+	// +kubebuilder:validation:Required
+	NetworkDevice *NetworkDeviceSpec `json:"networkDevice,omitempty"`
+	// Role defines the role of the node
+	// +kubebuilder:validation:Enum="";bootstrap;control-plane;compute
+	// +kubebuilder:validation:Required
+	Role string `json:"role"`
+}
+
+// NetworkDeviceSpec defines network config for static IP assignment.
+type NetworkDeviceSpec struct {
+	// gateway4 is the IPv4 gateway used by this device.
+	// Required when DHCP4 is false.
+	// +optional
+	// +kubebuilder:validation:Format=ipv4
+	Gateway4 string `json:"gateway4,omitempty"`
+	// gateway4 is the IPv4 gateway used by this device.
+	// Required when DHCP6 is false.
+	// +kubebuilder:validation:Format=ipv6
+	// +optional
+	Gateway6 string `json:"gateway6,omitempty"`
+	// ipAddrs is a list of one or more IPv4 and/or IPv6 addresses to assign
+	// to this device.
+	// Required when DHCP4 and DHCP6 are both Disabled.
+	// + Validation is applied via a patch, we validate the format as either ipv4 or ipv6
+	// +optional
+	IPAddrs []string `json:"ipAddrs,omitempty"`
+	// nameservers is a list of IPv4 and/or IPv6 addresses used as DNS
+	// nameservers.
+	// Please note that Linux allows only three nameservers (https://linux.die.net/man/5/resolv.conf).
+	// +optional
+	Nameservers []string `json:"nameservers,omitempty"`
 }
