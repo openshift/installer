@@ -4114,6 +4114,57 @@ spec:
                       Use FailureDomains.Topology.Folder'
                     pattern: ^/.*?/vm/.*?
                     type: string
+                  hosts:
+                    description: Hosts defines `Host` configurations to be applied
+                      to nodes deployed by the installer
+                    items:
+                      description: Host defines host VMs to generate as part of the
+                        installation.
+                      properties:
+                        failureDomain:
+                          description: FailureDomain refers to the name of a FailureDomain
+                            as described in https://github.com/openshift/enhancements/blob/master/enhancements/installer/vsphere-ipi-zonal.md
+                          type: string
+                        networkDevice:
+                          description: Slice of NetworkDeviceSpecs to be applied
+                          properties:
+                            gateway4:
+                              description: gateway4 is the IPv4 gateway used by this
+                                device. Required when DHCP4 is false.
+                              format: ipv4
+                              type: string
+                            gateway6:
+                              description: gateway4 is the IPv4 gateway used by this
+                                device. Required when DHCP6 is false.
+                              format: ipv6
+                              type: string
+                            ipAddrs:
+                              description: ipAddrs is a list of one or more IPv4 and/or
+                                IPv6 addresses to assign to this device. Required
+                                when DHCP4 and DHCP6 are both Disabled.
+                              items:
+                                type: string
+                              type: array
+                            nameservers:
+                              description: nameservers is a list of IPv4 and/or IPv6
+                                addresses used as DNS nameservers. Please note that
+                                Linux allows only three nameservers (https://linux.die.net/man/5/resolv.conf).
+                              items:
+                                type: string
+                              type: array
+                          type: object
+                        role:
+                          description: Role defines the role of the node
+                          enum:
+                          - ""
+                          - bootstrap
+                          - control-plane
+                          - compute
+                          type: string
+                      required:
+                      - role
+                      type: object
+                    type: array
                   ingressVIP:
                     description: 'DeprecatedIngressVIP is the virtual IP address for
                       ingress Deprecated: Use IngressVIPs'
