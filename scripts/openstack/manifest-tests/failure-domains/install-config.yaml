@@ -77,4 +77,5 @@ platform:
     cloud: ${OS_CLOUD}
     externalNetwork: ${EXTERNAL_NETWORK}
     lbFloatingIP: ${API_FIP}
+    machinesSubnet: 198.51.100.0/24
 pullSecret: ${PULL_SECRET}
