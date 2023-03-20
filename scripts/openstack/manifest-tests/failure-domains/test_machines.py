@@ -122,6 +122,13 @@ class FailureDomainsMachines(unittest.TestCase):
             # availability zones have matching names in the test-case install-config
             self.assertEqual(compute_zone[-1], storage_zone[-1])
 
+
+    def test_no_primarySubnet_if_control_plane_portTarget(self):
+        """Since install-config sets a control-plane portTarget, assert that primarySubnet is empty."""
+        for machine in self.machines:
+            self.assertIsNone(machine["spec"]["providerSpec"]["value"].get("primarySubnet"))
+
+
 if __name__ == '__main__':
     ASSETS_DIR = sys.argv.pop()
     with open(os.environ.get('JUNIT_FILE', '/dev/null'), 'wb') as output:
