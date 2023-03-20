@@ -161,4 +161,4 @@ replace golang.org/x/net => golang.org/x/net v0.5.0
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
-replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.10.0
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2

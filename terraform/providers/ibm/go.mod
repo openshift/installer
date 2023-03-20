@@ -123,7 +123,7 @@ require (
 	github.com/vmihailenco/msgpack/v4 v4.3.12 // indirect
 	github.com/vmihailenco/tagparser v0.1.1 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
-	go.mongodb.org/mongo-driver v1.10.0 // indirect
+	go.mongodb.org/mongo-driver v1.11.2 // indirect
 	golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect
@@ -150,4 +150,4 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 replace golang.org/x/net => golang.org/x/net v0.5.0
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
-replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.10.0
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
