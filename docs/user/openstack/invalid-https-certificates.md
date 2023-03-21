@@ -2,12 +2,37 @@
 
 With OpenShift v4.10, HTTPS certificates not using the `Subject Alternative Names` fields will be rejected. Upgrades will be blocked if such certificates are detected in some areas; however OpenShift will not automatically check the underlying OpenStack infrastructure prior to upgrading or installing. This is what the following instructions will walk you through doing.
 
-This script checks and reports on all HTTPS endpoints in an OpenStack catalog. Populate the environment with OpenStack credentials for the target cloud, then run the following Bash script.
+---
+
+A script provided below automates the operation. However, it requires to have a set of tools available (including a relatively recent version of `python3-openstackclient`). To manually check your OpenStack infrastructure:
+
+1. Collect the URL of the OpenStack public endpoints with `openstack catalog list` (HTTP (unsecured) endpoints do not need to be checked)
+2. For each HTTPS endpoint: collect the host (by removing the scheme, the port and the path) and the port
+3. Run this openssl command to extract the SAN field of the certificate:
+
+```plaintext
+host=<the host part of the URL>
+port=<the port part of the URL; 443 if unspecified>
+openssl s_client -showcerts -servername "$host" -connect "$host:$port" </dev/null 2>/dev/null \
+    | openssl x509 -noout -ext subjectAltName
+```
+
+If the output resembles this, the certificate is OK:
+```plaintext
+X509v3 Subject Alternative Name:
+    DNS:yout.host.example.net
+```
+
+If instead there is no output, then the certificate is invalid and it needs to be re-issued.
+
+---
+
+This script automatically checks and reports on all HTTPS endpoints in an OpenStack catalog. Populate the environment with OpenStack credentials for the target cloud, then run the following Bash script.
 
 Requirements:
-* Bash 4+
+* Bash v4+
 * grep
-* [Python OpenStack client][openstack-cli]
+* [Python OpenStack client][openstack-cli] v4+
 * [jq][jq]
 * [openssl 1.1.1l+][openssl]
 
