@@ -69,7 +69,7 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 
 ## OpenStack Requirements
 
-In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. If you are planning on using Kuryr, or want to learn more about it, please read through the [Kuryr documentation](kuryr.md). **NOTE: The installer has been tested and developed on Red Hat OSP 13.**
+In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. If you are planning on using Kuryr, or want to learn more about it, please read through the [Kuryr documentation](kuryr.md).
 
 For a successful installation it is required:
 
@@ -315,15 +315,15 @@ The third floating IP is created automatically by the installer and will be dest
 
 ##### Create API and Ingress Floating IP Addresses
 
-The deployed OpenShift cluster will need two floating IP addresses, one to attach to the API load balancer (lb FIP), and one for the OpenShift applications (apps FIP). Note that the LB FIP is the IP address you will add to your `install-config.yaml` or select in the interactive installer prompt.
+The deployed OpenShift cluster will need two floating IP addresses, one to attach to the API load balancer (API FIP), and one for the OpenShift applications (Apps FIP). Note that the API FIP is the IP address you will add to your `install-config.yaml` or select in the interactive installer prompt.
 
 You can create them like so:
 
 ```sh
 openstack floating ip create --description "API <cluster name>.<base domain>" <external network>
-# => <lb FIP>
+# => <API FIP>
 openstack floating ip create --description "Ingress <cluster name>.<base domain>" <external network>
-# => <apps FIP>
+# => <Apps FIP>
 ```
 
 **NOTE:** These IP addresses will **not** show up attached to any particular server (e.g. when running `openstack server list`). Similarly, the API and Ingress ports will always be in the `DOWN` state.
@@ -339,20 +339,20 @@ For more details, read the [OpenShift on OpenStack networking infrastructure des
 You will also need to add the following records to your DNS:
 
 ```dns
-api.<cluster name>.<base domain>.  IN  A  <lb FIP>
-*.apps.<cluster name>.<base domain>.  IN  A  <apps FIP>
+api.<cluster name>.<base domain>.  IN  A  <API FIP>
+*.apps.<cluster name>.<base domain>.  IN  A  <Apps FIP>
 ```
 
 If you're unable to create and publish these DNS records, you can add them to your `/etc/hosts` file.
 
 ```dns
-<lb FIP> api.<cluster name>.<base domain>
-<apps FIP> console-openshift-console.apps.<cluster name>.<base domain>
-<apps FIP> integrated-oauth-server-openshift-authentication.apps.<cluster name>.<base domain>
-<apps FIP> oauth-openshift.apps.<cluster name>.<base domain>
-<apps FIP> prometheus-k8s-openshift-monitoring.apps.<cluster name>.<base domain>
-<apps FIP> grafana-openshift-monitoring.apps.<cluster name>.<base domain>
-<apps FIP> <app name>.apps.<cluster name>.<base domain>
+<API FIP> api.<cluster name>.<base domain>
+<Apps FIP> console-openshift-console.apps.<cluster name>.<base domain>
+<Apps FIP> integrated-oauth-server-openshift-authentication.apps.<cluster name>.<base domain>
+<Apps FIP> oauth-openshift.apps.<cluster name>.<base domain>
+<Apps FIP> prometheus-k8s-openshift-monitoring.apps.<cluster name>.<base domain>
+<Apps FIP> grafana-openshift-monitoring.apps.<cluster name>.<base domain>
+<Apps FIP> <app name>.apps.<cluster name>.<base domain>
 ```
 
 **WARNING:** *this workaround will make the API accessible only to the computer with these `/etc/hosts` entries. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment. In addition, if you create new OpenShift apps or routes, you will have to add their entries too, because `/etc/hosts` does not support wildcard entries.*
@@ -378,7 +378,7 @@ openstack port show <cluster name>-<clusterID>-ingress-port
 Then attach the FIP to it:
 
 ```sh
-openstack floating ip set --port <cluster name>-<clusterID>-ingress-port <apps FIP>
+openstack floating ip set --port <cluster name>-<clusterID>-ingress-port <Apps FIP>
 ```
 
 This assumes the floating IP and corresponding `*.apps` DNS record exists.
