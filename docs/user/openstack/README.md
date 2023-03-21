@@ -86,7 +86,8 @@ For a successful installation it is required:
 - Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
 - OpenStack resource tagging
 
-**NOTE:** The installer will check OpenStack quota limits to make sure that the requested resources can be created. Note that it won't check for resource availability in the cloud, but only on the quotas.
+> **NOTE:**
+> The installer will check OpenStack quota limits to make sure that the requested resources can be created. Note that it won't check for resource availability in the cloud, but only on the quotas.
 
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
@@ -201,7 +202,8 @@ openstack network list --long -c ID -c Name -c "Router Type"
 +--------------------------------------+----------------+-------------+
 ```
 
-**NOTE:** If the `neutron` `trunk` service plug-in is enabled, trunk port will be created by default. For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
+> **NOTE:**
+> If the Neutron `trunk` service plug-in is enabled, trunk port will be created by default. For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
 
 ### Nova Metadata Service
 
@@ -315,20 +317,19 @@ The third floating IP is created automatically by the installer and will be dest
 
 ##### Create API and Ingress Floating IP Addresses
 
-The deployed OpenShift cluster will need two floating IP addresses, one to attach to the API load balancer (API FIP), and one for the OpenShift applications (Apps FIP). Note that the API FIP is the IP address you will add to your `install-config.yaml` or select in the interactive installer prompt.
+The deployed OpenShift cluster will need two floating IP addresses: one to attach to the API load balancer (`apiFloatingIP`) and one for the OpenShift applications (`ingressFloatingIP`). Note that `apiFloatingIP` is the IP address you will add to your `install-config.yaml` or select in the interactive installer prompt.
 
 You can create them like so:
 
 ```sh
 openstack floating ip create --description "API <cluster name>.<base domain>" <external network>
-# => <API FIP>
+# => <apiFloatingIP>
 openstack floating ip create --description "Ingress <cluster name>.<base domain>" <external network>
-# => <Apps FIP>
+# => <ingressFloatingIP>
 ```
 
-**NOTE:** These IP addresses will **not** show up attached to any particular server (e.g. when running `openstack server list`). Similarly, the API and Ingress ports will always be in the `DOWN` state.
-
-This is because the ports are not attached to the servers directly. Instead, their fixed IP addresses are managed by keepalived. This has no record in Neutron's database and as such, is not visible to OpenStack.
+> **NOTE:**
+> These IP addresses will **not** show up attached to any particular server (e.g. when running `openstack server list`). Similarly, the API and Ingress ports will always be in the `DOWN` state. This is because the ports are not attached to the servers directly. Instead, their fixed IP addresses are managed by keepalived. This has no record in Neutron's database and as such, is not visible to OpenStack.
 
 *The network traffic will flow through even though the IPs and ports do not show up in the servers*.
 
@@ -339,23 +340,24 @@ For more details, read the [OpenShift on OpenStack networking infrastructure des
 You will also need to add the following records to your DNS:
 
 ```dns
-api.<cluster name>.<base domain>.  IN  A  <API FIP>
-*.apps.<cluster name>.<base domain>.  IN  A  <Apps FIP>
+api.<cluster name>.<base domain>.  IN  A  <apiFloatingIP>
+*.apps.<cluster name>.<base domain>.  IN  A  <ingressFloatingIP>
 ```
 
 If you're unable to create and publish these DNS records, you can add them to your `/etc/hosts` file.
 
 ```dns
-<API FIP> api.<cluster name>.<base domain>
-<Apps FIP> console-openshift-console.apps.<cluster name>.<base domain>
-<Apps FIP> integrated-oauth-server-openshift-authentication.apps.<cluster name>.<base domain>
-<Apps FIP> oauth-openshift.apps.<cluster name>.<base domain>
-<Apps FIP> prometheus-k8s-openshift-monitoring.apps.<cluster name>.<base domain>
-<Apps FIP> grafana-openshift-monitoring.apps.<cluster name>.<base domain>
-<Apps FIP> <app name>.apps.<cluster name>.<base domain>
+<apiFloatingIP> api.<cluster name>.<base domain>
+<ingressFloatingIP> console-openshift-console.apps.<cluster name>.<base domain>
+<ingressFloatingIP> integrated-oauth-server-openshift-authentication.apps.<cluster name>.<base domain>
+<ingressFloatingIP> oauth-openshift.apps.<cluster name>.<base domain>
+<ingressFloatingIP> prometheus-k8s-openshift-monitoring.apps.<cluster name>.<base domain>
+<ingressFloatingIP> grafana-openshift-monitoring.apps.<cluster name>.<base domain>
+<ingressFloatingIP> <app name>.apps.<cluster name>.<base domain>
 ```
 
-**WARNING:** *this workaround will make the API accessible only to the computer with these `/etc/hosts` entries. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment. In addition, if you create new OpenShift apps or routes, you will have to add their entries too, because `/etc/hosts` does not support wildcard entries.*
+> **WARNING:**
+> *This workaround will make the API accessible only to the computer with these `/etc/hosts` entries. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment. In addition, if you create new OpenShift apps or routes, you will have to add their entries too, because `/etc/hosts` does not support wildcard entries.*
 
 ##### External API Access
 
@@ -378,7 +380,7 @@ openstack port show <cluster name>-<clusterID>-ingress-port
 Then attach the FIP to it:
 
 ```sh
-openstack floating ip set --port <cluster name>-<clusterID>-ingress-port <Apps FIP>
+openstack floating ip set --port <cluster name>-<clusterID>-ingress-port <ingressFloatingIP>
 ```
 
 This assumes the floating IP and corresponding `*.apps` DNS record exists.
@@ -388,7 +390,8 @@ This assumes the floating IP and corresponding `*.apps` DNS record exists.
 
 If you cannot or don't want to pre-create a floating IP address, the installation should still succeed, however the installer will fail waiting for the API.
 
-**WARNING:** The installer will fail if it can't reach the bootstrap OpenShift API in 20 minutes.
+> **WARNING:**
+> The installer will fail if it can't reach the bootstrap OpenShift API in 20 minutes.
 
 Even if the installer times out, the OpenShift cluster should still come up. Once the bootstrapping process is in place, it should all run to completion. So you should be able to deploy OpenShift without any floating IP addresses and DNS records and create everything yourself after the cluster is up.
 
@@ -565,7 +568,8 @@ In order to use Availability Zones, create one MachineSet per target
 Availability Zone, and set the Availability Zone in the `availabilityZone`
 property of the MachineSet.
 
-**NOTE:** Note when deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
+> **NOTE:**
+> When deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 
 [server-group-docs]: https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#create-server-group
 
@@ -681,7 +685,8 @@ If you need to update the OpenStack cloud provider configuration you can edit th
 oc edit configmap -n openshift-config cloud-provider-config
 ```
 
-**NOTE:** It can take a while to reconfigure the cluster depending on the size of it. The reconfiguration is completed once no node is getting `SchedulingDisabled` taint anymore.
+> **NOTE:**
+> It can take a while to reconfigure the cluster depending on the size of it. The reconfiguration is completed once no node is getting `SchedulingDisabled` taint anymore.
 
 There are several things you can change:
 
