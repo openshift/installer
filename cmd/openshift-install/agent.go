@@ -92,7 +92,6 @@ func newAgentCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create",
 		Short: "Commands for generating agent installation artifacts",
-		Args:  cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return cmd.Help()
 		},
