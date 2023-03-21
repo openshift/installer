@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"strings"
 
@@ -287,7 +288,7 @@ func validateHostNetworking(network *vsphere.NetworkDeviceSpec, fldPath *field.P
 		allErrs = append(allErrs, field.Required(fldPath.Child("ipAddrs"), "must specify a IP"))
 	}
 	for _, ip := range network.IPAddrs {
-		allErrs = append(allErrs, validateIP(ip, false, fldPath.Child("ipAddrs"))...)
+		allErrs = append(allErrs, validateIPWithCidr(ip, true, fldPath.Child("ipAddrs"))...)
 	}
 
 	// Check nameservers
@@ -304,6 +305,20 @@ func validateHostNetworking(network *vsphere.NetworkDeviceSpec, fldPath *field.P
 	// Check gateway6
 	allErrs = append(allErrs, validateIP(network.Gateway6, false, fldPath.Child("gateway6"))...)
 
+	return allErrs
+}
+
+// validateIPWithCidr checks IP/CIDR value to see if it is valid.  If IP is required, an error will be returned if
+// the IP is not specified.
+func validateIPWithCidr(ip string, req bool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ip == "" && req {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a IP address with CIDR"))
+	} else if ip != "" {
+		if _, _, valErr := net.ParseCIDR(ip); valErr != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath, ip, valErr.Error()))
+		}
+	}
 	return allErrs
 }
 

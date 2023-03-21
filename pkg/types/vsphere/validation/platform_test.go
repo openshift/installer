@@ -63,7 +63,7 @@ func validHosts() []*vsphere.Host {
 			Role: "bootstrap",
 			NetworkDevice: &vsphere.NetworkDeviceSpec{
 				IPAddrs: []string{
-					"192.168.101.240",
+					"192.168.101.240/24",
 				},
 				Gateway4: "192.168.101.1",
 				Nameservers: []string{
@@ -76,7 +76,7 @@ func validHosts() []*vsphere.Host {
 			FailureDomain: "test-east-1a",
 			NetworkDevice: &vsphere.NetworkDeviceSpec{
 				IPAddrs: []string{
-					"192.168.101.241",
+					"192.168.101.241/24",
 				},
 				Gateway4: "192.168.101.1",
 				Nameservers: []string{
@@ -89,7 +89,7 @@ func validHosts() []*vsphere.Host {
 			FailureDomain: "test-east-2a",
 			NetworkDevice: &vsphere.NetworkDeviceSpec{
 				IPAddrs: []string{
-					"192.168.101.242",
+					"192.168.101.242/24",
 				},
 				Gateway4: "192.168.101.1",
 				Nameservers: []string{
@@ -102,7 +102,7 @@ func validHosts() []*vsphere.Host {
 			FailureDomain: "test-east-1a",
 			NetworkDevice: &vsphere.NetworkDeviceSpec{
 				IPAddrs: []string{
-					"192.168.101.243",
+					"192.168.101.243/24",
 				},
 				Gateway4: "192.168.101.1",
 				Nameservers: []string{
@@ -389,10 +389,40 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
 				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309/24"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309/24": invalid CIDR address: 86.7.5.309/24$`,
+		},
+		{
+			name: "Static IP - invalid IP blank",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = ""
+				return p
+			}(),
+			expectedError: `^test-path.hosts.ipAddrs: Required value: must specify a IP address with CIDR$`,
+		},
+		{
+			name: "Static IP - invalid IP CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309/55"
+				return p
+			}(),
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309/55": invalid CIDR address: 86.7.5.309/55$`,
+		},
+		{
+			name: "Static IP - invalid IP missing CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
 				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309"
 				return p
 			}(),
-			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309": "86.7.5.309" is not a valid IP$`,
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309": invalid CIDR address: 86.7.5.309$`,
 		},
 		{
 			name: "Static IP - valid Gateway4 IP",
