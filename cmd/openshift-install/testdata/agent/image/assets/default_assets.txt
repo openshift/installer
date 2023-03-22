@@ -5,6 +5,9 @@ exec openshift-install agent create image --dir $WORK
 exists $WORK/agent.x86_64.iso
 
 ignitionImgContains agent.x86_64.iso config.ign
+initrdImgContains agent.x86_64.iso /agent-files/agent-tui
+initrdImgContains agent.x86_64.iso /agent-files/libnmstate.so.1.3.3
+initrdImgContains agent.x86_64.iso /usr/lib/dracut/hooks/pre-pivot/99-agent-copy-files.sh
 
 -- install-config.yaml --
 apiVersion: v1
