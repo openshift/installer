@@ -1,17 +1,19 @@
 package azure
 
 import (
-	"bytes"
 	"context"
+	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/compute/mgmt/compute"
-	"github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/storage/mgmt/storage"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
 	"github.com/Azure/azure-sdk-for-go/sdk/storage/azblob"
-	"github.com/Azure/go-autorest/autorest/to"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -29,8 +31,8 @@ type Gather struct {
 	logger                logrus.FieldLogger
 	serialLogBundle       string
 	directory             string
-	virtualMachinesClient compute.VirtualMachinesClient
-	accountsClient        storage.AccountsClient
+	virtualMachinesClient *armcompute.VirtualMachinesClient
+	accountsClient        *armstorage.AccountsClient
 }
 
 // New returns a Azure Gather from ClusterMetadata.
@@ -50,11 +52,29 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 		return nil, err
 	}
 
-	accountsClient := storage.NewAccountsClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
-	accountsClient.Authorizer = session.Authorizer
+	accountClientOptions := arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			// NOTE: the api version must support AzureStack
+			APIVersion: "2019-03-01",
+			Cloud:      session.CloudConfig,
+		},
+	}
+	accountsClient, err := armstorage.NewAccountsClient(session.Credentials.SubscriptionID, session.TokenCreds, &accountClientOptions)
+	if err != nil {
+		return nil, err
+	}
 
-	virtualMachinesClient := compute.NewVirtualMachinesClientWithBaseURI(session.Environment.ResourceManagerEndpoint, session.Credentials.SubscriptionID)
-	virtualMachinesClient.Authorizer = session.Authorizer
+	vmClientOptions := arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			// NOTE: the api version must both support AzureStack and BootDignosticsData
+			APIVersion: "2020-06-01",
+			Cloud:      session.CloudConfig,
+		},
+	}
+	virtualMachinesClient, err := armcompute.NewVirtualMachinesClient(session.Credentials.SubscriptionID, session.TokenCreds, &vmClientOptions)
+	if err != nil {
+		return nil, err
+	}
 
 	gather := &Gather{
 		resourceGroupName:     resourceGroupName,
@@ -88,11 +108,13 @@ func (g *Gather) Run() error {
 	// We can only get the serial log from VM's with boot diagnostics enabled
 	bootDiagnostics := getBootDiagnostics(ctx, virtualMachines, g)
 	for _, bootDiagnostic := range bootDiagnostics {
-		screenBmp := to.String(bootDiagnostic.ConsoleScreenshotBlobURI)
-		files = append(files, screenBmp)
+		if bootDiagnostic.ConsoleScreenshotBlobURI != nil {
+			files = append(files, *bootDiagnostic.ConsoleScreenshotBlobURI)
+		}
 
-		serialLog := to.String(bootDiagnostic.SerialConsoleLogBlobURI)
-		files = append(files, serialLog)
+		if bootDiagnostic.SerialConsoleLogBlobURI != nil {
+			files = append(files, *bootDiagnostic.SerialConsoleLogBlobURI)
+		}
 	}
 
 	err = downloadFiles(ctx, files, sharedKeyCredentials, g)
@@ -104,24 +126,24 @@ func (g *Gather) Run() error {
 }
 
 func getSharedKeyCredentials(ctx context.Context, g *Gather) ([]*azblob.SharedKeyCredential, error) {
-	accountListResult, err := g.accountsClient.ListByResourceGroup(ctx, g.resourceGroupName)
-	if err != nil {
-		return nil, errors.Wrap(err, "could not find any storage accounts")
-	}
+	pager := g.accountsClient.NewListByResourceGroupPager(g.resourceGroupName, nil)
 
 	var sharedKeyCredentials []*azblob.SharedKeyCredential
-	if accountListResult.Value != nil {
-		for _, account := range *accountListResult.Value {
-			accountName := to.String(account.Name)
-			keyResults, err := g.accountsClient.ListKeys(ctx, g.resourceGroupName, accountName)
+	for pager.More() {
+		accountListResult, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "could not find any storage account keys")
+		}
+		for _, account := range accountListResult.Value {
+			keyResults, err := g.accountsClient.ListKeys(ctx, g.resourceGroupName, *account.Name, nil)
 			if err != nil {
 				g.logger.Debugf("failed to list keys: %s", err.Error())
 				continue
 			}
 			if keyResults.Keys != nil {
-				for _, key := range *keyResults.Keys {
+				for _, key := range keyResults.Keys {
 					if key.Value != nil {
-						sharedKeyCredential, err := azblob.NewSharedKeyCredential(accountName, to.String(key.Value))
+						sharedKeyCredential, err := azblob.NewSharedKeyCredential(*account.Name, *key.Value)
 						if err != nil {
 							g.logger.Debugf("failed to get shared key: %s", err.Error())
 							continue
@@ -136,33 +158,30 @@ func getSharedKeyCredentials(ctx context.Context, g *Gather) ([]*azblob.SharedKe
 	return sharedKeyCredentials, nil
 }
 
-func getVirtualMachines(ctx context.Context, g *Gather) ([]compute.VirtualMachine, error) {
-	vmsPage, err := g.virtualMachinesClient.List(ctx, g.resourceGroupName)
-	if err != nil {
-		return nil, err
-	}
+func getVirtualMachines(ctx context.Context, g *Gather) ([]*armcompute.VirtualMachine, error) {
+	vmsPager := g.virtualMachinesClient.NewListPager(g.resourceGroupName, nil)
 
-	var virtualMachines []compute.VirtualMachine
-	for ; vmsPage.NotDone(); err = vmsPage.NextWithContext(ctx) {
+	var virtualMachines []*armcompute.VirtualMachine
+	for vmsPager.More() {
+		vmsPage, err := vmsPager.NextPage(ctx)
 		if err != nil {
 			g.logger.Debugf("failed to get vm: %s", err.Error())
-			continue
+			return nil, err
 		}
-		for _, virtualMachine := range vmsPage.Values() {
-			virtualMachines = append(virtualMachines, virtualMachine)
-		}
+		virtualMachines = append(virtualMachines, vmsPage.Value...)
 	}
 
 	return virtualMachines, nil
 }
 
-func getBootDiagnostics(ctx context.Context, virtualMachines []compute.VirtualMachine, g *Gather) []*compute.BootDiagnosticsInstanceView {
-	var bootDiagnostics []*compute.BootDiagnosticsInstanceView
+func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.VirtualMachine, g *Gather) []*armcompute.BootDiagnosticsInstanceView {
+	var bootDiagnostics []*armcompute.BootDiagnosticsInstanceView
 	for _, vm := range virtualMachines {
-		if vm.VirtualMachineProperties.DiagnosticsProfile != nil &&
-			vm.VirtualMachineProperties.DiagnosticsProfile.BootDiagnostics != nil &&
-			to.Bool(vm.VirtualMachineProperties.DiagnosticsProfile.BootDiagnostics.Enabled) {
-			instanceView, err := g.virtualMachinesClient.InstanceView(ctx, g.resourceGroupName, to.String(vm.Name))
+		if vm.Properties.DiagnosticsProfile != nil &&
+			vm.Properties.DiagnosticsProfile.BootDiagnostics != nil &&
+			vm.Properties.DiagnosticsProfile.BootDiagnostics.Enabled != nil &&
+			*vm.Properties.DiagnosticsProfile.BootDiagnostics.Enabled {
+			instanceView, err := g.virtualMachinesClient.InstanceView(ctx, g.resourceGroupName, *vm.Name, nil)
 			if err != nil {
 				g.logger.Debugf("failed to get instance view: %v", err)
 				continue
@@ -178,10 +197,17 @@ func getBootDiagnostics(ctx context.Context, virtualMachines []compute.VirtualMa
 
 func downloadFiles(ctx context.Context, fileURIs []string, sharedKeyCredentials []*azblob.SharedKeyCredential, g *Gather) error {
 	var errs []error
-	var files []string
 
+	serialLogBundleDir := filepath.Join(g.directory, strings.TrimSuffix(filepath.Base(g.serialLogBundle), ".tar.gz"))
+
+	err := os.MkdirAll(serialLogBundleDir, 0o755)
+	if err != nil && !errors.Is(err, os.ErrExist) {
+		return err
+	}
+
+	files := make([]string, 0, len(fileURIs))
 	for _, fileURI := range fileURIs {
-		filePath, err := downloadFile(ctx, fileURI, sharedKeyCredentials, g)
+		filePath, err := downloadFile(ctx, fileURI, serialLogBundleDir, sharedKeyCredentials, g)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -197,8 +223,7 @@ func downloadFiles(ctx context.Context, fileURIs []string, sharedKeyCredentials 
 		}
 	}
 
-	serialLogBundleDir := filepath.Join(g.directory, strings.TrimSuffix(filepath.Base(g.serialLogBundle), ".tar.gz"))
-	err := gather.DeleteArchiveDirectory(serialLogBundleDir)
+	err = gather.DeleteArchiveDirectory(serialLogBundleDir)
 	if err != nil {
 		g.logger.Debugf("failed to remove archive directory: %v", err)
 	}
@@ -206,40 +231,27 @@ func downloadFiles(ctx context.Context, fileURIs []string, sharedKeyCredentials 
 	return utilerrors.NewAggregate(errs)
 }
 
-func downloadFile(ctx context.Context, fileURI string, sharedKeyCredentials []*azblob.SharedKeyCredential, g *Gather) (string, error) {
-	directory := g.directory
+func downloadFile(ctx context.Context, fileURI string, filePathDir string, sharedKeyCredentials []*azblob.SharedKeyCredential, g *Gather) (string, error) {
 	g.logger.Debugf("attemping to download %s", fileURI)
 
-	serialLogBundleDir := strings.TrimSuffix(filepath.Base(g.serialLogBundle), ".tar.gz")
-	filePathDir := filepath.Join(directory, serialLogBundleDir)
-	filePath := filepath.Join(filePathDir, filepath.Base(fileURI))
-
-	err := os.MkdirAll(filePathDir, 0755)
-	if err != nil && !errors.Is(err, os.ErrExist) {
+	uri, err := url.ParseRequestURI(fileURI)
+	if err != nil {
 		return "", err
 	}
+	uriParts := strings.Split(uri.Path, "/")
+	containerName := uriParts[len(uriParts)-2]
+	blobName := uriParts[len(uriParts)-1]
+	filePath := filepath.Join(filePathDir, blobName)
 
+	accountURL := fmt.Sprintf("%s://%s/", uri.Scheme, uri.Host)
 	for _, credential := range sharedKeyCredentials {
-		blobClient, err := azblob.NewBlobClientWithSharedKey(fileURI, credential, nil)
+		if !strings.HasPrefix(uri.Host, credential.AccountName()) {
+			continue
+		}
+		blobClient, err := azblob.NewClientWithSharedKeyCredential(accountURL, credential, nil)
 		if err != nil {
 			g.logger.Debugf("failed to create blob client: %s", err.Error())
 			continue
-		}
-		dr, err := blobClient.Download(ctx, nil)
-		if err != nil {
-			continue
-		}
-
-		data := &bytes.Buffer{}
-		reader := dr.Body(&azblob.RetryReaderOptions{MaxRetryRequests: 3})
-		_, err = data.ReadFrom(reader)
-		if err != nil {
-			g.logger.Debugf("failed to read: %s", err.Error())
-			return "", err
-		}
-		err = reader.Close()
-		if err != nil {
-			return "", err
 		}
 
 		file, err := os.Create(filePath)
@@ -247,15 +259,13 @@ func downloadFile(ctx context.Context, fileURI string, sharedKeyCredentials []*a
 			g.logger.Debugf("failed to create file: %s", err.Error())
 			return "", err
 		}
+		defer file.Close()
 
-		_, err = file.Write(data.Bytes())
+		_, err = blobClient.DownloadFile(ctx, containerName, blobName, file, nil)
 		if err != nil {
-			g.logger.Debugf("failed to write to file: %s", err.Error())
-			file.Close()
 			return "", err
 		}
 
-		file.Close()
 		return filePath, nil
 	}
 
