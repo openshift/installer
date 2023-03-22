@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"k8s.io/utils/pointer"
 	"regexp"
 	"testing"
 
@@ -103,6 +104,45 @@ func validHosts() []*vsphere.Host {
 			NetworkDevice: &vsphere.NetworkDeviceSpec{
 				IPAddrs: []string{
 					"192.168.101.243/24",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "compute",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.244/24",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "compute",
+			FailureDomain: "test-east-2a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.245/24",
+				},
+				Gateway4: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "compute",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.246/24",
 				},
 				Gateway4: "192.168.101.1",
 				Nameservers: []string{
@@ -352,7 +392,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].Role = "crazy-uncle"
 				return p
 			}(),
-			expectedError: `^test-path.hosts.role: Invalid value: "crazy-uncle": role must be one of \[bootstrap control-plane worker]$`,
+			expectedError: `^test-path.hosts.role: Invalid value: "crazy-uncle": role must be one of \[bootstrap compute control-plane]$`,
 		},
 		{
 			name: "Static IP - invalid FailureDomain",
@@ -471,6 +511,149 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expectedError: `^test-path.hosts.nameservers: Too many: 4: must have at most 3 items$`,
+		},
+		{
+			name: "Static IP - Not enough control-planes",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(4),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(3),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured ControlPlane replicas \(4\)$`,
+		},
+		{
+			name: "Static IP - Too many control-planes",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(2),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(3),
+					},
+				},
+			},
+		},
+		{
+			name: "Static IP - Not enough workers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(4),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured Compute replicas \(4\)$`,
+		},
+		{
+			name: "Static IP - Too many workers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(2),
+					},
+				},
+			},
+		},
+		{
+			name: "Static IP - Not enough control-plane and workers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(4),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(4),
+					},
+				},
+			},
+			expectedError: `^\[test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured ControlPlane replicas \(4\), test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured Compute replicas \(4\)]$`,
 		},
 	}
 	for _, tc := range cases {

@@ -34,8 +34,8 @@ const (
 const (
 	// ControlPlaneRole represents control-plane nodes
 	ControlPlaneRole = "control-plane"
-	// WorkerRole represents worker nodes
-	WorkerRole = "worker"
+	// ComputeRole represents worker nodes
+	ComputeRole = "compute"
 	// BootstrapRole represents bootstrap nodes
 	BootstrapRole = "bootstrap"
 )
@@ -271,4 +271,19 @@ type NetworkDeviceSpec struct {
 	// Please note that Linux allows only three nameservers (https://linux.die.net/man/5/resolv.conf).
 	// +optional
 	Nameservers []string `json:"nameservers,omitempty"`
+}
+
+// IsControlPlane checks if the current host is a master
+func (h *Host) IsControlPlane() bool {
+	return h.Role == ControlPlaneRole
+}
+
+// IsCompute checks if the current host is a worker
+func (h *Host) IsCompute() bool {
+	return h.Role == ComputeRole
+}
+
+// IsBootstrap checks if the current host is a bootstrap
+func (h *Host) IsBootstrap() bool {
+	return h.Role == BootstrapRole
 }

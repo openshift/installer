@@ -45,7 +45,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		}
 		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
 
-		allErrs = append(allErrs, validateHosts(p, fldPath.Child("hosts"))...)
+		allErrs = append(allErrs, validateHosts(p, c, fldPath.Child("hosts"))...)
 	}
 
 	// Platform fields only allowed in TechPreviewNoUpgrade
@@ -226,8 +226,11 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 }
 
 // validateHosts
-func validateHosts(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
+func validateHosts(p *vsphere.Platform, installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	// Validate hosts counts match desired replicas
+	allErrs = append(allErrs, validateHostsCount(p.Hosts, installConfig, fldPath)...)
 
 	// Iterate through hosts
 	for _, host := range p.Hosts {
@@ -254,11 +257,57 @@ func validateHosts(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 // validateHostRole returns error if the host role is invalid
 func validateHostRole(host *vsphere.Host, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	validHostRoles := sets.NewString(vsphere.BootstrapRole, vsphere.ControlPlaneRole, vsphere.WorkerRole)
+	validHostRoles := sets.NewString(vsphere.BootstrapRole, vsphere.ControlPlaneRole, vsphere.ComputeRole)
 	if !validHostRoles.Has(host.Role) {
 		errMsg := fmt.Sprintf("role must be one of %v", validHostRoles.List())
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("role"), host.Role, errMsg))
 	}
+	return allErrs
+}
+
+// validateHostsCount ensure that the number of hosts is enough to cover the
+// ControlPlane and Compute replicas. Hosts without role will be considered
+// eligible for the ControlPlane or Compute requirements.
+func validateHostsCount(hosts []*vsphere.Host, installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	numRequiredControlPlane := int64(0)
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		numRequiredControlPlane += *installConfig.ControlPlane.Replicas
+	}
+
+	numRequiredWorkers := int64(0)
+	for _, worker := range installConfig.Compute {
+		if worker.Replicas != nil {
+			numRequiredWorkers += *worker.Replicas
+		}
+	}
+
+	numControlPlane := int64(0)
+	numWorkers := int64(0)
+
+	for _, h := range hosts {
+		if h.IsControlPlane() {
+			numControlPlane++
+		} else if h.IsCompute() {
+			numWorkers++
+		}
+	}
+
+	if numControlPlane < numRequiredControlPlane {
+		errMsg := fmt.Sprintf("not enough hosts found (%v) to support all the configured ControlPlane replicas (%v)", numControlPlane, numRequiredControlPlane)
+		allErrs = append(allErrs, field.Invalid(fldPath, "control-plane", errMsg))
+	} else if numControlPlane > numRequiredControlPlane {
+		logrus.Warnf("too many hosts found (%v) for the configured ControlPlane replicas (%v).  Extras will be ignored.", numControlPlane, numRequiredControlPlane)
+	}
+
+	if numWorkers < numRequiredWorkers {
+		errMsg := fmt.Sprintf("not enough hosts found (%v) to support all the configured Compute replicas (%v)", numWorkers, numRequiredWorkers)
+		allErrs = append(allErrs, field.Invalid(fldPath, "control-plane", errMsg))
+	} else if numWorkers > numRequiredWorkers {
+		logrus.Warnf("too many hosts found (%v) for the configured Compute replicas (%v).  Extras will be ignored.", numControlPlane, numRequiredControlPlane)
+	}
+
 	return allErrs
 }
 
