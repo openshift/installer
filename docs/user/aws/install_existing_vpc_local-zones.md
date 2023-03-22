@@ -115,22 +115,23 @@ aws cloudformation wait stack-create-complete \
 
 ```bash
 export VPC_ID=$(aws cloudformation describe-stacks \
-  --region us-west-2 \
-  --stack-name ${CLUSTER_NAME}-vpc \
-  | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="VpcId").OutputValue' )
+  --region ${AWS_REGION} --stack-name ${CLUSTER_NAME}-vpc \
+  --query 'Stacks[0].Outputs[?OutputKey==`VpcId`].OutputValue' --output text)
 ```
 
 - Extract the subnets IDs to the environment variable list `SUBNETS`:
 
 ```bash
 mapfile -t SUBNETS < <(aws cloudformation describe-stacks \
-  --region us-west-2 \
+  --region ${AWS_REGION} \
   --stack-name ${CLUSTER_NAME}-vpc \
-  | jq -r '.Stacks[0].Outputs[0].OutputValue' | tr ',' '\n')
+  --query 'Stacks[0].Outputs[?OutputKey==`PrivateSubnetIds`].OutputValue' \
+  --output text | tr ',' '\n')
 mapfile -t -O "${#SUBNETS[@]}" SUBNETS < <(aws cloudformation describe-stacks \
-  --region us-west-2 \
+  --region ${AWS_REGION} \
   --stack-name ${CLUSTER_NAME}-vpc  \
-  | jq -r '.Stacks[0].Outputs[1].OutputValue' | tr ',' '\n')
+  --query 'Stacks[0].Outputs[?OutputKey==`PublicSubnetIds`].OutputValue' \
+  --output text | tr ',' '\n')
 ```
 
 - Export the Public Route Table ID:
@@ -139,7 +140,7 @@ mapfile -t -O "${#SUBNETS[@]}" SUBNETS < <(aws cloudformation describe-stacks \
 export PUBLIC_RTB_ID=$(aws cloudformation describe-stacks \
   --region us-west-2 \
   --stack-name ${CLUSTER_NAME}-vpc \
-  | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicRouteTableId").OutputValue' )
+  --query 'Stacks[0].Outputs[?OutputKey==`PublicRouteTableId`].OutputValue' --output text)
 ```
 
 - Make sure all variables have been correctly set:
@@ -201,7 +202,7 @@ aws cloudformation wait stack-create-complete \
 export SUBNET_ID=$(aws cloudformation describe-stacks \
   --region ${AWS_REGION} \
   --stack-name ${SUBNET_NAME} \
-  | jq -r '.Stacks[0].Outputs[] | select(.OutputKey=="PublicSubnetIds").OutputValue' )
+  --query 'Stacks[0].Outputs[?OutputKey==`PublicSubnetIds`].OutputValue' --output text)
 
 # Append the Local Zone Subnet ID to the Subnet List
 SUBNETS+=(${SUBNET_ID})
