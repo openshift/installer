@@ -617,6 +617,17 @@ func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 	m.MachineFiles = fileList
 
+	file, err = f.FetchByName(filepath.Join(directory, controlPlaneMachineSetFileName))
+	if err != nil {
+		if os.IsNotExist(err) {
+			// Choosing to ignore the CPMS file if it does not exist since UPI does not need it.
+			logrus.Debugf("CPMS file missing. Ignoring it while loading machine asset.")
+			return true, nil
+		}
+		return true, err
+	}
+	m.ControlPlaneMachineSet = file
+
 	return true, nil
 }
 
@@ -638,6 +649,7 @@ func (m *Master) Machines() ([]machinev1beta1.Machine, error) {
 		&machinev1.AlibabaCloudMachineProviderConfig{},
 		&machinev1.NutanixMachineProviderConfig{},
 		&machinev1.PowerVSMachineProviderConfig{},
+		&machinev1.ControlPlaneMachineSet{},
 	)
 
 	machinev1beta1.AddToScheme(scheme)
@@ -679,7 +691,7 @@ func IsMachineManifest(file *asset.File) bool {
 		return false
 	}
 	filename := filepath.Base(file.Filename)
-	if filename == masterUserDataFileName || filename == workerUserDataFileName {
+	if filename == masterUserDataFileName || filename == workerUserDataFileName || filename == controlPlaneMachineSetFileName {
 		return true
 	}
 	if matched, err := machineconfig.IsManifest(filename); err != nil {
