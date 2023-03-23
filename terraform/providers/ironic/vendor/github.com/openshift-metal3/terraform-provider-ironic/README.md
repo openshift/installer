@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/openshift-metal3/terraform-provider-ironic.svg?branch=master)](https://travis-ci.org/openshift-metal3/terraform-provider-ironic) [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![GitHub release](https://img.shields.io/github/release/openshift-metal3/terraform-provider-ironic.svg)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0) ![GitHub release](https://img.shields.io/github/release/openshift-metal3/terraform-provider-ironic.svg)
 
 # Terraform provider for Ironic
 

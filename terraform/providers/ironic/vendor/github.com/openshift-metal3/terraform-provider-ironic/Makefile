@@ -2,6 +2,7 @@ LDFLAGS += -X main.version=$$(git describe --always --abbrev=40 --dirty)
 TEST?=$$(go list ./... |grep -v 'vendor')
 PKG_NAME=ironic
 TERRAFORM_PLUGINS=$(HOME)/.terraform.d/plugins
+GOPATH?=$$(go env GOPATH)
 
 ifeq ("$(IRONIC_ENDPOINT)", "")
 	IRONIC_ENDPOINT := http://127.0.0.1:6385/
