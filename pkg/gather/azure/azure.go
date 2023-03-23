@@ -113,7 +113,7 @@ func (g *Gather) Run() error {
 	// We can only get the serial log from VM's with boot diagnostics enabled
 	bootDiagnostics := getBootDiagnostics(ctx, virtualMachines, g)
 	if len(bootDiagnostics) == 0 {
-		g.logger.Debug("no boot logs found")
+		g.logger.Debug("No boot logs found")
 		return nil
 	}
 
@@ -143,7 +143,7 @@ func getSharedKeyCredentials(ctx context.Context, accounts []*armstorage.Account
 	for _, account := range accounts {
 		keyResults, err := g.accountsClient.ListKeys(ctx, g.resourceGroupName, *account.Name, nil)
 		if err != nil {
-			g.logger.Debugf("failed to list keys: %s", err.Error())
+			g.logger.Debugf("Failed to list keys: %s", err.Error())
 			continue
 		}
 		if keyResults.Keys != nil {
@@ -151,7 +151,7 @@ func getSharedKeyCredentials(ctx context.Context, accounts []*armstorage.Account
 				if key.Value != nil {
 					sharedKeyCredential, err := azblob.NewSharedKeyCredential(*account.Name, *key.Value)
 					if err != nil {
-						g.logger.Debugf("failed to get shared key: %s", err.Error())
+						g.logger.Debugf("Failed to get shared key: %s", err.Error())
 						continue
 					}
 					sharedKeyCredentials = append(sharedKeyCredentials, sharedKeyCredential)
@@ -170,7 +170,7 @@ func getVirtualMachines(ctx context.Context, g *Gather) ([]*armcompute.VirtualMa
 	for vmsPager.More() {
 		vmsPage, err := vmsPager.NextPage(ctx)
 		if err != nil {
-			g.logger.Debugf("failed to get vm: %s", err.Error())
+			g.logger.Debugf("Failed to get vm: %s", err.Error())
 			return nil, err
 		}
 		virtualMachines = append(virtualMachines, vmsPage.Value...)
@@ -186,12 +186,12 @@ func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.Virtu
 			vm.Properties.DiagnosticsProfile.BootDiagnostics == nil ||
 			vm.Properties.DiagnosticsProfile.BootDiagnostics.Enabled == nil ||
 			!*vm.Properties.DiagnosticsProfile.BootDiagnostics.Enabled {
-			g.logger.Debugf("no boot logs or boot diagnostics disabled for %s", *vm.Name)
+			g.logger.Debugf("No boot logs or boot diagnostics disabled for %s", *vm.Name)
 			continue
 		}
 		instanceView, err := g.virtualMachinesClient.InstanceView(ctx, g.resourceGroupName, *vm.Name, nil)
 		if err != nil {
-			g.logger.Debugf("failed to get instance view: %v", err)
+			g.logger.Debugf("Failed to get instance view: %v", err)
 			continue
 		}
 		var sshotURI *string
@@ -205,7 +205,7 @@ func getBootDiagnostics(ctx context.Context, virtualMachines []*armcompute.Virtu
 		if sshotURI == nil && slogURI == nil {
 			bootData, err := g.virtualMachinesClient.RetrieveBootDiagnosticsData(ctx, g.resourceGroupName, *vm.Name, nil)
 			if err != nil {
-				g.logger.Debugf("failed to get boot diagnostics data: %v", err)
+				g.logger.Debugf("Failed to get boot diagnostics data: %v", err)
 				continue
 			}
 			sshotURI = bootData.ConsoleScreenshotBlobURI
@@ -252,21 +252,21 @@ func downloadFiles(ctx context.Context, fileURIs []string, accounts []*armstorag
 	if len(files) > 0 {
 		err := gather.CreateArchive(files, g.serialLogBundle)
 		if err != nil {
-			g.logger.Debugf("failed to create archive: %s", err.Error())
+			g.logger.Debugf("Failed to create archive: %s", err.Error())
 			errs = append(errs, err)
 		}
 	}
 
 	err = gather.DeleteArchiveDirectory(serialLogBundleDir)
 	if err != nil {
-		g.logger.Debugf("failed to remove archive directory: %v", err)
+		g.logger.Debugf("Failed to remove archive directory: %v", err)
 	}
 
 	return utilerrors.NewAggregate(errs)
 }
 
 func downloadBlob(ctx context.Context, fileURI string, filePathDir string, sharedKeyCredentials []*azblob.SharedKeyCredential, g *Gather) (string, error) {
-	g.logger.Debugf("attemping to download %s", fileURI)
+	g.logger.Debugf("Attemping to download %s", fileURI)
 
 	uri, err := url.ParseRequestURI(fileURI)
 	if err != nil {
@@ -284,13 +284,13 @@ func downloadBlob(ctx context.Context, fileURI string, filePathDir string, share
 		}
 		blobClient, err := azblob.NewClientWithSharedKeyCredential(accountURL, credential, nil)
 		if err != nil {
-			g.logger.Debugf("failed to create blob client: %s", err.Error())
+			g.logger.Debugf("Failed to create blob client: %s", err.Error())
 			continue
 		}
 
 		file, err := os.Create(filePath)
 		if err != nil {
-			g.logger.Debugf("failed to create file: %s", err.Error())
+			g.logger.Debugf("Failed to create file: %s", err.Error())
 			return "", err
 		}
 		defer file.Close()
@@ -307,7 +307,7 @@ func downloadBlob(ctx context.Context, fileURI string, filePathDir string, share
 }
 
 func downloadFile(ctx context.Context, fileURI string, filePathDir string, g *Gather) (string, error) {
-	g.logger.Debug("attempting to download file from managed account")
+	g.logger.Debug("Attempting to download file from managed account")
 
 	uri, err := url.ParseRequestURI(fileURI)
 	if err != nil {
