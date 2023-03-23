@@ -18,7 +18,7 @@ import (
 func loadUsage(ctx context.Context, client *monitoring.MetricClient, project string) ([]record, error) {
 	req := &monitoringpb.ListTimeSeriesRequest{
 		Name:   fmt.Sprintf("projects/%s", project),
-		Filter: `metric.type = "serviceruntime.googleapis.com/quota/allocation/usage" AND resource.type = "consumer_quota"`,
+		Filter: fmt.Sprintf(`metric.type = "serviceruntime.googleapis.com/quota/allocation/usage" AND resource.type = "consumer_quota" AND project = "%s"`, project),
 		Interval: &monitoringpb.TimeInterval{
 			EndTime: &googlepb.Timestamp{
 				Seconds: time.Now().Add(-5 * time.Minute).Unix(),
