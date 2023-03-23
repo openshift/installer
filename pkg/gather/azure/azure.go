@@ -57,7 +57,7 @@ func New(logger logrus.FieldLogger, serialLogBundle string, bootstrap string, ma
 	accountClientOptions := arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
 			// NOTE: the api version must support AzureStack
-			APIVersion: "2019-03-01",
+			APIVersion: "2019-04-01",
 			Cloud:      session.CloudConfig,
 		},
 	}
