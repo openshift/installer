@@ -163,6 +163,10 @@ func (a *PlatformQuotaCheck) Generate(dependencies asset.Parents) error {
 				return errors.Wrap(err, "failed to meet the prerequisite for Cloud Connections")
 			}
 		}
+		err = bxCli.ValidateCapacity(context.TODO(), masters, workers, ic.Config.Platform.PowerVS.ServiceInstanceID)
+		if err != nil {
+			return err
+		}
 		if ic.Config.Platform.PowerVS.PVSNetworkName == "" {
 			err = bxCli.ValidateDhcpService(context.TODO(), ic.Config.Platform.PowerVS.ServiceInstanceID, ic.Config.MachineNetwork)
 			if err != nil {
