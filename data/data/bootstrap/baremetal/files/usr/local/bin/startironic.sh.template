@@ -10,6 +10,7 @@ IRONIC_IMAGE=$(image_for ironic)
 IRONIC_AGENT_IMAGE=$(image_for ironic-agent)
 CUSTOMIZATION_IMAGE=$(image_for machine-image-customization-controller)
 MACHINE_OS_IMAGES_IMAGE=$(image_for machine-os-images)
+HTTP_PORT=6180
 
 # This DHCP range is used by dnsmasq to serve DHCP to the cluster. If empty
 # dnsmasq will only serve TFTP, and DHCP will be disabled.
@@ -77,6 +78,7 @@ podman run -d --net host --privileged --name $dnsmasq_container_name \
      --restart on-failure \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env DHCP_RANGE=$DHCP_RANGE \
+     --env HTTP_PORT=$HTTP_PORT \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
 {{ else }}
 dnsmasq_container_name=""
@@ -125,10 +127,11 @@ podman run -d --net host --privileged --name httpd \
      --restart on-failure \
      --env IRONIC_RAMDISK_SSH_KEY="$IRONIC_RAMDISK_SSH_KEY" \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
+     --env HTTP_PORT=$HTTP_PORT \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/runhttpd ${IRONIC_IMAGE}
 
 # Add firewall rules to ensure the IPA ramdisk can reach httpd, Ironic and the Inspector API on the host
-for port in 80 5050 6385 ; do
+for port in 5050 $HTTP_PORT 6385 ; do
     if ! $IPTABLES -C INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
         $IPTABLES -I INPUT -i $PROVISIONING_NIC -p tcp -m tcp --dport $port -j ACCEPT
     fi
@@ -215,6 +218,7 @@ podman run -d --net host --privileged --name ironic \
      --env IRONIC_HTPASSWD=${IRONIC_HTPASSWD} \
      --env INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD} \
      --env "IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS}" \
+     --env HTTP_PORT=$HTTP_PORT \
      --entrypoint /bin/runironic \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
@@ -225,6 +229,7 @@ podman run -d --net host --privileged --name ironic-inspector \
      --env IRONIC_HTPASSWD=${IRONIC_HTPASSWD} \
      --env INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD} \
      --env "IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS}" \
+     --env HTTP_PORT=$HTTP_PORT \
      --entrypoint /bin/runironic-inspector \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
