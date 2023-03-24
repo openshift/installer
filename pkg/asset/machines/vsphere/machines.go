@@ -3,15 +3,14 @@ package vsphere
 
 import (
 	"fmt"
-
-	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/vsphere"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // Machines returns a list of machines for a machinepool.
@@ -40,8 +39,23 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		replicas = *pool.Replicas
 	}
 
+	// Create hosts to populate from.  Copying so we can remove without changing original
+	// and only put in the ones that match the role.
+	var hosts []*vsphere.Host
+	if config.Platform.VSphere.Hosts != nil {
+		for _, host := range config.Platform.VSphere.Hosts {
+			logrus.Debugf("host.role=%v role=%v", host.Role, role)
+			if (host.IsCompute() && role == "worker") || (host.IsControlPlane() && role == "master") {
+				logrus.Debug("Adding host for static ip assignment")
+				hosts = append(hosts, host)
+			}
+		}
+	}
+
 	for idx := int64(0); idx < replicas; idx++ {
+		logrus.Debugf("Creating %v machine %v\n", role, idx)
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
+		logrus.Debugf("Desired zone: %v\n", desiredZone)
 
 		if _, exists := zones[desiredZone]; !exists {
 			return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
@@ -66,6 +80,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 
+		// Apply static IP if configured
+		hosts = applyNetworkConfig(hosts, desiredZone, provider)
+
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -86,6 +103,26 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 	return machines, nil
+}
+
+// applyNetworkConfig this function will apply the static ip configuration to the networkDevice
+// field in the provider spec.  The function will use the desired zone to determine which config
+// to apply and then remove that host config from the hosts array.
+func applyNetworkConfig(hosts []*vsphere.Host, desiredZone string, provider *machineapi.VSphereMachineProviderSpec) []*vsphere.Host {
+	for index, host := range hosts {
+		if host.FailureDomain == "" || host.FailureDomain == desiredZone {
+			networkDevice := host.NetworkDevice
+			if networkDevice != nil {
+				provider.Network.Devices[0].IPAddrs = networkDevice.IPAddrs
+				provider.Network.Devices[0].Nameservers = networkDevice.Nameservers
+				provider.Network.Devices[0].Gateway4 = networkDevice.Gateway4
+				provider.Network.Devices[0].Gateway6 = networkDevice.Gateway6
+			}
+			hosts = append(hosts[:index], hosts[index+1:]...)
+			break
+		}
+	}
+	return hosts
 }
 
 func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.FailureDomain, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
