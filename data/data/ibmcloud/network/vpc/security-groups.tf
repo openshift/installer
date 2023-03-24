@@ -18,9 +18,11 @@ resource "ibm_is_security_group" "cluster_wide" {
 
 # SSH
 resource "ibm_is_security_group_rule" "cluster_wide_ssh_inbound" {
+  count = length(local.subnet_cidr_blocks)
+
   group     = ibm_is_security_group.cluster_wide.id
   direction = "inbound"
-  remote    = ibm_is_security_group.cluster_wide.id
+  remote    = local.subnet_cidr_blocks[count.index]
   tcp {
     port_min = 22
     port_max = 22
