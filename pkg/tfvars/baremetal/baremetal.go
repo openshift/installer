@@ -88,7 +88,7 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 			Password: host.BMC.Password,
 		}
 		driverInfo := accessDetails.DriverInfo(credentials)
-		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", net.JoinHostPort(imageCacheIP, "80"))
+		driverInfo["deploy_kernel"] = fmt.Sprintf("http://%s/images/ironic-python-agent.kernel", net.JoinHostPort(imageCacheIP, "6180"))
 		driverInfo["deploy_ramdisk"] = fmt.Sprintf("http://%s/%s.initramfs", net.JoinHostPort(imageCacheIP, "8084"), host.Name)
 		driverInfo["deploy_iso"] = fmt.Sprintf("http://%s/%s.iso", net.JoinHostPort(imageCacheIP, "8084"), host.Name)
 
