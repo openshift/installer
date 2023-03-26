@@ -60,10 +60,6 @@ else
   ETC_NETWORK_MANAGER="/etc/NetworkManager/system-connections"
 fi
 
-# remove default connection file create by NM(nm-initrd-generator). This is a WA until
-# NM is back to supporting priority between nmconnections
-rm -f ${ETC_NETWORK_MANAGER}/*
-
 # Create a map of host mac addresses to their network interfaces
 function map_host_macs_to_interfaces() {
   SYS_CLASS_NET_DIR='/sys/class/net'
@@ -98,8 +94,8 @@ function find_host_directory_by_mac_address() {
 
   if [ -z "$host_dir" ]
   then
-    echo "None of host directories are a match for the current host"
-    exit 0
+    echo "Error: None of the host directories contained a mac-address to host mapping for the current host"
+    // We should not exit the script here in any fashion as the Dracut initqueue handler will not run any subsequent scripts if there is an exit.
   fi
 }
 
@@ -168,7 +164,15 @@ function copy_nmconnection_files_to_nm_config_dir() {
 
 map_host_macs_to_interfaces
 find_host_directory_by_mac_address
-set_logical_nic_mac_mapping
-update_interface_names_by_mapping_file
-copy_nmconnection_files_to_nm_config_dir
+// Make sure we do not run any of the following functions if there was no matching config.
+if [ "$host_dir" ]
+  then
+    # remove default connection file create by NM(nm-initrd-generator). This is a WA until
+    # NM is back to supporting priority between nmconnections
+    rm -f ${ETC_NETWORK_MANAGER}/*
+    echo "Removing default connection files in '$ETC_NETWORK_MANAGER'"
+    set_logical_nic_mac_mapping
+    update_interface_names_by_mapping_file
+    copy_nmconnection_files_to_nm_config_dir
+fi
 `
