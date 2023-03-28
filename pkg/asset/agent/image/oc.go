@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -15,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -182,14 +184,24 @@ func (r *release) extractFileFromImage(image, file, cacheDir string) (string, er
 	} else {
 		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, image)
 	}
+	// Remove file if it exists
+	path := filepath.Join(cacheDir, path.Base(file))
+	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		logrus.Debugf("Could not remove existing baseISO %s", path)
+		return "", err
+	}
 
 	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
 	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.executer, r.pullSecret, cmd)
 	if err != nil {
 		return "", err
 	}
-	// set path
-	path := filepath.Join(cacheDir, path.Base(file))
+	// Make sure file exists after extraction
+	if _, err := os.Stat(path); err != nil {
+		logrus.Debugf("File %s was not found, err %s", file, err.Error())
+		return "", err
+	}
+
 	return path, nil
 }
 
