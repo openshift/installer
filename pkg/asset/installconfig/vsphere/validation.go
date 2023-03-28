@@ -13,6 +13,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vmware/govmomi/find"
+	"github.com/vmware/govmomi/object"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -173,16 +174,10 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 	}
 	computeClusterName := clusterPathParts[2]
 
-	allErrs = append(allErrs, validateESXiVersion(validationCtx, computeCluster, vsphereField, topologyField.Child("computeCluster"))...)
+	allErrs = append(allErrs, validateClusterComputeResources(validationCtx, computeCluster, vsphereField, topologyField.Child("computeCluster"), checkComputeClusterPrivileges, checkTags)...)
 	allErrs = append(allErrs, validateVcenterPrivileges(validationCtx, topologyField.Child("server"))...)
-	allErrs = append(allErrs, computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"), checkComputeClusterPrivileges, checkTags)...)
 	allErrs = append(allErrs, datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"), checkDatacenterPrivileges)...)
 	allErrs = append(allErrs, datastoreExists(validationCtx, failureDomain.Topology.Datacenter, failureDomain.Topology.Datastore, topologyField.Child("datastore"))...)
-
-	err := validateClusterComputeResourceHasHosts(context.TODO(), failureDomain.Topology.Datacenter, computeClusterName, validationCtx.Finder)
-	if err != nil {
-		allErrs = append(allErrs, field.InternalError(topologyField.Child("computeCluster"), err))
-	}
 
 	for _, network := range failureDomain.Topology.Networks {
 		allErrs = append(allErrs, validateNetwork(validationCtx, failureDomain.Topology.Datacenter, computeClusterName, network, topologyField)...)
@@ -216,6 +211,65 @@ func folderExists(validationCtx *validationContext, folderPath string, fldPath *
 	return allErrs
 }
 
+// validateClusterComputeResources processes all cluster resources together to reduce calls
+// to vsphere in regard to ClusterComputeResources and HostSystems
+func validateClusterComputeResources(validationCtx *validationContext, clusterPath string, vSphereFldPath, computeClusterFldPath *field.Path, checkPrivileges, checkTagAttachment bool) field.ErrorList {
+	// Get ComputeCluster objects
+	clusters, hosts, allErrs := getClusterComputeResources(validationCtx, clusterPath, vSphereFldPath, computeClusterFldPath)
+
+	// Validate esxi versions
+	allErrs = append(allErrs, validateESXiVersion(hosts, vSphereFldPath, computeClusterFldPath)...)
+
+	if len(clusters) > 0 {
+		// Validate compute cluster config
+		allErrs = append(allErrs, computeClusterExists(validationCtx, clusters[0], computeClusterFldPath, checkPrivileges, checkTagAttachment)...)
+
+		// Validate compute cluster hosts
+		err := validateClusterComputeResourceHasHosts(clusterPath, hosts)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(computeClusterFldPath, err))
+		}
+	}
+
+	return allErrs
+}
+
+// getClusterComputeResources retrieves the ClusterComputeResources and HostSystems.
+func getClusterComputeResources(validationCtx *validationContext, clusterPath string, vSphereFldPath, computeClusterFldPath *field.Path) ([]*object.ClusterComputeResource, []*object.HostSystem, field.ErrorList) {
+	allErrs := field.ErrorList{}
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	defer cancel()
+
+	clusters, err := validationCtx.Finder.ClusterComputeResourceList(ctx, clusterPath)
+
+	if err != nil {
+		var notFoundError *find.NotFoundError
+		var defaultNotFoundError *find.DefaultNotFoundError
+
+		/* These error types also exist, but it seems less likely to occur.
+		var *find.MultipleFoundError
+		var *find.DefaultMultipleFoundError
+		*/
+		switch {
+		case errors.As(err, &notFoundError):
+			return clusters, nil, field.ErrorList{field.Invalid(computeClusterFldPath, clusterPath, notFoundError.Error())}
+		case errors.As(err, &defaultNotFoundError):
+			return clusters, nil, field.ErrorList{field.Invalid(computeClusterFldPath, clusterPath, defaultNotFoundError.Error())}
+		default:
+			return clusters, nil, field.ErrorList{field.InternalError(vSphereFldPath, err)}
+		}
+	}
+
+	hosts, err := clusters[0].Hosts(context.TODO())
+	if err != nil {
+		err = errors.Wrapf(err, "unable to find hosts from cluster on path: %s", clusterPath)
+		return clusters, hosts, append(allErrs, field.InternalError(vSphereFldPath, err))
+	}
+
+	return clusters, hosts, allErrs
+}
+
 func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -245,41 +299,11 @@ func validateVCenterVersion(validationCtx *validationContext, fldPath *field.Pat
 	return allErrs
 }
 
-func validateESXiVersion(validationCtx *validationContext, clusterPath string, vSphereFldPath, computeClusterFldPath *field.Path) field.ErrorList {
+func validateESXiVersion(hosts []*object.HostSystem, vSphereFldPath, computeClusterFldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	finder := validationCtx.Finder
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
-	defer cancel()
-
-	clusters, err := finder.ClusterComputeResourceList(ctx, clusterPath)
-
-	if err != nil {
-		var notFoundError *find.NotFoundError
-		var defaultNotFoundError *find.DefaultNotFoundError
-
-		/* These error types also exist, but it seems less likely to occur.
-		var *find.MultipleFoundError
-		var *find.DefaultMultipleFoundError
-		*/
-		switch {
-		case errors.As(err, &notFoundError):
-			return field.ErrorList{field.Invalid(computeClusterFldPath, clusterPath, notFoundError.Error())}
-		case errors.As(err, &defaultNotFoundError):
-			return field.ErrorList{field.Invalid(computeClusterFldPath, clusterPath, defaultNotFoundError.Error())}
-		default:
-			return append(allErrs, field.InternalError(vSphereFldPath, err))
-		}
-	}
 
 	v7, err := version.NewVersion("7.0")
 	if err != nil {
-		return append(allErrs, field.InternalError(vSphereFldPath, err))
-	}
-
-	hosts, err := clusters[0].Hosts(context.TODO())
-	if err != nil {
-		err = errors.Wrapf(err, "unable to find hosts from cluster on path: %s", clusterPath)
 		return append(allErrs, field.InternalError(vSphereFldPath, err))
 	}
 
@@ -349,18 +373,11 @@ func validateNetwork(validationCtx *validationContext, datacenterName string, cl
 }
 
 // resourcePoolExists returns an error if a resourcePool is specified in the vSphere platform but a resourcePool with that name is not found in the datacenter.
-func computeClusterExists(validationCtx *validationContext, computeCluster string, fldPath *field.Path, checkPrivileges, checkTagAttachment bool) field.ErrorList {
-	if computeCluster == "" {
-		return field.ErrorList{field.Required(fldPath, "must specify the cluster")}
-	}
+func computeClusterExists(validationCtx *validationContext, computeClusterMo *object.ClusterComputeResource, fldPath *field.Path, checkPrivileges, checkTagAttachment bool) field.ErrorList {
+	var err error
 
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
-
-	computeClusterMo, err := validationCtx.Finder.ClusterComputeResource(ctx, computeCluster)
-	if err != nil {
-		return field.ErrorList{field.Invalid(fldPath, computeCluster, err.Error())}
-	}
 
 	if checkPrivileges {
 		permissionGroup := permissions[permissionCluster]
@@ -643,7 +660,20 @@ func validateTagAttachment(validationCtx *validationContext, reference vim25type
 // hosts, the check for networks will fail.  We want the message to be clear if this is the cause so
 // users know what to address.  This only returns an error if unable to verify or if no ComputeResources
 // are found.
-func validateClusterComputeResourceHasHosts(ctx context.Context, datacenter string, cluster string, finder Finder) error {
+func validateClusterComputeResourceHasHosts(cluster string, hosts []*object.HostSystem) error {
+	logrus.Debugf("Found the following Hosts: %v", hosts)
+	if len(hosts) == 0 {
+		return fmt.Errorf("no hosts found in cluster %v", cluster)
+	}
+	return nil
+}
+
+// validateClusterComputeResourceHasHostsWithLookup checks the ClusterComputeResource to see if there are any attached
+// hosts.  Without hosts, the check for networks will fail.  We want the message to be clear if this is the cause so
+// users know what to address.  This only returns an error if unable to verify or if no ComputeResources
+// are found.  This method is used mostly from interactive installation to make sure ClusterComputeResource
+// has HostSystems to select a network.
+func validateClusterComputeResourceHasHostsWithLookup(ctx context.Context, datacenter string, cluster string, finder Finder) error {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
@@ -653,17 +683,12 @@ func validateClusterComputeResourceHasHosts(ctx context.Context, datacenter stri
 		return err
 	}
 
-	var ccrMo mo.ComputeResource
 	logrus.Debugf("Checking for ComputeResources belonging to ClusterComputeResource: %v", ccr)
-
-	err = ccr.Properties(ctx, ccr.Reference(), []string{"host"}, &ccrMo)
-	logrus.Debugf("Found the following Hosts: %v", ccrMo.Host)
+	var hosts []*object.HostSystem
+	hosts, err = ccr.Hosts(context.TODO())
 	if err != nil {
 		return err
 	}
-	if len(ccrMo.Host) == 0 {
-		return fmt.Errorf("no hosts found in cluster %v", cluster)
-	}
 
-	return nil
+	return validateClusterComputeResourceHasHosts(cluster, hosts)
 }

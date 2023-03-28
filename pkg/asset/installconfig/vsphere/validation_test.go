@@ -3,6 +3,7 @@ package vsphere
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net"
 	"sync"
 	"testing"
@@ -317,7 +318,7 @@ func TestValidateFailureDomains(t *testing.T) {
 			}(),
 			validationMethod: validateFailureDomain,
 			checkTags:        false,
-			expectErr:        `\[platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found, platform.vsphere.failureDomains.topology.computeCluster: Internal error: cluster '/DC0/host/invalid-cluster' not found, platform.vsphere.failureDomains.topology: Invalid value: "DC0_DVPG0": could not find vSphere cluster at /DC0/host/invalid-cluster: cluster '/DC0/host/invalid-cluster' not found\]`,
+			expectErr:        `\[platform.vsphere.failureDomains.topology.computeCluster: Invalid value: "/DC0/host/invalid-cluster": cluster '/DC0/host/invalid-cluster' not found, platform.vsphere.failureDomains.topology: Invalid value: "DC0_DVPG0": could not find vSphere cluster at /DC0/host/invalid-cluster: cluster '/DC0/host/invalid-cluster' not found\]`,
 		},
 		{
 			name: "multi-zone validation - missing cluster",
@@ -533,7 +534,7 @@ func Test_validateESXiVersion(t *testing.T) {
 			}
 			defer server.Close()
 
-			err = validateESXiVersion(validationCtx, test.computeClusterPath, vSphereFldPath, computeClusterFldPath).ToAggregate()
+			err = validateClusterComputeResources(validationCtx, test.computeClusterPath, vSphereFldPath, computeClusterFldPath, false, false).ToAggregate()
 
 			if test.expectErr != "" {
 				assert.Regexp(t, test.expectErr, err)
@@ -697,15 +698,14 @@ func Test_ensureLoadBalancer(t *testing.T) {
 // Test_validateCheckClusterComputeResource test the various paths for the
 // validateClusterComputeResourceHasHosts method.
 func Test_validateCheckClusterComputeResource(t *testing.T) {
+	vSphereFldPath := field.NewPath("platform").Child("vsphere")
+	computeClusterFldPath := vSphereFldPath.Child("failureDomains").Child("topology").Child("computeCluster")
 	validationCtx, server, _, err := simulatorHelper(t, true)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	defer server.Close()
-
-	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
-	defer cancel()
 
 	tests := []struct {
 		name          string
@@ -721,12 +721,13 @@ func Test_validateCheckClusterComputeResource(t *testing.T) {
 		name:       "validateClusterComputeResourceHasHosts no ComputeResources",
 		dataCenter: "DC0",
 		cluster:    "Cluster1",
-		expectErr:  `^no hosts found in cluster Cluster1$`,
+		expectErr:  `^platform.vsphere.failureDomains.topology.computeCluster: Internal error: no hosts found in cluster /DC0/host/Cluster1$`,
 	}}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			err := validateClusterComputeResourceHasHosts(ctx, test.dataCenter, test.cluster, validationCtx.Finder)
+			// err := validateClusterComputeResourceHasHosts(ctx, test.dataCenter, test.cluster, validationCtx.Finder)
+			err := validateClusterComputeResources(validationCtx, fmt.Sprintf("/%v/host/%v", test.dataCenter, test.cluster), vSphereFldPath, computeClusterFldPath, false, false).ToAggregate()
 			if test.expectErr == "" {
 				assert.NoError(t, err)
 			} else {
