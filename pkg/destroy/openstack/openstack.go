@@ -1091,40 +1091,51 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 			// Openshiftclusterid in the X-Container-Meta- HEAD output
 			titlekey := strings.Title(strings.ToLower(key))
 			if metadata[titlekey] == val {
-				logger.Debugf("Bulk deleting container %q objects", container)
-				pager := objects.List(conn, container, &objects.ListOpts{
-					Full:  false,
-					Limit: 50,
-				})
-				err = pager.EachPage(func(page pagination.Page) (bool, error) {
+				queue := newSemaphore(10)
+				errCh := make(chan error)
+				err := objects.List(conn, container, nil).EachPage(func(page pagination.Page) (bool, error) {
 					objectsOnPage, err := objects.ExtractNames(page)
 					if err != nil {
 						return false, err
 					}
-					resp, err := objects.BulkDelete(conn, container, objectsOnPage).Extract()
-					if err != nil {
-						return false, err
-					}
-					if len(resp.Errors) > 0 {
-						// Convert resp.Errors to golang errors.
-						// Each error is represented by a list of 2 strings, where the first one
-						// is the object name, and the second one contains an error message.
-						errs := make([]error, len(resp.Errors))
-						for i, objectError := range resp.Errors {
-							errs[i] = fmt.Errorf("cannot delete object %s: %s", objectError[0], objectError[1])
+					queue.Add(func() {
+						logger.Debugf("Initiating bulk deletion of %d objects in container %q", len(objectsOnPage), container)
+						resp, err := objects.BulkDelete(conn, container, objectsOnPage).Extract()
+						if err != nil {
+							errCh <- err
+							return
 						}
+						if len(resp.Errors) > 0 {
+							// Convert resp.Errors to golang errors.
+							// Each error is represented by a list of 2 strings, where the first one
+							// is the object name, and the second one contains an error message.
+							for _, objectError := range resp.Errors {
+								errCh <- fmt.Errorf("cannot delete object %q: %s", objectError[0], objectError[1])
+							}
 
-						return false, fmt.Errorf("errors occurred during bulk deleting of container %s objects: %w", container, k8serrors.NewAggregate(errs))
-					}
-
+						}
+						logger.Debug("Terminating object deletion routine")
+					})
 					return true, nil
 				})
 				if err != nil {
 					var gerr gophercloud.ErrDefault404
 					if !errors.As(err, &gerr) {
-						logger.Errorf("Bulk deleting of container %q objects failed: %v", container, err)
+						logger.Errorf("Bulk deletion of container %q objects failed: %v", container, err)
 						return false, nil
 					}
+				}
+				var errs []error
+				go func() {
+					for err := range errCh {
+						errs = append(errs, err)
+					}
+				}()
+
+				queue.Wait()
+				close(errCh)
+				if len(errs) > 0 {
+					return false, fmt.Errorf("errors occurred during bulk deletion of the objects of container %q: %w", container, k8serrors.NewAggregate(errs))
 				}
 				logger.Debugf("Deleting container %q", container)
 				_, err = containers.Delete(conn, container).Extract()
