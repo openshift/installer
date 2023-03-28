@@ -3,14 +3,16 @@ package vsphere
 
 import (
 	"fmt"
-	machineapi "github.com/openshift/api/machine/v1beta1"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/vsphere"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	machineapi "github.com/openshift/api/machine/v1beta1"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // Machines returns a list of machines for a machinepool.

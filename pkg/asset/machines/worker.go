@@ -3,7 +3,6 @@ package machines
 import (
 	"context"
 	"fmt"
-	"k8s.io/utils/pointer"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
