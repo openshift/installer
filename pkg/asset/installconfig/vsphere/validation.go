@@ -673,12 +673,11 @@ func validateClusterComputeResourceHasHosts(cluster string, hosts []*object.Host
 // users know what to address.  This only returns an error if unable to verify or if no ComputeResources
 // are found.  This method is used mostly from interactive installation to make sure ClusterComputeResource
 // has HostSystems to select a network.
-func validateClusterComputeResourceHasHostsWithLookup(ctx context.Context, datacenter string, cluster string, finder Finder) error {
+func validateClusterComputeResourceHasHostsWithLookup(ctx context.Context, cluster string, finder Finder) error {
 	ctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 
-	path := fmt.Sprintf("/%s/host/%s", datacenter, cluster)
-	ccr, err := finder.ClusterComputeResource(ctx, path)
+	ccr, err := finder.ClusterComputeResource(ctx, cluster)
 	if err != nil {
 		return err
 	}

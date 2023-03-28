@@ -726,7 +726,6 @@ func Test_validateCheckClusterComputeResource(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			// err := validateClusterComputeResourceHasHosts(ctx, test.dataCenter, test.cluster, validationCtx.Finder)
 			err := validateClusterComputeResources(validationCtx, fmt.Sprintf("/%v/host/%v", test.dataCenter, test.cluster), vSphereFldPath, computeClusterFldPath, false, false).ToAggregate()
 			if test.expectErr == "" {
 				assert.NoError(t, err)
