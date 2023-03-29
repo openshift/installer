@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -165,22 +164,14 @@ func validateFailureDomain(validationCtx *validationContext, failureDomain *vsph
 		checkDatacenterPrivileges = false
 	}
 
-	computeCluster := failureDomain.Topology.ComputeCluster
-	clusterPathRegexp := regexp.MustCompile(`^/(.*?)/host/(.*?)$`)
-	clusterPathParts := clusterPathRegexp.FindStringSubmatch(computeCluster)
-	if len(clusterPathParts) < 3 {
-		return append(allErrs, field.Invalid(topologyField.Child("computeCluster"), computeCluster, "full path of cluster is required"))
-	}
-	computeClusterName := clusterPathParts[2]
-
-	allErrs = append(allErrs, validateESXiVersion(validationCtx, computeCluster, vsphereField, topologyField.Child("computeCluster"))...)
+	allErrs = append(allErrs, validateESXiVersion(validationCtx, failureDomain.Topology.ComputeCluster, vsphereField, topologyField.Child("computeCluster"))...)
 	allErrs = append(allErrs, validateVcenterPrivileges(validationCtx, topologyField.Child("server"))...)
-	allErrs = append(allErrs, computeClusterExists(validationCtx, computeCluster, topologyField.Child("computeCluster"), checkComputeClusterPrivileges, checkTags)...)
+	allErrs = append(allErrs, computeClusterExists(validationCtx, failureDomain.Topology.ComputeCluster, topologyField.Child("computeCluster"), checkComputeClusterPrivileges, checkTags)...)
 	allErrs = append(allErrs, datacenterExists(validationCtx, failureDomain.Topology.Datacenter, topologyField.Child("datacenter"), checkDatacenterPrivileges)...)
 	allErrs = append(allErrs, datastoreExists(validationCtx, failureDomain.Topology.Datacenter, failureDomain.Topology.Datastore, topologyField.Child("datastore"))...)
 
 	for _, network := range failureDomain.Topology.Networks {
-		allErrs = append(allErrs, validateNetwork(validationCtx, failureDomain.Topology.Datacenter, computeClusterName, network, topologyField)...)
+		allErrs = append(allErrs, validateNetwork(validationCtx, failureDomain.Topology.Datacenter, failureDomain.Topology.ComputeCluster, network, topologyField)...)
 	}
 
 	return allErrs
