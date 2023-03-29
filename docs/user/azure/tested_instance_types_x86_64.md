@@ -3,11 +3,12 @@
 * `standardDASv4Family`
 * `standardDASv5Family`
 * `standardDCSv3Family`
-* `standardDCSFamily`
 * `standardDCSv2Family`
 * `standardDDCSv3Family`
 * `standardDDSv4Family`
 * `standardDDSv5Family`
+* `standardDLDSv5Family`
+* `standardDLSv5Family`
 * `standardDSFamily`
 * `standardDSv2Family`
 * `standardDSv2PromoFamily`
