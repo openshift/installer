@@ -34,7 +34,7 @@ $(GO_BUILD_TARGETS): go-build.%: bin/$(TARGET_OS_ARCH)/terraform-provider-%.zip
 $(TERRAFORM_PROVIDER_TARGETS): bin/$(TARGET_OS_ARCH)/terraform-provider-%.zip: providers/%/go.mod
 	cd providers/$*; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
-	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$* "$$path"; \
+	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$* "$$path" && \
 	zip -1j ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$*.zip ../../bin/$(TARGET_OS_ARCH)/terraform-provider-$*;
 
 .PHONY: go-build-terraform
