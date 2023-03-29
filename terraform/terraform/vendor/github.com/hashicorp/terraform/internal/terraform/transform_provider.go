@@ -11,19 +11,17 @@ import (
 	"github.com/hashicorp/terraform/internal/tfdiags"
 )
 
-func TransformProviders(providers []string, concrete ConcreteProviderNodeFunc, config *configs.Config) GraphTransformer {
+func transformProviders(concrete ConcreteProviderNodeFunc, config *configs.Config) GraphTransformer {
 	return GraphTransformMulti(
 		// Add providers from the config
 		&ProviderConfigTransformer{
-			Config:    config,
-			Providers: providers,
-			Concrete:  concrete,
+			Config:   config,
+			Concrete: concrete,
 		},
 		// Add any remaining missing providers
 		&MissingProviderTransformer{
-			Config:    config,
-			Providers: providers,
-			Concrete:  concrete,
+			Config:   config,
+			Concrete: concrete,
 		},
 		// Connect the providers
 		&ProviderTransformer{
@@ -298,9 +296,6 @@ func (t *CloseProviderTransformer) Transform(g *Graph) error {
 // PruneProviderTransformer can then remove these once ProviderTransformer
 // has resolved all of the inheritence, etc.
 type MissingProviderTransformer struct {
-	// Providers is the list of providers we support.
-	Providers []string
-
 	// MissingProviderTransformer needs the config to rule out _implied_ default providers
 	Config *configs.Config
 
@@ -478,8 +473,7 @@ func (n *graphNodeProxyProvider) Target() GraphNodeProvider {
 // ProviderConfigTransformer adds all provider nodes from the configuration and
 // attaches the configs.
 type ProviderConfigTransformer struct {
-	Providers []string
-	Concrete  ConcreteProviderNodeFunc
+	Concrete ConcreteProviderNodeFunc
 
 	// each provider node is stored here so that the proxy nodes can look up
 	// their targets by name.
@@ -549,6 +543,13 @@ func (t *ProviderConfigTransformer) transformSingle(g *Graph, c *configs.Config)
 				Module:   path,
 			}
 
+			if _, ok := t.providers[addr.String()]; ok {
+				// The config validation warns about this too, but we can't
+				// completely prevent it in v1.
+				log.Printf("[WARN] ProviderConfigTransformer: duplicate required_providers entry for %s", addr)
+				continue
+			}
+
 			abstract := &NodeAbstractProvider{
 				Addr: addr,
 			}
@@ -572,6 +573,13 @@ func (t *ProviderConfigTransformer) transformSingle(g *Graph, c *configs.Config)
 			Provider: fqn,
 			Alias:    p.Alias,
 			Module:   path,
+		}
+
+		if _, ok := t.providers[addr.String()]; ok {
+			// The abstract provider node may already have been added from the
+			// provider requirements.
+			log.Printf("[WARN] ProviderConfigTransformer: provider node %s already added", addr)
+			continue
 		}
 
 		abstract := &NodeAbstractProvider{

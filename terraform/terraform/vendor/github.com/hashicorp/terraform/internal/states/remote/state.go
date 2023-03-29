@@ -6,9 +6,11 @@ import (
 	"sync"
 
 	uuid "github.com/hashicorp/go-uuid"
+
 	"github.com/hashicorp/terraform/internal/states"
 	"github.com/hashicorp/terraform/internal/states/statefile"
 	"github.com/hashicorp/terraform/internal/states/statemgr"
+	"github.com/hashicorp/terraform/internal/terraform"
 )
 
 // State implements the State interfaces in the state package to handle
@@ -44,6 +46,19 @@ func (s *State) State() *states.State {
 	defer s.mu.Unlock()
 
 	return s.state.DeepCopy()
+}
+
+func (s *State) GetRootOutputValues() (map[string]*states.OutputValue, error) {
+	if err := s.RefreshState(); err != nil {
+		return nil, fmt.Errorf("Failed to load state: %s", err)
+	}
+
+	state := s.State()
+	if state == nil {
+		state = states.NewState()
+	}
+
+	return state.RootModule().OutputValues, nil
 }
 
 // StateForMigration is part of our implementation of statemgr.Migrator.
@@ -139,7 +154,7 @@ func (s *State) refreshState() error {
 }
 
 // statemgr.Persister impl.
-func (s *State) PersistState() error {
+func (s *State) PersistState(schemas *terraform.Schemas) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -7,7 +7,8 @@ import (
 // Compile-time proof of interface implementation.
 var _ SAMLSettings = (*adminSAMLSettings)(nil)
 
-// SAMLSettings describes all the SAML admin settings.
+// SAMLSettings describes all the SAML admin settings for the Admin Setting API.
+// https://www.terraform.io/cloud-docs/api-docs/admin/settings
 type SAMLSettings interface {
 	// Read returns the SAML settings.
 	Read(ctx context.Context) (*AdminSAMLSetting, error)
@@ -48,14 +49,14 @@ type AdminSAMLSetting struct {
 }
 
 // Read returns the SAML settings.
-func (s *adminSAMLSettings) Read(ctx context.Context) (*AdminSAMLSetting, error) {
-	req, err := s.client.newRequest("GET", "admin/saml-settings", nil)
+func (a *adminSAMLSettings) Read(ctx context.Context) (*AdminSAMLSetting, error) {
+	req, err := a.client.NewRequest("GET", "admin/saml-settings", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	saml := &AdminSAMLSetting{}
-	err = s.client.do(ctx, req, saml)
+	err = req.Do(ctx, saml)
 	if err != nil {
 		return nil, err
 	}
@@ -81,13 +82,13 @@ type AdminSAMLSettingsUpdateOptions struct {
 
 // Update updates the SAML settings.
 func (a *adminSAMLSettings) Update(ctx context.Context, options AdminSAMLSettingsUpdateOptions) (*AdminSAMLSetting, error) {
-	req, err := a.client.newRequest("PATCH", "admin/saml-settings", &options)
+	req, err := a.client.NewRequest("PATCH", "admin/saml-settings", &options)
 	if err != nil {
 		return nil, err
 	}
 
 	saml := &AdminSAMLSetting{}
-	err = a.client.do(ctx, req, saml)
+	err = req.Do(ctx, saml)
 	if err != nil {
 		return nil, err
 	}
@@ -98,13 +99,13 @@ func (a *adminSAMLSettings) Update(ctx context.Context, options AdminSAMLSetting
 // RevokeIdpCert revokes the older IdP certificate when the new IdP
 // certificate is known to be functioning correctly.
 func (a *adminSAMLSettings) RevokeIdpCert(ctx context.Context) (*AdminSAMLSetting, error) {
-	req, err := a.client.newRequest("POST", "admin/saml-settings/actions/revoke-old-certificate", nil)
+	req, err := a.client.NewRequest("POST", "admin/saml-settings/actions/revoke-old-certificate", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	saml := &AdminSAMLSetting{}
-	err = a.client.do(ctx, req, saml)
+	err = req.Do(ctx, saml)
 	if err != nil {
 		return nil, err
 	}

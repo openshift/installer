@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -15,10 +14,10 @@ var _ NotificationConfigurations = (*notificationConfigurations)(nil)
 // related methods that the Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/notification-configurations.html
+// https://www.terraform.io/docs/cloud/api/notification-configurations.html
 type NotificationConfigurations interface {
 	// List all the notification configurations within a workspace.
-	List(ctx context.Context, workspaceID string, options NotificationConfigurationListOptions) (*NotificationConfigurationList, error)
+	List(ctx context.Context, workspaceID string, options *NotificationConfigurationListOptions) (*NotificationConfigurationList, error)
 
 	// Create a new notification configuration with the given options.
 	Create(ctx context.Context, workspaceID string, options NotificationConfigurationCreateOptions) (*NotificationConfiguration, error)
@@ -41,14 +40,17 @@ type notificationConfigurations struct {
 	client *Client
 }
 
-// List of available notification triggers.
+// NotificationTriggerType represents the different TFE notifications that can be sent
+// as a run's progress transitions between different states
+type NotificationTriggerType string
+
 const (
-	NotificationTriggerCreated        string = "run:created"
-	NotificationTriggerPlanning       string = "run:planning"
-	NotificationTriggerNeedsAttention string = "run:needs_attention"
-	NotificationTriggerApplying       string = "run:applying"
-	NotificationTriggerCompleted      string = "run:completed"
-	NotificationTriggerErrored        string = "run:errored"
+	NotificationTriggerCreated        NotificationTriggerType = "run:created"
+	NotificationTriggerPlanning       NotificationTriggerType = "run:planning"
+	NotificationTriggerNeedsAttention NotificationTriggerType = "run:needs_attention"
+	NotificationTriggerApplying       NotificationTriggerType = "run:applying"
+	NotificationTriggerCompleted      NotificationTriggerType = "run:completed"
+	NotificationTriggerErrored        NotificationTriggerType = "run:errored"
 )
 
 // NotificationDestinationType represents the destination type of the
@@ -57,9 +59,10 @@ type NotificationDestinationType string
 
 // List of available notification destination types.
 const (
-	NotificationDestinationTypeEmail   NotificationDestinationType = "email"
-	NotificationDestinationTypeGeneric NotificationDestinationType = "generic"
-	NotificationDestinationTypeSlack   NotificationDestinationType = "slack"
+	NotificationDestinationTypeEmail          NotificationDestinationType = "email"
+	NotificationDestinationTypeGeneric        NotificationDestinationType = "generic"
+	NotificationDestinationTypeSlack          NotificationDestinationType = "slack"
+	NotificationDestinationTypeMicrosoftTeams NotificationDestinationType = "microsoft-teams"
 )
 
 // NotificationConfigurationList represents a list of Notification
@@ -106,27 +109,6 @@ type NotificationConfigurationListOptions struct {
 	ListOptions
 }
 
-// List all the notification configurations associated with a workspace.
-func (s *notificationConfigurations) List(ctx context.Context, workspaceID string, options NotificationConfigurationListOptions) (*NotificationConfigurationList, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-
-	u := fmt.Sprintf("workspaces/%s/notification-configurations", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("GET", u, options)
-	if err != nil {
-		return nil, err
-	}
-
-	ncl := &NotificationConfigurationList{}
-	err = s.client.do(ctx, req, ncl)
-	if err != nil {
-		return nil, err
-	}
-
-	return ncl, nil
-}
-
 // NotificationConfigurationCreateOptions represents the options for
 // creating a new notification configuration.
 type NotificationConfigurationCreateOptions struct {
@@ -136,94 +118,30 @@ type NotificationConfigurationCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,notification-configurations"`
 
-	// The destination type of the notification configuration
+	// Required: The destination type of the notification configuration
 	DestinationType *NotificationDestinationType `jsonapi:"attr,destination-type"`
 
-	// Whether the notification configuration should be enabled or not
+	// Required: Whether the notification configuration should be enabled or not
 	Enabled *bool `jsonapi:"attr,enabled"`
 
-	// The name of the notification configuration
+	// Required: The name of the notification configuration
 	Name *string `jsonapi:"attr,name"`
 
-	// The token of the notification configuration
+	// Optional: The token of the notification configuration
 	Token *string `jsonapi:"attr,token,omitempty"`
 
-	// The list of run events that will trigger notifications.
-	Triggers []string `jsonapi:"attr,triggers,omitempty"`
+	// Optional: The list of run events that will trigger notifications.
+	Triggers []NotificationTriggerType `jsonapi:"attr,triggers,omitempty"`
 
-	// The url of the notification configuration
+	// Optional: The url of the notification configuration
 	URL *string `jsonapi:"attr,url,omitempty"`
 
-	// The list of email addresses that will receive notification emails.
+	// Optional: The list of email addresses that will receive notification emails.
 	// EmailAddresses is only available for TFE users. It is not available in TFC.
 	EmailAddresses []string `jsonapi:"attr,email-addresses,omitempty"`
 
-	// The list of users belonging to the organization that will receive notification emails.
+	// Optional: The list of users belonging to the organization that will receive notification emails.
 	EmailUsers []*User `jsonapi:"relation,users,omitempty"`
-}
-
-func (o NotificationConfigurationCreateOptions) valid() error {
-	if o.DestinationType == nil {
-		return errors.New("destination type is required")
-	}
-	if o.Enabled == nil {
-		return errors.New("enabled is required")
-	}
-	if !validString(o.Name) {
-		return ErrRequiredName
-	}
-
-	if *o.DestinationType == NotificationDestinationTypeGeneric || *o.DestinationType == NotificationDestinationTypeSlack {
-		if o.URL == nil {
-			return errors.New("url is required")
-		}
-	}
-	return nil
-}
-
-// Creates a notification configuration with the given options.
-func (s *notificationConfigurations) Create(ctx context.Context, workspaceID string, options NotificationConfigurationCreateOptions) (*NotificationConfiguration, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	u := fmt.Sprintf("workspaces/%s/notification-configurations", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("POST", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	nc := &NotificationConfiguration{}
-	err = s.client.do(ctx, req, nc)
-	if err != nil {
-		return nil, err
-	}
-
-	return nc, nil
-}
-
-// Read a notification configuration by its ID.
-func (s *notificationConfigurations) Read(ctx context.Context, notificationConfigurationID string) (*NotificationConfiguration, error) {
-	if !validStringID(&notificationConfigurationID) {
-		return nil, errors.New("invalid value for notification configuration ID")
-	}
-
-	u := fmt.Sprintf("notification-configurations/%s", url.QueryEscape(notificationConfigurationID))
-	req, err := s.client.newRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	nc := &NotificationConfiguration{}
-	err = s.client.do(ctx, req, nc)
-	if err != nil {
-		return nil, err
-	}
-
-	return nc, nil
 }
 
 // NotificationConfigurationUpdateOptions represents the options for
@@ -235,43 +153,113 @@ type NotificationConfigurationUpdateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,notification-configurations"`
 
-	// Whether the notification configuration should be enabled or not
+	// Optional: Whether the notification configuration should be enabled or not
 	Enabled *bool `jsonapi:"attr,enabled,omitempty"`
 
-	// The name of the notification configuration
+	// Optional: The name of the notification configuration
 	Name *string `jsonapi:"attr,name,omitempty"`
 
-	// The token of the notification configuration
+	// Optional: The token of the notification configuration
 	Token *string `jsonapi:"attr,token,omitempty"`
 
-	// The list of run events that will trigger notifications.
-	Triggers []string `jsonapi:"attr,triggers,omitempty"`
+	// Optional: The list of run events that will trigger notifications.
+	Triggers []NotificationTriggerType `jsonapi:"attr,triggers,omitempty"`
 
-	// The url of the notification configuration
+	// Optional: The url of the notification configuration
 	URL *string `jsonapi:"attr,url,omitempty"`
 
-	// The list of email addresses that will receive notification emails.
+	// Optional: The list of email addresses that will receive notification emails.
 	// EmailAddresses is only available for TFE users. It is not available in TFC.
 	EmailAddresses []string `jsonapi:"attr,email-addresses,omitempty"`
 
-	// The list of users belonging to the organization that will receive notification emails.
+	// Optional: The list of users belonging to the organization that will receive notification emails.
 	EmailUsers []*User `jsonapi:"relation,users,omitempty"`
 }
 
-// Updates a notification configuration with the given options.
-func (s *notificationConfigurations) Update(ctx context.Context, notificationConfigurationID string, options NotificationConfigurationUpdateOptions) (*NotificationConfiguration, error) {
-	if !validStringID(&notificationConfigurationID) {
-		return nil, errors.New("invalid value for notification configuration ID")
+// List all the notification configurations associated with a workspace.
+func (s *notificationConfigurations) List(ctx context.Context, workspaceID string, options *NotificationConfigurationListOptions) (*NotificationConfigurationList, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
 	}
 
-	u := fmt.Sprintf("notification-configurations/%s", url.QueryEscape(notificationConfigurationID))
-	req, err := s.client.newRequest("PATCH", u, &options)
+	u := fmt.Sprintf("workspaces/%s/notification-configurations", url.QueryEscape(workspaceID))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	ncl := &NotificationConfigurationList{}
+	err = req.Do(ctx, ncl)
+	if err != nil {
+		return nil, err
+	}
+
+	return ncl, nil
+}
+
+// Create a notification configuration with the given options.
+func (s *notificationConfigurations) Create(ctx context.Context, workspaceID string, options NotificationConfigurationCreateOptions) (*NotificationConfiguration, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
+	}
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("workspaces/%s/notification-configurations", url.QueryEscape(workspaceID))
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	nc := &NotificationConfiguration{}
-	err = s.client.do(ctx, req, nc)
+	err = req.Do(ctx, nc)
+	if err != nil {
+		return nil, err
+	}
+
+	return nc, nil
+}
+
+// Read a notification configuration by its ID.
+func (s *notificationConfigurations) Read(ctx context.Context, notificationConfigurationID string) (*NotificationConfiguration, error) {
+	if !validStringID(&notificationConfigurationID) {
+		return nil, ErrInvalidNotificationConfigID
+	}
+
+	u := fmt.Sprintf("notification-configurations/%s", url.QueryEscape(notificationConfigurationID))
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	nc := &NotificationConfiguration{}
+	err = req.Do(ctx, nc)
+	if err != nil {
+		return nil, err
+	}
+
+	return nc, nil
+}
+
+// Updates a notification configuration with the given options.
+func (s *notificationConfigurations) Update(ctx context.Context, notificationConfigurationID string, options NotificationConfigurationUpdateOptions) (*NotificationConfiguration, error) {
+	if !validStringID(&notificationConfigurationID) {
+		return nil, ErrInvalidNotificationConfigID
+	}
+
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("notification-configurations/%s", url.QueryEscape(notificationConfigurationID))
+	req, err := s.client.NewRequest("PATCH", u, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	nc := &NotificationConfiguration{}
+	err = req.Do(ctx, nc)
 	if err != nil {
 		return nil, err
 	}
@@ -282,37 +270,93 @@ func (s *notificationConfigurations) Update(ctx context.Context, notificationCon
 // Delete a notifications configuration by its ID.
 func (s *notificationConfigurations) Delete(ctx context.Context, notificationConfigurationID string) error {
 	if !validStringID(&notificationConfigurationID) {
-		return errors.New("invalid value for notification configuration ID")
+		return ErrInvalidNotificationConfigID
 	}
 
 	u := fmt.Sprintf("notification-configurations/%s", url.QueryEscape(notificationConfigurationID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }
 
-// Verifies a notification configuration by delivering a verification
+// Verify a notification configuration by delivering a verification
 // payload to the configured url.
 func (s *notificationConfigurations) Verify(ctx context.Context, notificationConfigurationID string) (*NotificationConfiguration, error) {
 	if !validStringID(&notificationConfigurationID) {
-		return nil, errors.New("invalid value for notification configuration ID")
+		return nil, ErrInvalidNotificationConfigID
 	}
 
 	u := fmt.Sprintf(
 		"notification-configurations/%s/actions/verify", url.QueryEscape(notificationConfigurationID))
-	req, err := s.client.newRequest("POST", u, nil)
+	req, err := s.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	nc := &NotificationConfiguration{}
-	err = s.client.do(ctx, req, nc)
+	err = req.Do(ctx, nc)
 	if err != nil {
 		return nil, err
 	}
 
 	return nc, nil
+}
+
+func (o NotificationConfigurationCreateOptions) valid() error {
+	if o.DestinationType == nil {
+		return ErrRequiredDestinationType
+	}
+	if o.Enabled == nil {
+		return ErrRequiredEnabled
+	}
+	if !validString(o.Name) {
+		return ErrRequiredName
+	}
+
+	if !validNotificationTriggerType(o.Triggers) {
+		return ErrInvalidNotificationTrigger
+	}
+
+	if *o.DestinationType == NotificationDestinationTypeGeneric ||
+		*o.DestinationType == NotificationDestinationTypeSlack ||
+		*o.DestinationType == NotificationDestinationTypeMicrosoftTeams {
+
+		if o.URL == nil {
+			return ErrRequiredURL
+		}
+	}
+	return nil
+}
+
+func (o NotificationConfigurationUpdateOptions) valid() error {
+	if o.Name != nil && !validString(o.Name) {
+		return ErrRequiredName
+	}
+
+	if !validNotificationTriggerType(o.Triggers) {
+		return ErrInvalidNotificationTrigger
+	}
+
+	return nil
+}
+
+func validNotificationTriggerType(triggers []NotificationTriggerType) bool {
+	for _, t := range triggers {
+		switch t {
+		case NotificationTriggerApplying,
+			NotificationTriggerNeedsAttention,
+			NotificationTriggerCompleted,
+			NotificationTriggerCreated,
+			NotificationTriggerErrored,
+			NotificationTriggerPlanning:
+			continue
+		default:
+			return false
+		}
+	}
+
+	return true
 }

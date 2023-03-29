@@ -4,7 +4,6 @@ package tfe
 // Note that admin settings are only available in Terraform Enterprise.
 //
 // TFE API docs: https://www.terraform.io/docs/cloud/api/admin/settings.html
-// AdminSettings todo
 type AdminSettings struct {
 	General        GeneralSettings
 	SAML           SAMLSettings

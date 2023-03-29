@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/internal/addrs"
 	"github.com/hashicorp/terraform/internal/configs/configschema"
+	"github.com/hashicorp/terraform/internal/lang/globalref"
 	"github.com/hashicorp/terraform/internal/states"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -27,14 +28,38 @@ type Plan struct {
 	// to the end-user, and so it must not be used to influence apply-time
 	// behavior. The actions during apply must be described entirely by
 	// the Changes field, regardless of how the plan was created.
+	//
+	// FIXME: destroy operations still rely on DestroyMode being set, because
+	// there is no other source of this information in the plan. New behavior
+	// should not be added based on this flag, and changing the flag should be
+	// checked carefully against existing destroy behaviors.
 	UIMode Mode
 
 	VariableValues    map[string]DynamicValue
 	Changes           *Changes
+	DriftedResources  []*ResourceInstanceChangeSrc
 	TargetAddrs       []addrs.Targetable
 	ForceReplaceAddrs []addrs.AbsResourceInstance
-	ProviderSHA256s   map[string][]byte
 	Backend           Backend
+
+	// Checks captures a snapshot of the (probably-incomplete) check results
+	// at the end of the planning process.
+	//
+	// If this plan is applyable (that is, if the planning process completed
+	// without errors) then the set of checks here should be complete even
+	// though some of them will likely have StatusUnknown where the check
+	// condition depends on values we won't know until the apply step.
+	Checks *states.CheckResults
+
+	// RelevantAttributes is a set of resource instance addresses and
+	// attributes that are either directly affected by proposed changes or may
+	// have indirectly contributed to them via references in expressions.
+	//
+	// This is the result of a heuristic and is intended only as a hint to
+	// the UI layer in case it wants to emphasize or de-emphasize certain
+	// resources. Don't use this to drive any non-cosmetic behavior, especially
+	// including anything that would be subject to compatibility constraints.
+	RelevantAttributes []globalref.ResourceAttr
 
 	// PrevRunState and PriorState both describe the situation that the plan
 	// was derived from:

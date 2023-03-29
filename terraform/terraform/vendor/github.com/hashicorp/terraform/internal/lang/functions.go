@@ -56,10 +56,10 @@ func (s *Scope) Functions() map[string]function.Function {
 			"concat":           stdlib.ConcatFunc,
 			"contains":         stdlib.ContainsFunc,
 			"csvdecode":        stdlib.CSVDecodeFunc,
-			"defaults":         s.experimentalFunction(experiments.ModuleVariableOptionalAttrs, funcs.DefaultsFunc),
 			"dirname":          funcs.DirnameFunc,
 			"distinct":         stdlib.DistinctFunc,
 			"element":          stdlib.ElementFunc,
+			"endswith":         funcs.EndsWithFunc,
 			"chunklist":        stdlib.ChunklistFunc,
 			"file":             funcs.MakeFileFunc(s.BaseDir, false),
 			"fileexists":       funcs.MakeFileExistsFunc(s.BaseDir),
@@ -116,6 +116,7 @@ func (s *Scope) Functions() map[string]function.Function {
 			"slice":            stdlib.SliceFunc,
 			"sort":             stdlib.SortFunc,
 			"split":            stdlib.SplitFunc,
+			"startswith":       funcs.StartsWithFunc,
 			"strrev":           stdlib.ReverseFunc,
 			"substr":           stdlib.SubstrFunc,
 			"sum":              funcs.SumFunc,
@@ -123,6 +124,7 @@ func (s *Scope) Functions() map[string]function.Function {
 			"textencodebase64": funcs.TextEncodeBase64Func,
 			"timestamp":        funcs.TimestampFunc,
 			"timeadd":          stdlib.TimeAddFunc,
+			"timecmp":          funcs.TimeCmpFunc,
 			"title":            stdlib.TitleFunc,
 			"tostring":         funcs.MakeToFunc(cty.String),
 			"tonumber":         funcs.MakeToFunc(cty.Number),
@@ -152,6 +154,11 @@ func (s *Scope) Functions() map[string]function.Function {
 			return s.funcs
 		})
 
+		if s.ConsoleMode {
+			// The type function is only available in terraform console.
+			s.funcs["type"] = funcs.TypeFunc
+		}
+
 		if s.PureOnly {
 			// Force our few impure functions to return unknown so that we
 			// can defer evaluating them until a later pass.
@@ -169,6 +176,8 @@ func (s *Scope) Functions() map[string]function.Function {
 // the recieving scope. If so, it will return the given function verbatim.
 // If not, it will return a placeholder function that just returns an
 // error explaining that the function requires the experiment to be enabled.
+//
+//lint:ignore U1000 Ignore unused function error for now
 func (s *Scope) experimentalFunction(experiment experiments.Experiment, fn function.Function) function.Function {
 	if s.activeExperiments.Has(experiment) {
 		return fn

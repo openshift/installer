@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 )
@@ -14,10 +13,10 @@ var _ TeamAccesses = (*teamAccesses)(nil)
 // Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/team-access.html
+// https://www.terraform.io/docs/cloud/api/team-access.html
 type TeamAccesses interface {
 	// List all the team accesses for a given workspace.
-	List(ctx context.Context, options TeamAccessListOptions) (*TeamAccessList, error)
+	List(ctx context.Context, options *TeamAccessListOptions) (*TeamAccessList, error)
 
 	// Add team access for a workspace.
 	Add(ctx context.Context, options TeamAccessAddOptions) (*TeamAccess, error)
@@ -40,42 +39,46 @@ type teamAccesses struct {
 // AccessType represents a team access type.
 type AccessType string
 
-// RunsPermissionType represents the permissiontype to a workspace's runs.
-type RunsPermissionType string
-
-// VariablesPermissionType represents the permissiontype to a workspace's variables.
-type VariablesPermissionType string
-
-// StateVersionsPermissionType represents the permissiontype to a workspace's state versions.
-type StateVersionsPermissionType string
-
-// SentinelMocksPermissionType represents the permissiontype to a workspace's Sentinel mocks.
-type SentinelMocksPermissionType string
-
-// WorkspaceLockingPermissionType represents the permissiontype to lock or unlock a workspace.
-type WorkspaceLockingPermissionType bool
-
-// List all available team access types and permissions.
 const (
 	AccessAdmin  AccessType = "admin"
 	AccessPlan   AccessType = "plan"
 	AccessRead   AccessType = "read"
 	AccessWrite  AccessType = "write"
 	AccessCustom AccessType = "custom"
+)
 
+// RunsPermissionType represents the permissiontype to a workspace's runs.
+type RunsPermissionType string
+
+const (
 	RunsPermissionRead  RunsPermissionType = "read"
 	RunsPermissionPlan  RunsPermissionType = "plan"
 	RunsPermissionApply RunsPermissionType = "apply"
+)
 
+// VariablesPermissionType represents the permissiontype to a workspace's variables.
+type VariablesPermissionType string
+
+const (
 	VariablesPermissionNone  VariablesPermissionType = "none"
 	VariablesPermissionRead  VariablesPermissionType = "read"
 	VariablesPermissionWrite VariablesPermissionType = "write"
+)
 
+// StateVersionsPermissionType represents the permissiontype to a workspace's state versions.
+type StateVersionsPermissionType string
+
+const (
 	StateVersionsPermissionNone        StateVersionsPermissionType = "none"
 	StateVersionsPermissionReadOutputs StateVersionsPermissionType = "read-outputs"
 	StateVersionsPermissionRead        StateVersionsPermissionType = "read"
 	StateVersionsPermissionWrite       StateVersionsPermissionType = "write"
+)
 
+// SentinelMocksPermissionType represents the permissiontype to a workspace's Sentinel mocks.
+type SentinelMocksPermissionType string
+
+const (
 	SentinelMocksPermissionNone SentinelMocksPermissionType = "none"
 	SentinelMocksPermissionRead SentinelMocksPermissionType = "read"
 )
@@ -95,6 +98,7 @@ type TeamAccess struct {
 	StateVersions    StateVersionsPermissionType `jsonapi:"attr,state-versions"`
 	SentinelMocks    SentinelMocksPermissionType `jsonapi:"attr,sentinel-mocks"`
 	WorkspaceLocking bool                        `jsonapi:"attr,workspace-locking"`
+	RunTasks         bool                        `jsonapi:"attr,run-tasks"`
 
 	// Relations
 	Team      *Team      `jsonapi:"relation,team"`
@@ -104,37 +108,7 @@ type TeamAccess struct {
 // TeamAccessListOptions represents the options for listing team accesses.
 type TeamAccessListOptions struct {
 	ListOptions
-	WorkspaceID *string `url:"filter[workspace][id],omitempty"`
-}
-
-func (o TeamAccessListOptions) valid() error {
-	if !validString(o.WorkspaceID) {
-		return errors.New("workspace ID is required")
-	}
-	if !validStringID(o.WorkspaceID) {
-		return ErrInvalidWorkspaceID
-	}
-	return nil
-}
-
-// List all the team accesses for a given workspace.
-func (s *teamAccesses) List(ctx context.Context, options TeamAccessListOptions) (*TeamAccessList, error) {
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	req, err := s.client.newRequest("GET", "team-workspaces", &options)
-	if err != nil {
-		return nil, err
-	}
-
-	tal := &TeamAccessList{}
-	err = s.client.do(ctx, req, tal)
-	if err != nil {
-		return nil, err
-	}
-
-	return tal, nil
+	WorkspaceID string `url:"filter[workspace][id]"`
 }
 
 // TeamAccessAddOptions represents the options for adding team access.
@@ -155,66 +129,13 @@ type TeamAccessAddOptions struct {
 	StateVersions    *StateVersionsPermissionType `jsonapi:"attr,state-versions,omitempty"`
 	SentinelMocks    *SentinelMocksPermissionType `jsonapi:"attr,sentinel-mocks,omitempty"`
 	WorkspaceLocking *bool                        `jsonapi:"attr,workspace-locking,omitempty"`
+	RunTasks         *bool                        `jsonapi:"attr,run-tasks,omitempty"`
 
 	// The team to add to the workspace
 	Team *Team `jsonapi:"relation,team"`
 
 	// The workspace to which the team is to be added.
 	Workspace *Workspace `jsonapi:"relation,workspace"`
-}
-
-func (o TeamAccessAddOptions) valid() error {
-	if o.Access == nil {
-		return errors.New("access is required")
-	}
-	if o.Team == nil {
-		return errors.New("team is required")
-	}
-	if o.Workspace == nil {
-		return errors.New("workspace is required")
-	}
-	return nil
-}
-
-// Add team access for a workspace.
-func (s *teamAccesses) Add(ctx context.Context, options TeamAccessAddOptions) (*TeamAccess, error) {
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	req, err := s.client.newRequest("POST", "team-workspaces", &options)
-	if err != nil {
-		return nil, err
-	}
-
-	ta := &TeamAccess{}
-	err = s.client.do(ctx, req, ta)
-	if err != nil {
-		return nil, err
-	}
-
-	return ta, nil
-}
-
-// Read a team access by its ID.
-func (s *teamAccesses) Read(ctx context.Context, teamAccessID string) (*TeamAccess, error) {
-	if !validStringID(&teamAccessID) {
-		return nil, errors.New("invalid value for team access ID")
-	}
-
-	u := fmt.Sprintf("team-workspaces/%s", url.QueryEscape(teamAccessID))
-	req, err := s.client.newRequest("GET", u, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	ta := &TeamAccess{}
-	err = s.client.do(ctx, req, ta)
-	if err != nil {
-		return nil, err
-	}
-
-	return ta, nil
 }
 
 // TeamAccessUpdateOptions represents the options for updating team access.
@@ -235,22 +156,84 @@ type TeamAccessUpdateOptions struct {
 	StateVersions    *StateVersionsPermissionType `jsonapi:"attr,state-versions,omitempty"`
 	SentinelMocks    *SentinelMocksPermissionType `jsonapi:"attr,sentinel-mocks,omitempty"`
 	WorkspaceLocking *bool                        `jsonapi:"attr,workspace-locking,omitempty"`
+	RunTasks         *bool                        `jsonapi:"attr,run-tasks,omitempty"`
 }
 
-// Update team access for a workspace
-func (s *teamAccesses) Update(ctx context.Context, teamAccessID string, options TeamAccessUpdateOptions) (*TeamAccess, error) {
-	if !validStringID(&teamAccessID) {
-		return nil, errors.New("invalid value for team access ID")
+// List all the team accesses for a given workspace.
+func (s *teamAccesses) List(ctx context.Context, options *TeamAccessListOptions) (*TeamAccessList, error) {
+	if err := options.valid(); err != nil {
+		return nil, err
 	}
 
-	u := fmt.Sprintf("team-workspaces/%s", url.QueryEscape(teamAccessID))
-	req, err := s.client.newRequest("PATCH", u, &options)
+	req, err := s.client.NewRequest("GET", "team-workspaces", options)
+	if err != nil {
+		return nil, err
+	}
+
+	tal := &TeamAccessList{}
+	err = req.Do(ctx, tal)
+	if err != nil {
+		return nil, err
+	}
+
+	return tal, nil
+}
+
+// Add team access for a workspace.
+func (s *teamAccesses) Add(ctx context.Context, options TeamAccessAddOptions) (*TeamAccess, error) {
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	req, err := s.client.NewRequest("POST", "team-workspaces", &options)
 	if err != nil {
 		return nil, err
 	}
 
 	ta := &TeamAccess{}
-	err = s.client.do(ctx, req, ta)
+	err = req.Do(ctx, ta)
+	if err != nil {
+		return nil, err
+	}
+
+	return ta, nil
+}
+
+// Read a team access by its ID.
+func (s *teamAccesses) Read(ctx context.Context, teamAccessID string) (*TeamAccess, error) {
+	if !validStringID(&teamAccessID) {
+		return nil, ErrInvalidAccessTeamID
+	}
+
+	u := fmt.Sprintf("team-workspaces/%s", url.QueryEscape(teamAccessID))
+	req, err := s.client.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	ta := &TeamAccess{}
+	err = req.Do(ctx, ta)
+	if err != nil {
+		return nil, err
+	}
+
+	return ta, nil
+}
+
+// Update team access for a workspace
+func (s *teamAccesses) Update(ctx context.Context, teamAccessID string, options TeamAccessUpdateOptions) (*TeamAccess, error) {
+	if !validStringID(&teamAccessID) {
+		return nil, ErrInvalidAccessTeamID
+	}
+
+	u := fmt.Sprintf("team-workspaces/%s", url.QueryEscape(teamAccessID))
+	req, err := s.client.NewRequest("PATCH", u, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	ta := &TeamAccess{}
+	err = req.Do(ctx, ta)
 	if err != nil {
 		return nil, err
 	}
@@ -261,14 +244,41 @@ func (s *teamAccesses) Update(ctx context.Context, teamAccessID string, options 
 // Remove team access from a workspace.
 func (s *teamAccesses) Remove(ctx context.Context, teamAccessID string) error {
 	if !validStringID(&teamAccessID) {
-		return errors.New("invalid value for team access ID")
+		return ErrInvalidAccessTeamID
 	}
 
 	u := fmt.Sprintf("team-workspaces/%s", url.QueryEscape(teamAccessID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o *TeamAccessListOptions) valid() error {
+	if o == nil {
+		return ErrRequiredTeamAccessListOps
+	}
+	if !validString(&o.WorkspaceID) {
+		return ErrRequiredWorkspaceID
+	}
+	if !validStringID(&o.WorkspaceID) {
+		return ErrInvalidWorkspaceID
+	}
+
+	return nil
+}
+
+func (o TeamAccessAddOptions) valid() error {
+	if o.Access == nil {
+		return ErrRequiredAccess
+	}
+	if o.Team == nil {
+		return ErrRequiredTeam
+	}
+	if o.Workspace == nil {
+		return ErrRequiredWorkspace
+	}
+	return nil
 }

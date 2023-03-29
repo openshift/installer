@@ -94,8 +94,17 @@ func GetSession(c *Config) (*session.Session, error) {
 		sess = sess.Copy(&aws.Config{MaxRetries: aws.Int(c.MaxRetries)})
 	}
 
-	for _, product := range c.UserAgentProducts {
-		sess.Handlers.Build.PushBack(request.MakeAddToUserAgentHandler(product.Name, product.Version, product.Extra...))
+	// AWS SDK Go automatically adds a User-Agent product to HTTP requests,
+	// which contains helpful information about the SDK version and runtime.
+	// The configuration of additional User-Agent header products should take
+	// precedence over that product. Since the AWS SDK Go request package
+	// functions only append, we must PushFront on the build handlers instead
+	// of PushBack. To properly keep the order given by the configuration, we
+	// must reverse iterate through the products so the last item is PushFront
+	// first through the first item being PushFront last.
+	for i := len(c.UserAgentProducts) - 1; i >= 0; i-- {
+		product := c.UserAgentProducts[i]
+		sess.Handlers.Build.PushFront(request.MakeAddToUserAgentHandler(product.Name, product.Version, product.Extra...))
 	}
 
 	// Add custom input from ENV to the User-Agent request header

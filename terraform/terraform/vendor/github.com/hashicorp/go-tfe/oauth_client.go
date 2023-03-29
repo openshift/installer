@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -18,13 +17,16 @@ var _ OAuthClients = (*oAuthClients)(nil)
 // https://www.terraform.io/docs/enterprise/api/oauth-clients.html
 type OAuthClients interface {
 	// List all the OAuth clients for a given organization.
-	List(ctx context.Context, organization string, options OAuthClientListOptions) (*OAuthClientList, error)
+	List(ctx context.Context, organization string, options *OAuthClientListOptions) (*OAuthClientList, error)
 
 	// Create an OAuth client to connect an organization and a VCS provider.
 	Create(ctx context.Context, organization string, options OAuthClientCreateOptions) (*OAuthClient, error)
 
 	// Read an OAuth client by its ID.
 	Read(ctx context.Context, oAuthClientID string) (*OAuthClient, error)
+
+	// Update an existing OAuth client by its ID.
+	Update(ctx context.Context, oAuthClientID string, options OAuthClientUpdateOptions) (*OAuthClient, error)
 
 	// Delete an OAuth client by its ID.
 	Delete(ctx context.Context, oAuthClientID string) error
@@ -71,6 +73,8 @@ type OAuthClient struct {
 	HTTPURL             string              `jsonapi:"attr,http-url"`
 	Key                 string              `jsonapi:"attr,key"`
 	RSAPublicKey        string              `jsonapi:"attr,rsa-public-key"`
+	Name                *string             `jsonapi:"attr,name"`
+	Secret              string              `jsonapi:"attr,secret"`
 	ServiceProvider     ServiceProviderType `jsonapi:"attr,service-provider"`
 	ServiceProviderName string              `jsonapi:"attr,service-provider-display-name"`
 
@@ -79,31 +83,17 @@ type OAuthClient struct {
 	OAuthTokens  []*OAuthToken `jsonapi:"relation,oauth-tokens"`
 }
 
+// A list of relations to include
+type OAuthClientIncludeOpt string
+
+const OauthClientOauthTokens OAuthClientIncludeOpt = "oauth_tokens"
+
 // OAuthClientListOptions represents the options for listing
 // OAuth clients.
 type OAuthClientListOptions struct {
 	ListOptions
-}
 
-// List all the OAuth clients for a given organization.
-func (s *oAuthClients) List(ctx context.Context, organization string, options OAuthClientListOptions) (*OAuthClientList, error) {
-	if !validStringID(&organization) {
-		return nil, ErrInvalidOrg
-	}
-
-	u := fmt.Sprintf("organizations/%s/oauth-clients", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, &options)
-	if err != nil {
-		return nil, err
-	}
-
-	ocl := &OAuthClientList{}
-	err = s.client.do(ctx, req, ocl)
-	if err != nil {
-		return nil, err
-	}
-
-	return ocl, nil
+	Include []OAuthClientIncludeOpt `url:"include,omitempty"`
 }
 
 // OAuthClientCreateOptions represents the options for creating an OAuth client.
@@ -114,39 +104,82 @@ type OAuthClientCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,oauth-clients"`
 
-	// The base URL of your VCS provider's API.
+	// A display name for the OAuth Client.
+	Name *string `jsonapi:"attr,name"`
+
+	// Required: The base URL of your VCS provider's API.
 	APIURL *string `jsonapi:"attr,api-url"`
 
-	// The homepage of your VCS provider.
+	// Required: The homepage of your VCS provider.
 	HTTPURL *string `jsonapi:"attr,http-url"`
 
-	// The token string you were given by your VCS provider.
-	OAuthToken *string `jsonapi:"attr,oauth-token-string"`
+	// Optional: The OAuth Client key.
+	Key *string `jsonapi:"attr,key,omitempty"`
 
-	// Private key associated with this vcs provider - only available for ado_server
-	PrivateKey *string `jsonapi:"attr,private-key"`
+	// Optional: The token string you were given by your VCS provider.
+	OAuthToken *string `jsonapi:"attr,oauth-token-string,omitempty"`
 
-	// The VCS provider being connected with.
+	// Optional: Private key associated with this vcs provider - only available for ado_server
+	PrivateKey *string `jsonapi:"attr,private-key,omitempty"`
+
+	// Optional: Secret key associated with this vcs provider - only available for ado_server
+	Secret *string `jsonapi:"attr,secret,omitempty"`
+
+	// Optional: RSAPublicKey the text of the SSH public key associated with your BitBucket
+	// Server Application Link.
+	RSAPublicKey *string `jsonapi:"attr,rsa-public-key,omitempty"`
+
+	// Required: The VCS provider being connected with.
 	ServiceProvider *ServiceProviderType `jsonapi:"attr,service-provider"`
 }
 
-func (o OAuthClientCreateOptions) valid() error {
-	if !validString(o.APIURL) {
-		return errors.New("API URL is required")
+// OAuthClientUpdateOptions represents the options for updating an OAuth client.
+type OAuthClientUpdateOptions struct {
+	// Type is a public field utilized by JSON:API to
+	// set the resource type via the field tag.
+	// It is not a user-defined value and does not need to be set.
+	// https://jsonapi.org/format/#crud-creating
+	Type string `jsonapi:"primary,oauth-clients"`
+
+	// Optional: A display name for the OAuth Client.
+	Name *string `jsonapi:"attr,name,omitempty"`
+
+	// Optional: The OAuth Client key.
+	Key *string `jsonapi:"attr,key,omitempty"`
+
+	// Optional: Secret key associated with this vcs provider - only available for ado_server
+	Secret *string `jsonapi:"attr,secret,omitempty"`
+
+	// Optional: RSAPublicKey the text of the SSH public key associated with your BitBucket
+	// Server Application Link.
+	RSAPublicKey *string `jsonapi:"attr,rsa-public-key,omitempty"`
+
+	// Optional: The token string you were given by your VCS provider.
+	OAuthToken *string `jsonapi:"attr,oauth-token-string,omitempty"`
+}
+
+// List all the OAuth clients for a given organization.
+func (s *oAuthClients) List(ctx context.Context, organization string, options *OAuthClientListOptions) (*OAuthClientList, error) {
+	if !validStringID(&organization) {
+		return nil, ErrInvalidOrg
 	}
-	if !validString(o.HTTPURL) {
-		return errors.New("HTTP URL is required")
+	if err := options.valid(); err != nil {
+		return nil, err
 	}
-	if !validString(o.OAuthToken) {
-		return errors.New("OAuth token is required")
+
+	u := fmt.Sprintf("organizations/%s/oauth-clients", url.QueryEscape(organization))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
 	}
-	if o.ServiceProvider == nil {
-		return errors.New("service provider is required")
+
+	ocl := &OAuthClientList{}
+	err = req.Do(ctx, ocl)
+	if err != nil {
+		return nil, err
 	}
-	if validString(o.PrivateKey) && *o.ServiceProvider != *ServiceProvider(ServiceProviderAzureDevOpsServer) {
-		return errors.New("Private Key can only be present with Azure DevOps Server service provider")
-	}
-	return nil
+
+	return ocl, nil
 }
 
 // Create an OAuth client to connect an organization and a VCS provider.
@@ -159,13 +192,13 @@ func (s *oAuthClients) Create(ctx context.Context, organization string, options 
 	}
 
 	u := fmt.Sprintf("organizations/%s/oauth-clients", url.QueryEscape(organization))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	oc := &OAuthClient{}
-	err = s.client.do(ctx, req, oc)
+	err = req.Do(ctx, oc)
 	if err != nil {
 		return nil, err
 	}
@@ -176,17 +209,38 @@ func (s *oAuthClients) Create(ctx context.Context, organization string, options 
 // Read an OAuth client by its ID.
 func (s *oAuthClients) Read(ctx context.Context, oAuthClientID string) (*OAuthClient, error) {
 	if !validStringID(&oAuthClientID) {
-		return nil, errors.New("invalid value for OAuth client ID")
+		return nil, ErrInvalidOauthClientID
 	}
 
 	u := fmt.Sprintf("oauth-clients/%s", url.QueryEscape(oAuthClientID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	oc := &OAuthClient{}
-	err = s.client.do(ctx, req, oc)
+	err = req.Do(ctx, oc)
+	if err != nil {
+		return nil, err
+	}
+
+	return oc, err
+}
+
+// Update an OAuth client by its ID.
+func (s *oAuthClients) Update(ctx context.Context, oAuthClientID string, options OAuthClientUpdateOptions) (*OAuthClient, error) {
+	if !validStringID(&oAuthClientID) {
+		return nil, ErrInvalidOauthClientID
+	}
+
+	u := fmt.Sprintf("oauth-clients/%s", url.QueryEscape(oAuthClientID))
+	req, err := s.client.NewRequest("PATCH", u, &options)
+	if err != nil {
+		return nil, err
+	}
+
+	oc := &OAuthClient{}
+	err = req.Do(ctx, oc)
 	if err != nil {
 		return nil, err
 	}
@@ -197,14 +251,58 @@ func (s *oAuthClients) Read(ctx context.Context, oAuthClientID string) (*OAuthCl
 // Delete an OAuth client by its ID.
 func (s *oAuthClients) Delete(ctx context.Context, oAuthClientID string) error {
 	if !validStringID(&oAuthClientID) {
-		return errors.New("invalid value for OAuth client ID")
+		return ErrInvalidOauthClientID
 	}
 
 	u := fmt.Sprintf("oauth-clients/%s", url.QueryEscape(oAuthClientID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o OAuthClientCreateOptions) valid() error {
+	if !validString(o.APIURL) {
+		return ErrRequiredAPIURL
+	}
+	if !validString(o.HTTPURL) {
+		return ErrRequiredHTTPURL
+	}
+	if o.ServiceProvider == nil {
+		return ErrRequiredServiceProvider
+	}
+	if !validString(o.OAuthToken) && *o.ServiceProvider != *ServiceProvider(ServiceProviderBitbucketServer) {
+		return ErrRequiredOauthToken
+	}
+	if validString(o.PrivateKey) && *o.ServiceProvider != *ServiceProvider(ServiceProviderAzureDevOpsServer) {
+		return ErrUnsupportedPrivateKey
+	}
+	return nil
+}
+
+func (o *OAuthClientListOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateOauthClientIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateOauthClientIncludeParams(params []OAuthClientIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case OauthClientOauthTokens:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
 }

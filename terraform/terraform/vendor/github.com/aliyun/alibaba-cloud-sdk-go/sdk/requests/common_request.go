@@ -11,9 +11,11 @@ import (
 type CommonRequest struct {
 	*baseRequest
 
-	Version string
-	ApiName string
-	Product string
+	Version      string
+	ApiName      string
+	Product      string
+	ServiceCode  string
+	EndpointType string
 
 	// roa params
 	PathPattern string
@@ -80,7 +82,11 @@ func (request *CommonRequest) TransToAcsRequest() {
 		rpcRequest.baseRequest = request.baseRequest
 		rpcRequest.product = request.Product
 		rpcRequest.version = request.Version
+		rpcRequest.locationServiceCode = request.ServiceCode
+		rpcRequest.locationEndpointType = request.EndpointType
 		rpcRequest.actionName = request.ApiName
+		rpcRequest.Headers["x-acs-version"] = request.Version
+		rpcRequest.Headers["x-acs-action"] = request.ApiName
 		request.Ontology = rpcRequest
 	}
 }

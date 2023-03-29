@@ -1,9 +1,10 @@
 package plans
 
 import (
+	"github.com/zclconf/go-cty/cty"
+
 	"github.com/hashicorp/terraform/internal/addrs"
 	"github.com/hashicorp/terraform/internal/states"
-	"github.com/zclconf/go-cty/cty"
 )
 
 // Changes describes various actions that Terraform will attempt to take if
@@ -33,7 +34,7 @@ func NewChanges() *Changes {
 
 func (c *Changes) Empty() bool {
 	for _, res := range c.Resources {
-		if res.Action != NoOp {
+		if res.Action != NoOp || res.Moved() {
 			return false
 		}
 	}
@@ -59,6 +60,21 @@ func (c *Changes) ResourceInstance(addr addrs.AbsResourceInstance) *ResourceInst
 
 	return nil
 
+}
+
+// InstancesForAbsResource returns the planned change for the current objects
+// of the resource instances of the given address, if any. Returns nil if no
+// changes are planned.
+func (c *Changes) InstancesForAbsResource(addr addrs.AbsResource) []*ResourceInstanceChangeSrc {
+	var changes []*ResourceInstanceChangeSrc
+	for _, rc := range c.Resources {
+		resAddr := rc.Addr.ContainingResource()
+		if resAddr.Equal(addr) && rc.DeposedKey == states.NotDeposed {
+			changes = append(changes, rc)
+		}
+	}
+
+	return changes
 }
 
 // InstancesForConfigResource returns the planned change for the current objects
@@ -90,7 +106,8 @@ func (c *Changes) ResourceInstanceDeposed(addr addrs.AbsResourceInstance, key st
 }
 
 // OutputValue returns the planned change for the output value with the
-//  given address, if any. Returns nil if no change is planned.
+//
+//	given address, if any. Returns nil if no change is planned.
 func (c *Changes) OutputValue(addr addrs.AbsOutputValue) *OutputChangeSrc {
 	for _, oc := range c.Outputs {
 		if oc.Addr.Equal(addr) {
@@ -99,6 +116,23 @@ func (c *Changes) OutputValue(addr addrs.AbsOutputValue) *OutputChangeSrc {
 	}
 
 	return nil
+}
+
+// RootOutputValues returns planned changes for all outputs of the root module.
+func (c *Changes) RootOutputValues() []*OutputChangeSrc {
+	var res []*OutputChangeSrc
+
+	for _, oc := range c.Outputs {
+		// we can't evaluate root module outputs
+		if !oc.Addr.Module.Equal(addrs.RootModuleInstance) {
+			continue
+		}
+
+		res = append(res, oc)
+
+	}
+
+	return res
 }
 
 // OutputValues returns planned changes for all outputs for all module
@@ -146,6 +180,19 @@ type ResourceInstanceChange struct {
 	// Addr is the absolute address of the resource instance that the change
 	// will apply to.
 	Addr addrs.AbsResourceInstance
+
+	// PrevRunAddr is the absolute address that this resource instance had at
+	// the conclusion of a previous run.
+	//
+	// This will typically be the same as Addr, but can be different if the
+	// previous resource instance was subject to a "moved" block that we
+	// handled in the process of creating this plan.
+	//
+	// For the initial creation of a resource instance there isn't really any
+	// meaningful "previous run address", but PrevRunAddr will still be set
+	// equal to Addr in that case in order to simplify logic elsewhere which
+	// aims to detect and react to the movement of instances between addresses.
+	PrevRunAddr addrs.AbsResourceInstance
 
 	// DeposedKey is the identifier for a deposed object associated with the
 	// given instance, or states.NotDeposed if this change applies to the
@@ -203,8 +250,15 @@ func (rc *ResourceInstanceChange) Encode(ty cty.Type) (*ResourceInstanceChangeSr
 	if err != nil {
 		return nil, err
 	}
+	prevRunAddr := rc.PrevRunAddr
+	if prevRunAddr.Resource.Resource.Type == "" {
+		// Suggests an old caller that hasn't been properly updated to
+		// populate this yet.
+		prevRunAddr = rc.Addr
+	}
 	return &ResourceInstanceChangeSrc{
 		Addr:            rc.Addr,
+		PrevRunAddr:     prevRunAddr,
 		DeposedKey:      rc.DeposedKey,
 		ProviderAddr:    rc.ProviderAddr,
 		ChangeSrc:       *cs,
@@ -212,6 +266,10 @@ func (rc *ResourceInstanceChange) Encode(ty cty.Type) (*ResourceInstanceChangeSr
 		RequiredReplace: rc.RequiredReplace,
 		Private:         rc.Private,
 	}, err
+}
+
+func (rc *ResourceInstanceChange) Moved() bool {
+	return !rc.Addr.Equal(rc.PrevRunAddr)
 }
 
 // Simplify will, where possible, produce a change with a simpler action than
@@ -222,12 +280,12 @@ func (rc *ResourceInstanceChange) Encode(ty cty.Type) (*ResourceInstanceChangeSr
 //
 // The following table shows the simplification behavior:
 //
-//     Action    Destroying?   New Action
-//     --------+-------------+-----------
-//     Create    true          NoOp
-//     Delete    false         NoOp
-//     Replace   true          Delete
-//     Replace   false         Create
+//	Action    Destroying?   New Action
+//	--------+-------------+-----------
+//	Create    true          NoOp
+//	Delete    false         NoOp
+//	Replace   true          Delete
+//	Replace   false         Create
 //
 // For any combination not in the above table, the Simplify just returns the
 // receiver as-is.
@@ -321,6 +379,11 @@ const (
 	// planning option.)
 	ResourceInstanceReplaceByRequest ResourceInstanceChangeActionReason = 'R'
 
+	// ResourceInstanceReplaceByTriggers indicates that the resource instance
+	// is planned to be replaced because of a corresponding change in a
+	// replace_triggered_by reference.
+	ResourceInstanceReplaceByTriggers ResourceInstanceChangeActionReason = 'D'
+
 	// ResourceInstanceReplaceBecauseCannotUpdate indicates that the resource
 	// instance is planned to be replaced because the provider has indicated
 	// that a requested change cannot be applied as an update.
@@ -329,6 +392,58 @@ const (
 	// the ResourceInstanceChange object to give information about specifically
 	// which arguments changed in a non-updatable way.
 	ResourceInstanceReplaceBecauseCannotUpdate ResourceInstanceChangeActionReason = 'F'
+
+	// ResourceInstanceDeleteBecauseNoResourceConfig indicates that the
+	// resource instance is planned to be deleted because there's no
+	// corresponding resource configuration block in the configuration.
+	ResourceInstanceDeleteBecauseNoResourceConfig ResourceInstanceChangeActionReason = 'N'
+
+	// ResourceInstanceDeleteBecauseWrongRepetition indicates that the
+	// resource instance is planned to be deleted because the instance key
+	// type isn't consistent with the repetition mode selected in the
+	// resource configuration.
+	ResourceInstanceDeleteBecauseWrongRepetition ResourceInstanceChangeActionReason = 'W'
+
+	// ResourceInstanceDeleteBecauseCountIndex indicates that the resource
+	// instance is planned to be deleted because its integer instance key
+	// is out of range for the current configured resource "count" value.
+	ResourceInstanceDeleteBecauseCountIndex ResourceInstanceChangeActionReason = 'C'
+
+	// ResourceInstanceDeleteBecauseEachKey indicates that the resource
+	// instance is planned to be deleted because its string instance key
+	// isn't one of the keys included in the current configured resource
+	// "for_each" value.
+	ResourceInstanceDeleteBecauseEachKey ResourceInstanceChangeActionReason = 'E'
+
+	// ResourceInstanceDeleteBecauseNoModule indicates that the resource
+	// instance is planned to be deleted because it belongs to a module
+	// instance that's no longer declared in the configuration.
+	//
+	// This is less specific than the reasons we return for the various ways
+	// a resource instance itself can be no longer declared, including both
+	// the total removal of a module block and changes to its count/for_each
+	// arguments. This difference in detail is out of pragmatism, because
+	// potentially multiple nested modules could all contribute conflicting
+	// specific reasons for a particular instance to no longer be declared.
+	ResourceInstanceDeleteBecauseNoModule ResourceInstanceChangeActionReason = 'M'
+
+	// ResourceInstanceDeleteBecauseNoMoveTarget indicates that the resource
+	// address appears as the target ("to") in a moved block, but no
+	// configuration exists for that resource. According to our move rules,
+	// this combination evaluates to a deletion of the "new" resource.
+	ResourceInstanceDeleteBecauseNoMoveTarget ResourceInstanceChangeActionReason = 'A'
+
+	// ResourceInstanceReadBecauseConfigUnknown indicates that the resource
+	// must be read during apply (rather than during planning) because its
+	// configuration contains unknown values. This reason applies only to
+	// data resources.
+	ResourceInstanceReadBecauseConfigUnknown ResourceInstanceChangeActionReason = '?'
+
+	// ResourceInstanceReadBecauseDependencyPending indicates that the resource
+	// must be read during apply (rather than during planning) because it
+	// depends on a managed resource instance which has its own changes
+	// pending.
+	ResourceInstanceReadBecauseDependencyPending ResourceInstanceChangeActionReason = '!'
 )
 
 // OutputChange describes a change to an output value.

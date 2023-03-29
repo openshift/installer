@@ -35,13 +35,13 @@ func (n *NodeApplyableProvider) Execute(ctx EvalContext, op walkOperation) (diag
 
 	switch op {
 	case walkValidate:
+		log.Printf("[TRACE] NodeApplyableProvider: validating configuration for %s", n.Addr)
 		return diags.Append(n.ValidateProvider(ctx, provider))
-	case walkPlan, walkApply, walkDestroy:
-		// walkPlanDestroy is purposely skipped here, since the config is not
-		// evaluated, and the provider is not needed to create delete actions
-		// for all instances.
+	case walkPlan, walkPlanDestroy, walkApply, walkDestroy:
+		log.Printf("[TRACE] NodeApplyableProvider: configuring %s", n.Addr)
 		return diags.Append(n.ConfigureProvider(ctx, provider, false))
 	case walkImport:
+		log.Printf("[TRACE] NodeApplyableProvider: configuring %s (requiring that configuration is wholly known)", n.Addr)
 		return diags.Append(n.ConfigureProvider(ctx, provider, true))
 	}
 	return diags

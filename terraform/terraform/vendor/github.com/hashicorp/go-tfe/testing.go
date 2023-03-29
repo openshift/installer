@@ -22,13 +22,13 @@ type TestAccountDetails struct {
 // address associated with the token used to run the tests.
 func FetchTestAccountDetails(t *testing.T, client *Client) *TestAccountDetails {
 	tad := &TestAccountDetails{}
-	req, err := client.newRequest("GET", "account/details", nil)
+	req, err := client.NewRequest("GET", "account/details", nil)
 	if err != nil {
 		t.Fatalf("could not create account details request: %v", err)
 	}
 
 	ctx := context.Background()
-	err = client.do(ctx, req, tad)
+	err = req.Do(ctx, tad)
 	if err != nil {
 		t.Fatalf("could not fetch test user details: %v", err)
 	}

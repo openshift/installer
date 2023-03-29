@@ -21,7 +21,6 @@ import (
 )
 
 // GetCallerIdentity invokes the sts.GetCallerIdentity API synchronously
-// api document: https://help.aliyun.com/api/sts/getcalleridentity.html
 func (client *Client) GetCallerIdentity(request *GetCallerIdentityRequest) (response *GetCallerIdentityResponse, err error) {
 	response = CreateGetCallerIdentityResponse()
 	err = client.DoAction(request, response)
@@ -29,8 +28,6 @@ func (client *Client) GetCallerIdentity(request *GetCallerIdentityRequest) (resp
 }
 
 // GetCallerIdentityWithChan invokes the sts.GetCallerIdentity API asynchronously
-// api document: https://help.aliyun.com/api/sts/getcalleridentity.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetCallerIdentityWithChan(request *GetCallerIdentityRequest) (<-chan *GetCallerIdentityResponse, <-chan error) {
 	responseChan := make(chan *GetCallerIdentityResponse, 1)
 	errChan := make(chan error, 1)
@@ -53,8 +50,6 @@ func (client *Client) GetCallerIdentityWithChan(request *GetCallerIdentityReques
 }
 
 // GetCallerIdentityWithCallback invokes the sts.GetCallerIdentity API asynchronously
-// api document: https://help.aliyun.com/api/sts/getcalleridentity.html
-// asynchronous document: https://help.aliyun.com/document_detail/66220.html
 func (client *Client) GetCallerIdentityWithCallback(request *GetCallerIdentityRequest, callback func(response *GetCallerIdentityResponse, err error)) <-chan int {
 	result := make(chan int, 1)
 	err := client.AddAsyncTask(func() {
@@ -81,13 +76,13 @@ type GetCallerIdentityRequest struct {
 // GetCallerIdentityResponse is the response struct for api GetCallerIdentity
 type GetCallerIdentityResponse struct {
 	*responses.BaseResponse
-	AccountId    string `json:"AccountId" xml:"AccountId"`
-	UserId       string `json:"UserId" xml:"UserId"`
-	RoleId       string `json:"RoleId" xml:"RoleId"`
-	Arn          string `json:"Arn" xml:"Arn"`
 	IdentityType string `json:"IdentityType" xml:"IdentityType"`
-	PrincipalId  string `json:"PrincipalId" xml:"PrincipalId"`
+	AccountId    string `json:"AccountId" xml:"AccountId"`
 	RequestId    string `json:"RequestId" xml:"RequestId"`
+	PrincipalId  string `json:"PrincipalId" xml:"PrincipalId"`
+	UserId       string `json:"UserId" xml:"UserId"`
+	Arn          string `json:"Arn" xml:"Arn"`
+	RoleId       string `json:"RoleId" xml:"RoleId"`
 }
 
 // CreateGetCallerIdentityRequest creates a request to invoke GetCallerIdentity API
@@ -95,7 +90,8 @@ func CreateGetCallerIdentityRequest() (request *GetCallerIdentityRequest) {
 	request = &GetCallerIdentityRequest{
 		RpcRequest: &requests.RpcRequest{},
 	}
-	request.InitWithApiInfo("Sts", "2015-04-01", "GetCallerIdentity", "sts", "openAPI")
+	request.InitWithApiInfo("Sts", "2015-04-01", "GetCallerIdentity", "", "")
+	request.Method = requests.POST
 	return
 }
 

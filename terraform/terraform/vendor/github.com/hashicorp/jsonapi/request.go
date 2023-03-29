@@ -443,6 +443,10 @@ func unmarshalAttribute(
 		return
 	}
 
+	if fieldValue.Type().Kind() == reflect.Interface {
+		return reflect.ValueOf(attribute), nil
+	}
+
 	// Handle field of type struct
 	if fieldValue.Type().Kind() == reflect.Struct {
 		value, err = handleStruct(attribute, fieldValue)

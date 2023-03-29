@@ -7,7 +7,8 @@ import (
 // Compile-time proof of interface implementation.
 var _ TwilioSettings = (*adminTwilioSettings)(nil)
 
-// TwilioSettings describes all the Twilio admin settings.
+// TwilioSettings describes all the Twilio admin settings for the Admin Setting API.
+// https://www.terraform.io/cloud-docs/api-docs/admin/settings.
 type TwilioSettings interface {
 	// Read returns the Twilio settings.
 	Read(ctx context.Context) (*AdminTwilioSetting, error)
@@ -33,13 +34,13 @@ type AdminTwilioSetting struct {
 
 // Read returns the Twilio settings.
 func (a *adminTwilioSettings) Read(ctx context.Context) (*AdminTwilioSetting, error) {
-	req, err := a.client.newRequest("GET", "admin/twilio-settings", nil)
+	req, err := a.client.NewRequest("GET", "admin/twilio-settings", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	twilio := &AdminTwilioSetting{}
-	err = a.client.do(ctx, req, twilio)
+	err = req.Do(ctx, twilio)
 	if err != nil {
 		return nil, err
 	}
@@ -57,15 +58,21 @@ type AdminTwilioSettingsUpdateOptions struct {
 	FromNumber *string `jsonapi:"attr,from-number,omitempty"`
 }
 
+// AdminTwilioSettingsVerifyOptions represents the test number to verify Twilio.
+// https://www.terraform.io/docs/cloud/api/admin/settings.html#verify-twilio-settings
+type AdminTwilioSettingsVerifyOptions struct {
+	TestNumber *string `jsonapi:"attr,test-number"` // Required
+}
+
 // Update updates the Twilio settings.
 func (a *adminTwilioSettings) Update(ctx context.Context, options AdminTwilioSettingsUpdateOptions) (*AdminTwilioSetting, error) {
-	req, err := a.client.newRequest("PATCH", "admin/twilio-settings", &options)
+	req, err := a.client.NewRequest("PATCH", "admin/twilio-settings", &options)
 	if err != nil {
 		return nil, err
 	}
 
 	twilio := &AdminTwilioSetting{}
-	err = a.client.do(ctx, req, twilio)
+	err = req.Do(ctx, twilio)
 	if err != nil {
 		return nil, err
 	}
@@ -73,18 +80,23 @@ func (a *adminTwilioSettings) Update(ctx context.Context, options AdminTwilioSet
 	return twilio, nil
 }
 
-// AdminTwilioSettingsVerifyOptions represents the test number to verify Twilio.
-// https://www.terraform.io/docs/cloud/api/admin/settings.html#verify-twilio-settings
-type AdminTwilioSettingsVerifyOptions struct {
-	TestNumber *string `jsonapi:"attr,test-number"`
-}
-
 // Verify verifies Twilio settings.
 func (a *adminTwilioSettings) Verify(ctx context.Context, options AdminTwilioSettingsVerifyOptions) error {
-	req, err := a.client.newRequest("PATCH", "admin/twilio-settings/verify", &options)
+	if err := options.valid(); err != nil {
+		return err
+	}
+	req, err := a.client.NewRequest("PATCH", "admin/twilio-settings/verify", &options)
 	if err != nil {
 		return err
 	}
 
-	return a.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o AdminTwilioSettingsVerifyOptions) valid() error {
+	if !validString(o.TestNumber) {
+		return ErrRequiredTestNumber
+	}
+
+	return nil
 }

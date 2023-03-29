@@ -14,10 +14,10 @@ var _ OrganizationTokens = (*organizationTokens)(nil)
 // that the Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/organization-tokens.html
+// https://www.terraform.io/docs/cloud/api/organization-tokens.html
 type OrganizationTokens interface {
-	// Generate a new organization token, replacing any existing token.
-	Generate(ctx context.Context, organization string) (*OrganizationToken, error)
+	// Create a new organization token, replacing any existing token.
+	Create(ctx context.Context, organization string) (*OrganizationToken, error)
 
 	// Read an organization token.
 	Read(ctx context.Context, organization string) (*OrganizationToken, error)
@@ -40,20 +40,20 @@ type OrganizationToken struct {
 	Token       string    `jsonapi:"attr,token"`
 }
 
-// Generate a new organization token, replacing any existing token.
-func (s *organizationTokens) Generate(ctx context.Context, organization string) (*OrganizationToken, error) {
+// Create a new organization token, replacing any existing token.
+func (s *organizationTokens) Create(ctx context.Context, organization string) (*OrganizationToken, error) {
 	if !validStringID(&organization) {
 		return nil, ErrInvalidOrg
 	}
 
 	u := fmt.Sprintf("organizations/%s/authentication-token", url.QueryEscape(organization))
-	req, err := s.client.newRequest("POST", u, nil)
+	req, err := s.client.NewRequest("POST", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ot := &OrganizationToken{}
-	err = s.client.do(ctx, req, ot)
+	err = req.Do(ctx, ot)
 	if err != nil {
 		return nil, err
 	}
@@ -68,13 +68,13 @@ func (s *organizationTokens) Read(ctx context.Context, organization string) (*Or
 	}
 
 	u := fmt.Sprintf("organizations/%s/authentication-token", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ot := &OrganizationToken{}
-	err = s.client.do(ctx, req, ot)
+	err = req.Do(ctx, ot)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +89,10 @@ func (s *organizationTokens) Delete(ctx context.Context, organization string) er
 	}
 
 	u := fmt.Sprintf("organizations/%s/authentication-token", url.QueryEscape(organization))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }

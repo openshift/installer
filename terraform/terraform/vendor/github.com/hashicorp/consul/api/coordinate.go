@@ -37,7 +37,7 @@ func (c *Coordinate) Datacenters() ([]*CoordinateDatacenterMap, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	var out []*CoordinateDatacenterMap
 	if err := decodeBody(resp, &out); err != nil {
@@ -54,7 +54,45 @@ func (c *Coordinate) Nodes(q *QueryOptions) ([]*CoordinateEntry, *QueryMeta, err
 	if err != nil {
 		return nil, nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
+
+	qm := &QueryMeta{}
+	parseQueryMeta(resp, qm)
+	qm.RequestTime = rtt
+
+	var out []*CoordinateEntry
+	if err := decodeBody(resp, &out); err != nil {
+		return nil, nil, err
+	}
+	return out, qm, nil
+}
+
+// Update inserts or updates the LAN coordinate of a node.
+func (c *Coordinate) Update(coord *CoordinateEntry, q *WriteOptions) (*WriteMeta, error) {
+	r := c.c.newRequest("PUT", "/v1/coordinate/update")
+	r.setWriteOptions(q)
+	r.obj = coord
+	rtt, resp, err := requireOK(c.c.doRequest(r))
+	if err != nil {
+		return nil, err
+	}
+	defer closeResponseBody(resp)
+
+	wm := &WriteMeta{}
+	wm.RequestTime = rtt
+
+	return wm, nil
+}
+
+// Node is used to return the coordinates of a single node in the LAN pool.
+func (c *Coordinate) Node(node string, q *QueryOptions) ([]*CoordinateEntry, *QueryMeta, error) {
+	r := c.c.newRequest("GET", "/v1/coordinate/node/"+node)
+	r.setQueryOptions(q)
+	rtt, resp, err := requireOK(c.c.doRequest(r))
+	if err != nil {
+		return nil, nil, err
+	}
+	defer closeResponseBody(resp)
 
 	qm := &QueryMeta{}
 	parseQueryMeta(resp, qm)

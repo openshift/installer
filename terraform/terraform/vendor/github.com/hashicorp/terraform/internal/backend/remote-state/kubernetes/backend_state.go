@@ -1,6 +1,7 @@
 package kubernetes
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sort"
@@ -21,6 +22,7 @@ func (b *Backend) Workspaces() ([]string, error) {
 	}
 
 	secrets, err := secretClient.List(
+		context.Background(),
 		metav1.ListOptions{
 			LabelSelector: tfstateKey + "=true",
 		},
@@ -121,7 +123,7 @@ func (b *Backend) StateMgr(name string) (statemgr.Full, error) {
 		if err := stateMgr.WriteState(states.NewState()); err != nil {
 			return nil, unlock(err)
 		}
-		if err := stateMgr.PersistState(); err != nil {
+		if err := stateMgr.PersistState(nil); err != nil {
 			return nil, unlock(err)
 		}
 

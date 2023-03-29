@@ -5,6 +5,7 @@ import (
 	"sync"
 
 	"github.com/hashicorp/terraform/internal/addrs"
+	"github.com/hashicorp/terraform/internal/checks"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -248,60 +249,6 @@ func (s *SyncState) RemoveResourceIfEmpty(addr addrs.AbsResource) bool {
 	return true
 }
 
-// MaybeFixUpResourceInstanceAddressForCount deals with the situation where a
-// resource has changed from having "count" set to not set, or vice-versa, and
-// so we need to rename the zeroth instance key to no key at all, or vice-versa.
-//
-// Set countEnabled to true if the resource has count set in its new
-// configuration, or false if it does not.
-//
-// The state is modified in-place if necessary, moving a resource instance
-// between the two addresses. The return value is true if a change was made,
-// and false otherwise.
-func (s *SyncState) MaybeFixUpResourceInstanceAddressForCount(addr addrs.ConfigResource, countEnabled bool) bool {
-	s.lock.Lock()
-	defer s.lock.Unlock()
-
-	// get all modules instances that may match this state
-	modules := s.state.ModuleInstances(addr.Module)
-	if len(modules) == 0 {
-		return false
-	}
-
-	changed := false
-
-	for _, ms := range modules {
-		relAddr := addr.Resource
-		rs := ms.Resource(relAddr)
-		if rs == nil {
-			continue
-		}
-
-		huntKey := addrs.NoKey
-		replaceKey := addrs.InstanceKey(addrs.IntKey(0))
-		if !countEnabled {
-			huntKey, replaceKey = replaceKey, huntKey
-		}
-
-		is, exists := rs.Instances[huntKey]
-		if !exists {
-			continue
-		}
-
-		if _, exists := rs.Instances[replaceKey]; exists {
-			// If the replacement key also exists then we'll do nothing and keep both.
-			continue
-		}
-
-		// If we get here then we need to "rename" from hunt to replace
-		rs.Instances[replaceKey] = is
-		delete(rs.Instances, huntKey)
-		changed = true
-	}
-
-	return changed
-}
-
 // SetResourceInstanceCurrent saves the given instance object as the current
 // generation of the resource instance with the given address, simultaneously
 // updating the recorded provider configuration address, dependencies, and
@@ -511,6 +458,24 @@ func (s *SyncState) RemovePlannedResourceInstanceObjects() {
 	}
 }
 
+// DiscardCheckResults discards any previously-recorded check results, with
+// the intent of preventing any references to them after they have become
+// stale due to starting (but possibly not completing) an update.
+func (s *SyncState) DiscardCheckResults() {
+	s.lock.Lock()
+	s.state.CheckResults = nil
+	s.lock.Unlock()
+}
+
+// RecordCheckResults replaces any check results already recorded in the state
+// with a new set taken from the given check state object.
+func (s *SyncState) RecordCheckResults(checkState *checks.State) {
+	newResults := NewCheckResults(checkState)
+	s.lock.Lock()
+	s.state.CheckResults = newResults
+	s.lock.Unlock()
+}
+
 // Lock acquires an explicit lock on the state, allowing direct read and write
 // access to the returned state object. The caller must call Unlock once
 // access is no longer needed, and then immediately discard the state pointer
@@ -533,6 +498,16 @@ func (s *SyncState) Unlock() {
 	s.lock.Unlock()
 }
 
+// Close extracts the underlying state from inside this wrapper, making the
+// wrapper invalid for any future operations.
+func (s *SyncState) Close() *State {
+	s.lock.Lock()
+	ret := s.state
+	s.state = nil // make sure future operations can't still modify it
+	s.lock.Unlock()
+	return ret
+}
+
 // maybePruneModule will remove a module from the state altogether if it is
 // empty, unless it's the root module which must always be present.
 //
@@ -553,4 +528,46 @@ func (s *SyncState) maybePruneModule(addr addrs.ModuleInstance) {
 		log.Printf("[TRACE] states.SyncState: pruning %s because it is empty", addr)
 		s.state.RemoveModule(addr)
 	}
+}
+
+func (s *SyncState) MoveAbsResource(src, dst addrs.AbsResource) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.state.MoveAbsResource(src, dst)
+}
+
+func (s *SyncState) MaybeMoveAbsResource(src, dst addrs.AbsResource) bool {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state.MaybeMoveAbsResource(src, dst)
+}
+
+func (s *SyncState) MoveResourceInstance(src, dst addrs.AbsResourceInstance) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.state.MoveAbsResourceInstance(src, dst)
+}
+
+func (s *SyncState) MaybeMoveResourceInstance(src, dst addrs.AbsResourceInstance) bool {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state.MaybeMoveAbsResourceInstance(src, dst)
+}
+
+func (s *SyncState) MoveModuleInstance(src, dst addrs.ModuleInstance) {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	s.state.MoveModuleInstance(src, dst)
+}
+
+func (s *SyncState) MaybeMoveModuleInstance(src, dst addrs.ModuleInstance) bool {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
+	return s.state.MaybeMoveModuleInstance(src, dst)
 }

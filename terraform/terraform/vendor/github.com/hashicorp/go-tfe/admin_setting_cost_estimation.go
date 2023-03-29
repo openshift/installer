@@ -7,7 +7,8 @@ import (
 // Compile-time proof of interface implementation.
 var _ CostEstimationSettings = (*adminCostEstimationSettings)(nil)
 
-// CostEstimationSettings describes all the cost estimation admin settings.
+// CostEstimationSettings describes all the cost estimation admin settings for the Admin Setting API.
+// https://www.terraform.io/cloud-docs/api-docs/admin/settings
 type CostEstimationSettings interface {
 	// Read returns the cost estimation settings.
 	Read(ctx context.Context) (*AdminCostEstimationSetting, error)
@@ -37,22 +38,6 @@ type AdminCostEstimationSetting struct {
 	AzureTenantID             string `jsonapi:"attr,azure-tenant-id"`
 }
 
-// Read returns the cost estimation settings.
-func (a *adminCostEstimationSettings) Read(ctx context.Context) (*AdminCostEstimationSetting, error) {
-	req, err := a.client.newRequest("GET", "admin/cost-estimation-settings", nil)
-	if err != nil {
-		return nil, err
-	}
-
-	ace := &AdminCostEstimationSetting{}
-	err = a.client.do(ctx, req, ace)
-	if err != nil {
-		return nil, err
-	}
-
-	return ace, nil
-}
-
 // AdminCostEstimationSettingOptions represents the admin options for updating
 // the cost estimation settings.
 // https://www.terraform.io/docs/cloud/api/admin/settings.html#request-body-1
@@ -67,15 +52,31 @@ type AdminCostEstimationSettingOptions struct {
 	AzureTenantID       *string `jsonapi:"attr,azure-tenant-id,omitempty"`
 }
 
-// Update updates the cost-estimation settings.
-func (a *adminCostEstimationSettings) Update(ctx context.Context, options AdminCostEstimationSettingOptions) (*AdminCostEstimationSetting, error) {
-	req, err := a.client.newRequest("PATCH", "admin/cost-estimation-settings", &options)
+// Read returns the cost estimation settings.
+func (a *adminCostEstimationSettings) Read(ctx context.Context) (*AdminCostEstimationSetting, error) {
+	req, err := a.client.NewRequest("GET", "admin/cost-estimation-settings", nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ace := &AdminCostEstimationSetting{}
-	err = a.client.do(ctx, req, ace)
+	err = req.Do(ctx, ace)
+	if err != nil {
+		return nil, err
+	}
+
+	return ace, nil
+}
+
+// Update updates the cost-estimation settings.
+func (a *adminCostEstimationSettings) Update(ctx context.Context, options AdminCostEstimationSettingOptions) (*AdminCostEstimationSetting, error) {
+	req, err := a.client.NewRequest("PATCH", "admin/cost-estimation-settings", &options)
+	if err != nil {
+		return nil, err
+	}
+
+	ace := &AdminCostEstimationSetting{}
+	err = req.Do(ctx, ace)
 	if err != nil {
 		return nil, err
 	}

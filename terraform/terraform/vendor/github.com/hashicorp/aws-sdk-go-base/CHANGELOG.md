@@ -1,4 +1,16 @@
-# v0.6.0 (unreleased)
+# v0.7.1 (April 14, 2021)
+
+BUG FIXES
+
+* session: Reorder User-Agent header so configuration products take precedence over AWS SDK Go product #56
+
+# v0.7.0 (October 6, 2020)
+
+ENHANCEMENTS
+
+* Optionally log the STS API calls when assuming a role #51
+
+# v0.6.0 (August 18, 2020)
 
 BREAKING CHANGES
 
@@ -7,6 +19,7 @@ BREAKING CHANGES
 ENHANCEMENTS
 
 * Additional AWS error checking function have been added to the `tfawserr` package - `ErrCodeEquals`, `ErrCodeContains` and `ErrStatusCodeEquals`.
+* Support for appending data to User-Agent request header with the `TF_APPEND_USER_AGENT` environment variable. #47
 
 # v0.5.0 (June 4, 2020)
 

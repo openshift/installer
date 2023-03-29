@@ -1,9 +1,10 @@
+package api
+
 // The /v1/operator/area endpoints are available only in Consul Enterprise and
 // interact with its network area subsystem. Network areas are used to link
 // together Consul servers in different Consul datacenters. With network areas,
 // Consul datacenters can be linked together in ways other than a fully-connected
 // mesh, as is required for Consul's WAN.
-package api
 
 import (
 	"net"
@@ -92,7 +93,7 @@ func (op *Operator) AreaCreate(area *Area, q *WriteOptions) (string, *WriteMeta,
 	if err != nil {
 		return "", nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	wm := &WriteMeta{}
 	wm.RequestTime = rtt
@@ -113,7 +114,7 @@ func (op *Operator) AreaUpdate(areaID string, area *Area, q *WriteOptions) (stri
 	if err != nil {
 		return "", nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	wm := &WriteMeta{}
 	wm.RequestTime = rtt
@@ -153,7 +154,7 @@ func (op *Operator) AreaDelete(areaID string, q *WriteOptions) (*WriteMeta, erro
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	wm := &WriteMeta{}
 	wm.RequestTime = rtt
@@ -170,7 +171,7 @@ func (op *Operator) AreaJoin(areaID string, addresses []string, q *WriteOptions)
 	if err != nil {
 		return nil, nil, err
 	}
-	defer resp.Body.Close()
+	defer closeResponseBody(resp)
 
 	wm := &WriteMeta{}
 	wm.RequestTime = rtt

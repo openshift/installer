@@ -3,6 +3,8 @@ package funcs
 import (
 	"strconv"
 
+	"github.com/hashicorp/terraform/internal/lang/marks"
+	"github.com/hashicorp/terraform/internal/lang/types"
 	"github.com/zclconf/go-cty/cty"
 	"github.com/zclconf/go-cty/cty/convert"
 	"github.com/zclconf/go-cty/cty/function"
@@ -28,9 +30,10 @@ func MakeToFunc(wantTy cty.Type) function.Function {
 				// messages to be more appropriate for an explicit type
 				// conversion, whereas the cty function system produces
 				// messages aimed at _implicit_ type conversions.
-				Type:        cty.DynamicPseudoType,
-				AllowNull:   true,
-				AllowMarked: true,
+				Type:             cty.DynamicPseudoType,
+				AllowNull:        true,
+				AllowMarked:      true,
+				AllowDynamicType: true,
 			},
 		},
 		Type: func(args []cty.Value) (cty.Type, error) {
@@ -59,28 +62,29 @@ func MakeToFunc(wantTy cty.Type) function.Function {
 			// to be known here but may still be null.
 			ret, err := convert.Convert(args[0], retType)
 			if err != nil {
+				val, _ := args[0].UnmarkDeep()
 				// Because we used GetConversionUnsafe above, conversion can
 				// still potentially fail in here. For example, if the user
 				// asks to convert the string "a" to bool then we'll
 				// optimistically permit it during type checking but fail here
 				// once we note that the value isn't either "true" or "false".
-				gotTy := args[0].Type()
+				gotTy := val.Type()
 				switch {
-				case args[0].ContainsMarked():
+				case marks.Contains(args[0], marks.Sensitive):
 					// Generic message so we won't inadvertently disclose
 					// information about sensitive values.
 					return cty.NilVal, function.NewArgErrorf(0, "cannot convert this sensitive %s to %s", gotTy.FriendlyName(), wantTy.FriendlyNameForConstraint())
 
 				case gotTy == cty.String && wantTy == cty.Bool:
 					what := "string"
-					if !args[0].IsNull() {
-						what = strconv.Quote(args[0].AsString())
+					if !val.IsNull() {
+						what = strconv.Quote(val.AsString())
 					}
 					return cty.NilVal, function.NewArgErrorf(0, `cannot convert %s to bool; only the strings "true" or "false" are allowed`, what)
 				case gotTy == cty.String && wantTy == cty.Number:
 					what := "string"
-					if !args[0].IsNull() {
-						what = strconv.Quote(args[0].AsString())
+					if !val.IsNull() {
+						what = strconv.Quote(val.AsString())
 					}
 					return cty.NilVal, function.NewArgErrorf(0, `cannot convert %s to number; given string must be a decimal representation of a number`, what)
 				default:
@@ -90,4 +94,28 @@ func MakeToFunc(wantTy cty.Type) function.Function {
 			return ret, nil
 		},
 	})
+}
+
+// TypeFunc returns an encapsulated value containing its argument's type. This
+// value is marked to allow us to limit the use of this function at the moment
+// to only a few supported use cases.
+var TypeFunc = function.New(&function.Spec{
+	Params: []function.Parameter{
+		{
+			Name:             "value",
+			Type:             cty.DynamicPseudoType,
+			AllowDynamicType: true,
+			AllowUnknown:     true,
+			AllowNull:        true,
+		},
+	},
+	Type: function.StaticReturnType(types.TypeType),
+	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
+		givenType := args[0].Type()
+		return cty.CapsuleVal(types.TypeType, &givenType).Mark(marks.TypeType), nil
+	},
+})
+
+func Type(input []cty.Value) (cty.Value, error) {
+	return TypeFunc.Call(input)
 }

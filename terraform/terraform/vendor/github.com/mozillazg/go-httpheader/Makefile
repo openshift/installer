@@ -4,7 +4,7 @@ help:
 
 .PHONY: test
 test:
-	go test -v -cover -coverprofile cover.out
+	go test -race -v -cover -coverprofile cover.out
 	go tool cover -html=cover.out -o cover.html
 
 .PHONY: lint

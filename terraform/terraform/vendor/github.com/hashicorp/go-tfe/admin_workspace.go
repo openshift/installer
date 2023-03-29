@@ -15,7 +15,7 @@ var _ AdminWorkspaces = (*adminWorkspaces)(nil)
 // TFE API docs: https://www.terraform.io/docs/cloud/api/admin/workspaces.html
 type AdminWorkspaces interface {
 	// List all the workspaces within a workspace.
-	List(ctx context.Context, options AdminWorkspaceListOptions) (*AdminWorkspaceList, error)
+	List(ctx context.Context, options *AdminWorkspaceListOptions) (*AdminWorkspaceList, error)
 
 	// Read a workspace by its ID.
 	Read(ctx context.Context, workspaceID string) (*AdminWorkspace, error)
@@ -24,11 +24,12 @@ type AdminWorkspaces interface {
 	Delete(ctx context.Context, workspaceID string) error
 }
 
-// adminWorkspaces implements AdminWorkspaces.
+// adminWorkspaces implements AdminWorkspaces interface.
 type adminWorkspaces struct {
 	client *Client
 }
 
+// AdminVCSRepo represents a VCS repository
 type AdminVCSRepo struct {
 	Identifier string `jsonapi:"attr,identifier"`
 }
@@ -45,17 +46,26 @@ type AdminWorkspace struct {
 	CurrentRun   *Run          `jsonapi:"relation,current-run"`
 }
 
+// AdminWorkspaceIncludeOpt represents the available options for include query params.
+// https://www.terraform.io/docs/cloud/api/admin/workspaces.html#available-related-resources
+type AdminWorkspaceIncludeOpt string
+
+const (
+	AdminWorkspaceOrg        AdminWorkspaceIncludeOpt = "organization"
+	AdminWorkspaceCurrentRun AdminWorkspaceIncludeOpt = "current_run"
+	AdminWorkspaceOrgOwners  AdminWorkspaceIncludeOpt = "organization.owners"
+)
+
 // AdminWorkspaceListOptions represents the options for listing workspaces.
 type AdminWorkspaceListOptions struct {
 	ListOptions
 
 	// A query string (partial workspace name) used to filter the results.
 	// https://www.terraform.io/docs/cloud/api/admin/workspaces.html#query-parameters
-	Query *string `url:"q,omitempty"`
-
-	// A list of relations to include. See available resources
+	Query string `url:"q,omitempty"`
+	// Optional: A list of relations to include. See available resources
 	// https://www.terraform.io/docs/cloud/api/admin/workspaces.html#available-related-resources
-	Include *string `url:"include"`
+	Include []AdminWorkspaceIncludeOpt `url:"include,omitempty"`
 }
 
 // AdminWorkspaceList represents a list of workspaces.
@@ -64,16 +74,20 @@ type AdminWorkspaceList struct {
 	Items []*AdminWorkspace
 }
 
-// List all the workspaces within a worksapce.
-func (s *adminWorkspaces) List(ctx context.Context, options AdminWorkspaceListOptions) (*AdminWorkspaceList, error) {
+// List all the workspaces within a workspace.
+func (s *adminWorkspaces) List(ctx context.Context, options *AdminWorkspaceListOptions) (*AdminWorkspaceList, error) {
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
 	u := "admin/workspaces"
-	req, err := s.client.newRequest("GET", u, &options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	awl := &AdminWorkspaceList{}
-	err = s.client.do(ctx, req, awl)
+	err = req.Do(ctx, awl)
 	if err != nil {
 		return nil, err
 	}
@@ -88,13 +102,13 @@ func (s *adminWorkspaces) Read(ctx context.Context, workspaceID string) (*AdminW
 	}
 
 	u := fmt.Sprintf("admin/workspaces/%s", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	aw := &AdminWorkspace{}
-	err = s.client.do(ctx, req, aw)
+	err = req.Do(ctx, aw)
 	if err != nil {
 		return nil, err
 	}
@@ -109,10 +123,35 @@ func (s *adminWorkspaces) Delete(ctx context.Context, workspaceID string) error 
 	}
 
 	u := fmt.Sprintf("admin/workspaces/%s", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o *AdminWorkspaceListOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateAdminWSIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateAdminWSIncludeParams(params []AdminWorkspaceIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case AdminWorkspaceOrg, AdminWorkspaceCurrentRun, AdminWorkspaceOrgOwners:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
 }

@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -18,7 +17,7 @@ var _ RunTriggers = (*runTriggers)(nil)
 // https://www.terraform.io/docs/cloud/api/run-triggers.html
 type RunTriggers interface {
 	// List all the run triggers within a workspace.
-	List(ctx context.Context, workspaceID string, options RunTriggerListOptions) (*RunTriggerList, error)
+	List(ctx context.Context, workspaceID string, options *RunTriggerListOptions) (*RunTriggerList, error)
 
 	// Create a new run trigger with the given options.
 	Create(ctx context.Context, workspaceID string, options RunTriggerCreateOptions) (*RunTrigger, error)
@@ -54,46 +53,29 @@ type RunTrigger struct {
 	Workspace  *Workspace `jsonapi:"relation,workspace"`
 }
 
+// https://www.terraform.io/cloud-docs/api-docs/run-triggers#query-parameters
+type RunTriggerFilterOp string
+
+const (
+	RunTriggerOutbound RunTriggerFilterOp = "outbound" // create runs in other workspaces.
+	RunTriggerInbound  RunTriggerFilterOp = "inbound"  // create runs in the specified workspace
+)
+
+// A list of relations to include
+// https://www.terraform.io/cloud-docs/api-docs/run-triggers#available-related-resources
+type RunTriggerIncludeOpt string
+
+const (
+	RunTriggerWorkspace  RunTriggerIncludeOpt = "workspace"
+	RunTriggerSourceable RunTriggerIncludeOpt = "sourceable"
+)
+
 // RunTriggerListOptions represents the options for listing
 // run triggers.
 type RunTriggerListOptions struct {
 	ListOptions
-	RunTriggerType *string `url:"filter[run-trigger][type]"`
-}
-
-func (o RunTriggerListOptions) valid() error {
-	if !validString(o.RunTriggerType) {
-		return errors.New("run-trigger type is required")
-	}
-	if *o.RunTriggerType != "inbound" && *o.RunTriggerType != "outbound" {
-		return errors.New("invalid value for run-trigger type")
-	}
-	return nil
-}
-
-// List all the run triggers associated with a workspace.
-func (s *runTriggers) List(ctx context.Context, workspaceID string, options RunTriggerListOptions) (*RunTriggerList, error) {
-	if !validStringID(&workspaceID) {
-		return nil, ErrInvalidWorkspaceID
-	}
-
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
-
-	u := fmt.Sprintf("workspaces/%s/run-triggers", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("GET", u, options)
-	if err != nil {
-		return nil, err
-	}
-
-	rtl := &RunTriggerList{}
-	err = s.client.do(ctx, req, rtl)
-	if err != nil {
-		return nil, err
-	}
-
-	return rtl, nil
+	RunTriggerType RunTriggerFilterOp     `url:"filter[run-trigger][type]"` // Required
+	Include        []RunTriggerIncludeOpt `url:"include,omitempty"`         // optional
 }
 
 // RunTriggerCreateOptions represents the options for
@@ -109,14 +91,31 @@ type RunTriggerCreateOptions struct {
 	Sourceable *Workspace `jsonapi:"relation,sourceable"`
 }
 
-func (o RunTriggerCreateOptions) valid() error {
-	if o.Sourceable == nil {
-		return errors.New("sourceable is required")
+// List all the run triggers associated with a workspace.
+func (s *runTriggers) List(ctx context.Context, workspaceID string, options *RunTriggerListOptions) (*RunTriggerList, error) {
+	if !validStringID(&workspaceID) {
+		return nil, ErrInvalidWorkspaceID
 	}
-	return nil
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
+
+	u := fmt.Sprintf("workspaces/%s/run-triggers", url.QueryEscape(workspaceID))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	rtl := &RunTriggerList{}
+	err = req.Do(ctx, rtl)
+	if err != nil {
+		return nil, err
+	}
+
+	return rtl, nil
 }
 
-// Creates a run trigger with the given options.
+// Create a run trigger with the given options.
 func (s *runTriggers) Create(ctx context.Context, workspaceID string, options RunTriggerCreateOptions) (*RunTrigger, error) {
 	if !validStringID(&workspaceID) {
 		return nil, ErrInvalidWorkspaceID
@@ -126,13 +125,13 @@ func (s *runTriggers) Create(ctx context.Context, workspaceID string, options Ru
 	}
 
 	u := fmt.Sprintf("workspaces/%s/run-triggers", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	rt := &RunTrigger{}
-	err = s.client.do(ctx, req, rt)
+	err = req.Do(ctx, rt)
 	if err != nil {
 		return nil, err
 	}
@@ -143,17 +142,17 @@ func (s *runTriggers) Create(ctx context.Context, workspaceID string, options Ru
 // Read a run trigger by its ID.
 func (s *runTriggers) Read(ctx context.Context, runTriggerID string) (*RunTrigger, error) {
 	if !validStringID(&runTriggerID) {
-		return nil, errors.New("invalid value for run trigger ID")
+		return nil, ErrInvalidRunTriggerID
 	}
 
 	u := fmt.Sprintf("run-triggers/%s", url.QueryEscape(runTriggerID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	rt := &RunTrigger{}
-	err = s.client.do(ctx, req, rt)
+	err = req.Do(ctx, rt)
 	if err != nil {
 		return nil, err
 	}
@@ -164,14 +163,67 @@ func (s *runTriggers) Read(ctx context.Context, runTriggerID string) (*RunTrigge
 // Delete a run trigger by its ID.
 func (s *runTriggers) Delete(ctx context.Context, runTriggerID string) error {
 	if !validStringID(&runTriggerID) {
-		return errors.New("invalid value for run trigger ID")
+		return ErrInvalidRunTriggerID
 	}
 
 	u := fmt.Sprintf("run-triggers/%s", url.QueryEscape(runTriggerID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
+}
+
+func (o RunTriggerCreateOptions) valid() error {
+	if o.Sourceable == nil {
+		return ErrRequiredSourceable
+	}
+	return nil
+}
+
+func (o *RunTriggerListOptions) valid() error {
+	if o == nil {
+		return ErrRequiredRunTriggerListOps
+	}
+
+	if err := validateRunTriggerFilterParam(o.RunTriggerType, o.Include); err != nil {
+		return err
+	}
+
+	if err := validateRunTriggerIncludeParams(o.Include); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateRunTriggerFilterParam(filterParam RunTriggerFilterOp, includeParams []RunTriggerIncludeOpt) error {
+	switch filterParam {
+	case RunTriggerOutbound, RunTriggerInbound:
+		// Do nothing
+	default:
+		return ErrInvalidRunTriggerType // return an error even if string is empty because this a required field
+	}
+
+	if len(includeParams) > 0 {
+		if filterParam != RunTriggerInbound {
+			return ErrUnsupportedRunTriggerType // if user passes RunTriggerOutbound the platform will not return any "include" data
+		}
+	}
+
+	return nil
+}
+
+func validateRunTriggerIncludeParams(params []RunTriggerIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case RunTriggerWorkspace, RunTriggerSourceable:
+			// Do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
 }

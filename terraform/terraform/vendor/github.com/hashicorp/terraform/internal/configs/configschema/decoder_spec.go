@@ -92,10 +92,10 @@ func (b *Block) DecoderSpec() hcldec.Spec {
 
 	for name, blockS := range b.BlockTypes {
 		if _, exists := ret[name]; exists {
-			// This indicates an invalid schema, since it's not valid to
-			// define both an attribute and a block type of the same name.
-			// However, we don't raise this here since it's checked by
-			// InternalValidate.
+			// This indicates an invalid schema, since it's not valid to define
+			// both an attribute and a block type of the same name. We assume
+			// that the provider has already used something like
+			// InternalValidate to validate their schema.
 			continue
 		}
 
@@ -138,10 +138,12 @@ func (b *Block) DecoderSpec() hcldec.Spec {
 			}
 		case NestingSet:
 			// We forbid dynamically-typed attributes inside NestingSet in
-			// InternalValidate, so we don't do anything special to handle
-			// that here. (There is no set analog to tuple and object types,
-			// because cty's set implementation depends on knowing the static
-			// type in order to properly compute its internal hashes.)
+			// InternalValidate, so we don't do anything special to handle that
+			// here. (There is no set analog to tuple and object types, because
+			// cty's set implementation depends on knowing the static type in
+			// order to properly compute its internal hashes.)  We assume that
+			// the provider has already used something like InternalValidate to
+			// validate their schema.
 			ret[name] = &hcldec.BlockSetSpec{
 				TypeName: name,
 				Nested:   childSpec,
@@ -168,7 +170,8 @@ func (b *Block) DecoderSpec() hcldec.Spec {
 			}
 		default:
 			// Invalid nesting type is just ignored. It's checked by
-			// InternalValidate.
+			// InternalValidate.  We assume that the provider has already used
+			// something like InternalValidate to validate their schema.
 			continue
 		}
 	}
@@ -184,16 +187,13 @@ func (a *Attribute) decoderSpec(name string) hcldec.Spec {
 	}
 
 	if a.NestedType != nil {
-		// FIXME: a panic() is a bad UX. Fix this, probably by extending
-		// InternalValidate() to check Attribute schemas as well and calling it
-		// when we get the schema from the provider in Context().
 		if a.Type != cty.NilType {
 			panic("Invalid attribute schema: NestedType and Type cannot both be set. This is a bug in the provider.")
 		}
 
 		ty := a.NestedType.specType()
 		ret.Type = ty
-		ret.Required = a.Required || a.NestedType.MinItems > 0
+		ret.Required = a.Required
 		return ret
 	}
 

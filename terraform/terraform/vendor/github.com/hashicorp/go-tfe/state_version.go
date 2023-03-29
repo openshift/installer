@@ -3,7 +3,6 @@ package tfe
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -16,10 +15,10 @@ var _ StateVersions = (*stateVersions)(nil)
 // the Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/state-versions.html
+// https://www.terraform.io/docs/cloud/api/state-versions.html
 type StateVersions interface {
 	// List all the state versions for a given workspace.
-	List(ctx context.Context, options StateVersionListOptions) (*StateVersionList, error)
+	List(ctx context.Context, options *StateVersionListOptions) (*StateVersionList, error)
 
 	// Create a new state version for the given workspace.
 	Create(ctx context.Context, workspaceID string, options StateVersionCreateOptions) (*StateVersion, error)
@@ -30,14 +29,17 @@ type StateVersions interface {
 	// ReadWithOptions reads a state version by its ID using the options supplied
 	ReadWithOptions(ctx context.Context, svID string, options *StateVersionReadOptions) (*StateVersion, error)
 
-	// Current reads the latest available state from the given workspace.
-	Current(ctx context.Context, workspaceID string) (*StateVersion, error)
+	// ReadCurrent reads the latest available state from the given workspace.
+	ReadCurrent(ctx context.Context, workspaceID string) (*StateVersion, error)
 
-	// CurrentWithOptions reads the latest available state from the given workspace using the options supplied
-	CurrentWithOptions(ctx context.Context, workspaceID string, options *StateVersionCurrentOptions) (*StateVersion, error)
+	// ReadCurrentWithOptions reads the latest available state from the given workspace using the options supplied
+	ReadCurrentWithOptions(ctx context.Context, workspaceID string, options *StateVersionCurrentOptions) (*StateVersion, error)
 
 	// Download retrieves the actual stored state of a state version
 	Download(ctx context.Context, url string) ([]byte, error)
+
+	// ListOutputs retrieves all the outputs of a state version by its ID.
+	ListOutputs(ctx context.Context, svID string, options *StateVersionOutputsListOptions) (*StateVersionOutputsList, error)
 }
 
 // stateVersions implements StateVersions.
@@ -53,53 +55,67 @@ type StateVersionList struct {
 
 // StateVersion represents a Terraform Enterprise state version.
 type StateVersion struct {
-	ID           string    `jsonapi:"primary,state-versions"`
-	CreatedAt    time.Time `jsonapi:"attr,created-at,iso8601"`
-	DownloadURL  string    `jsonapi:"attr,hosted-state-download-url"`
-	Serial       int64     `jsonapi:"attr,serial"`
-	VCSCommitSHA string    `jsonapi:"attr,vcs-commit-sha"`
-	VCSCommitURL string    `jsonapi:"attr,vcs-commit-url"`
+	ID                 string                   `jsonapi:"primary,state-versions"`
+	CreatedAt          time.Time                `jsonapi:"attr,created-at,iso8601"`
+	DownloadURL        string                   `jsonapi:"attr,hosted-state-download-url"`
+	Serial             int64                    `jsonapi:"attr,serial"`
+	VCSCommitSHA       string                   `jsonapi:"attr,vcs-commit-sha"`
+	VCSCommitURL       string                   `jsonapi:"attr,vcs-commit-url"`
+	ResourcesProcessed bool                     `jsonapi:"attr,resources-processed"`
+	StateVersion       int                      `jsonapi:"attr,state-version"`
+	TerraformVersion   string                   `jsonapi:"attr,terraform-version"`
+	Modules            *StateVersionModules     `jsonapi:"attr,modules"`
+	Providers          *StateVersionProviders   `jsonapi:"attr,providers"`
+	Resources          []*StateVersionResources `jsonapi:"attr,resources"`
 
 	// Relations
 	Run     *Run                  `jsonapi:"relation,run"`
 	Outputs []*StateVersionOutput `jsonapi:"relation,outputs"`
 }
 
+// StateVersionOutputsList represents a list of StateVersionOutput items.
+type StateVersionOutputsList struct {
+	*Pagination
+	Items []*StateVersionOutput
+}
+
 // StateVersionListOptions represents the options for listing state versions.
 type StateVersionListOptions struct {
 	ListOptions
-	Organization *string `url:"filter[organization][name]"`
-	Workspace    *string `url:"filter[workspace][name]"`
+	Organization string `url:"filter[organization][name]"`
+	Workspace    string `url:"filter[workspace][name]"`
 }
 
-func (o StateVersionListOptions) valid() error {
-	if !validString(o.Organization) {
-		return errors.New("organization is required")
-	}
-	if !validString(o.Workspace) {
-		return errors.New("workspace is required")
-	}
-	return nil
+// StateVersionIncludeOpt represents the available options for include query params.
+// https://www.terraform.io/cloud-docs/api-docs/state-versions#available-related-resources
+type StateVersionIncludeOpt string
+
+const (
+	SVcreatedby               StateVersionIncludeOpt = "created_by"
+	SVrun                     StateVersionIncludeOpt = "run"
+	SVrunCreatedBy            StateVersionIncludeOpt = "run.created_by"
+	SVrunConfigurationVersion StateVersionIncludeOpt = "run.configuration_version"
+	SVoutputs                 StateVersionIncludeOpt = "outputs"
+)
+
+// StateVersionReadOptions represents the options for reading state version.
+type StateVersionReadOptions struct {
+	// Optional: A list of relations to include. See available resources:
+	// https://www.terraform.io/cloud-docs/api-docs/state-versions#available-related-resources
+	Include []StateVersionIncludeOpt `url:"include,omitempty"`
 }
 
-// List all the state versions for a given workspace.
-func (s *stateVersions) List(ctx context.Context, options StateVersionListOptions) (*StateVersionList, error) {
-	if err := options.valid(); err != nil {
-		return nil, err
-	}
+// StateVersionOutputsListOptions represents the options for listing state
+// version outputs.
+type StateVersionOutputsListOptions struct {
+	ListOptions
+}
 
-	req, err := s.client.newRequest("GET", "state-versions", &options)
-	if err != nil {
-		return nil, err
-	}
-
-	svl := &StateVersionList{}
-	err = s.client.do(ctx, req, svl)
-	if err != nil {
-		return nil, err
-	}
-
-	return svl, nil
+// StateVersionCurrentOptions represents the options for reading the current state version.
+type StateVersionCurrentOptions struct {
+	// Optional: A list of relations to include. See available resources:
+	// https://www.terraform.io/cloud-docs/api-docs/state-versions#available-related-resources
+	Include []StateVersionIncludeOpt `url:"include,omitempty"`
 }
 
 // StateVersionCreateOptions represents the options for creating a state version.
@@ -110,37 +126,85 @@ type StateVersionCreateOptions struct {
 	// https://jsonapi.org/format/#crud-creating
 	Type string `jsonapi:"primary,state-versions"`
 
-	// The lineage of the state.
+	// Optional: The lineage of the state.
 	Lineage *string `jsonapi:"attr,lineage,omitempty"`
 
-	// The MD5 hash of the state version.
+	// Required: The MD5 hash of the state version.
 	MD5 *string `jsonapi:"attr,md5"`
 
-	// The serial of the state.
+	// Required: The serial of the state.
 	Serial *int64 `jsonapi:"attr,serial"`
 
-	// The base64 encoded state.
+	// Required: The base64 encoded state.
 	State *string `jsonapi:"attr,state"`
 
-	// Force can be set to skip certain validations. Wrong use
+	// Optional: Force can be set to skip certain validations. Wrong use
 	// of this flag can cause data loss, so USE WITH CAUTION!
-	Force *bool `jsonapi:"attr,force"`
+	Force *bool `jsonapi:"attr,force,omitempty"`
 
-	// Specifies the run to associate the state with.
+	// Optional: Specifies the run to associate the state with.
 	Run *Run `jsonapi:"relation,run,omitempty"`
+
+	// Optional: The external, json representation of state data, base64 encoded.
+	// https://www.terraform.io/internals/json-format#state-representation
+	// Supplying this state representation can provide more details to the platform
+	// about the current terraform state.
+	//
+	// **Note**: This field is in BETA, subject to change and not widely available yet.
+	JSONState *string `jsonapi:"attr,json-state,omitempty"`
+	// Optional: The external, json representation of state outputs, base64 encoded. Supplying this field
+	// will provide more detailed output type information to TFE.
+	// For more information on the contents of this field: https://www.terraform.io/internals/json-format#values-representation
+	// about the current terraform state.
+	//
+	// **Note**: This field is in BETA, subject to change and not widely available yet.
+	JSONStateOutputs *string `jsonapi:"attr,json-state-outputs,omitempty"`
 }
 
-func (o StateVersionCreateOptions) valid() error {
-	if !validString(o.MD5) {
-		return errors.New("MD5 is required")
+type StateVersionModules struct {
+	Root StateVersionModuleRoot `jsonapi:"attr,root"`
+}
+
+type StateVersionModuleRoot struct {
+	NullResource         int `jsonapi:"attr,null-resource"`
+	TerraformRemoteState int `jsonapi:"attr,data.terraform-remote-state"`
+}
+
+type StateVersionProviders struct {
+	Data ProviderData `jsonapi:"attr,provider[map]string"`
+}
+
+type ProviderData struct {
+	NullResource         int `json:"null-resource"`
+	TerraformRemoteState int `json:"data.terraform-remote-state"`
+}
+
+type StateVersionResources struct {
+	Name     string `jsonapi:"attr,name"`
+	Count    string `jsonapi:"attr,count"`
+	Type     int    `jsonapi:"attr,type"`
+	Module   string `jsonapi:"attr,module"`
+	Provider string `jsonapi:"attr,provider"`
+}
+
+// List all the state versions for a given workspace.
+func (s *stateVersions) List(ctx context.Context, options *StateVersionListOptions) (*StateVersionList, error) {
+	if err := options.valid(); err != nil {
+		return nil, err
 	}
-	if o.Serial == nil {
-		return errors.New("serial is required")
+
+	req, err := s.client.NewRequest("GET", "state-versions", options)
+	if err != nil {
+		return nil, err
 	}
-	if !validString(o.State) {
-		return errors.New("state is required")
+
+	svl := &StateVersionList{}
+	err = req.Do(ctx, svl)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+
+	return svl, nil
 }
 
 // Create a new state version for the given workspace.
@@ -153,13 +217,13 @@ func (s *stateVersions) Create(ctx context.Context, workspaceID string, options 
 	}
 
 	u := fmt.Sprintf("workspaces/%s/state-versions", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("POST", u, &options)
+	req, err := s.client.NewRequest("POST", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	sv := &StateVersion{}
-	err = s.client.do(ctx, req, sv)
+	err = req.Do(ctx, sv)
 	if err != nil {
 		return nil, err
 	}
@@ -167,25 +231,23 @@ func (s *stateVersions) Create(ctx context.Context, workspaceID string, options 
 	return sv, nil
 }
 
-// StateVersionReadOptions represents the options for reading state version.
-type StateVersionReadOptions struct {
-	Include string `url:"include"`
-}
-
 // Read a state version by its ID.
 func (s *stateVersions) ReadWithOptions(ctx context.Context, svID string, options *StateVersionReadOptions) (*StateVersion, error) {
 	if !validStringID(&svID) {
-		return nil, errors.New("invalid value for state version ID")
+		return nil, ErrInvalidStateVerID
+	}
+	if err := options.valid(); err != nil {
+		return nil, err
 	}
 
 	u := fmt.Sprintf("state-versions/%s", url.QueryEscape(svID))
-	req, err := s.client.newRequest("GET", u, options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	sv := &StateVersion{}
-	err = s.client.do(ctx, req, sv)
+	err = req.Do(ctx, sv)
 	if err != nil {
 		return nil, err
 	}
@@ -198,25 +260,23 @@ func (s *stateVersions) Read(ctx context.Context, svID string) (*StateVersion, e
 	return s.ReadWithOptions(ctx, svID, nil)
 }
 
-// StateVersionCurrentOptions represents the options for reading the current state version.
-type StateVersionCurrentOptions struct {
-	Include string `url:"include"`
-}
-
-// CurrentWithOptions reads the latest available state from the given workspace using the options supplied.
-func (s *stateVersions) CurrentWithOptions(ctx context.Context, workspaceID string, options *StateVersionCurrentOptions) (*StateVersion, error) {
+// ReadCurrentWithOptions reads the latest available state from the given workspace using the options supplied.
+func (s *stateVersions) ReadCurrentWithOptions(ctx context.Context, workspaceID string, options *StateVersionCurrentOptions) (*StateVersion, error) {
 	if !validStringID(&workspaceID) {
 		return nil, ErrInvalidWorkspaceID
 	}
+	if err := options.valid(); err != nil {
+		return nil, err
+	}
 
 	u := fmt.Sprintf("workspaces/%s/current-state-version", url.QueryEscape(workspaceID))
-	req, err := s.client.newRequest("GET", u, options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	sv := &StateVersion{}
-	err = s.client.do(ctx, req, sv)
+	err = req.Do(ctx, sv)
 	if err != nil {
 		return nil, err
 	}
@@ -224,24 +284,106 @@ func (s *stateVersions) CurrentWithOptions(ctx context.Context, workspaceID stri
 	return sv, nil
 }
 
-// Current reads the latest available state from the given workspace.
-func (s *stateVersions) Current(ctx context.Context, workspaceID string) (*StateVersion, error) {
-	return s.CurrentWithOptions(ctx, workspaceID, nil)
+// ReadCurrent reads the latest available state from the given workspace.
+func (s *stateVersions) ReadCurrent(ctx context.Context, workspaceID string) (*StateVersion, error) {
+	return s.ReadCurrentWithOptions(ctx, workspaceID, nil)
 }
 
 // Download retrieves the actual stored state of a state version
-func (s *stateVersions) Download(ctx context.Context, url string) ([]byte, error) {
-	req, err := s.client.newRequest("GET", url, nil)
+func (s *stateVersions) Download(ctx context.Context, u string) ([]byte, error) {
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/json")
 
 	var buf bytes.Buffer
-	err = s.client.do(ctx, req, &buf)
+	err = req.Do(ctx, &buf)
 	if err != nil {
 		return nil, err
 	}
 
 	return buf.Bytes(), nil
+}
+
+// ListOutputs retrieves all the outputs of a state version by its ID.
+func (s *stateVersions) ListOutputs(ctx context.Context, svID string, options *StateVersionOutputsListOptions) (*StateVersionOutputsList, error) {
+	if !validStringID(&svID) {
+		return nil, ErrInvalidStateVerID
+	}
+
+	u := fmt.Sprintf("state-versions/%s/outputs", url.QueryEscape(svID))
+	req, err := s.client.NewRequest("GET", u, options)
+	if err != nil {
+		return nil, err
+	}
+
+	sv := &StateVersionOutputsList{}
+	err = req.Do(ctx, sv)
+	if err != nil {
+		return nil, err
+	}
+
+	return sv, nil
+}
+
+// check that StateVersionListOptions fields had valid values
+func (o *StateVersionListOptions) valid() error {
+	if o == nil {
+		return ErrRequiredStateVerListOps
+	}
+	if !validString(&o.Organization) {
+		return ErrRequiredOrg
+	}
+	if !validString(&o.Workspace) {
+		return ErrRequiredWorkspace
+	}
+	return nil
+}
+
+func (o StateVersionCreateOptions) valid() error {
+	if !validString(o.MD5) {
+		return ErrRequiredM5
+	}
+	if o.Serial == nil {
+		return ErrRequiredSerial
+	}
+	if !validString(o.State) {
+		return ErrRequiredState
+	}
+	return nil
+}
+
+func (o *StateVersionReadOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateStateVerIncludeParams(o.Include); err != nil {
+		return err
+	}
+	return nil
+}
+func (o *StateVersionCurrentOptions) valid() error {
+	if o == nil {
+		return nil // nothing to validate
+	}
+
+	if err := validateStateVerIncludeParams(o.Include); err != nil {
+		return err
+	}
+	return nil
+}
+
+func validateStateVerIncludeParams(params []StateVersionIncludeOpt) error {
+	for _, p := range params {
+		switch p {
+		case SVcreatedby, SVrun, SVrunCreatedBy, SVrunConfigurationVersion, SVoutputs:
+			// do nothing
+		default:
+			return ErrInvalidIncludeValue
+		}
+	}
+
+	return nil
 }

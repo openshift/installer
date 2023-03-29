@@ -2,7 +2,6 @@ package tfe
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"time"
@@ -15,10 +14,10 @@ var _ OAuthTokens = (*oAuthTokens)(nil)
 // Terraform Enterprise API supports.
 //
 // TFE API docs:
-// https://www.terraform.io/docs/enterprise/api/oauth-tokens.html
+// https://www.terraform.io/docs/cloud/api/oauth-tokens.html
 type OAuthTokens interface {
 	// List all the OAuth tokens for a given organization.
-	List(ctx context.Context, organization string, options OAuthTokenListOptions) (*OAuthTokenList, error)
+	List(ctx context.Context, organization string, options *OAuthTokenListOptions) (*OAuthTokenList, error)
 	// Read a OAuth token by its ID.
 	Read(ctx context.Context, oAuthTokenID string) (*OAuthToken, error)
 
@@ -59,20 +58,32 @@ type OAuthTokenListOptions struct {
 	ListOptions
 }
 
+// OAuthTokenUpdateOptions represents the options for updating an OAuth token.
+type OAuthTokenUpdateOptions struct {
+	// Type is a public field utilized by JSON:API to
+	// set the resource type via the field tag.
+	// It is not a user-defined value and does not need to be set.
+	// https://jsonapi.org/format/#crud-creating
+	Type string `jsonapi:"primary,oauth-tokens"`
+
+	// Optional: A private SSH key to be used for git clone operations.
+	PrivateSSHKey *string `jsonapi:"attr,ssh-key,omitempty"`
+}
+
 // List all the OAuth tokens for a given organization.
-func (s *oAuthTokens) List(ctx context.Context, organization string, options OAuthTokenListOptions) (*OAuthTokenList, error) {
+func (s *oAuthTokens) List(ctx context.Context, organization string, options *OAuthTokenListOptions) (*OAuthTokenList, error) {
 	if !validStringID(&organization) {
 		return nil, ErrInvalidOrg
 	}
 
 	u := fmt.Sprintf("organizations/%s/oauth-tokens", url.QueryEscape(organization))
-	req, err := s.client.newRequest("GET", u, &options)
+	req, err := s.client.NewRequest("GET", u, options)
 	if err != nil {
 		return nil, err
 	}
 
 	otl := &OAuthTokenList{}
-	err = s.client.do(ctx, req, otl)
+	err = req.Do(ctx, otl)
 	if err != nil {
 		return nil, err
 	}
@@ -83,17 +94,17 @@ func (s *oAuthTokens) List(ctx context.Context, organization string, options OAu
 // Read an OAuth token by its ID.
 func (s *oAuthTokens) Read(ctx context.Context, oAuthTokenID string) (*OAuthToken, error) {
 	if !validStringID(&oAuthTokenID) {
-		return nil, errors.New("invalid value for OAuth token ID")
+		return nil, ErrInvalidOauthTokenID
 	}
 
 	u := fmt.Sprintf("oauth-tokens/%s", url.QueryEscape(oAuthTokenID))
-	req, err := s.client.newRequest("GET", u, nil)
+	req, err := s.client.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	ot := &OAuthToken{}
-	err = s.client.do(ctx, req, ot)
+	err = req.Do(ctx, ot)
 	if err != nil {
 		return nil, err
 	}
@@ -101,32 +112,20 @@ func (s *oAuthTokens) Read(ctx context.Context, oAuthTokenID string) (*OAuthToke
 	return ot, err
 }
 
-// OAuthTokenUpdateOptions represents the options for updating an OAuth token.
-type OAuthTokenUpdateOptions struct {
-	// Type is a public field utilized by JSON:API to
-	// set the resource type via the field tag.
-	// It is not a user-defined value and does not need to be set.
-	// https://jsonapi.org/format/#crud-creating
-	Type string `jsonapi:"primary,oauth-tokens"`
-
-	// A private SSH key to be used for git clone operations.
-	PrivateSSHKey *string `jsonapi:"attr,ssh-key"`
-}
-
 // Update an existing OAuth token.
 func (s *oAuthTokens) Update(ctx context.Context, oAuthTokenID string, options OAuthTokenUpdateOptions) (*OAuthToken, error) {
 	if !validStringID(&oAuthTokenID) {
-		return nil, errors.New("invalid value for OAuth token ID")
+		return nil, ErrInvalidOauthTokenID
 	}
 
 	u := fmt.Sprintf("oauth-tokens/%s", url.QueryEscape(oAuthTokenID))
-	req, err := s.client.newRequest("PATCH", u, &options)
+	req, err := s.client.NewRequest("PATCH", u, &options)
 	if err != nil {
 		return nil, err
 	}
 
 	ot := &OAuthToken{}
-	err = s.client.do(ctx, req, ot)
+	err = req.Do(ctx, ot)
 	if err != nil {
 		return nil, err
 	}
@@ -137,14 +136,14 @@ func (s *oAuthTokens) Update(ctx context.Context, oAuthTokenID string, options O
 // Delete an OAuth token by its ID.
 func (s *oAuthTokens) Delete(ctx context.Context, oAuthTokenID string) error {
 	if !validStringID(&oAuthTokenID) {
-		return errors.New("invalid value for OAuth token ID")
+		return ErrInvalidOauthTokenID
 	}
 
 	u := fmt.Sprintf("oauth-tokens/%s", url.QueryEscape(oAuthTokenID))
-	req, err := s.client.newRequest("DELETE", u, nil)
+	req, err := s.client.NewRequest("DELETE", u, nil)
 	if err != nil {
 		return err
 	}
 
-	return s.client.do(ctx, req, nil)
+	return req.Do(ctx, nil)
 }

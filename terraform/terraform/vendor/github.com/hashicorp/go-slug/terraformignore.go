@@ -192,20 +192,25 @@ func (r *rule) compile() error {
 	.git/
 	.terraform/
 	!.terraform/modules/
+	terraform.tfstate
 */
 
 var defaultExclusions = []rule{
 	{
-		val:      strings.Join([]string{"**", ".git", "**"}, string(os.PathSeparator)),
+		val:      filepath.Join("**", ".git", "**"),
 		excluded: false,
 	},
 	{
-		val:      strings.Join([]string{"**", ".terraform", "**"}, string(os.PathSeparator)),
+		val:      filepath.Join("**", ".terraform", "**"),
 		excluded: false,
 	},
 	{
-		val:      strings.Join([]string{"**", ".terraform", "modules", "**"}, string(os.PathSeparator)),
+		val:      filepath.Join("**", ".terraform", "modules", "**"),
 		excluded: true,
+	},
+	{
+		val:      filepath.Join("**", "terraform.tfstate"),
+		excluded: false,
 	},
 }
 

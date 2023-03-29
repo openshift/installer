@@ -77,12 +77,12 @@ func initCommands(
 		configDir = "" // No config dir available (e.g. looking up a home directory failed)
 	}
 
-	dataDir := os.Getenv("TF_DATA_DIR")
+	wd := WorkingDir(originalWorkingDir, os.Getenv("TF_DATA_DIR"))
 
 	meta := command.Meta{
-		OriginalWorkingDir: originalWorkingDir,
-		Streams:            streams,
-		View:               views.NewView(streams).SetRunningInAutomation(inAutomation),
+		WorkingDir: wd,
+		Streams:    streams,
+		View:       views.NewView(streams).SetRunningInAutomation(inAutomation),
 
 		Color:            true,
 		GlobalPluginDirs: globalPluginDirs(),
@@ -94,13 +94,14 @@ func initCommands(
 		RunningInAutomation: inAutomation,
 		CLIConfigDir:        configDir,
 		PluginCacheDir:      config.PluginCacheDir,
-		OverrideDataDir:     dataDir,
 
 		ShutdownCh: makeShutdownCh(),
 
 		ProviderSource:       providerSrc,
 		ProviderDevOverrides: providerDevOverrides,
 		UnmanagedProviders:   unmanagedProviders,
+
+		AllowExperimentalFeatures: ExperimentsAllowed(),
 	}
 
 	// The command list is included in the terraform -help

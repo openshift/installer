@@ -1,6 +1,7 @@
 package format
 
 import (
+	"github.com/hashicorp/terraform/internal/lang/marks"
 	"github.com/zclconf/go-cty/cty"
 )
 
@@ -30,7 +31,7 @@ func ObjectValueID(obj cty.Value) (k, v string) {
 
 	case atys["id"] == cty.String:
 		v := obj.GetAttr("id")
-		if v.HasMark("sensitive") {
+		if v.HasMark(marks.Sensitive) {
 			break
 		}
 		v, _ = v.Unmark()
@@ -43,7 +44,7 @@ func ObjectValueID(obj cty.Value) (k, v string) {
 		// "name" isn't always globally unique, but if there isn't also an
 		// "id" then it _often_ is, in practice.
 		v := obj.GetAttr("name")
-		if v.HasMark("sensitive") {
+		if v.HasMark(marks.Sensitive) {
 			break
 		}
 		v, _ = v.Unmark()
@@ -87,7 +88,7 @@ func ObjectValueName(obj cty.Value) (k, v string) {
 
 	case atys["name"] == cty.String:
 		v := obj.GetAttr("name")
-		if v.HasMark("sensitive") {
+		if v.HasMark(marks.Sensitive) {
 			break
 		}
 		v, _ = v.Unmark()
@@ -98,7 +99,7 @@ func ObjectValueName(obj cty.Value) (k, v string) {
 
 	case atys["tags"].IsMapType() && atys["tags"].ElementType() == cty.String:
 		tags := obj.GetAttr("tags")
-		if tags.IsNull() || !tags.IsWhollyKnown() || tags.HasMark("sensitive") {
+		if tags.IsNull() || !tags.IsWhollyKnown() || tags.HasMark(marks.Sensitive) {
 			break
 		}
 		tags, _ = tags.Unmark()
@@ -106,7 +107,7 @@ func ObjectValueName(obj cty.Value) (k, v string) {
 		switch {
 		case tags.HasIndex(cty.StringVal("name")).RawEquals(cty.True):
 			v := tags.Index(cty.StringVal("name"))
-			if v.HasMark("sensitive") {
+			if v.HasMark(marks.Sensitive) {
 				break
 			}
 			v, _ = v.Unmark()
@@ -117,7 +118,7 @@ func ObjectValueName(obj cty.Value) (k, v string) {
 		case tags.HasIndex(cty.StringVal("Name")).RawEquals(cty.True):
 			// AWS-style naming convention
 			v := tags.Index(cty.StringVal("Name"))
-			if v.HasMark("sensitive") {
+			if v.HasMark(marks.Sensitive) {
 				break
 			}
 			v, _ = v.Unmark()
