@@ -65,9 +65,10 @@ func (o *ClusterUninstaller) listDNSSvcDNSRecords() (cloudResources, error) {
 
 	result := []cloudResource{}
 	resourceRecordsRemaining := true
-	var viewedResourceRecords int64
+	viewedResourceRecords := int64(0)
 	for resourceRecordsRemaining {
 		options := o.dnsServicesSvc.NewListResourceRecordsOptions(o.DNSInstanceID, o.zoneID)
+		options = options.SetOffset(viewedResourceRecords)
 		resources, _, err := o.dnsServicesSvc.ListResourceRecordsWithContext(ctx, options)
 
 		if err != nil {
