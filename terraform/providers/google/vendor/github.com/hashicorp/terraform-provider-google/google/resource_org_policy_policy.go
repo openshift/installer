@@ -27,7 +27,7 @@ import (
 	orgpolicy "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/orgpolicy"
 )
 
-func resourceOrgPolicyPolicy() *schema.Resource {
+func ResourceOrgPolicyPolicy() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceOrgPolicyPolicyCreate,
 		Read:   resourceOrgPolicyPolicyRead,
@@ -39,9 +39,9 @@ func resourceOrgPolicyPolicy() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -212,8 +212,8 @@ func resourceOrgPolicyPolicyCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func resourceOrgPolicyPolicyCreate(d *schema.ResourceData, meta interface{}) err
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyPolicy(context.Background(), obj, createDirective...)
+	res, err := client.ApplyPolicy(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -253,7 +253,7 @@ func resourceOrgPolicyPolicyRead(d *schema.ResourceData, meta interface{}) error
 		Spec:   expandOrgPolicyPolicySpec(d.Get("spec")),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -296,7 +296,7 @@ func resourceOrgPolicyPolicyUpdate(d *schema.ResourceData, meta interface{}) err
 		Spec:   expandOrgPolicyPolicySpec(d.Get("spec")),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -338,7 +338,7 @@ func resourceOrgPolicyPolicyDelete(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Deleting Policy %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -377,7 +377,7 @@ func expandOrgPolicyPolicySpec(o interface{}) *orgpolicy.PolicySpec {
 		return orgpolicy.EmptyPolicySpec
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return orgpolicy.EmptyPolicySpec
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -409,7 +409,7 @@ func expandOrgPolicyPolicySpecRulesArray(o interface{}) []orgpolicy.PolicySpecRu
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]orgpolicy.PolicySpecRules, 0)
 	}
 
@@ -472,7 +472,7 @@ func expandOrgPolicyPolicySpecRulesCondition(o interface{}) *orgpolicy.PolicySpe
 		return orgpolicy.EmptyPolicySpecRulesCondition
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return orgpolicy.EmptyPolicySpecRulesCondition
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -504,7 +504,7 @@ func expandOrgPolicyPolicySpecRulesValues(o interface{}) *orgpolicy.PolicySpecRu
 		return orgpolicy.EmptyPolicySpecRulesValues
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return orgpolicy.EmptyPolicySpecRulesValues
 	}
 	obj := objArr[0].(map[string]interface{})

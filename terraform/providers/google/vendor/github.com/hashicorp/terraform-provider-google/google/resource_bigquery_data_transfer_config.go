@@ -19,10 +19,10 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -39,7 +39,41 @@ func sensitiveParamCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, v
 	return nil
 }
 
-func resourceBigqueryDataTransferConfig() *schema.Resource {
+// This customizeDiff is to use ForceNew for params fields data_path_template and
+// destination_table_name_template only if the value of "data_source_id" is "google_cloud_storage".
+func paramsCustomizeDiffFunc(diff TerraformResourceDiff) error {
+	old, new := diff.GetChange("params")
+	dsId := diff.Get("data_source_id").(string)
+	oldParams := old.(map[string]interface{})
+	newParams := new.(map[string]interface{})
+	var err error
+
+	if dsId == "google_cloud_storage" {
+		if oldParams["data_path_template"] != nil && newParams["data_path_template"] != nil && oldParams["data_path_template"].(string) != newParams["data_path_template"].(string) {
+			err = diff.ForceNew("params")
+			if err != nil {
+				return fmt.Errorf("ForceNew failed for params, old - %v and new - %v", oldParams, newParams)
+			}
+			return nil
+		}
+
+		if oldParams["destination_table_name_template"] != nil && newParams["destination_table_name_template"] != nil && oldParams["destination_table_name_template"].(string) != newParams["destination_table_name_template"].(string) {
+			err = diff.ForceNew("params")
+			if err != nil {
+				return fmt.Errorf("ForceNew failed for params, old - %v and new - %v", oldParams, newParams)
+			}
+			return nil
+		}
+	}
+
+	return nil
+}
+
+func paramsCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+	return paramsCustomizeDiffFunc(diff)
+}
+
+func ResourceBigqueryDataTransferConfig() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBigqueryDataTransferConfigCreate,
 		Read:   resourceBigqueryDataTransferConfigRead,
@@ -51,12 +85,12 @@ func resourceBigqueryDataTransferConfig() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
-		CustomizeDiff: sensitiveParamCustomizeDiff,
+		CustomizeDiff: customdiff.All(sensitiveParamCustomizeDiff, paramsCustomizeDiff),
 
 		Schema: map[string]*schema.Schema{
 			"data_source_id": {
@@ -68,14 +102,17 @@ func resourceBigqueryDataTransferConfig() *schema.Resource {
 			"display_name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: `The user specified display name for the transfer config.`,
 			},
 			"params": {
-				Type:        schema.TypeMap,
-				Required:    true,
-				Description: `These parameters are specific to each data source.`,
-				Elem:        &schema.Schema{Type: schema.TypeString},
+				Type:     schema.TypeMap,
+				Required: true,
+				Description: `Parameters specific to each data source. For more information see the bq tab in the 'Setting up a data transfer'
+section for each data source. For example the parameters for Cloud Storage transfers are listed here:
+https://cloud.google.com/bigquery-transfer/docs/cloud-storage-transfer#bq
+
+**NOTE** : If you are attempting to update a parameter that cannot be updated (due to api limitations) [please force recreation of the resource](https://www.terraform.io/cli/state/taint#forcing-re-creation-of-resources).`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"data_refresh_window_days": {
 				Type:     schema.TypeInt,
@@ -229,7 +266,7 @@ The name is ignored when creating a transfer config.`,
 
 func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -320,7 +357,7 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), iamMemberMissing)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), iamMemberMissing)
 	if err != nil {
 		return fmt.Errorf("Error creating Config: %s", err)
 	}
@@ -360,7 +397,7 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 
 func resourceBigqueryDataTransferConfigRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -383,7 +420,7 @@ func resourceBigqueryDataTransferConfigRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, iamMemberMissing)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, iamMemberMissing)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("BigqueryDataTransferConfig %q", d.Id()))
 	}
@@ -443,7 +480,7 @@ func resourceBigqueryDataTransferConfigRead(d *schema.ResourceData, meta interfa
 
 func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -457,6 +494,12 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 	billingProject = project
 
 	obj := make(map[string]interface{})
+	displayNameProp, err := expandBigqueryDataTransferConfigDisplayName(d.Get("display_name"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("display_name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
+		obj["displayName"] = displayNameProp
+	}
 	destinationDatasetIdProp, err := expandBigqueryDataTransferConfigDestinationDatasetId(d.Get("destination_dataset_id"), d, config)
 	if err != nil {
 		return err
@@ -519,6 +562,10 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 	log.Printf("[DEBUG] Updating Config %q: %#v", d.Id(), obj)
 	updateMask := []string{}
 
+	if d.HasChange("display_name") {
+		updateMask = append(updateMask, "displayName")
+	}
+
 	if d.HasChange("destination_dataset_id") {
 		updateMask = append(updateMask, "destinationDatasetId")
 	}
@@ -562,7 +609,7 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), iamMemberMissing)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), iamMemberMissing)
 
 	if err != nil {
 		return fmt.Errorf("Error updating Config %q: %s", d.Id(), err)
@@ -575,7 +622,7 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 
 func resourceBigqueryDataTransferConfigDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -601,7 +648,7 @@ func resourceBigqueryDataTransferConfigDelete(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), iamMemberMissing)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), iamMemberMissing)
 	if err != nil {
 		return handleNotFoundError(err, d, "Config")
 	}
@@ -695,7 +742,7 @@ func flattenBigqueryDataTransferConfigNotificationPubsubTopic(v interface{}, d *
 func flattenBigqueryDataTransferConfigDataRefreshWindowDays(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

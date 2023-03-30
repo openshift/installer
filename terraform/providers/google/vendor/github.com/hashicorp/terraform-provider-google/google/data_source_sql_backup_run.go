@@ -7,7 +7,7 @@ import (
 	sqladmin "google.golang.org/api/sqladmin/v1beta4"
 )
 
-func dataSourceSqlBackupRun() *schema.Resource {
+func DataSourceSqlBackupRun() *schema.Resource {
 
 	return &schema.Resource{
 		Read: dataSourceSqlBackupRunRead,
@@ -28,6 +28,12 @@ func dataSourceSqlBackupRun() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Location of the backups.`,
+			},
+			"project": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: `Project ID of the project that contains the instance.`,
 			},
 			"start_time": {
 				Type:        schema.TypeString,
@@ -50,7 +56,7 @@ func dataSourceSqlBackupRun() *schema.Resource {
 
 func dataSourceSqlBackupRunRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

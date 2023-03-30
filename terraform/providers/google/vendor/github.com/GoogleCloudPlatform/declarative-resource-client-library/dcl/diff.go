@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,13 +19,15 @@ import (
 	"reflect"
 )
 
-// Info is a struct that contains all information about the diff that's about to occur.
-type Info struct {
+// DiffInfo is a struct that contains all information about the diff that's about to occur.
+type DiffInfo struct {
 	// Ignore + OutputOnly cause the diff checker to always return no-diff.
-	Ignore          bool
-	OutputOnly      bool
-	IgnoredPrefixes []string
-	Type            string
+	Ignore           bool
+	OutputOnly       bool
+	ServerDefault    bool
+	MergeNestedDiffs bool
+	IgnoredPrefixes  []string
+	Type             string
 
 	// ObjectFunction is the function used to diff a Nested Object.
 	ObjectFunction func(desired, actual interface{}, fn FieldName) ([]*FieldDiff, error)
@@ -101,7 +103,7 @@ func stringValue(i interface{}) string {
 }
 
 // Diff takes in two interfaces and diffs them according to Info.
-func Diff(desired, actual interface{}, info Info, fn FieldName) ([]*FieldDiff, error) {
+func Diff(desired, actual interface{}, info DiffInfo, fn FieldName) ([]*FieldDiff, error) {
 	var diffs []*FieldDiff
 	// All Output-only fields should not be diffed.
 	if info.OutputOnly || info.Ignore {
@@ -255,52 +257,46 @@ func Diff(desired, actual interface{}, info Info, fn FieldName) ([]*FieldDiff, e
 		}
 
 	case "struct":
-		// Handle all optional types, which are represented as structs.
-		possibleDiffs, isOptional, err := optionalTypeDiffs(actual, desired, info, fn)
+		// If API returns nil (which means field is unset) && we have the empty-struct, no diff occurs.
+		if IsZeroValue(actual) && IsEmptyValueIndirect(desired) {
+			return nil, nil
+		}
+
+		// Want empty value, but non-empty value currrently exists.
+		// Only consider *explicitly* empty values, rather than "some combination
+		// of nils and falses" (as IEVI would do), because of the case comparing
+		// a non-explicitly empty struct with a struct containing only computed fields.
+		// See compute's `validate_test.go` for example.
+		if hasEmptyStructField(desired) && !IsEmptyValueIndirect(actual) {
+			if info.ServerDefault {
+				// The API can return values where none are in the desired state.
+				return nil, nil
+			}
+			diffs = append(diffs, &FieldDiff{FieldName: fn.FieldName, Desired: desired, Actual: actual})
+			addOperationToDiffs(diffs, info)
+			return diffs, nil
+		}
+
+		if info.ObjectFunction == nil {
+			return nil, fmt.Errorf("struct %v given without an object function", desired)
+		}
+
+		if info.EmptyObject == nil {
+			return nil, fmt.Errorf("struct %v given without an empty object type", desired)
+		}
+
+		// If the API returns nil, we can't diff against a nil. We should use the empty object instead.
+		// This is because the user could write out a config that is functionally equivalent to the empty object (contains all 0s and ""),
+		// but is not technically the empty object.
+		if actual == nil || ValueType(actual) == "invalid" {
+			actual = info.EmptyObject
+		}
+
+		ds, err := info.ObjectFunction(desired, actual, fn)
 		if err != nil {
 			return nil, err
 		}
-
-		if isOptional {
-			if len(possibleDiffs) > 0 {
-				diffs = append(diffs, possibleDiffs...)
-			}
-		} else {
-			// If API returns nil (which means field is unset) && we have the empty-struct, no diff occurs.
-			if IsZeroValue(actual) && IsEmptyValueIndirect(desired) {
-				return nil, nil
-			}
-
-			// Want empty value, but non-empty value currrently exists.
-			// Only consider *explicitly* empty values, rather than "some combination
-			// of nils and falses" (as IEVI would do), because of the case comparing
-			// a non-explicitly empty struct with a struct containing only computed fields.
-			// See compute's `validate_test.go` for example.
-			if hasEmptyStructField(desired) && !IsEmptyValueIndirect(actual) {
-				diffs = append(diffs, &FieldDiff{FieldName: fn.FieldName, Desired: desired, Actual: actual})
-				addOperationToDiffs(diffs, info)
-				return diffs, nil
-			}
-
-			if info.ObjectFunction == nil {
-				return nil, fmt.Errorf("struct %v given without an object function", desired)
-			}
-
-			if info.EmptyObject == nil {
-				return nil, fmt.Errorf("struct %v given without an empty object type", desired)
-			}
-
-			// If the API returns nil, we can't diff against a nil. We should use the empty object instead.
-			// This is because the user could write out a config that is functionally equivalent to the empty object (contains all 0s and ""),
-			// but is not technically the empty object.
-			if actual == nil || ValueType(actual) == "invalid" {
-				actual = info.EmptyObject
-			}
-
-			ds, err := info.ObjectFunction(desired, actual, fn)
-			if err != nil {
-				return nil, err
-			}
+		if info.MergeNestedDiffs {
 			// Replace any nested diffs with a recreate operation with a diff in this field.
 			nonRecreateCount := 0
 			for _, d := range ds {
@@ -318,8 +314,8 @@ func Diff(desired, actual interface{}, info Info, fn FieldName) ([]*FieldDiff, e
 				nonRecreateCount++
 			}
 			ds = ds[:nonRecreateCount]
-			diffs = append(diffs, ds...)
 		}
+		diffs = append(diffs, ds...)
 	default:
 		return nil, fmt.Errorf("no diffing logic exists for type: %q", desiredType)
 	}
@@ -328,7 +324,7 @@ func Diff(desired, actual interface{}, info Info, fn FieldName) ([]*FieldDiff, e
 	return diffs, nil
 }
 
-func arrayDiff(desired, actual []interface{}, info Info, fn FieldName) ([]*FieldDiff, error) {
+func arrayDiff(desired, actual []interface{}, info DiffInfo, fn FieldName) ([]*FieldDiff, error) {
 	var diffs []*FieldDiff
 
 	// Nothing to diff against.
@@ -354,7 +350,7 @@ func arrayDiff(desired, actual []interface{}, info Info, fn FieldName) ([]*Field
 	return diffs, nil
 }
 
-func setDiff(desired, actual []interface{}, info Info, fn FieldName) ([]*FieldDiff, error) {
+func setDiff(desired, actual []interface{}, info DiffInfo, fn FieldName) ([]*FieldDiff, error) {
 	var diffs []*FieldDiff
 
 	// Everything should be added.
@@ -538,7 +534,7 @@ func slice(slice interface{}) ([]interface{}, error) {
 	return ret, nil
 }
 
-func addOperationToDiffs(fds []*FieldDiff, i Info) {
+func addOperationToDiffs(fds []*FieldDiff, i DiffInfo) {
 	for _, fd := range fds {
 		// Do not overwrite update operations on nested fields with parent field operations.
 		if len(fd.ResultingOperation) == 0 {
@@ -547,7 +543,7 @@ func addOperationToDiffs(fds []*FieldDiff, i Info) {
 	}
 }
 
-func mapCompare(d, a map[string]interface{}, ignorePrefixes []string, info Info, fn FieldName) ([]*FieldDiff, error) {
+func mapCompare(d, a map[string]interface{}, ignorePrefixes []string, info DiffInfo, fn FieldName) ([]*FieldDiff, error) {
 	var diffs []*FieldDiff
 	for k, v := range d {
 		if isIgnored(k, ignorePrefixes) {
@@ -586,22 +582,4 @@ func mapCompare(d, a map[string]interface{}, ignorePrefixes []string, info Info,
 	}
 
 	return diffs, nil
-}
-
-// optionalTypeDiffs returns a list of diffs, an error, and a bool representing if these types were optional.
-func optionalTypeDiffs(d, a interface{}, info Info, fn FieldName) ([]*FieldDiff, bool, error) {
-	dO, ok := d.(Optional)
-	if ok {
-		aO, _ := a.(Optional)
-		if dO.IsUnset() != aO.IsUnset() {
-			return []*FieldDiff{{FieldName: fn.FieldName, Message: fmt.Sprintf("desired unset %v, actual %v", dO.IsUnset(), aO.IsUnset())}}, true, nil
-		}
-		if !dO.IsUnset() {
-			diffs, err := Diff(dO.GetValue(), aO.GetValue(), info, fn)
-			return diffs, true, err
-		}
-		return nil, true, nil
-	}
-
-	return nil, false, nil
 }

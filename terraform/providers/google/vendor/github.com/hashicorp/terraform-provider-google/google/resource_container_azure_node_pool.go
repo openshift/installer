@@ -27,7 +27,7 @@ import (
 	containerazure "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containerazure"
 )
 
-func resourceContainerAzureNodePool() *schema.Resource {
+func ResourceContainerAzureNodePool() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceContainerAzureNodePoolCreate,
 		Read:   resourceContainerAzureNodePoolRead,
@@ -39,17 +39,16 @@ func resourceContainerAzureNodePool() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
 			"autoscaling": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Autoscaler configuration for this node pool.",
+				Description: "Autoscaler configuration for this node pool.",
 				MaxItems:    1,
 				Elem:        ContainerAzureNodePoolAutoscalingSchema(),
 			},
@@ -65,8 +64,7 @@ func resourceContainerAzureNodePool() *schema.Resource {
 			"config": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The node configuration of the node pool.",
+				Description: "The node configuration of the node pool.",
 				MaxItems:    1,
 				Elem:        ContainerAzureNodePoolConfigSchema(),
 			},
@@ -82,7 +80,7 @@ func resourceContainerAzureNodePool() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The constraint on the maximum number of pods that can be run simultaneously on a node in the node pool.",
+				Description: "The constraint on the maximum number of pods that can be run simultaneously on a node in the node pool.",
 				MaxItems:    1,
 				Elem:        ContainerAzureNodePoolMaxPodsConstraintSchema(),
 			},
@@ -98,13 +96,13 @@ func resourceContainerAzureNodePool() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The ARM ID of the subnet where the node pool VMs run. Make sure it's a subnet under the virtual network in the cluster configuration.",
+				Description: "The ARM ID of the subnet where the node pool VMs run. Make sure it's a subnet under the virtual network in the cluster configuration.",
 			},
 
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Required. The Kubernetes version (e.g. `1.19.10-gke.1000`) running on this node pool.",
+				Description: "The Kubernetes version (e.g. `1.19.10-gke.1000`) running on this node pool.",
 			},
 
 			"annotations": {
@@ -176,15 +174,13 @@ func ContainerAzureNodePoolAutoscalingSchema() *schema.Resource {
 			"max_node_count": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Maximum number of nodes in the node pool. Must be >= min_node_count.",
+				Description: "Maximum number of nodes in the node pool. Must be >= min_node_count.",
 			},
 
 			"min_node_count": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Minimum number of nodes in the node pool. Must be >= 1 and <= max_node_count.",
+				Description: "Minimum number of nodes in the node pool. Must be >= 1 and <= max_node_count.",
 			},
 		},
 	}
@@ -196,10 +192,18 @@ func ContainerAzureNodePoolConfigSchema() *schema.Resource {
 			"ssh_config": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. SSH configuration for how to access the node pool machines.",
+				Description: "SSH configuration for how to access the node pool machines.",
 				MaxItems:    1,
 				Elem:        ContainerAzureNodePoolConfigSshConfigSchema(),
+			},
+
+			"proxy_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Proxy configuration for outbound HTTP(S) traffic.",
+				MaxItems:    1,
+				Elem:        ContainerAzureNodePoolConfigProxyConfigSchema(),
 			},
 
 			"root_volume": {
@@ -237,8 +241,27 @@ func ContainerAzureNodePoolConfigSshConfigSchema() *schema.Resource {
 			"authorized_key": {
 				Type:        schema.TypeString,
 				Required:    true,
+				Description: "The SSH public key data for VMs managed by Anthos. This accepts the authorized_keys file format used in OpenSSH according to the sshd(8) manual page.",
+			},
+		},
+	}
+}
+
+func ContainerAzureNodePoolConfigProxyConfigSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"resource_group_id": {
+				Type:        schema.TypeString,
+				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The SSH public key data for VMs managed by Anthos. This accepts the authorized_keys file format used in OpenSSH according to the sshd(8) manual page.",
+				Description: "The ARM ID the of the resource group containing proxy keyvault. Resource group ids are formatted as `/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>`",
+			},
+
+			"secret_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The URL the of the proxy setting secret with its version. Secret ids are formatted as `https:<key-vault-name>.vault.azure.net/secrets/<secret-name>/<secret-version>`.",
 			},
 		},
 	}
@@ -265,7 +288,7 @@ func ContainerAzureNodePoolMaxPodsConstraintSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The maximum number of pods to schedule on a single node.",
+				Description: "The maximum number of pods to schedule on a single node.",
 			},
 		},
 	}
@@ -292,13 +315,13 @@ func resourceContainerAzureNodePoolCreate(d *schema.ResourceData, meta interface
 		Project:               dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/azureClusters/{{cluster}}/azureNodePools/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -314,7 +337,7 @@ func resourceContainerAzureNodePoolCreate(d *schema.ResourceData, meta interface
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyNodePool(context.Background(), obj, createDirective...)
+	res, err := client.ApplyNodePool(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -350,7 +373,7 @@ func resourceContainerAzureNodePoolRead(d *schema.ResourceData, meta interface{}
 		Project:               dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -447,7 +470,7 @@ func resourceContainerAzureNodePoolUpdate(d *schema.ResourceData, meta interface
 		Project:               dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -501,7 +524,7 @@ func resourceContainerAzureNodePoolDelete(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Deleting NodePool %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -527,6 +550,7 @@ func resourceContainerAzureNodePoolDelete(d *schema.ResourceData, meta interface
 
 func resourceContainerAzureNodePoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/azureClusters/(?P<cluster>[^/]+)/azureNodePools/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<cluster>[^/]+)/(?P<name>[^/]+)",
@@ -550,7 +574,7 @@ func expandContainerAzureNodePoolAutoscaling(o interface{}) *containerazure.Node
 		return containerazure.EmptyNodePoolAutoscaling
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyNodePoolAutoscaling
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -578,15 +602,16 @@ func expandContainerAzureNodePoolConfig(o interface{}) *containerazure.NodePoolC
 		return containerazure.EmptyNodePoolConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyNodePoolConfig
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &containerazure.NodePoolConfig{
-		SshConfig:  expandContainerAzureNodePoolConfigSshConfig(obj["ssh_config"]),
-		RootVolume: expandContainerAzureNodePoolConfigRootVolume(obj["root_volume"]),
-		Tags:       checkStringMap(obj["tags"]),
-		VmSize:     dcl.StringOrNil(obj["vm_size"].(string)),
+		SshConfig:   expandContainerAzureNodePoolConfigSshConfig(obj["ssh_config"]),
+		ProxyConfig: expandContainerAzureNodePoolConfigProxyConfig(obj["proxy_config"]),
+		RootVolume:  expandContainerAzureNodePoolConfigRootVolume(obj["root_volume"]),
+		Tags:        checkStringMap(obj["tags"]),
+		VmSize:      dcl.StringOrNil(obj["vm_size"].(string)),
 	}
 }
 
@@ -595,10 +620,11 @@ func flattenContainerAzureNodePoolConfig(obj *containerazure.NodePoolConfig) int
 		return nil
 	}
 	transformed := map[string]interface{}{
-		"ssh_config":  flattenContainerAzureNodePoolConfigSshConfig(obj.SshConfig),
-		"root_volume": flattenContainerAzureNodePoolConfigRootVolume(obj.RootVolume),
-		"tags":        obj.Tags,
-		"vm_size":     obj.VmSize,
+		"ssh_config":   flattenContainerAzureNodePoolConfigSshConfig(obj.SshConfig),
+		"proxy_config": flattenContainerAzureNodePoolConfigProxyConfig(obj.ProxyConfig),
+		"root_volume":  flattenContainerAzureNodePoolConfigRootVolume(obj.RootVolume),
+		"tags":         obj.Tags,
+		"vm_size":      obj.VmSize,
 	}
 
 	return []interface{}{transformed}
@@ -610,7 +636,7 @@ func expandContainerAzureNodePoolConfigSshConfig(o interface{}) *containerazure.
 		return containerazure.EmptyNodePoolConfigSshConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyNodePoolConfigSshConfig
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -631,12 +657,40 @@ func flattenContainerAzureNodePoolConfigSshConfig(obj *containerazure.NodePoolCo
 
 }
 
+func expandContainerAzureNodePoolConfigProxyConfig(o interface{}) *containerazure.NodePoolConfigProxyConfig {
+	if o == nil {
+		return containerazure.EmptyNodePoolConfigProxyConfig
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return containerazure.EmptyNodePoolConfigProxyConfig
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containerazure.NodePoolConfigProxyConfig{
+		ResourceGroupId: dcl.String(obj["resource_group_id"].(string)),
+		SecretId:        dcl.String(obj["secret_id"].(string)),
+	}
+}
+
+func flattenContainerAzureNodePoolConfigProxyConfig(obj *containerazure.NodePoolConfigProxyConfig) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"resource_group_id": obj.ResourceGroupId,
+		"secret_id":         obj.SecretId,
+	}
+
+	return []interface{}{transformed}
+
+}
+
 func expandContainerAzureNodePoolConfigRootVolume(o interface{}) *containerazure.NodePoolConfigRootVolume {
 	if o == nil {
 		return nil
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return nil
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -662,7 +716,7 @@ func expandContainerAzureNodePoolMaxPodsConstraint(o interface{}) *containerazur
 		return containerazure.EmptyNodePoolMaxPodsConstraint
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyNodePoolMaxPodsConstraint
 	}
 	obj := objArr[0].(map[string]interface{})

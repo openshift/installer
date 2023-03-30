@@ -68,14 +68,14 @@ var IamCredentialsCustomEndpointEntry = &schema.Schema{
 	}, DefaultBasePaths[IamCredentialsBasePathKey]),
 }
 
-var ResourceManagerV2CustomEndpointEntryKey = "resource_manager_v2_custom_endpoint"
-var ResourceManagerV2CustomEndpointEntry = &schema.Schema{
+var ResourceManagerV3CustomEndpointEntryKey = "resource_manager_v3_custom_endpoint"
+var ResourceManagerV3CustomEndpointEntry = &schema.Schema{
 	Type:         schema.TypeString,
 	Optional:     true,
 	ValidateFunc: validateCustomEndpoint,
 	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
-		"GOOGLE_RESOURCE_MANAGER_V2_CUSTOM_ENDPOINT",
-	}, DefaultBasePaths[ResourceManagerV2BasePathKey]),
+		"GOOGLE_RESOURCE_MANAGER_V3_CUSTOM_ENDPOINT",
+	}, DefaultBasePaths[ResourceManagerV3BasePathKey]),
 }
 
 var ServiceNetworkingCustomEndpointEntryKey = "service_networking_custom_endpoint"
@@ -98,16 +98,6 @@ var ServiceUsageCustomEndpointEntry = &schema.Schema{
 	}, DefaultBasePaths[ServiceUsageBasePathKey]),
 }
 
-var StorageTransferCustomEndpointEntryKey = "storage_transfer_custom_endpoint"
-var StorageTransferCustomEndpointEntry = &schema.Schema{
-	Type:         schema.TypeString,
-	Optional:     true,
-	ValidateFunc: validateCustomEndpoint,
-	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
-		"GOOGLE_STORAGE_TRANSFER_CUSTOM_ENDPOINT",
-	}, DefaultBasePaths[StorageTransferBasePathKey]),
-}
-
 var BigtableAdminCustomEndpointEntryKey = "bigtable_custom_endpoint"
 var BigtableAdminCustomEndpointEntry = &schema.Schema{
 	Type:         schema.TypeString,
@@ -116,17 +106,6 @@ var BigtableAdminCustomEndpointEntry = &schema.Schema{
 	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
 		"GOOGLE_BIGTABLE_CUSTOM_ENDPOINT",
 	}, DefaultBasePaths[BigtableAdminBasePathKey]),
-}
-
-// GkeHubFeature uses a different base path "v1beta" than GkeHubMembership "v1beta1"
-var GkeHubFeatureCustomEndpointEntryKey = "gkehub_feature_custom_endpoint"
-var GkeHubFeatureCustomEndpointEntry = &schema.Schema{
-	Type:         schema.TypeString,
-	Optional:     true,
-	ValidateFunc: validateCustomEndpoint,
-	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
-		"GOOGLE_GKEHUB_FEATURE_CUSTOM_ENDPOINT",
-	}, DefaultBasePaths[GkeHubFeatureBasePathKey]),
 }
 
 var PrivatecaCertificateTemplateEndpointEntryKey = "privateca_custom_endpoint"
@@ -157,6 +136,16 @@ var ContainerAzureCustomEndpointEntry = &schema.Schema{
 	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
 		"GOOGLE_CONTAINERAZURE_CUSTOM_ENDPOINT",
 	}, DefaultBasePaths[ContainerAzureBasePathKey]),
+}
+
+var TagsLocationCustomEndpointEntryKey = "tags_location_custom_endpoint"
+var TagsLocationCustomEndpointEntry = &schema.Schema{
+	Type:         schema.TypeString,
+	Optional:     true,
+	ValidateFunc: validateCustomEndpoint,
+	DefaultFunc: schema.MultiEnvDefaultFunc([]string{
+		"GOOGLE_TAGS_LOCATION_CUSTOM_ENDPOINT",
+	}, DefaultBasePaths[TagsLocationBasePathKey]),
 }
 
 func validateCustomEndpoint(v interface{}, k string) (ws []string, errors []error) {

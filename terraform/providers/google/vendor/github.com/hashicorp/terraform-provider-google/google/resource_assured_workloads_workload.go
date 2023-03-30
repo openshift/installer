@@ -27,7 +27,7 @@ import (
 	assuredworkloads "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/assuredworkloads"
 )
 
-func resourceAssuredWorkloadsWorkload() *schema.Resource {
+func ResourceAssuredWorkloadsWorkload() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAssuredWorkloadsWorkloadCreate,
 		Read:   resourceAssuredWorkloadsWorkloadRead,
@@ -39,9 +39,9 @@ func resourceAssuredWorkloadsWorkload() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -207,13 +207,13 @@ func resourceAssuredWorkloadsWorkloadCreate(d *schema.ResourceData, meta interfa
 		ResourceSettings:           expandAssuredWorkloadsWorkloadResourceSettingsArray(d.Get("resource_settings")),
 	}
 
-	id, err := replaceVarsForId(d, config, "organizations/{{organization}}/locations/{{location}}/workloads/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func resourceAssuredWorkloadsWorkloadCreate(d *schema.ResourceData, meta interfa
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyWorkload(context.Background(), obj, createDirective...)
+	res, err := client.ApplyWorkload(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -239,17 +239,18 @@ func resourceAssuredWorkloadsWorkloadCreate(d *schema.ResourceData, meta interfa
 		return fmt.Errorf("Error creating Workload: %s", err)
 	}
 
-	log.Printf("[DEBUG] Finished creating Workload %q: %#v", d.Id(), res)
-
 	if err = d.Set("name", res.Name); err != nil {
 		return fmt.Errorf("error setting name in state: %s", err)
 	}
-	// Id has a server-generated value, set again after creation
-	id, err = replaceVarsForId(d, config, "organizations/{{organization}}/locations/{{location}}/workloads/{{name}}")
+	// ID has a server-generated value, set again after creation.
+
+	id, err = res.ID()
 	if err != nil {
-		return fmt.Errorf("Error constructing id: %s", err)
+		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	log.Printf("[DEBUG] Finished creating Workload %q: %#v", d.Id(), res)
 
 	return resourceAssuredWorkloadsWorkloadRead(d, meta)
 }
@@ -270,7 +271,7 @@ func resourceAssuredWorkloadsWorkloadRead(d *schema.ResourceData, meta interface
 		Name:                       dcl.StringOrNil(d.Get("name").(string)),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -361,7 +362,7 @@ func resourceAssuredWorkloadsWorkloadUpdate(d *schema.ResourceData, meta interfa
 	}
 	directive := UpdateDirective
 	directive = append(directive, dcl.WithStateHint(old))
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -410,7 +411,7 @@ func resourceAssuredWorkloadsWorkloadDelete(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Deleting Workload %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -436,6 +437,7 @@ func resourceAssuredWorkloadsWorkloadDelete(d *schema.ResourceData, meta interfa
 
 func resourceAssuredWorkloadsWorkloadImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"organizations/(?P<organization>[^/]+)/locations/(?P<location>[^/]+)/workloads/(?P<name>[^/]+)",
 		"(?P<organization>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -458,7 +460,7 @@ func expandAssuredWorkloadsWorkloadKmsSettings(o interface{}) *assuredworkloads.
 		return assuredworkloads.EmptyWorkloadKmsSettings
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return assuredworkloads.EmptyWorkloadKmsSettings
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -486,7 +488,7 @@ func expandAssuredWorkloadsWorkloadResourceSettingsArray(o interface{}) []assure
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]assuredworkloads.WorkloadResourceSettings, 0)
 	}
 

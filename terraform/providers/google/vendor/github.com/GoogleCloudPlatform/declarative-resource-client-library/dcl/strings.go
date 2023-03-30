@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,37 +94,54 @@ func TitleToCamelCasePath(s string) string {
 // go protoc special rules: convert to camel case, except when
 // the character following the underscore is a digit; e.g.,
 // foo_bar_2 -> FooBar_2.
+// From: http://google3/net/goa/codegen/names.go;l=14;rcl=294425921
 func ProtoCamelCase(s string) string {
-	var result string
+	// Invariant: if the next letter is lower case, it must be converted
+	// to upper case.
+	// That is, we process a word at a time, where words are marked by _ or
+	// upper case letter. Digits are treated as words.
+	var b []byte
 	for i := 0; i < len(s); i++ {
 		c := s[i]
-		if i == 0 {
-			result += strings.ToUpper(string(c))
-			continue
-		}
-		if c == '_' {
-			// Current character is underscore.
-			continue
-		}
-		p := s[i-1]
-		if p == '_' {
-			// Previous character was underscore.
-			if '0' <= c && c <= '9' {
-				// Current character is digit following an underscore.
-				result += "_"
+		switch {
+		case c == '.' && i+1 < len(s) && isASCIILower(s[i+1]):
+			// Skip over '.' in ".{{lowercase}}".
+		case c == '.':
+			b = append(b, '_') // convert '.' to '_'
+		case c == '_' && (i == 0 || s[i-1] == '.'):
+			// Convert initial '_' to ensure we start with a capital letter.
+			// Do the same for '_' after '.' to match historic behavior.
+			b = append(b, 'X') // convert '_' to 'X'
+		case c == '_' && i+1 < len(s) && isASCIILower(s[i+1]):
+			// Skip over '_' in "_{{lowercase}}".
+		case isASCIIDigit(c):
+			b = append(b, c)
+		default:
+			// Assume we have a letter now - if not, it's a bogus identifier.
+			// The next word is a sequence of characters that must start upper case.
+			if isASCIILower(c) {
+				c -= 'a' - 'A' // convert lowercase to uppercase
 			}
-			result += strings.ToUpper(string(c))
-		} else if '0' <= p && p <= '9' {
-			// Previous character was digit.
-			result += strings.ToUpper(string(c))
-		} else {
-			result += string(c)
+			b = append(b, c)
+
+			// Accept lower case sequence that follows.
+			for ; i+1 < len(s) && isASCIILower(s[i+1]); i++ {
+				b = append(b, s[i+1])
+			}
 		}
 	}
-	return result
+	return string(b)
 }
 
-// TitleToSnakeCase takes in a snake_case string and returns a TitleCase string.
+func isASCIILower(c byte) bool {
+	return 'a' <= c && c <= 'z'
+}
+
+func isASCIIDigit(c byte) bool {
+	return '0' <= c && c <= '9'
+}
+
+// TitleToSnakeCase takes in a TitleCase string and returns a snake_case string.
 func TitleToSnakeCase(s string) string {
 	for k, v := range initialisms {
 		kCap := strings.ToUpper(k[0:1]) + k[1:]

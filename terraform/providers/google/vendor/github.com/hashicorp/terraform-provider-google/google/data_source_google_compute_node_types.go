@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeNodeTypes() *schema.Resource {
+func DataSourceGoogleComputeNodeTypes() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeNodeTypesRead,
 		Schema: map[string]*schema.Schema{
@@ -35,7 +35,7 @@ func dataSourceGoogleComputeNodeTypes() *schema.Resource {
 
 func dataSourceGoogleComputeNodeTypesRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

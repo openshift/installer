@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var accessApprovalCloudProductMapping = map[string]string{
@@ -50,7 +49,7 @@ func accessApprovalEnrolledServicesHash(v interface{}) int {
 	return hashcode(buf.String())
 }
 
-func resourceAccessApprovalFolderSettings() *schema.Resource {
+func ResourceAccessApprovalFolderSettings() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAccessApprovalFolderSettingsCreate,
 		Read:   resourceAccessApprovalFolderSettingsRead,
@@ -62,9 +61,9 @@ func resourceAccessApprovalFolderSettings() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -85,6 +84,13 @@ A maximum of 10 enrolled services will be enforced, to be expanded as the set of
 				ForceNew:    true,
 				Description: `ID of the folder of the access approval settings.`,
 			},
+			"active_key_version": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: `The asymmetric crypto key version to use for signing approval requests.
+Empty active_key_version indicates that a Google-managed key should be used for signing.
+This property will be ignored if set by an ancestor of the resource, and new non-empty values may not be set.`,
+			},
 			"notification_emails": {
 				Type:     schema.TypeSet,
 				Computed: true,
@@ -98,10 +104,23 @@ resources of that resource. A maximum of 50 email addresses are allowed.`,
 				},
 				Set: schema.HashString,
 			},
+			"ancestor_has_active_key_version": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: `If the field is true, that indicates that an ancestor of this Folder has set active_key_version.`,
+			},
 			"enrolled_ancestor": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: `If the field is true, that indicates that at least one service is enrolled for Access Approval in one or more ancestors of the Folder.`,
+			},
+			"invalid_key_version": {
+				Type:     schema.TypeBool,
+				Computed: true,
+				Description: `If the field is true, that indicates that there is some configuration issue with the active_key_version
+configured on this Folder (e.g. it doesn't exist or the Access Approval service account doesn't have the
+correct permissions on it, etc.) This key version is not necessarily the effective key version at this level,
+as key versions are inherited top-down.`,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -147,7 +166,7 @@ Note: These values are supported as input, but considered a legacy format:
 			"enrollment_level": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"BLOCK_ALL", ""}, false),
+				ValidateFunc: validateEnum([]string{"BLOCK_ALL", ""}),
 				Description:  `The enrollment level of the service. Default value: "BLOCK_ALL" Possible values: ["BLOCK_ALL"]`,
 				Default:      "BLOCK_ALL",
 			},
@@ -157,7 +176,7 @@ Note: These values are supported as input, but considered a legacy format:
 
 func resourceAccessApprovalFolderSettingsCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -174,6 +193,12 @@ func resourceAccessApprovalFolderSettingsCreate(d *schema.ResourceData, meta int
 		return err
 	} else if v, ok := d.GetOkExists("enrolled_services"); !isEmptyValue(reflect.ValueOf(enrolledServicesProp)) && (ok || !reflect.DeepEqual(v, enrolledServicesProp)) {
 		obj["enrolledServices"] = enrolledServicesProp
+	}
+	activeKeyVersionProp, err := expandAccessApprovalFolderSettingsActiveKeyVersion(d.Get("active_key_version"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("active_key_version"); !isEmptyValue(reflect.ValueOf(activeKeyVersionProp)) && (ok || !reflect.DeepEqual(v, activeKeyVersionProp)) {
+		obj["activeKeyVersion"] = activeKeyVersionProp
 	}
 
 	url, err := replaceVars(d, config, "{{AccessApprovalBasePath}}folders/{{folder_id}}/accessApprovalSettings")
@@ -198,13 +223,17 @@ func resourceAccessApprovalFolderSettingsCreate(d *schema.ResourceData, meta int
 	if d.HasChange("enrolled_services") {
 		updateMask = append(updateMask, "enrolledServices")
 	}
+
+	if d.HasChange("active_key_version") {
+		updateMask = append(updateMask, "activeKeyVersion")
+	}
 	// updateMask is a URL parameter but not present in the schema, so replaceVars
 	// won't set it
 	url, err = addQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
 	if err != nil {
 		return err
 	}
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating FolderSettings: %s", err)
 	}
@@ -226,7 +255,7 @@ func resourceAccessApprovalFolderSettingsCreate(d *schema.ResourceData, meta int
 
 func resourceAccessApprovalFolderSettingsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -243,7 +272,7 @@ func resourceAccessApprovalFolderSettingsRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AccessApprovalFolderSettings %q", d.Id()))
 	}
@@ -260,13 +289,22 @@ func resourceAccessApprovalFolderSettingsRead(d *schema.ResourceData, meta inter
 	if err := d.Set("enrolled_ancestor", flattenAccessApprovalFolderSettingsEnrolledAncestor(res["enrolledAncestor"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FolderSettings: %s", err)
 	}
+	if err := d.Set("active_key_version", flattenAccessApprovalFolderSettingsActiveKeyVersion(res["activeKeyVersion"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FolderSettings: %s", err)
+	}
+	if err := d.Set("ancestor_has_active_key_version", flattenAccessApprovalFolderSettingsAncestorHasActiveKeyVersion(res["ancestorHasActiveKeyVersion"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FolderSettings: %s", err)
+	}
+	if err := d.Set("invalid_key_version", flattenAccessApprovalFolderSettingsInvalidKeyVersion(res["invalidKeyVersion"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FolderSettings: %s", err)
+	}
 
 	return nil
 }
 
 func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -286,6 +324,12 @@ func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta int
 	} else if v, ok := d.GetOkExists("enrolled_services"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, enrolledServicesProp)) {
 		obj["enrolledServices"] = enrolledServicesProp
 	}
+	activeKeyVersionProp, err := expandAccessApprovalFolderSettingsActiveKeyVersion(d.Get("active_key_version"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("active_key_version"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, activeKeyVersionProp)) {
+		obj["activeKeyVersion"] = activeKeyVersionProp
+	}
 
 	url, err := replaceVars(d, config, "{{AccessApprovalBasePath}}folders/{{folder_id}}/accessApprovalSettings")
 	if err != nil {
@@ -302,6 +346,10 @@ func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta int
 	if d.HasChange("enrolled_services") {
 		updateMask = append(updateMask, "enrolledServices")
 	}
+
+	if d.HasChange("active_key_version") {
+		updateMask = append(updateMask, "activeKeyVersion")
+	}
 	// updateMask is a URL parameter but not present in the schema, so replaceVars
 	// won't set it
 	url, err = addQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -314,7 +362,7 @@ func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating FolderSettings %q: %s", d.Id(), err)
@@ -327,7 +375,7 @@ func resourceAccessApprovalFolderSettingsUpdate(d *schema.ResourceData, meta int
 
 func resourceAccessApprovalFolderSettingsDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -335,6 +383,7 @@ func resourceAccessApprovalFolderSettingsDelete(d *schema.ResourceData, meta int
 	obj := make(map[string]interface{})
 	obj["notificationEmails"] = []string{}
 	obj["enrolledServices"] = []string{}
+	obj["activeKeyVersion"] = ""
 
 	url, err := replaceVars(d, config, "{{AccessApprovalBasePath}}folders/{{folder_id}}/accessApprovalSettings")
 	if err != nil {
@@ -346,6 +395,7 @@ func resourceAccessApprovalFolderSettingsDelete(d *schema.ResourceData, meta int
 
 	updateMask = append(updateMask, "notificationEmails")
 	updateMask = append(updateMask, "enrolledServices")
+	updateMask = append(updateMask, "activeKeyVersion")
 
 	// updateMask is a URL parameter but not present in the schema, so replaceVars
 	// won't set it
@@ -354,7 +404,7 @@ func resourceAccessApprovalFolderSettingsDelete(d *schema.ResourceData, meta int
 		return err
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", "", url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", "", url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error emptying FolderSettings %q: %s", d.Id(), err)
@@ -426,6 +476,18 @@ func flattenAccessApprovalFolderSettingsEnrolledAncestor(v interface{}, d *schem
 	return v
 }
 
+func flattenAccessApprovalFolderSettingsActiveKeyVersion(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenAccessApprovalFolderSettingsAncestorHasActiveKeyVersion(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenAccessApprovalFolderSettingsInvalidKeyVersion(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func expandAccessApprovalFolderSettingsNotificationEmails(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	v = v.(*schema.Set).List()
 	return v, nil
@@ -466,5 +528,9 @@ func expandAccessApprovalFolderSettingsEnrolledServicesCloudProduct(v interface{
 }
 
 func expandAccessApprovalFolderSettingsEnrolledServicesEnrollmentLevel(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAccessApprovalFolderSettingsActiveKeyVersion(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }

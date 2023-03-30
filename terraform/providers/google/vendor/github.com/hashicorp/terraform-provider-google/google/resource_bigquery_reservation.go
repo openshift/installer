@@ -18,14 +18,13 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceBigqueryReservationReservation() *schema.Resource {
+func ResourceBigqueryReservationReservation() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBigqueryReservationReservationCreate,
 		Read:   resourceBigqueryReservationReservationRead,
@@ -37,9 +36,9 @@ func resourceBigqueryReservationReservation() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -54,6 +53,12 @@ func resourceBigqueryReservationReservation() *schema.Resource {
 				Required: true,
 				Description: `Minimum slots available to this reservation. A slot is a unit of computational power in BigQuery, and serves as the
 unit of parallelism. Queries using this reservation might use more slots during runtime if ignoreIdleSlots is set to false.`,
+			},
+			"concurrency": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: `Maximum number of queries that are allowed to run concurrently in this reservation. This is a soft limit due to asynchronous nature of the system and various optimizations for small queries. Default value is 0 which means that concurrency will be automatically set based on the reservation size.`,
+				Default:     0,
 			},
 			"ignore_idle_slots": {
 				Type:     schema.TypeBool,
@@ -71,6 +76,12 @@ capacity specified above at most.`,
 Examples: US, EU, asia-northeast1. The default value is US.`,
 				Default: "US",
 			},
+			"multi_region_auxiliary": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `Applicable only for reservations located within one of the BigQuery multi-regions (US or EU).
+If set to true, this reservation is placed in the organization's secondary region which is designated for disaster recovery purposes. If false, this reservation is placed in the organization's default region.`,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -84,7 +95,7 @@ Examples: US, EU, asia-northeast1. The default value is US.`,
 
 func resourceBigqueryReservationReservationCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -101,6 +112,18 @@ func resourceBigqueryReservationReservationCreate(d *schema.ResourceData, meta i
 		return err
 	} else if v, ok := d.GetOkExists("ignore_idle_slots"); !isEmptyValue(reflect.ValueOf(ignoreIdleSlotsProp)) && (ok || !reflect.DeepEqual(v, ignoreIdleSlotsProp)) {
 		obj["ignoreIdleSlots"] = ignoreIdleSlotsProp
+	}
+	concurrencyProp, err := expandBigqueryReservationReservationConcurrency(d.Get("concurrency"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("concurrency"); !isEmptyValue(reflect.ValueOf(concurrencyProp)) && (ok || !reflect.DeepEqual(v, concurrencyProp)) {
+		obj["concurrency"] = concurrencyProp
+	}
+	multiRegionAuxiliaryProp, err := expandBigqueryReservationReservationMultiRegionAuxiliary(d.Get("multi_region_auxiliary"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("multi_region_auxiliary"); !isEmptyValue(reflect.ValueOf(multiRegionAuxiliaryProp)) && (ok || !reflect.DeepEqual(v, multiRegionAuxiliaryProp)) {
+		obj["multiRegionAuxiliary"] = multiRegionAuxiliaryProp
 	}
 
 	url, err := replaceVars(d, config, "{{BigqueryReservationBasePath}}projects/{{project}}/locations/{{location}}/reservations?reservationId={{name}}")
@@ -122,7 +145,7 @@ func resourceBigqueryReservationReservationCreate(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Reservation: %s", err)
 	}
@@ -141,7 +164,7 @@ func resourceBigqueryReservationReservationCreate(d *schema.ResourceData, meta i
 
 func resourceBigqueryReservationReservationRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -164,7 +187,7 @@ func resourceBigqueryReservationReservationRead(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("BigqueryReservationReservation %q", d.Id()))
 	}
@@ -179,13 +202,19 @@ func resourceBigqueryReservationReservationRead(d *schema.ResourceData, meta int
 	if err := d.Set("ignore_idle_slots", flattenBigqueryReservationReservationIgnoreIdleSlots(res["ignoreIdleSlots"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Reservation: %s", err)
 	}
+	if err := d.Set("concurrency", flattenBigqueryReservationReservationConcurrency(res["concurrency"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Reservation: %s", err)
+	}
+	if err := d.Set("multi_region_auxiliary", flattenBigqueryReservationReservationMultiRegionAuxiliary(res["multiRegionAuxiliary"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Reservation: %s", err)
+	}
 
 	return nil
 }
 
 func resourceBigqueryReservationReservationUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -211,6 +240,18 @@ func resourceBigqueryReservationReservationUpdate(d *schema.ResourceData, meta i
 	} else if v, ok := d.GetOkExists("ignore_idle_slots"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, ignoreIdleSlotsProp)) {
 		obj["ignoreIdleSlots"] = ignoreIdleSlotsProp
 	}
+	concurrencyProp, err := expandBigqueryReservationReservationConcurrency(d.Get("concurrency"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("concurrency"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, concurrencyProp)) {
+		obj["concurrency"] = concurrencyProp
+	}
+	multiRegionAuxiliaryProp, err := expandBigqueryReservationReservationMultiRegionAuxiliary(d.Get("multi_region_auxiliary"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("multi_region_auxiliary"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, multiRegionAuxiliaryProp)) {
+		obj["multiRegionAuxiliary"] = multiRegionAuxiliaryProp
+	}
 
 	url, err := replaceVars(d, config, "{{BigqueryReservationBasePath}}projects/{{project}}/locations/{{location}}/reservations/{{name}}")
 	if err != nil {
@@ -227,6 +268,14 @@ func resourceBigqueryReservationReservationUpdate(d *schema.ResourceData, meta i
 	if d.HasChange("ignore_idle_slots") {
 		updateMask = append(updateMask, "ignoreIdleSlots")
 	}
+
+	if d.HasChange("concurrency") {
+		updateMask = append(updateMask, "concurrency")
+	}
+
+	if d.HasChange("multi_region_auxiliary") {
+		updateMask = append(updateMask, "multiRegionAuxiliary")
+	}
 	// updateMask is a URL parameter but not present in the schema, so replaceVars
 	// won't set it
 	url, err = addQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -239,7 +288,7 @@ func resourceBigqueryReservationReservationUpdate(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Reservation %q: %s", d.Id(), err)
@@ -252,7 +301,7 @@ func resourceBigqueryReservationReservationUpdate(d *schema.ResourceData, meta i
 
 func resourceBigqueryReservationReservationDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -278,7 +327,7 @@ func resourceBigqueryReservationReservationDelete(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Reservation")
 	}
@@ -310,7 +359,7 @@ func resourceBigqueryReservationReservationImport(d *schema.ResourceData, meta i
 func flattenBigqueryReservationReservationSlotCapacity(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -328,10 +377,39 @@ func flattenBigqueryReservationReservationIgnoreIdleSlots(v interface{}, d *sche
 	return v
 }
 
+func flattenBigqueryReservationReservationConcurrency(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenBigqueryReservationReservationMultiRegionAuxiliary(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func expandBigqueryReservationReservationSlotCapacity(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandBigqueryReservationReservationIgnoreIdleSlots(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryReservationReservationConcurrency(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigqueryReservationReservationMultiRegionAuxiliary(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }

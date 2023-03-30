@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,10 +49,10 @@ func (r *FirewallPolicyAssociation) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":             dcl.ValueOrEmptyString(nr.Name),
-		"attachmentTarget": dcl.ValueOrEmptyString(nr.AttachmentTarget),
-		"firewallPolicy":   dcl.ValueOrEmptyString(nr.FirewallPolicy),
-		"shortName":        dcl.ValueOrEmptyString(nr.ShortName),
+		"name":              dcl.ValueOrEmptyString(nr.Name),
+		"attachment_target": dcl.ValueOrEmptyString(nr.AttachmentTarget),
+		"firewall_policy":   dcl.ValueOrEmptyString(nr.FirewallPolicy),
+		"short_name":        dcl.ValueOrEmptyString(nr.ShortName),
 	}
 	return dcl.Nprintf("locations/global/firewallPolicies/{{firewall_policy}}/associations/{{name}}", params), nil
 }
@@ -138,7 +138,7 @@ func (c *Client) GetFirewallPolicyAssociation(ctx context.Context, r *FirewallPo
 		}
 		return nil, err
 	}
-	result, err := unmarshalFirewallPolicyAssociation(b, c)
+	result, err := unmarshalFirewallPolicyAssociation(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -294,7 +294,7 @@ func applyFirewallPolicyAssociationHelper(c *Client, ctx context.Context, rawDes
 func applyFirewallPolicyAssociationDiff(c *Client, ctx context.Context, desired *FirewallPolicyAssociation, rawDesired *FirewallPolicyAssociation, ops []firewallPolicyAssociationApiOperation, opts ...dcl.ApplyOption) (*FirewallPolicyAssociation, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetFirewallPolicyAssociation(ctx, desired.urlNormalized())
+	rawNew, err := c.GetFirewallPolicyAssociation(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +307,7 @@ func applyFirewallPolicyAssociationDiff(c *Client, ctx context.Context, desired 
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapFirewallPolicyAssociation(r, c)
+				fullResp, err := unmarshalMapFirewallPolicyAssociation(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

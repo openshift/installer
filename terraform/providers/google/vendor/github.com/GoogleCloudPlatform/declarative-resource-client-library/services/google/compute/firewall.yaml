@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a Firewall
     parameters:
-    - name: Firewall
+    - name: firewall
       required: true
       description: A full instance of a Firewall
   apply:
     description: The function used to apply information about a Firewall
     parameters:
-    - name: Firewall
+    - name: firewall
       required: true
       description: A full instance of a Firewall
   delete:
     description: The function used to delete a Firewall
     parameters:
-    - name: Firewall
+    - name: firewall
       required: true
       description: A full instance of a Firewall
   deleteAll:
@@ -57,7 +57,11 @@ components:
       x-dcl-locations:
       - global
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -179,9 +183,8 @@ components:
           x-dcl-go-name: Direction
           x-dcl-go-type: FirewallDirectionEnum
           description: Direction of traffic to which this firewall applies, either
-            `INGRESS` or `EGRESS`. The default is `INGRESS`. For `INGRESS` traffic,
-            you cannot specify the `destinationRanges` field, and for `EGRESS` traffic,
-            you cannot specify the `sourceRanges` or `sourceTags` fields.
+            `INGRESS` or `EGRESS`. The default is `INGRESS`. For `EGRESS` traffic,
+            you cannot specify the `sourceTags` fields.
           x-kubernetes-immutable: true
           x-dcl-server-default: true
           enum:
@@ -193,17 +196,20 @@ components:
           description: Denotes whether the firewall rule is disabled. When set to
             true, the firewall rule is not enforced and the network behaves as if
             it did not exist. If this is unspecified, the firewall rule will be enabled.
-        id:
+        firewallId:
           type: string
-          x-dcl-go-name: Id
+          x-dcl-go-name: FirewallId
+          readOnly: true
           description: '[Output Only] The unique identifier for the resource. This
             identifier is defined by the server.'
+          x-kubernetes-immutable: true
         logConfig:
           type: object
           x-dcl-go-name: LogConfig
           x-dcl-go-type: FirewallLogConfig
           description: This field denotes the logging options for a particular firewall
             rule. If logging is enabled, logs will be exported to Cloud Logging.
+          x-dcl-server-default: true
           properties:
             enable:
               type: boolean
@@ -245,6 +251,7 @@ components:
             rules with a priority of `65535`. To avoid conflicts with the implied
             rules, use a priority number less than `65535`.
           default: 1000
+          x-dcl-server-default: true
         project:
           type: string
           x-dcl-go-name: Project

@@ -1,4 +1,3 @@
-//
 package google
 
 import (
@@ -118,15 +117,24 @@ func expandScheduling(v interface{}) (*compute.Scheduling, error) {
 	if v, ok := original["min_node_cpus"]; ok {
 		scheduling.MinNodeCpus = int64(v.(int))
 	}
-
+	if v, ok := original["provisioning_model"]; ok {
+		scheduling.ProvisioningModel = v.(string)
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "ProvisioningModel")
+	}
+	if v, ok := original["instance_termination_action"]; ok {
+		scheduling.InstanceTerminationAction = v.(string)
+		scheduling.ForceSendFields = append(scheduling.ForceSendFields, "InstanceTerminationAction")
+	}
 	return scheduling, nil
 }
 
 func flattenScheduling(resp *compute.Scheduling) []map[string]interface{} {
 	schedulingMap := map[string]interface{}{
-		"on_host_maintenance": resp.OnHostMaintenance,
-		"preemptible":         resp.Preemptible,
-		"min_node_cpus":       resp.MinNodeCpus,
+		"on_host_maintenance":         resp.OnHostMaintenance,
+		"preemptible":                 resp.Preemptible,
+		"min_node_cpus":               resp.MinNodeCpus,
+		"provisioning_model":          resp.ProvisioningModel,
+		"instance_termination_action": resp.InstanceTerminationAction,
 	}
 
 	if resp.AutomaticRestart != nil {
@@ -171,6 +179,7 @@ func flattenIpv6AccessConfigs(ipv6AccessConfigs []*compute.AccessConfig) []map[s
 			"network_tier": ac.NetworkTier,
 		}
 		flattened[i]["public_ptr_domain_name"] = ac.PublicPtrDomainName
+		flattened[i]["external_ipv6"] = ac.ExternalIpv6
 	}
 	return flattened
 }
@@ -387,6 +396,7 @@ func expandAdvancedMachineFeatures(d TerraformResourceData) *compute.AdvancedMac
 	return &compute.AdvancedMachineFeatures{
 		EnableNestedVirtualization: d.Get(prefix + ".enable_nested_virtualization").(bool),
 		ThreadsPerCore:             int64(d.Get(prefix + ".threads_per_core").(int)),
+		VisibleCoreCount:           int64(d.Get(prefix + ".visible_core_count").(int)),
 	}
 }
 
@@ -397,6 +407,7 @@ func flattenAdvancedMachineFeatures(AdvancedMachineFeatures *compute.AdvancedMac
 	return []map[string]interface{}{{
 		"enable_nested_virtualization": AdvancedMachineFeatures.EnableNestedVirtualization,
 		"threads_per_core":             AdvancedMachineFeatures.ThreadsPerCore,
+		"visible_core_count":           AdvancedMachineFeatures.VisibleCoreCount,
 	}}
 }
 
@@ -468,6 +479,14 @@ func schedulingHasChangeWithoutReboot(d *schema.ResourceData) bool {
 	}
 
 	if oScheduling["min_node_cpus"] != newScheduling["min_node_cpus"] {
+		return true
+	}
+
+	if oScheduling["provisioning_model"] != newScheduling["provisioning_model"] {
+		return true
+	}
+
+	if oScheduling["instance_termination_action"] != newScheduling["instance_termination_action"] {
 		return true
 	}
 

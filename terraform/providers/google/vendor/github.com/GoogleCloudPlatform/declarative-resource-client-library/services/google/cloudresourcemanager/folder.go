@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -81,14 +81,14 @@ func (r *Folder) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":        dcl.ValueOrEmptyString(nr.Name),
-		"parent":      dcl.ValueOrEmptyString(nr.Parent),
-		"displayName": dcl.ValueOrEmptyString(nr.DisplayName),
-		"state":       dcl.ValueOrEmptyString(nr.State),
-		"createTime":  dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":  dcl.ValueOrEmptyString(nr.UpdateTime),
-		"deleteTime":  dcl.ValueOrEmptyString(nr.DeleteTime),
-		"etag":        dcl.ValueOrEmptyString(nr.Etag),
+		"name":         dcl.ValueOrEmptyString(nr.Name),
+		"parent":       dcl.ValueOrEmptyString(nr.Parent),
+		"display_name": dcl.ValueOrEmptyString(nr.DisplayName),
+		"state":        dcl.ValueOrEmptyString(nr.State),
+		"create_time":  dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":  dcl.ValueOrEmptyString(nr.UpdateTime),
+		"delete_time":  dcl.ValueOrEmptyString(nr.DeleteTime),
+		"etag":         dcl.ValueOrEmptyString(nr.Etag),
 	}
 	return dcl.Nprintf("folders/{{name}}", params), nil
 }
@@ -174,7 +174,7 @@ func (c *Client) GetFolder(ctx context.Context, r *Folder) (*Folder, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalFolder(b, c)
+	result, err := unmarshalFolder(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -329,7 +329,7 @@ func applyFolderHelper(c *Client, ctx context.Context, rawDesired *Folder, opts 
 func applyFolderDiff(c *Client, ctx context.Context, desired *Folder, rawDesired *Folder, ops []folderApiOperation, opts ...dcl.ApplyOption) (*Folder, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetFolder(ctx, desired.urlNormalized())
+	rawNew, err := c.GetFolder(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -342,7 +342,7 @@ func applyFolderDiff(c *Client, ctx context.Context, desired *Folder, rawDesired
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapFolder(r, c)
+				fullResp, err := unmarshalMapFolder(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

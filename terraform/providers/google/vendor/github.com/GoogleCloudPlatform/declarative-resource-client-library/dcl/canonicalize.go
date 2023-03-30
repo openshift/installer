@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -143,38 +143,6 @@ func BoolCanonicalize(l, r *bool) bool {
 	right := *r
 
 	return left == right
-}
-
-// OptionalBoolCanonicalize checks cannonicalization for optional booleans.
-func OptionalBoolCanonicalize(l, r *OptionalBool) bool {
-	if l == nil && r == nil {
-		return true
-	}
-
-	left := *l
-	right := *r
-
-	if left.Unset != right.Unset {
-		return false
-	}
-
-	return BoolCanonicalize(l.Value, r.Value)
-}
-
-// OptionalStringCanonicalize checks cannonicalization for optional strings.
-func OptionalStringCanonicalize(l, r *OptionalString) bool {
-	if l == nil && r == nil {
-		return true
-	}
-
-	left := *l
-	right := *r
-
-	if left.Unset != right.Unset {
-		return false
-	}
-
-	return StringCanonicalize(l.Value, r.Value)
 }
 
 // NameToSelfLink returns true if left and right are equivalent for Names / SelfLinks.
@@ -692,52 +660,6 @@ func IsEmptyValueIndirect(i interface{}) bool {
 	return false
 }
 
-// IsNotReturnedByServer returns true if the value provided is "empty", according
-// to the *proto* rules.  This corresponds to whether the value will be sent by the
-// server in a response - it is useful for diffing a response against a provided
-// value.  The "Indirect" refers to the fact that this method returns correct
-// results even if the provided value is a pointer.  This differs from IsEmptyValueIndirect
-// in its handling of booleans - IEVI treats `false` as non-empty but INRBS
-// treats `false` as empty.
-func IsNotReturnedByServer(i interface{}) bool {
-	if i == nil {
-		return true
-	}
-
-	rt := reflect.TypeOf(i)
-	switch rt.Kind() {
-	case reflect.Slice:
-		return reflect.ValueOf(i).Len() == 0
-	case reflect.Array:
-		return rt.Len() == 0
-	case reflect.Map:
-		return len(reflect.ValueOf(i).MapKeys()) == 0
-	}
-
-	iv := reflect.Indirect(reflect.ValueOf(i))
-
-	if !iv.IsValid() || iv.IsZero() {
-		return true
-	}
-	if hasEmptyStructField(i) {
-		return true
-	}
-	if iv.Type().Kind() == reflect.Struct {
-		for f := 0; f < iv.NumField(); f++ {
-			field := iv.Field(f)
-			// Unexported fields should be ignored.
-			if !field.CanInterface() {
-				continue
-			}
-			if !IsNotReturnedByServer(field.Interface()) {
-				return false
-			}
-		}
-		return true
-	}
-	return false
-}
-
 // hasEmptyStructField returns true if the provided value is a struct
 // with an unexported field called 'empty', and that value is a boolean,
 // and that boolean is true.  This is useful when a user needs to explicitly
@@ -920,7 +842,7 @@ func StringEquals(l, r *string) bool {
 
 // IsPartialSelfLink returns true if this string represents a partial self link.
 func IsPartialSelfLink(s string) bool {
-	return strings.HasPrefix(s, "projects/") || strings.HasPrefix(s, "organizations/") || strings.HasPrefix(s, "folders/") || strings.HasPrefix(s, "billingAccounts/") || strings.HasPrefix(s, "tagKeys/") || strings.HasPrefix(s, "groups/")
+	return strings.HasPrefix(s, "projects/") || strings.HasPrefix(s, "organizations/") || strings.HasPrefix(s, "folders/") || strings.HasPrefix(s, "billingAccounts/") || strings.HasPrefix(s, "tagKeys/") || strings.HasPrefix(s, "tagValues/") || strings.HasPrefix(s, "groups/")
 }
 
 // IsSelfLink returns true if this string represents a full self link.
@@ -946,20 +868,5 @@ func ValueShouldBeSent(v interface{}) bool {
 		return false
 	}
 
-	b, ok := v.(Optional)
-	if ok {
-		if b.IsUnset() {
-			return false
-		}
-
-		_, ok := v.(*OptionalBool)
-		// If it's a bool and we're dealing with unsetness, we should always send.
-		// After all, unset != false for optional values.
-		if ok {
-			return true
-		}
-
-		return !IsEmptyValueIndirect(b.GetValue())
-	}
 	return !IsEmptyValueIndirect(v)
 }

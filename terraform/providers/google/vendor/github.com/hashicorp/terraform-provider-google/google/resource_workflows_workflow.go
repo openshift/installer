@@ -26,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceWorkflowsWorkflow() *schema.Resource {
+func ResourceWorkflowsWorkflow() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceWorkflowsWorkflowCreate,
 		Read:   resourceWorkflowsWorkflowRead,
@@ -34,9 +34,9 @@ func resourceWorkflowsWorkflow() *schema.Resource {
 		Delete: resourceWorkflowsWorkflowDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		SchemaVersion: 1,
@@ -129,7 +129,7 @@ Format: projects/{project}/serviceAccounts/{account}.`,
 
 func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -190,7 +190,7 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Workflow: %s", err)
 	}
@@ -205,12 +205,13 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = workflowsOperationWaitTimeWithResponse(
+	err = WorkflowsOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Workflow", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Workflow: %s", err)
 	}
 
@@ -232,7 +233,7 @@ func resourceWorkflowsWorkflowCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceWorkflowsWorkflowRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -255,7 +256,7 @@ func resourceWorkflowsWorkflowRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("WorkflowsWorkflow %q", d.Id()))
 	}
@@ -297,7 +298,7 @@ func resourceWorkflowsWorkflowRead(d *schema.ResourceData, meta interface{}) err
 
 func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -376,7 +377,7 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Workflow %q: %s", d.Id(), err)
@@ -384,7 +385,7 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 		log.Printf("[DEBUG] Finished updating Workflow %q: %#v", d.Id(), res)
 	}
 
-	err = workflowsOperationWaitTime(
+	err = WorkflowsOperationWaitTime(
 		config, res, project, "Updating Workflow", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -397,7 +398,7 @@ func resourceWorkflowsWorkflowUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceWorkflowsWorkflowDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -423,12 +424,12 @@ func resourceWorkflowsWorkflowDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Workflow")
 	}
 
-	err = workflowsOperationWaitTime(
+	err = WorkflowsOperationWaitTime(
 		config, res, project, "Deleting Workflow", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

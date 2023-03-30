@@ -57,7 +57,7 @@ func SpannerDatabaseIdParseFunc(d *schema.ResourceData, config *Config) error {
 }
 
 func (u *SpannerDatabaseIamUpdater) GetResourceIamPolicy() (*cloudresourcemanager.Policy, error) {
-	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	userAgent, err := generateUserAgentString(u.d, u.Config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,9 @@ func (u *SpannerDatabaseIamUpdater) GetResourceIamPolicy() (*cloudresourcemanage
 		Project:  u.project,
 		Database: u.database,
 		Instance: u.instance,
-	}.databaseUri(), &spanner.GetIamPolicyRequest{}).Do()
+	}.databaseUri(), &spanner.GetIamPolicyRequest{
+		Options: &spanner.GetPolicyOptions{RequestedPolicyVersion: IamPolicyVersion},
+	}).Do()
 
 	if err != nil {
 		return nil, errwrap.Wrapf(fmt.Sprintf("Error retrieving IAM policy for %s: {{err}}", u.DescribeResource()), err)
@@ -78,6 +80,8 @@ func (u *SpannerDatabaseIamUpdater) GetResourceIamPolicy() (*cloudresourcemanage
 		return nil, errwrap.Wrapf(fmt.Sprintf("Invalid IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
+	cloudResourcePolicy.Version = IamPolicyVersion
+
 	return cloudResourcePolicy, nil
 }
 
@@ -88,7 +92,9 @@ func (u *SpannerDatabaseIamUpdater) SetResourceIamPolicy(policy *cloudresourcema
 		return errwrap.Wrapf(fmt.Sprintf("Invalid IAM policy for %s: {{err}}", u.DescribeResource()), err)
 	}
 
-	userAgent, err := generateUserAgentString(u.d, u.Config.userAgent)
+	spannerPolicy.Version = IamPolicyVersion
+
+	userAgent, err := generateUserAgentString(u.d, u.Config.UserAgent)
 	if err != nil {
 		return err
 	}

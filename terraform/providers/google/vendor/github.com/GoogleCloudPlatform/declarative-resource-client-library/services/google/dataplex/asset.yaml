@@ -1,0 +1,419 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Dataplex/Asset
+  description: The Dataplex Asset resource
+  x-dcl-struct-name: Asset
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Asset
+    parameters:
+    - name: asset
+      required: true
+      description: A full instance of a Asset
+  apply:
+    description: The function used to apply information about a Asset
+    parameters:
+    - name: asset
+      required: true
+      description: A full instance of a Asset
+  delete:
+    description: The function used to delete a Asset
+    parameters:
+    - name: asset
+      required: true
+      description: A full instance of a Asset
+  deleteAll:
+    description: The function used to delete all Asset
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: dataplexZone
+      required: true
+      schema:
+        type: string
+    - name: lake
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Asset
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: dataplexZone
+      required: true
+      schema:
+        type: string
+    - name: lake
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Asset:
+      title: Asset
+      x-dcl-id: projects/{{project}}/locations/{{location}}/lakes/{{lake}}/zones/{{dataplex_zone}}/assets/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - resourceSpec
+      - discoverySpec
+      - project
+      - location
+      - lake
+      - dataplexZone
+      properties:
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The time when the asset was created.
+          x-kubernetes-immutable: true
+        dataplexZone:
+          type: string
+          x-dcl-go-name: DataplexZone
+          description: The zone for the resource
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: Optional. Description of the asset.
+        discoverySpec:
+          type: object
+          x-dcl-go-name: DiscoverySpec
+          x-dcl-go-type: AssetDiscoverySpec
+          description: Required. Specification of the discovery feature applied to
+            data referenced by this asset. When this spec is left unset, the asset
+            will use the spec set on the parent zone.
+          required:
+          - enabled
+          properties:
+            csvOptions:
+              type: object
+              x-dcl-go-name: CsvOptions
+              x-dcl-go-type: AssetDiscoverySpecCsvOptions
+              description: Optional. Configuration for CSV data.
+              x-dcl-server-default: true
+              properties:
+                delimiter:
+                  type: string
+                  x-dcl-go-name: Delimiter
+                  description: Optional. The delimiter being used to separate values.
+                    This defaults to ','.
+                disableTypeInference:
+                  type: boolean
+                  x-dcl-go-name: DisableTypeInference
+                  description: Optional. Whether to disable the inference of data
+                    type for CSV data. If true, all columns will be registered as
+                    strings.
+                encoding:
+                  type: string
+                  x-dcl-go-name: Encoding
+                  description: Optional. The character encoding of the data. The default
+                    is UTF-8.
+                headerRows:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: HeaderRows
+                  description: Optional. The number of rows to interpret as header
+                    rows that should be skipped when reading data rows.
+            enabled:
+              type: boolean
+              x-dcl-go-name: Enabled
+              description: Required. Whether discovery is enabled.
+            excludePatterns:
+              type: array
+              x-dcl-go-name: ExcludePatterns
+              description: Optional. The list of patterns to apply for selecting data
+                to exclude during discovery. For Cloud Storage bucket assets, these
+                are interpreted as glob patterns used to match object names. For BigQuery
+                dataset assets, these are interpreted as patterns to match table names.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            includePatterns:
+              type: array
+              x-dcl-go-name: IncludePatterns
+              description: Optional. The list of patterns to apply for selecting data
+                to include during discovery if only a subset of the data should considered.
+                For Cloud Storage bucket assets, these are interpreted as glob patterns
+                used to match object names. For BigQuery dataset assets, these are
+                interpreted as patterns to match table names.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            jsonOptions:
+              type: object
+              x-dcl-go-name: JsonOptions
+              x-dcl-go-type: AssetDiscoverySpecJsonOptions
+              description: Optional. Configuration for Json data.
+              x-dcl-server-default: true
+              properties:
+                disableTypeInference:
+                  type: boolean
+                  x-dcl-go-name: DisableTypeInference
+                  description: Optional. Whether to disable the inference of data
+                    type for Json data. If true, all columns will be registered as
+                    their primitive types (strings, number or boolean).
+                encoding:
+                  type: string
+                  x-dcl-go-name: Encoding
+                  description: Optional. The character encoding of the data. The default
+                    is UTF-8.
+            schedule:
+              type: string
+              x-dcl-go-name: Schedule
+              description: 'Optional. Cron schedule (https://en.wikipedia.org/wiki/Cron)
+                for running discovery periodically. Successive discovery runs must
+                be scheduled at least 60 minutes apart. The default value is to run
+                discovery every 60 minutes. To explicitly set a timezone to the cron
+                tab, apply a prefix in the cron tab: "CRON_TZ=${IANA_TIME_ZONE}" or
+                TZ=${IANA_TIME_ZONE}". The ${IANA_TIME_ZONE} may only be a valid string
+                from IANA time zone database. For example, "CRON_TZ=America/New_York
+                1 * * * *", or "TZ=America/New_York 1 * * * *".'
+        discoveryStatus:
+          type: object
+          x-dcl-go-name: DiscoveryStatus
+          x-dcl-go-type: AssetDiscoveryStatus
+          readOnly: true
+          description: Output only. Status of the discovery feature applied to data
+            referenced by this asset.
+          properties:
+            lastRunDuration:
+              type: string
+              x-dcl-go-name: LastRunDuration
+              description: The duration of the last discovery run.
+            lastRunTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: LastRunTime
+              description: The start time of the last discovery run.
+            message:
+              type: string
+              x-dcl-go-name: Message
+              description: Additional information about the current state.
+            state:
+              type: string
+              x-dcl-go-name: State
+              x-dcl-go-type: AssetDiscoveryStatusStateEnum
+              description: 'The current status of the discovery feature. Possible
+                values: STATE_UNSPECIFIED, SCHEDULED, IN_PROGRESS, PAUSED, DISABLED'
+              enum:
+              - STATE_UNSPECIFIED
+              - SCHEDULED
+              - IN_PROGRESS
+              - PAUSED
+              - DISABLED
+            stats:
+              type: object
+              x-dcl-go-name: Stats
+              x-dcl-go-type: AssetDiscoveryStatusStats
+              description: Data Stats of the asset reported by discovery.
+              properties:
+                dataItems:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: DataItems
+                  description: The count of data items within the referenced resource.
+                dataSize:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: DataSize
+                  description: The number of stored data bytes within the referenced
+                    resource.
+                filesets:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Filesets
+                  description: The count of fileset entities within the referenced
+                    resource.
+                tables:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Tables
+                  description: The count of table entities within the referenced resource.
+            updateTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: UpdateTime
+              description: Last update time of the status.
+        displayName:
+          type: string
+          x-dcl-go-name: DisplayName
+          description: Optional. User friendly display name.
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Labels
+          description: Optional. User defined labels for the asset.
+        lake:
+          type: string
+          x-dcl-go-name: Lake
+          description: The lake for the resource
+          x-kubernetes-immutable: true
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: The name of the asset.
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        resourceSpec:
+          type: object
+          x-dcl-go-name: ResourceSpec
+          x-dcl-go-type: AssetResourceSpec
+          description: Required. Immutable. Specification of the resource that is
+            referenced by this asset.
+          x-kubernetes-immutable: true
+          required:
+          - type
+          properties:
+            name:
+              type: string
+              x-dcl-go-name: Name
+              description: 'Immutable. Relative name of the cloud resource that contains
+                the data that is being managed within a lake. For example: `projects/{project_number}/buckets/{bucket_id}`
+                `projects/{project_number}/datasets/{dataset_id}`'
+              x-kubernetes-immutable: true
+            type:
+              type: string
+              x-dcl-go-name: Type
+              x-dcl-go-type: AssetResourceSpecTypeEnum
+              description: 'Required. Immutable. Type of resource. Possible values:
+                STORAGE_BUCKET, BIGQUERY_DATASET'
+              x-kubernetes-immutable: true
+              enum:
+              - STORAGE_BUCKET
+              - BIGQUERY_DATASET
+        resourceStatus:
+          type: object
+          x-dcl-go-name: ResourceStatus
+          x-dcl-go-type: AssetResourceStatus
+          readOnly: true
+          description: Output only. Status of the resource referenced by this asset.
+          properties:
+            message:
+              type: string
+              x-dcl-go-name: Message
+              description: Additional information about the current state.
+            state:
+              type: string
+              x-dcl-go-name: State
+              x-dcl-go-type: AssetResourceStatusStateEnum
+              description: 'The current state of the managed resource. Possible values:
+                STATE_UNSPECIFIED, READY, ERROR'
+              enum:
+              - STATE_UNSPECIFIED
+              - READY
+              - ERROR
+            updateTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: UpdateTime
+              description: Last update time of the status.
+        securityStatus:
+          type: object
+          x-dcl-go-name: SecurityStatus
+          x-dcl-go-type: AssetSecurityStatus
+          readOnly: true
+          description: Output only. Status of the security policy applied to resource
+            referenced by this asset.
+          properties:
+            message:
+              type: string
+              x-dcl-go-name: Message
+              description: Additional information about the current state.
+            state:
+              type: string
+              x-dcl-go-name: State
+              x-dcl-go-type: AssetSecurityStatusStateEnum
+              description: 'The current state of the security policy applied to the
+                attached resource. Possible values: STATE_UNSPECIFIED, READY, APPLYING,
+                ERROR'
+              enum:
+              - STATE_UNSPECIFIED
+              - READY
+              - APPLYING
+              - ERROR
+            updateTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: UpdateTime
+              description: Last update time of the status.
+        state:
+          type: string
+          x-dcl-go-name: State
+          x-dcl-go-type: AssetStateEnum
+          readOnly: true
+          description: 'Output only. Current state of the asset. Possible values:
+            STATE_UNSPECIFIED, ACTIVE, CREATING, DELETING, ACTION_REQUIRED'
+          x-kubernetes-immutable: true
+          enum:
+          - STATE_UNSPECIFIED
+          - ACTIVE
+          - CREATING
+          - DELETING
+          - ACTION_REQUIRED
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. System generated globally unique ID for the asset.
+            This ID will be different if the asset is deleted and re-created with
+            the same name.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The time when the asset was last updated.
+          x-kubernetes-immutable: true

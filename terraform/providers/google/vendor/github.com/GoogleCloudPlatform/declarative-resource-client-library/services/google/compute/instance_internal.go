@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -193,6 +192,8 @@ type instanceApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateInstanceSetDeletionProtectionRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.DeletionProtection; !dcl.IsEmptyValueIndirect(v) {
 		req["deletionProtection"] = v
@@ -268,6 +269,8 @@ func (op *updateInstanceSetDeletionProtectionOperation) do(ctx context.Context, 
 // fields based on the intended state of the resource.
 func newUpdateInstanceSetLabelsRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Labels; !dcl.IsEmptyValueIndirect(v) {
 		req["labels"] = v
@@ -360,8 +363,12 @@ func (op *updateInstanceSetLabelsOperation) do(ctx context.Context, r *Instance,
 // fields based on the intended state of the resource.
 func newUpdateInstanceSetMachineTypeRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
-	if v := f.MachineType; !dcl.IsEmptyValueIndirect(v) {
+	if v, err := dcl.DeriveFromPattern("zones/%s/machineTypes/%s", f.MachineType, dcl.SelfLinkToName(f.Zone), f.MachineType); err != nil {
+		return nil, fmt.Errorf("error expanding MachineType into machineType: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["machineType"] = v
 	}
 	return req, nil
@@ -435,6 +442,8 @@ func (op *updateInstanceSetMachineTypeOperation) do(ctx context.Context, r *Inst
 // fields based on the intended state of the resource.
 func newUpdateInstanceSetMetadataRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v, err := dcl.ListOfKeyValuesFromMap(f.Metadata, "key", "value"); err != nil {
 		return nil, fmt.Errorf("error expanding Metadata into items: %w", err)
@@ -529,6 +538,8 @@ func (op *updateInstanceSetMetadataOperation) do(ctx context.Context, r *Instanc
 // fields based on the intended state of the resource.
 func newUpdateInstanceSetTagsRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Tags; v != nil {
 		req["items"] = v
@@ -621,6 +632,8 @@ func (op *updateInstanceSetTagsOperation) do(ctx context.Context, r *Instance, c
 // fields based on the intended state of the resource.
 func newUpdateInstanceStartRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	return req, nil
 }
@@ -693,6 +706,8 @@ func (op *updateInstanceStartOperation) do(ctx context.Context, r *Instance, c *
 // fields based on the intended state of the resource.
 func newUpdateInstanceStopRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	return req, nil
 }
@@ -765,6 +780,8 @@ func (op *updateInstanceStopOperation) do(ctx context.Context, r *Instance, c *C
 // fields based on the intended state of the resource.
 func newUpdateInstanceUpdateRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	return req, nil
 }
@@ -837,8 +854,10 @@ func (op *updateInstanceUpdateOperation) do(ctx context.Context, r *Instance, c 
 // fields based on the intended state of the resource.
 func newUpdateInstanceUpdateShieldedInstanceConfigRequest(ctx context.Context, f *Instance, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
-	if v, err := expandInstanceShieldedInstanceConfig(c, f.ShieldedInstanceConfig); err != nil {
+	if v, err := expandInstanceShieldedInstanceConfig(c, f.ShieldedInstanceConfig, res); err != nil {
 		return nil, fmt.Errorf("error expanding ShieldedInstanceConfig into shieldedInstanceConfig: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["shieldedInstanceConfig"] = v
@@ -954,7 +973,7 @@ func (c *Client) listInstance(ctx context.Context, r *Instance, pageToken string
 
 	var l []*Instance
 	for _, v := range m.Items {
-		res, err := unmarshalMapInstance(v, c)
+		res, err := unmarshalMapInstance(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -1018,20 +1037,20 @@ func (op *deleteInstanceOperation) do(ctx context.Context, r *Instance, c *Clien
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetInstance(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetInstance(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -1130,6 +1149,11 @@ func (c *Client) instanceDiffsForRawDesired(ctx context.Context, rawDesired *Ins
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Instance: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Instance: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractInstanceFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeInstanceInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -1194,17 +1218,19 @@ func canonicalizeInstanceDesiredState(rawDesired, rawInitial *Instance, opts ...
 	} else {
 		canonicalDesired.Hostname = rawDesired.Hostname
 	}
-	if dcl.IsZeroValue(rawDesired.Labels) {
+	if dcl.IsZeroValue(rawDesired.Labels) || (dcl.IsEmptyValueIndirect(rawDesired.Labels) && dcl.IsEmptyValueIndirect(rawInitial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Labels = rawInitial.Labels
 	} else {
 		canonicalDesired.Labels = rawDesired.Labels
 	}
-	if dcl.IsZeroValue(rawDesired.Metadata) {
+	if dcl.IsZeroValue(rawDesired.Metadata) || (dcl.IsEmptyValueIndirect(rawDesired.Metadata) && dcl.IsEmptyValueIndirect(rawInitial.Metadata)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Metadata = rawInitial.Metadata
 	} else {
 		canonicalDesired.Metadata = rawDesired.Metadata
 	}
-	if dcl.NameToSelfLink(rawDesired.MachineType, rawInitial.MachineType) {
+	if dcl.PartialSelfLinkToSelfLink(rawDesired.MachineType, rawInitial.MachineType) {
 		canonicalDesired.MachineType = rawInitial.MachineType
 	} else {
 		canonicalDesired.MachineType = rawDesired.MachineType
@@ -1223,7 +1249,8 @@ func canonicalizeInstanceDesiredState(rawDesired, rawInitial *Instance, opts ...
 	canonicalDesired.Scheduling = canonicalizeInstanceScheduling(rawDesired.Scheduling, rawInitial.Scheduling, opts...)
 	canonicalDesired.ServiceAccounts = canonicalizeInstanceServiceAccountsSlice(rawDesired.ServiceAccounts, rawInitial.ServiceAccounts, opts...)
 	canonicalDesired.ShieldedInstanceConfig = canonicalizeInstanceShieldedInstanceConfig(rawDesired.ShieldedInstanceConfig, rawInitial.ShieldedInstanceConfig, opts...)
-	if dcl.IsZeroValue(rawDesired.Status) {
+	if dcl.IsZeroValue(rawDesired.Status) || (dcl.IsEmptyValueIndirect(rawDesired.Status) && dcl.IsEmptyValueIndirect(rawInitial.Status)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Status = rawInitial.Status
 	} else {
 		canonicalDesired.Status = rawDesired.Status
@@ -1233,7 +1260,8 @@ func canonicalizeInstanceDesiredState(rawDesired, rawInitial *Instance, opts ...
 	} else {
 		canonicalDesired.Tags = rawDesired.Tags
 	}
-	if dcl.NameToSelfLink(rawDesired.Zone, rawInitial.Zone) {
+	if dcl.IsZeroValue(rawDesired.Zone) || (dcl.IsEmptyValueIndirect(rawDesired.Zone) && dcl.IsEmptyValueIndirect(rawInitial.Zone)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Zone = rawInitial.Zone
 	} else {
 		canonicalDesired.Zone = rawDesired.Zone
@@ -1243,13 +1271,12 @@ func canonicalizeInstanceDesiredState(rawDesired, rawInitial *Instance, opts ...
 	} else {
 		canonicalDesired.Project = rawDesired.Project
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Instance, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.CanIPForward) && dcl.IsNotReturnedByServer(rawDesired.CanIPForward) {
+	if dcl.IsEmptyValueIndirect(rawNew.CanIPForward) && dcl.IsEmptyValueIndirect(rawDesired.CanIPForward) {
 		rawNew.CanIPForward = rawDesired.CanIPForward
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.CanIPForward, rawNew.CanIPForward) {
@@ -1257,7 +1284,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CpuPlatform) && dcl.IsNotReturnedByServer(rawDesired.CpuPlatform) {
+	if dcl.IsEmptyValueIndirect(rawNew.CpuPlatform) && dcl.IsEmptyValueIndirect(rawDesired.CpuPlatform) {
 		rawNew.CpuPlatform = rawDesired.CpuPlatform
 	} else {
 		if dcl.StringCanonicalize(rawDesired.CpuPlatform, rawNew.CpuPlatform) {
@@ -1265,7 +1292,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreationTimestamp) && dcl.IsNotReturnedByServer(rawDesired.CreationTimestamp) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreationTimestamp) && dcl.IsEmptyValueIndirect(rawDesired.CreationTimestamp) {
 		rawNew.CreationTimestamp = rawDesired.CreationTimestamp
 	} else {
 		if dcl.StringCanonicalize(rawDesired.CreationTimestamp, rawNew.CreationTimestamp) {
@@ -1273,7 +1300,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.DeletionProtection) && dcl.IsNotReturnedByServer(rawDesired.DeletionProtection) {
+	if dcl.IsEmptyValueIndirect(rawNew.DeletionProtection) && dcl.IsEmptyValueIndirect(rawDesired.DeletionProtection) {
 		rawNew.DeletionProtection = rawDesired.DeletionProtection
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.DeletionProtection, rawNew.DeletionProtection) {
@@ -1281,7 +1308,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -1291,13 +1318,13 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 
 	rawNew.Disks = rawDesired.Disks
 
-	if dcl.IsNotReturnedByServer(rawNew.GuestAccelerators) && dcl.IsNotReturnedByServer(rawDesired.GuestAccelerators) {
+	if dcl.IsEmptyValueIndirect(rawNew.GuestAccelerators) && dcl.IsEmptyValueIndirect(rawDesired.GuestAccelerators) {
 		rawNew.GuestAccelerators = rawDesired.GuestAccelerators
 	} else {
 		rawNew.GuestAccelerators = canonicalizeNewInstanceGuestAcceleratorsSlice(c, rawDesired.GuestAccelerators, rawNew.GuestAccelerators)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Hostname) && dcl.IsNotReturnedByServer(rawDesired.Hostname) {
+	if dcl.IsEmptyValueIndirect(rawNew.Hostname) && dcl.IsEmptyValueIndirect(rawDesired.Hostname) {
 		rawNew.Hostname = rawDesired.Hostname
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Hostname, rawNew.Hostname) {
@@ -1305,7 +1332,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Id) && dcl.IsNotReturnedByServer(rawDesired.Id) {
+	if dcl.IsEmptyValueIndirect(rawNew.Id) && dcl.IsEmptyValueIndirect(rawDesired.Id) {
 		rawNew.Id = rawDesired.Id
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Id, rawNew.Id) {
@@ -1313,25 +1340,25 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Labels) && dcl.IsNotReturnedByServer(rawDesired.Labels) {
+	if dcl.IsEmptyValueIndirect(rawNew.Labels) && dcl.IsEmptyValueIndirect(rawDesired.Labels) {
 		rawNew.Labels = rawDesired.Labels
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Metadata) && dcl.IsNotReturnedByServer(rawDesired.Metadata) {
+	if dcl.IsEmptyValueIndirect(rawNew.Metadata) && dcl.IsEmptyValueIndirect(rawDesired.Metadata) {
 		rawNew.Metadata = rawDesired.Metadata
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.MachineType) && dcl.IsNotReturnedByServer(rawDesired.MachineType) {
+	if dcl.IsEmptyValueIndirect(rawNew.MachineType) && dcl.IsEmptyValueIndirect(rawDesired.MachineType) {
 		rawNew.MachineType = rawDesired.MachineType
 	} else {
-		if dcl.NameToSelfLink(rawDesired.MachineType, rawNew.MachineType) {
+		if dcl.PartialSelfLinkToSelfLink(rawDesired.MachineType, rawNew.MachineType) {
 			rawNew.MachineType = rawDesired.MachineType
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.MinCpuPlatform) && dcl.IsNotReturnedByServer(rawDesired.MinCpuPlatform) {
+	if dcl.IsEmptyValueIndirect(rawNew.MinCpuPlatform) && dcl.IsEmptyValueIndirect(rawDesired.MinCpuPlatform) {
 		rawNew.MinCpuPlatform = rawDesired.MinCpuPlatform
 	} else {
 		if dcl.StringCanonicalize(rawDesired.MinCpuPlatform, rawNew.MinCpuPlatform) {
@@ -1339,7 +1366,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Name, rawNew.Name) {
@@ -1347,36 +1374,36 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NetworkInterfaces) && dcl.IsNotReturnedByServer(rawDesired.NetworkInterfaces) {
+	if dcl.IsEmptyValueIndirect(rawNew.NetworkInterfaces) && dcl.IsEmptyValueIndirect(rawDesired.NetworkInterfaces) {
 		rawNew.NetworkInterfaces = rawDesired.NetworkInterfaces
 	} else {
 		rawNew.NetworkInterfaces = canonicalizeNewInstanceNetworkInterfacesSlice(c, rawDesired.NetworkInterfaces, rawNew.NetworkInterfaces)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Scheduling) && dcl.IsNotReturnedByServer(rawDesired.Scheduling) {
+	if dcl.IsEmptyValueIndirect(rawNew.Scheduling) && dcl.IsEmptyValueIndirect(rawDesired.Scheduling) {
 		rawNew.Scheduling = rawDesired.Scheduling
 	} else {
 		rawNew.Scheduling = canonicalizeNewInstanceScheduling(c, rawDesired.Scheduling, rawNew.Scheduling)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ServiceAccounts) && dcl.IsNotReturnedByServer(rawDesired.ServiceAccounts) {
+	if dcl.IsEmptyValueIndirect(rawNew.ServiceAccounts) && dcl.IsEmptyValueIndirect(rawDesired.ServiceAccounts) {
 		rawNew.ServiceAccounts = rawDesired.ServiceAccounts
 	} else {
 		rawNew.ServiceAccounts = canonicalizeNewInstanceServiceAccountsSlice(c, rawDesired.ServiceAccounts, rawNew.ServiceAccounts)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ShieldedInstanceConfig) && dcl.IsNotReturnedByServer(rawDesired.ShieldedInstanceConfig) {
+	if dcl.IsEmptyValueIndirect(rawNew.ShieldedInstanceConfig) && dcl.IsEmptyValueIndirect(rawDesired.ShieldedInstanceConfig) {
 		rawNew.ShieldedInstanceConfig = rawDesired.ShieldedInstanceConfig
 	} else {
 		rawNew.ShieldedInstanceConfig = canonicalizeNewInstanceShieldedInstanceConfig(c, rawDesired.ShieldedInstanceConfig, rawNew.ShieldedInstanceConfig)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Status) && dcl.IsNotReturnedByServer(rawDesired.Status) {
+	if dcl.IsEmptyValueIndirect(rawNew.Status) && dcl.IsEmptyValueIndirect(rawDesired.Status) {
 		rawNew.Status = rawDesired.Status
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.StatusMessage) && dcl.IsNotReturnedByServer(rawDesired.StatusMessage) {
+	if dcl.IsEmptyValueIndirect(rawNew.StatusMessage) && dcl.IsEmptyValueIndirect(rawDesired.StatusMessage) {
 		rawNew.StatusMessage = rawDesired.StatusMessage
 	} else {
 		if dcl.StringCanonicalize(rawDesired.StatusMessage, rawNew.StatusMessage) {
@@ -1384,7 +1411,7 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Tags) && dcl.IsNotReturnedByServer(rawDesired.Tags) {
+	if dcl.IsEmptyValueIndirect(rawNew.Tags) && dcl.IsEmptyValueIndirect(rawDesired.Tags) {
 		rawNew.Tags = rawDesired.Tags
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.Tags, rawNew.Tags) {
@@ -1392,17 +1419,14 @@ func canonicalizeInstanceNewState(c *Client, rawNew, rawDesired *Instance) (*Ins
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Zone) && dcl.IsNotReturnedByServer(rawDesired.Zone) {
+	if dcl.IsEmptyValueIndirect(rawNew.Zone) && dcl.IsEmptyValueIndirect(rawDesired.Zone) {
 		rawNew.Zone = rawDesired.Zone
 	} else {
-		if dcl.NameToSelfLink(rawDesired.Zone, rawNew.Zone) {
-			rawNew.Zone = rawDesired.Zone
-		}
 	}
 
 	rawNew.Project = rawDesired.Project
 
-	if dcl.IsNotReturnedByServer(rawNew.SelfLink) && dcl.IsNotReturnedByServer(rawDesired.SelfLink) {
+	if dcl.IsEmptyValueIndirect(rawNew.SelfLink) && dcl.IsEmptyValueIndirect(rawDesired.SelfLink) {
 		rawNew.SelfLink = rawDesired.SelfLink
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SelfLink, rawNew.SelfLink) {
@@ -1443,28 +1467,33 @@ func canonicalizeInstanceDisks(des, initial *InstanceDisks, opts ...dcl.ApplyOpt
 		cDes.DeviceName = des.DeviceName
 	}
 	cDes.DiskEncryptionKey = canonicalizeInstanceDisksDiskEncryptionKey(des.DiskEncryptionKey, initial.DiskEncryptionKey, opts...)
-	if dcl.IsZeroValue(des.Index) {
+	if dcl.IsZeroValue(des.Index) || (dcl.IsEmptyValueIndirect(des.Index) && dcl.IsEmptyValueIndirect(initial.Index)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Index = initial.Index
 	} else {
 		cDes.Index = des.Index
 	}
 	cDes.InitializeParams = canonicalizeInstanceDisksInitializeParams(des.InitializeParams, initial.InitializeParams, opts...)
-	if dcl.IsZeroValue(des.Interface) {
+	if dcl.IsZeroValue(des.Interface) || (dcl.IsEmptyValueIndirect(des.Interface) && dcl.IsEmptyValueIndirect(initial.Interface)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Interface = initial.Interface
 	} else {
 		cDes.Interface = des.Interface
 	}
-	if dcl.IsZeroValue(des.Mode) {
+	if dcl.IsZeroValue(des.Mode) || (dcl.IsEmptyValueIndirect(des.Mode) && dcl.IsEmptyValueIndirect(initial.Mode)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Mode = initial.Mode
 	} else {
 		cDes.Mode = des.Mode
 	}
-	if dcl.NameToSelfLink(des.Source, initial.Source) || dcl.IsZeroValue(des.Source) {
+	if dcl.IsZeroValue(des.Source) || (dcl.IsEmptyValueIndirect(des.Source) && dcl.IsEmptyValueIndirect(initial.Source)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Source = initial.Source
 	} else {
 		cDes.Source = des.Source
 	}
-	if dcl.IsZeroValue(des.Type) {
+	if dcl.IsZeroValue(des.Type) || (dcl.IsEmptyValueIndirect(des.Type) && dcl.IsEmptyValueIndirect(initial.Type)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Type = initial.Type
 	} else {
 		cDes.Type = des.Type
@@ -1508,7 +1537,7 @@ func canonicalizeNewInstanceDisks(c *Client, des, nw *InstanceDisks) *InstanceDi
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceDisks while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1526,9 +1555,6 @@ func canonicalizeNewInstanceDisks(c *Client, des, nw *InstanceDisks) *InstanceDi
 	}
 	nw.DiskEncryptionKey = canonicalizeNewInstanceDisksDiskEncryptionKey(c, des.DiskEncryptionKey, nw.DiskEncryptionKey)
 	nw.InitializeParams = des.InitializeParams
-	if dcl.NameToSelfLink(des.Source, nw.Source) {
-		nw.Source = des.Source
-	}
 
 	return nw
 }
@@ -1537,23 +1563,26 @@ func canonicalizeNewInstanceDisksSet(c *Client, des, nw []InstanceDisks) []Insta
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceDisks
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceDisks
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceDisksNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceDisks(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceDisksSlice(c *Client, des, nw []InstanceDisks) []InstanceDisks {
@@ -1605,7 +1634,7 @@ func canonicalizeInstanceDisksDiskEncryptionKey(des, initial *InstanceDisksDiskE
 }
 
 func canonicalizeInstanceDisksDiskEncryptionKeySlice(des, initial []InstanceDisksDiskEncryptionKey, opts ...dcl.ApplyOption) []InstanceDisksDiskEncryptionKey {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1639,7 +1668,7 @@ func canonicalizeNewInstanceDisksDiskEncryptionKey(c *Client, des, nw *InstanceD
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceDisksDiskEncryptionKey while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1663,23 +1692,26 @@ func canonicalizeNewInstanceDisksDiskEncryptionKeySet(c *Client, des, nw []Insta
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceDisksDiskEncryptionKey
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceDisksDiskEncryptionKey
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceDisksDiskEncryptionKeyNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceDisksDiskEncryptionKey(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceDisksDiskEncryptionKeySlice(c *Client, des, nw []InstanceDisksDiskEncryptionKey) []InstanceDisksDiskEncryptionKey {
@@ -1721,12 +1753,14 @@ func canonicalizeInstanceDisksInitializeParams(des, initial *InstanceDisksInitia
 	} else {
 		cDes.DiskName = des.DiskName
 	}
-	if dcl.IsZeroValue(des.DiskSizeGb) {
+	if dcl.IsZeroValue(des.DiskSizeGb) || (dcl.IsEmptyValueIndirect(des.DiskSizeGb) && dcl.IsEmptyValueIndirect(initial.DiskSizeGb)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.DiskSizeGb = initial.DiskSizeGb
 	} else {
 		cDes.DiskSizeGb = des.DiskSizeGb
 	}
-	if dcl.NameToSelfLink(des.DiskType, initial.DiskType) || dcl.IsZeroValue(des.DiskType) {
+	if dcl.IsZeroValue(des.DiskType) || (dcl.IsEmptyValueIndirect(des.DiskType) && dcl.IsEmptyValueIndirect(initial.DiskType)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.DiskType = initial.DiskType
 	} else {
 		cDes.DiskType = des.DiskType
@@ -1742,7 +1776,7 @@ func canonicalizeInstanceDisksInitializeParams(des, initial *InstanceDisksInitia
 }
 
 func canonicalizeInstanceDisksInitializeParamsSlice(des, initial []InstanceDisksInitializeParams, opts ...dcl.ApplyOption) []InstanceDisksInitializeParams {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1776,7 +1810,7 @@ func canonicalizeNewInstanceDisksInitializeParams(c *Client, des, nw *InstanceDi
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceDisksInitializeParams while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1785,9 +1819,6 @@ func canonicalizeNewInstanceDisksInitializeParams(c *Client, des, nw *InstanceDi
 
 	if dcl.StringCanonicalize(des.DiskName, nw.DiskName) {
 		nw.DiskName = des.DiskName
-	}
-	if dcl.NameToSelfLink(des.DiskType, nw.DiskType) {
-		nw.DiskType = des.DiskType
 	}
 	if dcl.StringCanonicalize(des.SourceImage, nw.SourceImage) {
 		nw.SourceImage = des.SourceImage
@@ -1801,23 +1832,26 @@ func canonicalizeNewInstanceDisksInitializeParamsSet(c *Client, des, nw []Instan
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceDisksInitializeParams
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceDisksInitializeParams
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceDisksInitializeParamsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceDisksInitializeParams(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceDisksInitializeParamsSlice(c *Client, des, nw []InstanceDisksInitializeParams) []InstanceDisksInitializeParams {
@@ -1864,7 +1898,7 @@ func canonicalizeInstanceDisksInitializeParamsSourceImageEncryptionKey(des, init
 }
 
 func canonicalizeInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(des, initial []InstanceDisksInitializeParamsSourceImageEncryptionKey, opts ...dcl.ApplyOption) []InstanceDisksInitializeParamsSourceImageEncryptionKey {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1898,7 +1932,7 @@ func canonicalizeNewInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Cli
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceDisksInitializeParamsSourceImageEncryptionKey while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1919,23 +1953,26 @@ func canonicalizeNewInstanceDisksInitializeParamsSourceImageEncryptionKeySet(c *
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceDisksInitializeParamsSourceImageEncryptionKey
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceDisksInitializeParamsSourceImageEncryptionKey
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceDisksInitializeParamsSourceImageEncryptionKeyNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceDisksInitializeParamsSourceImageEncryptionKey(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client, des, nw []InstanceDisksInitializeParamsSourceImageEncryptionKey) []InstanceDisksInitializeParamsSourceImageEncryptionKey {
@@ -1972,7 +2009,8 @@ func canonicalizeInstanceGuestAccelerators(des, initial *InstanceGuestAccelerato
 
 	cDes := &InstanceGuestAccelerators{}
 
-	if dcl.IsZeroValue(des.AcceleratorCount) {
+	if dcl.IsZeroValue(des.AcceleratorCount) || (dcl.IsEmptyValueIndirect(des.AcceleratorCount) && dcl.IsEmptyValueIndirect(initial.AcceleratorCount)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.AcceleratorCount = initial.AcceleratorCount
 	} else {
 		cDes.AcceleratorCount = des.AcceleratorCount
@@ -2021,7 +2059,7 @@ func canonicalizeNewInstanceGuestAccelerators(c *Client, des, nw *InstanceGuestA
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceGuestAccelerators while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2039,23 +2077,26 @@ func canonicalizeNewInstanceGuestAcceleratorsSet(c *Client, des, nw []InstanceGu
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceGuestAccelerators
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceGuestAccelerators
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceGuestAcceleratorsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceGuestAccelerators(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceGuestAcceleratorsSlice(c *Client, des, nw []InstanceGuestAccelerators) []InstanceGuestAccelerators {
@@ -2095,7 +2136,8 @@ func canonicalizeInstanceNetworkInterfaces(des, initial *InstanceNetworkInterfac
 	cDes.AccessConfigs = canonicalizeInstanceNetworkInterfacesAccessConfigsSlice(des.AccessConfigs, initial.AccessConfigs, opts...)
 	cDes.IPv6AccessConfigs = canonicalizeInstanceNetworkInterfacesIPv6AccessConfigsSlice(des.IPv6AccessConfigs, initial.IPv6AccessConfigs, opts...)
 	cDes.AliasIPRanges = canonicalizeInstanceNetworkInterfacesAliasIPRangesSlice(des.AliasIPRanges, initial.AliasIPRanges, opts...)
-	if dcl.NameToSelfLink(des.Network, initial.Network) || dcl.IsZeroValue(des.Network) {
+	if dcl.IsZeroValue(des.Network) || (dcl.IsEmptyValueIndirect(des.Network) && dcl.IsEmptyValueIndirect(initial.Network)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Network = initial.Network
 	} else {
 		cDes.Network = des.Network
@@ -2105,7 +2147,8 @@ func canonicalizeInstanceNetworkInterfaces(des, initial *InstanceNetworkInterfac
 	} else {
 		cDes.NetworkIP = des.NetworkIP
 	}
-	if dcl.NameToSelfLink(des.Subnetwork, initial.Subnetwork) || dcl.IsZeroValue(des.Subnetwork) {
+	if dcl.IsZeroValue(des.Subnetwork) || (dcl.IsEmptyValueIndirect(des.Subnetwork) && dcl.IsEmptyValueIndirect(initial.Subnetwork)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Subnetwork = initial.Subnetwork
 	} else {
 		cDes.Subnetwork = des.Subnetwork
@@ -2149,7 +2192,7 @@ func canonicalizeNewInstanceNetworkInterfaces(c *Client, des, nw *InstanceNetwor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceNetworkInterfaces while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2162,14 +2205,8 @@ func canonicalizeNewInstanceNetworkInterfaces(c *Client, des, nw *InstanceNetwor
 	if dcl.StringCanonicalize(des.Name, nw.Name) {
 		nw.Name = des.Name
 	}
-	if dcl.NameToSelfLink(des.Network, nw.Network) {
-		nw.Network = des.Network
-	}
 	if dcl.StringCanonicalize(des.NetworkIP, nw.NetworkIP) {
 		nw.NetworkIP = des.NetworkIP
-	}
-	if dcl.NameToSelfLink(des.Subnetwork, nw.Subnetwork) {
-		nw.Subnetwork = des.Subnetwork
 	}
 
 	return nw
@@ -2179,23 +2216,26 @@ func canonicalizeNewInstanceNetworkInterfacesSet(c *Client, des, nw []InstanceNe
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceNetworkInterfaces
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceNetworkInterfaces
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceNetworkInterfacesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceNetworkInterfaces(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceNetworkInterfacesSlice(c *Client, des, nw []InstanceNetworkInterfaces) []InstanceNetworkInterfaces {
@@ -2237,7 +2277,8 @@ func canonicalizeInstanceNetworkInterfacesAccessConfigs(des, initial *InstanceNe
 	} else {
 		cDes.Name = des.Name
 	}
-	if dcl.NameToSelfLink(des.NatIP, initial.NatIP) || dcl.IsZeroValue(des.NatIP) {
+	if dcl.IsZeroValue(des.NatIP) || (dcl.IsEmptyValueIndirect(des.NatIP) && dcl.IsEmptyValueIndirect(initial.NatIP)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.NatIP = initial.NatIP
 	} else {
 		cDes.NatIP = des.NatIP
@@ -2252,12 +2293,14 @@ func canonicalizeInstanceNetworkInterfacesAccessConfigs(des, initial *InstanceNe
 	} else {
 		cDes.PublicPtrDomainName = des.PublicPtrDomainName
 	}
-	if dcl.IsZeroValue(des.NetworkTier) {
+	if dcl.IsZeroValue(des.NetworkTier) || (dcl.IsEmptyValueIndirect(des.NetworkTier) && dcl.IsEmptyValueIndirect(initial.NetworkTier)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.NetworkTier = initial.NetworkTier
 	} else {
 		cDes.NetworkTier = des.NetworkTier
 	}
-	if dcl.IsZeroValue(des.Type) {
+	if dcl.IsZeroValue(des.Type) || (dcl.IsEmptyValueIndirect(des.Type) && dcl.IsEmptyValueIndirect(initial.Type)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Type = initial.Type
 	} else {
 		cDes.Type = des.Type
@@ -2301,7 +2344,7 @@ func canonicalizeNewInstanceNetworkInterfacesAccessConfigs(c *Client, des, nw *I
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceNetworkInterfacesAccessConfigs while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2310,9 +2353,6 @@ func canonicalizeNewInstanceNetworkInterfacesAccessConfigs(c *Client, des, nw *I
 
 	if dcl.StringCanonicalize(des.Name, nw.Name) {
 		nw.Name = des.Name
-	}
-	if dcl.NameToSelfLink(des.NatIP, nw.NatIP) {
-		nw.NatIP = des.NatIP
 	}
 	if dcl.StringCanonicalize(des.ExternalIPv6, nw.ExternalIPv6) {
 		nw.ExternalIPv6 = des.ExternalIPv6
@@ -2334,23 +2374,26 @@ func canonicalizeNewInstanceNetworkInterfacesAccessConfigsSet(c *Client, des, nw
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceNetworkInterfacesAccessConfigs
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceNetworkInterfacesAccessConfigs
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceNetworkInterfacesAccessConfigsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceNetworkInterfacesAccessConfigs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceNetworkInterfacesAccessConfigsSlice(c *Client, des, nw []InstanceNetworkInterfacesAccessConfigs) []InstanceNetworkInterfacesAccessConfigs {
@@ -2392,7 +2435,8 @@ func canonicalizeInstanceNetworkInterfacesIPv6AccessConfigs(des, initial *Instan
 	} else {
 		cDes.Name = des.Name
 	}
-	if dcl.NameToSelfLink(des.NatIP, initial.NatIP) || dcl.IsZeroValue(des.NatIP) {
+	if dcl.IsZeroValue(des.NatIP) || (dcl.IsEmptyValueIndirect(des.NatIP) && dcl.IsEmptyValueIndirect(initial.NatIP)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.NatIP = initial.NatIP
 	} else {
 		cDes.NatIP = des.NatIP
@@ -2407,12 +2451,14 @@ func canonicalizeInstanceNetworkInterfacesIPv6AccessConfigs(des, initial *Instan
 	} else {
 		cDes.PublicPtrDomainName = des.PublicPtrDomainName
 	}
-	if dcl.IsZeroValue(des.NetworkTier) {
+	if dcl.IsZeroValue(des.NetworkTier) || (dcl.IsEmptyValueIndirect(des.NetworkTier) && dcl.IsEmptyValueIndirect(initial.NetworkTier)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.NetworkTier = initial.NetworkTier
 	} else {
 		cDes.NetworkTier = des.NetworkTier
 	}
-	if dcl.IsZeroValue(des.Type) {
+	if dcl.IsZeroValue(des.Type) || (dcl.IsEmptyValueIndirect(des.Type) && dcl.IsEmptyValueIndirect(initial.Type)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Type = initial.Type
 	} else {
 		cDes.Type = des.Type
@@ -2456,7 +2502,7 @@ func canonicalizeNewInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, des, n
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceNetworkInterfacesIPv6AccessConfigs while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2465,9 +2511,6 @@ func canonicalizeNewInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, des, n
 
 	if dcl.StringCanonicalize(des.Name, nw.Name) {
 		nw.Name = des.Name
-	}
-	if dcl.NameToSelfLink(des.NatIP, nw.NatIP) {
-		nw.NatIP = des.NatIP
 	}
 	if dcl.StringCanonicalize(des.ExternalIPv6, nw.ExternalIPv6) {
 		nw.ExternalIPv6 = des.ExternalIPv6
@@ -2489,23 +2532,26 @@ func canonicalizeNewInstanceNetworkInterfacesIPv6AccessConfigsSet(c *Client, des
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceNetworkInterfacesIPv6AccessConfigs
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceNetworkInterfacesIPv6AccessConfigs
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceNetworkInterfacesIPv6AccessConfigsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceNetworkInterfacesIPv6AccessConfigs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, des, nw []InstanceNetworkInterfacesIPv6AccessConfigs) []InstanceNetworkInterfacesIPv6AccessConfigs {
@@ -2591,7 +2637,7 @@ func canonicalizeNewInstanceNetworkInterfacesAliasIPRanges(c *Client, des, nw *I
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceNetworkInterfacesAliasIPRanges while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2612,23 +2658,26 @@ func canonicalizeNewInstanceNetworkInterfacesAliasIPRangesSet(c *Client, des, nw
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceNetworkInterfacesAliasIPRanges
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceNetworkInterfacesAliasIPRanges
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceNetworkInterfacesAliasIPRangesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceNetworkInterfacesAliasIPRanges(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, des, nw []InstanceNetworkInterfacesAliasIPRanges) []InstanceNetworkInterfacesAliasIPRanges {
@@ -2685,7 +2734,7 @@ func canonicalizeInstanceScheduling(des, initial *InstanceScheduling, opts ...dc
 }
 
 func canonicalizeInstanceSchedulingSlice(des, initial []InstanceScheduling, opts ...dcl.ApplyOption) []InstanceScheduling {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2719,7 +2768,7 @@ func canonicalizeNewInstanceScheduling(c *Client, des, nw *InstanceScheduling) *
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceScheduling while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2743,23 +2792,26 @@ func canonicalizeNewInstanceSchedulingSet(c *Client, des, nw []InstanceSchedulin
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceScheduling
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceScheduling
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceSchedulingNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceScheduling(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceSchedulingSlice(c *Client, des, nw []InstanceScheduling) []InstanceScheduling {
@@ -2801,7 +2853,7 @@ func canonicalizeInstanceServiceAccounts(des, initial *InstanceServiceAccounts, 
 	} else {
 		cDes.Email = des.Email
 	}
-	if dcl.StringArrayCanonicalize(des.Scopes, initial.Scopes) || dcl.IsZeroValue(des.Scopes) {
+	if dcl.StringArrayCanonicalize(des.Scopes, initial.Scopes) {
 		cDes.Scopes = initial.Scopes
 	} else {
 		cDes.Scopes = des.Scopes
@@ -2845,7 +2897,7 @@ func canonicalizeNewInstanceServiceAccounts(c *Client, des, nw *InstanceServiceA
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceServiceAccounts while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2866,23 +2918,26 @@ func canonicalizeNewInstanceServiceAccountsSet(c *Client, des, nw []InstanceServ
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceServiceAccounts
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceServiceAccounts
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceServiceAccountsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceServiceAccounts(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceServiceAccountsSlice(c *Client, des, nw []InstanceServiceAccounts) []InstanceServiceAccounts {
@@ -2939,7 +2994,7 @@ func canonicalizeInstanceShieldedInstanceConfig(des, initial *InstanceShieldedIn
 }
 
 func canonicalizeInstanceShieldedInstanceConfigSlice(des, initial []InstanceShieldedInstanceConfig, opts ...dcl.ApplyOption) []InstanceShieldedInstanceConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2973,7 +3028,7 @@ func canonicalizeNewInstanceShieldedInstanceConfig(c *Client, des, nw *InstanceS
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InstanceShieldedInstanceConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2997,23 +3052,26 @@ func canonicalizeNewInstanceShieldedInstanceConfigSet(c *Client, des, nw []Insta
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InstanceShieldedInstanceConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InstanceShieldedInstanceConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInstanceShieldedInstanceConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInstanceShieldedInstanceConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInstanceShieldedInstanceConfigSlice(c *Client, des, nw []InstanceShieldedInstanceConfig) []InstanceShieldedInstanceConfig {
@@ -3054,174 +3112,177 @@ func diffInstance(c *Client, desired, actual *Instance, opts ...dcl.ApplyOption)
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.CanIPForward, actual.CanIPForward, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CanIpForward")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CanIPForward, actual.CanIPForward, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CanIpForward")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CpuPlatform, actual.CpuPlatform, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CpuPlatform")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CpuPlatform, actual.CpuPlatform, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CpuPlatform")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreationTimestamp, actual.CreationTimestamp, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreationTimestamp")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreationTimestamp, actual.CreationTimestamp, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreationTimestamp")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DeletionProtection, actual.DeletionProtection, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceSetDeletionProtectionOperation")}, fn.AddNest("DeletionProtection")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DeletionProtection, actual.DeletionProtection, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceSetDeletionProtectionOperation")}, fn.AddNest("DeletionProtection")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Disks, actual.Disks, dcl.Info{Ignore: true, ObjectFunction: compareInstanceDisksNewStyle, EmptyObject: EmptyInstanceDisks, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Disks")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Disks, actual.Disks, dcl.DiffInfo{Ignore: true, ObjectFunction: compareInstanceDisksNewStyle, EmptyObject: EmptyInstanceDisks, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Disks")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.GuestAccelerators, actual.GuestAccelerators, dcl.Info{ObjectFunction: compareInstanceGuestAcceleratorsNewStyle, EmptyObject: EmptyInstanceGuestAccelerators, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("GuestAccelerators")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.GuestAccelerators, actual.GuestAccelerators, dcl.DiffInfo{ObjectFunction: compareInstanceGuestAcceleratorsNewStyle, EmptyObject: EmptyInstanceGuestAccelerators, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("GuestAccelerators")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Hostname, actual.Hostname, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Hostname")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Hostname, actual.Hostname, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Hostname")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceSetLabelsOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceSetLabelsOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Metadata, actual.Metadata, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceSetMetadataOperation")}, fn.AddNest("Metadata")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Metadata, actual.Metadata, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceSetMetadataOperation")}, fn.AddNest("Metadata")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MachineType, actual.MachineType, dcl.Info{Type: "ReferenceType", OperationSelector: machineTypeOperations()}, fn.AddNest("MachineType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MachineType, actual.MachineType, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: machineTypeOperations()}, fn.AddNest("MachineType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MinCpuPlatform, actual.MinCpuPlatform, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MinCpuPlatform")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MinCpuPlatform, actual.MinCpuPlatform, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MinCpuPlatform")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NetworkInterfaces, actual.NetworkInterfaces, dcl.Info{ObjectFunction: compareInstanceNetworkInterfacesNewStyle, EmptyObject: EmptyInstanceNetworkInterfaces, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkInterfaces")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NetworkInterfaces, actual.NetworkInterfaces, dcl.DiffInfo{ObjectFunction: compareInstanceNetworkInterfacesNewStyle, EmptyObject: EmptyInstanceNetworkInterfaces, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkInterfaces")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Scheduling, actual.Scheduling, dcl.Info{ObjectFunction: compareInstanceSchedulingNewStyle, EmptyObject: EmptyInstanceScheduling, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Scheduling")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Scheduling, actual.Scheduling, dcl.DiffInfo{ServerDefault: true, ObjectFunction: compareInstanceSchedulingNewStyle, EmptyObject: EmptyInstanceScheduling, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Scheduling")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ServiceAccounts, actual.ServiceAccounts, dcl.Info{ObjectFunction: compareInstanceServiceAccountsNewStyle, EmptyObject: EmptyInstanceServiceAccounts, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServiceAccounts")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ServiceAccounts, actual.ServiceAccounts, dcl.DiffInfo{ObjectFunction: compareInstanceServiceAccountsNewStyle, EmptyObject: EmptyInstanceServiceAccounts, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServiceAccounts")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ShieldedInstanceConfig, actual.ShieldedInstanceConfig, dcl.Info{ObjectFunction: compareInstanceShieldedInstanceConfigNewStyle, EmptyObject: EmptyInstanceShieldedInstanceConfig, OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("ShieldedInstanceConfig")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ShieldedInstanceConfig, actual.ShieldedInstanceConfig, dcl.DiffInfo{ServerDefault: true, ObjectFunction: compareInstanceShieldedInstanceConfigNewStyle, EmptyObject: EmptyInstanceShieldedInstanceConfig, OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("ShieldedInstanceConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Status, actual.Status, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Status")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Status, actual.Status, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Status")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.StatusMessage, actual.StatusMessage, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("StatusMessage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.StatusMessage, actual.StatusMessage, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("StatusMessage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Tags, actual.Tags, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceSetTagsOperation")}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Tags, actual.Tags, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceSetTagsOperation")}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Zone, actual.Zone, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Zone")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Zone, actual.Zone, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Zone")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareInstanceDisksNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -3244,70 +3305,70 @@ func compareInstanceDisksNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.Fi
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AutoDelete, actual.AutoDelete, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AutoDelete")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AutoDelete, actual.AutoDelete, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AutoDelete")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Boot, actual.Boot, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Boot")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Boot, actual.Boot, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Boot")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DeviceName, actual.DeviceName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DeviceName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DeviceName, actual.DeviceName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DeviceName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DiskEncryptionKey, actual.DiskEncryptionKey, dcl.Info{ObjectFunction: compareInstanceDisksDiskEncryptionKeyNewStyle, EmptyObject: EmptyInstanceDisksDiskEncryptionKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskEncryptionKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DiskEncryptionKey, actual.DiskEncryptionKey, dcl.DiffInfo{ObjectFunction: compareInstanceDisksDiskEncryptionKeyNewStyle, EmptyObject: EmptyInstanceDisksDiskEncryptionKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskEncryptionKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Index, actual.Index, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Index")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Index, actual.Index, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Index")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.InitializeParams, actual.InitializeParams, dcl.Info{Ignore: true, ObjectFunction: compareInstanceDisksInitializeParamsNewStyle, EmptyObject: EmptyInstanceDisksInitializeParams, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("InitializeParams")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.InitializeParams, actual.InitializeParams, dcl.DiffInfo{Ignore: true, ObjectFunction: compareInstanceDisksInitializeParamsNewStyle, EmptyObject: EmptyInstanceDisksInitializeParams, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("InitializeParams")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Interface, actual.Interface, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Interface")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Interface, actual.Interface, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Interface")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Mode, actual.Mode, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Mode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Mode, actual.Mode, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Mode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3336,21 +3397,21 @@ func compareInstanceDisksDiskEncryptionKeyNewStyle(d, a interface{}, fn dcl.Fiel
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.RawKey, actual.RawKey, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RawKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RawKey, actual.RawKey, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RawKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RsaEncryptedKey, actual.RsaEncryptedKey, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RsaEncryptedKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RsaEncryptedKey, actual.RsaEncryptedKey, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RsaEncryptedKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Sha256, actual.Sha256, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Sha256")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Sha256, actual.Sha256, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Sha256")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3379,35 +3440,35 @@ func compareInstanceDisksInitializeParamsNewStyle(d, a interface{}, fn dcl.Field
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DiskName, actual.DiskName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DiskName, actual.DiskName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DiskSizeGb, actual.DiskSizeGb, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskSizeGb")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DiskSizeGb, actual.DiskSizeGb, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskSizeGb")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DiskType, actual.DiskType, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DiskType, actual.DiskType, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DiskType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SourceImage, actual.SourceImage, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SourceImage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SourceImage, actual.SourceImage, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SourceImage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SourceImageEncryptionKey, actual.SourceImageEncryptionKey, dcl.Info{ObjectFunction: compareInstanceDisksInitializeParamsSourceImageEncryptionKeyNewStyle, EmptyObject: EmptyInstanceDisksInitializeParamsSourceImageEncryptionKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SourceImageEncryptionKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SourceImageEncryptionKey, actual.SourceImageEncryptionKey, dcl.DiffInfo{ObjectFunction: compareInstanceDisksInitializeParamsSourceImageEncryptionKeyNewStyle, EmptyObject: EmptyInstanceDisksInitializeParamsSourceImageEncryptionKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SourceImageEncryptionKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3436,14 +3497,14 @@ func compareInstanceDisksInitializeParamsSourceImageEncryptionKeyNewStyle(d, a i
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.RawKey, actual.RawKey, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RawKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RawKey, actual.RawKey, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RawKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Sha256, actual.Sha256, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Sha256")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Sha256, actual.Sha256, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Sha256")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3472,14 +3533,14 @@ func compareInstanceGuestAcceleratorsNewStyle(d, a interface{}, fn dcl.FieldName
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AcceleratorCount, actual.AcceleratorCount, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AcceleratorCount")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AcceleratorCount, actual.AcceleratorCount, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AcceleratorCount")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AcceleratorType, actual.AcceleratorType, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AcceleratorType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AcceleratorType, actual.AcceleratorType, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AcceleratorType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3508,49 +3569,49 @@ func compareInstanceNetworkInterfacesNewStyle(d, a interface{}, fn dcl.FieldName
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AccessConfigs, actual.AccessConfigs, dcl.Info{ObjectFunction: compareInstanceNetworkInterfacesAccessConfigsNewStyle, EmptyObject: EmptyInstanceNetworkInterfacesAccessConfigs, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AccessConfigs")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AccessConfigs, actual.AccessConfigs, dcl.DiffInfo{ObjectFunction: compareInstanceNetworkInterfacesAccessConfigsNewStyle, EmptyObject: EmptyInstanceNetworkInterfacesAccessConfigs, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AccessConfigs")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IPv6AccessConfigs, actual.IPv6AccessConfigs, dcl.Info{ObjectFunction: compareInstanceNetworkInterfacesIPv6AccessConfigsNewStyle, EmptyObject: EmptyInstanceNetworkInterfacesIPv6AccessConfigs, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Ipv6AccessConfigs")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IPv6AccessConfigs, actual.IPv6AccessConfigs, dcl.DiffInfo{ObjectFunction: compareInstanceNetworkInterfacesIPv6AccessConfigsNewStyle, EmptyObject: EmptyInstanceNetworkInterfacesIPv6AccessConfigs, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Ipv6AccessConfigs")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AliasIPRanges, actual.AliasIPRanges, dcl.Info{ObjectFunction: compareInstanceNetworkInterfacesAliasIPRangesNewStyle, EmptyObject: EmptyInstanceNetworkInterfacesAliasIPRanges, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AliasIPRanges")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AliasIPRanges, actual.AliasIPRanges, dcl.DiffInfo{ObjectFunction: compareInstanceNetworkInterfacesAliasIPRangesNewStyle, EmptyObject: EmptyInstanceNetworkInterfacesAliasIPRanges, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AliasIPRanges")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Network, actual.Network, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Network")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Network, actual.Network, dcl.DiffInfo{ServerDefault: true, Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Network")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NetworkIP, actual.NetworkIP, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkIP")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NetworkIP, actual.NetworkIP, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkIP")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Subnetwork, actual.Subnetwork, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Subnetwork")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Subnetwork, actual.Subnetwork, dcl.DiffInfo{ServerDefault: true, Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Subnetwork")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3579,56 +3640,56 @@ func compareInstanceNetworkInterfacesAccessConfigsNewStyle(d, a interface{}, fn 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NatIP, actual.NatIP, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NatIP")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NatIP, actual.NatIP, dcl.DiffInfo{ServerDefault: true, Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NatIP")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExternalIPv6, actual.ExternalIPv6, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExternalIPv6, actual.ExternalIPv6, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExternalIPv6PrefixLength, actual.ExternalIPv6PrefixLength, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6PrefixLength")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExternalIPv6PrefixLength, actual.ExternalIPv6PrefixLength, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6PrefixLength")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SetPublicPtr, actual.SetPublicPtr, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SetPublicPtr")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SetPublicPtr, actual.SetPublicPtr, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SetPublicPtr")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PublicPtrDomainName, actual.PublicPtrDomainName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicPtrDomainName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublicPtrDomainName, actual.PublicPtrDomainName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicPtrDomainName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NetworkTier, actual.NetworkTier, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkTier")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NetworkTier, actual.NetworkTier, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkTier")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3657,56 +3718,56 @@ func compareInstanceNetworkInterfacesIPv6AccessConfigsNewStyle(d, a interface{},
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NatIP, actual.NatIP, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NatIP")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NatIP, actual.NatIP, dcl.DiffInfo{ServerDefault: true, Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NatIP")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExternalIPv6, actual.ExternalIPv6, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExternalIPv6, actual.ExternalIPv6, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExternalIPv6PrefixLength, actual.ExternalIPv6PrefixLength, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6PrefixLength")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExternalIPv6PrefixLength, actual.ExternalIPv6PrefixLength, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExternalIPv6PrefixLength")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SetPublicPtr, actual.SetPublicPtr, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SetPublicPtr")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SetPublicPtr, actual.SetPublicPtr, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SetPublicPtr")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PublicPtrDomainName, actual.PublicPtrDomainName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicPtrDomainName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublicPtrDomainName, actual.PublicPtrDomainName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicPtrDomainName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NetworkTier, actual.NetworkTier, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkTier")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NetworkTier, actual.NetworkTier, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NetworkTier")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3735,14 +3796,14 @@ func compareInstanceNetworkInterfacesAliasIPRangesNewStyle(d, a interface{}, fn 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.IPCidrRange, actual.IPCidrRange, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IpCidrRange")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IPCidrRange, actual.IPCidrRange, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IpCidrRange")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubnetworkRangeName, actual.SubnetworkRangeName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubnetworkRangeName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubnetworkRangeName, actual.SubnetworkRangeName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubnetworkRangeName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3771,21 +3832,21 @@ func compareInstanceSchedulingNewStyle(d, a interface{}, fn dcl.FieldName) ([]*d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AutomaticRestart, actual.AutomaticRestart, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AutomaticRestart")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AutomaticRestart, actual.AutomaticRestart, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AutomaticRestart")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OnHostMaintenance, actual.OnHostMaintenance, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OnHostMaintenance")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OnHostMaintenance, actual.OnHostMaintenance, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OnHostMaintenance")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Preemptible, actual.Preemptible, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Preemptible")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Preemptible, actual.Preemptible, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Preemptible")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3814,14 +3875,14 @@ func compareInstanceServiceAccountsNewStyle(d, a interface{}, fn dcl.FieldName) 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Email, actual.Email, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Email")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Email, actual.Email, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Email")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Scopes, actual.Scopes, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Scopes")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Scopes, actual.Scopes, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Scopes")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3850,21 +3911,21 @@ func compareInstanceShieldedInstanceConfigNewStyle(d, a interface{}, fn dcl.Fiel
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.EnableSecureBoot, actual.EnableSecureBoot, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("EnableSecureBoot")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EnableSecureBoot, actual.EnableSecureBoot, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("EnableSecureBoot")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EnableVtpm, actual.EnableVtpm, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("EnableVtpm")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EnableVtpm, actual.EnableVtpm, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("EnableVtpm")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EnableIntegrityMonitoring, actual.EnableIntegrityMonitoring, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("EnableIntegrityMonitoring")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EnableIntegrityMonitoring, actual.EnableIntegrityMonitoring, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInstanceUpdateShieldedInstanceConfigOperation")}, fn.AddNest("EnableIntegrityMonitoring")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3996,15 +4057,15 @@ func (r *Instance) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalInstance decodes JSON responses into the Instance resource schema.
-func unmarshalInstance(b []byte, c *Client) (*Instance, error) {
+func unmarshalInstance(b []byte, c *Client, res *Instance) (*Instance, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapInstance(m, c)
+	return unmarshalMapInstance(m, c, res)
 }
 
-func unmarshalMapInstance(m map[string]interface{}, c *Client) (*Instance, error) {
+func unmarshalMapInstance(m map[string]interface{}, c *Client, res *Instance) (*Instance, error) {
 	if v, err := dcl.MapFromListOfKeyValues(m, []string{"metadata", "items"}, "key", "value"); err != nil {
 		return nil, err
 	} else {
@@ -4020,7 +4081,7 @@ func unmarshalMapInstance(m map[string]interface{}, c *Client) (*Instance, error
 		[]string{"tags"},
 	)
 
-	flattened := flattenInstance(c, m)
+	flattened := flattenInstance(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -4030,6 +4091,8 @@ func unmarshalMapInstance(m map[string]interface{}, c *Client) (*Instance, error
 // expandInstance expands Instance into a JSON request object.
 func expandInstance(c *Client, f *Instance) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.CanIPForward; dcl.ValueShouldBeSent(v) {
 		m["canIpForward"] = v
 	}
@@ -4039,14 +4102,14 @@ func expandInstance(c *Client, f *Instance) (map[string]interface{}, error) {
 	if v := f.Description; dcl.ValueShouldBeSent(v) {
 		m["description"] = v
 	}
-	if v, err := expandInstanceDisksSlice(c, f.Disks); err != nil {
+	if v, err := expandInstanceDisksSlice(c, f.Disks, res); err != nil {
 		return nil, fmt.Errorf("error expanding Disks into disks: %w", err)
-	} else {
+	} else if v != nil {
 		m["disks"] = v
 	}
-	if v, err := expandInstanceGuestAcceleratorsSlice(c, f.GuestAccelerators); err != nil {
+	if v, err := expandInstanceGuestAcceleratorsSlice(c, f.GuestAccelerators, res); err != nil {
 		return nil, fmt.Errorf("error expanding GuestAccelerators into guestAccelerators: %w", err)
-	} else {
+	} else if v != nil {
 		m["guestAccelerators"] = v
 	}
 	if v := f.Hostname; dcl.ValueShouldBeSent(v) {
@@ -4057,10 +4120,12 @@ func expandInstance(c *Client, f *Instance) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.ListOfKeyValuesFromMapInStruct(f.Metadata, "items", "key", "value"); err != nil {
 		return nil, fmt.Errorf("error expanding Metadata into metadata: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["metadata"] = v
 	}
-	if v := f.MachineType; dcl.ValueShouldBeSent(v) {
+	if v, err := dcl.DeriveFromPattern("zones/%s/machineTypes/%s", f.MachineType, dcl.SelfLinkToName(f.Zone), f.MachineType); err != nil {
+		return nil, fmt.Errorf("error expanding MachineType into machineType: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["machineType"] = v
 	}
 	if v := f.MinCpuPlatform; dcl.ValueShouldBeSent(v) {
@@ -4069,36 +4134,38 @@ func expandInstance(c *Client, f *Instance) (map[string]interface{}, error) {
 	if v := f.Name; dcl.ValueShouldBeSent(v) {
 		m["name"] = v
 	}
-	if v, err := expandInstanceNetworkInterfacesSlice(c, f.NetworkInterfaces); err != nil {
+	if v, err := expandInstanceNetworkInterfacesSlice(c, f.NetworkInterfaces, res); err != nil {
 		return nil, fmt.Errorf("error expanding NetworkInterfaces into networkInterfaces: %w", err)
-	} else {
+	} else if v != nil {
 		m["networkInterfaces"] = v
 	}
-	if v, err := expandInstanceScheduling(c, f.Scheduling); err != nil {
+	if v, err := expandInstanceScheduling(c, f.Scheduling, res); err != nil {
 		return nil, fmt.Errorf("error expanding Scheduling into scheduling: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["scheduling"] = v
 	}
-	if v, err := expandInstanceServiceAccountsSlice(c, f.ServiceAccounts); err != nil {
+	if v, err := expandInstanceServiceAccountsSlice(c, f.ServiceAccounts, res); err != nil {
 		return nil, fmt.Errorf("error expanding ServiceAccounts into serviceAccounts: %w", err)
-	} else {
+	} else if v != nil {
 		m["serviceAccounts"] = v
 	}
-	if v, err := expandInstanceShieldedInstanceConfig(c, f.ShieldedInstanceConfig); err != nil {
+	if v, err := expandInstanceShieldedInstanceConfig(c, f.ShieldedInstanceConfig, res); err != nil {
 		return nil, fmt.Errorf("error expanding ShieldedInstanceConfig into shieldedInstanceConfig: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["shieldedInstanceConfig"] = v
 	}
 	if v := f.Status; dcl.ValueShouldBeSent(v) {
 		m["status"] = v
 	}
-	m["tags"] = f.Tags
+	if v := f.Tags; v != nil {
+		m["tags"] = v
+	}
 	if v := f.Zone; dcl.ValueShouldBeSent(v) {
 		m["zone"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 
@@ -4107,7 +4174,7 @@ func expandInstance(c *Client, f *Instance) (map[string]interface{}, error) {
 
 // flattenInstance flattens Instance from a JSON request object into the
 // Instance type.
-func flattenInstance(c *Client, i interface{}) *Instance {
+func flattenInstance(c *Client, i interface{}, res *Instance) *Instance {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4116,45 +4183,45 @@ func flattenInstance(c *Client, i interface{}) *Instance {
 		return nil
 	}
 
-	res := &Instance{}
-	res.CanIPForward = dcl.FlattenBool(m["canIpForward"])
-	res.CpuPlatform = dcl.FlattenString(m["cpuPlatform"])
-	res.CreationTimestamp = dcl.FlattenString(m["creationTimestamp"])
-	res.DeletionProtection = dcl.FlattenBool(m["deletionProtection"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.Disks = flattenInstanceDisksSlice(c, m["disks"])
-	res.GuestAccelerators = flattenInstanceGuestAcceleratorsSlice(c, m["guestAccelerators"])
-	res.Hostname = dcl.FlattenString(m["hostname"])
-	res.Id = dcl.FlattenString(m["id"])
-	res.Labels = dcl.FlattenKeyValuePairs(m["labels"])
-	res.Metadata = dcl.FlattenKeyValuePairs(m["metadata"])
-	res.MachineType = dcl.FlattenString(m["machineType"])
-	res.MinCpuPlatform = dcl.FlattenString(m["minCpuPlatform"])
-	res.Name = dcl.FlattenString(m["name"])
-	res.NetworkInterfaces = flattenInstanceNetworkInterfacesSlice(c, m["networkInterfaces"])
-	res.Scheduling = flattenInstanceScheduling(c, m["scheduling"])
-	res.ServiceAccounts = flattenInstanceServiceAccountsSlice(c, m["serviceAccounts"])
-	res.ShieldedInstanceConfig = flattenInstanceShieldedInstanceConfig(c, m["shieldedInstanceConfig"])
-	res.Status = flattenInstanceStatusEnum(m["status"])
-	res.StatusMessage = dcl.FlattenString(m["statusMessage"])
-	res.Tags = dcl.FlattenStringSlice(m["tags"])
-	res.Zone = dcl.FlattenString(m["zone"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.SelfLink = dcl.FlattenString(m["selfLink"])
+	resultRes := &Instance{}
+	resultRes.CanIPForward = dcl.FlattenBool(m["canIpForward"])
+	resultRes.CpuPlatform = dcl.FlattenString(m["cpuPlatform"])
+	resultRes.CreationTimestamp = dcl.FlattenString(m["creationTimestamp"])
+	resultRes.DeletionProtection = dcl.FlattenBool(m["deletionProtection"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.Disks = flattenInstanceDisksSlice(c, m["disks"], res)
+	resultRes.GuestAccelerators = flattenInstanceGuestAcceleratorsSlice(c, m["guestAccelerators"], res)
+	resultRes.Hostname = dcl.FlattenString(m["hostname"])
+	resultRes.Id = dcl.FlattenString(m["id"])
+	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
+	resultRes.Metadata = dcl.FlattenKeyValuePairs(m["metadata"])
+	resultRes.MachineType = dcl.FlattenString(m["machineType"])
+	resultRes.MinCpuPlatform = dcl.FlattenString(m["minCpuPlatform"])
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.NetworkInterfaces = flattenInstanceNetworkInterfacesSlice(c, m["networkInterfaces"], res)
+	resultRes.Scheduling = flattenInstanceScheduling(c, m["scheduling"], res)
+	resultRes.ServiceAccounts = flattenInstanceServiceAccountsSlice(c, m["serviceAccounts"], res)
+	resultRes.ShieldedInstanceConfig = flattenInstanceShieldedInstanceConfig(c, m["shieldedInstanceConfig"], res)
+	resultRes.Status = flattenInstanceStatusEnum(m["status"])
+	resultRes.StatusMessage = dcl.FlattenString(m["statusMessage"])
+	resultRes.Tags = dcl.FlattenStringSlice(m["tags"])
+	resultRes.Zone = dcl.FlattenString(m["zone"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.SelfLink = dcl.FlattenString(m["selfLink"])
 
-	return res
+	return resultRes
 }
 
 // expandInstanceDisksMap expands the contents of InstanceDisks into a JSON
 // request object.
-func expandInstanceDisksMap(c *Client, f map[string]InstanceDisks) (map[string]interface{}, error) {
+func expandInstanceDisksMap(c *Client, f map[string]InstanceDisks, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceDisks(c, &item)
+		i, err := expandInstanceDisks(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4168,14 +4235,14 @@ func expandInstanceDisksMap(c *Client, f map[string]InstanceDisks) (map[string]i
 
 // expandInstanceDisksSlice expands the contents of InstanceDisks into a JSON
 // request object.
-func expandInstanceDisksSlice(c *Client, f []InstanceDisks) ([]map[string]interface{}, error) {
+func expandInstanceDisksSlice(c *Client, f []InstanceDisks, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceDisks(c, &item)
+		i, err := expandInstanceDisks(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4188,7 +4255,7 @@ func expandInstanceDisksSlice(c *Client, f []InstanceDisks) ([]map[string]interf
 
 // flattenInstanceDisksMap flattens the contents of InstanceDisks from a JSON
 // response object.
-func flattenInstanceDisksMap(c *Client, i interface{}) map[string]InstanceDisks {
+func flattenInstanceDisksMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisks {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisks{}
@@ -4200,7 +4267,7 @@ func flattenInstanceDisksMap(c *Client, i interface{}) map[string]InstanceDisks 
 
 	items := make(map[string]InstanceDisks)
 	for k, item := range a {
-		items[k] = *flattenInstanceDisks(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceDisks(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4208,7 +4275,7 @@ func flattenInstanceDisksMap(c *Client, i interface{}) map[string]InstanceDisks 
 
 // flattenInstanceDisksSlice flattens the contents of InstanceDisks from a JSON
 // response object.
-func flattenInstanceDisksSlice(c *Client, i interface{}) []InstanceDisks {
+func flattenInstanceDisksSlice(c *Client, i interface{}, res *Instance) []InstanceDisks {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisks{}
@@ -4220,7 +4287,7 @@ func flattenInstanceDisksSlice(c *Client, i interface{}) []InstanceDisks {
 
 	items := make([]InstanceDisks, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceDisks(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceDisks(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4228,8 +4295,8 @@ func flattenInstanceDisksSlice(c *Client, i interface{}) []InstanceDisks {
 
 // expandInstanceDisks expands an instance of InstanceDisks into a JSON
 // request object.
-func expandInstanceDisks(c *Client, f *InstanceDisks) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceDisks(c *Client, f *InstanceDisks, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -4243,7 +4310,7 @@ func expandInstanceDisks(c *Client, f *InstanceDisks) (map[string]interface{}, e
 	if v := f.DeviceName; !dcl.IsEmptyValueIndirect(v) {
 		m["deviceName"] = v
 	}
-	if v, err := expandInstanceDisksDiskEncryptionKey(c, f.DiskEncryptionKey); err != nil {
+	if v, err := expandInstanceDisksDiskEncryptionKey(c, f.DiskEncryptionKey, res); err != nil {
 		return nil, fmt.Errorf("error expanding DiskEncryptionKey into diskEncryptionKey: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["diskEncryptionKey"] = v
@@ -4251,7 +4318,7 @@ func expandInstanceDisks(c *Client, f *InstanceDisks) (map[string]interface{}, e
 	if v := f.Index; !dcl.IsEmptyValueIndirect(v) {
 		m["index"] = v
 	}
-	if v, err := expandInstanceDisksInitializeParams(c, f.InitializeParams); err != nil {
+	if v, err := expandInstanceDisksInitializeParams(c, f.InitializeParams, res); err != nil {
 		return nil, fmt.Errorf("error expanding InitializeParams into initializeParams: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["initializeParams"] = v
@@ -4274,7 +4341,7 @@ func expandInstanceDisks(c *Client, f *InstanceDisks) (map[string]interface{}, e
 
 // flattenInstanceDisks flattens an instance of InstanceDisks from a JSON
 // response object.
-func flattenInstanceDisks(c *Client, i interface{}) *InstanceDisks {
+func flattenInstanceDisks(c *Client, i interface{}, res *Instance) *InstanceDisks {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4288,9 +4355,9 @@ func flattenInstanceDisks(c *Client, i interface{}) *InstanceDisks {
 	r.AutoDelete = dcl.FlattenBool(m["autoDelete"])
 	r.Boot = dcl.FlattenBool(m["boot"])
 	r.DeviceName = dcl.FlattenString(m["deviceName"])
-	r.DiskEncryptionKey = flattenInstanceDisksDiskEncryptionKey(c, m["diskEncryptionKey"])
+	r.DiskEncryptionKey = flattenInstanceDisksDiskEncryptionKey(c, m["diskEncryptionKey"], res)
 	r.Index = dcl.FlattenInteger(m["index"])
-	r.InitializeParams = flattenInstanceDisksInitializeParams(c, m["initializeParams"])
+	r.InitializeParams = flattenInstanceDisksInitializeParams(c, m["initializeParams"], res)
 	r.Interface = flattenInstanceDisksInterfaceEnum(m["interface"])
 	r.Mode = flattenInstanceDisksModeEnum(m["mode"])
 	r.Source = dcl.FlattenString(m["source"])
@@ -4301,14 +4368,14 @@ func flattenInstanceDisks(c *Client, i interface{}) *InstanceDisks {
 
 // expandInstanceDisksDiskEncryptionKeyMap expands the contents of InstanceDisksDiskEncryptionKey into a JSON
 // request object.
-func expandInstanceDisksDiskEncryptionKeyMap(c *Client, f map[string]InstanceDisksDiskEncryptionKey) (map[string]interface{}, error) {
+func expandInstanceDisksDiskEncryptionKeyMap(c *Client, f map[string]InstanceDisksDiskEncryptionKey, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceDisksDiskEncryptionKey(c, &item)
+		i, err := expandInstanceDisksDiskEncryptionKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4322,14 +4389,14 @@ func expandInstanceDisksDiskEncryptionKeyMap(c *Client, f map[string]InstanceDis
 
 // expandInstanceDisksDiskEncryptionKeySlice expands the contents of InstanceDisksDiskEncryptionKey into a JSON
 // request object.
-func expandInstanceDisksDiskEncryptionKeySlice(c *Client, f []InstanceDisksDiskEncryptionKey) ([]map[string]interface{}, error) {
+func expandInstanceDisksDiskEncryptionKeySlice(c *Client, f []InstanceDisksDiskEncryptionKey, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceDisksDiskEncryptionKey(c, &item)
+		i, err := expandInstanceDisksDiskEncryptionKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4342,7 +4409,7 @@ func expandInstanceDisksDiskEncryptionKeySlice(c *Client, f []InstanceDisksDiskE
 
 // flattenInstanceDisksDiskEncryptionKeyMap flattens the contents of InstanceDisksDiskEncryptionKey from a JSON
 // response object.
-func flattenInstanceDisksDiskEncryptionKeyMap(c *Client, i interface{}) map[string]InstanceDisksDiskEncryptionKey {
+func flattenInstanceDisksDiskEncryptionKeyMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisksDiskEncryptionKey {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisksDiskEncryptionKey{}
@@ -4354,7 +4421,7 @@ func flattenInstanceDisksDiskEncryptionKeyMap(c *Client, i interface{}) map[stri
 
 	items := make(map[string]InstanceDisksDiskEncryptionKey)
 	for k, item := range a {
-		items[k] = *flattenInstanceDisksDiskEncryptionKey(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceDisksDiskEncryptionKey(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4362,7 +4429,7 @@ func flattenInstanceDisksDiskEncryptionKeyMap(c *Client, i interface{}) map[stri
 
 // flattenInstanceDisksDiskEncryptionKeySlice flattens the contents of InstanceDisksDiskEncryptionKey from a JSON
 // response object.
-func flattenInstanceDisksDiskEncryptionKeySlice(c *Client, i interface{}) []InstanceDisksDiskEncryptionKey {
+func flattenInstanceDisksDiskEncryptionKeySlice(c *Client, i interface{}, res *Instance) []InstanceDisksDiskEncryptionKey {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisksDiskEncryptionKey{}
@@ -4374,7 +4441,7 @@ func flattenInstanceDisksDiskEncryptionKeySlice(c *Client, i interface{}) []Inst
 
 	items := make([]InstanceDisksDiskEncryptionKey, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceDisksDiskEncryptionKey(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceDisksDiskEncryptionKey(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4382,7 +4449,7 @@ func flattenInstanceDisksDiskEncryptionKeySlice(c *Client, i interface{}) []Inst
 
 // expandInstanceDisksDiskEncryptionKey expands an instance of InstanceDisksDiskEncryptionKey into a JSON
 // request object.
-func expandInstanceDisksDiskEncryptionKey(c *Client, f *InstanceDisksDiskEncryptionKey) (map[string]interface{}, error) {
+func expandInstanceDisksDiskEncryptionKey(c *Client, f *InstanceDisksDiskEncryptionKey, res *Instance) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4400,7 +4467,7 @@ func expandInstanceDisksDiskEncryptionKey(c *Client, f *InstanceDisksDiskEncrypt
 
 // flattenInstanceDisksDiskEncryptionKey flattens an instance of InstanceDisksDiskEncryptionKey from a JSON
 // response object.
-func flattenInstanceDisksDiskEncryptionKey(c *Client, i interface{}) *InstanceDisksDiskEncryptionKey {
+func flattenInstanceDisksDiskEncryptionKey(c *Client, i interface{}, res *Instance) *InstanceDisksDiskEncryptionKey {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4420,14 +4487,14 @@ func flattenInstanceDisksDiskEncryptionKey(c *Client, i interface{}) *InstanceDi
 
 // expandInstanceDisksInitializeParamsMap expands the contents of InstanceDisksInitializeParams into a JSON
 // request object.
-func expandInstanceDisksInitializeParamsMap(c *Client, f map[string]InstanceDisksInitializeParams) (map[string]interface{}, error) {
+func expandInstanceDisksInitializeParamsMap(c *Client, f map[string]InstanceDisksInitializeParams, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceDisksInitializeParams(c, &item)
+		i, err := expandInstanceDisksInitializeParams(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4441,14 +4508,14 @@ func expandInstanceDisksInitializeParamsMap(c *Client, f map[string]InstanceDisk
 
 // expandInstanceDisksInitializeParamsSlice expands the contents of InstanceDisksInitializeParams into a JSON
 // request object.
-func expandInstanceDisksInitializeParamsSlice(c *Client, f []InstanceDisksInitializeParams) ([]map[string]interface{}, error) {
+func expandInstanceDisksInitializeParamsSlice(c *Client, f []InstanceDisksInitializeParams, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceDisksInitializeParams(c, &item)
+		i, err := expandInstanceDisksInitializeParams(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4461,7 +4528,7 @@ func expandInstanceDisksInitializeParamsSlice(c *Client, f []InstanceDisksInitia
 
 // flattenInstanceDisksInitializeParamsMap flattens the contents of InstanceDisksInitializeParams from a JSON
 // response object.
-func flattenInstanceDisksInitializeParamsMap(c *Client, i interface{}) map[string]InstanceDisksInitializeParams {
+func flattenInstanceDisksInitializeParamsMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisksInitializeParams {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisksInitializeParams{}
@@ -4473,7 +4540,7 @@ func flattenInstanceDisksInitializeParamsMap(c *Client, i interface{}) map[strin
 
 	items := make(map[string]InstanceDisksInitializeParams)
 	for k, item := range a {
-		items[k] = *flattenInstanceDisksInitializeParams(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceDisksInitializeParams(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4481,7 +4548,7 @@ func flattenInstanceDisksInitializeParamsMap(c *Client, i interface{}) map[strin
 
 // flattenInstanceDisksInitializeParamsSlice flattens the contents of InstanceDisksInitializeParams from a JSON
 // response object.
-func flattenInstanceDisksInitializeParamsSlice(c *Client, i interface{}) []InstanceDisksInitializeParams {
+func flattenInstanceDisksInitializeParamsSlice(c *Client, i interface{}, res *Instance) []InstanceDisksInitializeParams {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisksInitializeParams{}
@@ -4493,7 +4560,7 @@ func flattenInstanceDisksInitializeParamsSlice(c *Client, i interface{}) []Insta
 
 	items := make([]InstanceDisksInitializeParams, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceDisksInitializeParams(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceDisksInitializeParams(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4501,7 +4568,7 @@ func flattenInstanceDisksInitializeParamsSlice(c *Client, i interface{}) []Insta
 
 // expandInstanceDisksInitializeParams expands an instance of InstanceDisksInitializeParams into a JSON
 // request object.
-func expandInstanceDisksInitializeParams(c *Client, f *InstanceDisksInitializeParams) (map[string]interface{}, error) {
+func expandInstanceDisksInitializeParams(c *Client, f *InstanceDisksInitializeParams, res *Instance) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4519,7 +4586,7 @@ func expandInstanceDisksInitializeParams(c *Client, f *InstanceDisksInitializePa
 	if v := f.SourceImage; !dcl.IsEmptyValueIndirect(v) {
 		m["sourceImage"] = v
 	}
-	if v, err := expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c, f.SourceImageEncryptionKey); err != nil {
+	if v, err := expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c, f.SourceImageEncryptionKey, res); err != nil {
 		return nil, fmt.Errorf("error expanding SourceImageEncryptionKey into sourceImageEncryptionKey: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["sourceImageEncryptionKey"] = v
@@ -4530,7 +4597,7 @@ func expandInstanceDisksInitializeParams(c *Client, f *InstanceDisksInitializePa
 
 // flattenInstanceDisksInitializeParams flattens an instance of InstanceDisksInitializeParams from a JSON
 // response object.
-func flattenInstanceDisksInitializeParams(c *Client, i interface{}) *InstanceDisksInitializeParams {
+func flattenInstanceDisksInitializeParams(c *Client, i interface{}, res *Instance) *InstanceDisksInitializeParams {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4545,21 +4612,21 @@ func flattenInstanceDisksInitializeParams(c *Client, i interface{}) *InstanceDis
 	r.DiskSizeGb = dcl.FlattenInteger(m["diskSizeGb"])
 	r.DiskType = dcl.FlattenString(m["diskType"])
 	r.SourceImage = dcl.FlattenString(m["sourceImage"])
-	r.SourceImageEncryptionKey = flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c, m["sourceImageEncryptionKey"])
+	r.SourceImageEncryptionKey = flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c, m["sourceImageEncryptionKey"], res)
 
 	return r
 }
 
 // expandInstanceDisksInitializeParamsSourceImageEncryptionKeyMap expands the contents of InstanceDisksInitializeParamsSourceImageEncryptionKey into a JSON
 // request object.
-func expandInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, f map[string]InstanceDisksInitializeParamsSourceImageEncryptionKey) (map[string]interface{}, error) {
+func expandInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, f map[string]InstanceDisksInitializeParamsSourceImageEncryptionKey, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c, &item)
+		i, err := expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4573,14 +4640,14 @@ func expandInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, f
 
 // expandInstanceDisksInitializeParamsSourceImageEncryptionKeySlice expands the contents of InstanceDisksInitializeParamsSourceImageEncryptionKey into a JSON
 // request object.
-func expandInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client, f []InstanceDisksInitializeParamsSourceImageEncryptionKey) ([]map[string]interface{}, error) {
+func expandInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client, f []InstanceDisksInitializeParamsSourceImageEncryptionKey, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c, &item)
+		i, err := expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4593,7 +4660,7 @@ func expandInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client,
 
 // flattenInstanceDisksInitializeParamsSourceImageEncryptionKeyMap flattens the contents of InstanceDisksInitializeParamsSourceImageEncryptionKey from a JSON
 // response object.
-func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, i interface{}) map[string]InstanceDisksInitializeParamsSourceImageEncryptionKey {
+func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisksInitializeParamsSourceImageEncryptionKey {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisksInitializeParamsSourceImageEncryptionKey{}
@@ -4605,7 +4672,7 @@ func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, 
 
 	items := make(map[string]InstanceDisksInitializeParamsSourceImageEncryptionKey)
 	for k, item := range a {
-		items[k] = *flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4613,7 +4680,7 @@ func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeyMap(c *Client, 
 
 // flattenInstanceDisksInitializeParamsSourceImageEncryptionKeySlice flattens the contents of InstanceDisksInitializeParamsSourceImageEncryptionKey from a JSON
 // response object.
-func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client, i interface{}) []InstanceDisksInitializeParamsSourceImageEncryptionKey {
+func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client, i interface{}, res *Instance) []InstanceDisksInitializeParamsSourceImageEncryptionKey {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisksInitializeParamsSourceImageEncryptionKey{}
@@ -4625,7 +4692,7 @@ func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client
 
 	items := make([]InstanceDisksInitializeParamsSourceImageEncryptionKey, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4633,7 +4700,7 @@ func flattenInstanceDisksInitializeParamsSourceImageEncryptionKeySlice(c *Client
 
 // expandInstanceDisksInitializeParamsSourceImageEncryptionKey expands an instance of InstanceDisksInitializeParamsSourceImageEncryptionKey into a JSON
 // request object.
-func expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Client, f *InstanceDisksInitializeParamsSourceImageEncryptionKey) (map[string]interface{}, error) {
+func expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Client, f *InstanceDisksInitializeParamsSourceImageEncryptionKey, res *Instance) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4648,7 +4715,7 @@ func expandInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Client, f *I
 
 // flattenInstanceDisksInitializeParamsSourceImageEncryptionKey flattens an instance of InstanceDisksInitializeParamsSourceImageEncryptionKey from a JSON
 // response object.
-func flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Client, i interface{}) *InstanceDisksInitializeParamsSourceImageEncryptionKey {
+func flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Client, i interface{}, res *Instance) *InstanceDisksInitializeParamsSourceImageEncryptionKey {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4667,14 +4734,14 @@ func flattenInstanceDisksInitializeParamsSourceImageEncryptionKey(c *Client, i i
 
 // expandInstanceGuestAcceleratorsMap expands the contents of InstanceGuestAccelerators into a JSON
 // request object.
-func expandInstanceGuestAcceleratorsMap(c *Client, f map[string]InstanceGuestAccelerators) (map[string]interface{}, error) {
+func expandInstanceGuestAcceleratorsMap(c *Client, f map[string]InstanceGuestAccelerators, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceGuestAccelerators(c, &item)
+		i, err := expandInstanceGuestAccelerators(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4688,14 +4755,14 @@ func expandInstanceGuestAcceleratorsMap(c *Client, f map[string]InstanceGuestAcc
 
 // expandInstanceGuestAcceleratorsSlice expands the contents of InstanceGuestAccelerators into a JSON
 // request object.
-func expandInstanceGuestAcceleratorsSlice(c *Client, f []InstanceGuestAccelerators) ([]map[string]interface{}, error) {
+func expandInstanceGuestAcceleratorsSlice(c *Client, f []InstanceGuestAccelerators, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceGuestAccelerators(c, &item)
+		i, err := expandInstanceGuestAccelerators(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4708,7 +4775,7 @@ func expandInstanceGuestAcceleratorsSlice(c *Client, f []InstanceGuestAccelerato
 
 // flattenInstanceGuestAcceleratorsMap flattens the contents of InstanceGuestAccelerators from a JSON
 // response object.
-func flattenInstanceGuestAcceleratorsMap(c *Client, i interface{}) map[string]InstanceGuestAccelerators {
+func flattenInstanceGuestAcceleratorsMap(c *Client, i interface{}, res *Instance) map[string]InstanceGuestAccelerators {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceGuestAccelerators{}
@@ -4720,7 +4787,7 @@ func flattenInstanceGuestAcceleratorsMap(c *Client, i interface{}) map[string]In
 
 	items := make(map[string]InstanceGuestAccelerators)
 	for k, item := range a {
-		items[k] = *flattenInstanceGuestAccelerators(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceGuestAccelerators(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4728,7 +4795,7 @@ func flattenInstanceGuestAcceleratorsMap(c *Client, i interface{}) map[string]In
 
 // flattenInstanceGuestAcceleratorsSlice flattens the contents of InstanceGuestAccelerators from a JSON
 // response object.
-func flattenInstanceGuestAcceleratorsSlice(c *Client, i interface{}) []InstanceGuestAccelerators {
+func flattenInstanceGuestAcceleratorsSlice(c *Client, i interface{}, res *Instance) []InstanceGuestAccelerators {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceGuestAccelerators{}
@@ -4740,7 +4807,7 @@ func flattenInstanceGuestAcceleratorsSlice(c *Client, i interface{}) []InstanceG
 
 	items := make([]InstanceGuestAccelerators, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceGuestAccelerators(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceGuestAccelerators(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4748,8 +4815,8 @@ func flattenInstanceGuestAcceleratorsSlice(c *Client, i interface{}) []InstanceG
 
 // expandInstanceGuestAccelerators expands an instance of InstanceGuestAccelerators into a JSON
 // request object.
-func expandInstanceGuestAccelerators(c *Client, f *InstanceGuestAccelerators) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceGuestAccelerators(c *Client, f *InstanceGuestAccelerators, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -4766,7 +4833,7 @@ func expandInstanceGuestAccelerators(c *Client, f *InstanceGuestAccelerators) (m
 
 // flattenInstanceGuestAccelerators flattens an instance of InstanceGuestAccelerators from a JSON
 // response object.
-func flattenInstanceGuestAccelerators(c *Client, i interface{}) *InstanceGuestAccelerators {
+func flattenInstanceGuestAccelerators(c *Client, i interface{}, res *Instance) *InstanceGuestAccelerators {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4785,14 +4852,14 @@ func flattenInstanceGuestAccelerators(c *Client, i interface{}) *InstanceGuestAc
 
 // expandInstanceNetworkInterfacesMap expands the contents of InstanceNetworkInterfaces into a JSON
 // request object.
-func expandInstanceNetworkInterfacesMap(c *Client, f map[string]InstanceNetworkInterfaces) (map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesMap(c *Client, f map[string]InstanceNetworkInterfaces, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceNetworkInterfaces(c, &item)
+		i, err := expandInstanceNetworkInterfaces(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4806,14 +4873,14 @@ func expandInstanceNetworkInterfacesMap(c *Client, f map[string]InstanceNetworkI
 
 // expandInstanceNetworkInterfacesSlice expands the contents of InstanceNetworkInterfaces into a JSON
 // request object.
-func expandInstanceNetworkInterfacesSlice(c *Client, f []InstanceNetworkInterfaces) ([]map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesSlice(c *Client, f []InstanceNetworkInterfaces, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceNetworkInterfaces(c, &item)
+		i, err := expandInstanceNetworkInterfaces(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4826,7 +4893,7 @@ func expandInstanceNetworkInterfacesSlice(c *Client, f []InstanceNetworkInterfac
 
 // flattenInstanceNetworkInterfacesMap flattens the contents of InstanceNetworkInterfaces from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesMap(c *Client, i interface{}) map[string]InstanceNetworkInterfaces {
+func flattenInstanceNetworkInterfacesMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfaces {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfaces{}
@@ -4838,7 +4905,7 @@ func flattenInstanceNetworkInterfacesMap(c *Client, i interface{}) map[string]In
 
 	items := make(map[string]InstanceNetworkInterfaces)
 	for k, item := range a {
-		items[k] = *flattenInstanceNetworkInterfaces(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceNetworkInterfaces(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4846,7 +4913,7 @@ func flattenInstanceNetworkInterfacesMap(c *Client, i interface{}) map[string]In
 
 // flattenInstanceNetworkInterfacesSlice flattens the contents of InstanceNetworkInterfaces from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesSlice(c *Client, i interface{}) []InstanceNetworkInterfaces {
+func flattenInstanceNetworkInterfacesSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfaces {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfaces{}
@@ -4858,7 +4925,7 @@ func flattenInstanceNetworkInterfacesSlice(c *Client, i interface{}) []InstanceN
 
 	items := make([]InstanceNetworkInterfaces, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceNetworkInterfaces(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceNetworkInterfaces(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4866,23 +4933,23 @@ func flattenInstanceNetworkInterfacesSlice(c *Client, i interface{}) []InstanceN
 
 // expandInstanceNetworkInterfaces expands an instance of InstanceNetworkInterfaces into a JSON
 // request object.
-func expandInstanceNetworkInterfaces(c *Client, f *InstanceNetworkInterfaces) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceNetworkInterfaces(c *Client, f *InstanceNetworkInterfaces, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandInstanceNetworkInterfacesAccessConfigsSlice(c, f.AccessConfigs); err != nil {
+	if v, err := expandInstanceNetworkInterfacesAccessConfigsSlice(c, f.AccessConfigs, res); err != nil {
 		return nil, fmt.Errorf("error expanding AccessConfigs into accessConfigs: %w", err)
 	} else if v != nil {
 		m["accessConfigs"] = v
 	}
-	if v, err := expandInstanceNetworkInterfacesIPv6AccessConfigsSlice(c, f.IPv6AccessConfigs); err != nil {
+	if v, err := expandInstanceNetworkInterfacesIPv6AccessConfigsSlice(c, f.IPv6AccessConfigs, res); err != nil {
 		return nil, fmt.Errorf("error expanding IPv6AccessConfigs into ipv6AccessConfigs: %w", err)
 	} else if v != nil {
 		m["ipv6AccessConfigs"] = v
 	}
-	if v, err := expandInstanceNetworkInterfacesAliasIPRangesSlice(c, f.AliasIPRanges); err != nil {
+	if v, err := expandInstanceNetworkInterfacesAliasIPRangesSlice(c, f.AliasIPRanges, res); err != nil {
 		return nil, fmt.Errorf("error expanding AliasIPRanges into aliasIPRanges: %w", err)
 	} else if v != nil {
 		m["aliasIPRanges"] = v
@@ -4902,7 +4969,7 @@ func expandInstanceNetworkInterfaces(c *Client, f *InstanceNetworkInterfaces) (m
 
 // flattenInstanceNetworkInterfaces flattens an instance of InstanceNetworkInterfaces from a JSON
 // response object.
-func flattenInstanceNetworkInterfaces(c *Client, i interface{}) *InstanceNetworkInterfaces {
+func flattenInstanceNetworkInterfaces(c *Client, i interface{}, res *Instance) *InstanceNetworkInterfaces {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4913,9 +4980,9 @@ func flattenInstanceNetworkInterfaces(c *Client, i interface{}) *InstanceNetwork
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyInstanceNetworkInterfaces
 	}
-	r.AccessConfigs = flattenInstanceNetworkInterfacesAccessConfigsSlice(c, m["accessConfigs"])
-	r.IPv6AccessConfigs = flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice(c, m["ipv6AccessConfigs"])
-	r.AliasIPRanges = flattenInstanceNetworkInterfacesAliasIPRangesSlice(c, m["aliasIPRanges"])
+	r.AccessConfigs = flattenInstanceNetworkInterfacesAccessConfigsSlice(c, m["accessConfigs"], res)
+	r.IPv6AccessConfigs = flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice(c, m["ipv6AccessConfigs"], res)
+	r.AliasIPRanges = flattenInstanceNetworkInterfacesAliasIPRangesSlice(c, m["aliasIPRanges"], res)
 	r.Name = dcl.FlattenString(m["name"])
 	r.Network = dcl.FlattenString(m["network"])
 	r.NetworkIP = dcl.FlattenString(m["networkIP"])
@@ -4926,14 +4993,14 @@ func flattenInstanceNetworkInterfaces(c *Client, i interface{}) *InstanceNetwork
 
 // expandInstanceNetworkInterfacesAccessConfigsMap expands the contents of InstanceNetworkInterfacesAccessConfigs into a JSON
 // request object.
-func expandInstanceNetworkInterfacesAccessConfigsMap(c *Client, f map[string]InstanceNetworkInterfacesAccessConfigs) (map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesAccessConfigsMap(c *Client, f map[string]InstanceNetworkInterfacesAccessConfigs, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceNetworkInterfacesAccessConfigs(c, &item)
+		i, err := expandInstanceNetworkInterfacesAccessConfigs(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4947,14 +5014,14 @@ func expandInstanceNetworkInterfacesAccessConfigsMap(c *Client, f map[string]Ins
 
 // expandInstanceNetworkInterfacesAccessConfigsSlice expands the contents of InstanceNetworkInterfacesAccessConfigs into a JSON
 // request object.
-func expandInstanceNetworkInterfacesAccessConfigsSlice(c *Client, f []InstanceNetworkInterfacesAccessConfigs) ([]map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesAccessConfigsSlice(c *Client, f []InstanceNetworkInterfacesAccessConfigs, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceNetworkInterfacesAccessConfigs(c, &item)
+		i, err := expandInstanceNetworkInterfacesAccessConfigs(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4967,7 +5034,7 @@ func expandInstanceNetworkInterfacesAccessConfigsSlice(c *Client, f []InstanceNe
 
 // flattenInstanceNetworkInterfacesAccessConfigsMap flattens the contents of InstanceNetworkInterfacesAccessConfigs from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigsMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesAccessConfigs {
+func flattenInstanceNetworkInterfacesAccessConfigsMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesAccessConfigs {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesAccessConfigs{}
@@ -4979,7 +5046,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsMap(c *Client, i interface{}) 
 
 	items := make(map[string]InstanceNetworkInterfacesAccessConfigs)
 	for k, item := range a {
-		items[k] = *flattenInstanceNetworkInterfacesAccessConfigs(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceNetworkInterfacesAccessConfigs(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4987,7 +5054,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsMap(c *Client, i interface{}) 
 
 // flattenInstanceNetworkInterfacesAccessConfigsSlice flattens the contents of InstanceNetworkInterfacesAccessConfigs from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigsSlice(c *Client, i interface{}) []InstanceNetworkInterfacesAccessConfigs {
+func flattenInstanceNetworkInterfacesAccessConfigsSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesAccessConfigs {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesAccessConfigs{}
@@ -4999,7 +5066,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsSlice(c *Client, i interface{}
 
 	items := make([]InstanceNetworkInterfacesAccessConfigs, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceNetworkInterfacesAccessConfigs(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceNetworkInterfacesAccessConfigs(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5007,8 +5074,8 @@ func flattenInstanceNetworkInterfacesAccessConfigsSlice(c *Client, i interface{}
 
 // expandInstanceNetworkInterfacesAccessConfigs expands an instance of InstanceNetworkInterfacesAccessConfigs into a JSON
 // request object.
-func expandInstanceNetworkInterfacesAccessConfigs(c *Client, f *InstanceNetworkInterfacesAccessConfigs) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceNetworkInterfacesAccessConfigs(c *Client, f *InstanceNetworkInterfacesAccessConfigs, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -5037,7 +5104,7 @@ func expandInstanceNetworkInterfacesAccessConfigs(c *Client, f *InstanceNetworkI
 
 // flattenInstanceNetworkInterfacesAccessConfigs flattens an instance of InstanceNetworkInterfacesAccessConfigs from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigs(c *Client, i interface{}) *InstanceNetworkInterfacesAccessConfigs {
+func flattenInstanceNetworkInterfacesAccessConfigs(c *Client, i interface{}, res *Instance) *InstanceNetworkInterfacesAccessConfigs {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5062,14 +5129,14 @@ func flattenInstanceNetworkInterfacesAccessConfigs(c *Client, i interface{}) *In
 
 // expandInstanceNetworkInterfacesIPv6AccessConfigsMap expands the contents of InstanceNetworkInterfacesIPv6AccessConfigs into a JSON
 // request object.
-func expandInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, f map[string]InstanceNetworkInterfacesIPv6AccessConfigs) (map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, f map[string]InstanceNetworkInterfacesIPv6AccessConfigs, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceNetworkInterfacesIPv6AccessConfigs(c, &item)
+		i, err := expandInstanceNetworkInterfacesIPv6AccessConfigs(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5083,14 +5150,14 @@ func expandInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, f map[string
 
 // expandInstanceNetworkInterfacesIPv6AccessConfigsSlice expands the contents of InstanceNetworkInterfacesIPv6AccessConfigs into a JSON
 // request object.
-func expandInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, f []InstanceNetworkInterfacesIPv6AccessConfigs) ([]map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, f []InstanceNetworkInterfacesIPv6AccessConfigs, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceNetworkInterfacesIPv6AccessConfigs(c, &item)
+		i, err := expandInstanceNetworkInterfacesIPv6AccessConfigs(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5103,7 +5170,7 @@ func expandInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, f []Instan
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigsMap flattens the contents of InstanceNetworkInterfacesIPv6AccessConfigs from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesIPv6AccessConfigs {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesIPv6AccessConfigs {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesIPv6AccessConfigs{}
@@ -5115,7 +5182,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, i interface
 
 	items := make(map[string]InstanceNetworkInterfacesIPv6AccessConfigs)
 	for k, item := range a {
-		items[k] = *flattenInstanceNetworkInterfacesIPv6AccessConfigs(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceNetworkInterfacesIPv6AccessConfigs(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5123,7 +5190,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsMap(c *Client, i interface
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice flattens the contents of InstanceNetworkInterfacesIPv6AccessConfigs from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, i interface{}) []InstanceNetworkInterfacesIPv6AccessConfigs {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesIPv6AccessConfigs {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesIPv6AccessConfigs{}
@@ -5135,7 +5202,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, i interfa
 
 	items := make([]InstanceNetworkInterfacesIPv6AccessConfigs, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceNetworkInterfacesIPv6AccessConfigs(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceNetworkInterfacesIPv6AccessConfigs(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5143,8 +5210,8 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsSlice(c *Client, i interfa
 
 // expandInstanceNetworkInterfacesIPv6AccessConfigs expands an instance of InstanceNetworkInterfacesIPv6AccessConfigs into a JSON
 // request object.
-func expandInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, f *InstanceNetworkInterfacesIPv6AccessConfigs) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, f *InstanceNetworkInterfacesIPv6AccessConfigs, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -5173,7 +5240,7 @@ func expandInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, f *InstanceNetw
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigs flattens an instance of InstanceNetworkInterfacesIPv6AccessConfigs from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, i interface{}) *InstanceNetworkInterfacesIPv6AccessConfigs {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, i interface{}, res *Instance) *InstanceNetworkInterfacesIPv6AccessConfigs {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5198,14 +5265,14 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigs(c *Client, i interface{})
 
 // expandInstanceNetworkInterfacesAliasIPRangesMap expands the contents of InstanceNetworkInterfacesAliasIPRanges into a JSON
 // request object.
-func expandInstanceNetworkInterfacesAliasIPRangesMap(c *Client, f map[string]InstanceNetworkInterfacesAliasIPRanges) (map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesAliasIPRangesMap(c *Client, f map[string]InstanceNetworkInterfacesAliasIPRanges, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceNetworkInterfacesAliasIPRanges(c, &item)
+		i, err := expandInstanceNetworkInterfacesAliasIPRanges(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5219,14 +5286,14 @@ func expandInstanceNetworkInterfacesAliasIPRangesMap(c *Client, f map[string]Ins
 
 // expandInstanceNetworkInterfacesAliasIPRangesSlice expands the contents of InstanceNetworkInterfacesAliasIPRanges into a JSON
 // request object.
-func expandInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, f []InstanceNetworkInterfacesAliasIPRanges) ([]map[string]interface{}, error) {
+func expandInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, f []InstanceNetworkInterfacesAliasIPRanges, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceNetworkInterfacesAliasIPRanges(c, &item)
+		i, err := expandInstanceNetworkInterfacesAliasIPRanges(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5239,7 +5306,7 @@ func expandInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, f []InstanceNe
 
 // flattenInstanceNetworkInterfacesAliasIPRangesMap flattens the contents of InstanceNetworkInterfacesAliasIPRanges from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAliasIPRangesMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesAliasIPRanges {
+func flattenInstanceNetworkInterfacesAliasIPRangesMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesAliasIPRanges {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesAliasIPRanges{}
@@ -5251,7 +5318,7 @@ func flattenInstanceNetworkInterfacesAliasIPRangesMap(c *Client, i interface{}) 
 
 	items := make(map[string]InstanceNetworkInterfacesAliasIPRanges)
 	for k, item := range a {
-		items[k] = *flattenInstanceNetworkInterfacesAliasIPRanges(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceNetworkInterfacesAliasIPRanges(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5259,7 +5326,7 @@ func flattenInstanceNetworkInterfacesAliasIPRangesMap(c *Client, i interface{}) 
 
 // flattenInstanceNetworkInterfacesAliasIPRangesSlice flattens the contents of InstanceNetworkInterfacesAliasIPRanges from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, i interface{}) []InstanceNetworkInterfacesAliasIPRanges {
+func flattenInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesAliasIPRanges {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesAliasIPRanges{}
@@ -5271,7 +5338,7 @@ func flattenInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, i interface{}
 
 	items := make([]InstanceNetworkInterfacesAliasIPRanges, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceNetworkInterfacesAliasIPRanges(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceNetworkInterfacesAliasIPRanges(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5279,8 +5346,8 @@ func flattenInstanceNetworkInterfacesAliasIPRangesSlice(c *Client, i interface{}
 
 // expandInstanceNetworkInterfacesAliasIPRanges expands an instance of InstanceNetworkInterfacesAliasIPRanges into a JSON
 // request object.
-func expandInstanceNetworkInterfacesAliasIPRanges(c *Client, f *InstanceNetworkInterfacesAliasIPRanges) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceNetworkInterfacesAliasIPRanges(c *Client, f *InstanceNetworkInterfacesAliasIPRanges, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -5297,7 +5364,7 @@ func expandInstanceNetworkInterfacesAliasIPRanges(c *Client, f *InstanceNetworkI
 
 // flattenInstanceNetworkInterfacesAliasIPRanges flattens an instance of InstanceNetworkInterfacesAliasIPRanges from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAliasIPRanges(c *Client, i interface{}) *InstanceNetworkInterfacesAliasIPRanges {
+func flattenInstanceNetworkInterfacesAliasIPRanges(c *Client, i interface{}, res *Instance) *InstanceNetworkInterfacesAliasIPRanges {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5316,14 +5383,14 @@ func flattenInstanceNetworkInterfacesAliasIPRanges(c *Client, i interface{}) *In
 
 // expandInstanceSchedulingMap expands the contents of InstanceScheduling into a JSON
 // request object.
-func expandInstanceSchedulingMap(c *Client, f map[string]InstanceScheduling) (map[string]interface{}, error) {
+func expandInstanceSchedulingMap(c *Client, f map[string]InstanceScheduling, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceScheduling(c, &item)
+		i, err := expandInstanceScheduling(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5337,14 +5404,14 @@ func expandInstanceSchedulingMap(c *Client, f map[string]InstanceScheduling) (ma
 
 // expandInstanceSchedulingSlice expands the contents of InstanceScheduling into a JSON
 // request object.
-func expandInstanceSchedulingSlice(c *Client, f []InstanceScheduling) ([]map[string]interface{}, error) {
+func expandInstanceSchedulingSlice(c *Client, f []InstanceScheduling, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceScheduling(c, &item)
+		i, err := expandInstanceScheduling(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5357,7 +5424,7 @@ func expandInstanceSchedulingSlice(c *Client, f []InstanceScheduling) ([]map[str
 
 // flattenInstanceSchedulingMap flattens the contents of InstanceScheduling from a JSON
 // response object.
-func flattenInstanceSchedulingMap(c *Client, i interface{}) map[string]InstanceScheduling {
+func flattenInstanceSchedulingMap(c *Client, i interface{}, res *Instance) map[string]InstanceScheduling {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceScheduling{}
@@ -5369,7 +5436,7 @@ func flattenInstanceSchedulingMap(c *Client, i interface{}) map[string]InstanceS
 
 	items := make(map[string]InstanceScheduling)
 	for k, item := range a {
-		items[k] = *flattenInstanceScheduling(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceScheduling(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5377,7 +5444,7 @@ func flattenInstanceSchedulingMap(c *Client, i interface{}) map[string]InstanceS
 
 // flattenInstanceSchedulingSlice flattens the contents of InstanceScheduling from a JSON
 // response object.
-func flattenInstanceSchedulingSlice(c *Client, i interface{}) []InstanceScheduling {
+func flattenInstanceSchedulingSlice(c *Client, i interface{}, res *Instance) []InstanceScheduling {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceScheduling{}
@@ -5389,7 +5456,7 @@ func flattenInstanceSchedulingSlice(c *Client, i interface{}) []InstanceScheduli
 
 	items := make([]InstanceScheduling, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceScheduling(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceScheduling(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5397,7 +5464,7 @@ func flattenInstanceSchedulingSlice(c *Client, i interface{}) []InstanceScheduli
 
 // expandInstanceScheduling expands an instance of InstanceScheduling into a JSON
 // request object.
-func expandInstanceScheduling(c *Client, f *InstanceScheduling) (map[string]interface{}, error) {
+func expandInstanceScheduling(c *Client, f *InstanceScheduling, res *Instance) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -5418,7 +5485,7 @@ func expandInstanceScheduling(c *Client, f *InstanceScheduling) (map[string]inte
 
 // flattenInstanceScheduling flattens an instance of InstanceScheduling from a JSON
 // response object.
-func flattenInstanceScheduling(c *Client, i interface{}) *InstanceScheduling {
+func flattenInstanceScheduling(c *Client, i interface{}, res *Instance) *InstanceScheduling {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5438,14 +5505,14 @@ func flattenInstanceScheduling(c *Client, i interface{}) *InstanceScheduling {
 
 // expandInstanceServiceAccountsMap expands the contents of InstanceServiceAccounts into a JSON
 // request object.
-func expandInstanceServiceAccountsMap(c *Client, f map[string]InstanceServiceAccounts) (map[string]interface{}, error) {
+func expandInstanceServiceAccountsMap(c *Client, f map[string]InstanceServiceAccounts, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceServiceAccounts(c, &item)
+		i, err := expandInstanceServiceAccounts(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5459,14 +5526,14 @@ func expandInstanceServiceAccountsMap(c *Client, f map[string]InstanceServiceAcc
 
 // expandInstanceServiceAccountsSlice expands the contents of InstanceServiceAccounts into a JSON
 // request object.
-func expandInstanceServiceAccountsSlice(c *Client, f []InstanceServiceAccounts) ([]map[string]interface{}, error) {
+func expandInstanceServiceAccountsSlice(c *Client, f []InstanceServiceAccounts, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceServiceAccounts(c, &item)
+		i, err := expandInstanceServiceAccounts(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5479,7 +5546,7 @@ func expandInstanceServiceAccountsSlice(c *Client, f []InstanceServiceAccounts) 
 
 // flattenInstanceServiceAccountsMap flattens the contents of InstanceServiceAccounts from a JSON
 // response object.
-func flattenInstanceServiceAccountsMap(c *Client, i interface{}) map[string]InstanceServiceAccounts {
+func flattenInstanceServiceAccountsMap(c *Client, i interface{}, res *Instance) map[string]InstanceServiceAccounts {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceServiceAccounts{}
@@ -5491,7 +5558,7 @@ func flattenInstanceServiceAccountsMap(c *Client, i interface{}) map[string]Inst
 
 	items := make(map[string]InstanceServiceAccounts)
 	for k, item := range a {
-		items[k] = *flattenInstanceServiceAccounts(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceServiceAccounts(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5499,7 +5566,7 @@ func flattenInstanceServiceAccountsMap(c *Client, i interface{}) map[string]Inst
 
 // flattenInstanceServiceAccountsSlice flattens the contents of InstanceServiceAccounts from a JSON
 // response object.
-func flattenInstanceServiceAccountsSlice(c *Client, i interface{}) []InstanceServiceAccounts {
+func flattenInstanceServiceAccountsSlice(c *Client, i interface{}, res *Instance) []InstanceServiceAccounts {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceServiceAccounts{}
@@ -5511,7 +5578,7 @@ func flattenInstanceServiceAccountsSlice(c *Client, i interface{}) []InstanceSer
 
 	items := make([]InstanceServiceAccounts, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceServiceAccounts(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceServiceAccounts(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5519,8 +5586,8 @@ func flattenInstanceServiceAccountsSlice(c *Client, i interface{}) []InstanceSer
 
 // expandInstanceServiceAccounts expands an instance of InstanceServiceAccounts into a JSON
 // request object.
-func expandInstanceServiceAccounts(c *Client, f *InstanceServiceAccounts) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandInstanceServiceAccounts(c *Client, f *InstanceServiceAccounts, res *Instance) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -5537,7 +5604,7 @@ func expandInstanceServiceAccounts(c *Client, f *InstanceServiceAccounts) (map[s
 
 // flattenInstanceServiceAccounts flattens an instance of InstanceServiceAccounts from a JSON
 // response object.
-func flattenInstanceServiceAccounts(c *Client, i interface{}) *InstanceServiceAccounts {
+func flattenInstanceServiceAccounts(c *Client, i interface{}, res *Instance) *InstanceServiceAccounts {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5556,14 +5623,14 @@ func flattenInstanceServiceAccounts(c *Client, i interface{}) *InstanceServiceAc
 
 // expandInstanceShieldedInstanceConfigMap expands the contents of InstanceShieldedInstanceConfig into a JSON
 // request object.
-func expandInstanceShieldedInstanceConfigMap(c *Client, f map[string]InstanceShieldedInstanceConfig) (map[string]interface{}, error) {
+func expandInstanceShieldedInstanceConfigMap(c *Client, f map[string]InstanceShieldedInstanceConfig, res *Instance) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInstanceShieldedInstanceConfig(c, &item)
+		i, err := expandInstanceShieldedInstanceConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5577,14 +5644,14 @@ func expandInstanceShieldedInstanceConfigMap(c *Client, f map[string]InstanceShi
 
 // expandInstanceShieldedInstanceConfigSlice expands the contents of InstanceShieldedInstanceConfig into a JSON
 // request object.
-func expandInstanceShieldedInstanceConfigSlice(c *Client, f []InstanceShieldedInstanceConfig) ([]map[string]interface{}, error) {
+func expandInstanceShieldedInstanceConfigSlice(c *Client, f []InstanceShieldedInstanceConfig, res *Instance) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInstanceShieldedInstanceConfig(c, &item)
+		i, err := expandInstanceShieldedInstanceConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5597,7 +5664,7 @@ func expandInstanceShieldedInstanceConfigSlice(c *Client, f []InstanceShieldedIn
 
 // flattenInstanceShieldedInstanceConfigMap flattens the contents of InstanceShieldedInstanceConfig from a JSON
 // response object.
-func flattenInstanceShieldedInstanceConfigMap(c *Client, i interface{}) map[string]InstanceShieldedInstanceConfig {
+func flattenInstanceShieldedInstanceConfigMap(c *Client, i interface{}, res *Instance) map[string]InstanceShieldedInstanceConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceShieldedInstanceConfig{}
@@ -5609,7 +5676,7 @@ func flattenInstanceShieldedInstanceConfigMap(c *Client, i interface{}) map[stri
 
 	items := make(map[string]InstanceShieldedInstanceConfig)
 	for k, item := range a {
-		items[k] = *flattenInstanceShieldedInstanceConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenInstanceShieldedInstanceConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5617,7 +5684,7 @@ func flattenInstanceShieldedInstanceConfigMap(c *Client, i interface{}) map[stri
 
 // flattenInstanceShieldedInstanceConfigSlice flattens the contents of InstanceShieldedInstanceConfig from a JSON
 // response object.
-func flattenInstanceShieldedInstanceConfigSlice(c *Client, i interface{}) []InstanceShieldedInstanceConfig {
+func flattenInstanceShieldedInstanceConfigSlice(c *Client, i interface{}, res *Instance) []InstanceShieldedInstanceConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceShieldedInstanceConfig{}
@@ -5629,7 +5696,7 @@ func flattenInstanceShieldedInstanceConfigSlice(c *Client, i interface{}) []Inst
 
 	items := make([]InstanceShieldedInstanceConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInstanceShieldedInstanceConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenInstanceShieldedInstanceConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5637,7 +5704,7 @@ func flattenInstanceShieldedInstanceConfigSlice(c *Client, i interface{}) []Inst
 
 // expandInstanceShieldedInstanceConfig expands an instance of InstanceShieldedInstanceConfig into a JSON
 // request object.
-func expandInstanceShieldedInstanceConfig(c *Client, f *InstanceShieldedInstanceConfig) (map[string]interface{}, error) {
+func expandInstanceShieldedInstanceConfig(c *Client, f *InstanceShieldedInstanceConfig, res *Instance) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -5658,7 +5725,7 @@ func expandInstanceShieldedInstanceConfig(c *Client, f *InstanceShieldedInstance
 
 // flattenInstanceShieldedInstanceConfig flattens an instance of InstanceShieldedInstanceConfig from a JSON
 // response object.
-func flattenInstanceShieldedInstanceConfig(c *Client, i interface{}) *InstanceShieldedInstanceConfig {
+func flattenInstanceShieldedInstanceConfig(c *Client, i interface{}, res *Instance) *InstanceShieldedInstanceConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5678,7 +5745,7 @@ func flattenInstanceShieldedInstanceConfig(c *Client, i interface{}) *InstanceSh
 
 // flattenInstanceDisksInterfaceEnumMap flattens the contents of InstanceDisksInterfaceEnum from a JSON
 // response object.
-func flattenInstanceDisksInterfaceEnumMap(c *Client, i interface{}) map[string]InstanceDisksInterfaceEnum {
+func flattenInstanceDisksInterfaceEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisksInterfaceEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisksInterfaceEnum{}
@@ -5698,7 +5765,7 @@ func flattenInstanceDisksInterfaceEnumMap(c *Client, i interface{}) map[string]I
 
 // flattenInstanceDisksInterfaceEnumSlice flattens the contents of InstanceDisksInterfaceEnum from a JSON
 // response object.
-func flattenInstanceDisksInterfaceEnumSlice(c *Client, i interface{}) []InstanceDisksInterfaceEnum {
+func flattenInstanceDisksInterfaceEnumSlice(c *Client, i interface{}, res *Instance) []InstanceDisksInterfaceEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisksInterfaceEnum{}
@@ -5721,7 +5788,7 @@ func flattenInstanceDisksInterfaceEnumSlice(c *Client, i interface{}) []Instance
 func flattenInstanceDisksInterfaceEnum(i interface{}) *InstanceDisksInterfaceEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceDisksInterfaceEnumRef("")
+		return nil
 	}
 
 	return InstanceDisksInterfaceEnumRef(s)
@@ -5729,7 +5796,7 @@ func flattenInstanceDisksInterfaceEnum(i interface{}) *InstanceDisksInterfaceEnu
 
 // flattenInstanceDisksModeEnumMap flattens the contents of InstanceDisksModeEnum from a JSON
 // response object.
-func flattenInstanceDisksModeEnumMap(c *Client, i interface{}) map[string]InstanceDisksModeEnum {
+func flattenInstanceDisksModeEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisksModeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisksModeEnum{}
@@ -5749,7 +5816,7 @@ func flattenInstanceDisksModeEnumMap(c *Client, i interface{}) map[string]Instan
 
 // flattenInstanceDisksModeEnumSlice flattens the contents of InstanceDisksModeEnum from a JSON
 // response object.
-func flattenInstanceDisksModeEnumSlice(c *Client, i interface{}) []InstanceDisksModeEnum {
+func flattenInstanceDisksModeEnumSlice(c *Client, i interface{}, res *Instance) []InstanceDisksModeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisksModeEnum{}
@@ -5772,7 +5839,7 @@ func flattenInstanceDisksModeEnumSlice(c *Client, i interface{}) []InstanceDisks
 func flattenInstanceDisksModeEnum(i interface{}) *InstanceDisksModeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceDisksModeEnumRef("")
+		return nil
 	}
 
 	return InstanceDisksModeEnumRef(s)
@@ -5780,7 +5847,7 @@ func flattenInstanceDisksModeEnum(i interface{}) *InstanceDisksModeEnum {
 
 // flattenInstanceDisksTypeEnumMap flattens the contents of InstanceDisksTypeEnum from a JSON
 // response object.
-func flattenInstanceDisksTypeEnumMap(c *Client, i interface{}) map[string]InstanceDisksTypeEnum {
+func flattenInstanceDisksTypeEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceDisksTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceDisksTypeEnum{}
@@ -5800,7 +5867,7 @@ func flattenInstanceDisksTypeEnumMap(c *Client, i interface{}) map[string]Instan
 
 // flattenInstanceDisksTypeEnumSlice flattens the contents of InstanceDisksTypeEnum from a JSON
 // response object.
-func flattenInstanceDisksTypeEnumSlice(c *Client, i interface{}) []InstanceDisksTypeEnum {
+func flattenInstanceDisksTypeEnumSlice(c *Client, i interface{}, res *Instance) []InstanceDisksTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceDisksTypeEnum{}
@@ -5823,7 +5890,7 @@ func flattenInstanceDisksTypeEnumSlice(c *Client, i interface{}) []InstanceDisks
 func flattenInstanceDisksTypeEnum(i interface{}) *InstanceDisksTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceDisksTypeEnumRef("")
+		return nil
 	}
 
 	return InstanceDisksTypeEnumRef(s)
@@ -5831,7 +5898,7 @@ func flattenInstanceDisksTypeEnum(i interface{}) *InstanceDisksTypeEnum {
 
 // flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumMap flattens the contents of InstanceNetworkInterfacesAccessConfigsNetworkTierEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesAccessConfigsNetworkTierEnum {
+func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesAccessConfigsNetworkTierEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesAccessConfigsNetworkTierEnum{}
@@ -5851,7 +5918,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumMap(c *Client, 
 
 // flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumSlice flattens the contents of InstanceNetworkInterfacesAccessConfigsNetworkTierEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumSlice(c *Client, i interface{}) []InstanceNetworkInterfacesAccessConfigsNetworkTierEnum {
+func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesAccessConfigsNetworkTierEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesAccessConfigsNetworkTierEnum{}
@@ -5874,7 +5941,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnumSlice(c *Client
 func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnum(i interface{}) *InstanceNetworkInterfacesAccessConfigsNetworkTierEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceNetworkInterfacesAccessConfigsNetworkTierEnumRef("")
+		return nil
 	}
 
 	return InstanceNetworkInterfacesAccessConfigsNetworkTierEnumRef(s)
@@ -5882,7 +5949,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsNetworkTierEnum(i interface{})
 
 // flattenInstanceNetworkInterfacesAccessConfigsTypeEnumMap flattens the contents of InstanceNetworkInterfacesAccessConfigsTypeEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigsTypeEnumMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesAccessConfigsTypeEnum {
+func flattenInstanceNetworkInterfacesAccessConfigsTypeEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesAccessConfigsTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesAccessConfigsTypeEnum{}
@@ -5902,7 +5969,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsTypeEnumMap(c *Client, i inter
 
 // flattenInstanceNetworkInterfacesAccessConfigsTypeEnumSlice flattens the contents of InstanceNetworkInterfacesAccessConfigsTypeEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesAccessConfigsTypeEnumSlice(c *Client, i interface{}) []InstanceNetworkInterfacesAccessConfigsTypeEnum {
+func flattenInstanceNetworkInterfacesAccessConfigsTypeEnumSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesAccessConfigsTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesAccessConfigsTypeEnum{}
@@ -5925,7 +5992,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsTypeEnumSlice(c *Client, i int
 func flattenInstanceNetworkInterfacesAccessConfigsTypeEnum(i interface{}) *InstanceNetworkInterfacesAccessConfigsTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceNetworkInterfacesAccessConfigsTypeEnumRef("")
+		return nil
 	}
 
 	return InstanceNetworkInterfacesAccessConfigsTypeEnumRef(s)
@@ -5933,7 +6000,7 @@ func flattenInstanceNetworkInterfacesAccessConfigsTypeEnum(i interface{}) *Insta
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumMap flattens the contents of InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum{}
@@ -5953,7 +6020,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumMap(c *Clie
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumSlice flattens the contents of InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumSlice(c *Client, i interface{}) []InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum{}
@@ -5976,7 +6043,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumSlice(c *Cl
 func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum(i interface{}) *InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumRef("")
+		return nil
 	}
 
 	return InstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnumRef(s)
@@ -5984,7 +6051,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsNetworkTierEnum(i interfac
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumMap flattens the contents of InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumMap(c *Client, i interface{}) map[string]InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum{}
@@ -6004,7 +6071,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumMap(c *Client, i i
 
 // flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumSlice flattens the contents of InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum from a JSON
 // response object.
-func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumSlice(c *Client, i interface{}) []InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum {
+func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumSlice(c *Client, i interface{}, res *Instance) []InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum{}
@@ -6027,7 +6094,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnumSlice(c *Client, i
 func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnum(i interface{}) *InstanceNetworkInterfacesIPv6AccessConfigsTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceNetworkInterfacesIPv6AccessConfigsTypeEnumRef("")
+		return nil
 	}
 
 	return InstanceNetworkInterfacesIPv6AccessConfigsTypeEnumRef(s)
@@ -6035,7 +6102,7 @@ func flattenInstanceNetworkInterfacesIPv6AccessConfigsTypeEnum(i interface{}) *I
 
 // flattenInstanceStatusEnumMap flattens the contents of InstanceStatusEnum from a JSON
 // response object.
-func flattenInstanceStatusEnumMap(c *Client, i interface{}) map[string]InstanceStatusEnum {
+func flattenInstanceStatusEnumMap(c *Client, i interface{}, res *Instance) map[string]InstanceStatusEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InstanceStatusEnum{}
@@ -6055,7 +6122,7 @@ func flattenInstanceStatusEnumMap(c *Client, i interface{}) map[string]InstanceS
 
 // flattenInstanceStatusEnumSlice flattens the contents of InstanceStatusEnum from a JSON
 // response object.
-func flattenInstanceStatusEnumSlice(c *Client, i interface{}) []InstanceStatusEnum {
+func flattenInstanceStatusEnumSlice(c *Client, i interface{}, res *Instance) []InstanceStatusEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InstanceStatusEnum{}
@@ -6078,7 +6145,7 @@ func flattenInstanceStatusEnumSlice(c *Client, i interface{}) []InstanceStatusEn
 func flattenInstanceStatusEnum(i interface{}) *InstanceStatusEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InstanceStatusEnumRef("")
+		return nil
 	}
 
 	return InstanceStatusEnumRef(s)
@@ -6089,7 +6156,7 @@ func flattenInstanceStatusEnum(i interface{}) *InstanceStatusEnum {
 // identity).  This is useful in extracting the element from a List call.
 func (r *Instance) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalInstance(b, c)
+		cr, err := unmarshalInstance(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -6130,6 +6197,7 @@ type instanceDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         instanceApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToInstanceDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]instanceDiff, error) {
@@ -6149,7 +6217,8 @@ func convertFieldDiffsToInstanceDiffs(config *dcl.Config, fds []*dcl.FieldDiff, 
 	var diffs []instanceDiff
 	// For each operation name, create a instanceDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := instanceDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := instanceDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -6208,7 +6277,7 @@ func extractInstanceFields(r *Instance) error {
 	if err := extractInstanceSchedulingFields(r, vScheduling); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vScheduling) {
+	if !dcl.IsEmptyValueIndirect(vScheduling) {
 		r.Scheduling = vScheduling
 	}
 	vShieldedInstanceConfig := r.ShieldedInstanceConfig
@@ -6219,7 +6288,7 @@ func extractInstanceFields(r *Instance) error {
 	if err := extractInstanceShieldedInstanceConfigFields(r, vShieldedInstanceConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vShieldedInstanceConfig) {
+	if !dcl.IsEmptyValueIndirect(vShieldedInstanceConfig) {
 		r.ShieldedInstanceConfig = vShieldedInstanceConfig
 	}
 	return nil
@@ -6233,7 +6302,7 @@ func extractInstanceDisksFields(r *Instance, o *InstanceDisks) error {
 	if err := extractInstanceDisksDiskEncryptionKeyFields(r, vDiskEncryptionKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDiskEncryptionKey) {
+	if !dcl.IsEmptyValueIndirect(vDiskEncryptionKey) {
 		o.DiskEncryptionKey = vDiskEncryptionKey
 	}
 	vInitializeParams := o.InitializeParams
@@ -6244,7 +6313,7 @@ func extractInstanceDisksFields(r *Instance, o *InstanceDisks) error {
 	if err := extractInstanceDisksInitializeParamsFields(r, vInitializeParams); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vInitializeParams) {
+	if !dcl.IsEmptyValueIndirect(vInitializeParams) {
 		o.InitializeParams = vInitializeParams
 	}
 	return nil
@@ -6261,7 +6330,7 @@ func extractInstanceDisksInitializeParamsFields(r *Instance, o *InstanceDisksIni
 	if err := extractInstanceDisksInitializeParamsSourceImageEncryptionKeyFields(r, vSourceImageEncryptionKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSourceImageEncryptionKey) {
+	if !dcl.IsEmptyValueIndirect(vSourceImageEncryptionKey) {
 		o.SourceImageEncryptionKey = vSourceImageEncryptionKey
 	}
 	return nil
@@ -6303,7 +6372,7 @@ func postReadExtractInstanceFields(r *Instance) error {
 	if err := postReadExtractInstanceSchedulingFields(r, vScheduling); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vScheduling) {
+	if !dcl.IsEmptyValueIndirect(vScheduling) {
 		r.Scheduling = vScheduling
 	}
 	vShieldedInstanceConfig := r.ShieldedInstanceConfig
@@ -6314,7 +6383,7 @@ func postReadExtractInstanceFields(r *Instance) error {
 	if err := postReadExtractInstanceShieldedInstanceConfigFields(r, vShieldedInstanceConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vShieldedInstanceConfig) {
+	if !dcl.IsEmptyValueIndirect(vShieldedInstanceConfig) {
 		r.ShieldedInstanceConfig = vShieldedInstanceConfig
 	}
 	return nil
@@ -6328,7 +6397,7 @@ func postReadExtractInstanceDisksFields(r *Instance, o *InstanceDisks) error {
 	if err := extractInstanceDisksDiskEncryptionKeyFields(r, vDiskEncryptionKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDiskEncryptionKey) {
+	if !dcl.IsEmptyValueIndirect(vDiskEncryptionKey) {
 		o.DiskEncryptionKey = vDiskEncryptionKey
 	}
 	vInitializeParams := o.InitializeParams
@@ -6339,7 +6408,7 @@ func postReadExtractInstanceDisksFields(r *Instance, o *InstanceDisks) error {
 	if err := extractInstanceDisksInitializeParamsFields(r, vInitializeParams); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vInitializeParams) {
+	if !dcl.IsEmptyValueIndirect(vInitializeParams) {
 		o.InitializeParams = vInitializeParams
 	}
 	return nil
@@ -6356,7 +6425,7 @@ func postReadExtractInstanceDisksInitializeParamsFields(r *Instance, o *Instance
 	if err := extractInstanceDisksInitializeParamsSourceImageEncryptionKeyFields(r, vSourceImageEncryptionKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSourceImageEncryptionKey) {
+	if !dcl.IsEmptyValueIndirect(vSourceImageEncryptionKey) {
 		o.SourceImageEncryptionKey = vSourceImageEncryptionKey
 	}
 	return nil

@@ -18,14 +18,13 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
+	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceComputeBackendBucket() *schema.Resource {
+func ResourceComputeBackendBucket() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeBackendBucketCreate,
 		Read:   resourceComputeBackendBucketRead,
@@ -37,9 +36,9 @@ func resourceComputeBackendBucket() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -69,11 +68,57 @@ last character, which cannot be a dash.`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"bypass_cache_on_request_headers": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Bypass the cache when the specified request headers are matched - e.g. Pragma or Authorization headers. Up to 5 headers can be specified. The cache is bypassed for all cdnPolicy.cacheMode settings.`,
+							MaxItems:    5,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"header_name": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The header field name to match on when bypassing cache. Values are case-insensitive.`,
+									},
+								},
+							},
+						},
+						"cache_key_policy": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `The CacheKeyPolicy for this CdnPolicy.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"include_http_headers": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Allows HTTP request headers (by name) to be used in the
+cache key.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers"},
+									},
+									"query_string_whitelist": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Names of query string parameters to include in cache keys.
+Default parameters are always included. '&' and '=' will
+be percent encoded and not treated as delimiters.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers"},
+									},
+								},
+							},
+						},
 						"cache_mode": {
 							Type:         schema.TypeString,
 							Computed:     true,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "CACHE_ALL_STATIC", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "CACHE_ALL_STATIC", ""}),
 							Description: `Specifies the cache setting for all responses from this backend.
 The possible values are: USE_ORIGIN_HEADERS, FORCE_CACHE_ALL and CACHE_ALL_STATIC Possible values: ["USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "CACHE_ALL_STATIC"]`,
 						},
@@ -124,6 +169,11 @@ can be specified as values, and you cannot specify a status code more than once.
 								},
 							},
 						},
+						"request_coalescing": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `If true then Cloud CDN will combine multiple concurrent cache fill requests into a small number of requests to the origin.`,
+						},
 						"serve_while_stale": {
 							Type:        schema.TypeInt,
 							Computed:    true,
@@ -145,6 +195,12 @@ header. The actual headers served in responses will not be altered.`,
 					},
 				},
 			},
+			"compression_mode": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateEnum([]string{"AUTOMATIC", "DISABLED", ""}),
+				Description:  `Compress text responses using Brotli or gzip compression, based on the client's Accept-Encoding header. Possible values: ["AUTOMATIC", "DISABLED"]`,
+			},
 			"custom_response_headers": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -158,6 +214,12 @@ header. The actual headers served in responses will not be altered.`,
 				Optional: true,
 				Description: `An optional textual description of the resource; provided by the
 client when the resource is created.`,
+			},
+			"edge_security_policy": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				Description:      `The security policy associated with this backend bucket.`,
 			},
 			"enable_cdn": {
 				Type:        schema.TypeBool,
@@ -186,7 +248,7 @@ client when the resource is created.`,
 
 func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -203,6 +265,18 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 		return err
 	} else if v, ok := d.GetOkExists("cdn_policy"); !isEmptyValue(reflect.ValueOf(cdnPolicyProp)) && (ok || !reflect.DeepEqual(v, cdnPolicyProp)) {
 		obj["cdnPolicy"] = cdnPolicyProp
+	}
+	compressionModeProp, err := expandComputeBackendBucketCompressionMode(d.Get("compression_mode"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("compression_mode"); !isEmptyValue(reflect.ValueOf(compressionModeProp)) && (ok || !reflect.DeepEqual(v, compressionModeProp)) {
+		obj["compressionMode"] = compressionModeProp
+	}
+	edgeSecurityPolicyProp, err := expandComputeBackendBucketEdgeSecurityPolicy(d.Get("edge_security_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("edge_security_policy"); !isEmptyValue(reflect.ValueOf(edgeSecurityPolicyProp)) && (ok || !reflect.DeepEqual(v, edgeSecurityPolicyProp)) {
+		obj["edgeSecurityPolicy"] = edgeSecurityPolicyProp
 	}
 	customResponseHeadersProp, err := expandComputeBackendBucketCustomResponseHeaders(d.Get("custom_response_headers"), d, config)
 	if err != nil {
@@ -248,7 +322,7 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating BackendBucket: %s", err)
 	}
@@ -260,7 +334,7 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating BackendBucket", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -270,6 +344,26 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error waiting to create BackendBucket: %s", err)
 	}
 
+	// security_policy isn't set by Create / Update
+	if o, n := d.GetChange("edge_security_policy"); o.(string) != n.(string) {
+		pol, err := ParseSecurityPolicyFieldValue(n.(string), d, config)
+		if err != nil {
+			return errwrap.Wrapf("Error parsing Backend Service security policy: {{err}}", err)
+		}
+
+		spr := emptySecurityPolicyReference()
+		spr.SecurityPolicy = pol.RelativeLink()
+		op, err := config.NewComputeClient(userAgent).BackendBuckets.SetEdgeSecurityPolicy(project, obj["name"].(string), spr).Do()
+		if err != nil {
+			return errwrap.Wrapf("Error setting Backend Service security policy: {{err}}", err)
+		}
+		// This uses the create timeout for simplicity, though technically this code appears in both create and update
+		waitErr := ComputeOperationWaitTime(config, op, project, "Setting Backend Service Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
+		if waitErr != nil {
+			return waitErr
+		}
+	}
+
 	log.Printf("[DEBUG] Finished creating BackendBucket %q: %#v", d.Id(), res)
 
 	return resourceComputeBackendBucketRead(d, meta)
@@ -277,7 +371,7 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 
 func resourceComputeBackendBucketRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -300,7 +394,7 @@ func resourceComputeBackendBucketRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeBackendBucket %q", d.Id()))
 	}
@@ -313,6 +407,12 @@ func resourceComputeBackendBucketRead(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("Error reading BackendBucket: %s", err)
 	}
 	if err := d.Set("cdn_policy", flattenComputeBackendBucketCdnPolicy(res["cdnPolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendBucket: %s", err)
+	}
+	if err := d.Set("compression_mode", flattenComputeBackendBucketCompressionMode(res["compressionMode"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendBucket: %s", err)
+	}
+	if err := d.Set("edge_security_policy", flattenComputeBackendBucketEdgeSecurityPolicy(res["edgeSecurityPolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendBucket: %s", err)
 	}
 	if err := d.Set("custom_response_headers", flattenComputeBackendBucketCustomResponseHeaders(res["customResponseHeaders"], d, config)); err != nil {
@@ -339,7 +439,7 @@ func resourceComputeBackendBucketRead(d *schema.ResourceData, meta interface{}) 
 
 func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -364,6 +464,18 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 		return err
 	} else if v, ok := d.GetOkExists("cdn_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, cdnPolicyProp)) {
 		obj["cdnPolicy"] = cdnPolicyProp
+	}
+	compressionModeProp, err := expandComputeBackendBucketCompressionMode(d.Get("compression_mode"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("compression_mode"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, compressionModeProp)) {
+		obj["compressionMode"] = compressionModeProp
+	}
+	edgeSecurityPolicyProp, err := expandComputeBackendBucketEdgeSecurityPolicy(d.Get("edge_security_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("edge_security_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, edgeSecurityPolicyProp)) {
+		obj["edgeSecurityPolicy"] = edgeSecurityPolicyProp
 	}
 	customResponseHeadersProp, err := expandComputeBackendBucketCustomResponseHeaders(d.Get("custom_response_headers"), d, config)
 	if err != nil {
@@ -402,7 +514,7 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating BackendBucket %q: %s", d.Id(), err)
@@ -410,7 +522,7 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 		log.Printf("[DEBUG] Finished updating BackendBucket %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating BackendBucket", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -418,12 +530,31 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 		return err
 	}
 
+	// security_policy isn't set by Create / Update
+	if o, n := d.GetChange("edge_security_policy"); o.(string) != n.(string) {
+		pol, err := ParseSecurityPolicyFieldValue(n.(string), d, config)
+		if err != nil {
+			return errwrap.Wrapf("Error parsing Backend Service security policy: {{err}}", err)
+		}
+
+		spr := emptySecurityPolicyReference()
+		spr.SecurityPolicy = pol.RelativeLink()
+		op, err := config.NewComputeClient(userAgent).BackendBuckets.SetEdgeSecurityPolicy(project, obj["name"].(string), spr).Do()
+		if err != nil {
+			return errwrap.Wrapf("Error setting Backend Service security policy: {{err}}", err)
+		}
+		// This uses the create timeout for simplicity, though technically this code appears in both create and update
+		waitErr := ComputeOperationWaitTime(config, op, project, "Setting Backend Service Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
+		if waitErr != nil {
+			return waitErr
+		}
+	}
 	return resourceComputeBackendBucketRead(d, meta)
 }
 
 func resourceComputeBackendBucketDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -449,12 +580,12 @@ func resourceComputeBackendBucketDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "BackendBucket")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting BackendBucket", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -499,6 +630,8 @@ func flattenComputeBackendBucketCdnPolicy(v interface{}, d *schema.ResourceData,
 		return nil
 	}
 	transformed := make(map[string]interface{})
+	transformed["cache_key_policy"] =
+		flattenComputeBackendBucketCdnPolicyCacheKeyPolicy(original["cacheKeyPolicy"], d, config)
 	transformed["signed_url_cache_max_age_sec"] =
 		flattenComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(original["signedUrlCacheMaxAgeSec"], d, config)
 	transformed["default_ttl"] =
@@ -515,12 +648,39 @@ func flattenComputeBackendBucketCdnPolicy(v interface{}, d *schema.ResourceData,
 		flattenComputeBackendBucketCdnPolicyCacheMode(original["cacheMode"], d, config)
 	transformed["serve_while_stale"] =
 		flattenComputeBackendBucketCdnPolicyServeWhileStale(original["serveWhileStale"], d, config)
+	transformed["request_coalescing"] =
+		flattenComputeBackendBucketCdnPolicyRequestCoalescing(original["requestCoalescing"], d, config)
+	transformed["bypass_cache_on_request_headers"] =
+		flattenComputeBackendBucketCdnPolicyBypassCacheOnRequestHeaders(original["bypassCacheOnRequestHeaders"], d, config)
 	return []interface{}{transformed}
 }
+func flattenComputeBackendBucketCdnPolicyCacheKeyPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["query_string_whitelist"] =
+		flattenComputeBackendBucketCdnPolicyCacheKeyPolicyQueryStringWhitelist(original["queryStringWhitelist"], d, config)
+	transformed["include_http_headers"] =
+		flattenComputeBackendBucketCdnPolicyCacheKeyPolicyIncludeHttpHeaders(original["includeHttpHeaders"], d, config)
+	return []interface{}{transformed}
+}
+func flattenComputeBackendBucketCdnPolicyCacheKeyPolicyQueryStringWhitelist(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendBucketCdnPolicyCacheKeyPolicyIncludeHttpHeaders(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -537,7 +697,7 @@ func flattenComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(v interface{}, 
 func flattenComputeBackendBucketCdnPolicyDefaultTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -554,7 +714,7 @@ func flattenComputeBackendBucketCdnPolicyDefaultTtl(v interface{}, d *schema.Res
 func flattenComputeBackendBucketCdnPolicyMaxTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -571,7 +731,7 @@ func flattenComputeBackendBucketCdnPolicyMaxTtl(v interface{}, d *schema.Resourc
 func flattenComputeBackendBucketCdnPolicyClientTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -611,7 +771,7 @@ func flattenComputeBackendBucketCdnPolicyNegativeCachingPolicy(v interface{}, d 
 func flattenComputeBackendBucketCdnPolicyNegativeCachingPolicyCode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -628,7 +788,7 @@ func flattenComputeBackendBucketCdnPolicyNegativeCachingPolicyCode(v interface{}
 func flattenComputeBackendBucketCdnPolicyNegativeCachingPolicyTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -649,7 +809,7 @@ func flattenComputeBackendBucketCdnPolicyCacheMode(v interface{}, d *schema.Reso
 func flattenComputeBackendBucketCdnPolicyServeWhileStale(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -661,6 +821,40 @@ func flattenComputeBackendBucketCdnPolicyServeWhileStale(v interface{}, d *schem
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenComputeBackendBucketCdnPolicyRequestCoalescing(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendBucketCdnPolicyBypassCacheOnRequestHeaders(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"header_name": flattenComputeBackendBucketCdnPolicyBypassCacheOnRequestHeadersHeaderName(original["headerName"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenComputeBackendBucketCdnPolicyBypassCacheOnRequestHeadersHeaderName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendBucketCompressionMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendBucketEdgeSecurityPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
 }
 
 func flattenComputeBackendBucketCustomResponseHeaders(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -695,6 +889,13 @@ func expandComputeBackendBucketCdnPolicy(v interface{}, d TerraformResourceData,
 	raw := l[0]
 	original := raw.(map[string]interface{})
 	transformed := make(map[string]interface{})
+
+	transformedCacheKeyPolicy, err := expandComputeBackendBucketCdnPolicyCacheKeyPolicy(original["cache_key_policy"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCacheKeyPolicy); val.IsValid() && !isEmptyValue(val) {
+		transformed["cacheKeyPolicy"] = transformedCacheKeyPolicy
+	}
 
 	transformedSignedUrlCacheMaxAgeSec, err := expandComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(original["signed_url_cache_max_age_sec"], d, config)
 	if err != nil {
@@ -752,7 +953,55 @@ func expandComputeBackendBucketCdnPolicy(v interface{}, d TerraformResourceData,
 		transformed["serveWhileStale"] = transformedServeWhileStale
 	}
 
+	transformedRequestCoalescing, err := expandComputeBackendBucketCdnPolicyRequestCoalescing(original["request_coalescing"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["requestCoalescing"] = transformedRequestCoalescing
+	}
+
+	transformedBypassCacheOnRequestHeaders, err := expandComputeBackendBucketCdnPolicyBypassCacheOnRequestHeaders(original["bypass_cache_on_request_headers"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedBypassCacheOnRequestHeaders); val.IsValid() && !isEmptyValue(val) {
+		transformed["bypassCacheOnRequestHeaders"] = transformedBypassCacheOnRequestHeaders
+	}
+
 	return transformed, nil
+}
+
+func expandComputeBackendBucketCdnPolicyCacheKeyPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedQueryStringWhitelist, err := expandComputeBackendBucketCdnPolicyCacheKeyPolicyQueryStringWhitelist(original["query_string_whitelist"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["queryStringWhitelist"] = transformedQueryStringWhitelist
+	}
+
+	transformedIncludeHttpHeaders, err := expandComputeBackendBucketCdnPolicyCacheKeyPolicyIncludeHttpHeaders(original["include_http_headers"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["includeHttpHeaders"] = transformedIncludeHttpHeaders
+	}
+
+	return transformed, nil
+}
+
+func expandComputeBackendBucketCdnPolicyCacheKeyPolicyQueryStringWhitelist(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketCdnPolicyCacheKeyPolicyIncludeHttpHeaders(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandComputeBackendBucketCdnPolicySignedUrlCacheMaxAgeSec(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
@@ -817,6 +1066,44 @@ func expandComputeBackendBucketCdnPolicyCacheMode(v interface{}, d TerraformReso
 }
 
 func expandComputeBackendBucketCdnPolicyServeWhileStale(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketCdnPolicyRequestCoalescing(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketCdnPolicyBypassCacheOnRequestHeaders(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedHeaderName, err := expandComputeBackendBucketCdnPolicyBypassCacheOnRequestHeadersHeaderName(original["header_name"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedHeaderName); val.IsValid() && !isEmptyValue(val) {
+			transformed["headerName"] = transformedHeaderName
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandComputeBackendBucketCdnPolicyBypassCacheOnRequestHeadersHeaderName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketCompressionMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendBucketEdgeSecurityPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

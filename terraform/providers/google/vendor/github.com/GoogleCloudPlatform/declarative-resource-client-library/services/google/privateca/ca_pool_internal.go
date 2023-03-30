@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -253,13 +252,15 @@ type caPoolApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateCaPoolUpdateCaPoolRequest(ctx context.Context, f *CaPool, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
-	if v, err := expandCaPoolIssuancePolicy(c, f.IssuancePolicy); err != nil {
+	if v, err := expandCaPoolIssuancePolicy(c, f.IssuancePolicy, res); err != nil {
 		return nil, fmt.Errorf("error expanding IssuancePolicy into issuancePolicy: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["issuancePolicy"] = v
 	}
-	if v, err := expandCaPoolPublishingOptions(c, f.PublishingOptions); err != nil {
+	if v, err := expandCaPoolPublishingOptions(c, f.PublishingOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding PublishingOptions into publishingOptions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["publishingOptions"] = v
@@ -380,7 +381,7 @@ func (c *Client) listCaPool(ctx context.Context, r *CaPool, pageToken string, pa
 
 	var l []*CaPool
 	for _, v := range m.CaPools {
-		res, err := unmarshalMapCaPool(v, c)
+		res, err := unmarshalMapCaPool(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -444,20 +445,20 @@ func (op *deleteCaPoolOperation) do(ctx context.Context, r *CaPool, c *Client) e
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetCaPool(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetCaPool(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -556,6 +557,11 @@ func (c *Client) caPoolDiffsForRawDesired(ctx context.Context, rawDesired *CaPoo
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for CaPool: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for CaPool: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractCaPoolFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeCaPoolInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -603,14 +609,16 @@ func canonicalizeCaPoolDesiredState(rawDesired, rawInitial *CaPool, opts ...dcl.
 	} else {
 		canonicalDesired.Name = rawDesired.Name
 	}
-	if dcl.IsZeroValue(rawDesired.Tier) {
+	if dcl.IsZeroValue(rawDesired.Tier) || (dcl.IsEmptyValueIndirect(rawDesired.Tier) && dcl.IsEmptyValueIndirect(rawInitial.Tier)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Tier = rawInitial.Tier
 	} else {
 		canonicalDesired.Tier = rawDesired.Tier
 	}
 	canonicalDesired.IssuancePolicy = canonicalizeCaPoolIssuancePolicy(rawDesired.IssuancePolicy, rawInitial.IssuancePolicy, opts...)
 	canonicalDesired.PublishingOptions = canonicalizeCaPoolPublishingOptions(rawDesired.PublishingOptions, rawInitial.PublishingOptions, opts...)
-	if dcl.IsZeroValue(rawDesired.Labels) {
+	if dcl.IsZeroValue(rawDesired.Labels) || (dcl.IsEmptyValueIndirect(rawDesired.Labels) && dcl.IsEmptyValueIndirect(rawInitial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Labels = rawInitial.Labels
 	} else {
 		canonicalDesired.Labels = rawDesired.Labels
@@ -625,13 +633,12 @@ func canonicalizeCaPoolDesiredState(rawDesired, rawInitial *CaPool, opts ...dcl.
 	} else {
 		canonicalDesired.Location = rawDesired.Location
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeCaPoolNewState(c *Client, rawNew, rawDesired *CaPool) (*CaPool, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawNew.Name) {
@@ -639,24 +646,24 @@ func canonicalizeCaPoolNewState(c *Client, rawNew, rawDesired *CaPool) (*CaPool,
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Tier) && dcl.IsNotReturnedByServer(rawDesired.Tier) {
+	if dcl.IsEmptyValueIndirect(rawNew.Tier) && dcl.IsEmptyValueIndirect(rawDesired.Tier) {
 		rawNew.Tier = rawDesired.Tier
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.IssuancePolicy) && dcl.IsNotReturnedByServer(rawDesired.IssuancePolicy) {
+	if dcl.IsEmptyValueIndirect(rawNew.IssuancePolicy) && dcl.IsEmptyValueIndirect(rawDesired.IssuancePolicy) {
 		rawNew.IssuancePolicy = rawDesired.IssuancePolicy
 	} else {
 		rawNew.IssuancePolicy = canonicalizeNewCaPoolIssuancePolicy(c, rawDesired.IssuancePolicy, rawNew.IssuancePolicy)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PublishingOptions) && dcl.IsNotReturnedByServer(rawDesired.PublishingOptions) {
+	if dcl.IsEmptyValueIndirect(rawNew.PublishingOptions) && dcl.IsEmptyValueIndirect(rawDesired.PublishingOptions) {
 		rawNew.PublishingOptions = rawDesired.PublishingOptions
 	} else {
 		rawNew.PublishingOptions = canonicalizeNewCaPoolPublishingOptions(c, rawDesired.PublishingOptions, rawNew.PublishingOptions)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Labels) && dcl.IsNotReturnedByServer(rawDesired.Labels) {
+	if dcl.IsEmptyValueIndirect(rawNew.Labels) && dcl.IsEmptyValueIndirect(rawDesired.Labels) {
 		rawNew.Labels = rawDesired.Labels
 	} else {
 	}
@@ -697,7 +704,7 @@ func canonicalizeCaPoolIssuancePolicy(des, initial *CaPoolIssuancePolicy, opts .
 }
 
 func canonicalizeCaPoolIssuancePolicySlice(des, initial []CaPoolIssuancePolicy, opts ...dcl.ApplyOption) []CaPoolIssuancePolicy {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -731,7 +738,7 @@ func canonicalizeNewCaPoolIssuancePolicy(c *Client, des, nw *CaPoolIssuancePolic
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicy while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -754,23 +761,26 @@ func canonicalizeNewCaPoolIssuancePolicySet(c *Client, des, nw []CaPoolIssuanceP
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicy
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicy
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicy(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicySlice(c *Client, des, nw []CaPoolIssuancePolicy) []CaPoolIssuancePolicy {
@@ -868,7 +878,7 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypes(c *Client, des, nw *CaPo
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyAllowedKeyTypes while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -885,23 +895,26 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesSet(c *Client, des, nw []
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyAllowedKeyTypes
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyAllowedKeyTypes
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyAllowedKeyTypesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypes(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, des, nw []CaPoolIssuancePolicyAllowedKeyTypes) []CaPoolIssuancePolicyAllowedKeyTypes {
@@ -938,12 +951,14 @@ func canonicalizeCaPoolIssuancePolicyAllowedKeyTypesRsa(des, initial *CaPoolIssu
 
 	cDes := &CaPoolIssuancePolicyAllowedKeyTypesRsa{}
 
-	if dcl.IsZeroValue(des.MinModulusSize) {
+	if dcl.IsZeroValue(des.MinModulusSize) || (dcl.IsEmptyValueIndirect(des.MinModulusSize) && dcl.IsEmptyValueIndirect(initial.MinModulusSize)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MinModulusSize = initial.MinModulusSize
 	} else {
 		cDes.MinModulusSize = des.MinModulusSize
 	}
-	if dcl.IsZeroValue(des.MaxModulusSize) {
+	if dcl.IsZeroValue(des.MaxModulusSize) || (dcl.IsEmptyValueIndirect(des.MaxModulusSize) && dcl.IsEmptyValueIndirect(initial.MaxModulusSize)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MaxModulusSize = initial.MaxModulusSize
 	} else {
 		cDes.MaxModulusSize = des.MaxModulusSize
@@ -953,7 +968,7 @@ func canonicalizeCaPoolIssuancePolicyAllowedKeyTypesRsa(des, initial *CaPoolIssu
 }
 
 func canonicalizeCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(des, initial []CaPoolIssuancePolicyAllowedKeyTypesRsa, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyAllowedKeyTypesRsa {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -987,7 +1002,7 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, des, nw *C
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyAllowedKeyTypesRsa while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1001,23 +1016,26 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesRsaSet(c *Client, des, nw
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyAllowedKeyTypesRsa
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyAllowedKeyTypesRsa
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyAllowedKeyTypesRsaNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesRsa(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, des, nw []CaPoolIssuancePolicyAllowedKeyTypesRsa) []CaPoolIssuancePolicyAllowedKeyTypesRsa {
@@ -1054,7 +1072,8 @@ func canonicalizeCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(des, initial *
 
 	cDes := &CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve{}
 
-	if dcl.IsZeroValue(des.SignatureAlgorithm) {
+	if dcl.IsZeroValue(des.SignatureAlgorithm) || (dcl.IsEmptyValueIndirect(des.SignatureAlgorithm) && dcl.IsEmptyValueIndirect(initial.SignatureAlgorithm)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.SignatureAlgorithm = initial.SignatureAlgorithm
 	} else {
 		cDes.SignatureAlgorithm = des.SignatureAlgorithm
@@ -1064,7 +1083,7 @@ func canonicalizeCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(des, initial *
 }
 
 func canonicalizeCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(des, initial []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1098,7 +1117,7 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1112,23 +1131,26 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSet(c *Clien
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, des, nw []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve) []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
@@ -1180,7 +1202,7 @@ func canonicalizeCaPoolIssuancePolicyAllowedIssuanceModes(des, initial *CaPoolIs
 }
 
 func canonicalizeCaPoolIssuancePolicyAllowedIssuanceModesSlice(des, initial []CaPoolIssuancePolicyAllowedIssuanceModes, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyAllowedIssuanceModes {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1214,7 +1236,7 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, des, nw 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyAllowedIssuanceModes while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1235,23 +1257,26 @@ func canonicalizeNewCaPoolIssuancePolicyAllowedIssuanceModesSet(c *Client, des, 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyAllowedIssuanceModes
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyAllowedIssuanceModes
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyAllowedIssuanceModesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyAllowedIssuanceModes(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, des, nw []CaPoolIssuancePolicyAllowedIssuanceModes) []CaPoolIssuancePolicyAllowedIssuanceModes {
@@ -1291,7 +1316,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValues(des, initial *CaPoolIssuance
 	cDes.KeyUsage = canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsage(des.KeyUsage, initial.KeyUsage, opts...)
 	cDes.CaOptions = canonicalizeCaPoolIssuancePolicyBaselineValuesCaOptions(des.CaOptions, initial.CaOptions, opts...)
 	cDes.PolicyIds = canonicalizeCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(des.PolicyIds, initial.PolicyIds, opts...)
-	if dcl.StringArrayCanonicalize(des.AiaOcspServers, initial.AiaOcspServers) || dcl.IsZeroValue(des.AiaOcspServers) {
+	if dcl.StringArrayCanonicalize(des.AiaOcspServers, initial.AiaOcspServers) {
 		cDes.AiaOcspServers = initial.AiaOcspServers
 	} else {
 		cDes.AiaOcspServers = des.AiaOcspServers
@@ -1302,7 +1327,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValues(des, initial *CaPoolIssuance
 }
 
 func canonicalizeCaPoolIssuancePolicyBaselineValuesSlice(des, initial []CaPoolIssuancePolicyBaselineValues, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyBaselineValues {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1336,7 +1361,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValues(c *Client, des, nw *CaPoo
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValues while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1358,23 +1383,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesSet(c *Client, des, nw []C
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValues
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValues
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValues(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValues) []CaPoolIssuancePolicyBaselineValues {
@@ -1419,7 +1447,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsage(des, initial *CaPool
 }
 
 func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(des, initial []CaPoolIssuancePolicyBaselineValuesKeyUsage, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyBaselineValuesKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1453,7 +1481,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, des, n
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1471,23 +1499,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageSet(c *Client, des
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesKeyUsage) []CaPoolIssuancePolicyBaselineValuesKeyUsage {
@@ -1574,7 +1605,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(des, ini
 }
 
 func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(des, initial []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1608,7 +1639,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Cl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1650,23 +1681,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSet(c 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage) []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
@@ -1738,7 +1772,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(des,
 }
 
 func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(des, initial []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1772,7 +1806,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1805,23 +1839,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSe
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage) []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
@@ -1858,7 +1895,8 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsa
 
 	cDes := &CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -1902,7 +1940,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKey
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1916,23 +1954,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKey
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
@@ -1974,7 +2015,8 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesCaOptions(des, initial *CaPoo
 	} else {
 		cDes.IsCa = des.IsCa
 	}
-	if dcl.IsZeroValue(des.MaxIssuerPathLength) {
+	if dcl.IsZeroValue(des.MaxIssuerPathLength) || (dcl.IsEmptyValueIndirect(des.MaxIssuerPathLength) && dcl.IsEmptyValueIndirect(initial.MaxIssuerPathLength)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MaxIssuerPathLength = initial.MaxIssuerPathLength
 	} else {
 		cDes.MaxIssuerPathLength = des.MaxIssuerPathLength
@@ -1984,7 +2026,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesCaOptions(des, initial *CaPoo
 }
 
 func canonicalizeCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(des, initial []CaPoolIssuancePolicyBaselineValuesCaOptions, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyBaselineValuesCaOptions {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2018,7 +2060,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, des, 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesCaOptions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2028,7 +2070,6 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, des, 
 	if dcl.BoolCanonicalize(des.IsCa, nw.IsCa) {
 		nw.IsCa = des.IsCa
 	}
-	nw.MaxIssuerPathLength = des.MaxIssuerPathLength
 
 	return nw
 }
@@ -2037,23 +2078,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesCaOptionsSet(c *Client, de
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesCaOptions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesCaOptions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesCaOptionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesCaOptions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesCaOptions) []CaPoolIssuancePolicyBaselineValuesCaOptions {
@@ -2090,7 +2134,8 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesPolicyIds(des, initial *CaPoo
 
 	cDes := &CaPoolIssuancePolicyBaselineValuesPolicyIds{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -2134,7 +2179,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, des, 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesPolicyIds while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2148,23 +2193,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesPolicyIdsSet(c *Client, de
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesPolicyIds
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesPolicyIds
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesPolicyIdsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesPolicyIds(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesPolicyIds) []CaPoolIssuancePolicyBaselineValuesPolicyIds {
@@ -2251,7 +2299,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Cl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesAdditionalExtensions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2273,23 +2321,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSet(c 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
@@ -2326,7 +2377,8 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(
 
 	cDes := &CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -2336,7 +2388,7 @@ func canonicalizeCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(
 }
 
 func canonicalizeCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(des, initial []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2370,7 +2422,7 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObject
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2384,23 +2436,26 @@ func canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObject
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(c *Client, des, nw []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
@@ -2453,7 +2508,7 @@ func canonicalizeCaPoolIssuancePolicyIdentityConstraints(des, initial *CaPoolIss
 }
 
 func canonicalizeCaPoolIssuancePolicyIdentityConstraintsSlice(des, initial []CaPoolIssuancePolicyIdentityConstraints, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyIdentityConstraints {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2487,7 +2542,7 @@ func canonicalizeNewCaPoolIssuancePolicyIdentityConstraints(c *Client, des, nw *
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyIdentityConstraints while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2509,23 +2564,26 @@ func canonicalizeNewCaPoolIssuancePolicyIdentityConstraintsSet(c *Client, des, n
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyIdentityConstraints
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyIdentityConstraints
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyIdentityConstraintsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyIdentityConstraints(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, des, nw []CaPoolIssuancePolicyIdentityConstraints) []CaPoolIssuancePolicyIdentityConstraints {
@@ -2587,7 +2645,7 @@ func canonicalizeCaPoolIssuancePolicyIdentityConstraintsCelExpression(des, initi
 }
 
 func canonicalizeCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(des, initial []CaPoolIssuancePolicyIdentityConstraintsCelExpression, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyIdentityConstraintsCelExpression {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2621,7 +2679,7 @@ func canonicalizeNewCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Clie
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyIdentityConstraintsCelExpression while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2648,23 +2706,26 @@ func canonicalizeNewCaPoolIssuancePolicyIdentityConstraintsCelExpressionSet(c *C
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyIdentityConstraintsCelExpression
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyIdentityConstraintsCelExpression
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyIdentityConstraintsCelExpressionNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client, des, nw []CaPoolIssuancePolicyIdentityConstraintsCelExpression) []CaPoolIssuancePolicyIdentityConstraintsCelExpression {
@@ -2701,7 +2762,8 @@ func canonicalizeCaPoolIssuancePolicyPassthroughExtensions(des, initial *CaPoolI
 
 	cDes := &CaPoolIssuancePolicyPassthroughExtensions{}
 
-	if dcl.IsZeroValue(des.KnownExtensions) {
+	if dcl.IsZeroValue(des.KnownExtensions) || (dcl.IsEmptyValueIndirect(des.KnownExtensions) && dcl.IsEmptyValueIndirect(initial.KnownExtensions)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.KnownExtensions = initial.KnownExtensions
 	} else {
 		cDes.KnownExtensions = des.KnownExtensions
@@ -2712,7 +2774,7 @@ func canonicalizeCaPoolIssuancePolicyPassthroughExtensions(des, initial *CaPoolI
 }
 
 func canonicalizeCaPoolIssuancePolicyPassthroughExtensionsSlice(des, initial []CaPoolIssuancePolicyPassthroughExtensions, opts ...dcl.ApplyOption) []CaPoolIssuancePolicyPassthroughExtensions {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2746,7 +2808,7 @@ func canonicalizeNewCaPoolIssuancePolicyPassthroughExtensions(c *Client, des, nw
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyPassthroughExtensions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2762,23 +2824,26 @@ func canonicalizeNewCaPoolIssuancePolicyPassthroughExtensionsSet(c *Client, des,
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyPassthroughExtensions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyPassthroughExtensions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyPassthroughExtensionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyPassthroughExtensions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, des, nw []CaPoolIssuancePolicyPassthroughExtensions) []CaPoolIssuancePolicyPassthroughExtensions {
@@ -2815,7 +2880,8 @@ func canonicalizeCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(d
 
 	cDes := &CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -2859,7 +2925,7 @@ func canonicalizeNewCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtension
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2873,23 +2939,26 @@ func canonicalizeNewCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtension
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c *Client, des, nw []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions) []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
@@ -2941,7 +3010,7 @@ func canonicalizeCaPoolPublishingOptions(des, initial *CaPoolPublishingOptions, 
 }
 
 func canonicalizeCaPoolPublishingOptionsSlice(des, initial []CaPoolPublishingOptions, opts ...dcl.ApplyOption) []CaPoolPublishingOptions {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2975,7 +3044,7 @@ func canonicalizeNewCaPoolPublishingOptions(c *Client, des, nw *CaPoolPublishing
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CaPoolPublishingOptions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2996,23 +3065,26 @@ func canonicalizeNewCaPoolPublishingOptionsSet(c *Client, des, nw []CaPoolPublis
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CaPoolPublishingOptions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CaPoolPublishingOptions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCaPoolPublishingOptionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCaPoolPublishingOptions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCaPoolPublishingOptionsSlice(c *Client, des, nw []CaPoolPublishingOptions) []CaPoolPublishingOptions {
@@ -3053,55 +3125,58 @@ func diffCaPool(c *Client, desired, actual *CaPool, opts ...dcl.ApplyOption) ([]
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Tier, actual.Tier, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tier")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Tier, actual.Tier, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tier")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IssuancePolicy, actual.IssuancePolicy, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyNewStyle, EmptyObject: EmptyCaPoolIssuancePolicy, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("IssuancePolicy")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IssuancePolicy, actual.IssuancePolicy, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyNewStyle, EmptyObject: EmptyCaPoolIssuancePolicy, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("IssuancePolicy")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PublishingOptions, actual.PublishingOptions, dcl.Info{ObjectFunction: compareCaPoolPublishingOptionsNewStyle, EmptyObject: EmptyCaPoolPublishingOptions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PublishingOptions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublishingOptions, actual.PublishingOptions, dcl.DiffInfo{ObjectFunction: compareCaPoolPublishingOptionsNewStyle, EmptyObject: EmptyCaPoolPublishingOptions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PublishingOptions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareCaPoolIssuancePolicyNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -3124,42 +3199,42 @@ func compareCaPoolIssuancePolicyNewStyle(d, a interface{}, fn dcl.FieldName) ([]
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AllowedKeyTypes, actual.AllowedKeyTypes, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyAllowedKeyTypesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedKeyTypes, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowedKeyTypes")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowedKeyTypes, actual.AllowedKeyTypes, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyAllowedKeyTypesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedKeyTypes, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowedKeyTypes")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaximumLifetime, actual.MaximumLifetime, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MaximumLifetime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaximumLifetime, actual.MaximumLifetime, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MaximumLifetime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowedIssuanceModes, actual.AllowedIssuanceModes, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyAllowedIssuanceModesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedIssuanceModes, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowedIssuanceModes")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowedIssuanceModes, actual.AllowedIssuanceModes, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyAllowedIssuanceModesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedIssuanceModes, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowedIssuanceModes")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.BaselineValues, actual.BaselineValues, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValues, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("BaselineValues")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.BaselineValues, actual.BaselineValues, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValues, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("BaselineValues")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IdentityConstraints, actual.IdentityConstraints, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyIdentityConstraintsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyIdentityConstraints, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("IdentityConstraints")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IdentityConstraints, actual.IdentityConstraints, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyIdentityConstraintsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyIdentityConstraints, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("IdentityConstraints")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PassthroughExtensions, actual.PassthroughExtensions, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyPassthroughExtensionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyPassthroughExtensions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PassthroughExtensions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PassthroughExtensions, actual.PassthroughExtensions, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyPassthroughExtensionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyPassthroughExtensions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PassthroughExtensions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3188,14 +3263,14 @@ func compareCaPoolIssuancePolicyAllowedKeyTypesNewStyle(d, a interface{}, fn dcl
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Rsa, actual.Rsa, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyAllowedKeyTypesRsaNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedKeyTypesRsa, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Rsa")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Rsa, actual.Rsa, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyAllowedKeyTypesRsaNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedKeyTypesRsa, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Rsa")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EllipticCurve, actual.EllipticCurve, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("EllipticCurve")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EllipticCurve, actual.EllipticCurve, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("EllipticCurve")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3224,14 +3299,14 @@ func compareCaPoolIssuancePolicyAllowedKeyTypesRsaNewStyle(d, a interface{}, fn 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.MinModulusSize, actual.MinModulusSize, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MinModulusSize")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MinModulusSize, actual.MinModulusSize, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MinModulusSize")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaxModulusSize, actual.MaxModulusSize, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MaxModulusSize")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaxModulusSize, actual.MaxModulusSize, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MaxModulusSize")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3260,7 +3335,7 @@ func compareCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveNewStyle(d, a interf
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SignatureAlgorithm, actual.SignatureAlgorithm, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("SignatureAlgorithm")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SignatureAlgorithm, actual.SignatureAlgorithm, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("SignatureAlgorithm")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3289,14 +3364,14 @@ func compareCaPoolIssuancePolicyAllowedIssuanceModesNewStyle(d, a interface{}, f
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AllowCsrBasedIssuance, actual.AllowCsrBasedIssuance, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowCsrBasedIssuance")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowCsrBasedIssuance, actual.AllowCsrBasedIssuance, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowCsrBasedIssuance")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowConfigBasedIssuance, actual.AllowConfigBasedIssuance, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowConfigBasedIssuance")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowConfigBasedIssuance, actual.AllowConfigBasedIssuance, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowConfigBasedIssuance")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3325,35 +3400,35 @@ func compareCaPoolIssuancePolicyBaselineValuesNewStyle(d, a interface{}, fn dcl.
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KeyUsage, actual.KeyUsage, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsage, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyUsage, actual.KeyUsage, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsage, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CaOptions, actual.CaOptions, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesCaOptionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesCaOptions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CaOptions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CaOptions, actual.CaOptions, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesCaOptionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesCaOptions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CaOptions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PolicyIds, actual.PolicyIds, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesPolicyIdsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesPolicyIds, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PolicyIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PolicyIds, actual.PolicyIds, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesPolicyIdsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesPolicyIds, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PolicyIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AiaOcspServers, actual.AiaOcspServers, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AiaOcspServers")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AiaOcspServers, actual.AiaOcspServers, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AiaOcspServers")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3382,21 +3457,21 @@ func compareCaPoolIssuancePolicyBaselineValuesKeyUsageNewStyle(d, a interface{},
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.BaseKeyUsage, actual.BaseKeyUsage, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("BaseKeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.BaseKeyUsage, actual.BaseKeyUsage, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("BaseKeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExtendedKeyUsage, actual.ExtendedKeyUsage, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ExtendedKeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExtendedKeyUsage, actual.ExtendedKeyUsage, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ExtendedKeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UnknownExtendedKeyUsages, actual.UnknownExtendedKeyUsages, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("UnknownExtendedKeyUsages")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UnknownExtendedKeyUsages, actual.UnknownExtendedKeyUsages, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("UnknownExtendedKeyUsages")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3425,63 +3500,63 @@ func compareCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageNewStyle(d, a 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DigitalSignature, actual.DigitalSignature, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("DigitalSignature")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DigitalSignature, actual.DigitalSignature, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("DigitalSignature")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ContentCommitment, actual.ContentCommitment, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ContentCommitment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ContentCommitment, actual.ContentCommitment, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ContentCommitment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KeyEncipherment, actual.KeyEncipherment, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KeyEncipherment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyEncipherment, actual.KeyEncipherment, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KeyEncipherment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DataEncipherment, actual.DataEncipherment, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("DataEncipherment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DataEncipherment, actual.DataEncipherment, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("DataEncipherment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KeyAgreement, actual.KeyAgreement, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KeyAgreement")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyAgreement, actual.KeyAgreement, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KeyAgreement")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertSign, actual.CertSign, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CertSign")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertSign, actual.CertSign, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CertSign")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CrlSign, actual.CrlSign, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CrlSign")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CrlSign, actual.CrlSign, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CrlSign")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EncipherOnly, actual.EncipherOnly, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("EncipherOnly")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EncipherOnly, actual.EncipherOnly, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("EncipherOnly")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DecipherOnly, actual.DecipherOnly, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("DecipherOnly")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DecipherOnly, actual.DecipherOnly, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("DecipherOnly")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3510,42 +3585,42 @@ func compareCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageNewStyle(d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ServerAuth, actual.ServerAuth, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ServerAuth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ServerAuth, actual.ServerAuth, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ServerAuth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ClientAuth, actual.ClientAuth, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ClientAuth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ClientAuth, actual.ClientAuth, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ClientAuth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CodeSigning, actual.CodeSigning, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CodeSigning")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CodeSigning, actual.CodeSigning, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CodeSigning")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EmailProtection, actual.EmailProtection, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("EmailProtection")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EmailProtection, actual.EmailProtection, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("EmailProtection")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TimeStamping, actual.TimeStamping, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("TimeStamping")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TimeStamping, actual.TimeStamping, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("TimeStamping")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OcspSigning, actual.OcspSigning, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("OcspSigning")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OcspSigning, actual.OcspSigning, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("OcspSigning")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3574,7 +3649,7 @@ func compareCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesNe
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3603,14 +3678,14 @@ func compareCaPoolIssuancePolicyBaselineValuesCaOptionsNewStyle(d, a interface{}
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.IsCa, actual.IsCa, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("IsCa")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IsCa, actual.IsCa, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("IsCa")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaxIssuerPathLength, actual.MaxIssuerPathLength, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MaxIssuerPathLength")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaxIssuerPathLength, actual.MaxIssuerPathLength, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("MaxIssuerPathLength")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3639,7 +3714,7 @@ func compareCaPoolIssuancePolicyBaselineValuesPolicyIdsNewStyle(d, a interface{}
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3668,21 +3743,21 @@ func compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsNewStyle(d, a 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3711,7 +3786,7 @@ func compareCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdNewSty
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3740,21 +3815,21 @@ func compareCaPoolIssuancePolicyIdentityConstraintsNewStyle(d, a interface{}, fn
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.CelExpression, actual.CelExpression, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyIdentityConstraintsCelExpressionNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyIdentityConstraintsCelExpression, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CelExpression")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CelExpression, actual.CelExpression, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyIdentityConstraintsCelExpressionNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyIdentityConstraintsCelExpression, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("CelExpression")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowSubjectPassthrough, actual.AllowSubjectPassthrough, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowSubjectPassthrough")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowSubjectPassthrough, actual.AllowSubjectPassthrough, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowSubjectPassthrough")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowSubjectAltNamesPassthrough, actual.AllowSubjectAltNamesPassthrough, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowSubjectAltNamesPassthrough")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowSubjectAltNamesPassthrough, actual.AllowSubjectAltNamesPassthrough, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AllowSubjectAltNamesPassthrough")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3783,28 +3858,28 @@ func compareCaPoolIssuancePolicyIdentityConstraintsCelExpressionNewStyle(d, a in
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Expression, actual.Expression, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Expression")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Expression, actual.Expression, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Expression")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Title, actual.Title, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Title")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Title, actual.Title, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Title")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3833,14 +3908,14 @@ func compareCaPoolIssuancePolicyPassthroughExtensionsNewStyle(d, a interface{}, 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KnownExtensions, actual.KnownExtensions, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KnownExtensions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KnownExtensions, actual.KnownExtensions, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("KnownExtensions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.Info{ObjectFunction: compareCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.DiffInfo{ObjectFunction: compareCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsNewStyle, EmptyObject: EmptyCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions, OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3869,7 +3944,7 @@ func compareCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsNewStyl
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3898,14 +3973,14 @@ func compareCaPoolPublishingOptionsNewStyle(d, a interface{}, fn dcl.FieldName) 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.PublishCaCert, actual.PublishCaCert, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PublishCaCert")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublishCaCert, actual.PublishCaCert, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PublishCaCert")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PublishCrl, actual.PublishCrl, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PublishCrl")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublishCrl, actual.PublishCrl, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCaPoolUpdateCaPoolOperation")}, fn.AddNest("PublishCrl")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3953,17 +4028,17 @@ func (r *CaPool) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalCaPool decodes JSON responses into the CaPool resource schema.
-func unmarshalCaPool(b []byte, c *Client) (*CaPool, error) {
+func unmarshalCaPool(b []byte, c *Client, res *CaPool) (*CaPool, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapCaPool(m, c)
+	return unmarshalMapCaPool(m, c, res)
 }
 
-func unmarshalMapCaPool(m map[string]interface{}, c *Client) (*CaPool, error) {
+func unmarshalMapCaPool(m map[string]interface{}, c *Client, res *CaPool) (*CaPool, error) {
 
-	flattened := flattenCaPool(c, m)
+	flattened := flattenCaPool(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -3973,22 +4048,24 @@ func unmarshalMapCaPool(m map[string]interface{}, c *Client) (*CaPool, error) {
 // expandCaPool expands CaPool into a JSON request object.
 func expandCaPool(c *Client, f *CaPool) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/caPools/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.Tier; dcl.ValueShouldBeSent(v) {
 		m["tier"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicy(c, f.IssuancePolicy); err != nil {
+	if v, err := expandCaPoolIssuancePolicy(c, f.IssuancePolicy, res); err != nil {
 		return nil, fmt.Errorf("error expanding IssuancePolicy into issuancePolicy: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["issuancePolicy"] = v
 	}
-	if v, err := expandCaPoolPublishingOptions(c, f.PublishingOptions); err != nil {
+	if v, err := expandCaPoolPublishingOptions(c, f.PublishingOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding PublishingOptions into publishingOptions: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["publishingOptions"] = v
 	}
 	if v := f.Labels; dcl.ValueShouldBeSent(v) {
@@ -3996,12 +4073,12 @@ func expandCaPool(c *Client, f *CaPool) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
 
@@ -4010,7 +4087,7 @@ func expandCaPool(c *Client, f *CaPool) (map[string]interface{}, error) {
 
 // flattenCaPool flattens CaPool from a JSON request object into the
 // CaPool type.
-func flattenCaPool(c *Client, i interface{}) *CaPool {
+func flattenCaPool(c *Client, i interface{}, res *CaPool) *CaPool {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4019,28 +4096,28 @@ func flattenCaPool(c *Client, i interface{}) *CaPool {
 		return nil
 	}
 
-	res := &CaPool{}
-	res.Name = dcl.FlattenString(m["name"])
-	res.Tier = flattenCaPoolTierEnum(m["tier"])
-	res.IssuancePolicy = flattenCaPoolIssuancePolicy(c, m["issuancePolicy"])
-	res.PublishingOptions = flattenCaPoolPublishingOptions(c, m["publishingOptions"])
-	res.Labels = dcl.FlattenKeyValuePairs(m["labels"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
+	resultRes := &CaPool{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Tier = flattenCaPoolTierEnum(m["tier"])
+	resultRes.IssuancePolicy = flattenCaPoolIssuancePolicy(c, m["issuancePolicy"], res)
+	resultRes.PublishingOptions = flattenCaPoolPublishingOptions(c, m["publishingOptions"], res)
+	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
 
-	return res
+	return resultRes
 }
 
 // expandCaPoolIssuancePolicyMap expands the contents of CaPoolIssuancePolicy into a JSON
 // request object.
-func expandCaPoolIssuancePolicyMap(c *Client, f map[string]CaPoolIssuancePolicy) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyMap(c *Client, f map[string]CaPoolIssuancePolicy, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicy(c, &item)
+		i, err := expandCaPoolIssuancePolicy(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4054,14 +4131,14 @@ func expandCaPoolIssuancePolicyMap(c *Client, f map[string]CaPoolIssuancePolicy)
 
 // expandCaPoolIssuancePolicySlice expands the contents of CaPoolIssuancePolicy into a JSON
 // request object.
-func expandCaPoolIssuancePolicySlice(c *Client, f []CaPoolIssuancePolicy) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicySlice(c *Client, f []CaPoolIssuancePolicy, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicy(c, &item)
+		i, err := expandCaPoolIssuancePolicy(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4074,7 +4151,7 @@ func expandCaPoolIssuancePolicySlice(c *Client, f []CaPoolIssuancePolicy) ([]map
 
 // flattenCaPoolIssuancePolicyMap flattens the contents of CaPoolIssuancePolicy from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicy {
+func flattenCaPoolIssuancePolicyMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicy {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicy{}
@@ -4086,7 +4163,7 @@ func flattenCaPoolIssuancePolicyMap(c *Client, i interface{}) map[string]CaPoolI
 
 	items := make(map[string]CaPoolIssuancePolicy)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicy(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicy(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4094,7 +4171,7 @@ func flattenCaPoolIssuancePolicyMap(c *Client, i interface{}) map[string]CaPoolI
 
 // flattenCaPoolIssuancePolicySlice flattens the contents of CaPoolIssuancePolicy from a JSON
 // response object.
-func flattenCaPoolIssuancePolicySlice(c *Client, i interface{}) []CaPoolIssuancePolicy {
+func flattenCaPoolIssuancePolicySlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicy {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicy{}
@@ -4106,7 +4183,7 @@ func flattenCaPoolIssuancePolicySlice(c *Client, i interface{}) []CaPoolIssuance
 
 	items := make([]CaPoolIssuancePolicy, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicy(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicy(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4114,13 +4191,13 @@ func flattenCaPoolIssuancePolicySlice(c *Client, i interface{}) []CaPoolIssuance
 
 // expandCaPoolIssuancePolicy expands an instance of CaPoolIssuancePolicy into a JSON
 // request object.
-func expandCaPoolIssuancePolicy(c *Client, f *CaPoolIssuancePolicy) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicy(c *Client, f *CaPoolIssuancePolicy, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCaPoolIssuancePolicyAllowedKeyTypesSlice(c, f.AllowedKeyTypes); err != nil {
+	if v, err := expandCaPoolIssuancePolicyAllowedKeyTypesSlice(c, f.AllowedKeyTypes, res); err != nil {
 		return nil, fmt.Errorf("error expanding AllowedKeyTypes into allowedKeyTypes: %w", err)
 	} else if v != nil {
 		m["allowedKeyTypes"] = v
@@ -4128,22 +4205,22 @@ func expandCaPoolIssuancePolicy(c *Client, f *CaPoolIssuancePolicy) (map[string]
 	if v := f.MaximumLifetime; !dcl.IsEmptyValueIndirect(v) {
 		m["maximumLifetime"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyAllowedIssuanceModes(c, f.AllowedIssuanceModes); err != nil {
+	if v, err := expandCaPoolIssuancePolicyAllowedIssuanceModes(c, f.AllowedIssuanceModes, res); err != nil {
 		return nil, fmt.Errorf("error expanding AllowedIssuanceModes into allowedIssuanceModes: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["allowedIssuanceModes"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyBaselineValues(c, f.BaselineValues); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValues(c, f.BaselineValues, res); err != nil {
 		return nil, fmt.Errorf("error expanding BaselineValues into baselineValues: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["baselineValues"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyIdentityConstraints(c, f.IdentityConstraints); err != nil {
+	if v, err := expandCaPoolIssuancePolicyIdentityConstraints(c, f.IdentityConstraints, res); err != nil {
 		return nil, fmt.Errorf("error expanding IdentityConstraints into identityConstraints: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["identityConstraints"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyPassthroughExtensions(c, f.PassthroughExtensions); err != nil {
+	if v, err := expandCaPoolIssuancePolicyPassthroughExtensions(c, f.PassthroughExtensions, res); err != nil {
 		return nil, fmt.Errorf("error expanding PassthroughExtensions into passthroughExtensions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["passthroughExtensions"] = v
@@ -4154,7 +4231,7 @@ func expandCaPoolIssuancePolicy(c *Client, f *CaPoolIssuancePolicy) (map[string]
 
 // flattenCaPoolIssuancePolicy flattens an instance of CaPoolIssuancePolicy from a JSON
 // response object.
-func flattenCaPoolIssuancePolicy(c *Client, i interface{}) *CaPoolIssuancePolicy {
+func flattenCaPoolIssuancePolicy(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicy {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4165,26 +4242,26 @@ func flattenCaPoolIssuancePolicy(c *Client, i interface{}) *CaPoolIssuancePolicy
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicy
 	}
-	r.AllowedKeyTypes = flattenCaPoolIssuancePolicyAllowedKeyTypesSlice(c, m["allowedKeyTypes"])
+	r.AllowedKeyTypes = flattenCaPoolIssuancePolicyAllowedKeyTypesSlice(c, m["allowedKeyTypes"], res)
 	r.MaximumLifetime = dcl.FlattenString(m["maximumLifetime"])
-	r.AllowedIssuanceModes = flattenCaPoolIssuancePolicyAllowedIssuanceModes(c, m["allowedIssuanceModes"])
-	r.BaselineValues = flattenCaPoolIssuancePolicyBaselineValues(c, m["baselineValues"])
-	r.IdentityConstraints = flattenCaPoolIssuancePolicyIdentityConstraints(c, m["identityConstraints"])
-	r.PassthroughExtensions = flattenCaPoolIssuancePolicyPassthroughExtensions(c, m["passthroughExtensions"])
+	r.AllowedIssuanceModes = flattenCaPoolIssuancePolicyAllowedIssuanceModes(c, m["allowedIssuanceModes"], res)
+	r.BaselineValues = flattenCaPoolIssuancePolicyBaselineValues(c, m["baselineValues"], res)
+	r.IdentityConstraints = flattenCaPoolIssuancePolicyIdentityConstraints(c, m["identityConstraints"], res)
+	r.PassthroughExtensions = flattenCaPoolIssuancePolicyPassthroughExtensions(c, m["passthroughExtensions"], res)
 
 	return r
 }
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesMap expands the contents of CaPoolIssuancePolicyAllowedKeyTypes into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedKeyTypes) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedKeyTypes, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedKeyTypes(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedKeyTypes(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4198,14 +4275,14 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, f map[string]CaPool
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesSlice expands the contents of CaPoolIssuancePolicyAllowedKeyTypes into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, f []CaPoolIssuancePolicyAllowedKeyTypes) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, f []CaPoolIssuancePolicyAllowedKeyTypes, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedKeyTypes(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedKeyTypes(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4218,7 +4295,7 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, f []CaPoolIssuanc
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesMap flattens the contents of CaPoolIssuancePolicyAllowedKeyTypes from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyAllowedKeyTypes {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyAllowedKeyTypes {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyAllowedKeyTypes{}
@@ -4230,7 +4307,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, i interface{}) map
 
 	items := make(map[string]CaPoolIssuancePolicyAllowedKeyTypes)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyAllowedKeyTypes(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyAllowedKeyTypes(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4238,7 +4315,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesMap(c *Client, i interface{}) map
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesSlice flattens the contents of CaPoolIssuancePolicyAllowedKeyTypes from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, i interface{}) []CaPoolIssuancePolicyAllowedKeyTypes {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyAllowedKeyTypes {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyAllowedKeyTypes{}
@@ -4250,7 +4327,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, i interface{}) [
 
 	items := make([]CaPoolIssuancePolicyAllowedKeyTypes, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyAllowedKeyTypes(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyAllowedKeyTypes(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4258,18 +4335,18 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesSlice(c *Client, i interface{}) [
 
 // expandCaPoolIssuancePolicyAllowedKeyTypes expands an instance of CaPoolIssuancePolicyAllowedKeyTypes into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypes(c *Client, f *CaPoolIssuancePolicyAllowedKeyTypes) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCaPoolIssuancePolicyAllowedKeyTypes(c *Client, f *CaPoolIssuancePolicyAllowedKeyTypes, res *CaPool) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c, f.Rsa); err != nil {
+	if v, err := expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c, f.Rsa, res); err != nil {
 		return nil, fmt.Errorf("error expanding Rsa into rsa: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["rsa"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, f.EllipticCurve); err != nil {
+	if v, err := expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, f.EllipticCurve, res); err != nil {
 		return nil, fmt.Errorf("error expanding EllipticCurve into ellipticCurve: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["ellipticCurve"] = v
@@ -4280,7 +4357,7 @@ func expandCaPoolIssuancePolicyAllowedKeyTypes(c *Client, f *CaPoolIssuancePolic
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypes flattens an instance of CaPoolIssuancePolicyAllowedKeyTypes from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypes(c *Client, i interface{}) *CaPoolIssuancePolicyAllowedKeyTypes {
+func flattenCaPoolIssuancePolicyAllowedKeyTypes(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyAllowedKeyTypes {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4291,22 +4368,22 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypes(c *Client, i interface{}) *CaPoo
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicyAllowedKeyTypes
 	}
-	r.Rsa = flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c, m["rsa"])
-	r.EllipticCurve = flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, m["ellipticCurve"])
+	r.Rsa = flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c, m["rsa"], res)
+	r.EllipticCurve = flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, m["ellipticCurve"], res)
 
 	return r
 }
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesRsaMap expands the contents of CaPoolIssuancePolicyAllowedKeyTypesRsa into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedKeyTypesRsa) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedKeyTypesRsa, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4320,14 +4397,14 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, f map[string]CaP
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesRsaSlice expands the contents of CaPoolIssuancePolicyAllowedKeyTypesRsa into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, f []CaPoolIssuancePolicyAllowedKeyTypesRsa) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, f []CaPoolIssuancePolicyAllowedKeyTypesRsa, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4340,7 +4417,7 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, f []CaPoolIssu
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesRsaMap flattens the contents of CaPoolIssuancePolicyAllowedKeyTypesRsa from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyAllowedKeyTypesRsa {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyAllowedKeyTypesRsa {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyAllowedKeyTypesRsa{}
@@ -4352,7 +4429,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, i interface{}) 
 
 	items := make(map[string]CaPoolIssuancePolicyAllowedKeyTypesRsa)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4360,7 +4437,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaMap(c *Client, i interface{}) 
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesRsaSlice flattens the contents of CaPoolIssuancePolicyAllowedKeyTypesRsa from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, i interface{}) []CaPoolIssuancePolicyAllowedKeyTypesRsa {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyAllowedKeyTypesRsa {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyAllowedKeyTypesRsa{}
@@ -4372,7 +4449,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, i interface{}
 
 	items := make([]CaPoolIssuancePolicyAllowedKeyTypesRsa, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4380,7 +4457,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesRsaSlice(c *Client, i interface{}
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesRsa expands an instance of CaPoolIssuancePolicyAllowedKeyTypesRsa into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, f *CaPoolIssuancePolicyAllowedKeyTypesRsa) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, f *CaPoolIssuancePolicyAllowedKeyTypesRsa, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4398,7 +4475,7 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, f *CaPoolIssuancePo
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesRsa flattens an instance of CaPoolIssuancePolicyAllowedKeyTypesRsa from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, i interface{}) *CaPoolIssuancePolicyAllowedKeyTypesRsa {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyAllowedKeyTypesRsa {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4417,14 +4494,14 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesRsa(c *Client, i interface{}) *Ca
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap expands the contents of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4438,14 +4515,14 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, f map[
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice expands the contents of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, f []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, f []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4458,7 +4535,7 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, f []
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap flattens the contents of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve{}
@@ -4470,7 +4547,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, i int
 
 	items := make(map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4478,7 +4555,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveMap(c *Client, i int
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice flattens the contents of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, i interface{}) []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve{}
@@ -4490,7 +4567,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, i i
 
 	items := make([]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4498,7 +4575,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSlice(c *Client, i i
 
 // expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve expands an instance of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, f *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, f *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4513,7 +4590,7 @@ func expandCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, f *CaPool
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve flattens an instance of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, i interface{}) *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4531,14 +4608,14 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve(c *Client, i interf
 
 // expandCaPoolIssuancePolicyAllowedIssuanceModesMap expands the contents of CaPoolIssuancePolicyAllowedIssuanceModes into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedIssuanceModes) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, f map[string]CaPoolIssuancePolicyAllowedIssuanceModes, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedIssuanceModes(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedIssuanceModes(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4552,14 +4629,14 @@ func expandCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, f map[string]C
 
 // expandCaPoolIssuancePolicyAllowedIssuanceModesSlice expands the contents of CaPoolIssuancePolicyAllowedIssuanceModes into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, f []CaPoolIssuancePolicyAllowedIssuanceModes) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, f []CaPoolIssuancePolicyAllowedIssuanceModes, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyAllowedIssuanceModes(c, &item)
+		i, err := expandCaPoolIssuancePolicyAllowedIssuanceModes(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4572,7 +4649,7 @@ func expandCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, f []CaPoolIs
 
 // flattenCaPoolIssuancePolicyAllowedIssuanceModesMap flattens the contents of CaPoolIssuancePolicyAllowedIssuanceModes from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyAllowedIssuanceModes {
+func flattenCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyAllowedIssuanceModes {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyAllowedIssuanceModes{}
@@ -4584,7 +4661,7 @@ func flattenCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, i interface{}
 
 	items := make(map[string]CaPoolIssuancePolicyAllowedIssuanceModes)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyAllowedIssuanceModes(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyAllowedIssuanceModes(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4592,7 +4669,7 @@ func flattenCaPoolIssuancePolicyAllowedIssuanceModesMap(c *Client, i interface{}
 
 // flattenCaPoolIssuancePolicyAllowedIssuanceModesSlice flattens the contents of CaPoolIssuancePolicyAllowedIssuanceModes from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, i interface{}) []CaPoolIssuancePolicyAllowedIssuanceModes {
+func flattenCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyAllowedIssuanceModes {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyAllowedIssuanceModes{}
@@ -4604,7 +4681,7 @@ func flattenCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, i interface
 
 	items := make([]CaPoolIssuancePolicyAllowedIssuanceModes, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyAllowedIssuanceModes(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyAllowedIssuanceModes(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4612,7 +4689,7 @@ func flattenCaPoolIssuancePolicyAllowedIssuanceModesSlice(c *Client, i interface
 
 // expandCaPoolIssuancePolicyAllowedIssuanceModes expands an instance of CaPoolIssuancePolicyAllowedIssuanceModes into a JSON
 // request object.
-func expandCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, f *CaPoolIssuancePolicyAllowedIssuanceModes) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, f *CaPoolIssuancePolicyAllowedIssuanceModes, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4630,7 +4707,7 @@ func expandCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, f *CaPoolIssuance
 
 // flattenCaPoolIssuancePolicyAllowedIssuanceModes flattens an instance of CaPoolIssuancePolicyAllowedIssuanceModes from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, i interface{}) *CaPoolIssuancePolicyAllowedIssuanceModes {
+func flattenCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyAllowedIssuanceModes {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4649,14 +4726,14 @@ func flattenCaPoolIssuancePolicyAllowedIssuanceModes(c *Client, i interface{}) *
 
 // expandCaPoolIssuancePolicyBaselineValuesMap expands the contents of CaPoolIssuancePolicyBaselineValues into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValues) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValues, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValues(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValues(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4670,14 +4747,14 @@ func expandCaPoolIssuancePolicyBaselineValuesMap(c *Client, f map[string]CaPoolI
 
 // expandCaPoolIssuancePolicyBaselineValuesSlice expands the contents of CaPoolIssuancePolicyBaselineValues into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesSlice(c *Client, f []CaPoolIssuancePolicyBaselineValues) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesSlice(c *Client, f []CaPoolIssuancePolicyBaselineValues, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValues(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValues(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4690,7 +4767,7 @@ func expandCaPoolIssuancePolicyBaselineValuesSlice(c *Client, f []CaPoolIssuance
 
 // flattenCaPoolIssuancePolicyBaselineValuesMap flattens the contents of CaPoolIssuancePolicyBaselineValues from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValues {
+func flattenCaPoolIssuancePolicyBaselineValuesMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValues {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValues{}
@@ -4702,7 +4779,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesMap(c *Client, i interface{}) map[
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValues)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValues(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValues(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4710,7 +4787,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesMap(c *Client, i interface{}) map[
 
 // flattenCaPoolIssuancePolicyBaselineValuesSlice flattens the contents of CaPoolIssuancePolicyBaselineValues from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValues {
+func flattenCaPoolIssuancePolicyBaselineValuesSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValues {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValues{}
@@ -4722,7 +4799,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesSlice(c *Client, i interface{}) []
 
 	items := make([]CaPoolIssuancePolicyBaselineValues, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValues(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValues(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4730,23 +4807,23 @@ func flattenCaPoolIssuancePolicyBaselineValuesSlice(c *Client, i interface{}) []
 
 // expandCaPoolIssuancePolicyBaselineValues expands an instance of CaPoolIssuancePolicyBaselineValues into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValues(c *Client, f *CaPoolIssuancePolicyBaselineValues) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValues(c *Client, f *CaPoolIssuancePolicyBaselineValues, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c, f.KeyUsage); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c, f.KeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding KeyUsage into keyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["keyUsage"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesCaOptions(c, f.CaOptions); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesCaOptions(c, f.CaOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding CaOptions into caOptions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["caOptions"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c, f.PolicyIds); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c, f.PolicyIds, res); err != nil {
 		return nil, fmt.Errorf("error expanding PolicyIds into policyIds: %w", err)
 	} else if v != nil {
 		m["policyIds"] = v
@@ -4754,7 +4831,7 @@ func expandCaPoolIssuancePolicyBaselineValues(c *Client, f *CaPoolIssuancePolicy
 	if v := f.AiaOcspServers; v != nil {
 		m["aiaOcspServers"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c, f.AdditionalExtensions); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c, f.AdditionalExtensions, res); err != nil {
 		return nil, fmt.Errorf("error expanding AdditionalExtensions into additionalExtensions: %w", err)
 	} else if v != nil {
 		m["additionalExtensions"] = v
@@ -4765,7 +4842,7 @@ func expandCaPoolIssuancePolicyBaselineValues(c *Client, f *CaPoolIssuancePolicy
 
 // flattenCaPoolIssuancePolicyBaselineValues flattens an instance of CaPoolIssuancePolicyBaselineValues from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValues(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValues {
+func flattenCaPoolIssuancePolicyBaselineValues(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValues {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4776,25 +4853,25 @@ func flattenCaPoolIssuancePolicyBaselineValues(c *Client, i interface{}) *CaPool
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicyBaselineValues
 	}
-	r.KeyUsage = flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c, m["keyUsage"])
-	r.CaOptions = flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c, m["caOptions"])
-	r.PolicyIds = flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c, m["policyIds"])
+	r.KeyUsage = flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c, m["keyUsage"], res)
+	r.CaOptions = flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c, m["caOptions"], res)
+	r.PolicyIds = flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c, m["policyIds"], res)
 	r.AiaOcspServers = dcl.FlattenStringSlice(m["aiaOcspServers"])
-	r.AdditionalExtensions = flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c, m["additionalExtensions"])
+	r.AdditionalExtensions = flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c, m["additionalExtensions"], res)
 
 	return r
 }
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageMap expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsage) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsage, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4808,14 +4885,14 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, f map[string
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageSlice expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsage) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsage, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4828,7 +4905,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, f []CaPool
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageMap flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesKeyUsage{}
@@ -4840,7 +4917,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, i interface
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4848,7 +4925,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageMap(c *Client, i interface
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesKeyUsage{}
@@ -4860,7 +4937,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, i interfa
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4868,23 +4945,23 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageSlice(c *Client, i interfa
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsage expands an instance of CaPoolIssuancePolicyBaselineValuesKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsage) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsage, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, f.BaseKeyUsage); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, f.BaseKeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding BaseKeyUsage into baseKeyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["baseKeyUsage"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, f.ExtendedKeyUsage); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, f.ExtendedKeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding ExtendedKeyUsage into extendedKeyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["extendedKeyUsage"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c, f.UnknownExtendedKeyUsages); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c, f.UnknownExtendedKeyUsages, res); err != nil {
 		return nil, fmt.Errorf("error expanding UnknownExtendedKeyUsages into unknownExtendedKeyUsages: %w", err)
 	} else if v != nil {
 		m["unknownExtendedKeyUsages"] = v
@@ -4895,7 +4972,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, f *CaPoolIssuan
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsage flattens an instance of CaPoolIssuancePolicyBaselineValuesKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4906,23 +4983,23 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsage(c *Client, i interface{})
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicyBaselineValuesKeyUsage
 	}
-	r.BaseKeyUsage = flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, m["baseKeyUsage"])
-	r.ExtendedKeyUsage = flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, m["extendedKeyUsage"])
-	r.UnknownExtendedKeyUsages = flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c, m["unknownExtendedKeyUsages"])
+	r.BaseKeyUsage = flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, m["baseKeyUsage"], res)
+	r.ExtendedKeyUsage = flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, m["extendedKeyUsage"], res)
+	r.UnknownExtendedKeyUsages = flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c, m["unknownExtendedKeyUsages"], res)
 
 	return r
 }
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4936,14 +5013,14 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client, 
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4956,7 +5033,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Client
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage{}
@@ -4968,7 +5045,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client,
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4976,7 +5053,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageMap(c *Client,
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage{}
@@ -4988,7 +5065,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Clien
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4996,7 +5073,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageSlice(c *Clien
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage expands an instance of CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -5035,7 +5112,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Client, f *
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage flattens an instance of CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5061,14 +5138,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage(c *Client, i 
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5082,14 +5159,14 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Clie
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5102,7 +5179,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *Cl
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage{}
@@ -5114,7 +5191,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Cli
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5122,7 +5199,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageMap(c *Cli
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage{}
@@ -5134,7 +5211,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *C
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5142,7 +5219,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageSlice(c *C
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage expands an instance of CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -5172,7 +5249,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c *Client,
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage flattens an instance of CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5195,14 +5272,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage(c *Client
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5216,14 +5293,14 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice expands the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5236,7 +5313,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSli
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages{}
@@ -5248,7 +5325,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMa
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5256,7 +5333,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesMa
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages{}
@@ -5268,7 +5345,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSl
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5276,8 +5353,8 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsagesSl
 
 // expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages expands an instance of CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c *Client, f *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages, res *CaPool) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -5291,7 +5368,7 @@ func expandCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c 
 
 // flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages flattens an instance of CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
+func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5309,14 +5386,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages(c
 
 // expandCaPoolIssuancePolicyBaselineValuesCaOptionsMap expands the contents of CaPoolIssuancePolicyBaselineValuesCaOptions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesCaOptions) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesCaOptions, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesCaOptions(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesCaOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5330,14 +5407,14 @@ func expandCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, f map[strin
 
 // expandCaPoolIssuancePolicyBaselineValuesCaOptionsSlice expands the contents of CaPoolIssuancePolicyBaselineValuesCaOptions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesCaOptions) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesCaOptions, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesCaOptions(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesCaOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5350,7 +5427,7 @@ func expandCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, f []CaPoo
 
 // flattenCaPoolIssuancePolicyBaselineValuesCaOptionsMap flattens the contents of CaPoolIssuancePolicyBaselineValuesCaOptions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesCaOptions {
+func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesCaOptions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesCaOptions{}
@@ -5362,7 +5439,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, i interfac
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesCaOptions)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5370,7 +5447,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsMap(c *Client, i interfac
 
 // flattenCaPoolIssuancePolicyBaselineValuesCaOptionsSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesCaOptions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesCaOptions {
+func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesCaOptions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesCaOptions{}
@@ -5382,7 +5459,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, i interf
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesCaOptions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5390,7 +5467,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesCaOptionsSlice(c *Client, i interf
 
 // expandCaPoolIssuancePolicyBaselineValuesCaOptions expands an instance of CaPoolIssuancePolicyBaselineValuesCaOptions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, f *CaPoolIssuancePolicyBaselineValuesCaOptions) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, f *CaPoolIssuancePolicyBaselineValuesCaOptions, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -5408,7 +5485,7 @@ func expandCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, f *CaPoolIssua
 
 // flattenCaPoolIssuancePolicyBaselineValuesCaOptions flattens an instance of CaPoolIssuancePolicyBaselineValuesCaOptions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesCaOptions {
+func flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesCaOptions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5427,14 +5504,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesCaOptions(c *Client, i interface{}
 
 // expandCaPoolIssuancePolicyBaselineValuesPolicyIdsMap expands the contents of CaPoolIssuancePolicyBaselineValuesPolicyIds into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesPolicyIds) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesPolicyIds, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5448,14 +5525,14 @@ func expandCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, f map[strin
 
 // expandCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice expands the contents of CaPoolIssuancePolicyBaselineValuesPolicyIds into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesPolicyIds) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesPolicyIds, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5468,7 +5545,7 @@ func expandCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, f []CaPoo
 
 // flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsMap flattens the contents of CaPoolIssuancePolicyBaselineValuesPolicyIds from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesPolicyIds {
+func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesPolicyIds {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesPolicyIds{}
@@ -5480,7 +5557,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, i interfac
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesPolicyIds)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5488,7 +5565,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsMap(c *Client, i interfac
 
 // flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesPolicyIds from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesPolicyIds {
+func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesPolicyIds {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesPolicyIds{}
@@ -5500,7 +5577,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, i interf
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesPolicyIds, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5508,8 +5585,8 @@ func flattenCaPoolIssuancePolicyBaselineValuesPolicyIdsSlice(c *Client, i interf
 
 // expandCaPoolIssuancePolicyBaselineValuesPolicyIds expands an instance of CaPoolIssuancePolicyBaselineValuesPolicyIds into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, f *CaPoolIssuancePolicyBaselineValuesPolicyIds) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, f *CaPoolIssuancePolicyBaselineValuesPolicyIds, res *CaPool) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -5523,7 +5600,7 @@ func expandCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, f *CaPoolIssua
 
 // flattenCaPoolIssuancePolicyBaselineValuesPolicyIds flattens an instance of CaPoolIssuancePolicyBaselineValuesPolicyIds from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesPolicyIds {
+func flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesPolicyIds {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5541,14 +5618,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesPolicyIds(c *Client, i interface{}
 
 // expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap expands the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5562,14 +5639,14 @@ func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client, 
 
 // expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice expands the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5582,7 +5659,7 @@ func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Client
 
 // flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap flattens the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
+func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions{}
@@ -5594,7 +5671,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client,
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5602,7 +5679,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsMap(c *Client,
 
 // flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
+func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesAdditionalExtensions{}
@@ -5614,7 +5691,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Clien
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesAdditionalExtensions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5622,13 +5699,13 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsSlice(c *Clien
 
 // expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions expands an instance of CaPoolIssuancePolicyBaselineValuesAdditionalExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, f *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, f *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions, res *CaPool) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, f.ObjectId); err != nil {
+	if v, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, f.ObjectId, res); err != nil {
 		return nil, fmt.Errorf("error expanding ObjectId into objectId: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["objectId"] = v
@@ -5645,7 +5722,7 @@ func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, f *
 
 // flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions flattens an instance of CaPoolIssuancePolicyBaselineValuesAdditionalExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
+func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5656,7 +5733,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, i 
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensions
 	}
-	r.ObjectId = flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, m["objectId"])
+	r.ObjectId = flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, m["objectId"], res)
 	r.Critical = dcl.FlattenBool(m["critical"])
 	r.Value = dcl.FlattenString(m["value"])
 
@@ -5665,14 +5742,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensions(c *Client, i 
 
 // expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap expands the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c *Client, f map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5686,14 +5763,14 @@ func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c *
 
 // expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice expands the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(c *Client, f []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, &item)
+		i, err := expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5706,7 +5783,7 @@ func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(c
 
 // flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap flattens the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
+func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId{}
@@ -5718,7 +5795,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c 
 
 	items := make(map[string]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5726,7 +5803,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdMap(c 
 
 // flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice flattens the contents of CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(c *Client, i interface{}) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
+func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId{}
@@ -5738,7 +5815,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(
 
 	items := make([]CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5746,7 +5823,7 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdSlice(
 
 // expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId expands an instance of CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c *Client, f *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c *Client, f *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -5761,7 +5838,7 @@ func expandCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c *Cli
 
 // flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId flattens an instance of CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c *Client, i interface{}) *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
+func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5779,14 +5856,14 @@ func flattenCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId(c *Cl
 
 // expandCaPoolIssuancePolicyIdentityConstraintsMap expands the contents of CaPoolIssuancePolicyIdentityConstraints into a JSON
 // request object.
-func expandCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, f map[string]CaPoolIssuancePolicyIdentityConstraints) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, f map[string]CaPoolIssuancePolicyIdentityConstraints, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyIdentityConstraints(c, &item)
+		i, err := expandCaPoolIssuancePolicyIdentityConstraints(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5800,14 +5877,14 @@ func expandCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, f map[string]Ca
 
 // expandCaPoolIssuancePolicyIdentityConstraintsSlice expands the contents of CaPoolIssuancePolicyIdentityConstraints into a JSON
 // request object.
-func expandCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, f []CaPoolIssuancePolicyIdentityConstraints) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, f []CaPoolIssuancePolicyIdentityConstraints, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyIdentityConstraints(c, &item)
+		i, err := expandCaPoolIssuancePolicyIdentityConstraints(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5820,7 +5897,7 @@ func expandCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, f []CaPoolIss
 
 // flattenCaPoolIssuancePolicyIdentityConstraintsMap flattens the contents of CaPoolIssuancePolicyIdentityConstraints from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyIdentityConstraints {
+func flattenCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyIdentityConstraints {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyIdentityConstraints{}
@@ -5832,7 +5909,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, i interface{})
 
 	items := make(map[string]CaPoolIssuancePolicyIdentityConstraints)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyIdentityConstraints(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyIdentityConstraints(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5840,7 +5917,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsMap(c *Client, i interface{})
 
 // flattenCaPoolIssuancePolicyIdentityConstraintsSlice flattens the contents of CaPoolIssuancePolicyIdentityConstraints from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, i interface{}) []CaPoolIssuancePolicyIdentityConstraints {
+func flattenCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyIdentityConstraints {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyIdentityConstraints{}
@@ -5852,7 +5929,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, i interface{
 
 	items := make([]CaPoolIssuancePolicyIdentityConstraints, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyIdentityConstraints(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyIdentityConstraints(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5860,13 +5937,13 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsSlice(c *Client, i interface{
 
 // expandCaPoolIssuancePolicyIdentityConstraints expands an instance of CaPoolIssuancePolicyIdentityConstraints into a JSON
 // request object.
-func expandCaPoolIssuancePolicyIdentityConstraints(c *Client, f *CaPoolIssuancePolicyIdentityConstraints) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyIdentityConstraints(c *Client, f *CaPoolIssuancePolicyIdentityConstraints, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, f.CelExpression); err != nil {
+	if v, err := expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, f.CelExpression, res); err != nil {
 		return nil, fmt.Errorf("error expanding CelExpression into celExpression: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["celExpression"] = v
@@ -5883,7 +5960,7 @@ func expandCaPoolIssuancePolicyIdentityConstraints(c *Client, f *CaPoolIssuanceP
 
 // flattenCaPoolIssuancePolicyIdentityConstraints flattens an instance of CaPoolIssuancePolicyIdentityConstraints from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyIdentityConstraints(c *Client, i interface{}) *CaPoolIssuancePolicyIdentityConstraints {
+func flattenCaPoolIssuancePolicyIdentityConstraints(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyIdentityConstraints {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -5894,7 +5971,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraints(c *Client, i interface{}) *C
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicyIdentityConstraints
 	}
-	r.CelExpression = flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, m["celExpression"])
+	r.CelExpression = flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, m["celExpression"], res)
 	r.AllowSubjectPassthrough = dcl.FlattenBool(m["allowSubjectPassthrough"])
 	r.AllowSubjectAltNamesPassthrough = dcl.FlattenBool(m["allowSubjectAltNamesPassthrough"])
 
@@ -5903,14 +5980,14 @@ func flattenCaPoolIssuancePolicyIdentityConstraints(c *Client, i interface{}) *C
 
 // expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap expands the contents of CaPoolIssuancePolicyIdentityConstraintsCelExpression into a JSON
 // request object.
-func expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, f map[string]CaPoolIssuancePolicyIdentityConstraintsCelExpression) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, f map[string]CaPoolIssuancePolicyIdentityConstraintsCelExpression, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, &item)
+		i, err := expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5924,14 +6001,14 @@ func expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, f 
 
 // expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice expands the contents of CaPoolIssuancePolicyIdentityConstraintsCelExpression into a JSON
 // request object.
-func expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client, f []CaPoolIssuancePolicyIdentityConstraintsCelExpression) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client, f []CaPoolIssuancePolicyIdentityConstraintsCelExpression, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, &item)
+		i, err := expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -5944,7 +6021,7 @@ func expandCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client, 
 
 // flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap flattens the contents of CaPoolIssuancePolicyIdentityConstraintsCelExpression from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyIdentityConstraintsCelExpression {
+func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyIdentityConstraintsCelExpression {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyIdentityConstraintsCelExpression{}
@@ -5956,7 +6033,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, i
 
 	items := make(map[string]CaPoolIssuancePolicyIdentityConstraintsCelExpression)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -5964,7 +6041,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionMap(c *Client, i
 
 // flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice flattens the contents of CaPoolIssuancePolicyIdentityConstraintsCelExpression from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client, i interface{}) []CaPoolIssuancePolicyIdentityConstraintsCelExpression {
+func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyIdentityConstraintsCelExpression {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyIdentityConstraintsCelExpression{}
@@ -5976,7 +6053,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client,
 
 	items := make([]CaPoolIssuancePolicyIdentityConstraintsCelExpression, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -5984,7 +6061,7 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpressionSlice(c *Client,
 
 // expandCaPoolIssuancePolicyIdentityConstraintsCelExpression expands an instance of CaPoolIssuancePolicyIdentityConstraintsCelExpression into a JSON
 // request object.
-func expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Client, f *CaPoolIssuancePolicyIdentityConstraintsCelExpression) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Client, f *CaPoolIssuancePolicyIdentityConstraintsCelExpression, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -6008,7 +6085,7 @@ func expandCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Client, f *Ca
 
 // flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression flattens an instance of CaPoolIssuancePolicyIdentityConstraintsCelExpression from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Client, i interface{}) *CaPoolIssuancePolicyIdentityConstraintsCelExpression {
+func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyIdentityConstraintsCelExpression {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6029,14 +6106,14 @@ func flattenCaPoolIssuancePolicyIdentityConstraintsCelExpression(c *Client, i in
 
 // expandCaPoolIssuancePolicyPassthroughExtensionsMap expands the contents of CaPoolIssuancePolicyPassthroughExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, f map[string]CaPoolIssuancePolicyPassthroughExtensions) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, f map[string]CaPoolIssuancePolicyPassthroughExtensions, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyPassthroughExtensions(c, &item)
+		i, err := expandCaPoolIssuancePolicyPassthroughExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6050,14 +6127,14 @@ func expandCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, f map[string]
 
 // expandCaPoolIssuancePolicyPassthroughExtensionsSlice expands the contents of CaPoolIssuancePolicyPassthroughExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, f []CaPoolIssuancePolicyPassthroughExtensions) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, f []CaPoolIssuancePolicyPassthroughExtensions, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyPassthroughExtensions(c, &item)
+		i, err := expandCaPoolIssuancePolicyPassthroughExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6070,7 +6147,7 @@ func expandCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, f []CaPoolI
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsMap flattens the contents of CaPoolIssuancePolicyPassthroughExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyPassthroughExtensions {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyPassthroughExtensions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyPassthroughExtensions{}
@@ -6082,7 +6159,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, i interface{
 
 	items := make(map[string]CaPoolIssuancePolicyPassthroughExtensions)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyPassthroughExtensions(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyPassthroughExtensions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6090,7 +6167,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsMap(c *Client, i interface{
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsSlice flattens the contents of CaPoolIssuancePolicyPassthroughExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, i interface{}) []CaPoolIssuancePolicyPassthroughExtensions {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyPassthroughExtensions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyPassthroughExtensions{}
@@ -6102,7 +6179,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, i interfac
 
 	items := make([]CaPoolIssuancePolicyPassthroughExtensions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyPassthroughExtensions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyPassthroughExtensions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6110,7 +6187,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsSlice(c *Client, i interfac
 
 // expandCaPoolIssuancePolicyPassthroughExtensions expands an instance of CaPoolIssuancePolicyPassthroughExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyPassthroughExtensions(c *Client, f *CaPoolIssuancePolicyPassthroughExtensions) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyPassthroughExtensions(c *Client, f *CaPoolIssuancePolicyPassthroughExtensions, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -6119,7 +6196,7 @@ func expandCaPoolIssuancePolicyPassthroughExtensions(c *Client, f *CaPoolIssuanc
 	if v := f.KnownExtensions; v != nil {
 		m["knownExtensions"] = v
 	}
-	if v, err := expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c, f.AdditionalExtensions); err != nil {
+	if v, err := expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c, f.AdditionalExtensions, res); err != nil {
 		return nil, fmt.Errorf("error expanding AdditionalExtensions into additionalExtensions: %w", err)
 	} else if v != nil {
 		m["additionalExtensions"] = v
@@ -6130,7 +6207,7 @@ func expandCaPoolIssuancePolicyPassthroughExtensions(c *Client, f *CaPoolIssuanc
 
 // flattenCaPoolIssuancePolicyPassthroughExtensions flattens an instance of CaPoolIssuancePolicyPassthroughExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensions(c *Client, i interface{}) *CaPoolIssuancePolicyPassthroughExtensions {
+func flattenCaPoolIssuancePolicyPassthroughExtensions(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyPassthroughExtensions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6141,22 +6218,22 @@ func flattenCaPoolIssuancePolicyPassthroughExtensions(c *Client, i interface{}) 
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCaPoolIssuancePolicyPassthroughExtensions
 	}
-	r.KnownExtensions = flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumSlice(c, m["knownExtensions"])
-	r.AdditionalExtensions = flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c, m["additionalExtensions"])
+	r.KnownExtensions = flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumSlice(c, m["knownExtensions"], res)
+	r.AdditionalExtensions = flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c, m["additionalExtensions"], res)
 
 	return r
 }
 
 // expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap expands the contents of CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *Client, f map[string]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions) (map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *Client, f map[string]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, &item)
+		i, err := expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6170,14 +6247,14 @@ func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *C
 
 // expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice expands the contents of CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c *Client, f []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions) ([]map[string]interface{}, error) {
+func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c *Client, f []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, &item)
+		i, err := expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6190,7 +6267,7 @@ func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c 
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap flattens the contents of CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions{}
@@ -6202,7 +6279,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *
 
 	items := make(map[string]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions)
 	for k, item := range a {
-		items[k] = *flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6210,7 +6287,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsMap(c *
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice flattens the contents of CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c *Client, i interface{}) []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions{}
@@ -6222,7 +6299,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c
 
 	items := make([]CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6230,8 +6307,8 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensionsSlice(c
 
 // expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions expands an instance of CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions into a JSON
 // request object.
-func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c *Client, f *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c *Client, f *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions, res *CaPool) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -6245,7 +6322,7 @@ func expandCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c *Clie
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions flattens an instance of CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c *Client, i interface{}) *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c *Client, i interface{}, res *CaPool) *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6263,14 +6340,14 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions(c *Cli
 
 // expandCaPoolPublishingOptionsMap expands the contents of CaPoolPublishingOptions into a JSON
 // request object.
-func expandCaPoolPublishingOptionsMap(c *Client, f map[string]CaPoolPublishingOptions) (map[string]interface{}, error) {
+func expandCaPoolPublishingOptionsMap(c *Client, f map[string]CaPoolPublishingOptions, res *CaPool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCaPoolPublishingOptions(c, &item)
+		i, err := expandCaPoolPublishingOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6284,14 +6361,14 @@ func expandCaPoolPublishingOptionsMap(c *Client, f map[string]CaPoolPublishingOp
 
 // expandCaPoolPublishingOptionsSlice expands the contents of CaPoolPublishingOptions into a JSON
 // request object.
-func expandCaPoolPublishingOptionsSlice(c *Client, f []CaPoolPublishingOptions) ([]map[string]interface{}, error) {
+func expandCaPoolPublishingOptionsSlice(c *Client, f []CaPoolPublishingOptions, res *CaPool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCaPoolPublishingOptions(c, &item)
+		i, err := expandCaPoolPublishingOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6304,7 +6381,7 @@ func expandCaPoolPublishingOptionsSlice(c *Client, f []CaPoolPublishingOptions) 
 
 // flattenCaPoolPublishingOptionsMap flattens the contents of CaPoolPublishingOptions from a JSON
 // response object.
-func flattenCaPoolPublishingOptionsMap(c *Client, i interface{}) map[string]CaPoolPublishingOptions {
+func flattenCaPoolPublishingOptionsMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolPublishingOptions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolPublishingOptions{}
@@ -6316,7 +6393,7 @@ func flattenCaPoolPublishingOptionsMap(c *Client, i interface{}) map[string]CaPo
 
 	items := make(map[string]CaPoolPublishingOptions)
 	for k, item := range a {
-		items[k] = *flattenCaPoolPublishingOptions(c, item.(map[string]interface{}))
+		items[k] = *flattenCaPoolPublishingOptions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6324,7 +6401,7 @@ func flattenCaPoolPublishingOptionsMap(c *Client, i interface{}) map[string]CaPo
 
 // flattenCaPoolPublishingOptionsSlice flattens the contents of CaPoolPublishingOptions from a JSON
 // response object.
-func flattenCaPoolPublishingOptionsSlice(c *Client, i interface{}) []CaPoolPublishingOptions {
+func flattenCaPoolPublishingOptionsSlice(c *Client, i interface{}, res *CaPool) []CaPoolPublishingOptions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolPublishingOptions{}
@@ -6336,7 +6413,7 @@ func flattenCaPoolPublishingOptionsSlice(c *Client, i interface{}) []CaPoolPubli
 
 	items := make([]CaPoolPublishingOptions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCaPoolPublishingOptions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCaPoolPublishingOptions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6344,7 +6421,7 @@ func flattenCaPoolPublishingOptionsSlice(c *Client, i interface{}) []CaPoolPubli
 
 // expandCaPoolPublishingOptions expands an instance of CaPoolPublishingOptions into a JSON
 // request object.
-func expandCaPoolPublishingOptions(c *Client, f *CaPoolPublishingOptions) (map[string]interface{}, error) {
+func expandCaPoolPublishingOptions(c *Client, f *CaPoolPublishingOptions, res *CaPool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -6362,7 +6439,7 @@ func expandCaPoolPublishingOptions(c *Client, f *CaPoolPublishingOptions) (map[s
 
 // flattenCaPoolPublishingOptions flattens an instance of CaPoolPublishingOptions from a JSON
 // response object.
-func flattenCaPoolPublishingOptions(c *Client, i interface{}) *CaPoolPublishingOptions {
+func flattenCaPoolPublishingOptions(c *Client, i interface{}, res *CaPool) *CaPoolPublishingOptions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6381,7 +6458,7 @@ func flattenCaPoolPublishingOptions(c *Client, i interface{}) *CaPoolPublishingO
 
 // flattenCaPoolTierEnumMap flattens the contents of CaPoolTierEnum from a JSON
 // response object.
-func flattenCaPoolTierEnumMap(c *Client, i interface{}) map[string]CaPoolTierEnum {
+func flattenCaPoolTierEnumMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolTierEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolTierEnum{}
@@ -6401,7 +6478,7 @@ func flattenCaPoolTierEnumMap(c *Client, i interface{}) map[string]CaPoolTierEnu
 
 // flattenCaPoolTierEnumSlice flattens the contents of CaPoolTierEnum from a JSON
 // response object.
-func flattenCaPoolTierEnumSlice(c *Client, i interface{}) []CaPoolTierEnum {
+func flattenCaPoolTierEnumSlice(c *Client, i interface{}, res *CaPool) []CaPoolTierEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolTierEnum{}
@@ -6424,7 +6501,7 @@ func flattenCaPoolTierEnumSlice(c *Client, i interface{}) []CaPoolTierEnum {
 func flattenCaPoolTierEnum(i interface{}) *CaPoolTierEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CaPoolTierEnumRef("")
+		return nil
 	}
 
 	return CaPoolTierEnumRef(s)
@@ -6432,7 +6509,7 @@ func flattenCaPoolTierEnum(i interface{}) *CaPoolTierEnum {
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumMap flattens the contents of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum{}
@@ -6452,7 +6529,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEn
 
 // flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumSlice flattens the contents of CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumSlice(c *Client, i interface{}) []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum {
+func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum{}
@@ -6475,7 +6552,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEn
 func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum(i interface{}) *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumRef("")
+		return nil
 	}
 
 	return CaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEnumRef(s)
@@ -6483,7 +6560,7 @@ func flattenCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveSignatureAlgorithmEn
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumMap flattens the contents of CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumMap(c *Client, i interface{}) map[string]CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumMap(c *Client, i interface{}, res *CaPool) map[string]CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum{}
@@ -6503,7 +6580,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumMap(c *C
 
 // flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumSlice flattens the contents of CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum from a JSON
 // response object.
-func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumSlice(c *Client, i interface{}) []CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum {
+func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumSlice(c *Client, i interface{}, res *CaPool) []CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum{}
@@ -6526,7 +6603,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumSlice(c 
 func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum(i interface{}) *CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumRef("")
+		return nil
 	}
 
 	return CaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnumRef(s)
@@ -6537,7 +6614,7 @@ func flattenCaPoolIssuancePolicyPassthroughExtensionsKnownExtensionsEnum(i inter
 // identity).  This is useful in extracting the element from a List call.
 func (r *CaPool) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalCaPool(b, c)
+		cr, err := unmarshalCaPool(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -6578,6 +6655,7 @@ type caPoolDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         caPoolApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToCaPoolDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]caPoolDiff, error) {
@@ -6597,7 +6675,8 @@ func convertFieldDiffsToCaPoolDiffs(config *dcl.Config, fds []*dcl.FieldDiff, op
 	var diffs []caPoolDiff
 	// For each operation name, create a caPoolDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := caPoolDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := caPoolDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -6632,7 +6711,7 @@ func extractCaPoolFields(r *CaPool) error {
 	if err := extractCaPoolIssuancePolicyFields(r, vIssuancePolicy); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vIssuancePolicy) {
+	if !dcl.IsEmptyValueIndirect(vIssuancePolicy) {
 		r.IssuancePolicy = vIssuancePolicy
 	}
 	vPublishingOptions := r.PublishingOptions
@@ -6643,7 +6722,7 @@ func extractCaPoolFields(r *CaPool) error {
 	if err := extractCaPoolPublishingOptionsFields(r, vPublishingOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPublishingOptions) {
+	if !dcl.IsEmptyValueIndirect(vPublishingOptions) {
 		r.PublishingOptions = vPublishingOptions
 	}
 	return nil
@@ -6657,7 +6736,7 @@ func extractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolicy) error
 	if err := extractCaPoolIssuancePolicyAllowedIssuanceModesFields(r, vAllowedIssuanceModes); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAllowedIssuanceModes) {
+	if !dcl.IsEmptyValueIndirect(vAllowedIssuanceModes) {
 		o.AllowedIssuanceModes = vAllowedIssuanceModes
 	}
 	vBaselineValues := o.BaselineValues
@@ -6668,7 +6747,7 @@ func extractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolicy) error
 	if err := extractCaPoolIssuancePolicyBaselineValuesFields(r, vBaselineValues); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaselineValues) {
+	if !dcl.IsEmptyValueIndirect(vBaselineValues) {
 		o.BaselineValues = vBaselineValues
 	}
 	vIdentityConstraints := o.IdentityConstraints
@@ -6679,7 +6758,7 @@ func extractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolicy) error
 	if err := extractCaPoolIssuancePolicyIdentityConstraintsFields(r, vIdentityConstraints); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vIdentityConstraints) {
+	if !dcl.IsEmptyValueIndirect(vIdentityConstraints) {
 		o.IdentityConstraints = vIdentityConstraints
 	}
 	vPassthroughExtensions := o.PassthroughExtensions
@@ -6690,7 +6769,7 @@ func extractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolicy) error
 	if err := extractCaPoolIssuancePolicyPassthroughExtensionsFields(r, vPassthroughExtensions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPassthroughExtensions) {
+	if !dcl.IsEmptyValueIndirect(vPassthroughExtensions) {
 		o.PassthroughExtensions = vPassthroughExtensions
 	}
 	return nil
@@ -6704,7 +6783,7 @@ func extractCaPoolIssuancePolicyAllowedKeyTypesFields(r *CaPool, o *CaPoolIssuan
 	if err := extractCaPoolIssuancePolicyAllowedKeyTypesRsaFields(r, vRsa); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRsa) {
+	if !dcl.IsEmptyValueIndirect(vRsa) {
 		o.Rsa = vRsa
 	}
 	vEllipticCurve := o.EllipticCurve
@@ -6715,7 +6794,7 @@ func extractCaPoolIssuancePolicyAllowedKeyTypesFields(r *CaPool, o *CaPoolIssuan
 	if err := extractCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveFields(r, vEllipticCurve); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vEllipticCurve) {
+	if !dcl.IsEmptyValueIndirect(vEllipticCurve) {
 		o.EllipticCurve = vEllipticCurve
 	}
 	return nil
@@ -6738,7 +6817,7 @@ func extractCaPoolIssuancePolicyBaselineValuesFields(r *CaPool, o *CaPoolIssuanc
 	if err := extractCaPoolIssuancePolicyBaselineValuesKeyUsageFields(r, vKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vKeyUsage) {
 		o.KeyUsage = vKeyUsage
 	}
 	vCaOptions := o.CaOptions
@@ -6749,7 +6828,7 @@ func extractCaPoolIssuancePolicyBaselineValuesFields(r *CaPool, o *CaPoolIssuanc
 	if err := extractCaPoolIssuancePolicyBaselineValuesCaOptionsFields(r, vCaOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCaOptions) {
+	if !dcl.IsEmptyValueIndirect(vCaOptions) {
 		o.CaOptions = vCaOptions
 	}
 	return nil
@@ -6763,7 +6842,7 @@ func extractCaPoolIssuancePolicyBaselineValuesKeyUsageFields(r *CaPool, o *CaPoo
 	if err := extractCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageFields(r, vBaseKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaseKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vBaseKeyUsage) {
 		o.BaseKeyUsage = vBaseKeyUsage
 	}
 	vExtendedKeyUsage := o.ExtendedKeyUsage
@@ -6774,7 +6853,7 @@ func extractCaPoolIssuancePolicyBaselineValuesKeyUsageFields(r *CaPool, o *CaPoo
 	if err := extractCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageFields(r, vExtendedKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExtendedKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vExtendedKeyUsage) {
 		o.ExtendedKeyUsage = vExtendedKeyUsage
 	}
 	return nil
@@ -6803,7 +6882,7 @@ func extractCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsFields(r *CaPo
 	if err := extractCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -6820,7 +6899,7 @@ func extractCaPoolIssuancePolicyIdentityConstraintsFields(r *CaPool, o *CaPoolIs
 	if err := extractCaPoolIssuancePolicyIdentityConstraintsCelExpressionFields(r, vCelExpression); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCelExpression) {
+	if !dcl.IsEmptyValueIndirect(vCelExpression) {
 		o.CelExpression = vCelExpression
 	}
 	return nil
@@ -6847,7 +6926,7 @@ func postReadExtractCaPoolFields(r *CaPool) error {
 	if err := postReadExtractCaPoolIssuancePolicyFields(r, vIssuancePolicy); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vIssuancePolicy) {
+	if !dcl.IsEmptyValueIndirect(vIssuancePolicy) {
 		r.IssuancePolicy = vIssuancePolicy
 	}
 	vPublishingOptions := r.PublishingOptions
@@ -6858,7 +6937,7 @@ func postReadExtractCaPoolFields(r *CaPool) error {
 	if err := postReadExtractCaPoolPublishingOptionsFields(r, vPublishingOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPublishingOptions) {
+	if !dcl.IsEmptyValueIndirect(vPublishingOptions) {
 		r.PublishingOptions = vPublishingOptions
 	}
 	return nil
@@ -6872,7 +6951,7 @@ func postReadExtractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolic
 	if err := extractCaPoolIssuancePolicyAllowedIssuanceModesFields(r, vAllowedIssuanceModes); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAllowedIssuanceModes) {
+	if !dcl.IsEmptyValueIndirect(vAllowedIssuanceModes) {
 		o.AllowedIssuanceModes = vAllowedIssuanceModes
 	}
 	vBaselineValues := o.BaselineValues
@@ -6883,7 +6962,7 @@ func postReadExtractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolic
 	if err := extractCaPoolIssuancePolicyBaselineValuesFields(r, vBaselineValues); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaselineValues) {
+	if !dcl.IsEmptyValueIndirect(vBaselineValues) {
 		o.BaselineValues = vBaselineValues
 	}
 	vIdentityConstraints := o.IdentityConstraints
@@ -6894,7 +6973,7 @@ func postReadExtractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolic
 	if err := extractCaPoolIssuancePolicyIdentityConstraintsFields(r, vIdentityConstraints); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vIdentityConstraints) {
+	if !dcl.IsEmptyValueIndirect(vIdentityConstraints) {
 		o.IdentityConstraints = vIdentityConstraints
 	}
 	vPassthroughExtensions := o.PassthroughExtensions
@@ -6905,7 +6984,7 @@ func postReadExtractCaPoolIssuancePolicyFields(r *CaPool, o *CaPoolIssuancePolic
 	if err := extractCaPoolIssuancePolicyPassthroughExtensionsFields(r, vPassthroughExtensions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPassthroughExtensions) {
+	if !dcl.IsEmptyValueIndirect(vPassthroughExtensions) {
 		o.PassthroughExtensions = vPassthroughExtensions
 	}
 	return nil
@@ -6919,7 +6998,7 @@ func postReadExtractCaPoolIssuancePolicyAllowedKeyTypesFields(r *CaPool, o *CaPo
 	if err := extractCaPoolIssuancePolicyAllowedKeyTypesRsaFields(r, vRsa); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRsa) {
+	if !dcl.IsEmptyValueIndirect(vRsa) {
 		o.Rsa = vRsa
 	}
 	vEllipticCurve := o.EllipticCurve
@@ -6930,7 +7009,7 @@ func postReadExtractCaPoolIssuancePolicyAllowedKeyTypesFields(r *CaPool, o *CaPo
 	if err := extractCaPoolIssuancePolicyAllowedKeyTypesEllipticCurveFields(r, vEllipticCurve); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vEllipticCurve) {
+	if !dcl.IsEmptyValueIndirect(vEllipticCurve) {
 		o.EllipticCurve = vEllipticCurve
 	}
 	return nil
@@ -6953,7 +7032,7 @@ func postReadExtractCaPoolIssuancePolicyBaselineValuesFields(r *CaPool, o *CaPoo
 	if err := extractCaPoolIssuancePolicyBaselineValuesKeyUsageFields(r, vKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vKeyUsage) {
 		o.KeyUsage = vKeyUsage
 	}
 	vCaOptions := o.CaOptions
@@ -6964,7 +7043,7 @@ func postReadExtractCaPoolIssuancePolicyBaselineValuesFields(r *CaPool, o *CaPoo
 	if err := extractCaPoolIssuancePolicyBaselineValuesCaOptionsFields(r, vCaOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCaOptions) {
+	if !dcl.IsEmptyValueIndirect(vCaOptions) {
 		o.CaOptions = vCaOptions
 	}
 	return nil
@@ -6978,7 +7057,7 @@ func postReadExtractCaPoolIssuancePolicyBaselineValuesKeyUsageFields(r *CaPool, 
 	if err := extractCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsageFields(r, vBaseKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaseKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vBaseKeyUsage) {
 		o.BaseKeyUsage = vBaseKeyUsage
 	}
 	vExtendedKeyUsage := o.ExtendedKeyUsage
@@ -6989,7 +7068,7 @@ func postReadExtractCaPoolIssuancePolicyBaselineValuesKeyUsageFields(r *CaPool, 
 	if err := extractCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsageFields(r, vExtendedKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExtendedKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vExtendedKeyUsage) {
 		o.ExtendedKeyUsage = vExtendedKeyUsage
 	}
 	return nil
@@ -7018,7 +7097,7 @@ func postReadExtractCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsFields
 	if err := extractCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -7035,7 +7114,7 @@ func postReadExtractCaPoolIssuancePolicyIdentityConstraintsFields(r *CaPool, o *
 	if err := extractCaPoolIssuancePolicyIdentityConstraintsCelExpressionFields(r, vCelExpression); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCelExpression) {
+	if !dcl.IsEmptyValueIndirect(vCelExpression) {
 		o.CelExpression = vCelExpression
 	}
 	return nil

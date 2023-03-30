@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package privateca
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -92,4 +93,151 @@ func (r *Certificate) createURL(userBasePath string) (string, error) {
 		}
 	}
 	return basePath, nil
+}
+
+func flattenCertificateConfigX509ConfigCAOptions(_ *Client, i interface{}, _ *Certificate) *CertificateConfigX509ConfigCaOptions {
+	if i == nil {
+		return nil
+	}
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	result := &CertificateConfigX509ConfigCaOptions{}
+
+	isCA, ok := m["isCa"].(bool)
+	if ok {
+		result.IsCa = dcl.Bool(isCA)
+		if !isCA {
+			result.NonCa = dcl.Bool(true)
+		}
+	}
+
+	if _, ok := m["maxIssuerPathLength"]; ok {
+		pathLen := dcl.FlattenInteger(m["maxIssuerPathLength"])
+		result.MaxIssuerPathLength = pathLen
+		if dcl.ValueOrEmptyInt64(pathLen) == 0 {
+			result.ZeroMaxIssuerPathLength = dcl.Bool(true)
+		}
+	}
+
+	return result
+}
+
+func expandCertificateConfigX509ConfigCAOptions(_ *Client, caOptions *CertificateConfigX509ConfigCaOptions, _ *Certificate) (map[string]interface{}, error) {
+	if caOptions == nil {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	isCA := dcl.ValueOrEmptyBool(caOptions.IsCa)
+	nonCA := dcl.ValueOrEmptyBool(caOptions.NonCa)
+	zeroPathLength := dcl.ValueOrEmptyBool(caOptions.ZeroMaxIssuerPathLength)
+	maxIssuerPathLength := dcl.ValueOrEmptyInt64(caOptions.MaxIssuerPathLength)
+
+	if !isCA && !nonCA {
+		return nil, nil
+	} else if isCA && nonCA {
+		return nil, fmt.Errorf("is_ca and non_ca are mutually exclusive")
+	} else if isCA || nonCA {
+		m["isCa"] = isCA
+	}
+
+	if zeroPathLength && maxIssuerPathLength > 0 {
+		return nil, fmt.Errorf("max_issuer_path_length and zero_max_issuer_path_length are mutually exclusive")
+	}
+	if maxIssuerPathLength > 0 || zeroPathLength {
+		m["maxIssuerPathLength"] = maxIssuerPathLength
+	}
+
+	return m, nil
+}
+
+// base_key_usage has a custom flattener because the API does not return the object when all subfields are set to false.
+func flattenCertificateTemplateBaseKeyUsage(_ *Client, i interface{}, res *CertificateTemplate) *CertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		if res != nil && res.PredefinedValues != nil && res.PredefinedValues.KeyUsage != nil && res.PredefinedValues.KeyUsage.BaseKeyUsage != nil {
+			baseKeyUsage := res.PredefinedValues.KeyUsage.BaseKeyUsage
+			allFalse := true
+			for _, booleanField := range []*bool{
+				baseKeyUsage.DigitalSignature,
+				baseKeyUsage.ContentCommitment,
+				baseKeyUsage.KeyEncipherment,
+				baseKeyUsage.DataEncipherment,
+				baseKeyUsage.KeyAgreement,
+				baseKeyUsage.CertSign,
+				baseKeyUsage.CrlSign,
+				baseKeyUsage.EncipherOnly,
+				baseKeyUsage.DecipherOnly,
+			} {
+				if dcl.ValueOrEmptyBool(booleanField) {
+					allFalse = false
+				}
+			}
+			if allFalse {
+				return dcl.Copy(baseKeyUsage).(*CertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage)
+			}
+		}
+		return nil
+	}
+
+	r := &CertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyCertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage
+	}
+	r.DigitalSignature = dcl.FlattenBool(m["digitalSignature"])
+	r.ContentCommitment = dcl.FlattenBool(m["contentCommitment"])
+	r.KeyEncipherment = dcl.FlattenBool(m["keyEncipherment"])
+	r.DataEncipherment = dcl.FlattenBool(m["dataEncipherment"])
+	r.KeyAgreement = dcl.FlattenBool(m["keyAgreement"])
+	r.CertSign = dcl.FlattenBool(m["certSign"])
+	r.CrlSign = dcl.FlattenBool(m["crlSign"])
+	r.EncipherOnly = dcl.FlattenBool(m["encipherOnly"])
+	r.DecipherOnly = dcl.FlattenBool(m["decipherOnly"])
+
+	return r
+}
+
+// extended_key_usage has a custom flattener because the API does not return the object when all subfields are set to false.
+func flattenCertificateTemplateExtendedKeyUsage(_ *Client, i interface{}, res *CertificateTemplate) *CertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		if res != nil && res.PredefinedValues != nil && res.PredefinedValues.KeyUsage != nil && res.PredefinedValues.KeyUsage.ExtendedKeyUsage != nil {
+			extendedKeyUsage := res.PredefinedValues.KeyUsage.ExtendedKeyUsage
+			allFalse := true
+			for _, booleanField := range []*bool{
+				extendedKeyUsage.ServerAuth,
+				extendedKeyUsage.ClientAuth,
+				extendedKeyUsage.CodeSigning,
+				extendedKeyUsage.EmailProtection,
+				extendedKeyUsage.TimeStamping,
+				extendedKeyUsage.OcspSigning,
+			} {
+				if dcl.ValueOrEmptyBool(booleanField) {
+					allFalse = false
+				}
+			}
+			if allFalse {
+				return dcl.Copy(extendedKeyUsage).(*CertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage)
+			}
+		}
+		return nil
+	}
+
+	r := &CertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyCertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage
+	}
+	r.ServerAuth = dcl.FlattenBool(m["serverAuth"])
+	r.ClientAuth = dcl.FlattenBool(m["clientAuth"])
+	r.CodeSigning = dcl.FlattenBool(m["codeSigning"])
+	r.EmailProtection = dcl.FlattenBool(m["emailProtection"])
+	r.TimeStamping = dcl.FlattenBool(m["timeStamping"])
+	r.OcspSigning = dcl.FlattenBool(m["ocspSigning"])
+
+	return r
 }

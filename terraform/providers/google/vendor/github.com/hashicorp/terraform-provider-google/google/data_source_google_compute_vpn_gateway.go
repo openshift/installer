@@ -7,7 +7,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeVpnGateway() *schema.Resource {
+func DataSourceGoogleComputeVpnGateway() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeVpnGatewayRead,
 
@@ -49,7 +49,7 @@ func dataSourceGoogleComputeVpnGateway() *schema.Resource {
 
 func dataSourceGoogleComputeVpnGatewayRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

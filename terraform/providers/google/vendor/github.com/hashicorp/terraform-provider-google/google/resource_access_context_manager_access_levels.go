@@ -21,10 +21,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceAccessContextManagerAccessLevels() *schema.Resource {
+func ResourceAccessContextManagerAccessLevels() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAccessContextManagerAccessLevelsCreate,
 		Read:   resourceAccessContextManagerAccessLevelsRead,
@@ -36,9 +35,9 @@ func resourceAccessContextManagerAccessLevels() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -107,7 +106,7 @@ allowed.`,
 An empty list allows all management levels. Possible values: ["MANAGEMENT_UNSPECIFIED", "NONE", "BASIC", "COMPLETE"]`,
 													Elem: &schema.Schema{
 														Type:         schema.TypeString,
-														ValidateFunc: validation.StringInSlice([]string{"MANAGEMENT_UNSPECIFIED", "NONE", "BASIC", "COMPLETE"}, false),
+														ValidateFunc: validateEnum([]string{"MANAGEMENT_UNSPECIFIED", "NONE", "BASIC", "COMPLETE"}),
 													},
 												},
 												"allowed_encryption_statuses": {
@@ -117,7 +116,7 @@ An empty list allows all management levels. Possible values: ["MANAGEMENT_UNSPEC
 An empty list allows all statuses. Possible values: ["ENCRYPTION_UNSPECIFIED", "ENCRYPTION_UNSUPPORTED", "UNENCRYPTED", "ENCRYPTED"]`,
 													Elem: &schema.Schema{
 														Type:         schema.TypeString,
-														ValidateFunc: validation.StringInSlice([]string{"ENCRYPTION_UNSPECIFIED", "ENCRYPTION_UNSUPPORTED", "UNENCRYPTED", "ENCRYPTED"}, false),
+														ValidateFunc: validateEnum([]string{"ENCRYPTION_UNSPECIFIED", "ENCRYPTION_UNSUPPORTED", "UNENCRYPTED", "ENCRYPTED"}),
 													},
 												},
 												"os_constraints": {
@@ -130,7 +129,7 @@ An empty list allows all types and all versions.`,
 															"os_type": {
 																Type:         schema.TypeString,
 																Required:     true,
-																ValidateFunc: validation.StringInSlice([]string{"OS_UNSPECIFIED", "DESKTOP_MAC", "DESKTOP_WINDOWS", "DESKTOP_LINUX", "DESKTOP_CHROME_OS", "ANDROID", "IOS"}, false),
+																ValidateFunc: validateEnum([]string{"OS_UNSPECIFIED", "DESKTOP_MAC", "DESKTOP_WINDOWS", "DESKTOP_LINUX", "DESKTOP_CHROME_OS", "ANDROID", "IOS"}),
 																Description:  `The operating system type of the device. Possible values: ["OS_UNSPECIFIED", "DESKTOP_MAC", "DESKTOP_WINDOWS", "DESKTOP_LINUX", "DESKTOP_CHROME_OS", "ANDROID", "IOS"]`,
 															},
 															"minimum_version": {
@@ -229,7 +228,7 @@ Format: accessPolicies/{policy_id}/accessLevels/{short_name}`,
 						"combining_function": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"AND", "OR", ""}, false),
+							ValidateFunc: validateEnum([]string{"AND", "OR", ""}),
 							Description: `How the conditions list should be combined to determine if a request
 is granted this AccessLevel. If AND is used, each Condition in
 conditions must be satisfied for the AccessLevel to be applied. If
@@ -294,7 +293,7 @@ custom access levels - https://cloud.google.com/access-context-manager/docs/cust
 
 func resourceAccessContextManagerAccessLevelsCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -320,7 +319,7 @@ func resourceAccessContextManagerAccessLevelsCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating AccessLevels: %s", err)
 	}
@@ -332,7 +331,7 @@ func resourceAccessContextManagerAccessLevelsCreate(d *schema.ResourceData, meta
 	}
 	d.SetId(id)
 
-	err = accessContextManagerOperationWaitTime(
+	err = AccessContextManagerOperationWaitTime(
 		config, res, "Creating AccessLevels", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -349,7 +348,7 @@ func resourceAccessContextManagerAccessLevelsCreate(d *schema.ResourceData, meta
 
 func resourceAccessContextManagerAccessLevelsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -366,7 +365,7 @@ func resourceAccessContextManagerAccessLevelsRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerAccessLevels %q", d.Id()))
 	}
@@ -380,7 +379,7 @@ func resourceAccessContextManagerAccessLevelsRead(d *schema.ResourceData, meta i
 
 func resourceAccessContextManagerAccessLevelsUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -407,7 +406,7 @@ func resourceAccessContextManagerAccessLevelsUpdate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating AccessLevels %q: %s", d.Id(), err)
@@ -415,7 +414,7 @@ func resourceAccessContextManagerAccessLevelsUpdate(d *schema.ResourceData, meta
 		log.Printf("[DEBUG] Finished updating AccessLevels %q: %#v", d.Id(), res)
 	}
 
-	err = accessContextManagerOperationWaitTime(
+	err = AccessContextManagerOperationWaitTime(
 		config, res, "Updating AccessLevels", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -428,7 +427,7 @@ func resourceAccessContextManagerAccessLevelsUpdate(d *schema.ResourceData, meta
 
 func resourceAccessContextManagerAccessLevelsDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -442,7 +441,7 @@ func resourceAccessContextManagerAccessLevelsDelete(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Deleting AccessLevels %q: %#v", d.Id(), obj)
-	res, err := sendRequestWithTimeout(config, "POST", "", url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "POST", "", url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error deleting AccessLevels %q: %s", d.Id(), err)
@@ -450,7 +449,7 @@ func resourceAccessContextManagerAccessLevelsDelete(d *schema.ResourceData, meta
 		log.Printf("[DEBUG] Finished deleting AccessLevels %q: %#v", d.Id(), res)
 	}
 
-	err = accessContextManagerOperationWaitTime(
+	err = AccessContextManagerOperationWaitTime(
 		config, res, "Updating AccessLevels", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 

@@ -9,9 +9,9 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeInstanceTemplate() *schema.Resource {
+func DataSourceGoogleComputeInstanceTemplate() *schema.Resource {
 	// Generate datasource schema from resource
-	dsSchema := datasourceSchemaFromResourceSchema(resourceComputeInstanceTemplate().Schema)
+	dsSchema := datasourceSchemaFromResourceSchema(ResourceComputeInstanceTemplate().Schema)
 
 	dsSchema["filter"] = &schema.Schema{
 		Type:     schema.TypeString,
@@ -22,11 +22,8 @@ func dataSourceGoogleComputeInstanceTemplate() *schema.Resource {
 		Optional: true,
 	}
 
-	// Set 'Required' schema elements
-	addRequiredFieldsToSchema(dsSchema, "project")
-
 	// Set 'Optional' schema elements
-	addOptionalFieldsToSchema(dsSchema, "name", "filter", "most_recent")
+	addOptionalFieldsToSchema(dsSchema, "name", "filter", "most_recent", "project")
 
 	dsSchema["name"].ExactlyOneOf = []string{"name", "filter"}
 	dsSchema["filter"].ExactlyOneOf = []string{"name", "filter"}
@@ -49,7 +46,7 @@ func datasourceComputeInstanceTemplateRead(d *schema.ResourceData, meta interfac
 		return retrieveInstance(d, meta, project, v.(string))
 	}
 	if v, ok := d.GetOk("filter"); ok {
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return err
 		}

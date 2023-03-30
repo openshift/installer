@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -177,11 +177,12 @@ func (t loggingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err == nil {
 		respDump, err := httputil.DumpResponse(resp, true)
 		if err == nil {
+			respDumpStr := string(respDump)
 			if shouldLogRequest {
-				t.logger.InfoWithContextf(req.Context(), "Google API Response: (id %s) \n-----------[RESPONSE]----------\n%s\n-------[END RESPONSE]--------", randString, strings.ReplaceAll(string(respDump), "\r\n", "\n"))
-			} else if resp.StatusCode >= 400 {
+				t.logger.InfoWithContextf(req.Context(), "Google API Response: (id %s) \n-----------[RESPONSE]----------\n%s\n-------[END RESPONSE]--------", randString, strings.ReplaceAll(respDumpStr, "\r\n", "\n"))
+			} else if resp.StatusCode >= 400 || strings.Contains(respDumpStr, "error") {
 				t.logger.InfoWithContextf(req.Context(), "Google API Request: (id %s)\n-----------[REQUEST]----------\n%s\n-------[END REQUEST]--------", randString, strings.ReplaceAll(string(reqDump), "\r\n", "\n"))
-				t.logger.InfoWithContextf(req.Context(), "Google API Response: (id %s) \n-----------[RESPONSE]----------\n%s\n-------[END RESPONSE]--------", randString, strings.ReplaceAll(string(respDump), "\r\n", "\n"))
+				t.logger.InfoWithContextf(req.Context(), "Google API Response: (id %s) \n-----------[RESPONSE]----------\n%s\n-------[END RESPONSE]--------", randString, strings.ReplaceAll(respDumpStr, "\r\n", "\n"))
 			}
 		} else {
 			t.logger.WarningWithContextf(req.Context(), "Failed to parse response (id %s): %s", randString, err)

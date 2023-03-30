@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,19 +28,19 @@ paths:
   get:
     description: The function used to get information about a PacketMirroring
     parameters:
-    - name: PacketMirroring
+    - name: packetMirroring
       required: true
       description: A full instance of a PacketMirroring
   apply:
     description: The function used to apply information about a PacketMirroring
     parameters:
-    - name: PacketMirroring
+    - name: packetMirroring
       required: true
       description: A full instance of a PacketMirroring
   delete:
     description: The function used to delete a PacketMirroring
     parameters:
-    - name: PacketMirroring
+    - name: packetMirroring
       required: true
       description: A full instance of a PacketMirroring
   deleteAll:
@@ -73,7 +73,11 @@ components:
       x-dcl-locations:
       - region
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -129,6 +133,7 @@ components:
           x-dcl-go-type: PacketMirroringFilter
           description: Filter for mirrored traffic. If unspecified, all traffic is
             mirrored.
+          x-dcl-server-default: true
           properties:
             cidrRanges:
               type: array

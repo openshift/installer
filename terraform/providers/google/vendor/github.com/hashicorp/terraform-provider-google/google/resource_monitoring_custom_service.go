@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceMonitoringService() *schema.Resource {
+func ResourceMonitoringService() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMonitoringServiceCreate,
 		Read:   resourceMonitoringServiceRead,
@@ -36,9 +36,9 @@ func resourceMonitoringService() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -73,6 +73,17 @@ https://cloud.google.com/apis/design/resource_names.`,
 					},
 				},
 			},
+			"user_labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `Labels which have been used to annotate the service. Label keys must start
+with a letter. Label keys and values may contain lowercase letters,
+numbers, underscores, and dashes. Label keys and values have a maximum
+length of 63 characters, and must be less than 128 bytes in size. Up to 64
+label entries may be stored. For labels which do not have a semantic value,
+the empty string may be supplied for the label value.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -92,7 +103,7 @@ projects/[PROJECT_ID]/services/[SERVICE_ID].`,
 
 func resourceMonitoringServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -103,6 +114,12 @@ func resourceMonitoringServiceCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("display_name"); !isEmptyValue(reflect.ValueOf(displayNameProp)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
+	}
+	userLabelsProp, err := expandMonitoringServiceUserLabels(d.Get("user_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("user_labels"); ok || !reflect.DeepEqual(v, userLabelsProp) {
+		obj["userLabels"] = userLabelsProp
 	}
 	telemetryProp, err := expandMonitoringServiceTelemetry(d.Get("telemetry"), d, config)
 	if err != nil {
@@ -141,7 +158,7 @@ func resourceMonitoringServiceCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isMonitoringConcurrentEditError)
 	if err != nil {
 		return fmt.Errorf("Error creating Service: %s", err)
 	}
@@ -163,7 +180,7 @@ func resourceMonitoringServiceCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceMonitoringServiceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -186,7 +203,7 @@ func resourceMonitoringServiceRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isMonitoringConcurrentEditError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isMonitoringConcurrentEditError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringService %q", d.Id()))
 	}
@@ -201,6 +218,9 @@ func resourceMonitoringServiceRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("display_name", flattenMonitoringServiceDisplayName(res["displayName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
+	if err := d.Set("user_labels", flattenMonitoringServiceUserLabels(res["userLabels"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Service: %s", err)
+	}
 	if err := d.Set("telemetry", flattenMonitoringServiceTelemetry(res["telemetry"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Service: %s", err)
 	}
@@ -213,7 +233,7 @@ func resourceMonitoringServiceRead(d *schema.ResourceData, meta interface{}) err
 
 func resourceMonitoringServiceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -232,6 +252,12 @@ func resourceMonitoringServiceUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("display_name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, displayNameProp)) {
 		obj["displayName"] = displayNameProp
+	}
+	userLabelsProp, err := expandMonitoringServiceUserLabels(d.Get("user_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("user_labels"); ok || !reflect.DeepEqual(v, userLabelsProp) {
+		obj["userLabels"] = userLabelsProp
 	}
 	telemetryProp, err := expandMonitoringServiceTelemetry(d.Get("telemetry"), d, config)
 	if err != nil {
@@ -257,6 +283,10 @@ func resourceMonitoringServiceUpdate(d *schema.ResourceData, meta interface{}) e
 		updateMask = append(updateMask, "displayName")
 	}
 
+	if d.HasChange("user_labels") {
+		updateMask = append(updateMask, "userLabels")
+	}
+
 	if d.HasChange("telemetry") {
 		updateMask = append(updateMask, "telemetry")
 	}
@@ -272,7 +302,7 @@ func resourceMonitoringServiceUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringConcurrentEditError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating Service %q: %s", d.Id(), err)
@@ -285,7 +315,7 @@ func resourceMonitoringServiceUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceMonitoringServiceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -311,7 +341,7 @@ func resourceMonitoringServiceDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isMonitoringConcurrentEditError)
 	if err != nil {
 		return handleNotFoundError(err, d, "Service")
 	}
@@ -337,6 +367,10 @@ func flattenMonitoringServiceName(v interface{}, d *schema.ResourceData, config 
 }
 
 func flattenMonitoringServiceDisplayName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenMonitoringServiceUserLabels(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -366,6 +400,17 @@ func flattenMonitoringServiceServiceId(v interface{}, d *schema.ResourceData, co
 
 func expandMonitoringServiceDisplayName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandMonitoringServiceUserLabels(v interface{}, d TerraformResourceData, config *Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func expandMonitoringServiceTelemetry(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {

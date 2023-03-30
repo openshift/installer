@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleFolder() *schema.Resource {
+func DataSourceGoogleFolder() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceFolderRead,
 		Schema: map[string]*schema.Schema{
@@ -54,7 +54,7 @@ func dataSourceGoogleFolder() *schema.Resource {
 
 func dataSourceFolderRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

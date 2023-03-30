@@ -10,7 +10,7 @@ import (
 	iamcredentials "google.golang.org/api/iamcredentials/v1"
 )
 
-func dataSourceGoogleServiceAccountAccessToken() *schema.Resource {
+func DataSourceGoogleServiceAccountAccessToken() *schema.Resource {
 
 	return &schema.Resource{
 		Read: dataSourceGoogleServiceAccountAccessTokenRead,
@@ -56,7 +56,7 @@ func dataSourceGoogleServiceAccountAccessToken() *schema.Resource {
 
 func dataSourceGoogleServiceAccountAccessTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

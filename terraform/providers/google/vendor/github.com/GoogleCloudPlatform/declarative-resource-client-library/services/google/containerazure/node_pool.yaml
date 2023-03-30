@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ paths:
   get:
     description: The function used to get information about a NodePool
     parameters:
-    - name: NodePool
+    - name: nodePool
       required: true
       description: A full instance of a NodePool
   apply:
     description: The function used to apply information about a NodePool
     parameters:
-    - name: NodePool
+    - name: nodePool
       required: true
       description: A full instance of a NodePool
   delete:
     description: The function used to delete a NodePool
     parameters:
-    - name: NodePool
+    - name: nodePool
       required: true
       description: A full instance of a NodePool
   deleteAll:
@@ -77,7 +77,11 @@ components:
       title: NodePool
       x-dcl-id: projects/{{project}}/locations/{{location}}/azureClusters/{{cluster}}/azureNodePools/{{name}}
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -106,8 +110,7 @@ components:
           type: object
           x-dcl-go-name: Autoscaling
           x-dcl-go-type: NodePoolAutoscaling
-          description: Required. Autoscaler configuration for this node pool.
-          x-kubernetes-immutable: true
+          description: Autoscaler configuration for this node pool.
           required:
           - minNodeCount
           - maxNodeCount
@@ -116,16 +119,13 @@ components:
               type: integer
               format: int64
               x-dcl-go-name: MaxNodeCount
-              description: Required. Maximum number of nodes in the node pool. Must
-                be >= min_node_count.
-              x-kubernetes-immutable: true
+              description: Maximum number of nodes in the node pool. Must be >= min_node_count.
             minNodeCount:
               type: integer
               format: int64
               x-dcl-go-name: MinNodeCount
-              description: Required. Minimum number of nodes in the node pool. Must
-                be >= 1 and <= max_node_count.
-              x-kubernetes-immutable: true
+              description: Minimum number of nodes in the node pool. Must be >= 1
+                and <= max_node_count.
         azureAvailabilityZone:
           type: string
           x-dcl-go-name: AzureAvailabilityZone
@@ -146,11 +146,32 @@ components:
           type: object
           x-dcl-go-name: Config
           x-dcl-go-type: NodePoolConfig
-          description: Required. The node configuration of the node pool.
-          x-kubernetes-immutable: true
+          description: The node configuration of the node pool.
           required:
           - sshConfig
           properties:
+            proxyConfig:
+              type: object
+              x-dcl-go-name: ProxyConfig
+              x-dcl-go-type: NodePoolConfigProxyConfig
+              description: Proxy configuration for outbound HTTP(S) traffic.
+              x-kubernetes-immutable: true
+              required:
+              - resourceGroupId
+              - secretId
+              properties:
+                resourceGroupId:
+                  type: string
+                  x-dcl-go-name: ResourceGroupId
+                  description: The ARM ID the of the resource group containing proxy
+                    keyvault. Resource group ids are formatted as `/subscriptions/<subscription-id>/resourceGroups/<resource-group-name>`
+                  x-kubernetes-immutable: true
+                secretId:
+                  type: string
+                  x-dcl-go-name: SecretId
+                  description: The URL the of the proxy setting secret with its version.
+                    Secret ids are formatted as `https:<key-vault-name>.vault.azure.net/secrets/<secret-name>/<secret-version>`.
+                  x-kubernetes-immutable: true
             rootVolume:
               type: object
               x-dcl-go-name: RootVolume
@@ -174,19 +195,16 @@ components:
               type: object
               x-dcl-go-name: SshConfig
               x-dcl-go-type: NodePoolConfigSshConfig
-              description: Required. SSH configuration for how to access the node
-                pool machines.
-              x-kubernetes-immutable: true
+              description: SSH configuration for how to access the node pool machines.
               required:
               - authorizedKey
               properties:
                 authorizedKey:
                   type: string
                   x-dcl-go-name: AuthorizedKey
-                  description: Required. The SSH public key data for VMs managed by
-                    Anthos. This accepts the authorized_keys file format used in OpenSSH
-                    according to the sshd(8) manual page.
-                  x-kubernetes-immutable: true
+                  description: The SSH public key data for VMs managed by Anthos.
+                    This accepts the authorized_keys file format used in OpenSSH according
+                    to the sshd(8) manual page.
             tags:
               type: object
               additionalProperties:
@@ -230,8 +248,8 @@ components:
           type: object
           x-dcl-go-name: MaxPodsConstraint
           x-dcl-go-type: NodePoolMaxPodsConstraint
-          description: Required. The constraint on the maximum number of pods that
-            can be run simultaneously on a node in the node pool.
+          description: The constraint on the maximum number of pods that can be run
+            simultaneously on a node in the node pool.
           x-kubernetes-immutable: true
           required:
           - maxPodsPerNode
@@ -240,8 +258,7 @@ components:
               type: integer
               format: int64
               x-dcl-go-name: MaxPodsPerNode
-              description: Required. The maximum number of pods to schedule on a single
-                node.
+              description: The maximum number of pods to schedule on a single node.
               x-kubernetes-immutable: true
         name:
           type: string
@@ -284,9 +301,8 @@ components:
         subnetId:
           type: string
           x-dcl-go-name: SubnetId
-          description: Required. The ARM ID of the subnet where the node pool VMs
-            run. Make sure it's a subnet under the virtual network in the cluster
-            configuration.
+          description: The ARM ID of the subnet where the node pool VMs run. Make
+            sure it's a subnet under the virtual network in the cluster configuration.
           x-kubernetes-immutable: true
         uid:
           type: string
@@ -304,5 +320,5 @@ components:
         version:
           type: string
           x-dcl-go-name: Version
-          description: Required. The Kubernetes version (e.g. `1.19.10-gke.1000`)
-            running on this node pool.
+          description: The Kubernetes version (e.g. `1.19.10-gke.1000`) running on
+            this node pool.

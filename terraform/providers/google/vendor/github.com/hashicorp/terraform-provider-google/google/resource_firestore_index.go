@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 /*
@@ -62,7 +61,7 @@ func firestoreIFieldsDiffSuppress(k, old, new string, d *schema.ResourceData) bo
 	return firestoreIFieldsDiffSuppressFunc(k, old, new, d)
 }
 
-func resourceFirestoreIndex() *schema.Resource {
+func ResourceFirestoreIndex() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceFirestoreIndexCreate,
 		Read:   resourceFirestoreIndexRead,
@@ -73,8 +72,8 @@ func resourceFirestoreIndex() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -102,7 +101,7 @@ ordered '"ASCENDING"' (unless explicitly specified otherwise).`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"CONTAINS", ""}, false),
+							ValidateFunc: validateEnum([]string{"CONTAINS", ""}),
 							Description: `Indicates that this field supports operations on arrayValues. Only one of 'order' and 'arrayConfig' can
 be specified. Possible values: ["CONTAINS"]`,
 						},
@@ -116,7 +115,7 @@ be specified. Possible values: ["CONTAINS"]`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ASCENDING", "DESCENDING", ""}, false),
+							ValidateFunc: validateEnum([]string{"ASCENDING", "DESCENDING", ""}),
 							Description: `Indicates that this field supports ordering by the specified order or comparing using =, <, <=, >, >=.
 Only one of 'order' and 'arrayConfig' can be specified. Possible values: ["ASCENDING", "DESCENDING"]`,
 						},
@@ -134,7 +133,7 @@ Only one of 'order' and 'arrayConfig' can be specified. Possible values: ["ASCEN
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"COLLECTION", "COLLECTION_GROUP", ""}, false),
+				ValidateFunc: validateEnum([]string{"COLLECTION", "COLLECTION_GROUP", ""}),
 				Description:  `The scope at which a query is run. Default value: "COLLECTION" Possible values: ["COLLECTION", "COLLECTION_GROUP"]`,
 				Default:      "COLLECTION",
 			},
@@ -157,7 +156,7 @@ Only one of 'order' and 'arrayConfig' can be specified. Possible values: ["ASCEN
 
 func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -212,7 +211,7 @@ func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Index: %s", err)
 	}
@@ -227,12 +226,13 @@ func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = firestoreOperationWaitTimeWithResponse(
+	err = FirestoreOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Index", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Index: %s", err)
 	}
 
@@ -264,7 +264,7 @@ func resourceFirestoreIndexCreate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceFirestoreIndexRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func resourceFirestoreIndexRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("FirestoreIndex %q", d.Id()))
 	}
@@ -311,7 +311,7 @@ func resourceFirestoreIndexRead(d *schema.ResourceData, meta interface{}) error 
 
 func resourceFirestoreIndexDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -337,12 +337,12 @@ func resourceFirestoreIndexDelete(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Index")
 	}
 
-	err = firestoreOperationWaitTime(
+	err = FirestoreOperationWaitTime(
 		config, res, project, "Deleting Index", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

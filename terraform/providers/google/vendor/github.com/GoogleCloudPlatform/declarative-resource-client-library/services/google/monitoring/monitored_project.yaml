@@ -1,0 +1,100 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Monitoring/MonitoredProject
+  description: Monitored Project allows you to set a project as monitored by a _metrics
+    scope_, which is a term for a project used to group the metrics of multiple projects,
+    potentially across multiple organizations.  This enables you to view these groups
+    in the Monitoring page of the cloud console.
+  x-dcl-struct-name: MonitoredProject
+  x-dcl-has-iam: false
+  x-dcl-ref:
+    text: REST API
+    url: https://cloud.google.com/monitoring/api/ref_v3/rest/v1/locations.global.metricsScopes
+  x-dcl-guides:
+  - text: Understanding metrics scopes
+    url: https://cloud.google.com/monitoring/settings#concept-scope
+  - text: API notes
+    url: https://cloud.google.com/monitoring/settings/manage-api
+paths:
+  get:
+    description: The function used to get information about a MonitoredProject
+    parameters:
+    - name: monitoredProject
+      required: true
+      description: A full instance of a MonitoredProject
+  apply:
+    description: The function used to apply information about a MonitoredProject
+    parameters:
+    - name: monitoredProject
+      required: true
+      description: A full instance of a MonitoredProject
+  delete:
+    description: The function used to delete a MonitoredProject
+    parameters:
+    - name: monitoredProject
+      required: true
+      description: A full instance of a MonitoredProject
+  deleteAll:
+    description: The function used to delete all MonitoredProject
+    parameters:
+    - name: metricsScope
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many MonitoredProject
+    parameters:
+    - name: metricsScope
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    MonitoredProject:
+      title: MonitoredProject
+      x-dcl-id: locations/global/metricsScopes/{{metrics_scope}}/projects/{{name}}
+      x-dcl-locations:
+      - global
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - metricsScope
+      properties:
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The time when this `MonitoredProject` was created.
+          x-kubernetes-immutable: true
+        metricsScope:
+          type: string
+          x-dcl-go-name: MetricsScope
+          description: 'Required. The resource name of the existing Metrics Scope
+            that will monitor this project. Example: locations/global/metricsScopes/{SCOPING_PROJECT_ID_OR_NUMBER}'
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'Immutable. The resource name of the `MonitoredProject`. On
+            input, the resource name includes the scoping project ID and monitored
+            project ID. On output, it contains the equivalent project numbers. Example:
+            `locations/global/metricsScopes/{SCOPING_PROJECT_ID_OR_NUMBER}/projects/{MONITORED_PROJECT_ID_OR_NUMBER}`'
+          x-kubernetes-immutable: true

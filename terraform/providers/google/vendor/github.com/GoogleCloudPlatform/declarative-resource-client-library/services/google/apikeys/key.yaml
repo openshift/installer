@@ -1,0 +1,251 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Apikeys/Key
+  description: The Apikeys Key resource
+  x-dcl-struct-name: Key
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Key
+    parameters:
+    - name: key
+      required: true
+      description: A full instance of a Key
+  apply:
+    description: The function used to apply information about a Key
+    parameters:
+    - name: key
+      required: true
+      description: A full instance of a Key
+  delete:
+    description: The function used to delete a Key
+    parameters:
+    - name: key
+      required: true
+      description: A full instance of a Key
+  deleteAll:
+    description: The function used to delete all Key
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Key
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Key:
+      title: Key
+      x-dcl-id: projects/{{project}}/locations/global/keys/{{name}}
+      x-dcl-locations:
+      - global
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      properties:
+        displayName:
+          type: string
+          x-dcl-go-name: DisplayName
+          description: Human-readable display name of this API key. Modifiable by
+            user.
+        keyString:
+          type: string
+          x-dcl-go-name: KeyString
+          readOnly: true
+          description: Output only. An encrypted and signed value held by this key.
+            This field can be accessed only through the `GetKeyString` method.
+          x-kubernetes-immutable: true
+          x-dcl-sensitive: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'The resource name of the key. The name must be unique within
+            the project, must conform with RFC-1034, is restricted to lower-cased
+            letters, and has a maximum length of 63 characters. In another word, the
+            name must match the regular expression: `[a-z]([a-z0-9-]{0,61}[a-z0-9])?`.'
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        restrictions:
+          type: object
+          x-dcl-go-name: Restrictions
+          x-dcl-go-type: KeyRestrictions
+          description: Key restrictions.
+          properties:
+            androidKeyRestrictions:
+              type: object
+              x-dcl-go-name: AndroidKeyRestrictions
+              x-dcl-go-type: KeyRestrictionsAndroidKeyRestrictions
+              description: The Android apps that are allowed to use the key.
+              x-dcl-conflicts:
+              - browserKeyRestrictions
+              - serverKeyRestrictions
+              - iosKeyRestrictions
+              required:
+              - allowedApplications
+              properties:
+                allowedApplications:
+                  type: array
+                  x-dcl-go-name: AllowedApplications
+                  description: A list of Android applications that are allowed to
+                    make API calls with this key.
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: object
+                    x-dcl-go-type: KeyRestrictionsAndroidKeyRestrictionsAllowedApplications
+                    required:
+                    - sha1Fingerprint
+                    - packageName
+                    properties:
+                      packageName:
+                        type: string
+                        x-dcl-go-name: PackageName
+                        description: The package name of the application.
+                      sha1Fingerprint:
+                        type: string
+                        x-dcl-go-name: Sha1Fingerprint
+                        description: 'The SHA1 fingerprint of the application. For
+                          example, both sha1 formats are acceptable : DA:39:A3:EE:5E:6B:4B:0D:32:55:BF:EF:95:60:18:90:AF:D8:07:09
+                          or DA39A3EE5E6B4B0D3255BFEF95601890AFD80709. Output format
+                          is the latter.'
+            apiTargets:
+              type: array
+              x-dcl-go-name: ApiTargets
+              description: A restriction for a specific service and optionally one
+                or more specific methods. Requests are allowed if they match any of
+                these restrictions. If no restrictions are specified, all targets
+                are allowed.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: object
+                x-dcl-go-type: KeyRestrictionsApiTargets
+                required:
+                - service
+                properties:
+                  methods:
+                    type: array
+                    x-dcl-go-name: Methods
+                    description: 'Optional. List of one or more methods that can be
+                      called. If empty, all methods for the service are allowed. A
+                      wildcard (*) can be used as the last symbol. Valid examples:
+                      `google.cloud.translate.v2.TranslateService.GetSupportedLanguage`
+                      `TranslateText` `Get*` `translate.googleapis.com.Get*`'
+                    x-dcl-send-empty: true
+                    x-dcl-list-type: list
+                    items:
+                      type: string
+                      x-dcl-go-type: string
+                  service:
+                    type: string
+                    x-dcl-go-name: Service
+                    description: 'The service for this restriction. It should be the
+                      canonical service name, for example: `translate.googleapis.com`.
+                      You can use `gcloud services list` to get a list of services
+                      that are enabled in the project.'
+            browserKeyRestrictions:
+              type: object
+              x-dcl-go-name: BrowserKeyRestrictions
+              x-dcl-go-type: KeyRestrictionsBrowserKeyRestrictions
+              description: The HTTP referrers (websites) that are allowed to use the
+                key.
+              x-dcl-conflicts:
+              - serverKeyRestrictions
+              - androidKeyRestrictions
+              - iosKeyRestrictions
+              required:
+              - allowedReferrers
+              properties:
+                allowedReferrers:
+                  type: array
+                  x-dcl-go-name: AllowedReferrers
+                  description: A list of regular expressions for the referrer URLs
+                    that are allowed to make API calls with this key.
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+            iosKeyRestrictions:
+              type: object
+              x-dcl-go-name: IosKeyRestrictions
+              x-dcl-go-type: KeyRestrictionsIosKeyRestrictions
+              description: The iOS apps that are allowed to use the key.
+              x-dcl-conflicts:
+              - browserKeyRestrictions
+              - serverKeyRestrictions
+              - androidKeyRestrictions
+              required:
+              - allowedBundleIds
+              properties:
+                allowedBundleIds:
+                  type: array
+                  x-dcl-go-name: AllowedBundleIds
+                  description: A list of bundle IDs that are allowed when making API
+                    calls with this key.
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+            serverKeyRestrictions:
+              type: object
+              x-dcl-go-name: ServerKeyRestrictions
+              x-dcl-go-type: KeyRestrictionsServerKeyRestrictions
+              description: The IP addresses of callers that are allowed to use the
+                key.
+              x-dcl-conflicts:
+              - browserKeyRestrictions
+              - androidKeyRestrictions
+              - iosKeyRestrictions
+              required:
+              - allowedIps
+              properties:
+                allowedIps:
+                  type: array
+                  x-dcl-go-name: AllowedIps
+                  description: A list of the caller IP addresses that are allowed
+                    to make API calls with this key.
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. Unique id in UUID4 format.
+          x-kubernetes-immutable: true

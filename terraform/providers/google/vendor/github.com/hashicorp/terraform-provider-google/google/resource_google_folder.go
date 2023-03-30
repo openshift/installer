@@ -7,10 +7,10 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	resourceManagerV2 "google.golang.org/api/cloudresourcemanager/v2"
+	resourceManagerV3 "google.golang.org/api/cloudresourcemanager/v3"
 )
 
-func resourceGoogleFolder() *schema.Resource {
+func ResourceGoogleFolder() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGoogleFolderCreate,
 		Read:   resourceGoogleFolderRead,
@@ -70,7 +70,7 @@ func resourceGoogleFolder() *schema.Resource {
 
 func resourceGoogleFolderCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -78,12 +78,13 @@ func resourceGoogleFolderCreate(d *schema.ResourceData, meta interface{}) error 
 	displayName := d.Get("display_name").(string)
 	parent := d.Get("parent").(string)
 
-	var op *resourceManagerV2.Operation
-	err = retryTimeDuration(func() error {
+	var op *resourceManagerV3.Operation
+	err = RetryTimeDuration(func() error {
 		var reqErr error
-		op, reqErr = config.NewResourceManagerV2Client(userAgent).Folders.Create(&resourceManagerV2.Folder{
+		op, reqErr = config.NewResourceManagerV3Client(userAgent).Folders.Create(&resourceManagerV3.Folder{
 			DisplayName: displayName,
-		}).Parent(parent).Do()
+			Parent:      parent,
+		}).Do()
 		return reqErr
 	}, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
@@ -95,7 +96,7 @@ func resourceGoogleFolderCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 
-	err = resourceManagerOperationWaitTime(config, opAsMap, "creating folder", userAgent, d.Timeout(schema.TimeoutCreate))
+	err = ResourceManagerOperationWaitTime(config, opAsMap, "creating folder", userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating folder '%s' in '%s': %s", displayName, parent, err)
 	}
@@ -121,7 +122,7 @@ func resourceGoogleFolderCreate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceGoogleFolderRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -144,7 +145,7 @@ func resourceGoogleFolderRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("display_name", folder.DisplayName); err != nil {
 		return fmt.Errorf("Error setting display_name: %s", err)
 	}
-	if err := d.Set("lifecycle_state", folder.LifecycleState); err != nil {
+	if err := d.Set("lifecycle_state", folder.State); err != nil {
 		return fmt.Errorf("Error setting lifecycle_state: %s", err)
 	}
 	if err := d.Set("create_time", folder.CreateTime); err != nil {
@@ -156,7 +157,7 @@ func resourceGoogleFolderRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceGoogleFolderUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -165,7 +166,7 @@ func resourceGoogleFolderUpdate(d *schema.ResourceData, meta interface{}) error 
 	d.Partial(true)
 	if d.HasChange("display_name") {
 		err := retry(func() error {
-			_, reqErr := config.NewResourceManagerV2Client(userAgent).Folders.Patch(d.Id(), &resourceManagerV2.Folder{
+			_, reqErr := config.NewResourceManagerV3Client(userAgent).Folders.Patch(d.Id(), &resourceManagerV3.Folder{
 				DisplayName: displayName,
 			}).Do()
 			return reqErr
@@ -178,10 +179,10 @@ func resourceGoogleFolderUpdate(d *schema.ResourceData, meta interface{}) error 
 	if d.HasChange("parent") {
 		newParent := d.Get("parent").(string)
 
-		var op *resourceManagerV2.Operation
+		var op *resourceManagerV3.Operation
 		err := retry(func() error {
 			var reqErr error
-			op, reqErr = config.NewResourceManagerV2Client(userAgent).Folders.Move(d.Id(), &resourceManagerV2.MoveFolderRequest{
+			op, reqErr = config.NewResourceManagerV3Client(userAgent).Folders.Move(d.Id(), &resourceManagerV3.MoveFolderRequest{
 				DestinationParent: newParent,
 			}).Do()
 			return reqErr
@@ -195,7 +196,7 @@ func resourceGoogleFolderUpdate(d *schema.ResourceData, meta interface{}) error 
 			return err
 		}
 
-		err = resourceManagerOperationWaitTime(config, opAsMap, "move folder", userAgent, d.Timeout(schema.TimeoutUpdate))
+		err = ResourceManagerOperationWaitTime(config, opAsMap, "move folder", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error moving folder '%s' to '%s': %s", displayName, newParent, err)
 		}
@@ -208,19 +209,32 @@ func resourceGoogleFolderUpdate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceGoogleFolderDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 	displayName := d.Get("display_name").(string)
 
-	err = retryTimeDuration(func() error {
-		_, reqErr := config.NewResourceManagerV2Client(userAgent).Folders.Delete(d.Id()).Do()
+	var op *resourceManagerV3.Operation
+	err = RetryTimeDuration(func() error {
+		var reqErr error
+		op, reqErr = config.NewResourceManagerV3Client(userAgent).Folders.Delete(d.Id()).Do()
 		return reqErr
 	}, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return fmt.Errorf("Error deleting folder '%s': %s", displayName, err)
 	}
+
+	opAsMap, err := ConvertToMap(op)
+	if err != nil {
+		return err
+	}
+
+	err = ResourceManagerOperationWaitTime(config, opAsMap, "deleting folder", userAgent, d.Timeout(schema.TimeoutDelete))
+	if err != nil {
+		return fmt.Errorf("Error deleting folder '%s': %s", displayName, err)
+	}
+
 	return nil
 }
 
@@ -238,11 +252,11 @@ func resourceGoogleFolderImportState(d *schema.ResourceData, m interface{}) ([]*
 
 // Util to get a Folder resource from API. Note that folder described by name is not necessarily the
 // ResourceData resource.
-func getGoogleFolder(folderName, userAgent string, d *schema.ResourceData, config *Config) (*resourceManagerV2.Folder, error) {
-	var folder *resourceManagerV2.Folder
-	err := retryTimeDuration(func() error {
+func getGoogleFolder(folderName, userAgent string, d *schema.ResourceData, config *Config) (*resourceManagerV3.Folder, error) {
+	var folder *resourceManagerV3.Folder
+	err := RetryTimeDuration(func() error {
 		var reqErr error
-		folder, reqErr = config.NewResourceManagerV2Client(userAgent).Folders.Get(folderName).Do()
+		folder, reqErr = config.NewResourceManagerV3Client(userAgent).Folders.Get(folderName).Do()
 		return reqErr
 	}, d.Timeout(schema.TimeoutRead))
 	if err != nil {

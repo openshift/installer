@@ -26,36 +26,43 @@ import (
 // Name is the name of weighted_round_robin balancer.
 const Name = "weighted_round_robin"
 
-// attributeKey is the type used as the key to store AddrInfo in the Attributes
-// field of resolver.Address.
+// attributeKey is the type used as the key to store AddrInfo in the
+// BalancerAttributes field of resolver.Address.
 type attributeKey struct{}
 
-// AddrInfo will be stored inside Address metadata in order to use weighted
-// roundrobin balancer.
+// AddrInfo will be stored in the BalancerAttributes field of Address in order
+// to use weighted roundrobin balancer.
 type AddrInfo struct {
 	Weight uint32
 }
 
-// SetAddrInfo returns a copy of addr in which the Attributes field is updated
-// with addrInfo.
+// Equal allows the values to be compared by Attributes.Equal.
+func (a AddrInfo) Equal(o interface{}) bool {
+	oa, ok := o.(AddrInfo)
+	return ok && oa.Weight == a.Weight
+}
+
+// SetAddrInfo returns a copy of addr in which the BalancerAttributes field is
+// updated with addrInfo.
 //
-// Experimental
+// # Experimental
 //
 // Notice: This API is EXPERIMENTAL and may be changed or removed in a
 // later release.
 func SetAddrInfo(addr resolver.Address, addrInfo AddrInfo) resolver.Address {
-	addr.Attributes = addr.Attributes.WithValues(attributeKey{}, addrInfo)
+	addr.BalancerAttributes = addr.BalancerAttributes.WithValue(attributeKey{}, addrInfo)
 	return addr
 }
 
-// GetAddrInfo returns the AddrInfo stored in the Attributes fields of addr.
+// GetAddrInfo returns the AddrInfo stored in the BalancerAttributes field of
+// addr.
 //
-// Experimental
+// # Experimental
 //
 // Notice: This API is EXPERIMENTAL and may be changed or removed in a
 // later release.
 func GetAddrInfo(addr resolver.Address) AddrInfo {
-	v := addr.Attributes.Value(attributeKey{})
+	v := addr.BalancerAttributes.Value(attributeKey{})
 	ai, _ := v.(AddrInfo)
 	return ai
 }

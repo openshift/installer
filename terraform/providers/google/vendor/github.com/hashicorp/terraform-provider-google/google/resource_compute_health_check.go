@@ -24,7 +24,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // Whether the port should be set or not
@@ -110,7 +109,7 @@ func portDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 	return false
 }
 
-func resourceComputeHealthCheck() *schema.Resource {
+func ResourceComputeHealthCheck() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeHealthCheckCreate,
 		Read:   resourceComputeHealthCheckRead,
@@ -122,9 +121,9 @@ func resourceComputeHealthCheck() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		CustomizeDiff: healthCheckCustomizeDiff,
@@ -191,7 +190,7 @@ port_name are defined, port takes precedence.`,
 						"port_specification": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}),
 							Description: `Specifies how port is selected for health checking, can be one of the
 following values:
 
@@ -252,7 +251,7 @@ port_name are defined, port takes precedence.`,
 						"port_specification": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}),
 							Description: `Specifies how port is selected for health checking, can be one of the
 following values:
 
@@ -272,7 +271,7 @@ If not specified, HTTP2 health check follows behavior specified in 'port' and
 						"proxy_header": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "PROXY_V1", ""}, false),
+							ValidateFunc: validateEnum([]string{"NONE", "PROXY_V1", ""}),
 							Description: `Specifies the type of proxy header to append before sending data to the
 backend. Default value: "NONE" Possible values: ["NONE", "PROXY_V1"]`,
 							Default:      "NONE",
@@ -331,7 +330,7 @@ port_name are defined, port takes precedence.`,
 						"port_specification": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}),
 							Description: `Specifies how port is selected for health checking, can be one of the
 following values:
 
@@ -351,7 +350,7 @@ If not specified, HTTP health check follows behavior specified in 'port' and
 						"proxy_header": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "PROXY_V1", ""}, false),
+							ValidateFunc: validateEnum([]string{"NONE", "PROXY_V1", ""}),
 							Description: `Specifies the type of proxy header to append before sending data to the
 backend. Default value: "NONE" Possible values: ["NONE", "PROXY_V1"]`,
 							Default:      "NONE",
@@ -410,7 +409,7 @@ port_name are defined, port takes precedence.`,
 						"port_specification": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}),
 							Description: `Specifies how port is selected for health checking, can be one of the
 following values:
 
@@ -430,7 +429,7 @@ If not specified, HTTPS health check follows behavior specified in 'port' and
 						"proxy_header": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "PROXY_V1", ""}, false),
+							ValidateFunc: validateEnum([]string{"NONE", "PROXY_V1", ""}),
 							Description: `Specifies the type of proxy header to append before sending data to the
 backend. Default value: "NONE" Possible values: ["NONE", "PROXY_V1"]`,
 							Default:      "NONE",
@@ -499,7 +498,7 @@ port_name are defined, port takes precedence.`,
 						"port_specification": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}),
 							Description: `Specifies how port is selected for health checking, can be one of the
 following values:
 
@@ -519,7 +518,7 @@ If not specified, SSL health check follows behavior specified in 'port' and
 						"proxy_header": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "PROXY_V1", ""}, false),
+							ValidateFunc: validateEnum([]string{"NONE", "PROXY_V1", ""}),
 							Description: `Specifies the type of proxy header to append before sending data to the
 backend. Default value: "NONE" Possible values: ["NONE", "PROXY_V1"]`,
 							Default:      "NONE",
@@ -571,7 +570,7 @@ port_name are defined, port takes precedence.`,
 						"port_specification": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_FIXED_PORT", "USE_NAMED_PORT", "USE_SERVING_PORT", ""}),
 							Description: `Specifies how port is selected for health checking, can be one of the
 following values:
 
@@ -591,7 +590,7 @@ If not specified, TCP health check follows behavior specified in 'port' and
 						"proxy_header": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "PROXY_V1", ""}, false),
+							ValidateFunc: validateEnum([]string{"NONE", "PROXY_V1", ""}),
 							Description: `Specifies the type of proxy header to append before sending data to the
 backend. Default value: "NONE" Possible values: ["NONE", "PROXY_V1"]`,
 							Default:      "NONE",
@@ -660,7 +659,7 @@ consecutive failures. The default value is 2.`,
 
 func resourceComputeHealthCheckCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -769,7 +768,7 @@ func resourceComputeHealthCheckCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating HealthCheck: %s", err)
 	}
@@ -781,7 +780,7 @@ func resourceComputeHealthCheckCreate(d *schema.ResourceData, meta interface{}) 
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating HealthCheck", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -798,7 +797,7 @@ func resourceComputeHealthCheckCreate(d *schema.ResourceData, meta interface{}) 
 
 func resourceComputeHealthCheckRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -821,7 +820,7 @@ func resourceComputeHealthCheckRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeHealthCheck %q", d.Id()))
 	}
@@ -884,7 +883,7 @@ func resourceComputeHealthCheckRead(d *schema.ResourceData, meta interface{}) er
 
 func resourceComputeHealthCheckUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -994,7 +993,7 @@ func resourceComputeHealthCheckUpdate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating HealthCheck %q: %s", d.Id(), err)
@@ -1002,7 +1001,7 @@ func resourceComputeHealthCheckUpdate(d *schema.ResourceData, meta interface{}) 
 		log.Printf("[DEBUG] Finished updating HealthCheck %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating HealthCheck", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -1015,7 +1014,7 @@ func resourceComputeHealthCheckUpdate(d *schema.ResourceData, meta interface{}) 
 
 func resourceComputeHealthCheckDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1041,12 +1040,12 @@ func resourceComputeHealthCheckDelete(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "HealthCheck")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting HealthCheck", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -1081,7 +1080,7 @@ func resourceComputeHealthCheckImport(d *schema.ResourceData, meta interface{}) 
 func flattenComputeHealthCheckCheckIntervalSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1106,7 +1105,7 @@ func flattenComputeHealthCheckDescription(v interface{}, d *schema.ResourceData,
 func flattenComputeHealthCheckHealthyThreshold(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1127,7 +1126,7 @@ func flattenComputeHealthCheckName(v interface{}, d *schema.ResourceData, config
 func flattenComputeHealthCheckTimeoutSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1144,7 +1143,7 @@ func flattenComputeHealthCheckTimeoutSec(v interface{}, d *schema.ResourceData, 
 func flattenComputeHealthCheckUnhealthyThreshold(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1202,7 +1201,7 @@ func flattenComputeHealthCheckHttpHealthCheckResponse(v interface{}, d *schema.R
 func flattenComputeHealthCheckHttpHealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1268,7 +1267,7 @@ func flattenComputeHealthCheckHttpsHealthCheckResponse(v interface{}, d *schema.
 func flattenComputeHealthCheckHttpsHealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1328,7 +1327,7 @@ func flattenComputeHealthCheckTcpHealthCheckResponse(v interface{}, d *schema.Re
 func flattenComputeHealthCheckTcpHealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1388,7 +1387,7 @@ func flattenComputeHealthCheckSslHealthCheckResponse(v interface{}, d *schema.Re
 func flattenComputeHealthCheckSslHealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1454,7 +1453,7 @@ func flattenComputeHealthCheckHttp2HealthCheckResponse(v interface{}, d *schema.
 func flattenComputeHealthCheckHttp2HealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1502,7 +1501,7 @@ func flattenComputeHealthCheckGrpcHealthCheck(v interface{}, d *schema.ResourceD
 func flattenComputeHealthCheckGrpcHealthCheckPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
