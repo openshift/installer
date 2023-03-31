@@ -61,10 +61,16 @@ resource "vsphere_virtual_machine" "vm_master" {
     template_uuid = local.template_map[var.vsphere_control_planes[count.index].template].uuid
   }
 
-  extra_config = {
+  extra_config = length(var.vsphere_control_plane_network_kargs) > 0 ? {
     "guestinfo.ignition.config.data"          = base64encode(var.ignition_master)
     "guestinfo.ignition.config.data.encoding" = "base64"
     "guestinfo.hostname"                      = "${var.cluster_id}-master-${count.index}"
+    "stealclock.enable"                       = "TRUE"
+    "guestinfo.afterburn.initrd.network-kargs" = element(var.vsphere_control_plane_network_kargs,count.index)
+  } : {
+    "guestinfo.ignition.config.data"          = base64encode(var.ignition_master)
+    "guestinfo.ignition.config.data.encoding" = "base64"
+    "guestinfo.hostname"                      = "bootstrap"
     "stealclock.enable"                       = "TRUE"
   }
 }

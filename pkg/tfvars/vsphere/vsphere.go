@@ -3,8 +3,10 @@ package vsphere
 import (
 	"encoding/json"
 	"fmt"
+	"net"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -24,6 +26,8 @@ type config struct {
 	FailureDomains           []vtypes.FailureDomain                   `json:"vsphere_failure_domains"`
 	NetworksInFailureDomains map[string]string                        `json:"vsphere_networks"`
 	ControlPlanes            []*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes"`
+	ControlPlaneNetworkKargs []string                                 `json:"vsphere_control_plane_network_kargs"`
+	BootStrapNetworkKargs    string                                   `json:"vsphere_bootstrap_network_kargs"`
 	DatacentersFolders       map[string]*folder                       `json:"vsphere_folders"`
 }
 
@@ -59,6 +63,14 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		NetworksInFailureDomains: sources.NetworksInFailureDomain,
 		ControlPlanes:            sources.ControlPlaneConfigs,
 		DatacentersFolders:       datacentersFolders,
+	}
+
+	if len(sources.InstallConfig.Config.VSphere.Hosts) > 0 {
+		logrus.Debugf("Applying static IP configs")
+		err = processGuestNetworkConfiguration(cfg, sources)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
@@ -99,4 +111,62 @@ func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {
 		vcenterMap[v.Server] = v
 	}
 	return vcenterMap
+}
+
+// func constructKargsFromNetworkConfig(networkConfig *vtypes.NetworkDeviceSpec) (string, error) {
+func constructKargsFromNetworkConfig(ipAddrs, nameservers []string, gateway4 string) (string, error) {
+	if logrus.IsLevelEnabled(logrus.TraceLevel) {
+		logrus.Tracef("Constructing kargs from IPs [%v] nameservers [%v] gateway4 [%v]", ipAddrs, nameservers, gateway4)
+	}
+	outKargs := ""
+	// if an IPv4 gateway is defined, we'll only handle IPv4 addresses
+	if len(gateway4) > 0 {
+		for _, address := range ipAddrs {
+			ip, mask, err := net.ParseCIDR(address)
+			if err != nil {
+				return "", err
+			}
+			maskParts := mask.Mask
+			maskStr := fmt.Sprintf("%d.%d.%d.%d", maskParts[0], maskParts[1], maskParts[2], maskParts[3])
+			outKargs += fmt.Sprintf("ip=%s::%s:%s:::none ", ip.String(), gateway4, maskStr)
+		}
+	}
+
+	for _, nameserver := range nameservers {
+		outKargs += fmt.Sprintf("nameserver=%s ", nameserver)
+	}
+
+	logrus.Debugf("Generated karg: [%v]", outKargs)
+	return outKargs, nil
+}
+
+// processGuestNetworkConfiguration takes the config and sources data and generates the kernel arguments (kargs)
+// needed to boot RHCOS with static IP configurations.
+func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error {
+	platform := sources.InstallConfig.Config.Platform.VSphere
+
+	// Generate bootstrap karg using vsphere platform info from install-config
+	for _, host := range platform.Hosts {
+		if host.Role == vtypes.BootstrapRole {
+			logrus.Debugf("Generating kargs for bootstrap.")
+			network := host.NetworkDevice
+			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway4)
+			if err != nil {
+				return err
+			}
+			cfg.BootStrapNetworkKargs = kargs
+		}
+	}
+
+	// Generate control plane kargs using info from machine network config
+	for _, machine := range sources.ControlPlaneConfigs {
+		logrus.Debugf("Generating kargs for control plane %v.", machine.GenerateName)
+		network := machine.Network.Devices[0]
+		kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway4)
+		if err != nil {
+			return err
+		}
+		cfg.ControlPlaneNetworkKargs = append(cfg.ControlPlaneNetworkKargs, kargs)
+	}
+	return nil
 }

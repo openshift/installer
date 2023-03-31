@@ -41,7 +41,13 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
     template_uuid = var.template[0].uuid
   }
 
-  extra_config = {
+  extra_config = length(var.vsphere_bootstrap_network_kargs) > 0 ? {
+    "guestinfo.ignition.config.data"          = base64encode(var.ignition_bootstrap)
+    "guestinfo.ignition.config.data.encoding" = "base64"
+    "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
+    "stealclock.enable"                       = "TRUE"
+    "guestinfo.afterburn.initrd.network-kargs" = "${var.vsphere_bootstrap_network_kargs}"
+  } : {
     "guestinfo.ignition.config.data"          = base64encode(var.ignition_bootstrap)
     "guestinfo.ignition.config.data.encoding" = "base64"
     "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
