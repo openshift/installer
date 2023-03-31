@@ -356,7 +356,6 @@ For example:
                     --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
                     --rotate-certificates \
                     --kubeconfig=/var/lib/kubelet/kubeconfig \
-                    --container-runtime=remote \
                     --container-runtime-endpoint=/var/run/crio/crio.sock \
                     --allow-privileged \
                     --node-labels=node-role.kubernetes.io/master \
