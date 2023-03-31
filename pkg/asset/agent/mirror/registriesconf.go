@@ -247,7 +247,8 @@ func (i *RegistriesConf) validateReleaseImageIsSameInRegistriesConf(releaseImage
 
 func (i *RegistriesConf) generateDefaultRegistriesConf() error {
 	i.File = &asset.File{
-		Data: []byte(defaultRegistriesConf),
+		Filename: RegistriesConfFilename,
+		Data:     []byte(defaultRegistriesConf),
 	}
 	registriesConf := &sysregistriesv2.V2RegistriesConf{}
 	if err := toml.Unmarshal([]byte(defaultRegistriesConf), registriesConf); err != nil {
