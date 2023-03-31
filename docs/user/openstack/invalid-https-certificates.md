@@ -7,7 +7,7 @@ With OpenShift v4.10, HTTPS certificates not using the `Subject Alternative Name
 A script provided below automates the operation. However, it requires to have a set of tools available (including a relatively recent version of `python3-openstackclient`). To manually check your OpenStack infrastructure:
 
 1. Collect the URL of the OpenStack public endpoints with `openstack catalog list` (HTTP (unsecured) endpoints do not need to be checked)
-2. For each HTTPS endpoint: collect the host (by removing the scheme, the port and the path) and the port
+2. For each public HTTPS endpoint: collect the host (by removing the scheme, the port and the path) and the port
 3. Run this openssl command to extract the SAN field of the certificate:
 
 ```plaintext
@@ -49,7 +49,7 @@ readonly catalog san
 declare invalid=0
 
 openstack catalog list --format json --column Name --column Endpoints \
-	| jq -r '.[] | .Name as $name | .Endpoints[] | [$name, .interface, .url] | join(" ")' \
+	| jq -r '.[] | .Name as $name | .Endpoints[] | select(.interface=="public") | [$name, .interface, .url] | join(" ")' \
 	| sort \
 	> "$catalog"
 
@@ -63,7 +63,7 @@ while read -r name interface url; do
 	noschema=${url#"https://"}
 	
 	# If the schema was not HTTPS, error
-	if [[ noschema == "$url" ]]; then
+	if [[ "$noschema" == "$url" ]]; then
 		echo "ERROR (unknown schema): $name $interface $url"
 		exit 2
 	fi
