@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/types"
 )
 
 var (
@@ -82,6 +83,8 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 		if len(agentConfig.Config.Hosts) == 0 {
 			return nil
 		}
+		checkHostCount(installConfig.Config, agentConfig)
+
 		for i, host := range agentConfig.Config.Hosts {
 			if host.NetworkConfig.Raw != nil {
 				isNetworkConfigAvailable = true
@@ -335,4 +338,34 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 		})
 	}
 	return macInterfaceMap
+}
+
+func checkHostCount(installConfig *types.InstallConfig, agentConfig *agentconfig.AgentConfig) {
+	numRequiredMasters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
+
+	// Check that the number of replicas matches the configured hosts
+	numMasters := int64(0)
+	numWorkers := int64(0)
+	for _, host := range agentConfig.Config.Hosts {
+		switch host.Role {
+		case "master":
+			numMasters++
+		case "worker":
+			numWorkers++
+		case "":
+			// If not defined, the roles will be matched to replicas
+			if numMasters < numRequiredMasters {
+				numMasters++
+			} else if numWorkers < numRequiredWorkers {
+				numWorkers++
+			}
+		}
+	}
+
+	if numMasters != numRequiredMasters {
+		logrus.Warnf("The number of hosts configured as masters (%d) does not match the master replicas (%d)", numMasters, numRequiredMasters)
+	}
+	if numWorkers != numRequiredWorkers {
+		logrus.Warnf("The number of hosts configured as workers (%d) does not match the worker replicas (%d)", numWorkers, numRequiredWorkers)
+	}
 }
