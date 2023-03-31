@@ -131,11 +131,23 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
 		err = powervsconfig.ValidatePreExistingDNS(client, ic.Config, ic.PowerVS)
 		if err != nil {
 			return err
 		}
+
 		err = powervsconfig.ValidateCustomVPCSetup(client, ic.Config)
+		if err != nil {
+			return err
+		}
+
+		err = powervsconfig.ValidateResourceGroup(client, ic.Config)
+		if err != nil {
+			return err
+		}
+
+		err = powervsconfig.ValidateServiceInstance(client, ic.Config)
 		if err != nil {
 			return err
 		}

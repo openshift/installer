@@ -37,11 +37,14 @@ type API interface {
 	GetAPIKey() string
 	SetVPCServiceURLForRegion(ctx context.Context, region string) error
 	GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error)
+	ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error)
+	ListServiceInstances(ctx context.Context) ([]string, error)
 }
 
 // Client makes calls to the PowerVS API.
 type Client struct {
 	APIKey         string
+	BXCli          *BxClient
 	managementAPI  *resourcemanagerv2.ResourceManagerV2
 	controllerAPI  *resourcecontrollerv2.ResourceControllerV2
 	vpcAPI         *vpcv1.VpcV1
@@ -82,17 +85,45 @@ type DNSRecordResponse struct {
 
 // NewClient initializes a client with a session.
 func NewClient() (*Client, error) {
-	bxCli, err := NewBxClient()
+	bxCli, err := NewBxClient(false)
 	if err != nil {
 		return nil, err
 	}
 
 	client := &Client{
 		APIKey: bxCli.APIKey,
+		BXCli:  bxCli,
 	}
 
 	if err := client.loadSDKServices(); err != nil {
 		return nil, errors.Wrap(err, "failed to load IBM SDK services")
+	}
+
+	if bxCli.PowerVSResourceGroup == "Default" {
+		// Here we are initialized enough to handle a default resource group
+		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+		defer cancel()
+
+		resourceGroups, err := client.ListResourceGroups(ctx)
+		if err != nil {
+			return nil, errors.Wrap(err, "client.ListResourceGroups failed")
+		}
+		if resourceGroups == nil {
+			return nil, errors.New("client.ListResourceGroups returns nil")
+		}
+
+		found := false
+		for _, resourceGroup := range resourceGroups.Resources {
+			if resourceGroup.Default != nil && *resourceGroup.Default {
+				bxCli.PowerVSResourceGroup = *resourceGroup.Name
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return nil, errors.New("no default resource group found")
+		}
 	}
 
 	return client, nil
@@ -534,4 +565,84 @@ func (c *Client) GetVPCs(ctx context.Context, region string) ([]vpcv1.VPC, error
 	}
 
 	return vpcs.Vpcs, nil
+}
+
+// ListResourceGroups returns a list of resource groups.
+func (c *Client) ListResourceGroups(ctx context.Context) (*resourcemanagerv2.ResourceGroupList, error) {
+	listResourceGroupsOptions := c.managementAPI.NewListResourceGroupsOptions()
+
+	resourceGroups, _, err := c.managementAPI.ListResourceGroups(listResourceGroupsOptions)
+	if err != nil {
+		return nil, err
+	}
+
+	return resourceGroups, err
+}
+
+const (
+	// resource Id for Power Systems Virtual Server in the Global catalog.
+	powerIAASResourceID = "abd259f0-9990-11e8-acc8-b9f54a8f1661"
+)
+
+// ListServiceInstances lists all service instances in the cloud.
+func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
+	var (
+		serviceInstances []string
+		options          *resourcecontrollerv2.ListResourceInstancesOptions
+		resources        *resourcecontrollerv2.ResourceInstancesList
+		err              error
+		perPage          int64 = 10
+		moreData               = true
+		nextURL          *string
+	)
+
+	options = c.controllerAPI.NewListResourceInstancesOptions()
+	options.SetResourceGroupID(c.BXCli.PowerVSResourceGroup)
+	// resource ID for Power Systems Virtual Server in the Global catalog
+	options.SetResourceID(powerIAASResourceID)
+	options.SetLimit(perPage)
+
+	for moreData {
+		resources, _, err = c.controllerAPI.ListResourceInstancesWithContext(ctx, options)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to list resource instance")
+		}
+
+		for _, resource := range resources.Resources {
+			var (
+				getResourceOptions *resourcecontrollerv2.GetResourceInstanceOptions
+				resourceInstance   *resourcecontrollerv2.ResourceInstance
+				response           *core.DetailedResponse
+			)
+
+			getResourceOptions = c.controllerAPI.NewGetResourceInstanceOptions(*resource.ID)
+
+			resourceInstance, response, err = c.controllerAPI.GetResourceInstance(getResourceOptions)
+			if err != nil {
+				return nil, errors.Wrap(err, "Failed to get instance")
+			}
+			if response != nil && response.StatusCode == http.StatusNotFound || response.StatusCode == http.StatusInternalServerError {
+				continue
+			}
+
+			if resourceInstance.Type != nil && *resourceInstance.Type == "service_instance" {
+				serviceInstances = append(serviceInstances, fmt.Sprintf("%s %s", *resource.Name, *resource.GUID))
+			}
+		}
+
+		// Based on: https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=go#list-resource-instances
+		nextURL, err = core.GetQueryParam(resources.NextURL, "start")
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to GetQueryParam on start")
+		}
+		if nextURL == nil {
+			options.SetStart("")
+		} else {
+			options.SetStart(*nextURL)
+		}
+
+		moreData = *resources.RowsCount == perPage
+	}
+
+	return serviceInstances, nil
 }
