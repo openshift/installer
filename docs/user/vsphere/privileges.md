@@ -13,7 +13,7 @@ These privileges are necessary for OpenShift clusters on vSphere and are suffici
 
 Role Name | vSphere object | Privilege Set
 --- | --- | ---
-openshift-vcenter-level | vSphere vCenter | Cns.Searchable<br/>InventoryService.Tagging.AttachTag<br/>InventoryService.Tagging.CreateCategory<br/>InventoryService.Tagging.CreateTag<br/>InventoryService.Tagging.DeleteCategory<br/>InventoryService.Tagging.DeleteTag<br/>InventoryService.Tagging.EditCategory<br/>InventoryService.Tagging.EditTag<br/>Sessions.ValidateSession<br/>StorageProfile.View
+openshift-vcenter-level | vSphere vCenter | Cns.Searchable<br/>InventoryService.Tagging.AttachTag<br/>InventoryService.Tagging.CreateCategory<br/>InventoryService.Tagging.CreateTag<br/>InventoryService.Tagging.DeleteCategory<br/>InventoryService.Tagging.DeleteTag<br/>InventoryService.Tagging.EditCategory<br/>InventoryService.Tagging.EditTag<br/>Sessions.ValidateSession<br/>StorageProfile.View<br/>StorageProfile.Update
 openshift-resourcepool-level | vSphere vCenter Resource Pool | Host.Config.Storage<br/>Resource.AssignVMToPool<br/>VApp.AssignResourcePool<br/>VApp.Import<br/>VirtualMachine.Config.AddNewDisk
 openshift-datastore-level| vSphere Datastore | Datastore.AllocateSpace<br/>Datastore.Browse<br/>Datastore.FileManagement
 openshift-portgroup-level | vSphere Port Group | Network.Assign
