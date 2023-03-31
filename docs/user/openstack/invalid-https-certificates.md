@@ -63,7 +63,7 @@ while read -r name interface url; do
 	noschema=${url#"https://"}
 	
 	# If the schema was not HTTPS, error
-	if [[ noschema == "$url" ]]; then
+	if [[ "$noschema" == "$url" ]]; then
 		echo "ERROR (unknown schema): $name $interface $url"
 		exit 2
 	fi
