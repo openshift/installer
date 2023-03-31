@@ -46,9 +46,6 @@ output "worker_subnet_id" {
   value = local.worker_subnet_id
 }
 
-output "resource_group_name" {
-  value = data.azurerm_resource_group.main.name
-}
 
 output "vm_image" {
   value = var.azure_hypervgeneration_version == "V2" ? azurerm_shared_image_version.clustergen2_image_version.id : azurerm_shared_image_version.cluster_image_version.id
@@ -60,10 +57,6 @@ output "identity" {
 
 output "subnet_id" {
   value = local.master_subnet_id
-}
-
-output "storage_account_name" {
-  value = azurerm_storage_account.cluster.name
 }
 
 output "outbound_udr" {

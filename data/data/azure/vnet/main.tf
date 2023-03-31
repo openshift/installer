@@ -6,8 +6,6 @@ locals {
     var.azure_extra_tags,
   )
   description = "Created By OpenShift Installer"
-  # At this time min_tls_version is only supported in the Public Cloud and US Government Cloud.
-  environments_with_min_tls_version = ["public", "usgovernment"]
 
 }
 
@@ -22,18 +20,10 @@ provider "azurerm" {
   environment                 = var.azure_environment
 }
 
-resource "azurerm_resource_group" "main" {
-  count = var.azure_resource_group_name == "" ? 1 : 0
-
-  name     = "${var.cluster_id}-rg"
-  location = var.azure_region
-  tags     = var.azure_extra_tags
-}
-
 data "azurerm_resource_group" "main" {
   name = var.azure_resource_group_name == "" ? "${var.cluster_id}-rg" : var.azure_resource_group_name
 
-  depends_on = [azurerm_resource_group.main]
+  depends_on = [var.resource_group_name]
 }
 
 data "azurerm_resource_group" "network" {
@@ -42,15 +32,9 @@ data "azurerm_resource_group" "network" {
   name = var.azure_network_resource_group_name
 }
 
-resource "azurerm_storage_account" "cluster" {
-  name                            = "cluster${var.random_storage_account_suffix}"
-  resource_group_name             = data.azurerm_resource_group.main.name
-  location                        = var.azure_region
-  account_tier                    = "Standard"
-  account_replication_type        = "LRS"
-  min_tls_version                 = contains(local.environments_with_min_tls_version, var.azure_environment) ? "TLS1_2" : null
-  allow_nested_items_to_be_public = false
-  tags                            = var.azure_extra_tags
+data "azurerm_storage_account" "cluster" {
+  name                = var.storage_account_name
+  resource_group_name = data.azurerm_resource_group.main.name
 }
 
 resource "azurerm_user_assigned_identity" "main" {
@@ -72,21 +56,6 @@ resource "azurerm_role_assignment" "network" {
   scope                = data.azurerm_resource_group.network[0].id
   role_definition_name = "Contributor"
   principal_id         = azurerm_user_assigned_identity.main.principal_id
-}
-
-# copy over the vhd to cluster resource group and create an image using that
-resource "azurerm_storage_container" "vhd" {
-  name                 = "vhd"
-  storage_account_name = azurerm_storage_account.cluster.name
-}
-
-resource "azurerm_storage_blob" "rhcos_image" {
-  name                   = "rhcos${var.random_storage_account_suffix}.vhd"
-  storage_account_name   = azurerm_storage_account.cluster.name
-  storage_container_name = azurerm_storage_container.vhd.name
-  type                   = "Page"
-  source_uri             = var.azure_image_url
-  metadata               = tomap({ source_uri = var.azure_image_url })
 }
 
 # Creates Shared Image Gallery
@@ -142,8 +111,8 @@ resource "azurerm_shared_image_version" "cluster_image_version" {
   resource_group_name = azurerm_shared_image.cluster.resource_group_name
   location            = azurerm_shared_image.cluster.location
 
-  blob_uri           = azurerm_storage_blob.rhcos_image.url
-  storage_account_id = azurerm_storage_account.cluster.id
+  blob_uri           = var.rhcos_image_url
+  storage_account_id = data.azurerm_storage_account.cluster.id
 
   target_region {
     name                   = azurerm_shared_image.cluster.location
@@ -160,8 +129,8 @@ resource "azurerm_shared_image_version" "clustergen2_image_version" {
   resource_group_name = azurerm_shared_image.clustergen2.resource_group_name
   location            = azurerm_shared_image.clustergen2.location
 
-  blob_uri           = azurerm_storage_blob.rhcos_image.url
-  storage_account_id = azurerm_storage_account.cluster.id
+  blob_uri           = var.rhcos_image_url
+  storage_account_id = data.azurerm_storage_account.cluster.id
 
   target_region {
     name                   = azurerm_shared_image.clustergen2.location
@@ -170,4 +139,3 @@ resource "azurerm_shared_image_version" "clustergen2_image_version" {
 
   tags = var.azure_extra_tags
 }
-

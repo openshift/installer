@@ -59,12 +59,11 @@ variable "outbound_udr" {
   description = <<EOF
 This determined whether User defined routing will be used for egress to
 Internet.
-When false, Standard LB will be used for egress to the Internet.
 
+When false, Standard LB will be used for egress to the Internet.
 This is required because terraform cannot calculate counts during plan phase
 completely and therefore the `vnet/public-lb.tf`
 conditional need to be recreated. See
 https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
-

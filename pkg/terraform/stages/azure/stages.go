@@ -11,6 +11,12 @@ import (
 var PlatformStages = []terraform.Stage{
 	stages.NewStage(
 		typesazure.Name,
+		"storage",
+		[]providers.Provider{providers.AzureRM},
+		stages.WithNormalBootstrapDestroy(),
+	),
+	stages.NewStage(
+		typesazure.Name,
 		"vnet",
 		[]providers.Provider{providers.AzureRM},
 	),
