@@ -15,6 +15,10 @@ variable "control_plane_subnet_id_list" {
   type = list(string)
 }
 
+variable "compute_subnet_id_list" {
+  type = list(string)
+}
+
 variable "control_plane_subnet_zone_list" {
   type = list(string)
 }
