@@ -207,6 +207,16 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 
 		czero.PrintInstallStatus(clusterMetadata)
 
+		// If status indicates pending action, log host info to help pinpoint what is missing
+		if (*clusterMetadata.Status != czero.installHistory.RestAPIPreviousClusterStatus) &&
+			(*clusterMetadata.Status == models.ClusterStatusInstallingPendingUserAction) {
+			for _, host := range clusterMetadata.Hosts {
+				if *host.Status == models.ClusterStatusInstallingPendingUserAction {
+					logrus.Debugf("Host %s %s", host.RequestedHostname, *host.StatusInfo)
+				}
+			}
+		}
+
 		if *clusterMetadata.Status == models.ClusterStatusReady {
 			stuck, err := czero.IsClusterStuckInReady()
 			if err != nil {
