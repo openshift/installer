@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# shellcheck disable=SC1091
 source issue_status.sh
 
 BASE_URL="${SERVICE_BASE_URL}api/assisted-install/v2"
