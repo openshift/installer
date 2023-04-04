@@ -45,7 +45,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 		},
 	}
 	pullSecret := "pull-secret"
-	nodeZeroIP := "192.168.111.80"
+	nodeZeroIP := "2001:db8::dead:beef"
 	agentClusterInstall := &hiveext.AgentClusterInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-agent-cluster-install",
@@ -90,10 +90,10 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	templateData := getTemplateData(clusterName, pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
-	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
+	assert.Equal(t, "http://["+nodeZeroIP+"]:8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
 	assert.Equal(t, nodeZeroIP, templateData.NodeZeroIP)
-	assert.Equal(t, nodeZeroIP+":8090", templateData.AssistedServiceHost)
+	assert.Equal(t, "["+nodeZeroIP+"]:8090", templateData.AssistedServiceHost)
 	assert.Equal(t, agentClusterInstall.Spec.APIVIP, templateData.APIVIP)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
