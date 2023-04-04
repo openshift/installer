@@ -51,6 +51,7 @@ type Ignition struct {
 type agentTemplateData struct {
 	ServiceProtocol           string
 	ServiceBaseURL            string
+	ImageServiceBaseURL       string
 	PullSecret                string
 	NodeZeroIP                string
 	APIVIP                    string
@@ -270,10 +271,16 @@ func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImag
 		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
 		Path:   "/",
 	}
+	imageServiceBaseURL := url.URL{
+		Scheme: serviceBaseURL.Scheme,
+		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
+		Path:   "/",
+	}
 
 	return &agentTemplateData{
 		ServiceProtocol:           serviceBaseURL.Scheme,
 		ServiceBaseURL:            serviceBaseURL.String(),
+		ImageServiceBaseURL:       imageServiceBaseURL.String(),
 		PullSecret:                pullSecret,
 		NodeZeroIP:                serviceBaseURL.Hostname(),
 		APIVIP:                    agentClusterInstall.Spec.APIVIP,
