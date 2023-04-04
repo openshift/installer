@@ -53,7 +53,6 @@ type agentTemplateData struct {
 	ServiceBaseURL            string
 	PullSecret                string
 	NodeZeroIP                string
-	AssistedServiceHost       string
 	APIVIP                    string
 	ControlPlaneAgents        int
 	WorkerAgents              int
@@ -277,7 +276,6 @@ func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImag
 		ServiceBaseURL:            serviceBaseURL.String(),
 		PullSecret:                pullSecret,
 		NodeZeroIP:                serviceBaseURL.Hostname(),
-		AssistedServiceHost:       serviceBaseURL.Host,
 		APIVIP:                    agentClusterInstall.Spec.APIVIP,
 		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
