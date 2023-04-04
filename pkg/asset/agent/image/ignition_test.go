@@ -90,7 +90,6 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
-	assert.Equal(t, agentClusterInstall.Spec.APIVIP, templateData.APIVIP)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
 	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
