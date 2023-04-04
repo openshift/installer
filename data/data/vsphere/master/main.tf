@@ -70,7 +70,7 @@ resource "vsphere_virtual_machine" "vm_master" {
   } : {
     "guestinfo.ignition.config.data"          = base64encode(var.ignition_master)
     "guestinfo.ignition.config.data.encoding" = "base64"
-    "guestinfo.hostname"                      = "bootstrap"
+    "guestinfo.hostname"                      = "${var.cluster_id}-master-${count.index}"
     "stealclock.enable"                       = "TRUE"
   }
 }
