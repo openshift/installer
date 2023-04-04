@@ -48,16 +48,21 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		for _, host := range config.Platform.VSphere.Hosts {
 			logrus.Debugf("host.role=%v role=%v", host.Role, role)
 			if (host.IsCompute() && role == "worker") || (host.IsControlPlane() && role == "master") {
-				logrus.Debug("Adding host for static ip assignment")
+				logrus.Debugf("Adding host for static ip assignment: %v - %v", host.FailureDomain, host.NetworkDevice.IPAddrs[0])
 				hosts = append(hosts, host)
 			}
 		}
 	}
 
 	for idx := int64(0); idx < replicas; idx++ {
-		logrus.Debugf("Creating %v machine %v\n", role, idx)
+		logrus.Debugf("Creating %v machine %v", role, idx)
+		var host *vsphere.Host
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
-		logrus.Debugf("Desired zone: %v\n", desiredZone)
+		if int(idx) < len(hosts) {
+			host = hosts[idx]
+			desiredZone = host.FailureDomain
+		}
+		logrus.Debugf("Desired zone: %v", desiredZone)
 
 		if _, exists := zones[desiredZone]; !exists {
 			return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
@@ -83,7 +88,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		}
 
 		// Apply static IP if configured
-		hosts = applyNetworkConfig(hosts, desiredZone, provider)
+		applyNetworkConfig(host, provider)
 
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
@@ -110,21 +115,16 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 // applyNetworkConfig this function will apply the static ip configuration to the networkDevice
 // field in the provider spec.  The function will use the desired zone to determine which config
 // to apply and then remove that host config from the hosts array.
-func applyNetworkConfig(hosts []*vsphere.Host, desiredZone string, provider *machineapi.VSphereMachineProviderSpec) []*vsphere.Host {
-	for index, host := range hosts {
-		if host.FailureDomain == "" || host.FailureDomain == desiredZone {
-			networkDevice := host.NetworkDevice
-			if networkDevice != nil {
-				provider.Network.Devices[0].IPAddrs = networkDevice.IPAddrs
-				provider.Network.Devices[0].Nameservers = networkDevice.Nameservers
-				provider.Network.Devices[0].Gateway4 = networkDevice.Gateway4
-				provider.Network.Devices[0].Gateway6 = networkDevice.Gateway6
-			}
-			hosts = append(hosts[:index], hosts[index+1:]...)
-			break
+func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineProviderSpec) {
+	if host != nil {
+		networkDevice := host.NetworkDevice
+		if networkDevice != nil {
+			provider.Network.Devices[0].IPAddrs = networkDevice.IPAddrs
+			provider.Network.Devices[0].Nameservers = networkDevice.Nameservers
+			provider.Network.Devices[0].Gateway4 = networkDevice.Gateway4
+			provider.Network.Devices[0].Gateway6 = networkDevice.Gateway6
 		}
 	}
-	return hosts
 }
 
 func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.FailureDomain, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
