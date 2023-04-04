@@ -317,7 +317,6 @@ func generatedFiles(otherFiles ...string) []string {
 		"/etc/containers/containers.conf",
 		"/root/.docker/config.json",
 		"/root/assisted.te",
-		"/usr/local/bin/common.sh",
 		"/usr/local/bin/agent-gather",
 		"/usr/local/bin/extract-agent.sh",
 		"/usr/local/bin/get-container-images.sh",

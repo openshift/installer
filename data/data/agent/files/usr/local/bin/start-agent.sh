@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # shellcheck disable=SC1091
-source common.sh
+source /etc/assisted/rendezvous-host.env
 
 >&2 echo "Waiting for infra-env-id to be available"
 INFRA_ENV_ID=""
