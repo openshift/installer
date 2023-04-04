@@ -9,8 +9,16 @@ set_rendezvous_message() {
     agetty --reload
 }
 
-# shellcheck disable=SC1091
-source /etc/assisted/rendezvous-host.env
+rendezvous_host_env="/etc/assisted/rendezvous-host.env"
+while [ ! -f "${rendezvous_host_env}" ]; do
+    printf '\\e{lightred}Not configured - no Rendezvous IP set\\e{reset}\n' | set_rendezvous_message
+    sleep 30
+done
+rm -f "/etc/issue.d/${status_name}.issue" "/etc/motd.d/${status_name}"
+agetty --reload
+
+# shellcheck disable=SC1090
+source "${rendezvous_host_env}"
 echo "NODE_ZERO_IP: $NODE_ZERO_IP"
 
 is_node_zero() {
