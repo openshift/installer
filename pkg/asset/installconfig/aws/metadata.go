@@ -139,9 +139,6 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 
 // VPC retrieves the VPC ID containing PublicSubnets and PrivateSubnets.
 func (m *Metadata) VPC(ctx context.Context) (string, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
 	if m.vpc == "" {
 		if len(m.Subnets) == 0 {
 			return "", errors.New("cannot calculate VPC without configured subnets")
