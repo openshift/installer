@@ -18,11 +18,9 @@ done
 
 printf '\nInfra env id is %s\n' "${INFRA_ENV_ID}" 1>&2
 
-required_master_nodes={{.ControlPlaneAgents}}
-required_worker_nodes={{.WorkerAgents}}
-total_required_nodes=$(( ${required_master_nodes}+${required_worker_nodes} ))
-echo "Number of required master nodes: ${required_master_nodes}" 1>&2
-echo "Number of required worker nodes: ${required_worker_nodes}" 1>&2
+total_required_nodes=$(( REQUIRED_MASTER_NODES + REQUIRED_WORKER_NODES ))
+echo "Number of required master nodes: ${REQUIRED_MASTER_NODES}" 1>&2
+echo "Number of required worker nodes: ${REQUIRED_WORKER_NODES}" 1>&2
 echo "Total number of required nodes: ${total_required_nodes}" 1>&2
 
 status_issue="90_start-install"
