@@ -29,7 +29,7 @@ RUN yum update -y && \
     python3-openstackclient ansible-2.9.14-1.el8ae python3-openstacksdk python3-netaddr unzip jq && \
     yum clean all && rm -rf /var/cache/yum/*
 
-RUN python -m pip install yq
+RUN python -m pip install 'yq<3.2.0'
 
 # The Continuous Integration machinery relies on Route53 for DNS while testing the cluster.
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
