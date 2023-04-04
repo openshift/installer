@@ -26,13 +26,15 @@ func newGraphCmd() *cobra.Command {
 		Short: "Outputs the internal dependency graph for installer",
 		Long:  "",
 		Args:  cobra.ExactArgs(0),
-		RunE:  runGraphCmd,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runGraphCmd(cmd, args, targets)
+		},
 	}
 	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")
 	return cmd
 }
 
-func runGraphCmd(cmd *cobra.Command, args []string) error {
+func runGraphCmd(cmd *cobra.Command, args []string, cmdTargets []target) error {
 	g := gographviz.NewGraph()
 	g.SetName("G")
 	g.SetDir(true)
@@ -42,7 +44,7 @@ func runGraphCmd(cmd *cobra.Command, args []string) error {
 		string(gographviz.Shape): "box",
 		string(gographviz.Style): "filled",
 	}
-	for _, t := range targets {
+	for _, t := range cmdTargets {
 		name := fmt.Sprintf("%q", fmt.Sprintf("Target %s", t.name))
 		g.AddNode("G", name, tNodeAttr)
 		for _, dep := range t.assets {

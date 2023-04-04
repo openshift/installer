@@ -24,6 +24,7 @@ func newAgentCmd() *cobra.Command {
 
 	agentCmd.AddCommand(newAgentCreateCmd())
 	agentCmd.AddCommand(agent.NewWaitForCmd())
+	agentCmd.AddCommand(newAgentGraphCmd())
 	return agentCmd
 }
 
@@ -103,5 +104,19 @@ func newAgentCreateCmd() *cobra.Command {
 		cmd.AddCommand(t.command)
 	}
 
+	return cmd
+}
+
+func newAgentGraphCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "graph",
+		Short: "Outputs the internal dependency graph for the agent-based installer",
+		Long:  "",
+		Args:  cobra.ExactArgs(0),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return runGraphCmd(cmd, args, agentTargets)
+		},
+	}
+	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")
 	return cmd
 }
