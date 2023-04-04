@@ -1,8 +1,7 @@
 #!/bin/bash
 
 # shellcheck disable=SC1091
-source /usr/local/share/assisted-service/assisted-service.env 
-source /etc/assisted/agent-installer.env
+source /etc/assisted/rendezvous-host.env
 
 wait_for_assisted_service() {
     echo "Waiting for assisted-service to be ready"

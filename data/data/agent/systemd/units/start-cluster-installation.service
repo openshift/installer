@@ -7,6 +7,7 @@ After=network-online.target apply-host-config.service
 ConditionPathExists=/etc/assisted/node0
 
 [Service]
+EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStart=/usr/local/bin/start-cluster-installation.sh
 
 KillMode=none

@@ -29,7 +29,7 @@ if [ "${IS_NODE_ZERO}" = "true" ]; then
     cat >"${NODE0_PATH}" <<EOF
 # This file exists if the agent-based installer has determined the host is node 0.
 # The host is determined to be node 0 when one of its network interfaces has an 
-# IP address matching NODE_ZERO_IP in /etc/assisted/agent-installer.env. 
+# IP address matching NODE_ZERO_IP in /etc/assisted/rendezvous-host.env. 
 # The MAC address of the network interface matching NODE_ZERO_IP is noted below 
 # as BOOTSTRAP_HOST_MAC.
 #

@@ -8,6 +8,7 @@ ConditionPathExists=/etc/assisted/node0
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=/etc/assisted/rendezvous-host.env
 EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
 EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
