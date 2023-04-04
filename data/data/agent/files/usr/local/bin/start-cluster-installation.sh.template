@@ -16,7 +16,7 @@ do
     fi
 done
 
-echo -e "\nInfra env id is ${INFRA_ENV_ID}" 1>&2
+printf '\nInfra env id is %s\n' "${INFRA_ENV_ID}" 1>&2
 
 required_master_nodes={{.ControlPlaneAgents}}
 required_worker_nodes={{.WorkerAgents}}
