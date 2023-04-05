@@ -540,7 +540,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets: map[string]Subnet{},
 		publicSubnets:  map[string]Subnet{},
 		edgeSubnets:    validEdgeSubnets(),
-		expectErr:      `^platform\.aws\.subnets: Invalid value: \[\]string{\"valid-public-subnet-edge-a\", \"valid-public-subnet-edge-b\", \"valid-public-subnet-edge-c\"}: edge pool. no subnets configured$`,
+		expectErr:      `^\[platform\.aws\.subnets: Invalid value: \[\]string{\"valid-public-subnet-edge-a\", \"valid-public-subnet-edge-b\", \"valid-public-subnet-edge-c\"}: No private subnets found, controlPlane\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\], compute\[0\]\.platform\.aws\.zones: Invalid value: \[\]string{\"a\", \"b\", \"c\"}: No subnets provided for zones \[a b c\]]$`,
 	}, {
 		name: "invalid no subnet for control plane zones",
 		installConfig: func() *types.InstallConfig {
@@ -749,6 +749,7 @@ func TestValidate(t *testing.T) {
 				publicSubnets:     test.publicSubnets,
 				edgeSubnets:       test.edgeSubnets,
 				instanceTypes:     test.instanceTypes,
+				Subnets:           test.installConfig.Platform.AWS.Subnets,
 			}
 			if test.proxy != "" {
 				os.Setenv("HTTP_PROXY", test.proxy)
@@ -881,6 +882,7 @@ func TestValidateForProvisioning(t *testing.T) {
 				instanceTypes:     validInstanceTypes(),
 				Region:            editedInstallConfig.AWS.Region,
 				vpc:               "valid-private-subnet-a",
+				Subnets:           editedInstallConfig.Platform.AWS.Subnets,
 			}
 
 			err := ValidateForProvisioning(route53Client, editedInstallConfig, meta)

@@ -26,8 +26,7 @@ type Metadata struct {
 	Subnets  []string                   `json:"subnets,omitempty"`
 	Services []typesaws.ServiceEndpoint `json:"services,omitempty"`
 
-	mutex        sync.Mutex
-	mutexSubnets sync.Mutex
+	mutex sync.Mutex
 }
 
 // NewMetadata initializes a new Metadata object.
@@ -66,10 +65,9 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		m.availabilityZones, err = availabilityZones(ctx, session, m.Region)
 		if err != nil {
-			return nil, errors.Wrap(err, "creating AWS session")
+			return nil, errors.Wrap(err, "error retrieving Availability Zones")
 		}
 	}
 
@@ -82,9 +80,8 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 func (m *Metadata) EdgeSubnets(ctx context.Context) (map[string]Subnet, error) {
 	err := m.populateSubnets(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error retrieving Edge Subnets")
 	}
-
 	return m.edgeSubnets, nil
 }
 
@@ -94,9 +91,8 @@ func (m *Metadata) EdgeSubnets(ctx context.Context) (map[string]Subnet, error) {
 func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error) {
 	err := m.populateSubnets(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error retrieving Private Subnets")
 	}
-
 	return m.privateSubnets, nil
 }
 
@@ -106,25 +102,34 @@ func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error
 func (m *Metadata) PublicSubnets(ctx context.Context) (map[string]Subnet, error) {
 	err := m.populateSubnets(ctx)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "error retrieving Public Subnets")
 	}
-
 	return m.publicSubnets, nil
 }
 
-func (m *Metadata) populateSubnets(ctx context.Context) error {
-	if len(m.publicSubnets) > 0 || len(m.privateSubnets) > 0 {
-		return nil
+// VPC retrieves the VPC ID containing PublicSubnets and PrivateSubnets.
+func (m *Metadata) VPC(ctx context.Context) (string, error) {
+	err := m.populateSubnets(ctx)
+	if err != nil {
+		return "", errors.Wrap(err, "error retrieving VPC")
 	}
+	return m.vpc, nil
+}
+
+func (m *Metadata) populateSubnets(ctx context.Context) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
 
 	if len(m.Subnets) == 0 {
 		return errors.New("no subnets configured")
 	}
 
-	m.mutexSubnets.Lock()
-	defer m.mutexSubnets.Unlock()
+	if m.vpc != "" || len(m.privateSubnets) > 0 || len(m.publicSubnets) > 0 || len(m.edgeSubnets) > 0 {
+		// Call to populate subnets has already happened
+		return nil
+	}
 
-	session, err := m.Session(ctx)
+	session, err := m.unlockedSession(ctx)
 	if err != nil {
 		return err
 	}
@@ -135,25 +140,6 @@ func (m *Metadata) populateSubnets(ctx context.Context) error {
 	m.publicSubnets = sb.Public
 	m.edgeSubnets = sb.Edge
 	return err
-}
-
-// VPC retrieves the VPC ID containing PublicSubnets and PrivateSubnets.
-func (m *Metadata) VPC(ctx context.Context) (string, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	if m.vpc == "" {
-		if len(m.Subnets) == 0 {
-			return "", errors.New("cannot calculate VPC without configured subnets")
-		}
-
-		err := m.populateSubnets(ctx)
-		if err != nil {
-			return "", err
-		}
-	}
-
-	return m.vpc, nil
 }
 
 // InstanceTypes retrieves instance type metadata indexed by InstanceType for the configured region.
@@ -169,7 +155,7 @@ func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, 
 
 		m.instanceTypes, err = instanceTypes(ctx, session, m.Region)
 		if err != nil {
-			return nil, errors.Wrap(err, "listing instance types")
+			return nil, errors.Wrap(err, "error listing instance types")
 		}
 	}
 
