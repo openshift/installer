@@ -102,6 +102,7 @@ spec:
                         - ""
                         - identity
                         - aescbc
+                        - aesgcm
                 servingCerts:
                   description: servingCert is the TLS cert info for serving secure traffic. If not specified, operator managed certificates will be used for serving secure traffic.
                   type: object
