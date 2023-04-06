@@ -14,7 +14,7 @@ import (
 func AMIRegions(architecture types.Architecture) sets.String {
 	stream, err := FetchCoreOSBuild(context.Background())
 	if err != nil {
-		logrus.Error("could not fetch the rhcos stream data: %w", err)
+		logrus.Errorf("could not fetch the rhcos stream data: %v", err)
 		return nil
 	}
 	rpmArch := arch.RpmArch(string(architecture))
