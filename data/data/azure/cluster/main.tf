@@ -24,7 +24,6 @@ module "master" {
   vm_size                    = var.azure_master_vm_type
   disk_encryption_set_id     = var.azure_master_disk_encryption_set_id
   encryption_at_host_enabled = var.azure_master_encryption_at_host_enabled
-  vm_image                   = var.vm_image
   identity                   = var.identity
   ignition                   = var.ignition_master
   elb_backend_pool_v4_id     = var.elb_backend_pool_v4_id
@@ -40,6 +39,16 @@ module "master" {
   ultra_ssd_enabled          = var.azure_control_plane_ultra_ssd_enabled
   vm_networking_type         = var.azure_control_plane_vm_networking_type
   azure_extra_tags           = var.azure_extra_tags
+
+  storage_account_id              = var.storage_account_id
+  storage_rhcos_image_url         = var.storage_rhcos_image_url
+  image_version_gallery_name      = var.image_version_gallery_name
+  image_version_gen2_gallery_name = var.image_version_gen2_gallery_name
+  image_version_name              = var.image_version_name
+  image_version_gen2_name         = var.image_version_gen2_name
+  azure_image_release             = var.azure_image_release
+  azure_region                    = var.azure_region
+  azure_hypervgeneration_version  = var.azure_hypervgeneration_version
 
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6

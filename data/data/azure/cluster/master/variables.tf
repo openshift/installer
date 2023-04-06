@@ -27,9 +27,46 @@ variable "encryption_at_host_enabled" {
   description = "Enables encryption at the VM host."
 }
 
-variable "vm_image" {
+variable "storage_account_id" {
   type        = string
-  description = "The resource id of the vm image used for masters."
+  description = "The storage account ID for the cluster. It can be used for boot diagnostics"
+}
+
+variable "storage_rhcos_image_url" {
+  type        = string
+  description = "The rhcos image url used to identify the vm image for bootstrap and cluster."
+}
+
+variable "image_version_gallery_name" {
+  type        = string
+  description = "The name of the image gallery used to set up shared images."
+}
+
+variable "image_version_gen2_gallery_name" {
+  type        = string
+  description = "The name of the gen2 image gallery used to set up shared images."
+}
+
+variable "image_version_name" {
+  type        = string
+  description = "The name of shared image used to set up shared images."
+}
+
+variable "image_version_gen2_name" {
+  type        = string
+  description = "The name of the gen2 shared image used to set up shared images."
+}
+
+variable "azure_region" {
+  type = string
+}
+
+variable "azure_image_release" {
+  type = string
+}
+
+variable "azure_hypervgeneration_version" {
+  type = string
 }
 
 variable "identity" {

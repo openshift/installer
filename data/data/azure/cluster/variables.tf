@@ -62,9 +62,34 @@ variable "resource_group_name" {
   description = "The resource group name for the deployment."
 }
 
-variable "vm_image" {
+variable "storage_account_id" {
   type        = string
-  description = "The resource id of the vm image used for bootstrap."
+  description = "The storage account ID for the cluster. It can be used for boot diagnostics"
+}
+
+variable "storage_rhcos_image_url" {
+  type        = string
+  description = "The rhcos image url used to identify the vm image for bootstrap and cluster."
+}
+
+variable "image_version_gallery_name" {
+  type        = string
+  description = "The name of the image gallery used to set up shared images."
+}
+
+variable "image_version_gen2_gallery_name" {
+  type        = string
+  description = "The name of the gen2 image gallery used to set up shared images."
+}
+
+variable "image_version_name" {
+  type        = string
+  description = "The name of shared image used to set up shared images."
+}
+
+variable "image_version_gen2_name" {
+  type        = string
+  description = "The name of the gen2 shared image used to set up shared images."
 }
 
 variable "identity" {

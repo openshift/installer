@@ -4,6 +4,45 @@ locals {
   ip_v4_configuration_name = "pipConfig"
   // TODO: Azure machine provider probably needs to look for pipConfig-v6 as well (or a different name like pipConfig-secondary)
   ip_v6_configuration_name = "pipConfig-v6"
+
+  vm_image = var.azure_hypervgeneration_version == "V2" ? azurerm_shared_image_version.clustergen2_image_version.id : azurerm_shared_image_version.cluster_image_version.id
+
+}
+
+resource "azurerm_shared_image_version" "cluster_image_version" {
+  name                = var.azure_image_release
+  gallery_name        = var.image_version_gallery_name
+  image_name          = var.image_version_name
+  resource_group_name = var.resource_group_name
+  location            = var.azure_region
+
+  blob_uri           = var.storage_rhcos_image_url
+  storage_account_id = var.storage_account_id
+
+  target_region {
+    name                   = var.azure_region
+    regional_replica_count = 1
+  }
+
+  tags = var.azure_extra_tags
+}
+
+resource "azurerm_shared_image_version" "clustergen2_image_version" {
+  name                = var.azure_image_release
+  gallery_name        = var.image_version_gen2_gallery_name
+  image_name          = var.image_version_gen2_name
+  resource_group_name = var.resource_group_name
+  location            = var.azure_region
+
+  blob_uri           = var.storage_rhcos_image_url
+  storage_account_id = var.storage_account_id
+
+  target_region {
+    name                   = var.azure_region
+    regional_replica_count = 1
+  }
+
+  tags = var.azure_extra_tags
 }
 
 resource "azurerm_network_interface" "master" {
@@ -118,7 +157,7 @@ resource "azurerm_linux_virtual_machine" "master" {
     disk_encryption_set_id = var.disk_encryption_set_id
   }
 
-  source_image_id = var.vm_image
+  source_image_id = local.vm_image
 
   //we don't provide a ssh key, because it is set with ignition.
   //it is required to provide at least 1 auth method to deploy a linux vm

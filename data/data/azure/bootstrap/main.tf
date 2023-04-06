@@ -16,7 +16,7 @@ provider "azurerm" {
 }
 
 data "azurerm_storage_account" "storage_account" {
-  name                = var.storage_account_name
+  name                = azurerm_storage_account.cluster.name
   resource_group_name = var.resource_group_name
 }
 
@@ -56,14 +56,14 @@ data "azurerm_storage_account_sas" "ignition" {
 
 resource "azurerm_storage_container" "ignition" {
   name                  = "ignition"
-  storage_account_name  = var.storage_account_name
+  storage_account_name  = azurerm_storage_account.cluster.name
   container_access_type = "private"
 }
 
 resource "azurerm_storage_blob" "ignition" {
   name                   = "bootstrap.ign"
   source                 = var.ignition_bootstrap_file
-  storage_account_name   = var.storage_account_name
+  storage_account_name   = azurerm_storage_account.cluster.name
   storage_container_name = azurerm_storage_container.ignition.name
   type                   = "Block"
 }
@@ -217,7 +217,7 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     disk_encryption_set_id = var.azure_master_disk_encryption_set_id
   }
 
-  source_image_id = var.vm_image
+  source_image_id = azurerm_shared_image_version.bootstrap_image_version.id
 
   computer_name = "${var.cluster_id}-bootstrap-vm"
   custom_data   = base64encode(data.ignition_config.redirect.rendered)
