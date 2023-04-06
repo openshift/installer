@@ -594,10 +594,23 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 		perPage          int64 = 10
 		moreData               = true
 		nextURL          *string
+		groupID          = c.BXCli.PowerVSResourceGroup
 	)
 
+	// If the user passes in a human readable group id, then we need to convert it to a UUID
+	listGroupOptions := c.managementAPI.NewListResourceGroupsOptions()
+	groups, _, err := c.managementAPI.ListResourceGroupsWithContext(ctx, listGroupOptions)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to list resource groups")
+	}
+	for _, group := range groups.Resources {
+		if *group.Name == groupID {
+			groupID = *group.ID
+		}
+	}
+
 	options = c.controllerAPI.NewListResourceInstancesOptions()
-	options.SetResourceGroupID(c.BXCli.PowerVSResourceGroup)
+	options.SetResourceGroupID(groupID)
 	// resource ID for Power Systems Virtual Server in the Global catalog
 	options.SetResourceID(powerIAASResourceID)
 	options.SetLimit(perPage)
@@ -605,7 +618,7 @@ func (c *Client) ListServiceInstances(ctx context.Context) ([]string, error) {
 	for moreData {
 		resources, _, err = c.controllerAPI.ListResourceInstancesWithContext(ctx, options)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to list resource instance")
+			return nil, errors.Wrap(err, "Failed to list resource instances")
 		}
 
 		for _, resource := range resources.Resources {
