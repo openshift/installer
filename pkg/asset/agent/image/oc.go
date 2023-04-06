@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/fs"
 	"os"
 	"os/exec"
 	"path"
@@ -16,7 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -184,10 +182,9 @@ func (r *release) extractFileFromImage(image, file, cacheDir string) (string, er
 	} else {
 		cmd = fmt.Sprintf(templateImageExtract, file, cacheDir, image)
 	}
-	// Remove file if it exists
 	path := filepath.Join(cacheDir, path.Base(file))
-	if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
-		logrus.Debugf("Could not remove existing baseISO %s", path)
+	// Remove file if it exists
+	if err := removeCacheFile(path); err != nil {
 		return "", err
 	}
 
@@ -196,6 +193,14 @@ func (r *release) extractFileFromImage(image, file, cacheDir string) (string, er
 	if err != nil {
 		return "", err
 	}
+	// Get actual file if the file ends in wildcard
+	if strings.HasSuffix(file, "*") {
+		path, err = getExtractedFileFromWildcard(path)
+		if err != nil {
+			return "", err
+		}
+	}
+
 	// Make sure file exists after extraction
 	if _, err := os.Stat(path); err != nil {
 		logrus.Debugf("File %s was not found, err %s", file, err.Error())
@@ -286,6 +291,47 @@ func (r *release) verifyCacheFile(image, file, architecture string) (bool, error
 
 	logrus.Debugf("Cached file %s is not most recent", file)
 	return false, nil
+}
+
+// Remove any existing files in the cache.
+func removeCacheFile(path string) error {
+	matches, err := filepath.Glob(path)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range matches {
+		if err = os.Remove(file); err != nil {
+			return err
+		}
+		logrus.Debugf("Removed file %s", file)
+	}
+	return nil
+}
+
+func getExtractedFileFromWildcard(path string) (string, error) {
+	matches, err := filepath.Glob(path)
+	if err != nil {
+		return "", err
+	}
+
+	var found string
+	for _, file := range matches {
+		fileInfo, err := os.Lstat(file)
+		if err != nil {
+			return "", err
+		}
+		if fileInfo.Mode()&os.ModeSymlink == 0 {
+			if found != "" {
+				logrus.Warningf("Additional file %s matching %s in release", filepath.Base(path), filepath.Base(path))
+			}
+			found = file
+		}
+	}
+	if found == "" {
+		return "", fmt.Errorf("failed to extract file %s", filepath.Base(path))
+	}
+	return found, nil
 }
 
 func execute(executer executer.Executer, pullSecret, command string) (string, error) {
