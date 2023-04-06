@@ -471,9 +471,10 @@ gcloud iam service-accounts keys create service-account-key.json --iam-account=$
 Locate the RHCOS image source and create a cluster image.
 
 ```sh
-export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/rhcos.json | jq -r .gcp.url)
-gcloud compute images create "${INFRA_ID}-rhcos-image" --source-uri="${IMAGE_SOURCE}"
-export CLUSTER_IMAGE=$(gcloud compute images describe ${INFRA_ID}-rhcos-image --format json | jq -r .selfLink)
+export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/coreos/rhcos.json | jq -r '.architecture.x86_64.images.gcp')
+export IMAGE_NAME=$(echo "${IMAGE_SOURCE}" | jq -r '.name')
+export IMAGE_PROJECT=$(echo "${IMAGE_SOURCE}" | jq -r '.project')
+export CLUSTER_IMAGE=$(gcloud compute images describe ${IMAGE_NAME} --project ${IMAGE_PROJECT} --format json | jq -r .selfLink)
 ```
 
 ## Upload the bootstrap.ign to a new bucket
