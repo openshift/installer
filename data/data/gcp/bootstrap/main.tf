@@ -113,6 +113,27 @@ resource "google_compute_instance" "bootstrap" {
     network_ip = local.public_endpoints ? null : google_compute_address.bootstrap.address
   }
 
+  dynamic "shielded_instance_config" {
+    for_each = var.gcp_master_secure_boot != "" ? [1] : []
+    content {
+      enable_secure_boot = var.gcp_master_secure_boot == "Enabled"
+    }
+  }
+
+  dynamic "confidential_instance_config" {
+    for_each = var.gcp_master_confidential_compute != "" ? [1] : []
+    content {
+      enable_confidential_compute = var.gcp_master_confidential_compute == "Enabled"
+    }
+  }
+
+  dynamic "scheduling" {
+    for_each = var.gcp_master_on_host_maintenance != "" ? [1] : []
+    content {
+      on_host_maintenance = var.gcp_master_on_host_maintenance
+    }
+  }
+
   metadata = {
     user-data = data.ignition_config.redirect.rendered
   }
