@@ -54,6 +54,8 @@ import (
 var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOpenShiftSDN), string(operv1.NetworkTypeOVNKubernetes))
 
 // ValidateInstallConfig checks that the specified install config is valid.
+//
+//nolint:gocyclo
 func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if c.TypeMeta.APIVersion == "" {
@@ -127,9 +129,19 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	if c.Proxy != nil {
 		allErrs = append(allErrs, validateProxy(c.Proxy, c, field.NewPath("proxy"))...)
 	}
-	allErrs = append(allErrs, validateImageContentSources(c.ImageContentSources, field.NewPath("imageContentSources"))...)
+	allErrs = append(allErrs, validateImageContentSources(c.DeprecatedImageContentSources, field.NewPath("imageContentSources"))...)
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
+	}
+	allErrs = append(allErrs, validateImageDigestSources(c.ImageDigestSources, field.NewPath("imageDigestSources"))...)
+	if _, ok := validPublishingStrategies[c.Publish]; !ok {
+		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
+	}
+	if len(c.DeprecatedImageContentSources) != 0 && len(c.ImageDigestSources) != 0 {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("imageContentSources"), c.Publish, "cannot set imageContentSources and imageDigestSources at the same time"))
+	}
+	if len(c.DeprecatedImageContentSources) != 0 {
+		logrus.Warningln("imageContentSources is deprecated, please use ImageDigestSource")
 	}
 	allErrs = append(allErrs, validateCloudCredentialsMode(c.CredentialsMode, field.NewPath("credentialsMode"), c.Platform)...)
 	if c.Capabilities != nil {
@@ -798,6 +810,24 @@ func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) 
 }
 
 func validateImageContentSources(groups []types.ImageContentSource, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	for gidx, group := range groups {
+		groupf := fldPath.Index(gidx)
+		if err := validateNamedRepository(group.Source); err != nil {
+			allErrs = append(allErrs, field.Invalid(groupf.Child("source"), group.Source, err.Error()))
+		}
+
+		for midx, mirror := range group.Mirrors {
+			if err := validateNamedRepository(mirror); err != nil {
+				allErrs = append(allErrs, field.Invalid(groupf.Child("mirrors").Index(midx), mirror, err.Error()))
+				continue
+			}
+		}
+	}
+	return allErrs
+}
+
+func validateImageDigestSources(groups []types.ImageDigestSource, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for gidx, group := range groups {
 		groupf := fldPath.Index(gidx)

@@ -860,7 +860,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				CISInstanceCRN:       cisCRN,
 				DNSInstanceCRN:       dnsCRN,
 				PublishStrategy:      installConfig.Config.Publish,
-				EnableSNAT:           len(installConfig.Config.ImageContentSources) == 0,
+				EnableSNAT:           len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
 			},
 		)
 		if err != nil {

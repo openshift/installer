@@ -34,7 +34,6 @@ func ConvertInstallConfig(config *types.InstallConfig) error {
 		return field.Invalid(field.NewPath("apiVersion"), config.APIVersion, fmt.Sprintf("cannot upconvert from version %s", config.APIVersion))
 	}
 	convertNetworking(config)
-
 	switch config.Platform.Name() {
 	case baremetal.Name:
 		if err := convertBaremetal(config); err != nil {

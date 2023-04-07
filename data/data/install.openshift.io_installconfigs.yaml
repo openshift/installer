@@ -1940,9 +1940,31 @@ spec:
             type: boolean
           imageContentSources:
             description: ImageContentSources lists sources/repositories for the release-image
-              content.
+              content. The field is deprecated. Please use imageDigestSources.
             items:
               description: ImageContentSource defines a list of sources/repositories
+                that can be used to pull content. The field is deprecated. Please
+                use imageDigestSources.
+              properties:
+                mirrors:
+                  description: Mirrors is one or more repositories that may also contain
+                    the same images.
+                  items:
+                    type: string
+                  type: array
+                source:
+                  description: Source is the repository that users refer to, e.g.
+                    in image pull specifications.
+                  type: string
+              required:
+              - source
+              type: object
+            type: array
+          imageDigestSources:
+            description: ImageDigestSources lists sources/repositories for the release-image
+              content.
+            items:
+              description: ImageDigestSource defines a list of sources/repositories
                 that can be used to pull content.
               properties:
                 mirrors:
