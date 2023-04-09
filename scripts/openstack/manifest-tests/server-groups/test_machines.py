@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import unittest
-import xmlrunner
-
 import os
 import sys
 import glob
 import yaml
+import unittest
+import xmlrunner
 
 ASSETS_DIR = ""
 
