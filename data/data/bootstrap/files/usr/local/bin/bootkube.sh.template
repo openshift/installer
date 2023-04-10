@@ -57,6 +57,8 @@ NODE_TUNING_OPERATOR_IMAGE=$(image_for cluster-node-tuning-operator)
 
 CLOUD_CREDENTIAL_OPERATOR_IMAGE=$(image_for cloud-credential-operator)
 
+CLUSTER_STORAGE_OPERATOR_IMAGE=$(image_for cluster-storage-operator)
+
 OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
 OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
 
@@ -294,6 +296,28 @@ then
 	touch ingress-operator-bootstrap.done
     record_service_stage_success
 fi
+
+if [ ! -f storage-operator-bootstrap.done ]
+then
+    record_service_stage_start "storage-operator-bootstrap"
+	echo "Rendering Storage Operator core manifests..."
+
+	rm --recursive --force storage-operator-bootstrap
+
+	bootkube_podman_run \
+		--name storage-render \
+		--volume "$PWD:/assets:z" \
+		"${CLUSTER_STORAGE_OPERATOR_IMAGE}" \
+		render \
+		--prefix=cluster-storage- \
+		--output-dir=/assets/storage-operator-manifests
+
+	cp storage-operator-manifests/* manifests/
+
+	touch storage-operator-bootstrap.done
+    record_service_stage_success
+fi
+
 
 if [ ! -f node-tuning-bootstrap.done ]
 then
