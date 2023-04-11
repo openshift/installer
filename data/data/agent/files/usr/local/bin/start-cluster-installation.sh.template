@@ -3,8 +3,6 @@ set -e
 
 source issue_status.sh
 
-wait-for-assisted-service.sh
-
 BASE_URL="${SERVICE_BASE_URL}api/assisted-install/v2"
 
 cluster_id=""

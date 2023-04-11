@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# shellcheck disable=SC1091
-source /etc/assisted/rendezvous-host.env
-
 >&2 echo "Waiting for infra-env-id to be available"
 INFRA_ENV_ID=""
 until [[ $INFRA_ENV_ID != "" && $INFRA_ENV_ID != "null" ]]; do
