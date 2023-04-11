@@ -74,7 +74,7 @@ func (a *AgentImage) fetchAgentTuiFiles(releaseImage string, pullSecret string, 
 		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
 		releaseImage, pullSecret, mirrorConfig)
 
-	agentTuiFilenames := []string{"/usr/bin/agent-tui", "/usr/lib64/libnmstate.so.1.3.3"}
+	agentTuiFilenames := []string{"/usr/bin/agent-tui", "/usr/lib64/libnmstate.so.*"}
 	files := []string{}
 
 	for _, srcFile := range agentTuiFilenames {
