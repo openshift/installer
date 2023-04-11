@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"fmt"
 	"k8s.io/utils/pointer"
 	"regexp"
 	"testing"
@@ -148,6 +149,22 @@ func validHosts() []*vsphere.Host {
 				Nameservers: []string{
 					"192.168.101.2",
 				},
+			},
+		},
+	}
+}
+
+func validStaticIPInstallConfig() *types.InstallConfig {
+	return &types.InstallConfig{
+		FeatureSet: configv1.TechPreviewNoUpgrade,
+		ControlPlane: &types.MachinePool{
+			Name:     "master",
+			Replicas: pointer.Int64(3),
+		},
+		Compute: []types.MachinePool{
+			{
+				Name:     "worker",
+				Replicas: pointer.Int64(3),
 			},
 		},
 	}
@@ -383,6 +400,15 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts = validHosts()
 				return p
 			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - no hosts configured",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
 		},
 		{
 			name: "Static IP - invalid Role",
@@ -392,7 +418,8 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].Role = "crazy-uncle"
 				return p
 			}(),
-			expectedError: `^test-path.hosts.role: Invalid value: "crazy-uncle": role must be one of \[bootstrap compute control-plane]$`,
+			config:        validStaticIPInstallConfig(),
+			expectedError: `test-path.hosts.role: Invalid value: "crazy-uncle": role must be one of \[bootstrap compute control-plane]`,
 		},
 		{
 			name: "Static IP - invalid FailureDomain",
@@ -402,6 +429,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].FailureDomain = "north-pole"
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.failureDomain: Invalid value: "north-pole": failure domain not found$`,
 		},
 		{
@@ -412,6 +440,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice = nil
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.networkDevice: Required value: must specify networkDevice configuration$`,
 		},
 		{
@@ -422,6 +451,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.IPAddrs = nil
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.ipAddrs: Required value: must specify a IP$`,
 		},
 		{
@@ -432,6 +462,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309/24"
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309/24": invalid CIDR address: 86.7.5.309/24$`,
 		},
 		{
@@ -442,6 +473,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.IPAddrs[0] = ""
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.ipAddrs: Required value: must specify a IP address with CIDR$`,
 		},
 		{
@@ -452,6 +484,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309/55"
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309/55": invalid CIDR address: 86.7.5.309/55$`,
 		},
 		{
@@ -462,6 +495,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309"
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309": invalid CIDR address: 86.7.5.309$`,
 		},
 		{
@@ -472,6 +506,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.Gateway4 = "192.168.100.125"
 				return p
 			}(),
+			config: validStaticIPInstallConfig(),
 		},
 		{
 			name: "Static IP - invalid Gateway4 IP",
@@ -481,6 +516,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.Gateway4 = "86.7.5.309"
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.gateway4: Invalid value: "86.7.5.309": "86.7.5.309" is not a valid IP$`,
 		},
 		{
@@ -491,6 +527,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.Gateway6 = "2001:db8:3333:4444:5555:6666:7777:8888"
 				return p
 			}(),
+			config: validStaticIPInstallConfig(),
 		},
 		{
 			name: "Static IP - invalid Gateway6 IP",
@@ -500,6 +537,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.Gateway6 = "8888:666:7777:5555:3333:0000:9999:JENNY"
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.gateway6: Invalid value: "8888:666:7777:5555:3333:0000:9999:JENNY": "8888:666:7777:5555:3333:0000:9999:JENNY" is not a valid IP$`,
 		},
 		{
@@ -510,6 +548,7 @@ func TestValidatePlatform(t *testing.T) {
 				p.Hosts[1].NetworkDevice.Nameservers = []string{"86.75.30.9", "86.75.30.8", "86.75.30.7", "86.75.30.6"}
 				return p
 			}(),
+			config:        validStaticIPInstallConfig(),
 			expectedError: `^test-path.hosts.nameservers: Too many: 4: must have at most 3 items$`,
 		},
 		{
@@ -663,7 +702,11 @@ func TestValidatePlatform(t *testing.T) {
 				tc.config = installConfig().build()
 				tc.config.VSphere = tc.platform
 			}
-			err := ValidatePlatform(tc.platform, false, field.NewPath("test-path"), tc.config).ToAggregate()
+			if tc.config.VSphere == nil {
+				fmt.Printf("Setting vsphere: %v", tc.platform)
+				tc.config.VSphere = tc.platform
+			}
+			err := ValidatePlatform(tc.config.VSphere, false, field.NewPath("test-path"), tc.config).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

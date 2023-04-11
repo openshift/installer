@@ -45,7 +45,10 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		}
 		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
 
-		allErrs = append(allErrs, validateHosts(p, c, fldPath.Child("hosts"))...)
+		// Validate hosts if configured for static IP
+		if p.Hosts != nil {
+			allErrs = append(allErrs, validateHosts(p, c, fldPath.Child("hosts"))...)
+		}
 	}
 
 	// Platform fields only allowed in TechPreviewNoUpgrade
@@ -234,7 +237,6 @@ func validateHosts(p *vsphere.Platform, installConfig *types.InstallConfig, fldP
 
 	// Iterate through hosts
 	for _, host := range p.Hosts {
-
 		// Check Role (bootstrap, control-plane, compute)
 		allErrs = append(allErrs, validateHostRole(host, fldPath)...)
 
