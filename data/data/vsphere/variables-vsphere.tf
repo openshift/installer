@@ -34,6 +34,7 @@ variable "vsphere_ova_filepath" {
 
 variable "vsphere_control_plane_network_kargs" {
   type = list(string)
+  default = []
 }
 
 variable "vsphere_bootstrap_network_kargs" {

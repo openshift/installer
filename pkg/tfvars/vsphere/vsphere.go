@@ -63,6 +63,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		NetworksInFailureDomains: sources.NetworksInFailureDomain,
 		ControlPlanes:            sources.ControlPlaneConfigs,
 		DatacentersFolders:       datacentersFolders,
+		ControlPlaneNetworkKargs: []string{},
 	}
 
 	if len(sources.InstallConfig.Config.VSphere.Hosts) > 0 {
