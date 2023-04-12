@@ -56,21 +56,24 @@ var (
 			Type: "valid-dns-record-type",
 		},
 	}
-	noDNSRecordsResponse = []powervs.DNSRecordResponse{}
-	invalidArchitecture  = func(ic *types.InstallConfig) { ic.ControlPlane.Architecture = "ppc64" }
-
-	validVPCRegion    = "eu-gb"
-	invalidVPCRegion  = "foo-bah"
-	setValidVPCRegion = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCRegion = validVPCRegion }
-	validRG           = "valid-resource-group"
-	anotherValidRG    = "another-valid-resource-group"
-	validVPCID        = "valid-id"
-	anotherValidVPCID = "another-valid-id"
-	validVPC          = "valid-vpc"
-	setValidVPCName   = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCName = validVPC }
-	anotherValidVPC   = "another-valid-vpc"
-	invalidVPC        = "bogus-vpc"
-	validVPCs         = []vpcv1.VPC{
+	noDNSRecordsResponse   = []powervs.DNSRecordResponse{}
+	invalidArchitecture    = func(ic *types.InstallConfig) { ic.ControlPlane.Architecture = "ppc64" }
+	cidrInvalid, _         = ipnet.ParseCIDR("192.168.0.0/16")
+	invalidMachinePoolCIDR = func(ic *types.InstallConfig) { ic.Networking.MachineNetwork[0].CIDR = *cidrInvalid }
+	cidrValid, _           = ipnet.ParseCIDR("192.168.0.0/24")
+	validMachinePoolCIDR   = func(ic *types.InstallConfig) { ic.Networking.MachineNetwork[0].CIDR = *cidrValid }
+	validVPCRegion         = "eu-gb"
+	invalidVPCRegion       = "foo-bah"
+	setValidVPCRegion      = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCRegion = validVPCRegion }
+	validRG                = "valid-resource-group"
+	anotherValidRG         = "another-valid-resource-group"
+	validVPCID             = "valid-id"
+	anotherValidVPCID      = "another-valid-id"
+	validVPC               = "valid-vpc"
+	setValidVPCName        = func(ic *types.InstallConfig) { ic.Platform.PowerVS.VPCName = validVPC }
+	anotherValidVPC        = "another-valid-vpc"
+	invalidVPC             = "bogus-vpc"
+	validVPCs              = []vpcv1.VPC{
 		{
 			Name: &validVPC,
 			ID:   &validVPCID,
@@ -168,6 +171,16 @@ func TestValidate(t *testing.T) {
 			name:     "invalid architecture",
 			edits:    editFunctions{invalidArchitecture},
 			errorMsg: `^controlPlane.architecture\: Unsupported value\: \"ppc64\"\: supported values: \"ppc64le\"`,
+		},
+		{
+			name:     "invalid machine pool CIDR",
+			edits:    editFunctions{invalidMachinePoolCIDR},
+			errorMsg: `Networking.MachineNetwork.CIDR: Invalid value: "192.168.0.0/16": Machine Pool CIDR must be /24.`,
+		},
+		{
+			name:     "valid machine pool CIDR",
+			edits:    editFunctions{validMachinePoolCIDR},
+			errorMsg: "",
 		},
 	}
 
