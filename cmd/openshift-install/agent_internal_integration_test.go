@@ -322,7 +322,8 @@ func checkFileFromInitrdImg(isoPath string, fileName string) error {
 
 			// check if the current cpio files match the required ones
 			for _, f := range files {
-				if f == fileName {
+				matched, err := filepath.Match(fileName, f)
+				if matched && err == nil {
 					return nil
 				}
 			}
