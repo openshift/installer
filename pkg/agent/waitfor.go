@@ -18,7 +18,8 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 	waitContext, cancel := context.WithTimeout(cluster.Ctx, timeout)
 	defer cancel()
 
-	var lastErr error
+	var lastErrOnExit error
+	var lastErrStr string
 	wait.Until(func() {
 		bootstrap, exitOnErr, err := cluster.IsBootstrapComplete()
 		if bootstrap && err == nil {
@@ -28,10 +29,14 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 
 		if err != nil {
 			if exitOnErr {
-				lastErr = err
+				lastErrOnExit = err
 				cancel()
 			} else {
 				logrus.Info(err)
+				if err.Error() != lastErrStr {
+					logrus.Info(err)
+					lastErrStr = err.Error()
+				}
 			}
 		}
 
@@ -47,10 +52,10 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 
 	waitErr := waitContext.Err()
 	if waitErr != nil {
-		if waitErr == context.Canceled && lastErr != nil {
-			return errors.Wrap(lastErr, "bootstrap process returned error")
+		if errors.Is(waitErr, context.Canceled) && lastErrOnExit != nil {
+			return errors.Wrap(lastErrOnExit, "bootstrap process returned error")
 		}
-		if waitErr == context.DeadlineExceeded {
+		if errors.Is(waitErr, context.DeadlineExceeded) {
 			return errors.Wrap(waitErr, "bootstrap process timed out")
 		}
 	}
