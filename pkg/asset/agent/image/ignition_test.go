@@ -152,7 +152,7 @@ func TestIgnition_addStaticNetworkConfig(t *testing.T) {
 					NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: bad-ip\n      prefix-length: 24\n    enabled: true\n  mac-address: 52:54:01:aa:aa:a1\n  name: eth0\n  state: up\n  type: ethernet\n",
 				},
 			},
-			expectedError:    "'bad-ip' does not appear to be an IPv4 or IPv6 address",
+			expectedError:    "invalid IP address syntax",
 			expectedFileList: nil,
 		},
 	}
