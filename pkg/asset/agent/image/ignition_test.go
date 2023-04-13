@@ -306,12 +306,11 @@ func TestAddHostConfig_Roles(t *testing.T) {
 
 }
 
-func defaultGeneratedFiles() []string {
-	return []string{
+func generatedFiles(otherFiles ...string) []string {
+	defaultFiles := []string{
 		"/etc/issue",
 		"/etc/multipath.conf",
 		"/etc/containers/containers.conf",
-		"/etc/motd",
 		"/root/.docker/config.json",
 		"/root/assisted.te",
 		"/usr/local/bin/common.sh",
@@ -334,7 +333,13 @@ func defaultGeneratedFiles() []string {
 		"/etc/assisted/network/host0/mac_interface.ini",
 		"/usr/local/bin/pre-network-manager-config.sh",
 		"/opt/agent/tls/kubeadmin-password.hash",
+		"/etc/assisted/agent-installer.env",
+		"/etc/motd.d/10-agent-installer",
+		"/etc/systemd/system.conf.d/10-default-env.conf",
+		"/usr/local/bin/install-status.sh",
+		"/usr/local/bin/issue_status.sh",
 	}
+	return append(defaultFiles, otherFiles...)
 }
 
 func TestIgnition_Generate(t *testing.T) {
@@ -362,7 +367,7 @@ func TestIgnition_Generate(t *testing.T) {
 			name:                                  "no-extra-manifests",
 			preNetworkManagerConfigServiceEnabled: true,
 
-			expectedFiles: defaultGeneratedFiles(),
+			expectedFiles: generatedFiles(),
 		},
 		{
 			name: "default",
@@ -387,43 +392,16 @@ metadata:
 					},
 				},
 			},
-			expectedFiles: []string{
-				"/etc/issue",
-				"/etc/multipath.conf",
-				"/etc/containers/containers.conf",
-				"/etc/motd",
-				"/root/.docker/config.json",
-				"/root/assisted.te",
-				"/usr/local/bin/common.sh",
-				"/usr/local/bin/agent-gather",
-				"/usr/local/bin/agent-interactive-console.sh",
-				"/usr/local/bin/extract-agent.sh",
-				"/usr/local/bin/get-container-images.sh",
-				"/usr/local/bin/install-status.sh",
-				"/usr/local/bin/issue_status.sh",
-				"/usr/local/bin/set-hostname.sh",
-				"/usr/local/bin/start-agent.sh",
-				"/usr/local/bin/start-cluster-installation.sh",
-				"/usr/local/bin/wait-for-assisted-service.sh",
-				"/usr/local/bin/set-node-zero.sh",
-				"/usr/local/share/assisted-service/assisted-db.env",
-				"/usr/local/share/assisted-service/assisted-service.env",
-				"/usr/local/share/assisted-service/images.env",
-				"/usr/local/bin/bootstrap-service-record.sh",
-				"/usr/local/bin/release-image.sh",
-				"/usr/local/bin/release-image-download.sh",
-				"/etc/assisted/manifests/agent-config.yaml",
-				"/etc/assisted/network/host0/eth0.nmconnection",
-				"/etc/assisted/network/host0/mac_interface.ini",
-				"/usr/local/bin/pre-network-manager-config.sh",
-				"/opt/agent/tls/kubeadmin-password.hash",
-				"/etc/assisted/extra-manifests/test-configmap-0.yaml",
-				"/etc/assisted/extra-manifests/test-configmap-1.yaml",
-			},
+			expectedFiles: generatedFiles("/etc/assisted/extra-manifests/test-configmap-0.yaml", "/etc/assisted/extra-manifests/test-configmap-1.yaml"),
 			expectedFileContent: map[string]string{
-				"/usr/local/share/assisted-service/images.env": `ASSISTED_SERVICE_HOST=192.168.111.80:8090
-ASSISTED_SERVICE_SCHEME=http
-OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"x86_64","url":"https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-.*.x86_64.iso","version":".*"\}\]
+				"/etc/assisted/extra-manifests/test-configmap-0.yaml": `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-test-1`,
+				"/etc/assisted/extra-manifests/test-configmap-1.yaml": `apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-test-2
 `,
 			},
 			preNetworkManagerConfigServiceEnabled: true,
@@ -440,6 +418,12 @@ OS_IMAGES=\[\{"openshift_version":"was not built correctly","cpu_architecture":"
 					ClusterImageSet: &hivev1.ClusterImageSet{
 						Spec: hivev1.ClusterImageSetSpec{
 							ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
+						},
+					},
+					ClusterDeployment: &hivev1.ClusterDeployment{
+						Spec: hivev1.ClusterDeploymentSpec{
+							ClusterName: "ostest",
+							BaseDomain:  "ostest",
 						},
 					},
 					PullSecret: &v1.Secret{
@@ -534,6 +518,12 @@ func buildIgnitionAssetDefaultDependencies() []asset.Asset {
 			InfraEnv: &aiv1beta1.InfraEnv{
 				Spec: aiv1beta1.InfraEnvSpec{
 					SSHAuthorizedKey: "my-ssh-key",
+				},
+			},
+			ClusterDeployment: &hivev1.ClusterDeployment{
+				Spec: hivev1.ClusterDeploymentSpec{
+					ClusterName: "ostest",
+					BaseDomain:  "ostest",
 				},
 			},
 			ClusterImageSet: &hivev1.ClusterImageSet{
