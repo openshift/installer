@@ -146,7 +146,7 @@ github.com/aliyun/fc-go-sdk
 github.com/aliyun/terraform-provider-alicloud
 github.com/aliyun/terraform-provider-alicloud/alicloud
 github.com/aliyun/terraform-provider-alicloud/alicloud/connectivity
-# github.com/andybalholm/brotli v1.0.1
+# github.com/andybalholm/brotli v1.0.4
 ## explicit; go 1.12
 github.com/andybalholm/brotli
 # github.com/apparentlymart/go-cidr v1.0.1
@@ -241,8 +241,8 @@ github.com/go-kit/kit/log/level
 # github.com/go-logfmt/logfmt v0.5.0
 ## explicit; go 1.13
 github.com/go-logfmt/logfmt
-# github.com/go-logr/logr v0.4.0
-## explicit; go 1.14
+# github.com/go-logr/logr v1.2.3
+## explicit; go 1.16
 github.com/go-logr/logr
 # github.com/gogap/errors v0.0.0-20160523102334-149c546090d0
 ## explicit
@@ -273,8 +273,8 @@ github.com/golang/protobuf/ptypes/timestamp
 # github.com/golang/snappy v0.0.4
 ## explicit
 github.com/golang/snappy
-# github.com/google/go-cmp v0.5.6
-## explicit; go 1.8
+# github.com/google/go-cmp v0.5.8
+## explicit; go 1.13
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
 github.com/google/go-cmp/cmp/internal/flags
@@ -305,14 +305,14 @@ github.com/hashicorp/go-cleanhttp
 ## explicit; go 1.13
 github.com/hashicorp/go-getter
 github.com/hashicorp/go-getter/helper/url
-# github.com/hashicorp/go-hclog v1.1.0
+# github.com/hashicorp/go-hclog v1.2.2
 ## explicit; go 1.13
 github.com/hashicorp/go-hclog
 # github.com/hashicorp/go-multierror v1.1.1
 ## explicit; go 1.13
 github.com/hashicorp/go-multierror
-# github.com/hashicorp/go-plugin v1.4.3
-## explicit; go 1.13
+# github.com/hashicorp/go-plugin v1.4.4
+## explicit; go 1.17
 github.com/hashicorp/go-plugin
 github.com/hashicorp/go-plugin/internal/plugin
 # github.com/hashicorp/go-safetemp v1.0.0
@@ -414,7 +414,7 @@ github.com/hashicorp/yamux
 # github.com/huandu/xstrings v1.3.2
 ## explicit; go 1.12
 github.com/huandu/xstrings
-# github.com/imdario/mergo v0.3.12
+# github.com/imdario/mergo v0.3.13
 ## explicit; go 1.13
 github.com/imdario/mergo
 # github.com/jmespath/go-jmespath v0.4.0
@@ -472,13 +472,13 @@ github.com/mitchellh/copystructure
 # github.com/mitchellh/go-homedir v1.1.0
 ## explicit
 github.com/mitchellh/go-homedir
-# github.com/mitchellh/go-testing-interface v1.14.0
+# github.com/mitchellh/go-testing-interface v1.14.1
 ## explicit; go 1.14
 github.com/mitchellh/go-testing-interface
 # github.com/mitchellh/go-wordwrap v1.0.0
 ## explicit
 github.com/mitchellh/go-wordwrap
-# github.com/mitchellh/mapstructure v1.4.3
+# github.com/mitchellh/mapstructure v1.5.0
 ## explicit; go 1.14
 github.com/mitchellh/mapstructure
 # github.com/mitchellh/reflectwalk v1.0.2
@@ -570,7 +570,7 @@ go.opencensus.io/trace
 go.opencensus.io/trace/internal
 go.opencensus.io/trace/propagation
 go.opencensus.io/trace/tracestate
-# golang.org/x/crypto v0.0.0-20220622213112-05595931fe9d => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+# golang.org/x/crypto v0.6.0 => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 ## explicit; go 1.17
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blowfish
@@ -587,11 +587,12 @@ golang.org/x/crypto/scrypt
 ## explicit; go 1.11
 golang.org/x/lint
 golang.org/x/lint/golint
-# golang.org/x/mod v0.4.2
-## explicit; go 1.12
+# golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4
+## explicit; go 1.17
+golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.5.0 => golang.org/x/net v0.5.0
+# golang.org/x/net v0.7.0 => golang.org/x/net v0.5.0
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/context/ctxhttp
@@ -613,31 +614,32 @@ golang.org/x/oauth2/google/internal/externalaccount
 golang.org/x/oauth2/internal
 golang.org/x/oauth2/jws
 golang.org/x/oauth2/jwt
-# golang.org/x/sys v0.4.0
+# golang.org/x/sys v0.5.0
 ## explicit; go 1.17
 golang.org/x/sys/execabs
 golang.org/x/sys/internal/unsafeheader
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.4.0
+# golang.org/x/term v0.5.0
 ## explicit; go 1.17
 golang.org/x/term
-# golang.org/x/text v0.6.0 => golang.org/x/text v0.3.7
+# golang.org/x/text v0.7.0 => golang.org/x/text v0.3.7
 ## explicit; go 1.17
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/time v0.0.0-20211116232009-f0f3c7e86c11
+# golang.org/x/time v0.0.0-20220210224613-90d013bbcef8
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/tools v0.1.5
-## explicit; go 1.17
+# golang.org/x/tools v0.1.12
+## explicit; go 1.18
 golang.org/x/tools/cmd/goimports
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
 golang.org/x/tools/go/internal/gcimporter
+golang.org/x/tools/go/internal/pkgbits
 golang.org/x/tools/internal/event
 golang.org/x/tools/internal/event/core
 golang.org/x/tools/internal/event/keys
@@ -647,10 +649,6 @@ golang.org/x/tools/internal/gocommand
 golang.org/x/tools/internal/gopathwalk
 golang.org/x/tools/internal/imports
 golang.org/x/tools/internal/typeparams
-# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-## explicit; go 1.11
-golang.org/x/xerrors
-golang.org/x/xerrors/internal
 # google.golang.org/api v0.30.0
 ## explicit; go 1.11
 google.golang.org/api/googleapi
@@ -988,13 +986,18 @@ k8s.io/client-go/util/flowcontrol
 k8s.io/client-go/util/homedir
 k8s.io/client-go/util/keyutil
 k8s.io/client-go/util/workqueue
-# k8s.io/klog/v2 v2.9.0
+# k8s.io/klog/v2 v2.80.1
 ## explicit; go 1.13
 k8s.io/klog/v2
-# k8s.io/utils v0.0.0-20210930125809-cb0fa318a74b
+k8s.io/klog/v2/internal/buffer
+k8s.io/klog/v2/internal/clock
+k8s.io/klog/v2/internal/dbg
+k8s.io/klog/v2/internal/serialize
+k8s.io/klog/v2/internal/severity
+# k8s.io/utils v0.0.0-20220210201930-3a6ce19ff2f9
 ## explicit; go 1.12
 k8s.io/utils/integer
-# sigs.k8s.io/structured-merge-diff/v4 v4.1.2
+# sigs.k8s.io/structured-merge-diff/v4 v4.2.1
 ## explicit; go 1.13
 sigs.k8s.io/structured-merge-diff/v4/fieldpath
 sigs.k8s.io/structured-merge-diff/v4/schema
@@ -1006,7 +1009,7 @@ sigs.k8s.io/yaml
 # github.com/hashicorp/go-getter => github.com/hashicorp/go-getter v1.6.2
 # golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
 # golang.org/x/text => golang.org/x/text v0.3.7
-# github.com/hashicorp/vault => github.com/hashicorp/vault v1.9.10
+# github.com/hashicorp/vault => github.com/hashicorp/vault v1.11.9
 # github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
 # golang.org/x/net => golang.org/x/net v0.5.0
 # github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
