@@ -20,6 +20,7 @@ resource "azurerm_subnet_network_security_group_association" "worker" {
 }
 
 resource "azurerm_network_security_rule" "apiserver_in" {
+  count                       = var.azure_preexisting_network ? 0 : 1
   name                        = "apiserver_in"
   priority                    = 101
   direction                   = "Inbound"
