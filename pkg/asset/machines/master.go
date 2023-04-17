@@ -344,6 +344,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			installConfig.Config.ControlPlane.Architecture,
 		)
 		mpool.OSDisk.DiskSizeGB = 1024
+		if installConfig.Config.Platform.Azure.CloudName == azuretypes.StackCloud {
+			mpool.OSDisk.DiskSizeGB = azuredefaults.AzurestackMinimumDiskSize
+		}
 		mpool.Set(ic.Platform.Azure.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Azure)
 

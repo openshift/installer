@@ -54,7 +54,7 @@ resource "azurestack_virtual_machine" "master" {
   storage_os_disk {
     name              = "${var.cluster_id}-master-${count.index}_OSDisk" # os disk name needs to match cluster-api convention
     create_option     = "FromImage"
-    disk_size_gb      = min(var.os_volume_size, 1023)
+    disk_size_gb      = var.os_volume_size
     managed_disk_type = var.os_volume_type
   }
 
