@@ -30,6 +30,10 @@ type VolumeTypePage struct {
 
 // IsEmpty returns true if a ListResult contains no Volume Types.
 func (r VolumeTypePage) IsEmpty() (bool, error) {
+	if r.StatusCode == 204 {
+		return true, nil
+	}
+
 	volumetypes, err := ExtractVolumeTypes(r)
 	return len(volumetypes) == 0, err
 }
@@ -168,6 +172,10 @@ type AccessPage struct {
 
 // IsEmpty indicates whether an AccessPage is empty.
 func (page AccessPage) IsEmpty() (bool, error) {
+	if page.StatusCode == 204 {
+		return true, nil
+	}
+
 	v, err := ExtractAccesses(page)
 	return len(v) == 0, err
 }

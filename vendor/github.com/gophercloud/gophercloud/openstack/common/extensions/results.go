@@ -37,6 +37,10 @@ type ExtensionPage struct {
 
 // IsEmpty checks whether an ExtensionPage struct is empty.
 func (r ExtensionPage) IsEmpty() (bool, error) {
+	if r.StatusCode == 204 {
+		return true, nil
+	}
+
 	is, err := ExtractExtensions(r)
 	return len(is) == 0, err
 }

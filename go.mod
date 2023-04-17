@@ -41,8 +41,8 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.9
 	github.com/google/uuid v1.3.0
-	github.com/gophercloud/gophercloud v1.1.1
-	github.com/gophercloud/utils v0.0.0-20221207145018-e8fba78967ca
+	github.com/gophercloud/gophercloud v1.3.0
+	github.com/gophercloud/utils v0.0.0-20230330070308-5bd5e1d608f8
 	github.com/h2non/filetype v1.0.12
 	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/terraform-exec v0.17.3

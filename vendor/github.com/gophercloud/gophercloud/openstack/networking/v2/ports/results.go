@@ -111,6 +111,12 @@ type Port struct {
 	// Tags optionally set via extensions/attributestags
 	Tags []string `json:"tags"`
 
+	// PropagateUplinkStatus enables/disables propagate uplink status on the port.
+	PropagateUplinkStatus bool `json:"propagate_uplink_status"`
+
+	// Extra parameters to include in the request.
+	ValueSpecs map[string]string `json:"value_specs"`
+
 	// RevisionNumber optionally set via extensions/standard-attr-revisions
 	RevisionNumber int `json:"revision_number"`
 
@@ -181,6 +187,10 @@ func (r PortPage) NextPageURL() (string, error) {
 
 // IsEmpty checks whether a PortPage struct is empty.
 func (r PortPage) IsEmpty() (bool, error) {
+	if r.StatusCode == 204 {
+		return true, nil
+	}
+
 	is, err := ExtractPorts(r)
 	return len(is) == 0, err
 }

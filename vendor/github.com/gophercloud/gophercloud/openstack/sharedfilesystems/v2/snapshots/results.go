@@ -139,6 +139,10 @@ func (r SnapshotPage) LastMarker() (string, error) {
 
 // IsEmpty satisifies the IsEmpty method of the Page interface
 func (r SnapshotPage) IsEmpty() (bool, error) {
+	if r.StatusCode == 204 {
+		return true, nil
+	}
+
 	snapshots, err := ExtractSnapshots(r)
 	return len(snapshots) == 0, err
 }
