@@ -251,6 +251,10 @@ func (r SubnetPoolPage) NextPageURL() (string, error) {
 
 // IsEmpty determines whether or not a SubnetPoolPage is empty.
 func (r SubnetPoolPage) IsEmpty() (bool, error) {
+	if r.StatusCode == 204 {
+		return true, nil
+	}
+
 	subnetpools, err := ExtractSubnetPools(r)
 	return len(subnetpools) == 0, err
 }
