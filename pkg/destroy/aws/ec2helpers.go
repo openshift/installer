@@ -92,7 +92,7 @@ func deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logge
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("id", id)
+	logger = logger.WithField("id", id).WithField("resourceType", resourceType)
 
 	switch resourceType {
 	case "dhcp-options":
@@ -786,7 +786,40 @@ func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2.EC2, id stri
 }
 
 func deleteEC2VPCEndpointService(ctx context.Context, client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVpcEndpointServiceConfigurationsWithContext(ctx, &ec2.DeleteVpcEndpointServiceConfigurationsInput{
+	output, err := client.DescribeVpcEndpointConnectionsWithContext(ctx, &ec2.DescribeVpcEndpointConnectionsInput{
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("service-id"),
+				Values: aws.StringSlice([]string{id}),
+			},
+		},
+	})
+
+	if err != nil {
+		logger.Warn("Unable to get the list of VPC endpoint connections connected to service: ", err)
+		logger.Warn("Attempting to delete the VPC Endpoint Service")
+	} else {
+		endpointList := make([]*string, len(output.VpcEndpointConnections))
+		for _, endpoint := range output.VpcEndpointConnections {
+			if aws.StringValue(endpoint.VpcEndpointState) != "rejected" {
+				endpointList = append(endpointList, endpoint.VpcEndpointId)
+			}
+		}
+
+		_, err = client.RejectVpcEndpointConnectionsWithContext(ctx, &ec2.RejectVpcEndpointConnectionsInput{
+			ServiceId:      &id,
+			VpcEndpointIds: endpointList,
+		})
+
+		if err != nil {
+			logger.Warn("Unable to reject VPC endpoint connections for service: ", err)
+			logger.Warn("Attempting to delete the VPC Endpoint Service")
+		} else {
+			logger.WithField("resourceType", "VPC Endpoint Connection").Info("Rejected")
+		}
+	}
+
+	_, err = client.DeleteVpcEndpointServiceConfigurationsWithContext(ctx, &ec2.DeleteVpcEndpointServiceConfigurationsInput{
 		ServiceIds: aws.StringSlice([]string{id}),
 	})
 	if err != nil {
