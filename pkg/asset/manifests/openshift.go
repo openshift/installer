@@ -10,6 +10,8 @@ import (
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -157,6 +159,16 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		// We need to replace the local cacert path with one that is used in OpenShift
 		if cloud.CACertFile != "" {
 			cloud.CACertFile = "/etc/kubernetes/static-pod-resources/configmaps/cloud-config/ca-bundle.pem"
+		}
+
+		// Application credentials are easily rotated in the event of a leak and should be preferred. Encourage their use.
+		authTypes := sets.New(clientconfig.AuthPassword, clientconfig.AuthV2Password, clientconfig.AuthV3Password)
+		if cloud.AuthInfo != nil && authTypes.Has(cloud.AuthType) {
+			logrus.Warnf(
+				"clouds.yaml file is using %q type auth. Consider using the %q auth type instead to rotate credentials more easily.",
+				cloud.AuthType,
+				clientconfig.AuthV3ApplicationCredential,
+			)
 		}
 
 		clouds := make(map[string]map[string]*clientconfig.Cloud)
