@@ -16,6 +16,7 @@ import (
 	"google.golang.org/api/googleapi"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -291,10 +292,10 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 	// Should return the machine type as specified.
 	for key, value := range machineTypeAPIResult {
-		gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, nil).AnyTimes()
+		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New(validZone), nil).AnyTimes()
 	}
 	// When passed incorrect machine type, the API returns nil.
-	gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("404")).AnyTimes()
+	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
 
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
@@ -582,6 +583,60 @@ func TestValidateZones(t *testing.T) {
 			errs := validateZones(gcpClient, editedInstallConfig)
 			if tc.expectedError {
 				assert.Regexp(t, tc.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
+
+func TestValidateInstanceType(t *testing.T) {
+	cases := []struct {
+		name           string
+		zones          []string
+		instanceType   string
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:           "Valid instance type with min requirements and no zones specified",
+			zones:          []string{},
+			instanceType:   "n1-standard-4",
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Valid instance fails min requirements and no zones specified",
+			zones:          []string{},
+			instanceType:   "n1-standard-2",
+			expectedError:  true,
+			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
+		},
+		{
+			name:           "Invalid instance and no zones specified",
+			zones:          []string{},
+			instanceType:   "invalid-instance-1",
+			expectedError:  true,
+			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	// Should return the machine type as specified.
+	for key, value := range machineTypeAPIResult {
+		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New("a", "b", "c"), nil).AnyTimes()
+	}
+	// When passed incorrect machine type, the API returns nil.
+	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.instanceType, controlPlaneReq)
+			if test.expectedError {
+				assert.Regexp(t, test.expectedErrMsg, errs)
 			} else {
 				assert.Empty(t, errs)
 			}

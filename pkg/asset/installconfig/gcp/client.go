@@ -28,6 +28,7 @@ var (
 type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
 	GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error)
+	GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
 	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
 	GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error)
@@ -78,6 +79,40 @@ func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType 
 	}
 
 	return req, nil
+}
+
+// GetMachineTypeWithZones retrieves the specified machine type and the zones in which it is available.
+func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	var machine *compute.MachineType
+	zones := sets.New[string]()
+	filter := fmt.Sprintf("name = \"%s\" AND zone : %s-*", machineType, region)
+	req := svc.MachineTypes.AggregatedList(project).Filter(filter).Context(ctx)
+	err = req.Pages(ctx, func(page *compute.MachineTypeAggregatedList) error {
+		for _, scopedList := range page.Items {
+			for _, item := range scopedList.MachineTypes {
+				if machine == nil {
+					machine = item
+				}
+				zones.Insert(item.Zone)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, nil, err
+	} else if len(zones) == 0 || machine == nil {
+		return nil, nil, errors.New("failed to fetch instance type, this error usually occurs if the region or the instance type is not found")
+	}
+
+	return machine, zones, nil
 }
 
 // GetNetwork uses the GCP Compute Service API to get a network by name from a project.
