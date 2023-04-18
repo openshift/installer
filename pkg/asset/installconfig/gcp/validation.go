@@ -58,8 +58,9 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 
 	typeMeta, instanceZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
 	if err != nil {
-		if _, ok := err.(*googleapi.Error); ok {
-			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
+		var gErr *googleapi.Error
+		if errors.As(err, &gErr) {
+			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, gErr.Message))
 		}
 		return append(allErrs, field.InternalError(nil, err))
 	}
