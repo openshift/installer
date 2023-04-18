@@ -113,6 +113,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain openstack.FailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(failureDomain.PortTargets)+len(mpool.AdditionalNetworkIDs))
+	primarySubnet := platform.MachinesSubnet
 
 	if platform.MachinesSubnet != "" {
 		controlPlaneNetwork = machinev1alpha1.NetworkParam{
@@ -145,6 +146,9 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		}
 		if portTarget.ID == "control-plane" {
 			controlPlaneNetwork = networkParam
+			if role == "master" {
+				primarySubnet = ""
+			}
 		} else {
 			networkParam.NoAllowedAddressPairs = true
 			additionalNetworks = append(additionalNetworks, networkParam)
@@ -183,7 +187,7 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		CloudsSecret:     &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret:   &corev1.SecretReference{Name: userDataSecret},
 		Networks:         append([]machinev1alpha1.NetworkParam{controlPlaneNetwork}, additionalNetworks...),
-		PrimarySubnet:    platform.MachinesSubnet,
+		PrimarySubnet:    primarySubnet,
 		AvailabilityZone: failureDomain.ComputeAvailabilityZone,
 		SecurityGroups:   securityGroups,
 		ServerGroupName:  serverGroupName,
