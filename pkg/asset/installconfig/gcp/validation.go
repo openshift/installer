@@ -56,12 +56,21 @@ func Validate(client API, ic *types.InstallConfig) error {
 func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	typeMeta, _, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
+	typeMeta, instanceZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
 	if err != nil {
 		if _, ok := err.(*googleapi.Error); ok {
 			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
+	}
+
+	userZones := sets.New(zones...)
+	if len(userZones) == 0 {
+		userZones = instanceZones
+	}
+	if diff := userZones.Difference(instanceZones); len(diff) > 0 {
+		errMsg := fmt.Sprintf("instance type not available in zones: %v", sets.List(diff))
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 	}
 
 	if typeMeta.GuestCpus < req.minimumVCpus {
