@@ -492,3 +492,99 @@ func TestValidateCredentialMode(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateZones(t *testing.T) {
+	validZonesDefaultMachine := func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.Zones = []string{"us-central1-a", "us-central1-c"}
+	}
+	validZonesControlPlane := func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.Zones = []string{"us-central1-a", "us-central1-b"}
+	}
+	validZonesCompute := func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.Zones = []string{"us-central1-b", "us-central1-c", "us-central1-d"}
+	}
+	invalidZonesDefaultMachine := func(ic *types.InstallConfig) {
+		ic.Platform.GCP.DefaultMachinePlatform.Zones = []string{"us-central1-a", "us-central1-x", "us-central1-y"}
+	}
+	invalidZonesControlPlane := func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.GCP.Zones = []string{"us-central1-d", "us-central1-x", "us-central1-y"}
+	}
+	invalidZonesCompute := func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.GCP.Zones = []string{"us-central1-y", "us-central1-z", "us-central1-w"}
+	}
+
+	cases := []struct {
+		name           string
+		edits          editFunctions
+		expectedError  bool
+		expectedErrMsg string
+	}{
+		{
+			name:           "Valid zones for defaultMachine",
+			edits:          editFunctions{validZonesDefaultMachine},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid zones for defaultMachine",
+			edits:          editFunctions{invalidZonesDefaultMachine},
+			expectedError:  true,
+			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.zones: Invalid value: \[\]string\{"us\-central1\-x", "us\-central1\-y"\}: zone\(s\) not found in region\]$`,
+		},
+		{
+			name:           "Valid zones for controlPlane",
+			edits:          editFunctions{validZonesControlPlane},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid zones for controlPlane",
+			edits:          editFunctions{invalidZonesControlPlane},
+			expectedError:  true,
+			expectedErrMsg: `^\[controlPlane.platform.gcp.zones: Invalid value: \[\]string\{"us\-central1\-x", "us\-central1\-y"\}: zone\(s\) not found in region\]$`,
+		},
+		{
+			name:           "Valid zones for compute",
+			edits:          editFunctions{validZonesCompute},
+			expectedError:  false,
+			expectedErrMsg: "",
+		},
+		{
+			name:           "Invalid zones for compute",
+			edits:          editFunctions{invalidZonesCompute},
+			expectedError:  true,
+			expectedErrMsg: `^\[compute\[0\].platform.gcp.zones: Invalid value: \[\]string\{"us\-central1\-w", "us\-central1\-y", "us\-central1\-z"\}: zone\(s\) not found in region\]$`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	validZones := []*compute.Zone{
+		{Name: "us-central1-a"},
+		{Name: "us-central1-b"},
+		{Name: "us-central1-c"},
+		{Name: "us-central1-d"},
+	}
+
+	// Should get the list of zones.
+	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return(validZones, nil).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errs := validateZones(gcpClient, editedInstallConfig)
+			if tc.expectedError {
+				assert.Regexp(t, tc.expectedErrMsg, errs)
+			} else {
+				assert.Empty(t, errs)
+			}
+		})
+	}
+}
