@@ -246,3 +246,118 @@ func extractIgnitionCfg(isoPath string) (*igntypes.Config, error) {
 
 	return &config, nil
 }
+
+// [!] initrdImgContains `isoPath` `file` check if the specified file `file`
+// is stored within a compressed cpio archive by scanning the content of
+// /images/ignition.img archive in the ISO `isoPath` image (note: plain cpio
+// archives are ignored).
+func initrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: initrdImgContains isoPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, eFilePath := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	err := checkFileFromInitrdImg(isoPathAbs, eFilePath)
+	ts.Check(err)
+}
+
+func checkFileFromInitrdImg(isoPath string, fileName string) error {
+	disk, err := diskfs.OpenWithMode(isoPath, diskfs.ReadOnly)
+	if err != nil {
+		return err
+	}
+
+	fs, err := disk.GetFilesystem(0)
+	if err != nil {
+		return err
+	}
+
+	initRdImg, err := fs.OpenFile("/images/pxeboot/initrd.img", os.O_RDONLY)
+	if err != nil {
+		return err
+	}
+	defer initRdImg.Close()
+
+	const (
+		gzipID1     = 0x1f
+		gzipID2     = 0x8b
+		gzipDeflate = 0x08
+	)
+
+	buff := make([]byte, 4096)
+	for {
+		_, err := initRdImg.Read(buff)
+		if err == io.EOF { //nolint:errorlint
+			break
+		}
+
+		foundAt := -1
+		for idx := 0; idx < len(buff)-2; idx++ {
+			// scan the buffer for a potential gzip header
+			if buff[idx+0] == gzipID1 && buff[idx+1] == gzipID2 && buff[idx+2] == gzipDeflate {
+				foundAt = idx
+				break
+			}
+		}
+
+		if foundAt >= 0 {
+			// check if it's really a compressed cpio archive
+			delta := int64(foundAt - len(buff))
+			newPos, err := initRdImg.Seek(delta, io.SeekCurrent)
+			if err != nil {
+				break
+			}
+
+			files, err := lookForCpioFiles(initRdImg)
+			if err != nil {
+				if _, err := initRdImg.Seek(newPos+2, io.SeekStart); err != nil {
+					break
+				}
+				continue
+			}
+
+			// check if the current cpio files match the required ones
+			for _, f := range files {
+				matched, err := filepath.Match(fileName, f)
+				if err != nil {
+					return err
+				}
+				if matched {
+					return nil
+				}
+			}
+		}
+	}
+
+	return errors.NotFound(fmt.Sprintf("File %s not found within the /images/pxeboot/initrd.img archive", fileName))
+}
+
+func lookForCpioFiles(r io.Reader) ([]string, error) {
+	var files []string
+
+	gr, err := gzip.NewReader(r)
+	if err != nil {
+		return nil, err
+	}
+	defer gr.Close()
+
+	// skip in case of garbage
+	if gr.OS != 255 && gr.OS >= 13 {
+		return nil, fmt.Errorf("Unknown OS code: %v", gr.Header.OS)
+	}
+
+	cr := cpio.NewReader(gr)
+	for {
+		h, err := cr.Next()
+		if err != nil {
+			break
+		}
+
+		files = append(files, h.Name)
+	}
+
+	return files, nil
+}

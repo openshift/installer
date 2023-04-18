@@ -3,6 +3,7 @@ package image
 import (
 	"bytes"
 	"compress/gzip"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -70,13 +71,7 @@ func (ca *CpioArchive) StorePath(path string) error {
 
 // StoreFile appends to the current archive the specified file.
 func (ca *CpioArchive) StoreFile(filename string, dstPath string) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	fileInfo, err := f.Stat()
+	fileInfo, err := os.Lstat(filename)
 	if err != nil {
 		return err
 	}
@@ -91,9 +86,32 @@ func (ca *CpioArchive) StoreFile(filename string, dstPath string) error {
 		return err
 	}
 
-	_, err = io.Copy(ca.cpioWriter, f)
-	if err != nil {
-		return err
+	fm := fileInfo.Mode()
+	switch {
+	case fm.IsRegular():
+		// Copy the file content
+		f, err := os.Open(filename)
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		_, err = io.Copy(ca.cpioWriter, f)
+		if err != nil {
+			return err
+		}
+	case fm&os.ModeSymlink != 0:
+		// In case of a symbolic link, copy the link text
+		s, err := os.Readlink(filename)
+		if err != nil {
+			return err
+		}
+		_, err = ca.cpioWriter.Write([]byte(s))
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("unsupported file mode %v for file %s", fm, filename)
 	}
 
 	return nil
