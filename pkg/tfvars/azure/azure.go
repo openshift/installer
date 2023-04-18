@@ -22,6 +22,7 @@ type Auth struct {
 	TenantID                  string `json:"azure_tenant_id,omitempty"`
 	ClientCertificatePath     string `json:"azure_certificate_path,omitempty"`
 	ClientCertificatePassword string `json:"azure_certificate_password,omitempty"`
+	UseMSI                    bool   `json:"azure_use_msi,omitempty"`
 }
 
 type config struct {
