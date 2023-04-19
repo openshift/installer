@@ -78,6 +78,18 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_api" {
   description       = local.description
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_api_v6" {
+  count             = length(var.machine_v6_cidrs)
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "tcp"
+  port_range_min    = 6443
+  port_range_max    = 6443
+  remote_ip_prefix  = "::/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_vxlan" {
   count             = length(var.machine_v4_cidrs)
   direction         = "ingress"
@@ -276,6 +288,30 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_https" {
   port_range_min    = 443
   port_range_max    = 443
   remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_http_v6" {
+  count             = (var.masters_schedulable && length(var.machine_v6_cidrs) > 0) ? 1 : 0
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "tcp"
+  port_range_min    = 80
+  port_range_max    = 80
+  remote_ip_prefix  = "::/0"
+  security_group_id = openstack_networking_secgroup_v2.master.id
+  description       = local.description
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_https_v6" {
+  count             = (var.masters_schedulable && length(var.machine_v6_cidrs) > 0) ? 1 : 0
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "tcp"
+  port_range_min    = 443
+  port_range_max    = 443
+  remote_ip_prefix  = "::/0"
   security_group_id = openstack_networking_secgroup_v2.master.id
   description       = local.description
 }
