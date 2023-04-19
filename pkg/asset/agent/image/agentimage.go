@@ -78,16 +78,19 @@ func (a *AgentImage) fetchAgentTuiFiles(releaseImage string, pullSecret string, 
 	files := []string{}
 
 	for _, srcFile := range agentTuiFilenames {
-		f, err := release.ExtractFile("agent-installer-node-agent", srcFile)
+		extracted, err := release.ExtractFile("agent-installer-node-agent", srcFile)
 		if err != nil {
 			return nil, err
 		}
-		// Make sure it could be executed
-		err = os.Chmod(f, 0o555)
-		if err != nil {
-			return nil, err
+
+		for _, f := range extracted {
+			// Make sure it could be executed
+			err = os.Chmod(f, 0o555)
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, f)
 		}
-		files = append(files, f)
 	}
 
 	return files, nil

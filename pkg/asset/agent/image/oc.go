@@ -45,7 +45,7 @@ type Config struct {
 // Release is the interface to use the oc command to the get image info
 type Release interface {
 	GetBaseIso(architecture string) (string, error)
-	ExtractFile(image string, filename string) (string, error)
+	ExtractFile(image string, filename string) ([]string, error)
 }
 
 type release struct {
@@ -75,20 +75,20 @@ const (
 )
 
 // ExtractFile extracts the specified file from the given image name, and store it in the cache dir.
-func (r *release) ExtractFile(image string, filename string) (string, error) {
+func (r *release) ExtractFile(image string, filename string) ([]string, error) {
 	imagePullSpec, err := r.getImageFromRelease(image)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	cacheDir, err := GetCacheDir(filesDataType)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	path, err := r.extractFileFromImage(imagePullSpec, filename, cacheDir)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	return path, err
 }
@@ -130,7 +130,7 @@ func (r *release) GetBaseIso(architecture string) (string, error) {
 		return "", err
 	}
 	logrus.Infof("Base ISO obtained from release and cached at %s", path)
-	return path, err
+	return path[0], err
 }
 
 func (r *release) getImageFromRelease(imageName string) (string, error) {
@@ -170,12 +170,12 @@ func (r *release) getImageFromRelease(imageName string) (string, error) {
 	return image, nil
 }
 
-func (r *release) extractFileFromImage(image, file, cacheDir string) (string, error) {
+func (r *release) extractFileFromImage(image, file, cacheDir string) ([]string, error) {
 	var cmd string
 	if len(r.mirrorConfig) > 0 {
 		icspFile, err := getIcspFileFromRegistriesConfig(r.mirrorConfig)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		defer removeIcspFile(icspFile)
 		cmd = fmt.Sprintf(templateImageExtractWithIcsp, file, cacheDir, icspFile, image)
@@ -185,29 +185,25 @@ func (r *release) extractFileFromImage(image, file, cacheDir string) (string, er
 	path := filepath.Join(cacheDir, path.Base(file))
 	// Remove file if it exists
 	if err := removeCacheFile(path); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	logrus.Debugf("extracting %s to %s, %s", file, cacheDir, cmd)
 	_, err := retry.Do(r.config.MaxTries, r.config.RetryDelay, execute, r.executer, r.pullSecret, cmd)
 	if err != nil {
-		return "", err
-	}
-	// Get actual file if the file ends in wildcard
-	if strings.HasSuffix(file, "*") {
-		path, err = getExtractedFileFromWildcard(path)
-		if err != nil {
-			return "", err
-		}
+		return nil, err
 	}
 
-	// Make sure file exists after extraction
-	if _, err := os.Stat(path); err != nil {
-		logrus.Debugf("File %s was not found, err %s", file, err.Error())
-		return "", err
+	// Make sure file(s) exist after extraction
+	matches, err := filepath.Glob(path)
+	if err != nil {
+		return nil, err
+	}
+	if matches == nil {
+		return nil, fmt.Errorf("file %s was not found", file)
 	}
 
-	return path, nil
+	return matches, nil
 }
 
 // Get hash from rhcos.json
@@ -280,7 +276,7 @@ func (r *release) verifyCacheFile(image, file, architecture string) (bool, error
 		return false, nil
 	}
 
-	payloadSha, err := os.ReadFile(shaFile)
+	payloadSha, err := os.ReadFile(shaFile[0])
 	if err != nil {
 		return false, err
 	}
@@ -307,31 +303,6 @@ func removeCacheFile(path string) error {
 		logrus.Debugf("Removed file %s", file)
 	}
 	return nil
-}
-
-func getExtractedFileFromWildcard(path string) (string, error) {
-	matches, err := filepath.Glob(path)
-	if err != nil {
-		return "", err
-	}
-
-	var found string
-	for _, file := range matches {
-		fileInfo, err := os.Lstat(file)
-		if err != nil {
-			return "", err
-		}
-		if fileInfo.Mode()&os.ModeSymlink == 0 {
-			if found != "" {
-				logrus.Warningf("Additional file %s matching %s in release", filepath.Base(path), filepath.Base(path))
-			}
-			found = file
-		}
-	}
-	if found == "" {
-		return "", fmt.Errorf("failed to extract file %s", filepath.Base(path))
-	}
-	return found, nil
 }
 
 func execute(executer executer.Executer, pullSecret, command string) (string, error) {
