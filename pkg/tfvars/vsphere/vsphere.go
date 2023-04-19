@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -115,28 +116,52 @@ func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {
 }
 
 // func constructKargsFromNetworkConfig(networkConfig *vtypes.NetworkDeviceSpec) (string, error) {
-func constructKargsFromNetworkConfig(ipAddrs, nameservers []string, gateway4 string) (string, error) {
+func constructKargsFromNetworkConfig(ipAddrs, nameservers []string, gateway4, gateway6, deviceName string) (string, error) {
 	if logrus.IsLevelEnabled(logrus.TraceLevel) {
 		logrus.Tracef("Constructing kargs from IPs [%v] nameservers [%v] gateway4 [%v]", ipAddrs, nameservers, gateway4)
 	}
 	outKargs := ""
 	// if an IPv4 gateway is defined, we'll only handle IPv4 addresses
-	if len(gateway4) > 0 {
-		for _, address := range ipAddrs {
-			ip, mask, err := net.ParseCIDR(address)
-			if err != nil {
-				return "", err
-			}
-			maskParts := mask.Mask
-			maskStr := fmt.Sprintf("%d.%d.%d.%d", maskParts[0], maskParts[1], maskParts[2], maskParts[3])
-			outKargs += fmt.Sprintf("ip=%s::%s:%s:::none ", ip.String(), gateway4, maskStr)
+	for _, address := range ipAddrs {
+		ip, mask, err := net.ParseCIDR(address)
+		if err != nil {
+			return "", err
 		}
+
+		var gatewayStr string
+		var maskStr string
+		var ipStr string
+		if ip.To4() == nil {
+			gatewayStr = gateway6
+			if len(gatewayStr) > 0 {
+				gatewayStr = fmt.Sprintf("[%s]", gatewayStr)
+			}
+			maskStr = mask.String()
+			parts := strings.Split(maskStr, "/")
+			if len(parts) < 2 {
+				logrus.Info("IPv6 address must contain a prefix")
+			}
+			maskStr = parts[1]
+			ipStr = fmt.Sprintf("[%s]", ip.String())
+		} else {
+			ipStr = ip.String()
+			maskParts := mask.Mask
+			gatewayStr = gateway4
+			maskStr = fmt.Sprintf("%d.%d.%d.%d", maskParts[0], maskParts[1], maskParts[2], maskParts[3])
+		}
+
+		outKargs += fmt.Sprintf("ip=%s::%s:%s::%s:none ", ipStr, gatewayStr, maskStr, deviceName)
 	}
 
 	for _, nameserver := range nameservers {
+		ip := net.ParseIP(nameserver)
+		if ip.To4() == nil {
+			nameserver = fmt.Sprintf("[%s]", nameserver)
+		}
 		outKargs += fmt.Sprintf("nameserver=%s ", nameserver)
 	}
 
+	outKargs = strings.Trim(outKargs, " ")
 	logrus.Debugf("Generated karg: [%v]", outKargs)
 	return outKargs, nil
 }
@@ -151,7 +176,7 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 		if host.Role == vtypes.BootstrapRole {
 			logrus.Debugf("Generating kargs for bootstrap.")
 			network := host.NetworkDevice
-			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway4)
+			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway4, network.Gateway6, "")
 			if err != nil {
 				return err
 			}
@@ -163,7 +188,7 @@ func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error 
 	for _, machine := range sources.ControlPlaneConfigs {
 		logrus.Debugf("Generating kargs for control plane %v.", machine.GenerateName)
 		network := machine.Network.Devices[0]
-		kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway4)
+		kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway4, network.Gateway6, network.DeviceName)
 		if err != nil {
 			return err
 		}
