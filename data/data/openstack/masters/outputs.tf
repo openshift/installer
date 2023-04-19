@@ -21,6 +21,6 @@ output "private_network_id" {
   value = local.nodes_default_port.network_id
 }
 
-output "nodes_subnet_id" {
-  value = local.nodes_default_port.fixed_ips[0].subnet_id
+output "nodes_default_port" {
+  value = local.nodes_default_port
 }
