@@ -33,9 +33,6 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 }
 
 func determineCPUPartitioning(installConfig *types.InstallConfig) configv1.CPUPartitioningMode {
-	if installConfig.FeatureSet != configv1.TechPreviewNoUpgrade {
-		return configv1.CPUPartitioningNone
-	}
 	switch installConfig.CPUPartitioning {
 	case types.CPUPartitioningAllNodes:
 		return configv1.CPUPartitioningAllNodes
