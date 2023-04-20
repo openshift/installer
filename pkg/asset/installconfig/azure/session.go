@@ -35,6 +35,8 @@ type Session struct {
 	Credentials  Credentials
 	Environment  azureenv.Environment
 	AuthProvider *azurekiota.AzureIdentityAuthenticationProvider
+	TokenCreds   azcore.TokenCredential
+	CloudConfig  cloud.Configuration
 }
 
 // Credentials is the data type for credentials as understood by the azure sdk
@@ -105,7 +107,12 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 	if err != nil {
 		return nil, err
 	}
-	return newSessionFromCredentials(cloudEnv, credentials, cred)
+	session, err := newSessionFromCredentials(cloudEnv, credentials, cred)
+	if err != nil {
+		return nil, err
+	}
+	session.CloudConfig = cloudConfig
+	return session, nil
 }
 
 // credentialsFromFileOrUser returns credentials found
@@ -317,6 +324,7 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 		Credentials:  *credentials,
 		Environment:  cloudEnv,
 		AuthProvider: authProvider,
+		TokenCreds:   cred,
 	}, nil
 }
 
