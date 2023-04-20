@@ -105,6 +105,7 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 		Cmds: map[string]func(*testscript.TestScript, bool, []string){
 			"isocmp":              isoCmp,
 			"ignitionImgContains": ignitionImgContains,
+			"initrdImgContains":   initrdImgContains,
 		},
 	})
 }
