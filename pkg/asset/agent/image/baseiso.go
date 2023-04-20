@@ -100,6 +100,8 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 
 	// use the GetIso function to get the BaseIso from the release payload
 	agentManifests := &manifests.AgentManifests{}
+	installConfig := &agent.OptionalInstallConfig{}
+
 	dependencies.Get(agentManifests)
 	var baseIsoFileName string
 	var err error
@@ -112,30 +114,34 @@ func (i *BaseIso) Generate(dependencies asset.Parents) error {
 		if agentManifests.InfraEnv.Spec.CpuArchitecture != "" {
 			archName = agentManifests.InfraEnv.Spec.CpuArchitecture
 		}
-		releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
-		pullSecret := agentManifests.GetPullSecretData()
-		registriesConf := &mirror.RegistriesConf{}
-		dependencies.Get(agentManifests, registriesConf)
 
-		// If we have the image registry location and 'oc' command is available then get from release payload
-		ocRelease := NewRelease(&executer.CommonExecuter{},
-			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
-			releaseImage, pullSecret, registriesConf.MirrorConfig)
+		// OKD machine-os-images does not store yet SCOS iso, so let's go for a direct download
+		if !installConfig.Config.IsOKD() {
+			releaseImage := agentManifests.ClusterImageSet.Spec.ReleaseImage
+			pullSecret := agentManifests.GetPullSecretData()
+			registriesConf := &mirror.RegistriesConf{}
+			dependencies.Get(agentManifests, registriesConf)
 
-		logrus.Info("Extracting base ISO from release payload")
-		baseIsoFileName, err = ocRelease.GetBaseIso(archName)
-		if err == nil {
-			logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
-			i.File = &asset.File{Filename: baseIsoFileName}
-			return nil
-		}
+			// If we have the image registry location and 'oc' command is available then get from release payload
+			ocRelease := NewRelease(&executer.CommonExecuter{},
+				Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
+				releaseImage, pullSecret, registriesConf.MirrorConfig)
 
-		if errors.Is(err, fs.ErrNotExist) {
-			// if image extract failed to extract the iso that architecture may be missing from release image
-			return fmt.Errorf("base ISO for %s not found in release image, check release image architecture", archName)
-		}
-		if !errors.Is(err, &exec.Error{}) { // Already warned about missing oc binary
-			logrus.Warning("Failed to extract base ISO from release payload - check registry configuration")
+			logrus.Info("Extracting base ISO from release payload")
+			baseIsoFileName, err = ocRelease.GetBaseIso(archName)
+			if err == nil {
+				logrus.Debugf("Extracted base ISO image %s from release payload", baseIsoFileName)
+				i.File = &asset.File{Filename: baseIsoFileName}
+				return nil
+			}
+
+			if errors.Is(err, fs.ErrNotExist) {
+				// if image extract failed to extract the iso that architecture may be missing from release image
+				return fmt.Errorf("base ISO for %s not found in release image, check release image architecture", archName)
+			}
+			if !errors.Is(err, &exec.Error{}) { // Already warned about missing oc binary
+				logrus.Warning("Failed to extract base ISO from release payload - check registry configuration")
+			}
 		}
 	}
 

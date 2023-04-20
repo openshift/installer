@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,15 +19,23 @@ import (
 const (
 	streamRHCOSJSON = "data/data/coreos/rhcos.json"
 	streamFCOSJSON  = "data/data/coreos/fcos.json"
+	streamSCOSJSON  = "data/data/coreos/scos.json"
 	fcosTAG         = "okd"
+	scosTAG         = "scos"
 	dest            = "bin/manifests/coreos-bootimages.yaml"
 )
 
 func run() error {
 	streamJSON := streamRHCOSJSON
-	if tags, _ := os.LookupEnv("TAGS"); strings.Contains(tags, fcosTAG) {
+
+	tags, _ := os.LookupEnv("TAGS")
+	switch tags {
+	case fcosTAG:
 		streamJSON = streamFCOSJSON
+	case scosTAG:
+		streamJSON = streamSCOSJSON
 	}
+
 	bootimages, err := os.ReadFile(streamJSON)
 	if err != nil {
 		return err
