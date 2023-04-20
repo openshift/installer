@@ -11,6 +11,7 @@ import (
 	"google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 	"google.golang.org/api/serviceusage/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -81,6 +82,31 @@ func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType 
 	return req, nil
 }
 
+// GetMachineTypeList retrieves the machine type with the specified fields.
+func GetMachineTypeList(ctx context.Context, svc *compute.Service, project, region, machineType, fields string) ([]*compute.MachineType, error) {
+	var machines []*compute.MachineType
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	filter := fmt.Sprintf("name = \"%s\" AND zone : %s-*", machineType, region)
+	req := svc.MachineTypes.AggregatedList(project).Filter(filter).Context(ctx)
+	if len(fields) > 0 {
+		req.Fields(googleapi.Field(fields))
+	}
+	err := req.Pages(ctx, func(page *compute.MachineTypeAggregatedList) error {
+		for _, scopedList := range page.Items {
+			machines = append(machines, scopedList.MachineTypes...)
+		}
+		return nil
+	})
+	if len(machines) == 0 {
+		return nil, errors.New("failed to fetch instance type, this error usually occurs if the region or the instance type is not found")
+	}
+
+	return machines, err
+}
+
 // GetMachineTypeWithZones retrieves the specified machine type and the zones in which it is available.
 func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error) {
 	svc, err := c.getComputeService(ctx)
@@ -88,31 +114,17 @@ func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, m
 		return nil, nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	var machine *compute.MachineType
-	zones := sets.New[string]()
-	filter := fmt.Sprintf("name = \"%s\" AND zone : %s-*", machineType, region)
-	req := svc.MachineTypes.AggregatedList(project).Filter(filter).Context(ctx)
-	err = req.Pages(ctx, func(page *compute.MachineTypeAggregatedList) error {
-		for _, scopedList := range page.Items {
-			for _, item := range scopedList.MachineTypes {
-				if machine == nil {
-					machine = item
-				}
-				zones.Insert(item.Zone)
-			}
-		}
-		return nil
-	})
+	machines, err := GetMachineTypeList(ctx, svc, project, region, machineType, "")
 	if err != nil {
 		return nil, nil, err
-	} else if len(zones) == 0 || machine == nil {
-		return nil, nil, errors.New("failed to fetch instance type, this error usually occurs if the region or the instance type is not found")
 	}
 
-	return machine, zones, nil
+	zones := sets.New[string]()
+	for _, machine := range machines {
+		zones.Insert(machine.Zone)
+	}
+
+	return machines[0], zones, nil
 }
 
 // GetNetwork uses the GCP Compute Service API to get a network by name from a project.

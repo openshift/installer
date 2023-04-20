@@ -68,19 +68,14 @@ func ZonesForInstanceType(project, region, instanceType string) ([]string, error
 		return nil, errors.Wrap(err, "failed to create compute service")
 	}
 
-	found := sets.New[string]()
-	filter := fmt.Sprintf("name = \"%s\" AND zone : %s-*", instanceType, region)
-	req := svc.MachineTypes.AggregatedList(project).Filter(filter).Fields("items/*/machineTypes(zone),nextPageToken")
-	err = req.Pages(ctx, func(list *compute.MachineTypeAggregatedList) error {
-		for _, scopedList := range list.Items {
-			for _, item := range scopedList.MachineTypes {
-				found.Insert(item.Zone)
-			}
-		}
-		return nil
-	})
+	machines, err := gcpconfig.GetMachineTypeList(ctx, svc, project, region, instanceType, "items/*/machineTypes(zone),nextPageToken")
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get zones for instance type")
+	}
+
+	found := sets.New[string]()
+	for _, machine := range machines {
+		found.Insert(machine.Zone)
 	}
 
 	return sets.List(found), nil
