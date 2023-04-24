@@ -30,5 +30,4 @@ platform:
     cloud: ${OS_CLOUD}
     loadBalancer:
       type: UserManaged
-featureSet: TechPreviewNoUpgrade
 pullSecret: ${PULL_SECRET}

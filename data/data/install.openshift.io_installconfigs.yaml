@@ -3610,7 +3610,7 @@ spec:
                     type: string
                   loadBalancer:
                     description: LoadBalancer defines how the load balancer used by
-                      the cluster is configured. LoadBalancer is available in TechPreview.
+                      the cluster is configured.
                     properties:
                       type:
                         default: OpenShiftManagedDefault

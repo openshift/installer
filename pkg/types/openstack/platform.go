@@ -120,7 +120,6 @@ type Platform struct {
 	MachinesSubnet string `json:"machinesSubnet,omitempty"`
 
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
-	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.OpenStackPlatformLoadBalancer `json:"loadBalancer,omitempty"`
 }
