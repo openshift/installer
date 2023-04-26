@@ -1,6 +1,9 @@
 package openstack
 
-import machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
+import (
+	machinev1 "github.com/openshift/api/machine/v1"
+	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
+)
 
 // MachinePool stores the configuration for a machine pool installed
 // on OpenStack.
@@ -103,15 +106,8 @@ type RootVolume struct {
 // FailureDomain defines a set of correlated fault domains across different
 // OpenStack services: compute, storage, and network.
 type FailureDomain struct {
-	// ComputeAvailabilityZone is the name of a valid nova availability zone. The server will be created in this availability zone.
-	// +optional
-	ComputeAvailabilityZone string `json:"computeAvailabilityZone"`
-
-	// StorageAvailabilityZone is the name of a valid cinder availability
-	// zone. This will be the availability zone of the root volume if one is
-	// specified.
-	// +optional
-	StorageAvailabilityZone string `json:"storageAvailabilityZone"`
+	// OpenStackFailureDomain embeds the openshift/api definition for a Failure domain.
+	machinev1.OpenStackFailureDomain `json:",inline"`
 
 	// Ports defines a set of port targets which can be referenced by machines in this failure domain.
 	//
