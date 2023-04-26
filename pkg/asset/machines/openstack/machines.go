@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
@@ -32,19 +33,19 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
-		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
-		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 
 	mpool := pool.Platform.OpenStack
 	platform := config.Platform.OpenStack
 	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk", nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
@@ -57,6 +58,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	machines := make([]machineapi.Machine, 0, total)
+	machineSetProvider := &machinev1alpha1.OpenstackProviderSpec{}
+	var failureDomains []machinev1.OpenStackFailureDomain
 	for idx := int64(0); idx < total; idx++ {
 		failureDomain := machinev1.OpenStackFailureDomain{
 			AvailabilityZone: mpool.Zones[uint(idx)%uint(len(mpool.Zones))],
@@ -65,7 +68,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		}
 
-		var provider *machinev1alpha1.OpenstackProviderSpec
+		if failureDomain.ComputeAvailabilityZone != "" || failureDomain.StorageAvailabilityZone != "" {
+			failureDomains = append(failureDomains, failureDomain.OpenStackFailureDomain)
+		}
 
 		provider, err := generateProvider(
 			clusterID,
@@ -78,9 +83,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			failureDomain,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
-
+		*machineSetProvider = *provider
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -105,7 +110,54 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 
-	return machines, nil
+	replicas := int32(total)
+
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			State:    machinev1.ControlPlaneMachineSetStateActive,
+			Replicas: &replicas,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					FailureDomains: machinev1.FailureDomains{
+						Platform:  v1.OpenStackPlatformType,
+						OpenStack: &failureDomains,
+					},
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: machineSetProvider},
+						},
+					},
+				},
+			},
+		},
+	}
+	return machines, controlPlaneMachineSet, nil
 }
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
