@@ -20,7 +20,7 @@ tests:
         platform:
           type: AWS
           aws:
-            privateZoneIAMRole: arn:aws:iam:123456789012:role/foo
+            privateZoneIAMRole: arn:aws:iam::123456789012:role/foo
     expected: |
       apiVersion: config.openshift.io/v1
       kind: DNS
@@ -28,7 +28,7 @@ tests:
         platform:
           type: AWS
           aws:
-            privateZoneIAMRole: arn:aws:iam:123456789012:role/foo
+            privateZoneIAMRole: arn:aws:iam::123456789012:role/foo
   - name: Should not be able to specify unsupported platform
     initial: |
       apiVersion: config.openshift.io/v1
@@ -37,7 +37,7 @@ tests:
         platform:
           type: Azure
           azure:
-            privateZoneIAMRole: arn:aws:iam:123456789012:role/foo
+            privateZoneIAMRole: arn:aws:iam::123456789012:role/foo
     expectedError: "Invalid value: \"string\": allowed values are '' and 'AWS'"
   - name: Should not be able to specify invalid AWS role ARN
     initial: |
@@ -50,7 +50,7 @@ tests:
           type: AWS
           aws:
             privateZoneIAMRole: arn:aws:iam:bad:123456789012:role/foo
-    expectedError: "DNS.config.openshift.io \"cluster\" is invalid: spec.platform.aws.privateZoneIAMRole: Invalid value: \"arn:aws:iam:bad:123456789012:role/foo\": spec.platform.aws.privateZoneIAMRole in body should match '^arn:(aws|aws-cn|aws-us-gov):iam:[0-9]{12}:role\\/.*$'"
+    expectedError: "DNS.config.openshift.io \"cluster\" is invalid: spec.platform.aws.privateZoneIAMRole: Invalid value: \"arn:aws:iam:bad:123456789012:role/foo\": spec.platform.aws.privateZoneIAMRole in body should match '^arn:(aws|aws-cn|aws-us-gov):iam::[0-9]{12}:role\\/.*$'"
   - name: Should not be able to specify different type and platform
     initial: |
       apiVersion: config.openshift.io/v1
@@ -59,7 +59,7 @@ tests:
         platform:
           type: ""
           aws:
-            privateZoneIAMRole: arn:aws:iam:123456789012:role/foo
+            privateZoneIAMRole: arn:aws:iam::123456789012:role/foo
     expectedError: "Invalid value: \"object\": aws configuration is required when platform is AWS, and forbidden otherwise"
   onUpdate:
   - name: Can switch from empty (default), to AWS
@@ -76,7 +76,7 @@ tests:
         platform:
           type: AWS
           aws:
-            privateZoneIAMRole: arn:aws:iam:123456789012:role/foo
+            privateZoneIAMRole: arn:aws:iam::123456789012:role/foo
     expected: |
       apiVersion: config.openshift.io/v1
       kind: DNS
@@ -84,7 +84,7 @@ tests:
         platform:
           type: AWS
           aws:
-            privateZoneIAMRole: arn:aws:iam:123456789012:role/foo
+            privateZoneIAMRole: arn:aws:iam::123456789012:role/foo
   - name: Upgrade case is valid
     initial: |
       apiVersion: config.openshift.io/v1
