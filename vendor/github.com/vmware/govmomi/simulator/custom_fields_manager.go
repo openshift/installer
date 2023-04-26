@@ -32,7 +32,7 @@ type CustomFieldsManager struct {
 // Iterates through all entities of passed field type;
 // Removes found field from their custom field properties.
 func entitiesFieldRemove(ctx *Context, field types.CustomFieldDef) {
-	entities := Map.All(field.ManagedObjectType)
+	entities := ctx.Map.All(field.ManagedObjectType)
 	for _, e := range entities {
 		entity := e.Entity()
 		ctx.WithLock(entity, func() {
@@ -66,7 +66,7 @@ func entitiesFieldRemove(ctx *Context, field types.CustomFieldDef) {
 // Iterates through all entities of passed field type;
 // Renames found field in entity's AvailableField property.
 func entitiesFieldRename(ctx *Context, field types.CustomFieldDef) {
-	entities := Map.All(field.ManagedObjectType)
+	entities := ctx.Map.All(field.ManagedObjectType)
 	for _, e := range entities {
 		entity := e.Entity()
 		ctx.WithLock(entity, func() {
@@ -123,7 +123,7 @@ func (c *CustomFieldsManager) AddCustomFieldDef(ctx *Context, req *types.AddCust
 		FieldInstancePrivileges: req.FieldPolicy,
 	}
 
-	entities := Map.All(req.MoType)
+	entities := ctx.Map.All(req.MoType)
 	for _, e := range entities {
 		entity := e.Entity()
 		ctx.WithLock(entity, func() {
@@ -188,8 +188,30 @@ func (c *CustomFieldsManager) SetField(ctx *Context, req *types.SetField) soap.H
 		Value:            req.Value,
 	}
 
-	entity := Map.Get(req.Entity).(mo.Entity).Entity()
+	removeIndex := func(s []types.BaseCustomFieldValue, i int) []types.BaseCustomFieldValue {
+		new := make([]types.BaseCustomFieldValue, 0)
+		new = append(new, s[:i]...)
+		return append(new, s[i+1:]...)
+	}
+
+	removeExistingValues := func(s []types.BaseCustomFieldValue) []types.BaseCustomFieldValue {
+		for i := 0; i < len(s); {
+			if s[i].GetCustomFieldValue().Key == newValue.GetCustomFieldValue().Key {
+				s = removeIndex(s, i)
+			}
+			i++
+		}
+		return s
+	}
+
+	entity := ctx.Map.Get(req.Entity).(mo.Entity).Entity()
+
 	ctx.WithLock(entity, func() {
+		// Check if custom value and value are already set. If so, remove them.
+		entity.CustomValue = removeExistingValues(entity.CustomValue)
+		entity.Value = removeExistingValues(entity.Value)
+
+		// Add the new value
 		entity.CustomValue = append(entity.CustomValue, newValue)
 		entity.Value = append(entity.Value, newValue)
 	})

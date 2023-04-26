@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2022-2022 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package hgfs
+package vapi
 
-import (
-	"os"
+const (
+	// Path is the new-style endpoint for API resources. It supersedes /rest.
+	Path = "/api"
 )
-
-func (a *AttrV2) sysStat(info os.FileInfo) {
-}

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2021 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -107,6 +107,7 @@ type Model struct {
 	// For example: /DC0/host/DC0_C0/Resources
 	// The root ResourcePool is named "RP0" within other object names.
 	// When Model.Pool is set to 1 or higher, this creates child ResourcePools under the root pool.
+	// Note that this flag is not effective on standalone hosts.
 	// For example: /DC0/host/DC0_C0/Resources/DC0_C0_RP1
 	// Name prefix: RP, vcsim flag: -pool
 	Pool int
@@ -117,7 +118,12 @@ type Model struct {
 	// Name prefix: LocalDS, vcsim flag: -ds
 	Datastore int
 
-	// Machine specifies the number of VirtualMachine entities to create per ResourcePool
+	// Machine specifies the number of VirtualMachine entities to create per
+	// ResourcePool. If the pool flag is specified, the specified number of virtual
+	// machines will be deployed to each child pool and prefixed with the child
+	// resource pool name. Otherwise they are deployed into the root resource pool,
+	// prefixed with RP0. On standalone hosts, machines are always deployed into the
+	// root resource pool without any prefix.
 	// Name prefix: VM, vcsim flag: -vm
 	Machine int
 
@@ -257,6 +263,7 @@ var kinds = map[string]reflect.Type{
 	"StoragePod":                      reflect.TypeOf((*StoragePod)(nil)).Elem(),
 	"StorageResourceManager":          reflect.TypeOf((*StorageResourceManager)(nil)).Elem(),
 	"TaskManager":                     reflect.TypeOf((*TaskManager)(nil)).Elem(),
+	"TenantTenantManager":             reflect.TypeOf((*TenantManager)(nil)).Elem(),
 	"UserDirectory":                   reflect.TypeOf((*UserDirectory)(nil)).Elem(),
 	"VcenterVStorageObjectManager":    reflect.TypeOf((*VcenterVStorageObjectManager)(nil)).Elem(),
 	"ViewManager":                     reflect.TypeOf((*ViewManager)(nil)).Elem(),
@@ -307,18 +314,18 @@ func loadObject(content types.ObjectContent) (mo.Reference, error) {
 // example: Load's dir only contains a single OpaqueNetwork, we need to create a Datacenter and
 // place the OpaqueNetwork in the Datacenter's network folder.
 func (m *Model) resolveReferences(ctx *Context) error {
-	dc, ok := Map.Any("Datacenter").(*Datacenter)
+	dc, ok := ctx.Map.Any("Datacenter").(*Datacenter)
 	if !ok {
 		// Need to have at least 1 Datacenter
-		root := Map.Get(Map.content().RootFolder).(*Folder)
+		root := ctx.Map.Get(ctx.Map.content().RootFolder).(*Folder)
 		ref := root.CreateDatacenter(ctx, &types.CreateDatacenter{
 			This: root.Self,
 			Name: "DC0",
 		}).(*methods.CreateDatacenterBody).Res.Returnval
-		dc = Map.Get(ref).(*Datacenter)
+		dc = ctx.Map.Get(ref).(*Datacenter)
 	}
 
-	for ref, val := range Map.objects {
+	for ref, val := range ctx.Map.objects {
 		me, ok := val.(mo.Entity)
 		if !ok {
 			continue
@@ -327,7 +334,7 @@ func (m *Model) resolveReferences(ctx *Context) error {
 		if e.Parent == nil || ref.Type == "Folder" {
 			continue
 		}
-		if Map.Get(*e.Parent) == nil {
+		if ctx.Map.Get(*e.Parent) == nil {
 			// object was loaded without its parent, attempt to foster with another parent
 			switch e.Parent.Type {
 			case "Folder":
@@ -432,12 +439,14 @@ func (m *Model) Load(dir string) error {
 			s = new(ServiceInstance)
 			s.Self = content.Obj
 			Map = NewRegistry()
-			Map.Put(s)
+			ctx.Map = Map
+			ctx.Map.Put(s)
 			return mo.LoadObjectContent([]types.ObjectContent{content}, &s.ServiceInstance)
 		}
 
 		if s == nil {
 			s = NewServiceInstance(ctx, m.ServiceContent, m.RootFolder)
+			ctx.Map = Map
 		}
 
 		obj, err := loadObject(content)
@@ -451,7 +460,7 @@ func (m *Model) Load(dir string) error {
 			}
 		}
 
-		return m.loadMethod(Map.Put(obj), dir)
+		return m.loadMethod(ctx.Map.Put(obj), dir)
 	})
 
 	if err != nil {
@@ -467,6 +476,7 @@ func (m *Model) Load(dir string) error {
 func (m *Model) Create() error {
 	ctx := SpoofContext()
 	m.Service = New(NewServiceInstance(ctx, m.ServiceContent, m.RootFolder))
+	ctx.Map = Map
 
 	client := m.Service.client
 	root := object.NewRootFolder(client)
@@ -546,6 +556,7 @@ func (m *Model) Create() error {
 				disk := devices.CreateDisk(scsi.(types.BaseVirtualController), ds,
 					config.Files.VmPathName+" "+path.Join(name, "disk1.vmdk"))
 				disk.CapacityInKB = int64(units.GB*10) / units.KB
+				disk.StorageIOAllocation = &types.StorageIOAllocationInfo{Limit: types.NewInt64(-1)}
 
 				devices = append(devices, scsi, cdrom, disk, &nic)
 
@@ -644,8 +655,9 @@ func (m *Model) Create() error {
 		for npg := 0; npg < m.Portgroup; npg++ {
 			name := m.fmtName(dcName+"_DVPG", npg)
 			spec := types.DVPortgroupConfigSpec{
-				Name: name,
-				Type: string(types.DistributedVirtualPortgroupPortgroupTypeEarlyBinding),
+				Name:     name,
+				Type:     string(types.DistributedVirtualPortgroupPortgroupTypeEarlyBinding),
+				NumPorts: 1,
 			}
 
 			task, err := dvs.AddPortgroup(ctx, []types.DVPortgroupConfigSpec{spec})
@@ -659,8 +671,8 @@ func (m *Model) Create() error {
 			// Use the 1st DVPG for the VMs eth0 backing
 			if npg == 0 {
 				// AddPortgroup_Task does not return the moid, so we look it up by name
-				net := Map.Get(folders.NetworkFolder.Reference()).(*Folder)
-				pg := Map.FindByName(name, net.ChildEntity)
+				net := ctx.Map.Get(folders.NetworkFolder.Reference()).(*Folder)
+				pg := ctx.Map.FindByName(name, net.ChildEntity)
 
 				vmnet, _ = object.NewDistributedVirtualPortgroup(client, pg.Reference()).EthernetCardBackingInfo(ctx)
 			}
@@ -684,7 +696,7 @@ func (m *Model) Create() error {
 		}
 
 		// Must use simulator methods directly for OpaqueNetwork
-		networkFolder := Map.Get(folders.NetworkFolder.Reference()).(*Folder)
+		networkFolder := ctx.Map.Get(folders.NetworkFolder.Reference()).(*Folder)
 
 		for i := 0; i < m.OpaqueNetwork; i++ {
 			var summary types.OpaqueNetworkSummary
@@ -727,19 +739,24 @@ func (m *Model) Create() error {
 				}
 			}
 
-			pool, err := cluster.ResourcePool(ctx)
+			rootRP, err := cluster.ResourcePool(ctx)
 			if err != nil {
 				return err
 			}
 
 			prefix := clusterName + "_RP"
 
-			addMachine(prefix+"0", nil, pool, folders)
+			// put VMs in cluster RP if no child RP(s) configured
+			if m.Pool == 0 {
+				addMachine(prefix+"0", nil, rootRP, folders)
+			}
 
-			for npool := 1; npool <= m.Pool; npool++ {
+			// create child RP(s) with VMs
+			for childRP := 1; childRP <= m.Pool; childRP++ {
 				spec := types.DefaultResourceConfigSpec()
 
-				_, err = pool.Create(ctx, m.fmtName(prefix, npool), spec)
+				p, err := rootRP.Create(ctx, m.fmtName(prefix, childRP), spec)
+				addMachine(m.fmtName(prefix, childRP), nil, p, folders)
 				if err != nil {
 					return err
 				}
@@ -752,7 +769,7 @@ func (m *Model) Create() error {
 				vspec := NewVAppConfigSpec()
 				name := m.fmtName(prefix, napp)
 
-				vapp, err := pool.CreateVApp(ctx, name, rspec, vspec, nil)
+				vapp, err := rootRP.CreateVApp(ctx, name, rspec, vspec, nil)
 				if err != nil {
 					return err
 				}

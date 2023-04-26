@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2015 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2022 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,30 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package types
+package version
 
-type HasFault interface {
-	Fault() BaseMethodFault
-}
+const (
+	// ClientName is the name of this SDK
+	ClientName = "govmomi"
 
-func IsFileNotFound(err error) bool {
-	if f, ok := err.(HasFault); ok {
-		switch f.Fault().(type) {
-		case *FileNotFound:
-			return true
-		}
-	}
-
-	return false
-}
-
-func IsAlreadyExists(err error) bool {
-	if f, ok := err.(HasFault); ok {
-		switch f.Fault().(type) {
-		case *AlreadyExists:
-			return true
-		}
-	}
-
-	return false
-}
+	// ClientVersion is the version of this SDK
+	ClientVersion = "0.30.4"
+)
