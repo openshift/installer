@@ -434,9 +434,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		preexistingnetwork := installConfig.Config.GCP.Network != ""
 
 		// Search the project for a dns zone with the specified base domain.
-		publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
-		if err != nil {
-			return errors.Wrapf(err, "failed to get GCP public zone")
+		publicZoneName := ""
+		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+			publicZone, err := gcpconfig.GetPublicZone(ctx, installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+			if err != nil {
+				return errors.Wrapf(err, "failed to get GCP public zone")
+			}
+			publicZoneName = publicZone.Name
 		}
 
 		archName := coreosarch.RpmArch(string(installConfig.Config.ControlPlane.Architecture))
@@ -466,7 +470,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				ImageURI:            imageURL,
 				ImageLicenses:       installConfig.Config.GCP.Licenses,
 				PreexistingNetwork:  preexistingnetwork,
-				PublicZoneName:      publicZone.Name,
+				PublicZoneName:      publicZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
 			},
 		)
