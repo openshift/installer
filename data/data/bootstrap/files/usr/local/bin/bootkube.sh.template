@@ -104,7 +104,6 @@ then
 		--config-output-file=/assets/config-bootstrap/config \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/config-bootstrap \
-		--featuregate-manifest=/assets/manifests/99_feature-gate.yaml \
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
 		"${ADDITIONAL_FLAGS[@]}"
@@ -114,6 +113,13 @@ then
 	touch config-bootstrap.done
     record_service_stage_success
 fi
+
+echo "HERHEREHERE"
+cat /assets/manifests/99_feature-gate.yaml
+echo "DONEDONEDONE"
+
+exit 1
+
 
 if [ ! -f cvo-bootstrap.done ]
 then
