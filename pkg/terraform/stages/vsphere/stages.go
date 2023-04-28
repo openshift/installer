@@ -31,12 +31,12 @@ var PlatformStages = []terraform.Stage{
 		stages.WithNormalBootstrapDestroy(),
 		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
 	),
-	stages.NewStage(
+	/*stages.NewStage(
 		"vsphere",
 		"master",
 		[]providers.Provider{providers.VSphere},
 		stages.WithCustomExtractHostAddresses(extractOutputHostAddresses),
-	),
+	),*/
 }
 
 func extractOutputHostAddresses(s stages.SplitStage, directory string, config *types.InstallConfig) (bootstrap string, port int, masters []string, err error) {

@@ -50,6 +50,7 @@ MACHINE_CONFIG_INFRA_IMAGE=$(image_for pod)
 CLUSTER_ETCD_OPERATOR_IMAGE=$(image_for cluster-etcd-operator)
 CONFIG_OPERATOR_IMAGE=$(image_for cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
+MACHINE_API_OPERATOR_IMAGE=$(image_for machine-api-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(image_for cluster-kube-controller-manager-operator)
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(image_for cluster-kube-scheduler-operator)
 INGRESS_OPERATOR_IMAGE=$(image_for cluster-ingress-operator)
@@ -400,7 +401,7 @@ fi
 # Check if the API and API_INT Server URLs can be resolved.
 echo "Check if API and API-Int URLs are resolvable during bootstrap"
 API_SERVER_URL="{{.APIServerURL}}"
-API_INT_SERVER_URL="{{.APIIntServerURL}}" 
+API_INT_SERVER_URL="{{.APIIntServerURL}}"
 
 resolve_url "API_URL" "${API_SERVER_URL}"
 resolve_url "API_INT_URL" "${API_INT_SERVER_URL}"
@@ -443,6 +444,26 @@ then
     record_service_stage_success
 fi
 
+
+if [ ! -f machine-controller-manager-bootstrap.done ]
+then
+    record_service_stage_start "machine-controller-manager-bootstrap"
+  	echo "Starting machine-controller-manager..."
+
+    # shellcheck disable=SC2154
+	  bootkube_podman_run \
+	    --name machine-controller-manager \
+	    --user 0 \
+	    --detach \
+	    --restart=on-failure \
+	    --volume /opt/openshift/auth/kubeconfig:/opt/openshift/auth/kubeconfig:z \
+	    ${MACHINE_API_OPERATOR_IMAGE} \
+	    /machine-controller-manager \
+	    -kubeconfig /opt/openshift/auth/kubeconfig
+  	touch machine-controller-manager-bootstrap.done
+      record_service_stage_success
+fi
+
 REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 if [ "$BOOTSTRAP_INPLACE" = true ]
 then
@@ -459,7 +480,6 @@ run_cluster_bootstrap() {
         "${CLUSTER_BOOTSTRAP_IMAGE}" \
         start --tear-down-early=false --asset-dir=/assets --required-pods="${REQUIRED_PODS}"
 }
-    
 if [ ! -f cb-bootstrap.done ]
 then
     if run_cluster_bootstrap
