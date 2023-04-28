@@ -13,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
+const (
+	// ErrCodeAccessDeniedException represents error code for the AccessDeniedException
+	ErrCodeAccessDeniedException = "AccessDeniedException"
+)
+
 type iamRoleSearch struct {
 	client    *iam.IAM
 	filters   []Filter
@@ -39,13 +44,21 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 				// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
 				response, err := search.client.GetRoleWithContext(ctx, &iam.GetRoleInput{RoleName: role.RoleName})
 				if err != nil {
-					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
-						search.unmatched[*role.Arn] = exists
-					} else {
-						if lastError != nil {
-							search.logger.Debug(lastError)
+					var awsErr awserr.Error
+					if errors.As(err, &awsErr) {
+						switch awsErr.Code() {
+						case ErrCodeAccessDeniedException, iam.ErrCodeNoSuchEntityException:
+							// Installer does not have access to this IAM role or the
+							// the role does not exist.
+							// Ignore this IAM Role and donot report this error via
+							// lastError
+							search.unmatched[*role.Arn] = exists
+						default:
+							if lastError != nil {
+								search.logger.Debug(lastError)
+							}
+							lastError = errors.Wrapf(err, "get tags for %s", *role.Arn)
 						}
-						lastError = errors.Wrapf(err, "get tags for %s", *role.Arn)
 					}
 				} else {
 					role = response.Role
