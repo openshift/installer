@@ -78,6 +78,43 @@ then
     record_service_stage_success
 fi
 
+if [ ! -f config-bootstrap.done ]
+then
+    record_service_stage_start "config-bootstrap"
+	echo "Rendering cluster config manifests..."
+
+	rm --recursive --force config-bootstrap
+
+	ADDITIONAL_FLAGS=()
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
+	fi
+	{{- if .FeatureSet }}
+	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
+	{{- end}}
+  VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${RELEASE_IMAGE_DIGEST}")"
+
+	bootkube_podman_run \
+		--name config-render \
+		--volume "$PWD:/assets:z" \
+		"${CONFIG_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-config-operator render \
+		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
+		--config-output-file=/assets/config-bootstrap/config \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/config-bootstrap \
+		--featuregate-manifest=/assets/manifests/99_feature-gate.yaml \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION \
+		"${ADDITIONAL_FLAGS[@]}"
+
+	cp config-bootstrap/manifests/* manifests/
+
+	touch config-bootstrap.done
+    record_service_stage_success
+fi
+
 if [ ! -f cvo-bootstrap.done ]
 then
     record_service_stage_start "cvo-bootstrap"
@@ -132,39 +169,6 @@ then
 	cp etcd-bootstrap/tls/* tls/
 
 	touch etcd-bootstrap.done
-    record_service_stage_success
-fi
-
-if [ ! -f config-bootstrap.done ]
-then
-    record_service_stage_start "config-bootstrap"
-	echo "Rendering cluster config manifests..."
-
-	rm --recursive --force config-bootstrap
-
-	ADDITIONAL_FLAGS=()
-	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
-		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
-	fi
-	{{- if .FeatureSet }}
-	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
-	{{- end}}
-
-	bootkube_podman_run \
-		--name config-render \
-		--volume "$PWD:/assets:z" \
-		"${CONFIG_OPERATOR_IMAGE}" \
-		/usr/bin/cluster-config-operator render \
-		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
-		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
-		--config-output-file=/assets/config-bootstrap/config \
-		--asset-input-dir=/assets/tls \
-		--asset-output-dir=/assets/config-bootstrap \
-		"${ADDITIONAL_FLAGS[@]}"
-
-	cp config-bootstrap/manifests/* manifests/
-
-	touch config-bootstrap.done
     record_service_stage_success
 fi
 

@@ -40,38 +40,33 @@ func (f *FeatureGate) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 
-	// A FeatureGate could be populated on every install,
-	// even for those using the default feature set, but for
-	// continuity let's only create a cluster feature gate
-	// when non-default feature gates are enabled.
-	if installConfig.Config.FeatureSet != configv1.Default {
-		f.Config = configv1.FeatureGate{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: configv1.SchemeGroupVersion.String(),
-				Kind:       "FeatureGate",
+	f.Config = configv1.FeatureGate{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: configv1.SchemeGroupVersion.String(),
+			Kind:       "FeatureGate",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cluster",
+		},
+		Spec: configv1.FeatureGateSpec{
+			FeatureGateSelection: configv1.FeatureGateSelection{
+				FeatureSet: installConfig.Config.FeatureSet,
 			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name: "cluster",
-			},
-			Spec: configv1.FeatureGateSpec{
-				FeatureGateSelection: configv1.FeatureGateSelection{
-					FeatureSet: installConfig.Config.FeatureSet,
-				},
-			},
-		}
-
-		configData, err := yaml.Marshal(f.Config)
-		if err != nil {
-			return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", f.Name())
-		}
-
-		f.FileList = []*asset.File{
-			{
-				Filename: fgFileName,
-				Data:     configData,
-			},
-		}
+		},
 	}
+
+	configData, err := yaml.Marshal(f.Config)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", f.Name())
+	}
+
+	f.FileList = []*asset.File{
+		{
+			Filename: fgFileName,
+			Data:     configData,
+		},
+	}
+
 	return nil
 }
 
