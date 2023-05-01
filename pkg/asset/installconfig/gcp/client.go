@@ -29,7 +29,7 @@ type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
 	GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
-	GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error)
+	GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error)
 	GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error)
 	GetSubnetworks(ctx context.Context, network, project, region string) ([]*compute.Subnetwork, error)
 	GetProjects(ctx context.Context) (map[string]string, error)
@@ -139,8 +139,8 @@ func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string)
 
 }
 
-// GetPublicDNSZone returns a public DNS zone for a basedomain.
-func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
+// GetDNSZone returns a public DNS zone for a basedomain.
+func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
 	defer cancel()
 
@@ -155,7 +155,9 @@ func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain strin
 	var res *dns.ManagedZone
 	if err := req.Pages(ctx, func(page *dns.ManagedZonesListResponse) error {
 		for idx, v := range page.ManagedZones {
-			if v.Visibility != "private" {
+			if v.Visibility != "private" && isPublic {
+				res = page.ManagedZones[idx]
+			} else if v.Visibility == "private" && !isPublic {
 				res = page.ManagedZones[idx]
 			}
 		}
@@ -164,7 +166,12 @@ func (c *Client) GetPublicDNSZone(ctx context.Context, project, baseDomain strin
 		return nil, errors.Wrap(err, "failed to list DNS Zones")
 	}
 	if res == nil {
-		return nil, errors.New("no matching public DNS Zone found")
+		if isPublic {
+			return nil, errors.New("no matching public DNS Zone found")
+		} else {
+			// A Private DNS Zone may be created (if the correct permissions exist)
+			return nil, nil
+		}
 	}
 	return res, nil
 }
