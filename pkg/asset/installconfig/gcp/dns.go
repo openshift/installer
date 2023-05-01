@@ -16,6 +16,15 @@ import (
 // GetPublicZone returns a DNS managed zone from the provided project which matches the baseDomain
 // If multiple zones match the basedomain, it uses the last public zone in the list as provided by the GCP API.
 func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
+	return getZone(ctx, project, baseDomain, true)
+}
+
+// GetPrivateZone returns a DNS managed zone from the provided project which matches the baseDomain.
+func GetPrivateZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
+	return getZone(ctx, project, baseDomain, false)
+}
+
+func getZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
 	client, err := NewClient(context.TODO())
 	if err != nil {
 		return nil, err
@@ -23,7 +32,7 @@ func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.Manage
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer cancel()
 
-	dnsZone, err := client.GetPublicDNSZone(ctx, project, baseDomain)
+	dnsZone, err := client.GetDNSZone(ctx, project, baseDomain, isPublic)
 	if err != nil {
 		return nil, err
 	}

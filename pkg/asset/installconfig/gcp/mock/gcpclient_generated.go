@@ -52,6 +52,21 @@ func (mr *MockAPIMockRecorder) GetCredentials() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCredentials", reflect.TypeOf((*MockAPI)(nil).GetCredentials))
 }
 
+// GetDNSZone mocks base method.
+func (m *MockAPI) GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDNSZone", ctx, project, baseDomain, isPublic)
+	ret0, _ := ret[0].(*dns.ManagedZone)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetDNSZone indicates an expected call of GetDNSZone.
+func (mr *MockAPIMockRecorder) GetDNSZone(ctx, project, baseDomain, isPublic interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDNSZone", reflect.TypeOf((*MockAPI)(nil).GetDNSZone), ctx, project, baseDomain, isPublic)
+}
+
 // GetDNSZoneByName mocks base method.
 func (m *MockAPI) GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error) {
 	m.ctrl.T.Helper()
@@ -140,21 +155,6 @@ func (m *MockAPI) GetProjects(ctx context.Context) (map[string]string, error) {
 func (mr *MockAPIMockRecorder) GetProjects(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjects", reflect.TypeOf((*MockAPI)(nil).GetProjects), ctx)
-}
-
-// GetPublicDNSZone mocks base method.
-func (m *MockAPI) GetPublicDNSZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPublicDNSZone", ctx, project, baseDomain)
-	ret0, _ := ret[0].(*dns.ManagedZone)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetPublicDNSZone indicates an expected call of GetPublicDNSZone.
-func (mr *MockAPIMockRecorder) GetPublicDNSZone(ctx, project, baseDomain interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublicDNSZone", reflect.TypeOf((*MockAPI)(nil).GetPublicDNSZone), ctx, project, baseDomain)
 }
 
 // GetPublicDomains mocks base method.
