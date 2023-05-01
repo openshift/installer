@@ -9,35 +9,8 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
 	"github.com/pkg/errors"
-	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
 )
-
-// GetPublicZone returns a DNS managed zone from the provided project which matches the baseDomain
-// If multiple zones match the basedomain, it uses the last public zone in the list as provided by the GCP API.
-func GetPublicZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
-	return getZone(ctx, project, baseDomain, true)
-}
-
-// GetPrivateZone returns a DNS managed zone from the provided project which matches the baseDomain.
-func GetPrivateZone(ctx context.Context, project, baseDomain string) (*dns.ManagedZone, error) {
-	return getZone(ctx, project, baseDomain, false)
-}
-
-func getZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
-	client, err := NewClient(context.TODO())
-	if err != nil {
-		return nil, err
-	}
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-
-	dnsZone, err := client.GetDNSZone(ctx, project, baseDomain, isPublic)
-	if err != nil {
-		return nil, err
-	}
-	return dnsZone, nil
-}
 
 // GetBaseDomain returns a base domain chosen from among the project's public DNS zones.
 func GetBaseDomain(project string) (string, error) {

@@ -139,9 +139,9 @@ func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string)
 
 }
 
-// GetDNSZone returns a public DNS zone for a basedomain.
+// GetDNSZone returns a DNS zone for a basedomain.
 func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -168,10 +168,9 @@ func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isP
 	if res == nil {
 		if isPublic {
 			return nil, errors.New("no matching public DNS Zone found")
-		} else {
-			// A Private DNS Zone may be created (if the correct permissions exist)
-			return nil, nil
 		}
+		// A Private DNS Zone may be created (if the correct permissions exist)
+		return nil, nil
 	}
 	return res, nil
 }
