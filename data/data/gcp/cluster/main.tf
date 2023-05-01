@@ -78,6 +78,7 @@ module "dns" {
 
   cluster_id         = var.cluster_id
   public_zone_name   = var.gcp_public_zone_name
+  private_zone_name  = var.gcp_private_zone_name
   network            = module.network.network
   cluster_domain     = var.cluster_domain
   api_external_lb_ip = module.network.cluster_public_ip

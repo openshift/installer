@@ -38,6 +38,7 @@ type config struct {
 	VolumeSize                int64    `json:"gcp_master_root_volume_size"`
 	VolumeKMSKeyLink          string   `json:"gcp_root_volume_kms_key_link"`
 	PublicZoneName            string   `json:"gcp_public_zone_name,omitempty"`
+	PrivateZoneName           string   `json:"gcp_private_zone_name,omitempty"`
 	PublishStrategy           string   `json:"gcp_publish_strategy,omitempty"`
 	PreexistingNetwork        bool     `json:"gcp_preexisting_network,omitempty"`
 	ClusterNetwork            string   `json:"gcp_cluster_network,omitempty"`
@@ -58,6 +59,7 @@ type TFVarsSources struct {
 	MasterConfigs       []*machineapi.GCPMachineProviderSpec
 	WorkerConfigs       []*machineapi.GCPMachineProviderSpec
 	PublicZoneName      string
+	PrivateZoneName     string
 	PublishStrategy     types.PublishingStrategy
 	PreexistingNetwork  bool
 }
@@ -84,6 +86,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Image:                     masterConfig.Disks[0].Image,
 		ImageLicenses:             sources.ImageLicenses,
 		PublicZoneName:            sources.PublicZoneName,
+		PrivateZoneName:           sources.PrivateZoneName,
 		PublishStrategy:           string(sources.PublishStrategy),
 		ClusterNetwork:            masterConfig.NetworkInterfaces[0].Network,
 		ControlPlaneSubnet:        masterConfig.NetworkInterfaces[0].Subnetwork,

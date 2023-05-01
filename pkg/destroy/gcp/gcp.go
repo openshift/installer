@@ -33,12 +33,13 @@ var (
 
 // ClusterUninstaller holds the various options for the cluster we want to delete
 type ClusterUninstaller struct {
-	Logger           logrus.FieldLogger
-	Region           string
-	ProjectID        string
-	NetworkProjectID string
-	ClusterID        string
-	Context          context.Context
+	Logger            logrus.FieldLogger
+	Region            string
+	ProjectID         string
+	NetworkProjectID  string
+	PrivateZoneDomain string
+	ClusterID         string
+	Context           context.Context //nolint:containedctx
 
 	computeSvc *compute.Service
 	iamSvc     *iam.Service
@@ -67,6 +68,7 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		Region:             metadata.ClusterPlatformMetadata.GCP.Region,
 		ProjectID:          metadata.ClusterPlatformMetadata.GCP.ProjectID,
 		NetworkProjectID:   metadata.ClusterPlatformMetadata.GCP.NetworkProjectID,
+		PrivateZoneDomain:  metadata.ClusterPlatformMetadata.GCP.PrivateZoneDomain,
 		ClusterID:          metadata.InfraID,
 		Context:            context.Background(),
 		cloudControllerUID: gcptypes.CloudControllerUID(metadata.InfraID),

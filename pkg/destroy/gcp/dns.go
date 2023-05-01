@@ -32,8 +32,7 @@ func (o *ClusterUninstaller) listDNSZones() (private *dnsZone, public []dnsZone,
 			for _, zone := range response.ManagedZones {
 				switch zone.Visibility {
 				case "private":
-					if o.isClusterResource(zone.Name) {
-						o.Logger.Debugf("Found cluster private dns zone: %s\n", zone.Name)
+					if o.isClusterResource(zone.Name) || (o.PrivateZoneDomain != "" && o.PrivateZoneDomain == zone.DnsName) {
 						private = &dnsZone{name: zone.Name, domain: zone.DnsName, project: project}
 					}
 				default:
@@ -50,6 +49,11 @@ func (o *ClusterUninstaller) listDNSZones() (private *dnsZone, public []dnsZone,
 }
 
 func (o *ClusterUninstaller) deleteDNSZone(name string) error {
+	if !o.isClusterResource(name) {
+		o.Logger.Warnf("Skipping deletion of DNS Zone %s, not created by installer", name)
+		return nil
+	}
+
 	o.Logger.Debugf("Deleting DNS zones %s", name)
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()

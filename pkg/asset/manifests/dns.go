@@ -137,6 +137,10 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			}
 		}
 	case gcptypes.Name:
+		client, err := icgcp.NewClient(context.Background())
+		if err != nil {
+			return err
+		}
 
 		// Set the public zone
 		switch {
@@ -144,7 +148,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			// Do not use a public zone when not publishing externally.
 		default:
 			// Search the project for a zone with the specified base domain.
-			zone, err := icgcp.GetPublicZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain)
+			zone, err := client.GetDNSZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.BaseDomain, true)
 			if err != nil {
 				return errors.Wrapf(err, "failed to get public zone for %q", installConfig.Config.BaseDomain)
 			}
@@ -153,6 +157,13 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 
 		// Set the private zone
 		privateZoneID := fmt.Sprintf("%s-private-zone", clusterID.InfraID)
+		zone, err := client.GetDNSZone(context.TODO(), installConfig.Config.GCP.ProjectID, installConfig.Config.ClusterDomain(), false)
+		if err != nil {
+			return errors.Wrapf(err, "failed to get private zone for %q", installConfig.Config.BaseDomain)
+		}
+		if zone != nil {
+			privateZoneID = zone.Name
+		}
 		config.Spec.PrivateZone = &configv1.DNSZone{ID: privateZoneID}
 
 	case ibmcloudtypes.Name:
