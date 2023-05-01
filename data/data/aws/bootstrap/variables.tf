@@ -25,3 +25,4 @@ variable "master_sg_id" {
 variable "ami_id" {
   type = string
 }
+
