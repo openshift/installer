@@ -141,6 +141,43 @@ func TestValidateMachinePool(t *testing.T) {
 	}
 }
 
+func Test_ValdidateSecurityGroups(t *testing.T) {
+	cases := []struct {
+		name     string
+		platform *aws.Platform
+		pool     *aws.MachinePool
+		err      string
+	}{{
+		name: "valid security group config",
+		platform: &aws.Platform{
+			Region:  "us-east-1",
+			Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+		},
+		pool: &aws.MachinePool{
+			AdditionalSecurityGroupIDs: []string{
+				"sg-valid-security-group",
+			},
+		},
+	}, {
+		name:     "invalid security group config",
+		platform: &aws.Platform{Region: "us-east-1"},
+		pool:     &aws.MachinePool{AdditionalSecurityGroupIDs: []string{"sg-valid-security-group"}},
+		err:      "test-path.additionalSecurityGroupID: Required value: subnets must be provided for security groups",
+	},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateSecurityGroups(tc.platform, tc.pool, field.NewPath("test-path")).ToAggregate()
+			if tc.err == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.err, err)
+			}
+		})
+	}
+}
+
 func Test_validateAMIID(t *testing.T) {
 	cases := []struct {
 		platform *aws.Platform
