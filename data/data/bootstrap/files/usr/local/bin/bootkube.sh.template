@@ -67,6 +67,8 @@ COREDNS_IMAGE=$(image_for coredns)
 HAPROXY_IMAGE=$(image_for haproxy-router)
 BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
+VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${RELEASE_IMAGE_DIGEST}")"
+
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
@@ -77,6 +79,7 @@ then
 	touch openshift-manifests.done
     record_service_stage_success
 fi
+
 
 if [ ! -f config-bootstrap.done ]
 then
@@ -92,7 +95,6 @@ then
 	{{- if .FeatureSet }}
 	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
 	{{- end}}
-  VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${RELEASE_IMAGE_DIGEST}")"
 
 	bootkube_podman_run \
 		--name config-render \
@@ -179,11 +181,6 @@ then
 
 	rm --recursive --force kube-apiserver-bootstrap
 
-  ADDITIONAL_FLAGS=()
-	{{- if .FeatureSet }}
-	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
-	{{- end}}
-
 	bootkube_podman_run  \
 		--name kube-apiserver-render \
 		--volume "$PWD:/assets:z" \
@@ -199,7 +196,8 @@ then
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
 		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml \
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
-		"${ADDITIONAL_FLAGS[@]}"
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -216,10 +214,6 @@ then
 
 	rm --recursive --force kube-controller-manager-bootstrap
 
-  ADDITIONAL_FLAGS=()
-	{{- if .FeatureSet }}
-	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
-	{{- end}}
 
 	bootkube_podman_run \
 		--name kube-controller-render \
@@ -233,7 +227,8 @@ then
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
 		--cpc-config-output-file=/assets/kube-controller-manager-bootstrap/cpc-config \
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
-    "${ADDITIONAL_FLAGS[@]}"
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/cpc-config /etc/kubernetes/bootstrap-configs/cluster-policy-controller-config.yaml
