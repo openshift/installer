@@ -45,6 +45,7 @@ resource "vsphere_virtual_machine" "vm_master" {
   wait_for_guest_net_timeout  = "0"
   wait_for_guest_net_routable = "false"
   tags                        = var.tags
+  firmware                    = "efi"
 
   network_interface {
     network_id = local.template_map[var.vsphere_control_planes[count.index].template].network_interfaces.0.network_id
