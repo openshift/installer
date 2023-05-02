@@ -175,6 +175,23 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			expected: fmt.Sprintf(`^\Qtest-path.userTags: Too many: %d: must have at most %d items`, userTagLimit+1, userTagLimit),
 		},
+		{
+			name: "hosted zone role without hosted zone",
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				HostedZoneRole: "test-hosted-zone-role",
+			},
+			expected: `^test-path\.hostedZoneRole: Invalid value: "test-hosted-zone-role": may not specify a role to assume for hosted zone operations without also specifying a hosted zone$`,
+		},
+		{
+			name: "hosted zone & role",
+			platform: &aws.Platform{
+				Region:         "us-east-1",
+				Subnets:        []string{"test-subnet"},
+				HostedZone:     "test-hosted-zone",
+				HostedZoneRole: "test-hosted-zone-role",
+			},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
