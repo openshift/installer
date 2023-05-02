@@ -375,6 +375,20 @@ spec:
                           required:
                           - DiskSizeGB
                           type: object
+                        osImage:
+                          description: OSImage defines a custom image for instance.
+                          properties:
+                            name:
+                              description: Name defines the name of the image.
+                              type: string
+                            project:
+                              description: Project defines the name of the project
+                                containing the image.
+                              type: string
+                          required:
+                          - name
+                          - project
+                          type: object
                         type:
                           description: InstanceType defines the GCP instance type.
                             eg. n1-standard-4
@@ -1009,6 +1023,20 @@ spec:
                             type: object
                         required:
                         - DiskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines a custom image for instance.
+                        properties:
+                          name:
+                            description: Name defines the name of the image.
+                            type: string
+                          project:
+                            description: Project defines the name of the project containing
+                              the image.
+                            type: string
+                        required:
+                        - name
+                        - project
                         type: object
                       type:
                         description: InstanceType defines the GCP instance type. eg.
@@ -2180,6 +2208,20 @@ spec:
                             type: object
                         required:
                         - DiskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines a custom image for instance.
+                        properties:
+                          name:
+                            description: Name defines the name of the image.
+                            type: string
+                          project:
+                            description: Project defines the name of the project containing
+                              the image.
+                            type: string
+                        required:
+                        - name
+                        - project
                         type: object
                       type:
                         description: InstanceType defines the GCP instance type. eg.

@@ -28,6 +28,7 @@ type API interface {
 	GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error)
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
+	GetImage(ctx context.Context, name string, project string) (*compute.Image, error)
 }
 
 // Client makes calls to the GCP API.
@@ -316,4 +317,17 @@ func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Serv
 		return nil, errors.Wrap(err, "failed to create service usage service")
 	}
 	return svc, nil
+}
+
+// GetImage returns the marketplace image specified by the user.
+func (c *Client) GetImage(ctx context.Context, name string, project string) (*compute.Image, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	return svc.Images.Get(project, name).Context(ctx).Do()
 }
