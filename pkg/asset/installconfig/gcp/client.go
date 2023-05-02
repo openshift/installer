@@ -40,6 +40,7 @@ type API interface {
 	GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error)
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
 	GetCredentials() *googleoauth.Credentials
+	GetImage(ctx context.Context, name string, project string) (*compute.Image, error)
 	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error)
 	GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error)
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
@@ -370,6 +371,19 @@ func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.Serv
 // GetCredentials returns the credentials used to authenticate the GCP session.
 func (c *Client) GetCredentials() *googleoauth.Credentials {
 	return c.ssn.Credentials
+}
+
+// GetImage returns the marketplace image specified by the user.
+func (c *Client) GetImage(ctx context.Context, name string, project string) (*compute.Image, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	return svc.Images.Get(project, name).Context(ctx).Do()
 }
 
 func (c *Client) getPermissions(ctx context.Context, project string, permissions []string) ([]string, error) {

@@ -414,6 +414,20 @@ spec:
                           required:
                           - DiskSizeGB
                           type: object
+                        osImage:
+                          description: OSImage defines a custom image for instance.
+                          properties:
+                            name:
+                              description: Name defines the name of the image.
+                              type: string
+                            project:
+                              description: Project defines the name of the project
+                                containing the image.
+                              type: string
+                          required:
+                          - name
+                          - project
+                          type: object
                         secureBoot:
                           description: SecureBoot Defines whether the instance should
                             have secure boot enabled. secure boot Verify the digital
@@ -1317,6 +1331,20 @@ spec:
                             type: object
                         required:
                         - DiskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines a custom image for instance.
+                        properties:
+                          name:
+                            description: Name defines the name of the image.
+                            type: string
+                          project:
+                            description: Project defines the name of the project containing
+                              the image.
+                            type: string
+                        required:
+                        - name
+                        - project
                         type: object
                       secureBoot:
                         description: SecureBoot Defines whether the instance should
@@ -2849,6 +2877,20 @@ spec:
                             type: object
                         required:
                         - DiskSizeGB
+                        type: object
+                      osImage:
+                        description: OSImage defines a custom image for instance.
+                        properties:
+                          name:
+                            description: Name defines the name of the image.
+                            type: string
+                          project:
+                            description: Project defines the name of the project containing
+                              the image.
+                            type: string
+                        required:
+                        - name
+                        - project
                         type: object
                       secureBoot:
                         description: SecureBoot Defines whether the instance should
