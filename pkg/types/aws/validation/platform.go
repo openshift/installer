@@ -39,6 +39,10 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 		}
 	}
 
+	if p.HostedZoneRole != "" && p.HostedZone == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostedZoneRole"), p.HostedZoneRole, "may not specify a role to assume for hosted zone operations without also specifying a hosted zone"))
+	}
+
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
 	allErrs = append(allErrs, validateUserTags(p.UserTags, p.PropagateUserTag, fldPath.Child("userTags"))...)
 
