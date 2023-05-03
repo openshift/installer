@@ -387,11 +387,12 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 
 	errors := field.ErrorList{}
 	allErrs := field.ErrorList{}
+	r53cfg := GetR53ClientCfg(metadata.session, ic.AWS.HostedZoneRole)
 
 	if ic.AWS.HostedZone != "" {
 		zoneName = ic.AWS.HostedZone
 		zonePath = field.NewPath("aws", "hostedZone")
-		zoneOutput, err := client.GetHostedZone(zoneName)
+		zoneOutput, err := client.GetHostedZone(zoneName, r53cfg)
 		if err != nil {
 			return field.ErrorList{
 				field.Invalid(zonePath, zoneName, "cannot find hosted zone"),
@@ -416,7 +417,7 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 		zone = baseDomainOutput
 	}
 
-	if errors = client.ValidateZoneRecords(zone, zoneName, zonePath, ic); len(errors) > 0 {
+	if errors = client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errors) > 0 {
 		allErrs = append(allErrs, errors...)
 	}
 
