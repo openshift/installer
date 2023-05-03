@@ -266,7 +266,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		aws.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish)
 	case gcptypes.Name:
-		mpool := defaultGCPMachinePoolPlatform()
+		mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {
