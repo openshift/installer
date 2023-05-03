@@ -33,6 +33,7 @@ type config struct {
 	PrivateSubnets                  []string          `json:"aws_private_subnets,omitempty"`
 	PublicSubnets                   *[]string         `json:"aws_public_subnets,omitempty"`
 	InternalZone                    string            `json:"aws_internal_zone,omitempty"`
+	InternalZoneRole                string            `json:"aws_internal_zone_role,omitempty"`
 	PublishStrategy                 string            `json:"aws_publish_strategy,omitempty"`
 	IgnitionBucket                  string            `json:"aws_ignition_bucket"`
 	BootstrapIgnitionStub           string            `json:"aws_bootstrap_stub_ignition"`
@@ -44,10 +45,10 @@ type config struct {
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
 type TFVarsSources struct {
-	VPC                           string
-	PrivateSubnets, PublicSubnets []string
-	InternalZone                  string
-	Services                      []typesaws.ServiceEndpoint
+	VPC                            string
+	PrivateSubnets, PublicSubnets  []string
+	InternalZone, InternalZoneRole string
+	Services                       []typesaws.ServiceEndpoint
 
 	Publish types.PublishingStrategy
 
@@ -132,6 +133,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		VPC:                     sources.VPC,
 		PrivateSubnets:          sources.PrivateSubnets,
 		InternalZone:            sources.InternalZone,
+		InternalZoneRole:        sources.InternalZoneRole,
 		PublishStrategy:         string(sources.Publish),
 		IgnitionBucket:          sources.IgnitionBucket,
 		MasterIAMRoleName:       sources.MasterIAMRoleName,
