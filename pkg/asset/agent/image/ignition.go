@@ -87,6 +87,33 @@ func (a *Ignition) Dependencies() []asset.Asset {
 	}
 }
 
+// GetConfigImageFiles returns the list of files or file paths to be included in the config-image.
+func GetConfigImageFiles() []string {
+	return []string{
+		"/etc/assisted/manifests/pull-secret.yaml", //nolint:gosec // not hardcoded credentials
+		"/etc/assisted/manifests/nmstateconfig.yaml",
+		"/etc/assisted/manifests/cluster-deployment.yaml",
+		"/etc/assisted/manifests/cluster-image-set.yaml",
+		"/etc/assisted/manifests/agent-cluster-install.yaml",
+		"/etc/assisted/extra-manifests",
+		"/etc/assisted/hostconfig",
+		"/etc/assisted/hostnames",
+		"/usr/local/bin/start-cluster-installation.sh",
+		"/etc/issue",
+		"/root/.docker/config.json",
+		"/opt/agent/tls/kubeadmin-password.hash", //nolint:gosec // not hardcoded credentials
+		"/opt/agent/tls/admin-kubeconfig-signer.key",
+		"/opt/agent/tls/admin-kubeconfig-signer.crt",
+		"/opt/agent/tls/kube-apiserver-lb-signer.key",
+		"/opt/agent/tls/kube-apiserver-lb-signer.crt",
+		"/opt/agent/tls/kube-apiserver-localhost-signer.key",
+		"/opt/agent/tls/kube-apiserver-localhost-signer.crt",
+		"/opt/agent/tls/kube-apiserver-service-network-signer.key",
+		"/opt/agent/tls/kube-apiserver-service-network-signer.crt",
+		rendezvousHostEnvPath,
+	}
+}
+
 // Generate generates the agent installer ignition.
 func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentManifests := &manifests.AgentManifests{}
