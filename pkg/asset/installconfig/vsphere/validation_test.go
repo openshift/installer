@@ -11,11 +11,11 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/sirupsen/logrus/hooks/test"
 	"github.com/stretchr/testify/assert"
-	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/session"
 	"github.com/vmware/govmomi/simulator"
 	"github.com/vmware/govmomi/vapi/rest"
 	vapitags "github.com/vmware/govmomi/vapi/tags"
+	"github.com/vmware/govmomi/vim25/mo"
 	vim25types "github.com/vmware/govmomi/vim25/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -84,7 +84,7 @@ func validMultiVCenterPlatform() *vsphere.Platform {
 					Networks: []string{
 						"DC0_DVPG0",
 					},
-					Datastore: "LocalDS_0",
+					Datastore: "/DC0/datastore/LocalDS_0",
 				}},
 		},
 	}
@@ -205,7 +205,7 @@ func simulatorHelper(t *testing.T, setVersionToSupported bool) (*validationConte
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
 	defer cancel()
 
 	finder, err := mock.GetFinder(server)
@@ -226,8 +226,18 @@ func simulatorHelper(t *testing.T, setVersionToSupported bool) (*validationConte
 		return nil, nil, nil, err
 	}
 
-	rootFolder := object.NewRootFolder(client)
-	_, err = rootFolder.CreateFolder(ctx, "/DC0/vm/my-folder")
+	vmFolder, err := finder.Folder(ctx, "/DC0/vm")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	myFolder, err := vmFolder.CreateFolder(ctx, "my-folder")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	var folder mo.Folder
+
+	err = myFolder.Properties(ctx, myFolder.Reference(), nil, &folder)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -674,6 +684,69 @@ func Test_ensureLoadBalancer(t *testing.T) {
 					assert.Equal(t, test.expectLevel, e.Level.String())
 					assert.Regexp(t, test.expectWarn, e.Message)
 				}
+			}
+			hook.Reset()
+		})
+	}
+}
+
+func Test_compareCurrentToTemplate(t *testing.T) {
+	logger, hook := test.NewNullLogger()
+	localLogger = logger
+
+	tests := []struct {
+		name                   string
+		rhcosReleaseVersion    string
+		templateProductVersion string
+		expectErr              string
+		expectWarn             string
+	}{
+		{
+			name:                   "same version",
+			rhcosReleaseVersion:    "412.86.202303211731-0",
+			templateProductVersion: "412.86.202303211731-0",
+			expectErr:              ``,
+			expectWarn:             ``,
+		},
+		{
+			name:                   "template newer than current rhcos",
+			rhcosReleaseVersion:    "412.86.202303211731-0",
+			templateProductVersion: "414.92.202304252144-0",
+			expectErr:              `rhcos version: 414.92.202304252144-0 is too many revisions ahead current version: 412.86.202303211731-0`,
+			expectWarn:             ``,
+		},
+		{
+			name:                   "rhcos one release newer than template",
+			rhcosReleaseVersion:    "413.92.202304252144-0",
+			templateProductVersion: "412.86.202303211731-0",
+			expectErr:              ``,
+			expectWarn:             `rhcos version: 412.86.202303211731-0 is behind current version: 413.92.202304252144-0, installation may fail`,
+		},
+		{
+			name:                   "rhcos two release newer than template",
+			rhcosReleaseVersion:    "414.92.202304252144-0",
+			templateProductVersion: "412.86.202303211731-0",
+			expectErr:              `rhcos version: 412.86.202303211731-0 is too many revisions behind current version: 414.92.202304252144-0`,
+			expectWarn:             ``,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			err := compareCurrentToTemplate(tc.templateProductVersion, tc.rhcosReleaseVersion)
+
+			if tc.expectWarn != "" {
+				// there should be only one entry
+				entries := hook.AllEntries()
+				assert.NotEmpty(t, entries)
+				for _, e := range entries {
+					assert.Regexp(t, tc.expectWarn, e.Message)
+				}
+			}
+
+			if tc.expectErr != "" {
+				assert.Regexp(t, tc.expectErr, err)
+			} else if err != nil {
+				t.Error(err)
 			}
 			hook.Reset()
 		})
