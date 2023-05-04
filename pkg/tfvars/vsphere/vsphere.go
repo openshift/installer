@@ -21,10 +21,12 @@ type config struct {
 	OvaFilePath              string                                   `json:"vsphere_ova_filepath"`
 	DiskType                 vtypes.DiskType                          `json:"vsphere_disk_type"`
 	VCenters                 map[string]vtypes.VCenter                `json:"vsphere_vcenters"`
-	FailureDomains           []vtypes.FailureDomain                   `json:"vsphere_failure_domains"`
 	NetworksInFailureDomains map[string]string                        `json:"vsphere_networks"`
 	ControlPlanes            []*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes"`
 	DatacentersFolders       map[string]*folder                       `json:"vsphere_folders"`
+
+	ImportOvaFailureDomainMap map[string]vtypes.FailureDomain `json:"vsphere_import_ova_failure_domain_map"`
+	FailureDomainMap          map[string]vtypes.FailureDomain `json:"vsphere_failure_domain_map"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -40,9 +42,16 @@ type TFVarsSources struct {
 
 // TFVars generate vSphere-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
-	cachedImage, err := cache.DownloadImageFile(sources.ImageURL)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to use cached vsphere image")
+	var err error
+	cachedImage := ""
+
+	failureDomainMap, importOvaFailureDomainMap := createFailureDomainMaps(sources.InstallConfig.Config.VSphere.FailureDomains, sources.InfraID)
+
+	if len(importOvaFailureDomainMap) > 0 {
+		cachedImage, err = cache.DownloadImageFile(sources.ImageURL)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to use cached vsphere image")
+		}
 	}
 
 	vcenterZones := convertVCentersToMap(sources.InstallConfig.Config.VSphere.VCenters)
@@ -55,13 +64,34 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		OvaFilePath:              cachedImage,
 		DiskType:                 sources.DiskType,
 		VCenters:                 vcenterZones,
-		FailureDomains:           sources.InstallConfig.Config.VSphere.FailureDomains,
 		NetworksInFailureDomains: sources.NetworksInFailureDomain,
 		ControlPlanes:            sources.ControlPlaneConfigs,
 		DatacentersFolders:       datacentersFolders,
+
+		ImportOvaFailureDomainMap: importOvaFailureDomainMap,
+		FailureDomainMap:          failureDomainMap,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
+}
+
+func createFailureDomainMaps(failureDomains []vtypes.FailureDomain, infraID string) (map[string]vtypes.FailureDomain, map[string]vtypes.FailureDomain) {
+	importOvaFailureDomainMap := make(map[string]vtypes.FailureDomain)
+	failureDomainMap := make(map[string]vtypes.FailureDomain)
+
+	for _, fd := range failureDomains {
+		if fd.Topology.Folder == "" {
+			fd.Topology.Folder = infraID
+		}
+
+		if fd.Topology.Template == "" {
+			fd.Topology.Template = fmt.Sprintf("%s-rhcos-%s-%s", infraID, fd.Region, fd.Zone)
+			importOvaFailureDomainMap[fd.Name] = fd
+		}
+		failureDomainMap[fd.Name] = fd
+	}
+
+	return failureDomainMap, importOvaFailureDomainMap
 }
 
 // createDatacenterFolderMap()

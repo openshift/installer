@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,8 @@ import (
 	coreosarch "github.com/coreos/stream-metadata-go/arch"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/vim25/mo"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -876,6 +879,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 
 	case vsphere.Name:
+		networkFailureDomainMap := make(map[string]string)
+		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+		defer cancel()
+
 		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
 			installConfig.Config.VSphere.VCenters[0].Server,
 			installConfig.Config.VSphere.VCenters[0].Username,
@@ -887,31 +894,54 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		finder := vsphereconfig.NewFinder(vim25Client)
 
-		networkFailureDomainMap := make(map[string]string)
-
 		controlPlanes, err := mastersAsset.Machines()
 		if err != nil {
 			return err
 		}
 		controlPlaneConfigs := make([]*machinev1beta1.VSphereMachineProviderSpec, len(controlPlanes))
 		for i, c := range controlPlanes {
+			var clusterMo mo.ClusterComputeResource
 			controlPlaneConfigs[i] = c.Spec.ProviderSpec.Value.Object.(*machinev1beta1.VSphereMachineProviderSpec)
+			rpObj, err := finder.ResourcePool(ctx, controlPlaneConfigs[i].Workspace.ResourcePool)
+			if err != nil {
+				return err
+			}
+
+			clusterRef, err := rpObj.Owner(ctx)
+			if err != nil {
+				return err
+			}
+
+			clusterObj := object.NewClusterComputeResource(vim25Client, clusterRef.Reference())
+			err = clusterObj.Properties(ctx, clusterRef.Reference(), []string{"name", "summary"}, &clusterMo)
+			if err != nil {
+				return err
+			}
+
+			clusterPath := strings.SplitAfter(controlPlaneConfigs[i].Workspace.ResourcePool, clusterMo.Name)
+
+			networkPath := path.Join(clusterPath[0], controlPlaneConfigs[i].Network.Devices[0].NetworkName)
+
+			netObj, err := finder.Network(ctx, networkPath)
+			if err != nil {
+				return err
+			}
+
+			controlPlaneConfigs[i].Network.Devices[0].NetworkName = netObj.Reference().Value
 		}
 
 		for _, fd := range installConfig.Config.VSphere.FailureDomains {
 			// Must use the Managed Object ID for a port group (e.g. dvportgroup-5258)
 			// instead of the name since port group names aren't always unique in vSphere.
 			// https://bugzilla.redhat.com/show_bug.cgi?id=1918005
-			networkFailureDomainMap[fd.Name], err = vsphereconfig.GetNetworkMoID(context.TODO(),
-				vim25Client,
-				finder,
-				fd.Topology.Datacenter,
-				fd.Topology.ComputeCluster,
-				fd.Topology.Networks[0])
 
+			networkPath := path.Join(fd.Topology.ComputeCluster, fd.Topology.Networks[0])
+			netObj, err := finder.Network(ctx, networkPath)
 			if err != nil {
 				return errors.Wrap(err, "failed to get vSphere network ID")
 			}
+
+			networkFailureDomainMap[fd.Name] = netObj.Reference().Value
 		}
 
 		data, err = vspheretfvars.TFVars(

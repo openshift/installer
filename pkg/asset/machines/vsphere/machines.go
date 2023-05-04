@@ -55,7 +55,10 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			"machine.openshift.io/cluster-api-machine-type": role,
 		}
 
-		osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+		osImageForZone := failureDomain.Topology.Template
+		if failureDomain.Topology.Template == "" {
+			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+		}
 
 		vcenter, err := getVCenterFromServerName(failureDomain.Server, platform)
 		if err != nil {

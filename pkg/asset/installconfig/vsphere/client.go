@@ -30,6 +30,9 @@ type Finder interface {
 	NetworkList(ctx context.Context, path string) ([]object.NetworkReference, error)
 	Network(ctx context.Context, path string) (object.NetworkReference, error)
 	ResourcePool(ctx context.Context, path string) (*object.ResourcePool, error)
+	VirtualMachine(ctx context.Context, path string) (*object.VirtualMachine, error)
+	VirtualMachineList(ctx context.Context, path string) ([]*object.VirtualMachine, error)
+	HostSystemList(ctx context.Context, path string) ([]*object.HostSystem, error)
 }
 
 // NewFinder creates a new client that conforms with the Finder interface and returns a

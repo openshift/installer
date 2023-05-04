@@ -135,7 +135,10 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			return nil, err
 		}
 
-		osImageForZone := fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+		osImageForZone := failureDomain.Topology.Template
+		if failureDomain.Topology.Template == "" {
+			osImageForZone = fmt.Sprintf("%s-%s-%s", osImage, failureDomain.Region, failureDomain.Zone)
+		}
 		machineset, err := getMachineSetWithPlatform(
 			clusterID,
 			name,
