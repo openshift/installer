@@ -1,7 +1,6 @@
 locals {
-  description           = "Created By OpenShift Installer"
-  vcenter_key           = keys(var.vsphere_vcenters)[0]
-  failure_domains_count = length(var.vsphere_failure_domains)
+  description = "Created By OpenShift Installer"
+  vcenter_key = keys(var.vsphere_vcenters)[0]
 }
 
 provider "vsphere" {
@@ -19,31 +18,25 @@ provider "vsphereprivate" {
 }
 
 data "vsphere_datacenter" "datacenter" {
-  count = local.failure_domains_count
-  name  = var.vsphere_failure_domains[count.index].topology.datacenter
+  for_each = var.vsphere_failure_domain_map
+  name     = var.vsphere_failure_domain_map[each.key].topology.datacenter
 }
 
 data "vsphere_compute_cluster" "cluster" {
-  count         = local.failure_domains_count
-  name          = var.vsphere_failure_domains[count.index].topology.computeCluster
-  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
+  for_each      = var.vsphere_failure_domain_map
+  name          = var.vsphere_failure_domain_map[each.key].topology.computeCluster
+  datacenter_id = data.vsphere_datacenter.datacenter[each.key].id
 }
 
 data "vsphere_resource_pool" "resource_pool" {
-  count = local.failure_domains_count
-  name  = var.vsphere_failure_domains[count.index].topology.resourcePool
+  for_each = var.vsphere_failure_domain_map
+  name     = var.vsphere_failure_domain_map[each.key].topology.resourcePool
 }
 
 data "vsphere_datastore" "datastore" {
-  count         = local.failure_domains_count
-  name          = var.vsphere_failure_domains[count.index].topology.datastore
-  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
-}
-
-data "vsphere_virtual_machine" "template" {
-  count         = local.failure_domains_count
-  name          = vsphereprivate_import_ova.import[count.index].name
-  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
+  for_each      = var.vsphere_failure_domain_map
+  name          = var.vsphere_failure_domain_map[each.key].topology.datastore
+  datacenter_id = data.vsphere_datacenter.datacenter[each.key].id
 }
 
 // Why is there two datacenters?
@@ -68,17 +61,18 @@ resource "vsphere_folder" "folder" {
 }
 
 resource "vsphereprivate_import_ova" "import" {
-  count = local.failure_domains_count
-  name  = format("%s-rhcos-%s-%s", var.cluster_id, var.vsphere_failure_domains[count.index].region, var.vsphere_failure_domains[count.index].zone)
+  for_each = var.vsphere_import_ova_failure_domain_map
+
+  name = format("%s-rhcos-%s-%s", var.cluster_id, var.vsphere_failure_domain_map[each.key].region, var.vsphere_failure_domain_map[each.key].zone)
 
   filename      = var.vsphere_ova_filepath
-  cluster       = data.vsphere_compute_cluster.cluster[count.index].name
-  resource_pool = data.vsphere_resource_pool.resource_pool[count.index].name
-  datacenter    = data.vsphere_datacenter.datacenter[count.index].name
-  datastore     = data.vsphere_datastore.datastore[count.index].name
+  cluster       = data.vsphere_compute_cluster.cluster[each.key].name
+  resource_pool = data.vsphere_resource_pool.resource_pool[each.key].name
+  datacenter    = data.vsphere_datacenter.datacenter[each.key].name
+  datastore     = data.vsphere_datastore.datastore[each.key].name
 
-  network   = var.vsphere_networks[var.vsphere_failure_domains[count.index].name]
-  folder    = var.vsphere_failure_domains[count.index].topology.folder
+  network   = var.vsphere_networks[each.key]
+  folder    = var.vsphere_failure_domain_map[each.key].topology.folder
   tag       = vsphere_tag.tag.id
   disk_type = var.vsphere_disk_type
 
