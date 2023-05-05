@@ -1091,7 +1091,7 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 			// Openshiftclusterid in the X-Container-Meta- HEAD output
 			titlekey := strings.Title(strings.ToLower(key))
 			if metadata[titlekey] == val {
-				queue := newSemaphore(10)
+				queue := newSemaphore(3)
 				errCh := make(chan error)
 				err := objects.List(conn, container, nil).EachPage(func(page pagination.Page) (bool, error) {
 					objectsOnPage, err := objects.ExtractNames(page)
@@ -1112,9 +1112,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 							for _, objectError := range resp.Errors {
 								errCh <- fmt.Errorf("cannot delete object %q: %s", objectError[0], objectError[1])
 							}
-
 						}
-						logger.Debug("Terminating object deletion routine")
+						logger.Debugf("Terminating object deletion routine. Deleted %d objects out of %d.", resp.NumberDeleted, len(objectsOnPage))
 					})
 					return true, nil
 				})
