@@ -255,6 +255,36 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
 	}
+
+	allErrs = append(allErrs, validateSecurityGroupIDs(ctx, meta, fldPath.Child("additionalSecurityGroupIDs"), platform, pool)...)
+
+	return allErrs
+}
+
+func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if len(pool.AdditionalSecurityGroupIDs) == 0 {
+		return allErrs
+	}
+
+	vpcs, err := GetVpcsFromSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
+	}
+
+	if len(vpcs) != 1 {
+		return append(allErrs, field.Invalid(fldPath, vpcs, "exactly 1 vpc should be found"))
+	}
+
+	vpcFromSecurityGroups := vpcs[0]
+	vpc, err := meta.VPC(ctx)
+	if err == nil {
+		if vpc != vpcFromSecurityGroups {
+			errMsg := fmt.Sprintf("vpcs do not match %s, %s", vpcFromSecurityGroups, vpc)
+			allErrs = append(allErrs, field.Invalid(fldPath, vpcFromSecurityGroups, errMsg))
+		}
+	}
 	return allErrs
 }
 
