@@ -34,7 +34,7 @@ func suppressGkeHubEndpointSelfLinkDiff(_, old, new string, _ *schema.ResourceDa
 	return false
 }
 
-func resourceGKEHubMembership() *schema.Resource {
+func ResourceGKEHubMembership() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGKEHubMembershipCreate,
 		Read:   resourceGKEHubMembershipRead,
@@ -46,9 +46,9 @@ func resourceGKEHubMembership() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -70,6 +70,7 @@ https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity`,
 						"issuer": {
 							Type:     schema.TypeString,
 							Required: true,
+							ForceNew: true,
 							Description: `A JSON Web Token (JWT) issuer URI. 'issuer' must start with 'https://' and // be a valid 
 with length <2000 characters. For example: 'https://container.googleapis.com/v1/projects/my-project/locations/us-west1/clusters/my-cluster' (must be 'locations' rather than 'zones'). If the cluster is provisioned with Terraform, this is '"https://container.googleapis.com/v1/${google_container_cluster.my-cluster.id}"'.`,
 						},
@@ -133,7 +134,7 @@ this can be '"//container.googleapis.com/${google_container_cluster.my-cluster.i
 
 func resourceGKEHubMembershipCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -177,13 +178,13 @@ func resourceGKEHubMembershipCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Membership: %s", err)
 	}
 
 	// Store the ID now
-	id, err := replaceVars(d, config, "{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/locations/global/memberships/{{membership_id}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -192,12 +193,13 @@ func resourceGKEHubMembershipCreate(d *schema.ResourceData, meta interface{}) er
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = gKEHubOperationWaitTimeWithResponse(
+	err = GKEHubOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Membership", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Membership: %s", err)
 	}
 
@@ -206,7 +208,7 @@ func resourceGKEHubMembershipCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	// This may have caused the ID to update - update it if so.
-	id, err = replaceVars(d, config, "{{name}}")
+	id, err = replaceVars(d, config, "projects/{{project}}/locations/global/memberships/{{membership_id}}")
 	if err != nil {
 		return fmt.Errorf("Error constructing id: %s", err)
 	}
@@ -219,12 +221,12 @@ func resourceGKEHubMembershipCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceGKEHubMembershipRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
-	url, err := replaceVars(d, config, "{{GKEHubBasePath}}{{name}}")
+	url, err := replaceVars(d, config, "{{GKEHubBasePath}}projects/{{project}}/locations/global/memberships/{{membership_id}}")
 	if err != nil {
 		return err
 	}
@@ -242,7 +244,7 @@ func resourceGKEHubMembershipRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("GKEHubMembership %q", d.Id()))
 	}
@@ -269,7 +271,7 @@ func resourceGKEHubMembershipRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourceGKEHubMembershipUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -323,7 +325,7 @@ func resourceGKEHubMembershipUpdate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Membership %q: %s", d.Id(), err)
@@ -331,7 +333,7 @@ func resourceGKEHubMembershipUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[DEBUG] Finished updating Membership %q: %#v", d.Id(), res)
 	}
 
-	err = gKEHubOperationWaitTime(
+	err = GKEHubOperationWaitTime(
 		config, res, project, "Updating Membership", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -344,7 +346,7 @@ func resourceGKEHubMembershipUpdate(d *schema.ResourceData, meta interface{}) er
 
 func resourceGKEHubMembershipDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -357,7 +359,7 @@ func resourceGKEHubMembershipDelete(d *schema.ResourceData, meta interface{}) er
 	}
 	billingProject = project
 
-	url, err := replaceVars(d, config, "{{GKEHubBasePath}}{{name}}")
+	url, err := replaceVars(d, config, "{{GKEHubBasePath}}projects/{{project}}/locations/global/memberships/{{membership_id}}")
 	if err != nil {
 		return err
 	}
@@ -370,12 +372,12 @@ func resourceGKEHubMembershipDelete(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Membership")
 	}
 
-	err = gKEHubOperationWaitTime(
+	err = GKEHubOperationWaitTime(
 		config, res, project, "Deleting Membership", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -390,13 +392,15 @@ func resourceGKEHubMembershipDelete(d *schema.ResourceData, meta interface{}) er
 func resourceGKEHubMembershipImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 	if err := parseImportId([]string{
-		"(?P<name>.+)",
+		"projects/(?P<project>[^/]+)/locations/global/memberships/(?P<membership_id>[^/]+)",
+		"(?P<project>[^/]+)/(?P<membership_id>[^/]+)",
+		"(?P<membership_id>[^/]+)",
 	}, d, config); err != nil {
 		return nil, err
 	}
 
 	// Replace import id for the resource id
-	id, err := replaceVars(d, config, "{{name}}")
+	id, err := replaceVars(d, config, "projects/{{project}}/locations/global/memberships/{{membership_id}}")
 	if err != nil {
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}

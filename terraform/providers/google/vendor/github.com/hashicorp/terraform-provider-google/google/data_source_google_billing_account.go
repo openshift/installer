@@ -9,7 +9,7 @@ import (
 	"google.golang.org/api/cloudbilling/v1"
 )
 
-func dataSourceGoogleBillingAccount() *schema.Resource {
+func DataSourceGoogleBillingAccount() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceBillingAccountRead,
 		Schema: map[string]*schema.Schema{
@@ -46,7 +46,7 @@ func dataSourceGoogleBillingAccount() *schema.Resource {
 
 func dataSourceBillingAccountRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

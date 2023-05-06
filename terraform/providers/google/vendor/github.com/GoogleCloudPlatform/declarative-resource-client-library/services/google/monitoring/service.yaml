@@ -1,0 +1,108 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Monitoring/Service
+  description: The Monitoring Service resource
+  x-dcl-struct-name: Service
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Service
+    parameters:
+    - name: service
+      required: true
+      description: A full instance of a Service
+  apply:
+    description: The function used to apply information about a Service
+    parameters:
+    - name: service
+      required: true
+      description: A full instance of a Service
+  delete:
+    description: The function used to delete a Service
+    parameters:
+    - name: service
+      required: true
+      description: A full instance of a Service
+  deleteAll:
+    description: The function used to delete all Service
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Service
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Service:
+      title: Service
+      x-dcl-id: projects/{{project}}/services/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-labels: userLabels
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      properties:
+        displayName:
+          type: string
+          x-dcl-go-name: DisplayName
+          description: Name used for UI elements listing this Service.
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'Resource name for this Service. The format is: projects/[PROJECT_ID_OR_NUMBER]/services/[SERVICE_ID]'
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        telemetry:
+          type: object
+          x-dcl-go-name: Telemetry
+          x-dcl-go-type: ServiceTelemetry
+          description: Configuration for how to query telemetry on a Service.
+          properties:
+            resourceName:
+              type: string
+              x-dcl-go-name: ResourceName
+              description: The full name of the resource that defines this service.
+                Formatted as described in https://cloud.google.com/apis/design/resource_names.
+        userLabels:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: UserLabels
+          description: Labels which have been used to annotate the service. Label
+            keys must start with a letter. Label keys and values may contain lowercase
+            letters, numbers, underscores, and dashes. Label keys and values have
+            a maximum length of 63 characters, and must be less than 128 bytes in
+            size. Up to 64 label entries may be stored. For labels which do not have
+            a semantic value, the empty string may be supplied for the label value.

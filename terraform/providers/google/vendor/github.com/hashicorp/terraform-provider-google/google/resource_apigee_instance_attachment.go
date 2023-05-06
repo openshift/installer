@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceApigeeInstanceAttachment() *schema.Resource {
+func ResourceApigeeInstanceAttachment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceApigeeInstanceAttachmentCreate,
 		Read:   resourceApigeeInstanceAttachmentRead,
@@ -64,7 +64,7 @@ in the format 'organisations/{{org_name}}/instances/{{instance_name}}'.`,
 
 func resourceApigeeInstanceAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func resourceApigeeInstanceAttachmentCreate(d *schema.ResourceData, meta interfa
 		obj["environment"] = environmentProp
 	}
 
-	lockName, err := replaceVars(d, config, "{{instance_id}}")
+	lockName, err := replaceVars(d, config, "apigeeInstanceAttachments")
 	if err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func resourceApigeeInstanceAttachmentCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating InstanceAttachment: %s", err)
 	}
@@ -112,12 +112,13 @@ func resourceApigeeInstanceAttachmentCreate(d *schema.ResourceData, meta interfa
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = apigeeOperationWaitTimeWithResponse(
+	err = ApigeeOperationWaitTimeWithResponse(
 		config, res, &opRes, "Creating InstanceAttachment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create InstanceAttachment: %s", err)
 	}
 
@@ -139,7 +140,7 @@ func resourceApigeeInstanceAttachmentCreate(d *schema.ResourceData, meta interfa
 
 func resourceApigeeInstanceAttachmentRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -156,7 +157,7 @@ func resourceApigeeInstanceAttachmentRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ApigeeInstanceAttachment %q", d.Id()))
 	}
@@ -173,14 +174,14 @@ func resourceApigeeInstanceAttachmentRead(d *schema.ResourceData, meta interface
 
 func resourceApigeeInstanceAttachmentDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
 
-	lockName, err := replaceVars(d, config, "{{instance_id}}")
+	lockName, err := replaceVars(d, config, "apigeeInstanceAttachments")
 	if err != nil {
 		return err
 	}
@@ -200,12 +201,12 @@ func resourceApigeeInstanceAttachmentDelete(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "InstanceAttachment")
 	}
 
-	err = apigeeOperationWaitTime(
+	err = ApigeeOperationWaitTime(
 		config, res, "Deleting InstanceAttachment", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

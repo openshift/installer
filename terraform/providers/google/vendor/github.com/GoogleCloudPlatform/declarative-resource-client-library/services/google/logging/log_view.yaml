@@ -1,0 +1,149 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Logging/LogView
+  description: The Logging LogView resource
+  x-dcl-struct-name: LogView
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a LogView
+    parameters:
+    - name: logView
+      required: true
+      description: A full instance of a LogView
+  apply:
+    description: The function used to apply information about a LogView
+    parameters:
+    - name: logView
+      required: true
+      description: A full instance of a LogView
+  delete:
+    description: The function used to delete a LogView
+    parameters:
+    - name: logView
+      required: true
+      description: A full instance of a LogView
+  deleteAll:
+    description: The function used to delete all LogView
+    parameters:
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: bucket
+      required: true
+      schema:
+        type: string
+    - name: parent
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many LogView
+    parameters:
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: bucket
+      required: true
+      schema:
+        type: string
+    - name: parent
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    LogView:
+      title: LogView
+      x-dcl-id: '{{parent}}/locations/{{location}}/buckets/{{bucket}}/views/{{name}}'
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - bucket
+      properties:
+        bucket:
+          type: string
+          x-dcl-go-name: Bucket
+          description: The bucket of the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Logging/LogBucket
+            field: name
+            parent: true
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The creation timestamp of the view.
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: Describes this view.
+        filter:
+          type: string
+          x-dcl-go-name: Filter
+          description: 'Filter that restricts which log entries in a bucket are visible
+            in this view. Filters are restricted to be a logical AND of ==/!= of any
+            of the following: - originating project/folder/organization/billing account.
+            - resource type - log id For example: SOURCE("projects/myproject") AND
+            resource.type = "gce_instance" AND LOG_ID("stdout")'
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: 'The location of the resource. The supported locations are:
+            global, us-central1, us-east1, us-west1, asia-east1, europe-west1.'
+          x-kubernetes-immutable: true
+          x-dcl-extract-if-empty: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'The resource name of the view. For example: `projects/my-project/locations/global/buckets/my-bucket/views/my-view`'
+          x-kubernetes-immutable: true
+        parent:
+          type: string
+          x-dcl-go-name: Parent
+          description: The parent of the resource.
+          x-kubernetes-immutable: true
+          x-dcl-forward-slash-allowed: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/BillingAccount
+            field: name
+            parent: true
+          - resource: Cloudresourcemanager/Folder
+            field: name
+            parent: true
+          - resource: Cloudresourcemanager/Organization
+            field: name
+            parent: true
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+          x-dcl-extract-if-empty: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The last update timestamp of the view.
+          x-kubernetes-immutable: true

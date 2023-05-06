@@ -18,13 +18,10 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"google.golang.org/api/googleapi"
 )
 
 var domainMappingGoogleProvidedLabels = []string{
@@ -49,7 +46,7 @@ func domainMappingLabelDiffSuppress(k, old, new string, d *schema.ResourceData) 
 	return false
 }
 
-func resourceCloudRunDomainMapping() *schema.Resource {
+func ResourceCloudRunDomainMapping() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudRunDomainMappingCreate,
 		Read:   resourceCloudRunDomainMappingRead,
@@ -60,8 +57,8 @@ func resourceCloudRunDomainMapping() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -172,7 +169,7 @@ The route must exist.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "AUTOMATIC", ""}, false),
+							ValidateFunc: validateEnum([]string{"NONE", "AUTOMATIC", ""}),
 							Description:  `The mode of the certificate. Default value: "AUTOMATIC" Possible values: ["NONE", "AUTOMATIC"]`,
 							Default:      "AUTOMATIC",
 						},
@@ -205,7 +202,7 @@ serve the application via this domain mapping.`,
 									"type": {
 										Type:         schema.TypeString,
 										Optional:     true,
-										ValidateFunc: validation.StringInSlice([]string{"A", "AAAA", "CNAME", ""}, false),
+										ValidateFunc: validateEnum([]string{"A", "AAAA", "CNAME", ""}),
 										Description:  `Resource record type. Example: 'AAAA'. Possible values: ["A", "AAAA", "CNAME"]`,
 									},
 									"name": {
@@ -280,7 +277,7 @@ was last processed by the controller.`,
 
 func resourceCloudRunDomainMappingCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -323,7 +320,7 @@ func resourceCloudRunDomainMappingCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isCloudRunCreationConflict)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isCloudRunCreationConflict)
 	if err != nil {
 		return fmt.Errorf("Error creating DomainMapping: %s", err)
 	}
@@ -367,12 +364,12 @@ func resourceCloudRunDomainMappingPollRead(d *schema.ResourceData, meta interfac
 			billingProject = bp
 		}
 
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isCloudRunCreationConflict)
+		res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isCloudRunCreationConflict)
 		if err != nil {
 			return res, err
 		}
@@ -381,11 +378,7 @@ func resourceCloudRunDomainMappingPollRead(d *schema.ResourceData, meta interfac
 			return nil, err
 		}
 		if res == nil {
-			// Decoded object not found, spoof a 404 error for poll
-			return nil, &googleapi.Error{
-				Code:    404,
-				Message: "could not find object CloudRunDomainMapping",
-			}
+			return nil, fake404("decoded", "CloudRunDomainMapping")
 		}
 
 		return res, nil
@@ -394,7 +387,7 @@ func resourceCloudRunDomainMappingPollRead(d *schema.ResourceData, meta interfac
 
 func resourceCloudRunDomainMappingRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -417,7 +410,7 @@ func resourceCloudRunDomainMappingRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isCloudRunCreationConflict)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isCloudRunCreationConflict)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("CloudRunDomainMapping %q", d.Id()))
 	}
@@ -453,7 +446,7 @@ func resourceCloudRunDomainMappingRead(d *schema.ResourceData, meta interface{})
 
 func resourceCloudRunDomainMappingDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -479,7 +472,7 @@ func resourceCloudRunDomainMappingDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isCloudRunCreationConflict)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isCloudRunCreationConflict)
 	if err != nil {
 		return handleNotFoundError(err, d, "DomainMapping")
 	}
@@ -567,7 +560,7 @@ func flattenCloudRunDomainMappingStatusConditionsType(v interface{}, d *schema.R
 func flattenCloudRunDomainMappingStatusObservedGeneration(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -679,7 +672,7 @@ func flattenCloudRunDomainMappingMetadataLabels(v interface{}, d *schema.Resourc
 func flattenCloudRunDomainMappingMetadataGeneration(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -79,12 +79,12 @@ func (r *Project) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"labels":         dcl.ValueOrEmptyString(nr.Labels),
-		"lifecycleState": dcl.ValueOrEmptyString(nr.LifecycleState),
-		"displayName":    dcl.ValueOrEmptyString(nr.DisplayName),
-		"parent":         dcl.ValueOrEmptyString(nr.Parent),
-		"name":           dcl.ValueOrEmptyString(nr.Name),
-		"projectNumber":  dcl.ValueOrEmptyString(nr.ProjectNumber),
+		"labels":          dcl.ValueOrEmptyString(nr.Labels),
+		"lifecycle_state": dcl.ValueOrEmptyString(nr.LifecycleState),
+		"display_name":    dcl.ValueOrEmptyString(nr.DisplayName),
+		"parent":          dcl.ValueOrEmptyString(nr.Parent),
+		"name":            dcl.ValueOrEmptyString(nr.Name),
+		"project_number":  dcl.ValueOrEmptyString(nr.ProjectNumber),
 	}
 	return dcl.Nprintf("projects/{{name}}", params), nil
 }
@@ -121,21 +121,23 @@ func (l *ProjectList) Next(ctx context.Context, c *Client) error {
 	return err
 }
 
-func (c *Client) ListProject(ctx context.Context) (*ProjectList, error) {
+func (c *Client) ListProject(ctx context.Context, parent string) (*ProjectList, error) {
 	ctx = dcl.ContextWithRequestID(ctx)
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
-	return c.ListProjectWithMaxResults(ctx, ProjectMaxPage)
+	return c.ListProjectWithMaxResults(ctx, parent, ProjectMaxPage)
 
 }
 
-func (c *Client) ListProjectWithMaxResults(ctx context.Context, pageSize int32) (*ProjectList, error) {
+func (c *Client) ListProjectWithMaxResults(ctx context.Context, parent string, pageSize int32) (*ProjectList, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
 	// Create a resource object so that we can use proper url normalization methods.
-	r := &Project{}
+	r := &Project{
+		Parent: &parent,
+	}
 	items, token, err := c.listProject(ctx, r, "", pageSize)
 	if err != nil {
 		return nil, err
@@ -168,7 +170,7 @@ func (c *Client) GetProject(ctx context.Context, r *Project) (*Project, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalProject(b, c)
+	result, err := unmarshalProject(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -202,8 +204,8 @@ func (c *Client) DeleteProject(ctx context.Context, r *Project) error {
 }
 
 // DeleteAllProject deletes all resources that the filter functions returns true on.
-func (c *Client) DeleteAllProject(ctx context.Context, filter func(*Project) bool) error {
-	listObj, err := c.ListProject(ctx)
+func (c *Client) DeleteAllProject(ctx context.Context, parent string, filter func(*Project) bool) error {
+	listObj, err := c.ListProject(ctx, parent)
 	if err != nil {
 		return err
 	}
@@ -323,7 +325,7 @@ func applyProjectHelper(c *Client, ctx context.Context, rawDesired *Project, opt
 func applyProjectDiff(c *Client, ctx context.Context, desired *Project, rawDesired *Project, ops []projectApiOperation, opts ...dcl.ApplyOption) (*Project, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetProject(ctx, desired.urlNormalized())
+	rawNew, err := c.GetProject(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +338,7 @@ func applyProjectDiff(c *Client, ctx context.Context, desired *Project, rawDesir
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapProject(r, c)
+				fullResp, err := unmarshalMapProject(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

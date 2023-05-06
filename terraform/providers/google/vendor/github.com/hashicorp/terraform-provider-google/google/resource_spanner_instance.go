@@ -19,7 +19,6 @@ import (
 	"log"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -54,7 +53,7 @@ func deleteSpannerBackups(d *schema.ResourceData, config *Config, res map[string
 			return err
 		}
 
-		_, err = sendRequest(config, "DELETE", billingProject, url, userAgent, nil)
+		_, err = SendRequest(config, "DELETE", billingProject, url, userAgent, nil)
 		if err != nil {
 			return err
 		}
@@ -62,7 +61,23 @@ func deleteSpannerBackups(d *schema.ResourceData, config *Config, res map[string
 	return nil
 }
 
-func resourceSpannerInstance() *schema.Resource {
+func resourceSpannerInstanceVirtualUpdate(d *schema.ResourceData, resourceSchema map[string]*schema.Schema) bool {
+	// force_destroy is the only virtual field
+	if d.HasChange("force_destroy") {
+		for field := range resourceSchema {
+			if field == "force_destroy" {
+				continue
+			}
+			if d.HasChange(field) {
+				return false
+			}
+		}
+		return true
+	}
+	return false
+}
+
+func ResourceSpannerInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceSpannerInstanceCreate,
 		Read:   resourceSpannerInstanceRead,
@@ -143,6 +158,8 @@ or node_count must be present in terraform.`,
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  false,
+				Description: `When deleting a spanner instance, this boolean option will delete all backups of this instance.
+This must be set to true if you created a backup manually in the console.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -157,7 +174,7 @@ or node_count must be present in terraform.`,
 
 func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -224,7 +241,7 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -239,12 +256,13 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = spannerOperationWaitTimeWithResponse(
+	err = SpannerOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Instance", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Instance: %s", err)
 	}
 
@@ -279,7 +297,7 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 
 func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -302,7 +320,7 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("SpannerInstance %q", d.Id()))
 	}
@@ -356,7 +374,7 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 
 func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -406,13 +424,21 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
+	if resourceSpannerInstanceVirtualUpdate(d, ResourceSpannerInstance().Schema) {
+		if d.Get("force_destroy") != nil {
+			if err := d.Set("force_destroy", d.Get("force_destroy")); err != nil {
+				return fmt.Errorf("Error reading Instance: %s", err)
+			}
+		}
+		return nil
+	}
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
@@ -420,7 +446,7 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
 	}
 
-	err = spannerOperationWaitTime(
+	err = SpannerOperationWaitTime(
 		config, res, project, "Updating Instance", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -433,7 +459,7 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 
 func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -459,7 +485,7 @@ func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) err
 			return err
 		}
 
-		resp, err := sendRequest(config, "GET", billingProject, backupsUrl, userAgent, nil)
+		resp, err := SendRequest(config, "GET", billingProject, backupsUrl, userAgent, nil)
 		if err != nil {
 			// API returns 200 if no backups exist but the instance still exists, hence the error check.
 			return handleNotFoundError(err, d, fmt.Sprintf("SpannerInstance %q", d.Id()))
@@ -477,7 +503,7 @@ func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
 	}
@@ -532,7 +558,7 @@ func flattenSpannerInstanceDisplayName(v interface{}, d *schema.ResourceData, co
 func flattenSpannerInstanceNumNodes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -549,7 +575,7 @@ func flattenSpannerInstanceNumNodes(v interface{}, d *schema.ResourceData, confi
 func flattenSpannerInstanceProcessingUnits(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,32 +25,35 @@ import (
 )
 
 type ForwardingRule struct {
-	Labels               map[string]string                      `json:"labels"`
-	AllPorts             *bool                                  `json:"allPorts"`
-	AllowGlobalAccess    *bool                                  `json:"allowGlobalAccess"`
-	LabelFingerprint     *string                                `json:"labelFingerprint"`
-	BackendService       *string                                `json:"backendService"`
-	CreationTimestamp    *string                                `json:"creationTimestamp"`
-	Description          *string                                `json:"description"`
-	IPAddress            *string                                `json:"ipAddress"`
-	IPProtocol           *ForwardingRuleIPProtocolEnum          `json:"ipProtocol"`
-	IPVersion            *ForwardingRuleIPVersionEnum           `json:"ipVersion"`
-	IsMirroringCollector *bool                                  `json:"isMirroringCollector"`
-	LoadBalancingScheme  *ForwardingRuleLoadBalancingSchemeEnum `json:"loadBalancingScheme"`
-	MetadataFilter       []ForwardingRuleMetadataFilter         `json:"metadataFilter"`
-	Name                 *string                                `json:"name"`
-	Network              *string                                `json:"network"`
-	NetworkTier          *ForwardingRuleNetworkTierEnum         `json:"networkTier"`
-	PortRange            *string                                `json:"portRange"`
-	Ports                []string                               `json:"ports"`
-	Region               *string                                `json:"region"`
-	SelfLink             *string                                `json:"selfLink"`
-	ServiceLabel         *string                                `json:"serviceLabel"`
-	ServiceName          *string                                `json:"serviceName"`
-	Subnetwork           *string                                `json:"subnetwork"`
-	Target               *string                                `json:"target"`
-	Project              *string                                `json:"project"`
-	Location             *string                                `json:"location"`
+	Labels                        map[string]string                             `json:"labels"`
+	AllPorts                      *bool                                         `json:"allPorts"`
+	AllowGlobalAccess             *bool                                         `json:"allowGlobalAccess"`
+	LabelFingerprint              *string                                       `json:"labelFingerprint"`
+	BackendService                *string                                       `json:"backendService"`
+	CreationTimestamp             *string                                       `json:"creationTimestamp"`
+	Description                   *string                                       `json:"description"`
+	IPAddress                     *string                                       `json:"ipAddress"`
+	IPProtocol                    *ForwardingRuleIPProtocolEnum                 `json:"ipProtocol"`
+	IPVersion                     *ForwardingRuleIPVersionEnum                  `json:"ipVersion"`
+	IsMirroringCollector          *bool                                         `json:"isMirroringCollector"`
+	LoadBalancingScheme           *ForwardingRuleLoadBalancingSchemeEnum        `json:"loadBalancingScheme"`
+	MetadataFilter                []ForwardingRuleMetadataFilter                `json:"metadataFilter"`
+	Name                          *string                                       `json:"name"`
+	Network                       *string                                       `json:"network"`
+	NetworkTier                   *ForwardingRuleNetworkTierEnum                `json:"networkTier"`
+	PortRange                     *string                                       `json:"portRange"`
+	Ports                         []string                                      `json:"ports"`
+	Region                        *string                                       `json:"region"`
+	SelfLink                      *string                                       `json:"selfLink"`
+	ServiceLabel                  *string                                       `json:"serviceLabel"`
+	ServiceName                   *string                                       `json:"serviceName"`
+	Subnetwork                    *string                                       `json:"subnetwork"`
+	Target                        *string                                       `json:"target"`
+	Project                       *string                                       `json:"project"`
+	Location                      *string                                       `json:"location"`
+	ServiceDirectoryRegistrations []ForwardingRuleServiceDirectoryRegistrations `json:"serviceDirectoryRegistrations"`
+	PscConnectionId               *string                                       `json:"pscConnectionId"`
+	PscConnectionStatus           *ForwardingRulePscConnectionStatusEnum        `json:"pscConnectionStatus"`
 }
 
 func (r *ForwardingRule) String() string {
@@ -126,7 +129,7 @@ func (v ForwardingRuleLoadBalancingSchemeEnum) Validate() error {
 		// Empty enum is okay.
 		return nil
 	}
-	for _, s := range []string{"INVALID", "INTERNAL", "INTERNAL_MANAGED", "INTERNAL_SELF_MANAGED", "EXTERNAL"} {
+	for _, s := range []string{"INVALID", "INTERNAL", "INTERNAL_MANAGED", "INTERNAL_SELF_MANAGED", "EXTERNAL", "EXTERNAL_MANAGED"} {
 		if string(v) == s {
 			return nil
 		}
@@ -192,6 +195,33 @@ func (v ForwardingRuleNetworkTierEnum) Validate() error {
 	}
 }
 
+// The enum ForwardingRulePscConnectionStatusEnum.
+type ForwardingRulePscConnectionStatusEnum string
+
+// ForwardingRulePscConnectionStatusEnumRef returns a *ForwardingRulePscConnectionStatusEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func ForwardingRulePscConnectionStatusEnumRef(s string) *ForwardingRulePscConnectionStatusEnum {
+	v := ForwardingRulePscConnectionStatusEnum(s)
+	return &v
+}
+
+func (v ForwardingRulePscConnectionStatusEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"STATUS_UNSPECIFIED", "PENDING", "ACCEPTED", "REJECTED", "CLOSED"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "ForwardingRulePscConnectionStatusEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
 type ForwardingRuleMetadataFilter struct {
 	empty               bool                                                 `json:"-"`
 	FilterMatchCriteria *ForwardingRuleMetadataFilterFilterMatchCriteriaEnum `json:"filterMatchCriteria"`
@@ -222,8 +252,8 @@ func (r *ForwardingRuleMetadataFilter) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ForwardingRuleMetadataFilter is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyForwardingRuleMetadataFilter *ForwardingRuleMetadataFilter = &ForwardingRuleMetadataFilter{empty: true}
 
 func (r *ForwardingRuleMetadataFilter) Empty() bool {
@@ -271,8 +301,8 @@ func (r *ForwardingRuleMetadataFilterFilterLabel) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this ForwardingRuleMetadataFilterFilterLabel is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyForwardingRuleMetadataFilterFilterLabel *ForwardingRuleMetadataFilterFilterLabel = &ForwardingRuleMetadataFilterFilterLabel{empty: true}
 
 func (r *ForwardingRuleMetadataFilterFilterLabel) Empty() bool {
@@ -284,6 +314,55 @@ func (r *ForwardingRuleMetadataFilterFilterLabel) String() string {
 }
 
 func (r *ForwardingRuleMetadataFilterFilterLabel) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type ForwardingRuleServiceDirectoryRegistrations struct {
+	empty     bool    `json:"-"`
+	Namespace *string `json:"namespace"`
+	Service   *string `json:"service"`
+}
+
+type jsonForwardingRuleServiceDirectoryRegistrations ForwardingRuleServiceDirectoryRegistrations
+
+func (r *ForwardingRuleServiceDirectoryRegistrations) UnmarshalJSON(data []byte) error {
+	var res jsonForwardingRuleServiceDirectoryRegistrations
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyForwardingRuleServiceDirectoryRegistrations
+	} else {
+
+		r.Namespace = res.Namespace
+
+		r.Service = res.Service
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this ForwardingRuleServiceDirectoryRegistrations is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyForwardingRuleServiceDirectoryRegistrations *ForwardingRuleServiceDirectoryRegistrations = &ForwardingRuleServiceDirectoryRegistrations{empty: true}
+
+func (r *ForwardingRuleServiceDirectoryRegistrations) Empty() bool {
+	return r.empty
+}
+
+func (r *ForwardingRuleServiceDirectoryRegistrations) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *ForwardingRuleServiceDirectoryRegistrations) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))
@@ -306,33 +385,40 @@ func (r *ForwardingRule) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"labels":               dcl.ValueOrEmptyString(nr.Labels),
-		"allPorts":             dcl.ValueOrEmptyString(nr.AllPorts),
-		"allowGlobalAccess":    dcl.ValueOrEmptyString(nr.AllowGlobalAccess),
-		"labelFingerprint":     dcl.ValueOrEmptyString(nr.LabelFingerprint),
-		"backendService":       dcl.ValueOrEmptyString(nr.BackendService),
-		"creationTimestamp":    dcl.ValueOrEmptyString(nr.CreationTimestamp),
-		"description":          dcl.ValueOrEmptyString(nr.Description),
-		"iPAddress":            dcl.ValueOrEmptyString(nr.IPAddress),
-		"iPProtocol":           dcl.ValueOrEmptyString(nr.IPProtocol),
-		"iPVersion":            dcl.ValueOrEmptyString(nr.IPVersion),
-		"isMirroringCollector": dcl.ValueOrEmptyString(nr.IsMirroringCollector),
-		"loadBalancingScheme":  dcl.ValueOrEmptyString(nr.LoadBalancingScheme),
-		"metadataFilter":       dcl.ValueOrEmptyString(nr.MetadataFilter),
-		"name":                 dcl.ValueOrEmptyString(nr.Name),
-		"network":              dcl.ValueOrEmptyString(nr.Network),
-		"networkTier":          dcl.ValueOrEmptyString(nr.NetworkTier),
-		"portRange":            dcl.ValueOrEmptyString(nr.PortRange),
-		"ports":                dcl.ValueOrEmptyString(nr.Ports),
-		"region":               dcl.ValueOrEmptyString(nr.Region),
-		"selfLink":             dcl.ValueOrEmptyString(nr.SelfLink),
-		"serviceLabel":         dcl.ValueOrEmptyString(nr.ServiceLabel),
-		"serviceName":          dcl.ValueOrEmptyString(nr.ServiceName),
-		"subnetwork":           dcl.ValueOrEmptyString(nr.Subnetwork),
-		"target":               dcl.ValueOrEmptyString(nr.Target),
-		"project":              dcl.ValueOrEmptyString(nr.Project),
-		"location":             dcl.ValueOrEmptyString(nr.Location),
+		"labels":                          dcl.ValueOrEmptyString(nr.Labels),
+		"all_ports":                       dcl.ValueOrEmptyString(nr.AllPorts),
+		"allow_global_access":             dcl.ValueOrEmptyString(nr.AllowGlobalAccess),
+		"label_fingerprint":               dcl.ValueOrEmptyString(nr.LabelFingerprint),
+		"backend_service":                 dcl.ValueOrEmptyString(nr.BackendService),
+		"creation_timestamp":              dcl.ValueOrEmptyString(nr.CreationTimestamp),
+		"description":                     dcl.ValueOrEmptyString(nr.Description),
+		"ip_address":                      dcl.ValueOrEmptyString(nr.IPAddress),
+		"ip_protocol":                     dcl.ValueOrEmptyString(nr.IPProtocol),
+		"ip_version":                      dcl.ValueOrEmptyString(nr.IPVersion),
+		"is_mirroring_collector":          dcl.ValueOrEmptyString(nr.IsMirroringCollector),
+		"load_balancing_scheme":           dcl.ValueOrEmptyString(nr.LoadBalancingScheme),
+		"metadata_filter":                 dcl.ValueOrEmptyString(nr.MetadataFilter),
+		"name":                            dcl.ValueOrEmptyString(nr.Name),
+		"network":                         dcl.ValueOrEmptyString(nr.Network),
+		"network_tier":                    dcl.ValueOrEmptyString(nr.NetworkTier),
+		"port_range":                      dcl.ValueOrEmptyString(nr.PortRange),
+		"ports":                           dcl.ValueOrEmptyString(nr.Ports),
+		"region":                          dcl.ValueOrEmptyString(nr.Region),
+		"self_link":                       dcl.ValueOrEmptyString(nr.SelfLink),
+		"service_label":                   dcl.ValueOrEmptyString(nr.ServiceLabel),
+		"service_name":                    dcl.ValueOrEmptyString(nr.ServiceName),
+		"subnetwork":                      dcl.ValueOrEmptyString(nr.Subnetwork),
+		"target":                          dcl.ValueOrEmptyString(nr.Target),
+		"project":                         dcl.ValueOrEmptyString(nr.Project),
+		"location":                        dcl.ValueOrEmptyString(nr.Location),
+		"service_directory_registrations": dcl.ValueOrEmptyString(nr.ServiceDirectoryRegistrations),
+		"psc_connection_id":               dcl.ValueOrEmptyString(nr.PscConnectionId),
+		"psc_connection_status":           dcl.ValueOrEmptyString(nr.PscConnectionStatus),
 	}
+	if dcl.IsRegion(nr.Location) {
+		return dcl.Nprintf("projects/{{project}}/regions/{{location}}/forwardingRules/{{name}}", params), nil
+	}
+
 	return dcl.Nprintf("projects/{{project}}/global/forwardingRules/{{name}}", params), nil
 }
 
@@ -432,7 +518,7 @@ func (c *Client) GetForwardingRule(ctx context.Context, r *ForwardingRule) (*For
 		}
 		return nil, err
 	}
-	result, err := unmarshalForwardingRule(b, c)
+	result, err := unmarshalForwardingRule(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -607,7 +693,7 @@ func applyForwardingRuleHelper(c *Client, ctx context.Context, rawDesired *Forwa
 func applyForwardingRuleDiff(c *Client, ctx context.Context, desired *ForwardingRule, rawDesired *ForwardingRule, ops []forwardingRuleApiOperation, opts ...dcl.ApplyOption) (*ForwardingRule, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetForwardingRule(ctx, desired.urlNormalized())
+	rawNew, err := c.GetForwardingRule(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -620,7 +706,7 @@ func applyForwardingRuleDiff(c *Client, ctx context.Context, desired *Forwarding
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapForwardingRule(r, c)
+				fullResp, err := unmarshalMapForwardingRule(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

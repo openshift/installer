@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -154,8 +154,8 @@ func (r *WorkloadResources) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkloadResources is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkloadResources *WorkloadResources = &WorkloadResources{empty: true}
 
 func (r *WorkloadResources) Empty() bool {
@@ -203,8 +203,8 @@ func (r *WorkloadKmsSettings) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkloadKmsSettings is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkloadKmsSettings *WorkloadKmsSettings = &WorkloadKmsSettings{empty: true}
 
 func (r *WorkloadKmsSettings) Empty() bool {
@@ -252,8 +252,8 @@ func (r *WorkloadResourceSettings) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkloadResourceSettings is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkloadResourceSettings *WorkloadResourceSettings = &WorkloadResourceSettings{empty: true}
 
 func (r *WorkloadResourceSettings) Empty() bool {
@@ -287,18 +287,18 @@ func (r *Workload) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                       dcl.ValueOrEmptyString(nr.Name),
-		"displayName":                dcl.ValueOrEmptyString(nr.DisplayName),
-		"resources":                  dcl.ValueOrEmptyString(nr.Resources),
-		"complianceRegime":           dcl.ValueOrEmptyString(nr.ComplianceRegime),
-		"createTime":                 dcl.ValueOrEmptyString(nr.CreateTime),
-		"billingAccount":             dcl.ValueOrEmptyString(nr.BillingAccount),
-		"labels":                     dcl.ValueOrEmptyString(nr.Labels),
-		"provisionedResourcesParent": dcl.ValueOrEmptyString(nr.ProvisionedResourcesParent),
-		"kmsSettings":                dcl.ValueOrEmptyString(nr.KmsSettings),
-		"resourceSettings":           dcl.ValueOrEmptyString(nr.ResourceSettings),
-		"organization":               dcl.ValueOrEmptyString(nr.Organization),
-		"location":                   dcl.ValueOrEmptyString(nr.Location),
+		"name":                         dcl.ValueOrEmptyString(nr.Name),
+		"display_name":                 dcl.ValueOrEmptyString(nr.DisplayName),
+		"resources":                    dcl.ValueOrEmptyString(nr.Resources),
+		"compliance_regime":            dcl.ValueOrEmptyString(nr.ComplianceRegime),
+		"create_time":                  dcl.ValueOrEmptyString(nr.CreateTime),
+		"billing_account":              dcl.ValueOrEmptyString(nr.BillingAccount),
+		"labels":                       dcl.ValueOrEmptyString(nr.Labels),
+		"provisioned_resources_parent": dcl.ValueOrEmptyString(nr.ProvisionedResourcesParent),
+		"kms_settings":                 dcl.ValueOrEmptyString(nr.KmsSettings),
+		"resource_settings":            dcl.ValueOrEmptyString(nr.ResourceSettings),
+		"organization":                 dcl.ValueOrEmptyString(nr.Organization),
+		"location":                     dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("organizations/{{organization}}/locations/{{location}}/workloads/{{name}}", params), nil
 }
@@ -385,7 +385,7 @@ func (c *Client) GetWorkload(ctx context.Context, r *Workload) (*Workload, error
 		}
 		return nil, err
 	}
-	result, err := unmarshalWorkload(b, c)
+	result, err := unmarshalWorkload(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +542,7 @@ func applyWorkloadHelper(c *Client, ctx context.Context, rawDesired *Workload, o
 func applyWorkloadDiff(c *Client, ctx context.Context, desired *Workload, rawDesired *Workload, ops []workloadApiOperation, opts ...dcl.ApplyOption) (*Workload, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetWorkload(ctx, desired.urlNormalized())
+	rawNew, err := c.GetWorkload(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -555,7 +555,7 @@ func applyWorkloadDiff(c *Client, ctx context.Context, desired *Workload, rawDes
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapWorkload(r, c)
+				fullResp, err := unmarshalMapWorkload(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

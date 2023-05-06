@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -94,8 +94,8 @@ func (r *NetworkRoutingConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NetworkRoutingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNetworkRoutingConfig *NetworkRoutingConfig = &NetworkRoutingConfig{empty: true}
 
 func (r *NetworkRoutingConfig) Empty() bool {
@@ -129,15 +129,15 @@ func (r *Network) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"description":           dcl.ValueOrEmptyString(nr.Description),
-		"gatewayIPv4":           dcl.ValueOrEmptyString(nr.GatewayIPv4),
-		"name":                  dcl.ValueOrEmptyString(nr.Name),
-		"autoCreateSubnetworks": dcl.ValueOrEmptyString(nr.AutoCreateSubnetworks),
-		"routingConfig":         dcl.ValueOrEmptyString(nr.RoutingConfig),
-		"mtu":                   dcl.ValueOrEmptyString(nr.Mtu),
-		"project":               dcl.ValueOrEmptyString(nr.Project),
-		"selfLink":              dcl.ValueOrEmptyString(nr.SelfLink),
-		"selfLinkWithId":        dcl.ValueOrEmptyString(nr.SelfLinkWithId),
+		"description":             dcl.ValueOrEmptyString(nr.Description),
+		"gateway_ipv4":            dcl.ValueOrEmptyString(nr.GatewayIPv4),
+		"name":                    dcl.ValueOrEmptyString(nr.Name),
+		"auto_create_subnetworks": dcl.ValueOrEmptyString(nr.AutoCreateSubnetworks),
+		"routing_config":          dcl.ValueOrEmptyString(nr.RoutingConfig),
+		"mtu":                     dcl.ValueOrEmptyString(nr.Mtu),
+		"project":                 dcl.ValueOrEmptyString(nr.Project),
+		"self_link":               dcl.ValueOrEmptyString(nr.SelfLink),
+		"self_link_with_id":       dcl.ValueOrEmptyString(nr.SelfLinkWithId),
 	}
 	return dcl.Nprintf("projects/{{project}}/global/networks/{{name}}", params), nil
 }
@@ -223,7 +223,7 @@ func (c *Client) GetNetwork(ctx context.Context, r *Network) (*Network, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalNetwork(b, c)
+	result, err := unmarshalNetwork(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -382,7 +382,7 @@ func applyNetworkHelper(c *Client, ctx context.Context, rawDesired *Network, opt
 func applyNetworkDiff(c *Client, ctx context.Context, desired *Network, rawDesired *Network, ops []networkApiOperation, opts ...dcl.ApplyOption) (*Network, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetNetwork(ctx, desired.urlNormalized())
+	rawNew, err := c.GetNetwork(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -395,7 +395,7 @@ func applyNetworkDiff(c *Client, ctx context.Context, desired *Network, rawDesir
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapNetwork(r, c)
+				fullResp, err := unmarshalMapNetwork(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

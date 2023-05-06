@@ -8,9 +8,9 @@ import (
 	"google.golang.org/api/cloudidentity/v1"
 )
 
-func dataSourceGoogleCloudIdentityGroups() *schema.Resource {
+func DataSourceGoogleCloudIdentityGroups() *schema.Resource {
 	// Generate datasource schema from resource
-	dsSchema := datasourceSchemaFromResourceSchema(resourceCloudIdentityGroup().Schema)
+	dsSchema := datasourceSchemaFromResourceSchema(ResourceCloudIdentityGroup().Schema)
 
 	return &schema.Resource{
 		Read: dataSourceGoogleCloudIdentityGroupsRead,
@@ -40,7 +40,7 @@ groups or customers/{customer_id} for Google Groups.`,
 
 func dataSourceGoogleCloudIdentityGroupsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

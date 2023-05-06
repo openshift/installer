@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -73,8 +73,8 @@ func (r *PolicySpec) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PolicySpec is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPolicySpec *PolicySpec = &PolicySpec{empty: true}
 
 func (r *PolicySpec) Empty() bool {
@@ -131,8 +131,8 @@ func (r *PolicySpecRules) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PolicySpecRules is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPolicySpecRules *PolicySpecRules = &PolicySpecRules{empty: true}
 
 func (r *PolicySpecRules) Empty() bool {
@@ -180,8 +180,8 @@ func (r *PolicySpecRulesValues) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PolicySpecRulesValues is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPolicySpecRulesValues *PolicySpecRulesValues = &PolicySpecRulesValues{empty: true}
 
 func (r *PolicySpecRulesValues) Empty() bool {
@@ -235,8 +235,8 @@ func (r *PolicySpecRulesCondition) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PolicySpecRulesCondition is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPolicySpecRulesCondition *PolicySpecRulesCondition = &PolicySpecRulesCondition{empty: true}
 
 func (r *PolicySpecRulesCondition) Empty() bool {
@@ -372,7 +372,7 @@ func (c *Client) GetPolicy(ctx context.Context, r *Policy) (*Policy, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalPolicy(b, c)
+	result, err := unmarshalPolicy(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -542,7 +542,7 @@ func applyPolicyHelper(c *Client, ctx context.Context, rawDesired *Policy, opts 
 func applyPolicyDiff(c *Client, ctx context.Context, desired *Policy, rawDesired *Policy, ops []policyApiOperation, opts ...dcl.ApplyOption) (*Policy, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetPolicy(ctx, desired.urlNormalized())
+	rawNew, err := c.GetPolicy(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -555,7 +555,7 @@ func applyPolicyDiff(c *Client, ctx context.Context, desired *Policy, rawDesired
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapPolicy(r, c)
+				fullResp, err := unmarshalMapPolicy(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

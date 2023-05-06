@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a ForwardingRule
     parameters:
-    - name: ForwardingRule
+    - name: forwardingRule
       required: true
       description: A full instance of a ForwardingRule
   apply:
     description: The function used to apply information about a ForwardingRule
     parameters:
-    - name: ForwardingRule
+    - name: forwardingRule
       required: true
       description: A full instance of a ForwardingRule
   delete:
     description: The function used to delete a ForwardingRule
     parameters:
-    - name: ForwardingRule
+    - name: forwardingRule
       required: true
       description: A full instance of a ForwardingRule
   deleteAll:
@@ -67,7 +67,11 @@ components:
       - global
       x-dcl-parent-container: project
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -189,22 +193,18 @@ components:
           type: string
           x-dcl-go-name: LoadBalancingScheme
           x-dcl-go-type: ForwardingRuleLoadBalancingSchemeEnum
-          description: |-
-            Specifies the forwarding rule type.
-
-            *   `EXTERNAL` is used for:
-                *   Classic Cloud VPN gateways
-                *   Protocol forwarding to VMs from an external IP address
-                *   The following load balancers: HTTP(S), SSL Proxy, TCP Proxy, and Network TCP/UDP
-            *   `INTERNAL` is used for:
-                *   Protocol forwarding to VMs from an internal IP address
-                *   Internal TCP/UDP load balancers
-            *   `INTERNAL_MANAGED` is used for:
-                *   Internal HTTP(S) load balancers
-            *   `INTERNAL_SELF_MANAGED` is used for:
-                *   Traffic Director
-
-            For more information about forwarding rules, refer to [Forwarding rule concepts](/load-balancing/docs/forwarding-rule-concepts). Possible values: INVALID, INTERNAL, INTERNAL_MANAGED, INTERNAL_SELF_MANAGED, EXTERNAL
+          description: "Specifies the forwarding rule type.\n\n*   `EXTERNAL` is used
+            for:\n    *   Classic Cloud VPN gateways\n    *   Protocol forwarding
+            to VMs from an external IP address\n    *   The following load balancers:
+            HTTP(S), SSL Proxy, TCP Proxy, and Network TCP/UDP\n*   `INTERNAL` is
+            used for:\n    *   Protocol forwarding to VMs from an internal IP address\n
+            \   *   Internal TCP/UDP load balancers\n*   `INTERNAL_MANAGED` is used
+            for:\n    *   Internal HTTP(S) load balancers\n*   `INTERNAL_SELF_MANAGED`
+            is used for:\n    *   Traffic Director\n*   `EXTERNAL_MANAGED` is used
+            for:\n    *   Global external HTTP(S) load balancers \n\nFor more information
+            about forwarding rules, refer to [Forwarding rule concepts](/load-balancing/docs/forwarding-rule-concepts).
+            Possible values: INVALID, INTERNAL, INTERNAL_MANAGED, INTERNAL_SELF_MANAGED,
+            EXTERNAL, EXTERNAL_MANAGED"
           x-kubernetes-immutable: true
           enum:
           - INVALID
@@ -212,6 +212,7 @@ components:
           - INTERNAL_MANAGED
           - INTERNAL_SELF_MANAGED
           - EXTERNAL
+          - EXTERNAL_MANAGED
         location:
           type: string
           x-dcl-go-name: Location
@@ -364,9 +365,30 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
+        pscConnectionId:
+          type: string
+          x-dcl-go-name: PscConnectionId
+          readOnly: true
+          description: The PSC connection id of the PSC Forwarding Rule.
+          x-kubernetes-immutable: true
+        pscConnectionStatus:
+          type: string
+          x-dcl-go-name: PscConnectionStatus
+          x-dcl-go-type: ForwardingRulePscConnectionStatusEnum
+          readOnly: true
+          description: 'The PSC connection status of the PSC Forwarding Rule. Possible
+            values: STATUS_UNSPECIFIED, PENDING, ACCEPTED, REJECTED, CLOSED'
+          x-kubernetes-immutable: true
+          enum:
+          - STATUS_UNSPECIFIED
+          - PENDING
+          - ACCEPTED
+          - REJECTED
+          - CLOSED
         region:
           type: string
           x-dcl-go-name: Region
+          readOnly: true
           description: '[Output Only] URL of the region where the regional forwarding
             rule resides. This field is not applicable to global forwarding rules.
             You must specify this field as part of the HTTP request URL. It is not
@@ -378,6 +400,32 @@ components:
           readOnly: true
           description: '[Output Only] Server-defined URL for the resource.'
           x-kubernetes-immutable: true
+        serviceDirectoryRegistrations:
+          type: array
+          x-dcl-go-name: ServiceDirectoryRegistrations
+          description: Service Directory resources to register this forwarding rule
+            with. Currently, only supports a single Service Directory resource.
+          x-kubernetes-immutable: true
+          x-dcl-server-default: true
+          x-dcl-send-empty: true
+          x-dcl-list-type: list
+          items:
+            type: object
+            x-dcl-go-type: ForwardingRuleServiceDirectoryRegistrations
+            properties:
+              namespace:
+                type: string
+                x-dcl-go-name: Namespace
+                description: Service Directory namespace to register the forwarding
+                  rule under.
+                x-kubernetes-immutable: true
+                x-dcl-server-default: true
+              service:
+                type: string
+                x-dcl-go-name: Service
+                description: Service Directory service to register the forwarding
+                  rule under.
+                x-kubernetes-immutable: true
         serviceLabel:
           type: string
           x-dcl-go-name: ServiceLabel

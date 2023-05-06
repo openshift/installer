@@ -12,7 +12,7 @@ import (
 	"cloud.google.com/go/bigtable"
 )
 
-func resourceBigtableInstance() *schema.Resource {
+func ResourceBigtableInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBigtableInstanceCreate,
 		Read:   resourceBigtableInstanceRead,
@@ -41,7 +41,7 @@ func resourceBigtableInstance() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: `The name (also called Instance Id in the Cloud Console) of the Cloud Bigtable instance.`,
+				Description: `The name (also called Instance Id in the Cloud Console) of the Cloud Bigtable instance. Must be 6-33 characters and must only contain hyphens, lowercase letters and numbers.`,
 			},
 
 			"cluster": {
@@ -54,7 +54,7 @@ func resourceBigtableInstance() *schema.Resource {
 						"cluster_id": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: `The ID of the Cloud Bigtable cluster.`,
+							Description: `The ID of the Cloud Bigtable cluster. Must be 6-30 characters and must only contain hyphens, lowercase letters and numbers.`,
 						},
 						"zone": {
 							Type:        schema.TypeString,
@@ -69,7 +69,7 @@ func resourceBigtableInstance() *schema.Resource {
 							// so mark as computed.
 							Computed:     true,
 							ValidateFunc: validation.IntAtLeast(1),
-							Description:  `The number of nodes in your Cloud Bigtable cluster. Required, with a minimum of 1 for a PRODUCTION instance. Must be left unset for a DEVELOPMENT instance.`,
+							Description:  `The number of nodes in your Cloud Bigtable cluster. Required, with a minimum of 1 for each cluster in an instance.`,
 						},
 						"storage_type": {
 							Type:         schema.TypeString,
@@ -81,9 +81,39 @@ func resourceBigtableInstance() *schema.Resource {
 						"kms_key_name": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							ForceNew:    true,
 							Computed:    true,
 							Description: `Describes the Cloud KMS encryption key that will be used to protect the destination Bigtable cluster. The requirements for this key are: 1) The Cloud Bigtable service account associated with the project that contains this cluster must be granted the cloudkms.cryptoKeyEncrypterDecrypter role on the CMEK key. 2) Only regional keys can be used and the region of the CMEK key must match the region of the cluster. 3) All clusters within an instance must use the same CMEK key. Values are of the form projects/{project}/locations/{location}/keyRings/{keyring}/cryptoKeys/{key}`,
+						},
+						"autoscaling_config": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							MaxItems:    1,
+							Description: "A list of Autoscaling configurations. Only one element is used and allowed.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"min_nodes": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: `The minimum number of nodes for autoscaling.`,
+									},
+									"max_nodes": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: `The maximum number of nodes for autoscaling.`,
+									},
+									"cpu_target": {
+										Type:        schema.TypeInt,
+										Required:    true,
+										Description: `The target CPU utilization for autoscaling. Value must be between 10 and 80.`,
+									},
+									"storage_target": {
+										Type:        schema.TypeInt,
+										Optional:    true,
+										Computed:    true,
+										Description: `The target storage utilization for autoscaling, in GB, for each node in a cluster. This number is limited between 2560 (2.5TiB) and 5120 (5TiB) for a SSD cluster and between 8192 (8TiB) and 16384 (16 TiB) for an HDD cluster. If not set, whatever is already set for the cluster will not change, or if the cluster is just being created, it will use the default value of 2560 for SSD clusters and 8192 for HDD clusters.`,
+									},
+								},
+							},
 						},
 					},
 				},
@@ -132,7 +162,7 @@ func resourceBigtableInstance() *schema.Resource {
 
 func resourceBigtableInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -193,7 +223,7 @@ func resourceBigtableInstanceCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceBigtableInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -215,9 +245,12 @@ func resourceBigtableInstanceRead(d *schema.ResourceData, meta interface{}) erro
 
 	instance, err := c.InstanceInfo(ctx, instanceName)
 	if err != nil {
-		log.Printf("[WARN] Removing %s because it's gone", instanceName)
-		d.SetId("")
-		return nil
+		if isNotFoundGrpcError(err) {
+			log.Printf("[WARN] Removing %s because it's gone", instanceName)
+			d.SetId("")
+			return nil
+		}
+		return err
 	}
 
 	if err := d.Set("project", project); err != nil {
@@ -257,7 +290,7 @@ func resourceBigtableInstanceRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourceBigtableInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -313,7 +346,7 @@ func resourceBigtableInstanceDestroy(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("cannot destroy instance without setting deletion_protection=false and running `terraform apply`")
 	}
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -352,13 +385,23 @@ func flattenBigtableCluster(c *bigtable.ClusterInfo) map[string]interface{} {
 		storageType = "HDD"
 	}
 
-	return map[string]interface{}{
+	cluster := map[string]interface{}{
 		"zone":         c.Zone,
 		"num_nodes":    c.ServeNodes,
 		"cluster_id":   c.Name,
 		"storage_type": storageType,
 		"kms_key_name": c.KMSKeyName,
 	}
+	if c.AutoscalingConfig != nil {
+		cluster["autoscaling_config"] = make([]map[string]interface{}, 1)
+		autoscaling_config := cluster["autoscaling_config"].([]map[string]interface{})
+		autoscaling_config[0] = make(map[string]interface{})
+		autoscaling_config[0]["min_nodes"] = c.AutoscalingConfig.MinNodes
+		autoscaling_config[0]["max_nodes"] = c.AutoscalingConfig.MaxNodes
+		autoscaling_config[0]["cpu_target"] = c.AutoscalingConfig.CPUTargetPercent
+		autoscaling_config[0]["storage_target"] = c.AutoscalingConfig.StorageUtilizationPerNode
+	}
+	return cluster
 }
 
 func expandBigtableClusters(clusters []interface{}, instanceID string, config *Config) ([]bigtable.ClusterConfig, error) {
@@ -376,14 +419,26 @@ func expandBigtableClusters(clusters []interface{}, instanceID string, config *C
 		case "HDD":
 			storageType = bigtable.HDD
 		}
-		results = append(results, bigtable.ClusterConfig{
+
+		cluster_config := bigtable.ClusterConfig{
 			InstanceID:  instanceID,
 			Zone:        zone,
 			ClusterID:   cluster["cluster_id"].(string),
 			NumNodes:    int32(cluster["num_nodes"].(int)),
 			StorageType: storageType,
 			KMSKeyName:  cluster["kms_key_name"].(string),
-		})
+		}
+		autoscaling_configs := cluster["autoscaling_config"].([]interface{})
+		if len(autoscaling_configs) > 0 {
+			autoscaling_config := autoscaling_configs[0].(map[string]interface{})
+			cluster_config.AutoscalingConfig = &bigtable.AutoscalingConfig{
+				MinNodes:                  autoscaling_config["min_nodes"].(int),
+				MaxNodes:                  autoscaling_config["max_nodes"].(int),
+				CPUTargetPercent:          autoscaling_config["cpu_target"].(int),
+				StorageUtilizationPerNode: autoscaling_config["storage_target"].(int),
+			}
+		}
+		results = append(results, cluster_config)
 	}
 	return results, nil
 }
@@ -404,13 +459,14 @@ func getBigtableZone(z string, config *Config) (string, error) {
 // act like a TypeSet while it's a TypeList underneath. It preserves state
 // ordering on updates, and causes the resource to get recreated if it would
 // attempt to perform an impossible change.
-// This doesn't use the standard unordered list utility (https://github.com/GoogleCloudPlatform/magic-modules/blob/master/templates/terraform/unordered_list_customize_diff.erb)
+// This doesn't use the standard unordered list utility (https://github.com/GoogleCloudPlatform/magic-modules/blob/main/templates/terraform/unordered_list_customize_diff.erb)
 // because some fields can't be modified using the API and we recreate the instance
 // when they're changed.
 func resourceBigtableInstanceClusterReorderTypeList(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
 	oldCount, newCount := diff.GetChange("cluster.#")
 
-	// simulate Required:true, MinItems:1 for "cluster"
+	// Simulate Required:true, MinItems:1 for "cluster". This doesn't work
+	// when the whole `cluster` field is removed on update.
 	if newCount.(int) < 1 {
 		return fmt.Errorf("config is invalid: Too few cluster blocks: Should have at least 1 \"cluster\" block")
 	}
@@ -466,6 +522,7 @@ func resourceBigtableInstanceClusterReorderTypeList(_ context.Context, diff *sch
 		for i, e := range orderedClusters {
 			if e == nil {
 				orderedClusters[i] = elem
+				break
 			}
 		}
 	}
@@ -475,10 +532,10 @@ func resourceBigtableInstanceClusterReorderTypeList(_ context.Context, diff *sch
 		return fmt.Errorf("Error setting cluster diff: %s", err)
 	}
 
-	// Clusters can't have their zone / storage_type updated, ForceNew if it's
-	// changed. This will show a diff with the old state on the left side and
-	// the unmodified new state on the right and the ForceNew attributed to the
-	// _old state index_ even if the diff appears to have moved.
+	// Clusters can't have their zone, storage_type or kms_key_name updated,
+	// ForceNew if it's changed. This will show a diff with the old state on
+	// the left side and the unmodified new state on the right and the ForceNew
+	// attributed to the _old state index_ even if the diff appears to have moved.
 	// This depends on the clusters having been reordered already by the prior
 	// SetNew call.
 	// We've implemented it here because it doesn't return an error in the
@@ -489,6 +546,7 @@ func resourceBigtableInstanceClusterReorderTypeList(_ context.Context, diff *sch
 			continue
 		}
 
+		// ForceNew only if the old and the new clusters have the matching cluster ID.
 		oZone, nZone := diff.GetChange(fmt.Sprintf("cluster.%d.zone", i))
 		if oZone != nZone {
 			err := diff.ForceNew(fmt.Sprintf("cluster.%d.zone", i))
@@ -500,6 +558,14 @@ func resourceBigtableInstanceClusterReorderTypeList(_ context.Context, diff *sch
 		oST, nST := diff.GetChange(fmt.Sprintf("cluster.%d.storage_type", i))
 		if oST != nST {
 			err := diff.ForceNew(fmt.Sprintf("cluster.%d.storage_type", i))
+			if err != nil {
+				return fmt.Errorf("Error setting cluster diff: %s", err)
+			}
+		}
+
+		oKey, nKey := diff.GetChange(fmt.Sprintf("cluster.%d.kms_key_name", i))
+		if oKey != nKey {
+			err := diff.ForceNew(fmt.Sprintf("cluster.%d.kms_key_name", i))
 			if err != nil {
 				return fmt.Errorf("Error setting cluster diff: %s", err)
 			}

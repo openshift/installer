@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a NetworkEndpointGroup
     parameters:
-    - name: NetworkEndpointGroup
+    - name: networkEndpointGroup
       required: true
       description: A full instance of a NetworkEndpointGroup
   apply:
     description: The function used to apply information about a NetworkEndpointGroup
     parameters:
-    - name: NetworkEndpointGroup
+    - name: networkEndpointGroup
       required: true
       description: A full instance of a NetworkEndpointGroup
   delete:
     description: The function used to delete a NetworkEndpointGroup
     parameters:
-    - name: NetworkEndpointGroup
+    - name: networkEndpointGroup
       required: true
       description: A full instance of a NetworkEndpointGroup
   deleteAll:
@@ -65,7 +65,11 @@ components:
       - region
       - zone
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -257,12 +261,6 @@ components:
           x-dcl-go-name: SelfLink
           readOnly: true
           description: Server-defined URL for the resource.
-          x-kubernetes-immutable: true
-        selfLinkWithId:
-          type: string
-          x-dcl-go-name: SelfLinkWithId
-          readOnly: true
-          description: Server-defined URL for this resource with the resource id.
           x-kubernetes-immutable: true
         size:
           type: integer

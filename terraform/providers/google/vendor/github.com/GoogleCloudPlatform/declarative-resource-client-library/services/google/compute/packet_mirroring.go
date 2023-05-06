@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -128,8 +128,8 @@ func (r *PacketMirroringNetwork) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PacketMirroringNetwork is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPacketMirroringNetwork *PacketMirroringNetwork = &PacketMirroringNetwork{empty: true}
 
 func (r *PacketMirroringNetwork) Empty() bool {
@@ -177,8 +177,8 @@ func (r *PacketMirroringCollectorIlb) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PacketMirroringCollectorIlb is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPacketMirroringCollectorIlb *PacketMirroringCollectorIlb = &PacketMirroringCollectorIlb{empty: true}
 
 func (r *PacketMirroringCollectorIlb) Empty() bool {
@@ -229,8 +229,8 @@ func (r *PacketMirroringMirroredResources) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PacketMirroringMirroredResources is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPacketMirroringMirroredResources *PacketMirroringMirroredResources = &PacketMirroringMirroredResources{empty: true}
 
 func (r *PacketMirroringMirroredResources) Empty() bool {
@@ -278,8 +278,8 @@ func (r *PacketMirroringMirroredResourcesSubnetworks) UnmarshalJSON(data []byte)
 }
 
 // This object is used to assert a desired state where this PacketMirroringMirroredResourcesSubnetworks is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPacketMirroringMirroredResourcesSubnetworks *PacketMirroringMirroredResourcesSubnetworks = &PacketMirroringMirroredResourcesSubnetworks{empty: true}
 
 func (r *PacketMirroringMirroredResourcesSubnetworks) Empty() bool {
@@ -327,8 +327,8 @@ func (r *PacketMirroringMirroredResourcesInstances) UnmarshalJSON(data []byte) e
 }
 
 // This object is used to assert a desired state where this PacketMirroringMirroredResourcesInstances is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPacketMirroringMirroredResourcesInstances *PacketMirroringMirroredResourcesInstances = &PacketMirroringMirroredResourcesInstances{empty: true}
 
 func (r *PacketMirroringMirroredResourcesInstances) Empty() bool {
@@ -379,8 +379,8 @@ func (r *PacketMirroringFilter) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this PacketMirroringFilter is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyPacketMirroringFilter *PacketMirroringFilter = &PacketMirroringFilter{empty: true}
 
 func (r *PacketMirroringFilter) Empty() bool {
@@ -414,19 +414,19 @@ func (r *PacketMirroring) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"id":                dcl.ValueOrEmptyString(nr.Id),
-		"selfLink":          dcl.ValueOrEmptyString(nr.SelfLink),
-		"name":              dcl.ValueOrEmptyString(nr.Name),
-		"description":       dcl.ValueOrEmptyString(nr.Description),
-		"region":            dcl.ValueOrEmptyString(nr.Region),
-		"network":           dcl.ValueOrEmptyString(nr.Network),
-		"priority":          dcl.ValueOrEmptyString(nr.Priority),
-		"collectorIlb":      dcl.ValueOrEmptyString(nr.CollectorIlb),
-		"mirroredResources": dcl.ValueOrEmptyString(nr.MirroredResources),
-		"filter":            dcl.ValueOrEmptyString(nr.Filter),
-		"enable":            dcl.ValueOrEmptyString(nr.Enable),
-		"project":           dcl.ValueOrEmptyString(nr.Project),
-		"location":          dcl.ValueOrEmptyString(nr.Location),
+		"id":                 dcl.ValueOrEmptyString(nr.Id),
+		"self_link":          dcl.ValueOrEmptyString(nr.SelfLink),
+		"name":               dcl.ValueOrEmptyString(nr.Name),
+		"description":        dcl.ValueOrEmptyString(nr.Description),
+		"region":             dcl.ValueOrEmptyString(nr.Region),
+		"network":            dcl.ValueOrEmptyString(nr.Network),
+		"priority":           dcl.ValueOrEmptyString(nr.Priority),
+		"collector_ilb":      dcl.ValueOrEmptyString(nr.CollectorIlb),
+		"mirrored_resources": dcl.ValueOrEmptyString(nr.MirroredResources),
+		"filter":             dcl.ValueOrEmptyString(nr.Filter),
+		"enable":             dcl.ValueOrEmptyString(nr.Enable),
+		"project":            dcl.ValueOrEmptyString(nr.Project),
+		"location":           dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/regions/{{location}}/packetMirrorings/{{name}}", params), nil
 }
@@ -513,7 +513,7 @@ func (c *Client) GetPacketMirroring(ctx context.Context, r *PacketMirroring) (*P
 		}
 		return nil, err
 	}
-	result, err := unmarshalPacketMirroring(b, c)
+	result, err := unmarshalPacketMirroring(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -670,7 +670,7 @@ func applyPacketMirroringHelper(c *Client, ctx context.Context, rawDesired *Pack
 func applyPacketMirroringDiff(c *Client, ctx context.Context, desired *PacketMirroring, rawDesired *PacketMirroring, ops []packetMirroringApiOperation, opts ...dcl.ApplyOption) (*PacketMirroring, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetPacketMirroring(ctx, desired.urlNormalized())
+	rawNew, err := c.GetPacketMirroring(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -683,7 +683,7 @@ func applyPacketMirroringDiff(c *Client, ctx context.Context, desired *PacketMir
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapPacketMirroring(r, c)
+				fullResp, err := unmarshalMapPacketMirroring(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

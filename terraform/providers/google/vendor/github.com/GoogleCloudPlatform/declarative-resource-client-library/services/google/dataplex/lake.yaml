@@ -1,0 +1,225 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Dataplex/Lake
+  description: The Dataplex Lake resource
+  x-dcl-struct-name: Lake
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Lake
+    parameters:
+    - name: lake
+      required: true
+      description: A full instance of a Lake
+  apply:
+    description: The function used to apply information about a Lake
+    parameters:
+    - name: lake
+      required: true
+      description: A full instance of a Lake
+  delete:
+    description: The function used to delete a Lake
+    parameters:
+    - name: lake
+      required: true
+      description: A full instance of a Lake
+  deleteAll:
+    description: The function used to delete all Lake
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Lake
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Lake:
+      title: Lake
+      x-dcl-id: projects/{{project}}/locations/{{location}}/lakes/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      - location
+      properties:
+        assetStatus:
+          type: object
+          x-dcl-go-name: AssetStatus
+          x-dcl-go-type: LakeAssetStatus
+          readOnly: true
+          description: Output only. Aggregated status of the underlying assets of
+            the lake.
+          properties:
+            activeAssets:
+              type: integer
+              format: int64
+              x-dcl-go-name: ActiveAssets
+              description: Number of active assets.
+            securityPolicyApplyingAssets:
+              type: integer
+              format: int64
+              x-dcl-go-name: SecurityPolicyApplyingAssets
+              description: Number of assets that are in process of updating the security
+                policy on attached resources.
+            updateTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: UpdateTime
+              description: Last update time of the status.
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The time when the lake was created.
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: Optional. Description of the lake.
+        displayName:
+          type: string
+          x-dcl-go-name: DisplayName
+          description: Optional. User friendly display name.
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Labels
+          description: Optional. User-defined labels for the lake.
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        metastore:
+          type: object
+          x-dcl-go-name: Metastore
+          x-dcl-go-type: LakeMetastore
+          description: Optional. Settings to manage lake and Dataproc Metastore service
+            instance association.
+          properties:
+            service:
+              type: string
+              x-dcl-go-name: Service
+              description: 'Optional. A relative reference to the Dataproc Metastore
+                (https://cloud.google.com/dataproc-metastore/docs) service associated
+                with the lake: `projects/{project_id}/locations/{location_id}/services/{service_id}`'
+        metastoreStatus:
+          type: object
+          x-dcl-go-name: MetastoreStatus
+          x-dcl-go-type: LakeMetastoreStatus
+          readOnly: true
+          description: Output only. Metastore status of the lake.
+          properties:
+            endpoint:
+              type: string
+              x-dcl-go-name: Endpoint
+              description: The URI of the endpoint used to access the Metastore service.
+            message:
+              type: string
+              x-dcl-go-name: Message
+              description: Additional information about the current status.
+            state:
+              type: string
+              x-dcl-go-name: State
+              x-dcl-go-type: LakeMetastoreStatusStateEnum
+              description: 'Current state of association. Possible values: STATE_UNSPECIFIED,
+                NONE, READY, UPDATING, ERROR'
+              enum:
+              - STATE_UNSPECIFIED
+              - NONE
+              - READY
+              - UPDATING
+              - ERROR
+            updateTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: UpdateTime
+              description: Last update time of the metastore status of the lake.
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: The name of the lake.
+          x-dcl-references:
+          - resource: Dataplex/Lake
+            field: selfLink
+            parent: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        serviceAccount:
+          type: string
+          x-dcl-go-name: ServiceAccount
+          readOnly: true
+          description: Output only. Service account associated with this lake. This
+            service account must be authorized to access or operate on resources managed
+            by the lake.
+          x-kubernetes-immutable: true
+        state:
+          type: string
+          x-dcl-go-name: State
+          x-dcl-go-type: LakeStateEnum
+          readOnly: true
+          description: 'Output only. Current state of the lake. Possible values: STATE_UNSPECIFIED,
+            ACTIVE, CREATING, DELETING, ACTION_REQUIRED'
+          x-kubernetes-immutable: true
+          enum:
+          - STATE_UNSPECIFIED
+          - ACTIVE
+          - CREATING
+          - DELETING
+          - ACTION_REQUIRED
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. System generated globally unique ID for the lake.
+            This ID will be different if the lake is deleted and re-created with the
+            same name.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The time when the lake was last updated.
+          x-kubernetes-immutable: true

@@ -16,7 +16,7 @@ const (
 	userInfoScope = "https://www.googleapis.com/auth/userinfo.email"
 )
 
-func dataSourceGoogleServiceAccountIdToken() *schema.Resource {
+func DataSourceGoogleServiceAccountIdToken() *schema.Resource {
 
 	return &schema.Resource{
 		Read: dataSourceGoogleServiceAccountIdTokenRead,
@@ -63,7 +63,7 @@ func dataSourceGoogleServiceAccountIdToken() *schema.Resource {
 
 func dataSourceGoogleServiceAccountIdTokenRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

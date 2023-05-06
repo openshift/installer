@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -129,8 +129,8 @@ func (r *WorkerPoolPrivatePoolV1Config) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkerPoolPrivatePoolV1Config is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkerPoolPrivatePoolV1Config *WorkerPoolPrivatePoolV1Config = &WorkerPoolPrivatePoolV1Config{empty: true}
 
 func (r *WorkerPoolPrivatePoolV1Config) Empty() bool {
@@ -178,8 +178,8 @@ func (r *WorkerPoolPrivatePoolV1ConfigWorkerConfig) UnmarshalJSON(data []byte) e
 }
 
 // This object is used to assert a desired state where this WorkerPoolPrivatePoolV1ConfigWorkerConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkerPoolPrivatePoolV1ConfigWorkerConfig *WorkerPoolPrivatePoolV1ConfigWorkerConfig = &WorkerPoolPrivatePoolV1ConfigWorkerConfig{empty: true}
 
 func (r *WorkerPoolPrivatePoolV1ConfigWorkerConfig) Empty() bool {
@@ -198,9 +198,10 @@ func (r *WorkerPoolPrivatePoolV1ConfigWorkerConfig) HashCode() string {
 }
 
 type WorkerPoolPrivatePoolV1ConfigNetworkConfig struct {
-	empty         bool                                                        `json:"-"`
-	PeeredNetwork *string                                                     `json:"peeredNetwork"`
-	EgressOption  *WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnum `json:"egressOption"`
+	empty                bool                                                        `json:"-"`
+	PeeredNetwork        *string                                                     `json:"peeredNetwork"`
+	PeeredNetworkIPRange *string                                                     `json:"peeredNetworkIPRange"`
+	EgressOption         *WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnum `json:"egressOption"`
 }
 
 type jsonWorkerPoolPrivatePoolV1ConfigNetworkConfig WorkerPoolPrivatePoolV1ConfigNetworkConfig
@@ -220,6 +221,8 @@ func (r *WorkerPoolPrivatePoolV1ConfigNetworkConfig) UnmarshalJSON(data []byte) 
 
 		r.PeeredNetwork = res.PeeredNetwork
 
+		r.PeeredNetworkIPRange = res.PeeredNetworkIPRange
+
 		r.EgressOption = res.EgressOption
 
 	}
@@ -227,8 +230,8 @@ func (r *WorkerPoolPrivatePoolV1ConfigNetworkConfig) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this WorkerPoolPrivatePoolV1ConfigNetworkConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkerPoolPrivatePoolV1ConfigNetworkConfig *WorkerPoolPrivatePoolV1ConfigNetworkConfig = &WorkerPoolPrivatePoolV1ConfigNetworkConfig{empty: true}
 
 func (r *WorkerPoolPrivatePoolV1ConfigNetworkConfig) Empty() bool {
@@ -279,8 +282,8 @@ func (r *WorkerPoolWorkerConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkerPoolWorkerConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkerPoolWorkerConfig *WorkerPoolWorkerConfig = &WorkerPoolWorkerConfig{empty: true}
 
 func (r *WorkerPoolWorkerConfig) Empty() bool {
@@ -299,8 +302,9 @@ func (r *WorkerPoolWorkerConfig) HashCode() string {
 }
 
 type WorkerPoolNetworkConfig struct {
-	empty         bool    `json:"-"`
-	PeeredNetwork *string `json:"peeredNetwork"`
+	empty                bool    `json:"-"`
+	PeeredNetwork        *string `json:"peeredNetwork"`
+	PeeredNetworkIPRange *string `json:"peeredNetworkIPRange"`
 }
 
 type jsonWorkerPoolNetworkConfig WorkerPoolNetworkConfig
@@ -320,13 +324,15 @@ func (r *WorkerPoolNetworkConfig) UnmarshalJSON(data []byte) error {
 
 		r.PeeredNetwork = res.PeeredNetwork
 
+		r.PeeredNetworkIPRange = res.PeeredNetworkIPRange
+
 	}
 	return nil
 }
 
 // This object is used to assert a desired state where this WorkerPoolNetworkConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkerPoolNetworkConfig *WorkerPoolNetworkConfig = &WorkerPoolNetworkConfig{empty: true}
 
 func (r *WorkerPoolNetworkConfig) Empty() bool {
@@ -360,20 +366,20 @@ func (r *WorkerPool) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                dcl.ValueOrEmptyString(nr.Name),
-		"displayName":         dcl.ValueOrEmptyString(nr.DisplayName),
-		"uid":                 dcl.ValueOrEmptyString(nr.Uid),
-		"annotations":         dcl.ValueOrEmptyString(nr.Annotations),
-		"createTime":          dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":          dcl.ValueOrEmptyString(nr.UpdateTime),
-		"deleteTime":          dcl.ValueOrEmptyString(nr.DeleteTime),
-		"state":               dcl.ValueOrEmptyString(nr.State),
-		"privatePoolV1Config": dcl.ValueOrEmptyString(nr.PrivatePoolV1Config),
-		"etag":                dcl.ValueOrEmptyString(nr.Etag),
-		"workerConfig":        dcl.ValueOrEmptyString(nr.WorkerConfig),
-		"networkConfig":       dcl.ValueOrEmptyString(nr.NetworkConfig),
-		"project":             dcl.ValueOrEmptyString(nr.Project),
-		"location":            dcl.ValueOrEmptyString(nr.Location),
+		"name":                   dcl.ValueOrEmptyString(nr.Name),
+		"display_name":           dcl.ValueOrEmptyString(nr.DisplayName),
+		"uid":                    dcl.ValueOrEmptyString(nr.Uid),
+		"annotations":            dcl.ValueOrEmptyString(nr.Annotations),
+		"create_time":            dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":            dcl.ValueOrEmptyString(nr.UpdateTime),
+		"delete_time":            dcl.ValueOrEmptyString(nr.DeleteTime),
+		"state":                  dcl.ValueOrEmptyString(nr.State),
+		"private_pool_v1_config": dcl.ValueOrEmptyString(nr.PrivatePoolV1Config),
+		"etag":                   dcl.ValueOrEmptyString(nr.Etag),
+		"worker_config":          dcl.ValueOrEmptyString(nr.WorkerConfig),
+		"network_config":         dcl.ValueOrEmptyString(nr.NetworkConfig),
+		"project":                dcl.ValueOrEmptyString(nr.Project),
+		"location":               dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/workerPools/{{name}}", params), nil
 }
@@ -460,7 +466,7 @@ func (c *Client) GetWorkerPool(ctx context.Context, r *WorkerPool) (*WorkerPool,
 		}
 		return nil, err
 	}
-	result, err := unmarshalWorkerPool(b, c)
+	result, err := unmarshalWorkerPool(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -617,7 +623,7 @@ func applyWorkerPoolHelper(c *Client, ctx context.Context, rawDesired *WorkerPoo
 func applyWorkerPoolDiff(c *Client, ctx context.Context, desired *WorkerPool, rawDesired *WorkerPool, ops []workerPoolApiOperation, opts ...dcl.ApplyOption) (*WorkerPool, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetWorkerPool(ctx, desired.urlNormalized())
+	rawNew, err := c.GetWorkerPool(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -630,7 +636,7 @@ func applyWorkerPoolDiff(c *Client, ctx context.Context, desired *WorkerPool, ra
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapWorkerPool(r, c)
+				fullResp, err := unmarshalMapWorkerPool(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

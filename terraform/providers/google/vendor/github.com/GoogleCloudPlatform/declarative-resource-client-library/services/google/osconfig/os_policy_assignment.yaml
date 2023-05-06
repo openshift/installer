@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,19 +23,19 @@ paths:
   get:
     description: The function used to get information about a OSPolicyAssignment
     parameters:
-    - name: OSPolicyAssignment
+    - name: oSPolicyAssignment
       required: true
       description: A full instance of a OSPolicyAssignment
   apply:
     description: The function used to apply information about a OSPolicyAssignment
     parameters:
-    - name: OSPolicyAssignment
+    - name: oSPolicyAssignment
       required: true
       description: A full instance of a OSPolicyAssignment
   delete:
     description: The function used to delete a OSPolicyAssignment
     parameters:
-    - name: OSPolicyAssignment
+    - name: oSPolicyAssignment
       required: true
       description: A full instance of a OSPolicyAssignment
   deleteAll:
@@ -62,115 +62,16 @@ paths:
         type: string
 components:
   schemas:
-    Exec:
-      x-dcl-has-iam: false
-      type: object
-      x-dcl-go-name: Validate
-      x-dcl-go-type: OSPolicyAssignmentExec
-      description: Required. What to run to validate this resource is in the desired
-        state. An exit code of 100 indicates "in desired state", and exit code of
-        101 indicates "not in desired state". Any other exit code indicates a failure
-        running validate.
-      required:
-      - interpreter
-      properties:
-        args:
-          type: array
-          x-dcl-go-name: Args
-          description: Optional arguments to pass to the source during execution.
-          x-dcl-send-empty: true
-          x-dcl-list-type: list
-          items:
-            type: string
-            x-dcl-go-type: string
-        file:
-          $ref: '#/components/schemas/File'
-          x-dcl-go-name: File
-        interpreter:
-          type: string
-          x-dcl-go-name: Interpreter
-          x-dcl-go-type: OSPolicyAssignmentExecInterpreterEnum
-          description: 'Required. The script interpreter to use. Possible values:
-            INTERPRETER_UNSPECIFIED, NONE, SHELL, POWERSHELL'
-          enum:
-          - INTERPRETER_UNSPECIFIED
-          - NONE
-          - SHELL
-          - POWERSHELL
-        outputFilePath:
-          type: string
-          x-dcl-go-name: OutputFilePath
-          description: Only recorded for enforce Exec. Path to an output file (that
-            is created by this Exec) whose content will be recorded in OSPolicyResourceCompliance
-            after a successful run. Absence or failure to read this file will result
-            in this ExecResource being non-compliant. Output file size is limited
-            to 100K bytes.
-        script:
-          type: string
-          x-dcl-go-name: Script
-          description: An inline script. The size of the script is limited to 1024
-            characters.
-    File:
-      x-dcl-has-iam: false
-      type: object
-      x-dcl-go-name: Source
-      x-dcl-go-type: OSPolicyAssignmentFile
-      description: Required. A deb package.
-      properties:
-        allowInsecure:
-          type: boolean
-          x-dcl-go-name: AllowInsecure
-          description: 'Defaults to false. When false, files are subject to validations
-            based on the file type: Remote: A checksum must be specified. Cloud Storage:
-            An object generation number must be specified.'
-        gcs:
-          type: object
-          x-dcl-go-name: Gcs
-          x-dcl-go-type: OSPolicyAssignmentFileGcs
-          description: A Cloud Storage object.
-          required:
-          - bucket
-          - object
-          properties:
-            bucket:
-              type: string
-              x-dcl-go-name: Bucket
-              description: Required. Bucket of the Cloud Storage object.
-            generation:
-              type: integer
-              format: int64
-              x-dcl-go-name: Generation
-              description: Generation number of the Cloud Storage object.
-            object:
-              type: string
-              x-dcl-go-name: Object
-              description: Required. Name of the Cloud Storage object.
-        localPath:
-          type: string
-          x-dcl-go-name: LocalPath
-          description: A local path within the VM to use.
-        remote:
-          type: object
-          x-dcl-go-name: Remote
-          x-dcl-go-type: OSPolicyAssignmentFileRemote
-          description: A generic remote file.
-          required:
-          - uri
-          properties:
-            sha256Checksum:
-              type: string
-              x-dcl-go-name: Sha256Checksum
-              description: SHA256 checksum of the remote file.
-            uri:
-              type: string
-              x-dcl-go-name: Uri
-              description: Required. URI from which to fetch the object. It should
-                contain both the protocol and path following the format `{protocol}://{location}`.
     OSPolicyAssignment:
       title: OSPolicyAssignment
       x-dcl-id: projects/{{project}}/locations/{{location}}/osPolicyAssignments/{{name}}
+      x-dcl-uses-state-hint: true
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -406,20 +307,273 @@ components:
                             x-dcl-go-name: Exec
                             x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec
                             description: Exec resource
+                            x-dcl-conflicts:
+                            - pkg
+                            - repository
+                            - file
                             required:
                             - validate
                             properties:
                               enforce:
-                                $ref: '#/components/schemas/Exec'
+                                type: object
                                 x-dcl-go-name: Enforce
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce
+                                description: What to run to bring this resource into
+                                  the desired state. An exit code of 100 indicates
+                                  "success", any other exit code indicates a failure
+                                  running enforce.
+                                required:
+                                - interpreter
+                                properties:
+                                  args:
+                                    type: array
+                                    x-dcl-go-name: Args
+                                    description: Optional arguments to pass to the
+                                      source during execution.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  file:
+                                    type: object
+                                    x-dcl-go-name: File
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile
+                                    description: A remote or local file.
+                                    x-dcl-conflicts:
+                                    - script
+                                    properties:
+                                      allowInsecure:
+                                        type: boolean
+                                        x-dcl-go-name: AllowInsecure
+                                        description: 'Defaults to false. When false,
+                                          files are subject to validations based on
+                                          the file type: Remote: A checksum must be
+                                          specified. Cloud Storage: An object generation
+                                          number must be specified.'
+                                      gcs:
+                                        type: object
+                                        x-dcl-go-name: Gcs
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs
+                                        description: A Cloud Storage object.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - localPath
+                                        required:
+                                        - bucket
+                                        - object
+                                        properties:
+                                          bucket:
+                                            type: string
+                                            x-dcl-go-name: Bucket
+                                            description: Required. Bucket of the Cloud
+                                              Storage object.
+                                          generation:
+                                            type: integer
+                                            format: int64
+                                            x-dcl-go-name: Generation
+                                            description: Generation number of the
+                                              Cloud Storage object.
+                                          object:
+                                            type: string
+                                            x-dcl-go-name: Object
+                                            description: Required. Name of the Cloud
+                                              Storage object.
+                                      localPath:
+                                        type: string
+                                        x-dcl-go-name: LocalPath
+                                        description: A local path within the VM to
+                                          use.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - gcs
+                                      remote:
+                                        type: object
+                                        x-dcl-go-name: Remote
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote
+                                        description: A generic remote file.
+                                        x-dcl-conflicts:
+                                        - gcs
+                                        - localPath
+                                        required:
+                                        - uri
+                                        properties:
+                                          sha256Checksum:
+                                            type: string
+                                            x-dcl-go-name: Sha256Checksum
+                                            description: SHA256 checksum of the remote
+                                              file.
+                                          uri:
+                                            type: string
+                                            x-dcl-go-name: Uri
+                                            description: Required. URI from which
+                                              to fetch the object. It should contain
+                                              both the protocol and path following
+                                              the format `{protocol}://{location}`.
+                                  interpreter:
+                                    type: string
+                                    x-dcl-go-name: Interpreter
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum
+                                    description: 'Required. The script interpreter
+                                      to use. Possible values: INTERPRETER_UNSPECIFIED,
+                                      NONE, SHELL, POWERSHELL'
+                                    enum:
+                                    - INTERPRETER_UNSPECIFIED
+                                    - NONE
+                                    - SHELL
+                                    - POWERSHELL
+                                  outputFilePath:
+                                    type: string
+                                    x-dcl-go-name: OutputFilePath
+                                    description: Only recorded for enforce Exec. Path
+                                      to an output file (that is created by this Exec)
+                                      whose content will be recorded in OSPolicyResourceCompliance
+                                      after a successful run. Absence or failure to
+                                      read this file will result in this ExecResource
+                                      being non-compliant. Output file size is limited
+                                      to 100K bytes.
+                                  script:
+                                    type: string
+                                    x-dcl-go-name: Script
+                                    description: An inline script. The size of the
+                                      script is limited to 1024 characters.
+                                    x-dcl-conflicts:
+                                    - file
                               validate:
-                                $ref: '#/components/schemas/Exec'
+                                type: object
                                 x-dcl-go-name: Validate
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate
+                                description: Required. What to run to validate this
+                                  resource is in the desired state. An exit code of
+                                  100 indicates "in desired state", and exit code
+                                  of 101 indicates "not in desired state". Any other
+                                  exit code indicates a failure running validate.
+                                required:
+                                - interpreter
+                                properties:
+                                  args:
+                                    type: array
+                                    x-dcl-go-name: Args
+                                    description: Optional arguments to pass to the
+                                      source during execution.
+                                    x-dcl-send-empty: true
+                                    x-dcl-list-type: list
+                                    items:
+                                      type: string
+                                      x-dcl-go-type: string
+                                  file:
+                                    type: object
+                                    x-dcl-go-name: File
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile
+                                    description: A remote or local file.
+                                    x-dcl-conflicts:
+                                    - script
+                                    properties:
+                                      allowInsecure:
+                                        type: boolean
+                                        x-dcl-go-name: AllowInsecure
+                                        description: 'Defaults to false. When false,
+                                          files are subject to validations based on
+                                          the file type: Remote: A checksum must be
+                                          specified. Cloud Storage: An object generation
+                                          number must be specified.'
+                                      gcs:
+                                        type: object
+                                        x-dcl-go-name: Gcs
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs
+                                        description: A Cloud Storage object.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - localPath
+                                        required:
+                                        - bucket
+                                        - object
+                                        properties:
+                                          bucket:
+                                            type: string
+                                            x-dcl-go-name: Bucket
+                                            description: Required. Bucket of the Cloud
+                                              Storage object.
+                                          generation:
+                                            type: integer
+                                            format: int64
+                                            x-dcl-go-name: Generation
+                                            description: Generation number of the
+                                              Cloud Storage object.
+                                          object:
+                                            type: string
+                                            x-dcl-go-name: Object
+                                            description: Required. Name of the Cloud
+                                              Storage object.
+                                      localPath:
+                                        type: string
+                                        x-dcl-go-name: LocalPath
+                                        description: A local path within the VM to
+                                          use.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - gcs
+                                      remote:
+                                        type: object
+                                        x-dcl-go-name: Remote
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote
+                                        description: A generic remote file.
+                                        x-dcl-conflicts:
+                                        - gcs
+                                        - localPath
+                                        required:
+                                        - uri
+                                        properties:
+                                          sha256Checksum:
+                                            type: string
+                                            x-dcl-go-name: Sha256Checksum
+                                            description: SHA256 checksum of the remote
+                                              file.
+                                          uri:
+                                            type: string
+                                            x-dcl-go-name: Uri
+                                            description: Required. URI from which
+                                              to fetch the object. It should contain
+                                              both the protocol and path following
+                                              the format `{protocol}://{location}`.
+                                  interpreter:
+                                    type: string
+                                    x-dcl-go-name: Interpreter
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum
+                                    description: 'Required. The script interpreter
+                                      to use. Possible values: INTERPRETER_UNSPECIFIED,
+                                      NONE, SHELL, POWERSHELL'
+                                    enum:
+                                    - INTERPRETER_UNSPECIFIED
+                                    - NONE
+                                    - SHELL
+                                    - POWERSHELL
+                                  outputFilePath:
+                                    type: string
+                                    x-dcl-go-name: OutputFilePath
+                                    description: Only recorded for enforce Exec. Path
+                                      to an output file (that is created by this Exec)
+                                      whose content will be recorded in OSPolicyResourceCompliance
+                                      after a successful run. Absence or failure to
+                                      read this file will result in this ExecResource
+                                      being non-compliant. Output file size is limited
+                                      to 100K bytes.
+                                  script:
+                                    type: string
+                                    x-dcl-go-name: Script
+                                    description: An inline script. The size of the
+                                      script is limited to 1024 characters.
+                                    x-dcl-conflicts:
+                                    - file
                           file:
                             type: object
                             x-dcl-go-name: File
                             x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile
                             description: File resource
+                            x-dcl-conflicts:
+                            - pkg
+                            - repository
+                            - exec
                             required:
                             - path
                             - state
@@ -429,9 +583,81 @@ components:
                                 x-dcl-go-name: Content
                                 description: A a file with this content. The size
                                   of the content is limited to 1024 characters.
+                                x-dcl-conflicts:
+                                - file
                               file:
-                                $ref: '#/components/schemas/File'
+                                type: object
                                 x-dcl-go-name: File
+                                x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile
+                                description: A remote or local source.
+                                x-dcl-conflicts:
+                                - content
+                                properties:
+                                  allowInsecure:
+                                    type: boolean
+                                    x-dcl-go-name: AllowInsecure
+                                    description: 'Defaults to false. When false, files
+                                      are subject to validations based on the file
+                                      type: Remote: A checksum must be specified.
+                                      Cloud Storage: An object generation number must
+                                      be specified.'
+                                  gcs:
+                                    type: object
+                                    x-dcl-go-name: Gcs
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs
+                                    description: A Cloud Storage object.
+                                    x-dcl-conflicts:
+                                    - remote
+                                    - localPath
+                                    required:
+                                    - bucket
+                                    - object
+                                    properties:
+                                      bucket:
+                                        type: string
+                                        x-dcl-go-name: Bucket
+                                        description: Required. Bucket of the Cloud
+                                          Storage object.
+                                      generation:
+                                        type: integer
+                                        format: int64
+                                        x-dcl-go-name: Generation
+                                        description: Generation number of the Cloud
+                                          Storage object.
+                                      object:
+                                        type: string
+                                        x-dcl-go-name: Object
+                                        description: Required. Name of the Cloud Storage
+                                          object.
+                                  localPath:
+                                    type: string
+                                    x-dcl-go-name: LocalPath
+                                    description: A local path within the VM to use.
+                                    x-dcl-conflicts:
+                                    - remote
+                                    - gcs
+                                  remote:
+                                    type: object
+                                    x-dcl-go-name: Remote
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote
+                                    description: A generic remote file.
+                                    x-dcl-conflicts:
+                                    - gcs
+                                    - localPath
+                                    required:
+                                    - uri
+                                    properties:
+                                      sha256Checksum:
+                                        type: string
+                                        x-dcl-go-name: Sha256Checksum
+                                        description: SHA256 checksum of the remote
+                                          file.
+                                      uri:
+                                        type: string
+                                        x-dcl-go-name: Uri
+                                        description: Required. URI from which to fetch
+                                          the object. It should contain both the protocol
+                                          and path following the format `{protocol}://{location}`.
                               path:
                                 type: string
                                 x-dcl-go-name: Path
@@ -479,6 +705,10 @@ components:
                             x-dcl-go-name: Pkg
                             x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg
                             description: Package resource
+                            x-dcl-conflicts:
+                            - repository
+                            - exec
+                            - file
                             required:
                             - desiredState
                             properties:
@@ -487,6 +717,13 @@ components:
                                 x-dcl-go-name: Apt
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt
                                 description: A package managed by Apt.
+                                x-dcl-conflicts:
+                                - deb
+                                - yum
+                                - zypper
+                                - rpm
+                                - googet
+                                - msi
                                 required:
                                 - name
                                 properties:
@@ -499,6 +736,13 @@ components:
                                 x-dcl-go-name: Deb
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb
                                 description: A deb package file.
+                                x-dcl-conflicts:
+                                - apt
+                                - yum
+                                - zypper
+                                - rpm
+                                - googet
+                                - msi
                                 required:
                                 - source
                                 properties:
@@ -510,8 +754,78 @@ components:
                                       package` - install when true: `apt-get update
                                       && apt-get -y install package.deb`'
                                   source:
-                                    $ref: '#/components/schemas/File'
+                                    type: object
                                     x-dcl-go-name: Source
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource
+                                    description: Required. A deb package.
+                                    properties:
+                                      allowInsecure:
+                                        type: boolean
+                                        x-dcl-go-name: AllowInsecure
+                                        description: 'Defaults to false. When false,
+                                          files are subject to validations based on
+                                          the file type: Remote: A checksum must be
+                                          specified. Cloud Storage: An object generation
+                                          number must be specified.'
+                                      gcs:
+                                        type: object
+                                        x-dcl-go-name: Gcs
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs
+                                        description: A Cloud Storage object.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - localPath
+                                        required:
+                                        - bucket
+                                        - object
+                                        properties:
+                                          bucket:
+                                            type: string
+                                            x-dcl-go-name: Bucket
+                                            description: Required. Bucket of the Cloud
+                                              Storage object.
+                                          generation:
+                                            type: integer
+                                            format: int64
+                                            x-dcl-go-name: Generation
+                                            description: Generation number of the
+                                              Cloud Storage object.
+                                          object:
+                                            type: string
+                                            x-dcl-go-name: Object
+                                            description: Required. Name of the Cloud
+                                              Storage object.
+                                      localPath:
+                                        type: string
+                                        x-dcl-go-name: LocalPath
+                                        description: A local path within the VM to
+                                          use.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - gcs
+                                      remote:
+                                        type: object
+                                        x-dcl-go-name: Remote
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote
+                                        description: A generic remote file.
+                                        x-dcl-conflicts:
+                                        - gcs
+                                        - localPath
+                                        required:
+                                        - uri
+                                        properties:
+                                          sha256Checksum:
+                                            type: string
+                                            x-dcl-go-name: Sha256Checksum
+                                            description: SHA256 checksum of the remote
+                                              file.
+                                          uri:
+                                            type: string
+                                            x-dcl-go-name: Uri
+                                            description: Required. URI from which
+                                              to fetch the object. It should contain
+                                              both the protocol and path following
+                                              the format `{protocol}://{location}`.
                               desiredState:
                                 type: string
                                 x-dcl-go-name: DesiredState
@@ -528,6 +842,13 @@ components:
                                 x-dcl-go-name: Googet
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget
                                 description: A package managed by GooGet.
+                                x-dcl-conflicts:
+                                - apt
+                                - deb
+                                - yum
+                                - zypper
+                                - rpm
+                                - msi
                                 required:
                                 - name
                                 properties:
@@ -540,6 +861,13 @@ components:
                                 x-dcl-go-name: Msi
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi
                                 description: An MSI package.
+                                x-dcl-conflicts:
+                                - apt
+                                - deb
+                                - yum
+                                - zypper
+                                - rpm
+                                - googet
                                 required:
                                 - source
                                 properties:
@@ -556,13 +884,90 @@ components:
                                       type: string
                                       x-dcl-go-type: string
                                   source:
-                                    $ref: '#/components/schemas/File'
+                                    type: object
                                     x-dcl-go-name: Source
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource
+                                    description: Required. The MSI package.
+                                    properties:
+                                      allowInsecure:
+                                        type: boolean
+                                        x-dcl-go-name: AllowInsecure
+                                        description: 'Defaults to false. When false,
+                                          files are subject to validations based on
+                                          the file type: Remote: A checksum must be
+                                          specified. Cloud Storage: An object generation
+                                          number must be specified.'
+                                      gcs:
+                                        type: object
+                                        x-dcl-go-name: Gcs
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs
+                                        description: A Cloud Storage object.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - localPath
+                                        required:
+                                        - bucket
+                                        - object
+                                        properties:
+                                          bucket:
+                                            type: string
+                                            x-dcl-go-name: Bucket
+                                            description: Required. Bucket of the Cloud
+                                              Storage object.
+                                          generation:
+                                            type: integer
+                                            format: int64
+                                            x-dcl-go-name: Generation
+                                            description: Generation number of the
+                                              Cloud Storage object.
+                                          object:
+                                            type: string
+                                            x-dcl-go-name: Object
+                                            description: Required. Name of the Cloud
+                                              Storage object.
+                                      localPath:
+                                        type: string
+                                        x-dcl-go-name: LocalPath
+                                        description: A local path within the VM to
+                                          use.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - gcs
+                                      remote:
+                                        type: object
+                                        x-dcl-go-name: Remote
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote
+                                        description: A generic remote file.
+                                        x-dcl-conflicts:
+                                        - gcs
+                                        - localPath
+                                        required:
+                                        - uri
+                                        properties:
+                                          sha256Checksum:
+                                            type: string
+                                            x-dcl-go-name: Sha256Checksum
+                                            description: SHA256 checksum of the remote
+                                              file.
+                                          uri:
+                                            type: string
+                                            x-dcl-go-name: Uri
+                                            description: Required. URI from which
+                                              to fetch the object. It should contain
+                                              both the protocol and path following
+                                              the format `{protocol}://{location}`.
                               rpm:
                                 type: object
                                 x-dcl-go-name: Rpm
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm
                                 description: An rpm package file.
+                                x-dcl-conflicts:
+                                - apt
+                                - deb
+                                - yum
+                                - zypper
+                                - googet
+                                - msi
                                 required:
                                 - source
                                 properties:
@@ -575,13 +980,90 @@ components:
                                       `yum -y install package.rpm` or `zypper -y install
                                       package.rpm`'
                                   source:
-                                    $ref: '#/components/schemas/File'
+                                    type: object
                                     x-dcl-go-name: Source
+                                    x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource
+                                    description: Required. An rpm package.
+                                    properties:
+                                      allowInsecure:
+                                        type: boolean
+                                        x-dcl-go-name: AllowInsecure
+                                        description: 'Defaults to false. When false,
+                                          files are subject to validations based on
+                                          the file type: Remote: A checksum must be
+                                          specified. Cloud Storage: An object generation
+                                          number must be specified.'
+                                      gcs:
+                                        type: object
+                                        x-dcl-go-name: Gcs
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs
+                                        description: A Cloud Storage object.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - localPath
+                                        required:
+                                        - bucket
+                                        - object
+                                        properties:
+                                          bucket:
+                                            type: string
+                                            x-dcl-go-name: Bucket
+                                            description: Required. Bucket of the Cloud
+                                              Storage object.
+                                          generation:
+                                            type: integer
+                                            format: int64
+                                            x-dcl-go-name: Generation
+                                            description: Generation number of the
+                                              Cloud Storage object.
+                                          object:
+                                            type: string
+                                            x-dcl-go-name: Object
+                                            description: Required. Name of the Cloud
+                                              Storage object.
+                                      localPath:
+                                        type: string
+                                        x-dcl-go-name: LocalPath
+                                        description: A local path within the VM to
+                                          use.
+                                        x-dcl-conflicts:
+                                        - remote
+                                        - gcs
+                                      remote:
+                                        type: object
+                                        x-dcl-go-name: Remote
+                                        x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote
+                                        description: A generic remote file.
+                                        x-dcl-conflicts:
+                                        - gcs
+                                        - localPath
+                                        required:
+                                        - uri
+                                        properties:
+                                          sha256Checksum:
+                                            type: string
+                                            x-dcl-go-name: Sha256Checksum
+                                            description: SHA256 checksum of the remote
+                                              file.
+                                          uri:
+                                            type: string
+                                            x-dcl-go-name: Uri
+                                            description: Required. URI from which
+                                              to fetch the object. It should contain
+                                              both the protocol and path following
+                                              the format `{protocol}://{location}`.
                               yum:
                                 type: object
                                 x-dcl-go-name: Yum
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum
                                 description: A package managed by YUM.
+                                x-dcl-conflicts:
+                                - apt
+                                - deb
+                                - zypper
+                                - rpm
+                                - googet
+                                - msi
                                 required:
                                 - name
                                 properties:
@@ -594,6 +1076,13 @@ components:
                                 x-dcl-go-name: Zypper
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
                                 description: A package managed by Zypper.
+                                x-dcl-conflicts:
+                                - apt
+                                - deb
+                                - yum
+                                - rpm
+                                - googet
+                                - msi
                                 required:
                                 - name
                                 properties:
@@ -606,12 +1095,20 @@ components:
                             x-dcl-go-name: Repository
                             x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository
                             description: Package repository resource
+                            x-dcl-conflicts:
+                            - pkg
+                            - exec
+                            - file
                             properties:
                               apt:
                                 type: object
                                 x-dcl-go-name: Apt
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt
                                 description: An Apt Repository.
+                                x-dcl-conflicts:
+                                - yum
+                                - zypper
+                                - goo
                                 required:
                                 - archiveType
                                 - uri
@@ -657,6 +1154,10 @@ components:
                                 x-dcl-go-name: Goo
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo
                                 description: A Goo Repository.
+                                x-dcl-conflicts:
+                                - apt
+                                - yum
+                                - zypper
                                 required:
                                 - name
                                 - url
@@ -674,6 +1175,10 @@ components:
                                 x-dcl-go-name: Yum
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum
                                 description: A Yum Repository.
+                                x-dcl-conflicts:
+                                - apt
+                                - zypper
+                                - goo
                                 required:
                                 - id
                                 - baseUrl
@@ -710,6 +1215,10 @@ components:
                                 x-dcl-go-name: Zypper
                                 x-dcl-go-type: OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper
                                 description: A Zypper Repository.
+                                x-dcl-conflicts:
+                                - apt
+                                - yum
+                                - goo
                                 required:
                                 - id
                                 - baseUrl
@@ -797,12 +1306,16 @@ components:
                   format: int64
                   x-dcl-go-name: Fixed
                   description: Specifies a fixed value.
+                  x-dcl-conflicts:
+                  - percent
                 percent:
                   type: integer
                   format: int64
                   x-dcl-go-name: Percent
                   description: Specifies the relative value defined as a percentage,
                     which will be multiplied by a reference value.
+                  x-dcl-conflicts:
+                  - fixed
             minWaitDuration:
               type: string
               x-dcl-go-name: MinWaitDuration
@@ -825,6 +1338,12 @@ components:
           - CANCELLING
           - CANCELLED
           - SUCCEEDED
+        skipAwaitRollout:
+          type: boolean
+          x-dcl-go-name: SkipAwaitRollout
+          description: Set to true to skip awaiting rollout during resource creation
+            and update.
+          x-dcl-mutable-unreadable: true
         uid:
           type: string
           x-dcl-go-name: Uid

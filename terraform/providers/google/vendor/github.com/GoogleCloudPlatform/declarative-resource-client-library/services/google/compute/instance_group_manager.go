@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -246,8 +246,8 @@ func (r *InstanceGroupManagerDistributionPolicy) UnmarshalJSON(data []byte) erro
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerDistributionPolicy is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerDistributionPolicy *InstanceGroupManagerDistributionPolicy = &InstanceGroupManagerDistributionPolicy{empty: true}
 
 func (r *InstanceGroupManagerDistributionPolicy) Empty() bool {
@@ -292,8 +292,8 @@ func (r *InstanceGroupManagerDistributionPolicyZones) UnmarshalJSON(data []byte)
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerDistributionPolicyZones is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerDistributionPolicyZones *InstanceGroupManagerDistributionPolicyZones = &InstanceGroupManagerDistributionPolicyZones{empty: true}
 
 func (r *InstanceGroupManagerDistributionPolicyZones) Empty() bool {
@@ -312,10 +312,10 @@ func (r *InstanceGroupManagerDistributionPolicyZones) HashCode() string {
 }
 
 type InstanceGroupManagerVersions struct {
-	empty            bool                                `json:"-"`
-	Name             *string                             `json:"name"`
-	InstanceTemplate *string                             `json:"instanceTemplate"`
-	TargetSize       *InstanceGroupManagerFixedOrPercent `json:"targetSize"`
+	empty            bool                                    `json:"-"`
+	Name             *string                                 `json:"name"`
+	InstanceTemplate *string                                 `json:"instanceTemplate"`
+	TargetSize       *InstanceGroupManagerVersionsTargetSize `json:"targetSize"`
 }
 
 type jsonInstanceGroupManagerVersions InstanceGroupManagerVersions
@@ -344,8 +344,8 @@ func (r *InstanceGroupManagerVersions) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerVersions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerVersions *InstanceGroupManagerVersions = &InstanceGroupManagerVersions{empty: true}
 
 func (r *InstanceGroupManagerVersions) Empty() bool {
@@ -363,17 +363,17 @@ func (r *InstanceGroupManagerVersions) HashCode() string {
 	return fmt.Sprintf("%x", hash)
 }
 
-type InstanceGroupManagerFixedOrPercent struct {
+type InstanceGroupManagerVersionsTargetSize struct {
 	empty      bool   `json:"-"`
 	Fixed      *int64 `json:"fixed"`
 	Percent    *int64 `json:"percent"`
 	Calculated *int64 `json:"calculated"`
 }
 
-type jsonInstanceGroupManagerFixedOrPercent InstanceGroupManagerFixedOrPercent
+type jsonInstanceGroupManagerVersionsTargetSize InstanceGroupManagerVersionsTargetSize
 
-func (r *InstanceGroupManagerFixedOrPercent) UnmarshalJSON(data []byte) error {
-	var res jsonInstanceGroupManagerFixedOrPercent
+func (r *InstanceGroupManagerVersionsTargetSize) UnmarshalJSON(data []byte) error {
+	var res jsonInstanceGroupManagerVersionsTargetSize
 	if err := json.Unmarshal(data, &res); err != nil {
 		return err
 	}
@@ -382,7 +382,7 @@ func (r *InstanceGroupManagerFixedOrPercent) UnmarshalJSON(data []byte) error {
 	json.Unmarshal(data, &m)
 
 	if len(m) == 0 {
-		*r = *EmptyInstanceGroupManagerFixedOrPercent
+		*r = *EmptyInstanceGroupManagerVersionsTargetSize
 	} else {
 
 		r.Fixed = res.Fixed
@@ -395,20 +395,20 @@ func (r *InstanceGroupManagerFixedOrPercent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// This object is used to assert a desired state where this InstanceGroupManagerFixedOrPercent is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
-var EmptyInstanceGroupManagerFixedOrPercent *InstanceGroupManagerFixedOrPercent = &InstanceGroupManagerFixedOrPercent{empty: true}
+// This object is used to assert a desired state where this InstanceGroupManagerVersionsTargetSize is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyInstanceGroupManagerVersionsTargetSize *InstanceGroupManagerVersionsTargetSize = &InstanceGroupManagerVersionsTargetSize{empty: true}
 
-func (r *InstanceGroupManagerFixedOrPercent) Empty() bool {
+func (r *InstanceGroupManagerVersionsTargetSize) Empty() bool {
 	return r.empty
 }
 
-func (r *InstanceGroupManagerFixedOrPercent) String() string {
+func (r *InstanceGroupManagerVersionsTargetSize) String() string {
 	return dcl.SprintResource(r)
 }
 
-func (r *InstanceGroupManagerFixedOrPercent) HashCode() string {
+func (r *InstanceGroupManagerVersionsTargetSize) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))
@@ -466,8 +466,8 @@ func (r *InstanceGroupManagerCurrentActions) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerCurrentActions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerCurrentActions *InstanceGroupManagerCurrentActions = &InstanceGroupManagerCurrentActions{empty: true}
 
 func (r *InstanceGroupManagerCurrentActions) Empty() bool {
@@ -521,8 +521,8 @@ func (r *InstanceGroupManagerStatus) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatus is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatus *InstanceGroupManagerStatus = &InstanceGroupManagerStatus{empty: true}
 
 func (r *InstanceGroupManagerStatus) Empty() bool {
@@ -567,8 +567,8 @@ func (r *InstanceGroupManagerStatusVersionTarget) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatusVersionTarget is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatusVersionTarget *InstanceGroupManagerStatusVersionTarget = &InstanceGroupManagerStatusVersionTarget{empty: true}
 
 func (r *InstanceGroupManagerStatusVersionTarget) Empty() bool {
@@ -616,8 +616,8 @@ func (r *InstanceGroupManagerStatusStateful) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatusStateful is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatusStateful *InstanceGroupManagerStatusStateful = &InstanceGroupManagerStatusStateful{empty: true}
 
 func (r *InstanceGroupManagerStatusStateful) Empty() bool {
@@ -662,8 +662,8 @@ func (r *InstanceGroupManagerStatusStatefulPerInstanceConfigs) UnmarshalJSON(dat
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatusStatefulPerInstanceConfigs is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatusStatefulPerInstanceConfigs *InstanceGroupManagerStatusStatefulPerInstanceConfigs = &InstanceGroupManagerStatusStatefulPerInstanceConfigs{empty: true}
 
 func (r *InstanceGroupManagerStatusStatefulPerInstanceConfigs) Empty() bool {
@@ -711,8 +711,8 @@ func (r *InstanceGroupManagerAutoHealingPolicies) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerAutoHealingPolicies is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerAutoHealingPolicies *InstanceGroupManagerAutoHealingPolicies = &InstanceGroupManagerAutoHealingPolicies{empty: true}
 
 func (r *InstanceGroupManagerAutoHealingPolicies) Empty() bool {
@@ -735,8 +735,8 @@ type InstanceGroupManagerUpdatePolicy struct {
 	Type                       *InstanceGroupManagerUpdatePolicyTypeEnum                       `json:"type"`
 	InstanceRedistributionType *InstanceGroupManagerUpdatePolicyInstanceRedistributionTypeEnum `json:"instanceRedistributionType"`
 	MinimalAction              *InstanceGroupManagerUpdatePolicyMinimalActionEnum              `json:"minimalAction"`
-	MaxSurge                   *InstanceGroupManagerFixedOrPercent                             `json:"maxSurge"`
-	MaxUnavailable             *InstanceGroupManagerFixedOrPercent                             `json:"maxUnavailable"`
+	MaxSurge                   *InstanceGroupManagerUpdatePolicyMaxSurge                       `json:"maxSurge"`
+	MaxUnavailable             *InstanceGroupManagerUpdatePolicyMaxUnavailable                 `json:"maxUnavailable"`
 	ReplacementMethod          *InstanceGroupManagerUpdatePolicyReplacementMethodEnum          `json:"replacementMethod"`
 }
 
@@ -772,8 +772,8 @@ func (r *InstanceGroupManagerUpdatePolicy) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerUpdatePolicy is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerUpdatePolicy *InstanceGroupManagerUpdatePolicy = &InstanceGroupManagerUpdatePolicy{empty: true}
 
 func (r *InstanceGroupManagerUpdatePolicy) Empty() bool {
@@ -785,6 +785,110 @@ func (r *InstanceGroupManagerUpdatePolicy) String() string {
 }
 
 func (r *InstanceGroupManagerUpdatePolicy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type InstanceGroupManagerUpdatePolicyMaxSurge struct {
+	empty      bool   `json:"-"`
+	Fixed      *int64 `json:"fixed"`
+	Percent    *int64 `json:"percent"`
+	Calculated *int64 `json:"calculated"`
+}
+
+type jsonInstanceGroupManagerUpdatePolicyMaxSurge InstanceGroupManagerUpdatePolicyMaxSurge
+
+func (r *InstanceGroupManagerUpdatePolicyMaxSurge) UnmarshalJSON(data []byte) error {
+	var res jsonInstanceGroupManagerUpdatePolicyMaxSurge
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyInstanceGroupManagerUpdatePolicyMaxSurge
+	} else {
+
+		r.Fixed = res.Fixed
+
+		r.Percent = res.Percent
+
+		r.Calculated = res.Calculated
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this InstanceGroupManagerUpdatePolicyMaxSurge is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyInstanceGroupManagerUpdatePolicyMaxSurge *InstanceGroupManagerUpdatePolicyMaxSurge = &InstanceGroupManagerUpdatePolicyMaxSurge{empty: true}
+
+func (r *InstanceGroupManagerUpdatePolicyMaxSurge) Empty() bool {
+	return r.empty
+}
+
+func (r *InstanceGroupManagerUpdatePolicyMaxSurge) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *InstanceGroupManagerUpdatePolicyMaxSurge) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type InstanceGroupManagerUpdatePolicyMaxUnavailable struct {
+	empty      bool   `json:"-"`
+	Fixed      *int64 `json:"fixed"`
+	Percent    *int64 `json:"percent"`
+	Calculated *int64 `json:"calculated"`
+}
+
+type jsonInstanceGroupManagerUpdatePolicyMaxUnavailable InstanceGroupManagerUpdatePolicyMaxUnavailable
+
+func (r *InstanceGroupManagerUpdatePolicyMaxUnavailable) UnmarshalJSON(data []byte) error {
+	var res jsonInstanceGroupManagerUpdatePolicyMaxUnavailable
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyInstanceGroupManagerUpdatePolicyMaxUnavailable
+	} else {
+
+		r.Fixed = res.Fixed
+
+		r.Percent = res.Percent
+
+		r.Calculated = res.Calculated
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this InstanceGroupManagerUpdatePolicyMaxUnavailable is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyInstanceGroupManagerUpdatePolicyMaxUnavailable *InstanceGroupManagerUpdatePolicyMaxUnavailable = &InstanceGroupManagerUpdatePolicyMaxUnavailable{empty: true}
+
+func (r *InstanceGroupManagerUpdatePolicyMaxUnavailable) Empty() bool {
+	return r.empty
+}
+
+func (r *InstanceGroupManagerUpdatePolicyMaxUnavailable) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *InstanceGroupManagerUpdatePolicyMaxUnavailable) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))
@@ -821,8 +925,8 @@ func (r *InstanceGroupManagerNamedPorts) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerNamedPorts is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerNamedPorts *InstanceGroupManagerNamedPorts = &InstanceGroupManagerNamedPorts{empty: true}
 
 func (r *InstanceGroupManagerNamedPorts) Empty() bool {
@@ -867,8 +971,8 @@ func (r *InstanceGroupManagerStatefulPolicy) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatefulPolicy is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatefulPolicy *InstanceGroupManagerStatefulPolicy = &InstanceGroupManagerStatefulPolicy{empty: true}
 
 func (r *InstanceGroupManagerStatefulPolicy) Empty() bool {
@@ -913,8 +1017,8 @@ func (r *InstanceGroupManagerStatefulPolicyPreservedState) UnmarshalJSON(data []
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatefulPolicyPreservedState is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatefulPolicyPreservedState *InstanceGroupManagerStatefulPolicyPreservedState = &InstanceGroupManagerStatefulPolicyPreservedState{empty: true}
 
 func (r *InstanceGroupManagerStatefulPolicyPreservedState) Empty() bool {
@@ -959,8 +1063,8 @@ func (r *InstanceGroupManagerStatefulPolicyPreservedStateDisks) UnmarshalJSON(da
 }
 
 // This object is used to assert a desired state where this InstanceGroupManagerStatefulPolicyPreservedStateDisks is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGroupManagerStatefulPolicyPreservedStateDisks *InstanceGroupManagerStatefulPolicyPreservedStateDisks = &InstanceGroupManagerStatefulPolicyPreservedStateDisks{empty: true}
 
 func (r *InstanceGroupManagerStatefulPolicyPreservedStateDisks) Empty() bool {
@@ -994,30 +1098,38 @@ func (r *InstanceGroupManager) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"id":                  dcl.ValueOrEmptyString(nr.Id),
-		"creationTimestamp":   dcl.ValueOrEmptyString(nr.CreationTimestamp),
-		"name":                dcl.ValueOrEmptyString(nr.Name),
-		"description":         dcl.ValueOrEmptyString(nr.Description),
-		"zone":                dcl.ValueOrEmptyString(nr.Zone),
-		"region":              dcl.ValueOrEmptyString(nr.Region),
-		"distributionPolicy":  dcl.ValueOrEmptyString(nr.DistributionPolicy),
-		"instanceTemplate":    dcl.ValueOrEmptyString(nr.InstanceTemplate),
-		"versions":            dcl.ValueOrEmptyString(nr.Versions),
-		"instanceGroup":       dcl.ValueOrEmptyString(nr.InstanceGroup),
-		"targetPools":         dcl.ValueOrEmptyString(nr.TargetPools),
-		"baseInstanceName":    dcl.ValueOrEmptyString(nr.BaseInstanceName),
-		"fingerprint":         dcl.ValueOrEmptyString(nr.Fingerprint),
-		"currentActions":      dcl.ValueOrEmptyString(nr.CurrentActions),
-		"status":              dcl.ValueOrEmptyString(nr.Status),
-		"targetSize":          dcl.ValueOrEmptyString(nr.TargetSize),
-		"selfLink":            dcl.ValueOrEmptyString(nr.SelfLink),
-		"autoHealingPolicies": dcl.ValueOrEmptyString(nr.AutoHealingPolicies),
-		"updatePolicy":        dcl.ValueOrEmptyString(nr.UpdatePolicy),
-		"namedPorts":          dcl.ValueOrEmptyString(nr.NamedPorts),
-		"statefulPolicy":      dcl.ValueOrEmptyString(nr.StatefulPolicy),
-		"project":             dcl.ValueOrEmptyString(nr.Project),
-		"location":            dcl.ValueOrEmptyString(nr.Location),
+		"id":                    dcl.ValueOrEmptyString(nr.Id),
+		"creation_timestamp":    dcl.ValueOrEmptyString(nr.CreationTimestamp),
+		"name":                  dcl.ValueOrEmptyString(nr.Name),
+		"description":           dcl.ValueOrEmptyString(nr.Description),
+		"zone":                  dcl.ValueOrEmptyString(nr.Zone),
+		"region":                dcl.ValueOrEmptyString(nr.Region),
+		"distribution_policy":   dcl.ValueOrEmptyString(nr.DistributionPolicy),
+		"instance_template":     dcl.ValueOrEmptyString(nr.InstanceTemplate),
+		"versions":              dcl.ValueOrEmptyString(nr.Versions),
+		"instance_group":        dcl.ValueOrEmptyString(nr.InstanceGroup),
+		"target_pools":          dcl.ValueOrEmptyString(nr.TargetPools),
+		"base_instance_name":    dcl.ValueOrEmptyString(nr.BaseInstanceName),
+		"fingerprint":           dcl.ValueOrEmptyString(nr.Fingerprint),
+		"current_actions":       dcl.ValueOrEmptyString(nr.CurrentActions),
+		"status":                dcl.ValueOrEmptyString(nr.Status),
+		"target_size":           dcl.ValueOrEmptyString(nr.TargetSize),
+		"self_link":             dcl.ValueOrEmptyString(nr.SelfLink),
+		"auto_healing_policies": dcl.ValueOrEmptyString(nr.AutoHealingPolicies),
+		"update_policy":         dcl.ValueOrEmptyString(nr.UpdatePolicy),
+		"named_ports":           dcl.ValueOrEmptyString(nr.NamedPorts),
+		"stateful_policy":       dcl.ValueOrEmptyString(nr.StatefulPolicy),
+		"project":               dcl.ValueOrEmptyString(nr.Project),
+		"location":              dcl.ValueOrEmptyString(nr.Location),
 	}
+	if dcl.IsRegion(nr.Location) {
+		return dcl.Nprintf("projects/{{project}}/regions/{{location}}/instanceGroupManagers/{{name}}", params), nil
+	}
+
+	if dcl.IsZone(nr.Location) {
+		return dcl.Nprintf("projects/{{project}}/zones/{{location}}/instanceGroupManagers/{{name}}", params), nil
+	}
+
 	return dcl.Nprintf("", params), nil
 }
 
@@ -1117,7 +1229,7 @@ func (c *Client) GetInstanceGroupManager(ctx context.Context, r *InstanceGroupMa
 		}
 		return nil, err
 	}
-	result, err := unmarshalInstanceGroupManager(b, c)
+	result, err := unmarshalInstanceGroupManager(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -1288,7 +1400,7 @@ func applyInstanceGroupManagerHelper(c *Client, ctx context.Context, rawDesired 
 func applyInstanceGroupManagerDiff(c *Client, ctx context.Context, desired *InstanceGroupManager, rawDesired *InstanceGroupManager, ops []instanceGroupManagerApiOperation, opts ...dcl.ApplyOption) (*InstanceGroupManager, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetInstanceGroupManager(ctx, desired.urlNormalized())
+	rawNew, err := c.GetInstanceGroupManager(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -1301,7 +1413,7 @@ func applyInstanceGroupManagerDiff(c *Client, ctx context.Context, desired *Inst
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapInstanceGroupManager(r, c)
+				fullResp, err := unmarshalMapInstanceGroupManager(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

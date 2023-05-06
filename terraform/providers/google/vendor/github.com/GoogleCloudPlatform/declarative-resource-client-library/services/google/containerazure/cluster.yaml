@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -26,19 +26,19 @@ paths:
   get:
     description: The function used to get information about a Cluster
     parameters:
-    - name: Cluster
+    - name: cluster
       required: true
       description: A full instance of a Cluster
   apply:
     description: The function used to apply information about a Cluster
     parameters:
-    - name: Cluster
+    - name: cluster
       required: true
       description: A full instance of a Cluster
   delete:
     description: The function used to delete a Cluster
     parameters:
-    - name: Cluster
+    - name: cluster
       required: true
       description: A full instance of a Cluster
   deleteAll:
@@ -69,13 +69,16 @@ components:
       title: Cluster
       x-dcl-id: projects/{{project}}/locations/{{location}}/azureClusters/{{name}}
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
       - azureRegion
       - resourceGroupId
-      - client
       - networking
       - controlPlane
       - authorization
@@ -99,19 +102,17 @@ components:
           type: object
           x-dcl-go-name: Authorization
           x-dcl-go-type: ClusterAuthorization
-          description: Required. Configuration related to the cluster RBAC settings.
-          x-kubernetes-immutable: true
+          description: Configuration related to the cluster RBAC settings.
           required:
           - adminUsers
           properties:
             adminUsers:
               type: array
               x-dcl-go-name: AdminUsers
-              description: Required. Users that can perform operations as a cluster
-                admin. A new ClusterRoleBinding will be created to grant the cluster-admin
-                ClusterRole to the users. At most one user can be specified. For more
-                info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
-              x-kubernetes-immutable: true
+              description: Users that can perform operations as a cluster admin. A
+                new ClusterRoleBinding will be created to grant the cluster-admin
+                ClusterRole to the users. Up to ten admin users can be provided. For
+                more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles
               x-dcl-send-empty: true
               x-dcl-list-type: list
               items:
@@ -123,23 +124,46 @@ components:
                   username:
                     type: string
                     x-dcl-go-name: Username
-                    description: Required. The name of the user, e.g. `my-gcp-id@gmail.com`.
-                    x-kubernetes-immutable: true
+                    description: The name of the user, e.g. `my-gcp-id@gmail.com`.
         azureRegion:
           type: string
           x-dcl-go-name: AzureRegion
-          description: Required. The Azure region where the cluster runs. Each Google
-            Cloud region supports a subset of nearby Azure regions. You can call to
-            list all supported Azure regions within a given Google Cloud region.
+          description: The Azure region where the cluster runs. Each Google Cloud
+            region supports a subset of nearby Azure regions. You can call to list
+            all supported Azure regions within a given Google Cloud region.
           x-kubernetes-immutable: true
+        azureServicesAuthentication:
+          type: object
+          x-dcl-go-name: AzureServicesAuthentication
+          x-dcl-go-type: ClusterAzureServicesAuthentication
+          description: Azure authentication configuration for management of Azure
+            resources
+          x-dcl-conflicts:
+          - client
+          required:
+          - tenantId
+          - applicationId
+          properties:
+            applicationId:
+              type: string
+              x-dcl-go-name: ApplicationId
+              description: The Azure Active Directory Application ID for Authentication
+                configuration.
+            tenantId:
+              type: string
+              x-dcl-go-name: TenantId
+              description: The Azure Active Directory Tenant ID for Authentication
+                configuration.
         client:
           type: string
           x-dcl-go-name: Client
-          description: Required. Name of the AzureClient. The `AzureClient` resource
-            must reside on the same GCP project and region as the `AzureCluster`.
-            `AzureClient` names are formatted as `projects/<project-number>/locations/<region>/azureClients/<client-id>`.
+          description: Name of the AzureClient. The `AzureClient` resource must reside
+            on the same GCP project and region as the `AzureCluster`. `AzureClient`
+            names are formatted as `projects/<project-number>/locations/<region>/azureClients/<client-id>`.
             See Resource Names (https:cloud.google.com/apis/design/resource_names)
             for more details on Google Cloud resource names.
+          x-dcl-conflicts:
+          - azureServicesAuthentication
           x-dcl-references:
           - resource: ContainerAzure/AzureClient
             field: name
@@ -147,7 +171,7 @@ components:
           type: object
           x-dcl-go-name: ControlPlane
           x-dcl-go-type: ClusterControlPlane
-          description: Required. Configuration related to the cluster control plane.
+          description: Configuration related to the cluster control plane.
           required:
           - version
           - subnetId
@@ -266,24 +290,22 @@ components:
               type: object
               x-dcl-go-name: SshConfig
               x-dcl-go-type: ClusterControlPlaneSshConfig
-              description: Required. SSH configuration for how to access the underlying
-                control plane machines.
-              x-kubernetes-immutable: true
+              description: SSH configuration for how to access the underlying control
+                plane machines.
               required:
               - authorizedKey
               properties:
                 authorizedKey:
                   type: string
                   x-dcl-go-name: AuthorizedKey
-                  description: Required. The SSH public key data for VMs managed by
-                    Anthos. This accepts the authorized_keys file format used in OpenSSH
-                    according to the sshd(8) manual page.
-                  x-kubernetes-immutable: true
+                  description: The SSH public key data for VMs managed by Anthos.
+                    This accepts the authorized_keys file format used in OpenSSH according
+                    to the sshd(8) manual page.
             subnetId:
               type: string
               x-dcl-go-name: SubnetId
-              description: 'Required. The ARM ID of the subnet where the control plane
-                VMs are deployed. Example: `/subscriptions//resourceGroups//providers/Microsoft.Network/virtualNetworks//subnets/default`.'
+              description: 'The ARM ID of the subnet where the control plane VMs are
+                deployed. Example: `/subscriptions//resourceGroups//providers/Microsoft.Network/virtualNetworks//subnets/default`.'
               x-kubernetes-immutable: true
             tags:
               type: object
@@ -296,16 +318,15 @@ components:
             version:
               type: string
               x-dcl-go-name: Version
-              description: Required. The Kubernetes version to run on control plane
-                replicas (e.g. `1.19.10-gke.1000`). You can list all supported versions
-                on a given Google Cloud region by calling GetAzureServerConfig.
+              description: The Kubernetes version to run on control plane replicas
+                (e.g. `1.19.10-gke.1000`). You can list all supported versions on
+                a given Google Cloud region by calling GetAzureServerConfig.
             vmSize:
               type: string
               x-dcl-go-name: VmSize
               description: 'Optional. The Azure VM size name. Example: `Standard_DS2_v2`.
                 For available VM sizes, see https://docs.microsoft.com/en-us/azure/virtual-machines/vm-naming-conventions.
                 When unspecified, it defaults to `Standard_DS2_v2`.'
-              x-kubernetes-immutable: true
               x-dcl-server-default: true
         createTime:
           type: string
@@ -373,7 +394,7 @@ components:
           type: object
           x-dcl-go-name: Networking
           x-dcl-go-type: ClusterNetworking
-          description: Required. Cluster-wide networking configuration.
+          description: Cluster-wide networking configuration.
           x-kubernetes-immutable: true
           required:
           - virtualNetworkId
@@ -383,10 +404,10 @@ components:
             podAddressCidrBlocks:
               type: array
               x-dcl-go-name: PodAddressCidrBlocks
-              description: Required. The IP address range of the pods in this cluster,
-                in CIDR notation (e.g. `10.96.0.0/14`). All pods in the cluster get
-                assigned a unique RFC1918 IPv4 address from these ranges. Only a single
-                range is supported. This field cannot be changed after creation.
+              description: The IP address range of the pods in this cluster, in CIDR
+                notation (e.g. `10.96.0.0/14`). All pods in the cluster get assigned
+                a unique RFC1918 IPv4 address from these ranges. Only a single range
+                is supported. This field cannot be changed after creation.
               x-kubernetes-immutable: true
               x-dcl-send-empty: true
               x-dcl-list-type: list
@@ -396,11 +417,10 @@ components:
             serviceAddressCidrBlocks:
               type: array
               x-dcl-go-name: ServiceAddressCidrBlocks
-              description: Required. The IP address range for services in this cluster,
-                in CIDR notation (e.g. `10.96.0.0/14`). All services in the cluster
-                get assigned a unique RFC1918 IPv4 address from these ranges. Only
-                a single range is supported. This field cannot be changed after creating
-                a cluster.
+              description: The IP address range for services in this cluster, in CIDR
+                notation (e.g. `10.96.0.0/14`). All services in the cluster get assigned
+                a unique RFC1918 IPv4 address from these ranges. Only a single range
+                is supported. This field cannot be changed after creating a cluster.
               x-kubernetes-immutable: true
               x-dcl-send-empty: true
               x-dcl-list-type: list
@@ -410,9 +430,9 @@ components:
             virtualNetworkId:
               type: string
               x-dcl-go-name: VirtualNetworkId
-              description: 'Required. The Azure Resource Manager (ARM) ID of the VNet
-                associated with your cluster. All components in the cluster (i.e.
-                control plane and node pools) run on a single VNet. Example: `/subscriptions/*/resourceGroups/*/providers/Microsoft.Network/virtualNetworks/*`
+              description: 'The Azure Resource Manager (ARM) ID of the VNet associated
+                with your cluster. All components in the cluster (i.e. control plane
+                and node pools) run on a single VNet. Example: `/subscriptions/*/resourceGroups/*/providers/Microsoft.Network/virtualNetworks/*`
                 This field cannot be changed after creation.'
               x-kubernetes-immutable: true
         project:
@@ -434,8 +454,8 @@ components:
         resourceGroupId:
           type: string
           x-dcl-go-name: ResourceGroupId
-          description: 'Required. The ARM ID of the resource group where the cluster
-            resources are deployed. For example: `/subscriptions/*/resourceGroups/*`'
+          description: 'The ARM ID of the resource group where the cluster resources
+            are deployed. For example: `/subscriptions/*/resourceGroups/*`'
           x-kubernetes-immutable: true
         state:
           type: string

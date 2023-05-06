@@ -18,7 +18,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -33,7 +32,7 @@ func suppressOmittedMaxDuration(_, old, new string, _ *schema.ResourceData) bool
 	return false
 }
 
-func resourceCloudTasksQueue() *schema.Resource {
+func ResourceCloudTasksQueue() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudTasksQueueCreate,
 		Read:   resourceCloudTasksQueueRead,
@@ -45,9 +44,9 @@ func resourceCloudTasksQueue() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -241,7 +240,7 @@ default and means that no operations are logged.`,
 
 func resourceCloudTasksQueueCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -297,7 +296,7 @@ func resourceCloudTasksQueueCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Queue: %s", err)
 	}
@@ -316,7 +315,7 @@ func resourceCloudTasksQueueCreate(d *schema.ResourceData, meta interface{}) err
 
 func resourceCloudTasksQueueRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -339,7 +338,7 @@ func resourceCloudTasksQueueRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("CloudTasksQueue %q", d.Id()))
 	}
@@ -369,7 +368,7 @@ func resourceCloudTasksQueueRead(d *schema.ResourceData, meta interface{}) error
 
 func resourceCloudTasksQueueUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -443,7 +442,7 @@ func resourceCloudTasksQueueUpdate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Queue %q: %s", d.Id(), err)
@@ -456,7 +455,7 @@ func resourceCloudTasksQueueUpdate(d *schema.ResourceData, meta interface{}) err
 
 func resourceCloudTasksQueueDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -482,7 +481,7 @@ func resourceCloudTasksQueueDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Queue")
 	}
@@ -561,7 +560,7 @@ func flattenCloudTasksQueueRateLimitsMaxDispatchesPerSecond(v interface{}, d *sc
 func flattenCloudTasksQueueRateLimitsMaxConcurrentDispatches(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -578,7 +577,7 @@ func flattenCloudTasksQueueRateLimitsMaxConcurrentDispatches(v interface{}, d *s
 func flattenCloudTasksQueueRateLimitsMaxBurstSize(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -616,7 +615,7 @@ func flattenCloudTasksQueueRetryConfig(v interface{}, d *schema.ResourceData, co
 func flattenCloudTasksQueueRetryConfigMaxAttempts(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -645,7 +644,7 @@ func flattenCloudTasksQueueRetryConfigMaxBackoff(v interface{}, d *schema.Resour
 func flattenCloudTasksQueueRetryConfigMaxDoublings(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

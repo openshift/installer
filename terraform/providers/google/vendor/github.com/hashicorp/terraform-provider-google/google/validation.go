@@ -82,7 +82,9 @@ var rfc1918Networks = []string{
 	"192.168.0.0/16",
 }
 
-func validateGCPName(v interface{}, k string) (ws []string, errors []error) {
+// validateGCEName ensures that a field matches the requirements for Compute Engine resource names
+// https://cloud.google.com/compute/docs/naming-resources#resource-name-format
+func validateGCEName(v interface{}, k string) (ws []string, errors []error) {
 	re := `^(?:[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?)$`
 	return validateRegexp(re)(v, k)
 }
@@ -112,6 +114,10 @@ func validateRegexp(re string) schema.SchemaValidateFunc {
 	}
 }
 
+func validateEnum(values []string) schema.SchemaValidateFunc {
+	return validation.StringInSlice(values, false)
+}
+
 func validateRFC1918Network(min, max int) schema.SchemaValidateFunc {
 	return func(i interface{}, k string) (s []string, es []error) {
 
@@ -137,7 +143,7 @@ func validateRFC1918Network(min, max int) schema.SchemaValidateFunc {
 func validateRFC3339Time(v interface{}, k string) (warnings []string, errors []error) {
 	time := v.(string)
 	if len(time) != 5 || time[2] != ':' {
-		errors = append(errors, fmt.Errorf("%q (%q) must be in the format HH:mm (RFC3399)", k, time))
+		errors = append(errors, fmt.Errorf("%q (%q) must be in the format HH:mm (RFC3339)", k, time))
 		return
 	}
 	if hour, err := strconv.ParseUint(time[:2], 10, 0); err != nil || hour > 23 {
@@ -197,6 +203,20 @@ func orEmpty(f schema.SchemaValidateFunc) schema.SchemaValidateFunc {
 func validateProjectID() schema.SchemaValidateFunc {
 	return func(v interface{}, k string) (ws []string, errors []error) {
 		value := v.(string)
+
+		if !regexp.MustCompile("^" + ProjectRegex + "$").MatchString(value) {
+			errors = append(errors, fmt.Errorf(
+				"%q project_id must be 6 to 30 with lowercase letters, digits, hyphens and start with a letter. Trailing hyphens are prohibited.", value))
+		}
+		return
+	}
+}
+
+func validateDSProjectID() schema.SchemaValidateFunc {
+	return func(v interface{}, k string) (ws []string, errors []error) {
+		value := v.(string)
+		ids := strings.Split(value, "/")
+		value = ids[len(ids)-1]
 
 		if !regexp.MustCompile("^" + ProjectRegex + "$").MatchString(value) {
 			errors = append(errors, fmt.Errorf(

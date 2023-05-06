@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
+func DataSourceGoogleComputeGlobalAddress() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeGlobalAddressRead,
 
@@ -42,7 +42,7 @@ func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
 
 func dataSourceGoogleComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

@@ -22,10 +22,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourcePubsubTopic() *schema.Resource {
+func ResourcePubsubTopic() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePubsubTopicCreate,
 		Read:   resourcePubsubTopicRead,
@@ -37,9 +36,9 @@ func resourcePubsubTopic() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -74,7 +73,7 @@ the last messageRetentionDuration are always available to subscribers.
 For instance, it allows any attached subscription to seek to a timestamp
 that is up to messageRetentionDuration in the past. If this field is not
 set, message retention is controlled by settings on individual subscriptions.
-Cannot be more than 7 days or less than 10 minutes.`,
+Cannot be more than 31 days or less than 10 minutes.`,
 			},
 			"message_storage_policy": {
 				Type:     schema.TypeList,
@@ -113,6 +112,7 @@ and is not a valid configuration.`,
 						"schema": {
 							Type:     schema.TypeString,
 							Required: true,
+							ForceNew: true,
 							Description: `The name of the schema that messages published should be
 validated against. Format is projects/{project}/schemas/{schema}.
 The value of this field will be _deleted-schema_
@@ -121,7 +121,8 @@ if the schema has been deleted.`,
 						"encoding": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ENCODING_UNSPECIFIED", "JSON", "BINARY", ""}, false),
+							ForceNew:     true,
+							ValidateFunc: validateEnum([]string{"ENCODING_UNSPECIFIED", "JSON", "BINARY", ""}),
 							Description:  `The encoding of messages validated against schema. Default value: "ENCODING_UNSPECIFIED" Possible values: ["ENCODING_UNSPECIFIED", "JSON", "BINARY"]`,
 							Default:      "ENCODING_UNSPECIFIED",
 						},
@@ -141,7 +142,7 @@ if the schema has been deleted.`,
 
 func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -208,7 +209,7 @@ func resourcePubsubTopicCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), pubsubTopicProjectNotReady)
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), pubsubTopicProjectNotReady)
 	if err != nil {
 		return fmt.Errorf("Error creating Topic: %s", err)
 	}
@@ -252,12 +253,12 @@ func resourcePubsubTopicPollRead(d *schema.ResourceData, meta interface{}) PollR
 			billingProject = bp
 		}
 
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, pubsubTopicProjectNotReady)
+		res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, pubsubTopicProjectNotReady)
 		if err != nil {
 			return res, err
 		}
@@ -267,7 +268,7 @@ func resourcePubsubTopicPollRead(d *schema.ResourceData, meta interface{}) PollR
 
 func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -290,7 +291,7 @@ func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, pubsubTopicProjectNotReady)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, pubsubTopicProjectNotReady)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("PubsubTopic %q", d.Id()))
 	}
@@ -323,7 +324,7 @@ func resourcePubsubTopicRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -412,7 +413,7 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), pubsubTopicProjectNotReady)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), pubsubTopicProjectNotReady)
 
 	if err != nil {
 		return fmt.Errorf("Error updating Topic %q: %s", d.Id(), err)
@@ -425,7 +426,7 @@ func resourcePubsubTopicUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourcePubsubTopicDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -451,7 +452,7 @@ func resourcePubsubTopicDelete(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), pubsubTopicProjectNotReady)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), pubsubTopicProjectNotReady)
 	if err != nil {
 		return handleNotFoundError(err, d, "Topic")
 	}

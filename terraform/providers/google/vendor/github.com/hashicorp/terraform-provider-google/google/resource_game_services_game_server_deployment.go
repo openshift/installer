@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceGameServicesGameServerDeployment() *schema.Resource {
+func ResourceGameServicesGameServerDeployment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGameServicesGameServerDeploymentCreate,
 		Read:   resourceGameServicesGameServerDeploymentRead,
@@ -36,9 +36,9 @@ func resourceGameServicesGameServerDeployment() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -89,7 +89,7 @@ For example,
 
 func resourceGameServicesGameServerDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -127,7 +127,7 @@ func resourceGameServicesGameServerDeploymentCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating GameServerDeployment: %s", err)
 	}
@@ -142,12 +142,13 @@ func resourceGameServicesGameServerDeploymentCreate(d *schema.ResourceData, meta
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = gameServicesOperationWaitTimeWithResponse(
+	err = GameServicesOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating GameServerDeployment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create GameServerDeployment: %s", err)
 	}
 
@@ -169,7 +170,7 @@ func resourceGameServicesGameServerDeploymentCreate(d *schema.ResourceData, meta
 
 func resourceGameServicesGameServerDeploymentRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -192,7 +193,7 @@ func resourceGameServicesGameServerDeploymentRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("GameServicesGameServerDeployment %q", d.Id()))
 	}
@@ -216,7 +217,7 @@ func resourceGameServicesGameServerDeploymentRead(d *schema.ResourceData, meta i
 
 func resourceGameServicesGameServerDeploymentUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -270,7 +271,7 @@ func resourceGameServicesGameServerDeploymentUpdate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating GameServerDeployment %q: %s", d.Id(), err)
@@ -278,7 +279,7 @@ func resourceGameServicesGameServerDeploymentUpdate(d *schema.ResourceData, meta
 		log.Printf("[DEBUG] Finished updating GameServerDeployment %q: %#v", d.Id(), res)
 	}
 
-	err = gameServicesOperationWaitTime(
+	err = GameServicesOperationWaitTime(
 		config, res, project, "Updating GameServerDeployment", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -291,7 +292,7 @@ func resourceGameServicesGameServerDeploymentUpdate(d *schema.ResourceData, meta
 
 func resourceGameServicesGameServerDeploymentDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -317,12 +318,12 @@ func resourceGameServicesGameServerDeploymentDelete(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "GameServerDeployment")
 	}
 
-	err = gameServicesOperationWaitTime(
+	err = GameServicesOperationWaitTime(
 		config, res, project, "Deleting GameServerDeployment", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

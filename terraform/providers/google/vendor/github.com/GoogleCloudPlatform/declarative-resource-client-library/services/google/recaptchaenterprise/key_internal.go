@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -124,21 +124,23 @@ type keyApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateKeyUpdateKeyRequest(ctx context.Context, f *Key, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.DisplayName; !dcl.IsEmptyValueIndirect(v) {
 		req["displayName"] = v
 	}
-	if v, err := expandKeyWebSettings(c, f.WebSettings); err != nil {
+	if v, err := expandKeyWebSettings(c, f.WebSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding WebSettings into webSettings: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["webSettings"] = v
 	}
-	if v, err := expandKeyAndroidSettings(c, f.AndroidSettings); err != nil {
+	if v, err := expandKeyAndroidSettings(c, f.AndroidSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding AndroidSettings into androidSettings: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["androidSettings"] = v
 	}
-	if v, err := expandKeyIosSettings(c, f.IosSettings); err != nil {
+	if v, err := expandKeyIosSettings(c, f.IosSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding IosSettings into iosSettings: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["iosSettings"] = v
@@ -247,7 +249,7 @@ func (c *Client) listKey(ctx context.Context, r *Key, pageToken string, pageSize
 
 	var l []*Key
 	for _, v := range m.Keys {
-		res, err := unmarshalMapKey(v, c)
+		res, err := unmarshalMapKey(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -325,6 +327,10 @@ func (op *createKeyOperation) do(ctx context.Context, r *Key, c *Client) error {
 	if err != nil {
 		return err
 	}
+	if r.Name != nil {
+		// Allowing creation to continue with Name set could result in a Key with the wrong Name.
+		return fmt.Errorf("server-generated parameter Name was specified by user as %v, should be unspecified", dcl.ValueOrEmptyString(r.Name))
+	}
 	resp, err := dcl.SendRequest(ctx, c.Config, "POST", u, bytes.NewBuffer(req), c.Config.RetryProvider)
 	if err != nil {
 		return err
@@ -337,11 +343,8 @@ func (op *createKeyOperation) do(ctx context.Context, r *Key, c *Client) error {
 	op.response = o
 
 	// Include Name in URL substitution for initial GET request.
-	name, ok := op.response["name"].(string)
-	if !ok {
-		return fmt.Errorf("expected name to be a string in %v, was %T", op.response, op.response["name"])
-	}
-	r.Name = &name
+	m := op.response
+	r.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
 
 	if _, err := c.GetKey(ctx, r); err != nil {
 		c.Config.Logger.WarningWithContextf(ctx, "get returned error: %v", err)
@@ -405,6 +408,11 @@ func (c *Client) keyDiffsForRawDesired(ctx context.Context, rawDesired *Key, opt
 	}
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Key: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Key: %v", rawDesired)
+
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractKeyFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
 
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeKeyInitialState(rawInitial, rawDesired)
@@ -471,33 +479,9 @@ func canonicalizeKeyDesiredState(rawDesired, rawInitial *Key, opts ...dcl.ApplyO
 
 		return rawDesired, nil
 	}
-
-	if rawDesired.WebSettings != nil || rawInitial.WebSettings != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.AndroidSettings, rawDesired.IosSettings) {
-			rawDesired.WebSettings = nil
-			rawInitial.WebSettings = nil
-		}
-	}
-
-	if rawDesired.AndroidSettings != nil || rawInitial.AndroidSettings != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.WebSettings, rawDesired.IosSettings) {
-			rawDesired.AndroidSettings = nil
-			rawInitial.AndroidSettings = nil
-		}
-	}
-
-	if rawDesired.IosSettings != nil || rawInitial.IosSettings != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.WebSettings, rawDesired.AndroidSettings) {
-			rawDesired.IosSettings = nil
-			rawInitial.IosSettings = nil
-		}
-	}
-
 	canonicalDesired := &Key{}
-	if dcl.IsZeroValue(rawDesired.Name) {
+	if dcl.IsZeroValue(rawDesired.Name) || (dcl.IsEmptyValueIndirect(rawDesired.Name) && dcl.IsEmptyValueIndirect(rawInitial.Name)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Name = rawInitial.Name
 	} else {
 		canonicalDesired.Name = rawDesired.Name
@@ -510,7 +494,8 @@ func canonicalizeKeyDesiredState(rawDesired, rawInitial *Key, opts ...dcl.ApplyO
 	canonicalDesired.WebSettings = canonicalizeKeyWebSettings(rawDesired.WebSettings, rawInitial.WebSettings, opts...)
 	canonicalDesired.AndroidSettings = canonicalizeKeyAndroidSettings(rawDesired.AndroidSettings, rawInitial.AndroidSettings, opts...)
 	canonicalDesired.IosSettings = canonicalizeKeyIosSettings(rawDesired.IosSettings, rawInitial.IosSettings, opts...)
-	if dcl.IsZeroValue(rawDesired.Labels) {
+	if dcl.IsZeroValue(rawDesired.Labels) || (dcl.IsEmptyValueIndirect(rawDesired.Labels) && dcl.IsEmptyValueIndirect(rawInitial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Labels = rawInitial.Labels
 	} else {
 		canonicalDesired.Labels = rawDesired.Labels
@@ -522,17 +507,38 @@ func canonicalizeKeyDesiredState(rawDesired, rawInitial *Key, opts ...dcl.ApplyO
 		canonicalDesired.Project = rawDesired.Project
 	}
 
+	if canonicalDesired.WebSettings != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.AndroidSettings, rawDesired.IosSettings) {
+			canonicalDesired.WebSettings = EmptyKeyWebSettings
+		}
+	}
+
+	if canonicalDesired.AndroidSettings != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.WebSettings, rawDesired.IosSettings) {
+			canonicalDesired.AndroidSettings = EmptyKeyAndroidSettings
+		}
+	}
+
+	if canonicalDesired.IosSettings != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.WebSettings, rawDesired.AndroidSettings) {
+			canonicalDesired.IosSettings = EmptyKeyIosSettings
+		}
+	}
+
 	return canonicalDesired, nil
 }
 
 func canonicalizeKeyNewState(c *Client, rawNew, rawDesired *Key) (*Key, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.DisplayName) && dcl.IsNotReturnedByServer(rawDesired.DisplayName) {
+	if dcl.IsEmptyValueIndirect(rawNew.DisplayName) && dcl.IsEmptyValueIndirect(rawDesired.DisplayName) {
 		rawNew.DisplayName = rawDesired.DisplayName
 	} else {
 		if dcl.StringCanonicalize(rawDesired.DisplayName, rawNew.DisplayName) {
@@ -540,35 +546,35 @@ func canonicalizeKeyNewState(c *Client, rawNew, rawDesired *Key) (*Key, error) {
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.WebSettings) && dcl.IsNotReturnedByServer(rawDesired.WebSettings) {
+	if dcl.IsEmptyValueIndirect(rawNew.WebSettings) && dcl.IsEmptyValueIndirect(rawDesired.WebSettings) {
 		rawNew.WebSettings = rawDesired.WebSettings
 	} else {
 		rawNew.WebSettings = canonicalizeNewKeyWebSettings(c, rawDesired.WebSettings, rawNew.WebSettings)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.AndroidSettings) && dcl.IsNotReturnedByServer(rawDesired.AndroidSettings) {
+	if dcl.IsEmptyValueIndirect(rawNew.AndroidSettings) && dcl.IsEmptyValueIndirect(rawDesired.AndroidSettings) {
 		rawNew.AndroidSettings = rawDesired.AndroidSettings
 	} else {
 		rawNew.AndroidSettings = canonicalizeNewKeyAndroidSettings(c, rawDesired.AndroidSettings, rawNew.AndroidSettings)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.IosSettings) && dcl.IsNotReturnedByServer(rawDesired.IosSettings) {
+	if dcl.IsEmptyValueIndirect(rawNew.IosSettings) && dcl.IsEmptyValueIndirect(rawDesired.IosSettings) {
 		rawNew.IosSettings = rawDesired.IosSettings
 	} else {
 		rawNew.IosSettings = canonicalizeNewKeyIosSettings(c, rawDesired.IosSettings, rawNew.IosSettings)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Labels) && dcl.IsNotReturnedByServer(rawDesired.Labels) {
+	if dcl.IsEmptyValueIndirect(rawNew.Labels) && dcl.IsEmptyValueIndirect(rawDesired.Labels) {
 		rawNew.Labels = rawDesired.Labels
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreateTime) && dcl.IsNotReturnedByServer(rawDesired.CreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreateTime) && dcl.IsEmptyValueIndirect(rawDesired.CreateTime) {
 		rawNew.CreateTime = rawDesired.CreateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.TestingOptions) && dcl.IsNotReturnedByServer(rawDesired.TestingOptions) {
+	if dcl.IsEmptyValueIndirect(rawNew.TestingOptions) && dcl.IsEmptyValueIndirect(rawDesired.TestingOptions) {
 		rawNew.TestingOptions = rawDesired.TestingOptions
 	} else {
 		rawNew.TestingOptions = canonicalizeNewKeyTestingOptions(c, rawDesired.TestingOptions, rawNew.TestingOptions)
@@ -598,7 +604,7 @@ func canonicalizeKeyWebSettings(des, initial *KeyWebSettings, opts ...dcl.ApplyO
 	} else {
 		cDes.AllowAllDomains = des.AllowAllDomains
 	}
-	if dcl.StringArrayCanonicalize(des.AllowedDomains, initial.AllowedDomains) || dcl.IsZeroValue(des.AllowedDomains) {
+	if dcl.StringArrayCanonicalize(des.AllowedDomains, initial.AllowedDomains) {
 		cDes.AllowedDomains = initial.AllowedDomains
 	} else {
 		cDes.AllowedDomains = des.AllowedDomains
@@ -608,12 +614,14 @@ func canonicalizeKeyWebSettings(des, initial *KeyWebSettings, opts ...dcl.ApplyO
 	} else {
 		cDes.AllowAmpTraffic = des.AllowAmpTraffic
 	}
-	if dcl.IsZeroValue(des.IntegrationType) {
+	if dcl.IsZeroValue(des.IntegrationType) || (dcl.IsEmptyValueIndirect(des.IntegrationType) && dcl.IsEmptyValueIndirect(initial.IntegrationType)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.IntegrationType = initial.IntegrationType
 	} else {
 		cDes.IntegrationType = des.IntegrationType
 	}
-	if dcl.IsZeroValue(des.ChallengeSecurityPreference) {
+	if dcl.IsZeroValue(des.ChallengeSecurityPreference) || (dcl.IsEmptyValueIndirect(des.ChallengeSecurityPreference) && dcl.IsEmptyValueIndirect(initial.ChallengeSecurityPreference)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ChallengeSecurityPreference = initial.ChallengeSecurityPreference
 	} else {
 		cDes.ChallengeSecurityPreference = des.ChallengeSecurityPreference
@@ -623,7 +631,7 @@ func canonicalizeKeyWebSettings(des, initial *KeyWebSettings, opts ...dcl.ApplyO
 }
 
 func canonicalizeKeyWebSettingsSlice(des, initial []KeyWebSettings, opts ...dcl.ApplyOption) []KeyWebSettings {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -657,7 +665,7 @@ func canonicalizeNewKeyWebSettings(c *Client, des, nw *KeyWebSettings) *KeyWebSe
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for KeyWebSettings while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -681,23 +689,26 @@ func canonicalizeNewKeyWebSettingsSet(c *Client, des, nw []KeyWebSettings) []Key
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []KeyWebSettings
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []KeyWebSettings
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareKeyWebSettingsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewKeyWebSettings(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewKeyWebSettingsSlice(c *Client, des, nw []KeyWebSettings) []KeyWebSettings {
@@ -739,7 +750,7 @@ func canonicalizeKeyAndroidSettings(des, initial *KeyAndroidSettings, opts ...dc
 	} else {
 		cDes.AllowAllPackageNames = des.AllowAllPackageNames
 	}
-	if dcl.StringArrayCanonicalize(des.AllowedPackageNames, initial.AllowedPackageNames) || dcl.IsZeroValue(des.AllowedPackageNames) {
+	if dcl.StringArrayCanonicalize(des.AllowedPackageNames, initial.AllowedPackageNames) {
 		cDes.AllowedPackageNames = initial.AllowedPackageNames
 	} else {
 		cDes.AllowedPackageNames = des.AllowedPackageNames
@@ -749,7 +760,7 @@ func canonicalizeKeyAndroidSettings(des, initial *KeyAndroidSettings, opts ...dc
 }
 
 func canonicalizeKeyAndroidSettingsSlice(des, initial []KeyAndroidSettings, opts ...dcl.ApplyOption) []KeyAndroidSettings {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -783,7 +794,7 @@ func canonicalizeNewKeyAndroidSettings(c *Client, des, nw *KeyAndroidSettings) *
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for KeyAndroidSettings while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -804,23 +815,26 @@ func canonicalizeNewKeyAndroidSettingsSet(c *Client, des, nw []KeyAndroidSetting
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []KeyAndroidSettings
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []KeyAndroidSettings
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareKeyAndroidSettingsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewKeyAndroidSettings(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewKeyAndroidSettingsSlice(c *Client, des, nw []KeyAndroidSettings) []KeyAndroidSettings {
@@ -862,7 +876,7 @@ func canonicalizeKeyIosSettings(des, initial *KeyIosSettings, opts ...dcl.ApplyO
 	} else {
 		cDes.AllowAllBundleIds = des.AllowAllBundleIds
 	}
-	if dcl.StringArrayCanonicalize(des.AllowedBundleIds, initial.AllowedBundleIds) || dcl.IsZeroValue(des.AllowedBundleIds) {
+	if dcl.StringArrayCanonicalize(des.AllowedBundleIds, initial.AllowedBundleIds) {
 		cDes.AllowedBundleIds = initial.AllowedBundleIds
 	} else {
 		cDes.AllowedBundleIds = des.AllowedBundleIds
@@ -872,7 +886,7 @@ func canonicalizeKeyIosSettings(des, initial *KeyIosSettings, opts ...dcl.ApplyO
 }
 
 func canonicalizeKeyIosSettingsSlice(des, initial []KeyIosSettings, opts ...dcl.ApplyOption) []KeyIosSettings {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -906,7 +920,7 @@ func canonicalizeNewKeyIosSettings(c *Client, des, nw *KeyIosSettings) *KeyIosSe
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for KeyIosSettings while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -927,23 +941,26 @@ func canonicalizeNewKeyIosSettingsSet(c *Client, des, nw []KeyIosSettings) []Key
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []KeyIosSettings
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []KeyIosSettings
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareKeyIosSettingsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewKeyIosSettings(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewKeyIosSettingsSlice(c *Client, des, nw []KeyIosSettings) []KeyIosSettings {
@@ -980,12 +997,14 @@ func canonicalizeKeyTestingOptions(des, initial *KeyTestingOptions, opts ...dcl.
 
 	cDes := &KeyTestingOptions{}
 
-	if dcl.IsZeroValue(des.TestingScore) {
+	if dcl.IsZeroValue(des.TestingScore) || (dcl.IsEmptyValueIndirect(des.TestingScore) && dcl.IsEmptyValueIndirect(initial.TestingScore)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.TestingScore = initial.TestingScore
 	} else {
 		cDes.TestingScore = des.TestingScore
 	}
-	if dcl.IsZeroValue(des.TestingChallenge) {
+	if dcl.IsZeroValue(des.TestingChallenge) || (dcl.IsEmptyValueIndirect(des.TestingChallenge) && dcl.IsEmptyValueIndirect(initial.TestingChallenge)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.TestingChallenge = initial.TestingChallenge
 	} else {
 		cDes.TestingChallenge = des.TestingChallenge
@@ -995,7 +1014,7 @@ func canonicalizeKeyTestingOptions(des, initial *KeyTestingOptions, opts ...dcl.
 }
 
 func canonicalizeKeyTestingOptionsSlice(des, initial []KeyTestingOptions, opts ...dcl.ApplyOption) []KeyTestingOptions {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1029,7 +1048,7 @@ func canonicalizeNewKeyTestingOptions(c *Client, des, nw *KeyTestingOptions) *Ke
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for KeyTestingOptions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1043,23 +1062,26 @@ func canonicalizeNewKeyTestingOptionsSet(c *Client, des, nw []KeyTestingOptions)
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []KeyTestingOptions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []KeyTestingOptions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareKeyTestingOptionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewKeyTestingOptions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewKeyTestingOptionsSlice(c *Client, des, nw []KeyTestingOptions) []KeyTestingOptions {
@@ -1100,69 +1122,72 @@ func diffKey(c *Client, desired, actual *Key, opts ...dcl.ApplyOption) ([]*dcl.F
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.WebSettings, actual.WebSettings, dcl.Info{ObjectFunction: compareKeyWebSettingsNewStyle, EmptyObject: EmptyKeyWebSettings, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WebSettings")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.WebSettings, actual.WebSettings, dcl.DiffInfo{ObjectFunction: compareKeyWebSettingsNewStyle, EmptyObject: EmptyKeyWebSettings, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WebSettings")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AndroidSettings, actual.AndroidSettings, dcl.Info{ObjectFunction: compareKeyAndroidSettingsNewStyle, EmptyObject: EmptyKeyAndroidSettings, OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AndroidSettings")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AndroidSettings, actual.AndroidSettings, dcl.DiffInfo{ObjectFunction: compareKeyAndroidSettingsNewStyle, EmptyObject: EmptyKeyAndroidSettings, OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AndroidSettings")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IosSettings, actual.IosSettings, dcl.Info{ObjectFunction: compareKeyIosSettingsNewStyle, EmptyObject: EmptyKeyIosSettings, OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("IosSettings")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IosSettings, actual.IosSettings, dcl.DiffInfo{ObjectFunction: compareKeyIosSettingsNewStyle, EmptyObject: EmptyKeyIosSettings, OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("IosSettings")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TestingOptions, actual.TestingOptions, dcl.Info{ObjectFunction: compareKeyTestingOptionsNewStyle, EmptyObject: EmptyKeyTestingOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingOptions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TestingOptions, actual.TestingOptions, dcl.DiffInfo{ObjectFunction: compareKeyTestingOptionsNewStyle, EmptyObject: EmptyKeyTestingOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingOptions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareKeyWebSettingsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -1185,35 +1210,35 @@ func compareKeyWebSettingsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.F
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AllowAllDomains, actual.AllowAllDomains, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAllDomains")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowAllDomains, actual.AllowAllDomains, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAllDomains")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowedDomains, actual.AllowedDomains, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowedDomains")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowedDomains, actual.AllowedDomains, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowedDomains")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowAmpTraffic, actual.AllowAmpTraffic, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAmpTraffic")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowAmpTraffic, actual.AllowAmpTraffic, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAmpTraffic")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IntegrationType, actual.IntegrationType, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IntegrationType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IntegrationType, actual.IntegrationType, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IntegrationType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ChallengeSecurityPreference, actual.ChallengeSecurityPreference, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("ChallengeSecurityPreference")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ChallengeSecurityPreference, actual.ChallengeSecurityPreference, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("ChallengeSecurityPreference")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1242,14 +1267,14 @@ func compareKeyAndroidSettingsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AllowAllPackageNames, actual.AllowAllPackageNames, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAllPackageNames")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowAllPackageNames, actual.AllowAllPackageNames, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAllPackageNames")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowedPackageNames, actual.AllowedPackageNames, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowedPackageNames")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowedPackageNames, actual.AllowedPackageNames, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowedPackageNames")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1278,14 +1303,14 @@ func compareKeyIosSettingsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.F
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AllowAllBundleIds, actual.AllowAllBundleIds, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAllBundleIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowAllBundleIds, actual.AllowAllBundleIds, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowAllBundleIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowedBundleIds, actual.AllowedBundleIds, dcl.Info{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowedBundleIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowedBundleIds, actual.AllowedBundleIds, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateKeyUpdateKeyOperation")}, fn.AddNest("AllowedBundleIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1314,14 +1339,14 @@ func compareKeyTestingOptionsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dc
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.TestingScore, actual.TestingScore, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingScore")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TestingScore, actual.TestingScore, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingScore")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TestingChallenge, actual.TestingChallenge, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingChallenge")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TestingChallenge, actual.TestingChallenge, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TestingChallenge")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1368,17 +1393,17 @@ func (r *Key) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalKey decodes JSON responses into the Key resource schema.
-func unmarshalKey(b []byte, c *Client) (*Key, error) {
+func unmarshalKey(b []byte, c *Client, res *Key) (*Key, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapKey(m, c)
+	return unmarshalMapKey(m, c, res)
 }
 
-func unmarshalMapKey(m map[string]interface{}, c *Client) (*Key, error) {
+func unmarshalMapKey(m map[string]interface{}, c *Client, res *Key) (*Key, error) {
 
-	flattened := flattenKey(c, m)
+	flattened := flattenKey(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -1388,40 +1413,42 @@ func unmarshalMapKey(m map[string]interface{}, c *Client) (*Key, error) {
 // expandKey expands Key into a JSON request object.
 func expandKey(c *Client, f *Key) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/keys/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.DisplayName; dcl.ValueShouldBeSent(v) {
 		m["displayName"] = v
 	}
-	if v, err := expandKeyWebSettings(c, f.WebSettings); err != nil {
+	if v, err := expandKeyWebSettings(c, f.WebSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding WebSettings into webSettings: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["webSettings"] = v
 	}
-	if v, err := expandKeyAndroidSettings(c, f.AndroidSettings); err != nil {
+	if v, err := expandKeyAndroidSettings(c, f.AndroidSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding AndroidSettings into androidSettings: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["androidSettings"] = v
 	}
-	if v, err := expandKeyIosSettings(c, f.IosSettings); err != nil {
+	if v, err := expandKeyIosSettings(c, f.IosSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding IosSettings into iosSettings: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["iosSettings"] = v
 	}
 	if v := f.Labels; dcl.ValueShouldBeSent(v) {
 		m["labels"] = v
 	}
-	if v, err := expandKeyTestingOptions(c, f.TestingOptions); err != nil {
+	if v, err := expandKeyTestingOptions(c, f.TestingOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding TestingOptions into testingOptions: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["testingOptions"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 
@@ -1430,7 +1457,7 @@ func expandKey(c *Client, f *Key) (map[string]interface{}, error) {
 
 // flattenKey flattens Key from a JSON request object into the
 // Key type.
-func flattenKey(c *Client, i interface{}) *Key {
+func flattenKey(c *Client, i interface{}, res *Key) *Key {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1439,30 +1466,30 @@ func flattenKey(c *Client, i interface{}) *Key {
 		return nil
 	}
 
-	res := &Key{}
-	res.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
-	res.DisplayName = dcl.FlattenString(m["displayName"])
-	res.WebSettings = flattenKeyWebSettings(c, m["webSettings"])
-	res.AndroidSettings = flattenKeyAndroidSettings(c, m["androidSettings"])
-	res.IosSettings = flattenKeyIosSettings(c, m["iosSettings"])
-	res.Labels = dcl.FlattenKeyValuePairs(m["labels"])
-	res.CreateTime = dcl.FlattenString(m["createTime"])
-	res.TestingOptions = flattenKeyTestingOptions(c, m["testingOptions"])
-	res.Project = dcl.FlattenString(m["project"])
+	resultRes := &Key{}
+	resultRes.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
+	resultRes.DisplayName = dcl.FlattenString(m["displayName"])
+	resultRes.WebSettings = flattenKeyWebSettings(c, m["webSettings"], res)
+	resultRes.AndroidSettings = flattenKeyAndroidSettings(c, m["androidSettings"], res)
+	resultRes.IosSettings = flattenKeyIosSettings(c, m["iosSettings"], res)
+	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
+	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
+	resultRes.TestingOptions = flattenKeyTestingOptions(c, m["testingOptions"], res)
+	resultRes.Project = dcl.FlattenString(m["project"])
 
-	return res
+	return resultRes
 }
 
 // expandKeyWebSettingsMap expands the contents of KeyWebSettings into a JSON
 // request object.
-func expandKeyWebSettingsMap(c *Client, f map[string]KeyWebSettings) (map[string]interface{}, error) {
+func expandKeyWebSettingsMap(c *Client, f map[string]KeyWebSettings, res *Key) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandKeyWebSettings(c, &item)
+		i, err := expandKeyWebSettings(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1476,14 +1503,14 @@ func expandKeyWebSettingsMap(c *Client, f map[string]KeyWebSettings) (map[string
 
 // expandKeyWebSettingsSlice expands the contents of KeyWebSettings into a JSON
 // request object.
-func expandKeyWebSettingsSlice(c *Client, f []KeyWebSettings) ([]map[string]interface{}, error) {
+func expandKeyWebSettingsSlice(c *Client, f []KeyWebSettings, res *Key) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandKeyWebSettings(c, &item)
+		i, err := expandKeyWebSettings(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1496,7 +1523,7 @@ func expandKeyWebSettingsSlice(c *Client, f []KeyWebSettings) ([]map[string]inte
 
 // flattenKeyWebSettingsMap flattens the contents of KeyWebSettings from a JSON
 // response object.
-func flattenKeyWebSettingsMap(c *Client, i interface{}) map[string]KeyWebSettings {
+func flattenKeyWebSettingsMap(c *Client, i interface{}, res *Key) map[string]KeyWebSettings {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyWebSettings{}
@@ -1508,7 +1535,7 @@ func flattenKeyWebSettingsMap(c *Client, i interface{}) map[string]KeyWebSetting
 
 	items := make(map[string]KeyWebSettings)
 	for k, item := range a {
-		items[k] = *flattenKeyWebSettings(c, item.(map[string]interface{}))
+		items[k] = *flattenKeyWebSettings(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1516,7 +1543,7 @@ func flattenKeyWebSettingsMap(c *Client, i interface{}) map[string]KeyWebSetting
 
 // flattenKeyWebSettingsSlice flattens the contents of KeyWebSettings from a JSON
 // response object.
-func flattenKeyWebSettingsSlice(c *Client, i interface{}) []KeyWebSettings {
+func flattenKeyWebSettingsSlice(c *Client, i interface{}, res *Key) []KeyWebSettings {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyWebSettings{}
@@ -1528,7 +1555,7 @@ func flattenKeyWebSettingsSlice(c *Client, i interface{}) []KeyWebSettings {
 
 	items := make([]KeyWebSettings, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenKeyWebSettings(c, item.(map[string]interface{})))
+		items = append(items, *flattenKeyWebSettings(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1536,7 +1563,7 @@ func flattenKeyWebSettingsSlice(c *Client, i interface{}) []KeyWebSettings {
 
 // expandKeyWebSettings expands an instance of KeyWebSettings into a JSON
 // request object.
-func expandKeyWebSettings(c *Client, f *KeyWebSettings) (map[string]interface{}, error) {
+func expandKeyWebSettings(c *Client, f *KeyWebSettings, res *Key) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1563,7 +1590,7 @@ func expandKeyWebSettings(c *Client, f *KeyWebSettings) (map[string]interface{},
 
 // flattenKeyWebSettings flattens an instance of KeyWebSettings from a JSON
 // response object.
-func flattenKeyWebSettings(c *Client, i interface{}) *KeyWebSettings {
+func flattenKeyWebSettings(c *Client, i interface{}, res *Key) *KeyWebSettings {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1585,14 +1612,14 @@ func flattenKeyWebSettings(c *Client, i interface{}) *KeyWebSettings {
 
 // expandKeyAndroidSettingsMap expands the contents of KeyAndroidSettings into a JSON
 // request object.
-func expandKeyAndroidSettingsMap(c *Client, f map[string]KeyAndroidSettings) (map[string]interface{}, error) {
+func expandKeyAndroidSettingsMap(c *Client, f map[string]KeyAndroidSettings, res *Key) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandKeyAndroidSettings(c, &item)
+		i, err := expandKeyAndroidSettings(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1606,14 +1633,14 @@ func expandKeyAndroidSettingsMap(c *Client, f map[string]KeyAndroidSettings) (ma
 
 // expandKeyAndroidSettingsSlice expands the contents of KeyAndroidSettings into a JSON
 // request object.
-func expandKeyAndroidSettingsSlice(c *Client, f []KeyAndroidSettings) ([]map[string]interface{}, error) {
+func expandKeyAndroidSettingsSlice(c *Client, f []KeyAndroidSettings, res *Key) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandKeyAndroidSettings(c, &item)
+		i, err := expandKeyAndroidSettings(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1626,7 +1653,7 @@ func expandKeyAndroidSettingsSlice(c *Client, f []KeyAndroidSettings) ([]map[str
 
 // flattenKeyAndroidSettingsMap flattens the contents of KeyAndroidSettings from a JSON
 // response object.
-func flattenKeyAndroidSettingsMap(c *Client, i interface{}) map[string]KeyAndroidSettings {
+func flattenKeyAndroidSettingsMap(c *Client, i interface{}, res *Key) map[string]KeyAndroidSettings {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyAndroidSettings{}
@@ -1638,7 +1665,7 @@ func flattenKeyAndroidSettingsMap(c *Client, i interface{}) map[string]KeyAndroi
 
 	items := make(map[string]KeyAndroidSettings)
 	for k, item := range a {
-		items[k] = *flattenKeyAndroidSettings(c, item.(map[string]interface{}))
+		items[k] = *flattenKeyAndroidSettings(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1646,7 +1673,7 @@ func flattenKeyAndroidSettingsMap(c *Client, i interface{}) map[string]KeyAndroi
 
 // flattenKeyAndroidSettingsSlice flattens the contents of KeyAndroidSettings from a JSON
 // response object.
-func flattenKeyAndroidSettingsSlice(c *Client, i interface{}) []KeyAndroidSettings {
+func flattenKeyAndroidSettingsSlice(c *Client, i interface{}, res *Key) []KeyAndroidSettings {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyAndroidSettings{}
@@ -1658,7 +1685,7 @@ func flattenKeyAndroidSettingsSlice(c *Client, i interface{}) []KeyAndroidSettin
 
 	items := make([]KeyAndroidSettings, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenKeyAndroidSettings(c, item.(map[string]interface{})))
+		items = append(items, *flattenKeyAndroidSettings(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1666,7 +1693,7 @@ func flattenKeyAndroidSettingsSlice(c *Client, i interface{}) []KeyAndroidSettin
 
 // expandKeyAndroidSettings expands an instance of KeyAndroidSettings into a JSON
 // request object.
-func expandKeyAndroidSettings(c *Client, f *KeyAndroidSettings) (map[string]interface{}, error) {
+func expandKeyAndroidSettings(c *Client, f *KeyAndroidSettings, res *Key) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1684,7 +1711,7 @@ func expandKeyAndroidSettings(c *Client, f *KeyAndroidSettings) (map[string]inte
 
 // flattenKeyAndroidSettings flattens an instance of KeyAndroidSettings from a JSON
 // response object.
-func flattenKeyAndroidSettings(c *Client, i interface{}) *KeyAndroidSettings {
+func flattenKeyAndroidSettings(c *Client, i interface{}, res *Key) *KeyAndroidSettings {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1703,14 +1730,14 @@ func flattenKeyAndroidSettings(c *Client, i interface{}) *KeyAndroidSettings {
 
 // expandKeyIosSettingsMap expands the contents of KeyIosSettings into a JSON
 // request object.
-func expandKeyIosSettingsMap(c *Client, f map[string]KeyIosSettings) (map[string]interface{}, error) {
+func expandKeyIosSettingsMap(c *Client, f map[string]KeyIosSettings, res *Key) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandKeyIosSettings(c, &item)
+		i, err := expandKeyIosSettings(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1724,14 +1751,14 @@ func expandKeyIosSettingsMap(c *Client, f map[string]KeyIosSettings) (map[string
 
 // expandKeyIosSettingsSlice expands the contents of KeyIosSettings into a JSON
 // request object.
-func expandKeyIosSettingsSlice(c *Client, f []KeyIosSettings) ([]map[string]interface{}, error) {
+func expandKeyIosSettingsSlice(c *Client, f []KeyIosSettings, res *Key) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandKeyIosSettings(c, &item)
+		i, err := expandKeyIosSettings(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1744,7 +1771,7 @@ func expandKeyIosSettingsSlice(c *Client, f []KeyIosSettings) ([]map[string]inte
 
 // flattenKeyIosSettingsMap flattens the contents of KeyIosSettings from a JSON
 // response object.
-func flattenKeyIosSettingsMap(c *Client, i interface{}) map[string]KeyIosSettings {
+func flattenKeyIosSettingsMap(c *Client, i interface{}, res *Key) map[string]KeyIosSettings {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyIosSettings{}
@@ -1756,7 +1783,7 @@ func flattenKeyIosSettingsMap(c *Client, i interface{}) map[string]KeyIosSetting
 
 	items := make(map[string]KeyIosSettings)
 	for k, item := range a {
-		items[k] = *flattenKeyIosSettings(c, item.(map[string]interface{}))
+		items[k] = *flattenKeyIosSettings(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1764,7 +1791,7 @@ func flattenKeyIosSettingsMap(c *Client, i interface{}) map[string]KeyIosSetting
 
 // flattenKeyIosSettingsSlice flattens the contents of KeyIosSettings from a JSON
 // response object.
-func flattenKeyIosSettingsSlice(c *Client, i interface{}) []KeyIosSettings {
+func flattenKeyIosSettingsSlice(c *Client, i interface{}, res *Key) []KeyIosSettings {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyIosSettings{}
@@ -1776,7 +1803,7 @@ func flattenKeyIosSettingsSlice(c *Client, i interface{}) []KeyIosSettings {
 
 	items := make([]KeyIosSettings, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenKeyIosSettings(c, item.(map[string]interface{})))
+		items = append(items, *flattenKeyIosSettings(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1784,7 +1811,7 @@ func flattenKeyIosSettingsSlice(c *Client, i interface{}) []KeyIosSettings {
 
 // expandKeyIosSettings expands an instance of KeyIosSettings into a JSON
 // request object.
-func expandKeyIosSettings(c *Client, f *KeyIosSettings) (map[string]interface{}, error) {
+func expandKeyIosSettings(c *Client, f *KeyIosSettings, res *Key) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1802,7 +1829,7 @@ func expandKeyIosSettings(c *Client, f *KeyIosSettings) (map[string]interface{},
 
 // flattenKeyIosSettings flattens an instance of KeyIosSettings from a JSON
 // response object.
-func flattenKeyIosSettings(c *Client, i interface{}) *KeyIosSettings {
+func flattenKeyIosSettings(c *Client, i interface{}, res *Key) *KeyIosSettings {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1821,14 +1848,14 @@ func flattenKeyIosSettings(c *Client, i interface{}) *KeyIosSettings {
 
 // expandKeyTestingOptionsMap expands the contents of KeyTestingOptions into a JSON
 // request object.
-func expandKeyTestingOptionsMap(c *Client, f map[string]KeyTestingOptions) (map[string]interface{}, error) {
+func expandKeyTestingOptionsMap(c *Client, f map[string]KeyTestingOptions, res *Key) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandKeyTestingOptions(c, &item)
+		i, err := expandKeyTestingOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1842,14 +1869,14 @@ func expandKeyTestingOptionsMap(c *Client, f map[string]KeyTestingOptions) (map[
 
 // expandKeyTestingOptionsSlice expands the contents of KeyTestingOptions into a JSON
 // request object.
-func expandKeyTestingOptionsSlice(c *Client, f []KeyTestingOptions) ([]map[string]interface{}, error) {
+func expandKeyTestingOptionsSlice(c *Client, f []KeyTestingOptions, res *Key) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandKeyTestingOptions(c, &item)
+		i, err := expandKeyTestingOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1862,7 +1889,7 @@ func expandKeyTestingOptionsSlice(c *Client, f []KeyTestingOptions) ([]map[strin
 
 // flattenKeyTestingOptionsMap flattens the contents of KeyTestingOptions from a JSON
 // response object.
-func flattenKeyTestingOptionsMap(c *Client, i interface{}) map[string]KeyTestingOptions {
+func flattenKeyTestingOptionsMap(c *Client, i interface{}, res *Key) map[string]KeyTestingOptions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyTestingOptions{}
@@ -1874,7 +1901,7 @@ func flattenKeyTestingOptionsMap(c *Client, i interface{}) map[string]KeyTesting
 
 	items := make(map[string]KeyTestingOptions)
 	for k, item := range a {
-		items[k] = *flattenKeyTestingOptions(c, item.(map[string]interface{}))
+		items[k] = *flattenKeyTestingOptions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1882,7 +1909,7 @@ func flattenKeyTestingOptionsMap(c *Client, i interface{}) map[string]KeyTesting
 
 // flattenKeyTestingOptionsSlice flattens the contents of KeyTestingOptions from a JSON
 // response object.
-func flattenKeyTestingOptionsSlice(c *Client, i interface{}) []KeyTestingOptions {
+func flattenKeyTestingOptionsSlice(c *Client, i interface{}, res *Key) []KeyTestingOptions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyTestingOptions{}
@@ -1894,7 +1921,7 @@ func flattenKeyTestingOptionsSlice(c *Client, i interface{}) []KeyTestingOptions
 
 	items := make([]KeyTestingOptions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenKeyTestingOptions(c, item.(map[string]interface{})))
+		items = append(items, *flattenKeyTestingOptions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1902,7 +1929,7 @@ func flattenKeyTestingOptionsSlice(c *Client, i interface{}) []KeyTestingOptions
 
 // expandKeyTestingOptions expands an instance of KeyTestingOptions into a JSON
 // request object.
-func expandKeyTestingOptions(c *Client, f *KeyTestingOptions) (map[string]interface{}, error) {
+func expandKeyTestingOptions(c *Client, f *KeyTestingOptions, res *Key) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1920,7 +1947,7 @@ func expandKeyTestingOptions(c *Client, f *KeyTestingOptions) (map[string]interf
 
 // flattenKeyTestingOptions flattens an instance of KeyTestingOptions from a JSON
 // response object.
-func flattenKeyTestingOptions(c *Client, i interface{}) *KeyTestingOptions {
+func flattenKeyTestingOptions(c *Client, i interface{}, res *Key) *KeyTestingOptions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1939,7 +1966,7 @@ func flattenKeyTestingOptions(c *Client, i interface{}) *KeyTestingOptions {
 
 // flattenKeyWebSettingsIntegrationTypeEnumMap flattens the contents of KeyWebSettingsIntegrationTypeEnum from a JSON
 // response object.
-func flattenKeyWebSettingsIntegrationTypeEnumMap(c *Client, i interface{}) map[string]KeyWebSettingsIntegrationTypeEnum {
+func flattenKeyWebSettingsIntegrationTypeEnumMap(c *Client, i interface{}, res *Key) map[string]KeyWebSettingsIntegrationTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyWebSettingsIntegrationTypeEnum{}
@@ -1959,7 +1986,7 @@ func flattenKeyWebSettingsIntegrationTypeEnumMap(c *Client, i interface{}) map[s
 
 // flattenKeyWebSettingsIntegrationTypeEnumSlice flattens the contents of KeyWebSettingsIntegrationTypeEnum from a JSON
 // response object.
-func flattenKeyWebSettingsIntegrationTypeEnumSlice(c *Client, i interface{}) []KeyWebSettingsIntegrationTypeEnum {
+func flattenKeyWebSettingsIntegrationTypeEnumSlice(c *Client, i interface{}, res *Key) []KeyWebSettingsIntegrationTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyWebSettingsIntegrationTypeEnum{}
@@ -1982,7 +2009,7 @@ func flattenKeyWebSettingsIntegrationTypeEnumSlice(c *Client, i interface{}) []K
 func flattenKeyWebSettingsIntegrationTypeEnum(i interface{}) *KeyWebSettingsIntegrationTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return KeyWebSettingsIntegrationTypeEnumRef("")
+		return nil
 	}
 
 	return KeyWebSettingsIntegrationTypeEnumRef(s)
@@ -1990,7 +2017,7 @@ func flattenKeyWebSettingsIntegrationTypeEnum(i interface{}) *KeyWebSettingsInte
 
 // flattenKeyWebSettingsChallengeSecurityPreferenceEnumMap flattens the contents of KeyWebSettingsChallengeSecurityPreferenceEnum from a JSON
 // response object.
-func flattenKeyWebSettingsChallengeSecurityPreferenceEnumMap(c *Client, i interface{}) map[string]KeyWebSettingsChallengeSecurityPreferenceEnum {
+func flattenKeyWebSettingsChallengeSecurityPreferenceEnumMap(c *Client, i interface{}, res *Key) map[string]KeyWebSettingsChallengeSecurityPreferenceEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyWebSettingsChallengeSecurityPreferenceEnum{}
@@ -2010,7 +2037,7 @@ func flattenKeyWebSettingsChallengeSecurityPreferenceEnumMap(c *Client, i interf
 
 // flattenKeyWebSettingsChallengeSecurityPreferenceEnumSlice flattens the contents of KeyWebSettingsChallengeSecurityPreferenceEnum from a JSON
 // response object.
-func flattenKeyWebSettingsChallengeSecurityPreferenceEnumSlice(c *Client, i interface{}) []KeyWebSettingsChallengeSecurityPreferenceEnum {
+func flattenKeyWebSettingsChallengeSecurityPreferenceEnumSlice(c *Client, i interface{}, res *Key) []KeyWebSettingsChallengeSecurityPreferenceEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyWebSettingsChallengeSecurityPreferenceEnum{}
@@ -2033,7 +2060,7 @@ func flattenKeyWebSettingsChallengeSecurityPreferenceEnumSlice(c *Client, i inte
 func flattenKeyWebSettingsChallengeSecurityPreferenceEnum(i interface{}) *KeyWebSettingsChallengeSecurityPreferenceEnum {
 	s, ok := i.(string)
 	if !ok {
-		return KeyWebSettingsChallengeSecurityPreferenceEnumRef("")
+		return nil
 	}
 
 	return KeyWebSettingsChallengeSecurityPreferenceEnumRef(s)
@@ -2041,7 +2068,7 @@ func flattenKeyWebSettingsChallengeSecurityPreferenceEnum(i interface{}) *KeyWeb
 
 // flattenKeyTestingOptionsTestingChallengeEnumMap flattens the contents of KeyTestingOptionsTestingChallengeEnum from a JSON
 // response object.
-func flattenKeyTestingOptionsTestingChallengeEnumMap(c *Client, i interface{}) map[string]KeyTestingOptionsTestingChallengeEnum {
+func flattenKeyTestingOptionsTestingChallengeEnumMap(c *Client, i interface{}, res *Key) map[string]KeyTestingOptionsTestingChallengeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]KeyTestingOptionsTestingChallengeEnum{}
@@ -2061,7 +2088,7 @@ func flattenKeyTestingOptionsTestingChallengeEnumMap(c *Client, i interface{}) m
 
 // flattenKeyTestingOptionsTestingChallengeEnumSlice flattens the contents of KeyTestingOptionsTestingChallengeEnum from a JSON
 // response object.
-func flattenKeyTestingOptionsTestingChallengeEnumSlice(c *Client, i interface{}) []KeyTestingOptionsTestingChallengeEnum {
+func flattenKeyTestingOptionsTestingChallengeEnumSlice(c *Client, i interface{}, res *Key) []KeyTestingOptionsTestingChallengeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []KeyTestingOptionsTestingChallengeEnum{}
@@ -2084,7 +2111,7 @@ func flattenKeyTestingOptionsTestingChallengeEnumSlice(c *Client, i interface{})
 func flattenKeyTestingOptionsTestingChallengeEnum(i interface{}) *KeyTestingOptionsTestingChallengeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return KeyTestingOptionsTestingChallengeEnumRef("")
+		return nil
 	}
 
 	return KeyTestingOptionsTestingChallengeEnumRef(s)
@@ -2095,7 +2122,7 @@ func flattenKeyTestingOptionsTestingChallengeEnum(i interface{}) *KeyTestingOpti
 // identity).  This is useful in extracting the element from a List call.
 func (r *Key) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalKey(b, c)
+		cr, err := unmarshalKey(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -2128,6 +2155,7 @@ type keyDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         keyApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToKeyDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]keyDiff, error) {
@@ -2147,7 +2175,8 @@ func convertFieldDiffsToKeyDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts 
 	var diffs []keyDiff
 	// For each operation name, create a keyDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := keyDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := keyDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -2182,7 +2211,7 @@ func extractKeyFields(r *Key) error {
 	if err := extractKeyWebSettingsFields(r, vWebSettings); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vWebSettings) {
+	if !dcl.IsEmptyValueIndirect(vWebSettings) {
 		r.WebSettings = vWebSettings
 	}
 	vAndroidSettings := r.AndroidSettings
@@ -2193,7 +2222,7 @@ func extractKeyFields(r *Key) error {
 	if err := extractKeyAndroidSettingsFields(r, vAndroidSettings); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAndroidSettings) {
+	if !dcl.IsEmptyValueIndirect(vAndroidSettings) {
 		r.AndroidSettings = vAndroidSettings
 	}
 	vIosSettings := r.IosSettings
@@ -2204,7 +2233,7 @@ func extractKeyFields(r *Key) error {
 	if err := extractKeyIosSettingsFields(r, vIosSettings); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vIosSettings) {
+	if !dcl.IsEmptyValueIndirect(vIosSettings) {
 		r.IosSettings = vIosSettings
 	}
 	vTestingOptions := r.TestingOptions
@@ -2215,7 +2244,7 @@ func extractKeyFields(r *Key) error {
 	if err := extractKeyTestingOptionsFields(r, vTestingOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vTestingOptions) {
+	if !dcl.IsEmptyValueIndirect(vTestingOptions) {
 		r.TestingOptions = vTestingOptions
 	}
 	return nil
@@ -2242,7 +2271,7 @@ func postReadExtractKeyFields(r *Key) error {
 	if err := postReadExtractKeyWebSettingsFields(r, vWebSettings); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vWebSettings) {
+	if !dcl.IsEmptyValueIndirect(vWebSettings) {
 		r.WebSettings = vWebSettings
 	}
 	vAndroidSettings := r.AndroidSettings
@@ -2253,7 +2282,7 @@ func postReadExtractKeyFields(r *Key) error {
 	if err := postReadExtractKeyAndroidSettingsFields(r, vAndroidSettings); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAndroidSettings) {
+	if !dcl.IsEmptyValueIndirect(vAndroidSettings) {
 		r.AndroidSettings = vAndroidSettings
 	}
 	vIosSettings := r.IosSettings
@@ -2264,7 +2293,7 @@ func postReadExtractKeyFields(r *Key) error {
 	if err := postReadExtractKeyIosSettingsFields(r, vIosSettings); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vIosSettings) {
+	if !dcl.IsEmptyValueIndirect(vIosSettings) {
 		r.IosSettings = vIosSettings
 	}
 	vTestingOptions := r.TestingOptions
@@ -2275,7 +2304,7 @@ func postReadExtractKeyFields(r *Key) error {
 	if err := postReadExtractKeyTestingOptionsFields(r, vTestingOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vTestingOptions) {
+	if !dcl.IsEmptyValueIndirect(vTestingOptions) {
 		r.TestingOptions = vTestingOptions
 	}
 	return nil
