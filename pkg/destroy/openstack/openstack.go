@@ -1099,21 +1099,31 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 						return false, err
 					}
 					queue.Add(func() {
-						logger.Debugf("Initiating bulk deletion of %d objects in container %q", len(objectsOnPage), container)
-						resp, err := objects.BulkDelete(conn, container, objectsOnPage).Extract()
-						if err != nil {
-							errCh <- err
-							return
-						}
-						if len(resp.Errors) > 0 {
-							// Convert resp.Errors to golang errors.
-							// Each error is represented by a list of 2 strings, where the first one
-							// is the object name, and the second one contains an error message.
-							for _, objectError := range resp.Errors {
-								errCh <- fmt.Errorf("cannot delete object %q: %s", objectError[0], objectError[1])
+						for len(objectsOnPage) > 0 {
+							logger.Debugf("Initiating bulk deletion of %d objects in container %q", len(objectsOnPage), container)
+							resp, err := objects.BulkDelete(conn, container, objectsOnPage).Extract()
+							if err != nil {
+								errCh <- err
+								return
 							}
+							if len(resp.Errors) > 0 {
+								// Convert resp.Errors to golang errors.
+								// Each error is represented by a list of 2 strings, where the first one
+								// is the object name, and the second one contains an error message.
+								for _, objectError := range resp.Errors {
+									errCh <- fmt.Errorf("cannot delete object %q: %s", objectError[0], objectError[1])
+								}
+								logger.Debugf("Terminating object deletion routine with error. Deleted %d objects out of %d.", resp.NumberDeleted, len(objectsOnPage))
+							}
+
+							// Some object-storage instances may be set to have a limit to the LIST operation
+							// that is higher to the limit to the BULK DELETE operation. On those clouds, objects
+							// in the BULK DELETE call beyond the limit are silently ignored. In this loop, after
+							// checking that no errors were encountered, we reduce the BULK DELETE list by the
+							// number of processed objects, and send it back to the server if it's not empty.
+							objectsOnPage = objectsOnPage[resp.NumberDeleted+resp.NumberNotFound:]
 						}
-						logger.Debugf("Terminating object deletion routine. Deleted %d objects out of %d.", resp.NumberDeleted, len(objectsOnPage))
+						logger.Debugf("Terminating object deletion routine.")
 					})
 					return true, nil
 				})
