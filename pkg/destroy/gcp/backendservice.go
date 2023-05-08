@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -8,17 +10,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listBackendServices() ([]cloudResource, error) {
-	return o.listBackendServicesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listBackendServices(ctx context.Context) ([]cloudResource, error) {
+	return o.listBackendServicesWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listBackendServicesWithFilter lists backend services in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter string, filterFunc func(*compute.BackendService) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listBackendServicesWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.BackendService) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing backend services")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.RegionBackendServices.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
@@ -51,9 +53,9 @@ func (o *ClusterUninstaller) listBackendServicesWithFilter(fields string, filter
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteBackendService(item cloudResource) error {
+func (o *ClusterUninstaller) deleteBackendService(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting backend service %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.RegionBackendServices.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -74,14 +76,14 @@ func (o *ClusterUninstaller) deleteBackendService(item cloudResource) error {
 
 // destroyBackendServices removes backend services with a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyBackendServices() error {
-	found, err := o.listBackendServices()
+func (o *ClusterUninstaller) destroyBackendServices(ctx context.Context) error {
+	found, err := o.listBackendServices(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("backendservice", found)
 	for _, item := range items {
-		err := o.deleteBackendService(item)
+		err := o.deleteBackendService(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -10,17 +11,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listInstanceGroups() ([]cloudResource, error) {
-	return o.listInstanceGroupsWithFilter("items/*/instanceGroups(name,selfLink,zone),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listInstanceGroups(ctx context.Context) ([]cloudResource, error) {
+	return o.listInstanceGroupsWithFilter(ctx, "items/*/instanceGroups(name,selfLink,zone),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listInstanceGroupsWithFilter lists addresses in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listInstanceGroupsWithFilter(fields string, filter string, filterFunc func(*compute.InstanceGroup) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listInstanceGroupsWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.InstanceGroup) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing instance groups")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.InstanceGroups.AggregatedList(o.ProjectID).Fields(googleapi.Field(fields))
@@ -61,9 +62,9 @@ func (o *ClusterUninstaller) listInstanceGroupsWithFilter(fields string, filter 
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteInstanceGroup(item cloudResource) error {
+func (o *ClusterUninstaller) deleteInstanceGroup(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting instance group %s in zone %s", item.name, item.zone)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.InstanceGroups.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -84,14 +85,14 @@ func (o *ClusterUninstaller) deleteInstanceGroup(item cloudResource) error {
 
 // destroyInstanceGroups searches for instance groups that have a name prefixed
 // with the cluster's infra ID, and then deletes each instance found.
-func (o *ClusterUninstaller) destroyInstanceGroups() error {
-	found, err := o.listInstanceGroups()
+func (o *ClusterUninstaller) destroyInstanceGroups(ctx context.Context) error {
+	found, err := o.listInstanceGroups(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("instancegroup", found)
 	for _, item := range items {
-		err := o.deleteInstanceGroup(item)
+		err := o.deleteInstanceGroup(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
