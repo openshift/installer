@@ -128,6 +128,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 		},
 		Spec: machinev1.ControlPlaneMachineSetSpec{
+			State:    machinev1.ControlPlaneMachineSetStateActive,
 			Replicas: &replicas,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
