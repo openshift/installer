@@ -30,10 +30,6 @@ COPY --from=macbuilder /go/src/github.com/openshift/installer/bin/openshift-inst
 COPY --from=macarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/mac_arm64/openshift-install
 COPY --from=linuxbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_amd64/openshift-install
 COPY --from=linuxarmbuilder /go/src/github.com/openshift/installer/bin/openshift-install /usr/share/openshift/linux_arm64/openshift-install
-RUN mkdir /output && chown 1000:1000 /output
-USER 1000:1000
-ENV PATH /bin
-ENV HOME /output
-WORKDIR /output
+
 # We're not really an operator, we're just getting some data into the release image.
 LABEL io.openshift.release.operator=true
