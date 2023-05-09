@@ -146,10 +146,14 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 		reader = io.TeeReader(reader, hasher)
 	}
 
-	_, err = io.Copy(file, reader)
+	written, err := io.Copy(file, reader)
 	if err != nil {
 		return err
 	}
+
+	// Let's find out how much data was written
+	// for future troubleshooting
+	logrus.Debugf("writing the RHCOS image was %d bytes", written)
 
 	err = file.Close()
 	if err != nil {
@@ -204,12 +208,14 @@ func (u *urlWithIntegrity) download(dataType string) (string, error) {
 		return "", err
 	}
 
-	// Send a request
 	resp, err := http.Get(u.location.String())
 	if err != nil {
 		return "", err
 	}
 	defer resp.Body.Close()
+
+	// Let's find the content length for future debugging
+	logrus.Debugf("image download content length: %d", resp.ContentLength)
 
 	// Check server response
 	if resp.StatusCode != http.StatusOK {
