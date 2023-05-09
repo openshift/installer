@@ -44,7 +44,7 @@ func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
 }
 
 func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
-	return o.listDisksWithFilter("items/*/disks(name,zone,type,sizeGb),nextPageToken", o.clusterLabelOrClusterIDFilter(), nil)
+	return o.listDisksWithFilter("items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
 }
 
 // listDisksWithFilter lists disks in the project that satisfy the filter criteria.
