@@ -101,7 +101,7 @@ Once you configure the quota for your project, please ensure that the user for t
 
 The default deployment stands up 3 master nodes, which is the minimum amount required for a cluster. For each master node you stand up, you will need 1 instance, and 1 port available in your quota. They should be assigned a flavor with at least 16 GB RAM, 4 vCPUs, and 100 GB Disk (or Root Volume). It is theoretically possible to run with a smaller flavor, but be aware that if it takes too long to stand up services, or certain essential services crash, the installer could time out, leading to a failed install.
 
-The master nodes are placed in a single Server group with "soft anti-affinity" policy by default; the machines will therefore be created on separate hosts when possible.
+The master nodes are placed in a single Server group with "soft anti-affinity" policy by default; the machines will therefore be created on separate hosts when possible. Note that this is also the case when the master nodes are deployed across multiple availability zones that were specified by their failure domain.
 
 ### Worker Nodes
 
