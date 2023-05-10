@@ -12,6 +12,8 @@ import (
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
 
 const (
@@ -36,18 +38,34 @@ func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&Ignition{},
 		&BaseIso{},
+		&AgentImage{},
+		&manifests.AgentManifests{},
+		&mirror.RegistriesConf{},
 	}
 }
 
 // Generate generates the image files for PXE asset.
 func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	ignition := &Ignition{}
-	dependencies.Get(ignition)
+	agentImage := &AgentImage{}
+	agentManifests := &manifests.AgentManifests{}
+	registriesConf := &mirror.RegistriesConf{}
+	dependencies.Get(ignition, agentImage, agentManifests, registriesConf)
 
 	baseImage := &BaseIso{}
 	dependencies.Get(baseImage)
 
 	a.isoPath = baseImage.File.Filename
+	agentTuiFiles, err := agentImage.FetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
+	if err != nil {
+		return err
+	}
+
+	initrdImgPath, err := agentImage.AppendAgentFilesToInitrd(agentTuiFiles)
+	if err != nil {
+		return err
+	}
+	logrus.Debugf("*************************************************** initrdImgPath = %s", initrdImgPath)
 
 	tmpdir, err := os.MkdirTemp("", pxeAssetsPath)
 	if err != nil {
@@ -55,12 +73,12 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", initrdimg)
-	dstfilename := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
-	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, dstfilename)
-	if err != nil {
-		return err
-	}
+	// srcfilename := fmt.Sprintf("images/pxeboot/%s.img", initrdimg)
+	// dstfilename := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
+	// err = a.extractPXEFileFromISO(a.isoPath, srcfilename, dstfilename)
+	// if err != nil {
+	// 	return err
+	// }
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
@@ -69,7 +87,8 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
 
-	custom, err := isoeditor.NewInitRamFSStreamReader(dstfilename, ignitionContent)
+	// custom, err := isoeditor.NewInitRamFSStreamReader(dstfilename, ignitionContent)
+	custom, err := isoeditor.NewInitRamFSStreamReader(initrdImgPath, ignitionContent)
 	if err != nil {
 		return err
 	}

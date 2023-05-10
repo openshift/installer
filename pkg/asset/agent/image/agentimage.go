@@ -53,7 +53,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
+	agentTuiFiles, err := a.FetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {
 		return err
 	}
@@ -69,7 +69,7 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func (a *AgentImage) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
+func (a *AgentImage) FetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
 	release := NewRelease(&executer.CommonExecuter{},
 		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
 		releaseImage, pullSecret, mirrorConfig)
@@ -114,7 +114,7 @@ func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, additionalFile
 		return err
 	}
 
-	err = a.appendAgentFilesToInitrd(additionalFiles)
+	_, err = a.AppendAgentFilesToInitrd(additionalFiles)
 	if err != nil {
 		return err
 	}
@@ -165,20 +165,20 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 	return nil
 }
 
-func (a *AgentImage) appendAgentFilesToInitrd(additionalFiles []string) error {
+func (a *AgentImage) AppendAgentFilesToInitrd(additionalFiles []string) (string, error) {
 	ca := NewCpioArchive()
 
 	dstPath := "/agent-files/"
 	err := ca.StorePath(dstPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Add the required agent files to the archive
 	for _, f := range additionalFiles {
 		err := ca.StoreFile(f, dstPath)
 		if err != nil {
-			return err
+			return "", err
 		}
 	}
 
@@ -191,28 +191,28 @@ for i in $(find /agent-files/ -printf "%P\n"); do chcon system_u:object_r:bin_t:
 
 	err = ca.StoreBytes("/usr/lib/dracut/hooks/pre-pivot/99-agent-copy-files.sh", []byte(dracutHookScript), 0o755)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	buff, err := ca.SaveBuffer()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	// Append the archive to initrd.img
 	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
 	initrdImg, err := os.OpenFile(initrdImgPath, os.O_WRONLY|os.O_APPEND, 0)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer initrdImg.Close()
 
 	_, err = initrdImg.Write(buff)
 	if err != nil {
-		return err
+		return "", err
 	}
 
-	return nil
+	return initrdImgPath, nil
 }
 
 // PersistToFile writes the iso image in the assets folder
