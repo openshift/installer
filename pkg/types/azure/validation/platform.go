@@ -70,6 +70,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 			allErrs = append(allErrs, field.Required(fldPath.Child("networkResourceGroupName"), "must provide a network resource group when a virtual network is specified"))
 		}
 	}
+	if p.BaseDomainResourceGroupName != "" && p.NetworkResourceGroupName != "" && strings.ToUpper(p.BaseDomainResourceGroupName) == strings.ToUpper(p.NetworkResourceGroupName) {
+		allErrs = append(allErrs, field.Required(fldPath.Child("baseDomainResourceGroupname"), "baseDomainResourceGroupName cannot be the same as networkResourceGroupName"))
+	}
 	if (p.ComputeSubnet != "" || p.ControlPlaneSubnet != "") && (p.VirtualNetwork == "" || p.NetworkResourceGroupName == "") {
 		if p.VirtualNetwork == "" {
 			allErrs = append(allErrs, field.Required(fldPath.Child("virtualNetwork"), "must provide a virtual network when supplying subnets"))
