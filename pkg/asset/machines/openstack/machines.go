@@ -174,9 +174,17 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 	}
 
 	serverGroupName := clusterID + "-" + role
-	if failureDomain.ComputeAvailabilityZone != "" {
+	// We initially used the AZ name as part of the server group name for the masters
+	// but we realized that it was not useful. Whether or not the AZ is specified, the
+	// masters will be spread across multiple hosts by default by the Nova scheduler
+	// (the policy can be changed via `serverGroupPolicy` in install-config.yaml).
+	// For the workers, we still use the AZ name as part of the server group name
+	// so the user can control the scheduling policy per AZ and change the MachineSets
+	// if needed on a day 2 operation.
+	if role == "worker" && failureDomain.ComputeAvailabilityZone != "" {
 		serverGroupName += "-" + failureDomain.ComputeAvailabilityZone
 	}
+
 	spec := machinev1alpha1.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: machinev1alpha1.GroupVersion.String(),
