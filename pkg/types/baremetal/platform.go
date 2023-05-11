@@ -232,4 +232,10 @@ type Platform struct {
 	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.BareMetalPlatformLoadBalancer `json:"loadBalancer,omitempty"`
+
+	// BootstrapExternalStaticDNS is the static network DNS of the bootstrap node.
+	// This can be useful in environments without a DHCP server.
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	BootstrapExternalStaticDNS string `json:"bootstrapExternalStaticDNS,omitempty"`
 }
