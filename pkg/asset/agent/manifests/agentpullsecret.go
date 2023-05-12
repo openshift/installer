@@ -178,3 +178,8 @@ func (a *AgentPullSecret) validateSecretIsNotEmpty() field.ErrorList {
 
 	return allErrs
 }
+
+// GetPullSecretData returns the content of the pull secret.
+func (a *AgentPullSecret) GetPullSecretData() string {
+	return a.Config.StringData[".dockerconfigjson"]
+}

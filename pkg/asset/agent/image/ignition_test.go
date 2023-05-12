@@ -72,7 +72,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	ov := "4.12"
 	isoURL := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live.x86_64.iso"
 	ver := "412.86.202208101039-0"
-	osImage := &models.OsImage{
+	osImage := models.OsImage{
 		CPUArchitecture:  &arch,
 		OpenshiftVersion: &ov,
 		URL:              &isoURL,

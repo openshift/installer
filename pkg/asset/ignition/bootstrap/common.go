@@ -396,7 +396,7 @@ func AddStorageFiles(config *igntypes.Config, base string, uri string, templateD
 	}
 
 	// Replace files that already exist in the slice with ones added later, otherwise append them
-	config.Storage.Files = replaceOrAppend(config.Storage.Files, ign)
+	config.Storage.Files = ReplaceOrAppend(config.Storage.Files, ign)
 
 	return nil
 }
@@ -478,7 +478,7 @@ func AddSystemdUnits(config *igntypes.Config, uri string, templateData interface
 			if _, ok := enabled[name]; ok {
 				unit.Enabled = ignutil.BoolToPtr(true)
 			}
-			config.Systemd.Units = append(config.Systemd.Units, unit)
+			config.Systemd.Units = ReplaceOrAppendUnit(config.Systemd.Units, unit)
 		} else {
 			name, contents, err := readFile(childInfo.Name(), file, templateData)
 			if err != nil {
@@ -492,11 +492,27 @@ func AddSystemdUnits(config *igntypes.Config, uri string, templateData interface
 			if _, ok := enabled[name]; ok {
 				unit.Enabled = ignutil.BoolToPtr(true)
 			}
-			config.Systemd.Units = append(config.Systemd.Units, unit)
+			config.Systemd.Units = ReplaceOrAppendUnit(config.Systemd.Units, unit)
 		}
 	}
 
 	return nil
+}
+
+// ReplaceOrAppendUnit Replaces an existing unit in the units array if it has the same Name.
+// It appends the unit to the units array if it is new.
+// Parameters:
+// units - units array where unit is to be added or replaced
+// unit - the unit to be added.
+func ReplaceOrAppendUnit(units []igntypes.Unit, unit igntypes.Unit) []igntypes.Unit {
+	for i, f := range units {
+		if f.Name == unit.Name {
+			units[i] = unit
+			return units
+		}
+	}
+	units = append(units, unit)
+	return units
 }
 
 // Read data from the string reader, and, if the name ends with
@@ -538,7 +554,7 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0644, asset) {
-			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+			a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}
 
@@ -587,16 +603,21 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 
 		// Replace files that already exist in the slice with ones added later, otherwise append them
 		for _, file := range ignition.FilesFromAsset(rootDir, "root", 0600, asset) {
-			a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, file)
+			a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, file)
 		}
 	}
 
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
-	a.Config.Storage.Files = replaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+	a.Config.Storage.Files = ReplaceOrAppend(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
-func replaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
+// ReplaceOrAppend replaces an existing file in the igntypes.File array if it has the same file.Node.Path.
+// It appends the file to the igntypes.File array if it is new.
+// Parameters:
+// files - igntypes.File array where file is to be added or replaced
+// file - the file to be added.
+func ReplaceOrAppend(files []igntypes.File, file igntypes.File) []igntypes.File {
 	for i, f := range files {
 		if f.Node.Path == file.Node.Path {
 			files[i] = file
