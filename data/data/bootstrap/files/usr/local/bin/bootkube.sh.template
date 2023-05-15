@@ -92,6 +92,9 @@ then
 	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
 		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
 	fi
+	{{- if .FeatureSet }}
+	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
+	{{- end}}
 
 	bootkube_podman_run \
 		--name config-render \
@@ -103,6 +106,7 @@ then
 		--config-output-file=/assets/config-bootstrap/config \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/config-bootstrap \
+		--featuregate-manifest=/assets/manifests/99_feature-gate.yaml \
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
 		"${ADDITIONAL_FLAGS[@]}"
