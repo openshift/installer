@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -42,8 +41,8 @@ func (a *Artifact) Fetch(w io.Writer) error {
 	return nil
 }
 
-/// Name returns the "basename" of the artifact, i.e. the contents
-/// after the last `/`.  This can be useful when downloading to a file.
+// Name returns the "basename" of the artifact, i.e. the contents
+// after the last `/`.  This can be useful when downloading to a file.
 func (a *Artifact) Name() (string, error) {
 	loc, err := url.Parse(a.Location)
 	if err != nil {
@@ -53,17 +52,17 @@ func (a *Artifact) Name() (string, error) {
 	return path.Base(loc.Path), nil
 }
 
-/// Download fetches the specified artifact and saves it to the target
-/// directory.  The full file path will be returned as a string.
-/// If the target file path exists, it will be overwritten.
-/// If the download fails, the temporary file will be deleted.
+// Download fetches the specified artifact and saves it to the target
+// directory.  The full file path will be returned as a string.
+// If the target file path exists, it will be overwritten.
+// If the download fails, the temporary file will be deleted.
 func (a *Artifact) Download(destdir string) (string, error) {
 	name, err := a.Name()
 	if err != nil {
 		return "", err
 	}
 	destfile := filepath.Join(destdir, name)
-	w, err := ioutil.TempFile(destdir, ".coreos-artifact-")
+	w, err := os.CreateTemp(destdir, ".coreos-artifact-")
 	if err != nil {
 		return "", err
 	}
