@@ -1,17 +1,13 @@
 package image
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
-	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/agent/manifests"
-	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
 
 const (
@@ -22,9 +18,9 @@ const (
 type AgentImage struct {
 	cpuArch      string
 	rendezvousIP string
-
-	tmpPath  string
-	volumeID string
+	tmpPath      string
+	volumeID     string
+	isoPath      string
 }
 
 var _ asset.WritableAsset = (*AgentImage)(nil)
@@ -32,98 +28,30 @@ var _ asset.WritableAsset = (*AgentImage)(nil)
 // Dependencies returns the assets on which the Bootstrap asset depends.
 func (a *AgentImage) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&Ignition{},
-		&BaseIso{},
-		&manifests.AgentManifests{},
-		&mirror.RegistriesConf{},
+		&AgentArtifacts{},
 	}
 }
 
 // Generate generates the image file for to ISO asset.
 func (a *AgentImage) Generate(dependencies asset.Parents) error {
-	ignition := &Ignition{}
-	baseImage := &BaseIso{}
-	agentManifests := &manifests.AgentManifests{}
-	registriesConf := &mirror.RegistriesConf{}
+	agentArtifacts := &AgentArtifacts{}
+	dependencies.Get(agentArtifacts)
 
-	dependencies.Get(ignition, baseImage, agentManifests, registriesConf)
+	a.cpuArch = agentArtifacts.CPUArch
+	a.rendezvousIP = agentArtifacts.RendezvousIP
+	a.tmpPath = agentArtifacts.TmpPath
+	a.isoPath = agentArtifacts.ISOPath
 
-	ignitionByte, err := json.Marshal(ignition.Config)
-	if err != nil {
-		return err
-	}
-
-	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
-	if err != nil {
-		return err
-	}
-
-	err = a.prepareAgentISO(baseImage.File.Filename, ignitionByte, agentTuiFiles)
-	if err != nil {
-		return err
-	}
-
-	a.cpuArch = ignition.CPUArch
-	a.rendezvousIP = ignition.RendezvousIP
-
-	return nil
-}
-
-func (a *AgentImage) fetchAgentTuiFiles(releaseImage string, pullSecret string, mirrorConfig []mirror.RegistriesConfig) ([]string, error) {
-	release := NewRelease(&executer.CommonExecuter{},
-		Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
-		releaseImage, pullSecret, mirrorConfig)
-
-	agentTuiFilenames := []string{"/usr/bin/agent-tui", "/usr/lib64/libnmstate.so.*"}
-	files := []string{}
-
-	for _, srcFile := range agentTuiFilenames {
-		extracted, err := release.ExtractFile("agent-installer-utils", srcFile)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, f := range extracted {
-			// Make sure it could be executed
-			err = os.Chmod(f, 0o555)
-			if err != nil {
-				return nil, err
-			}
-			files = append(files, f)
-		}
-	}
-
-	return files, nil
-}
-
-func (a *AgentImage) prepareAgentISO(iso string, ignition []byte, additionalFiles []string) error {
-	// Create a tmp folder to store all the pieces required to generate the agent ISO.
-	tmpPath, err := os.MkdirTemp("", "agent")
-	if err != nil {
-		return err
-	}
-	a.tmpPath = tmpPath
-
-	err = isoeditor.Extract(iso, a.tmpPath)
-	if err != nil {
-		return err
-	}
-
-	err = a.updateIgnitionImg(ignition)
-	if err != nil {
-		return err
-	}
-
-	err = a.appendAgentFilesToInitrd(additionalFiles)
-	if err != nil {
-		return err
-	}
-
-	volumeID, err := isoeditor.VolumeIdentifier(iso)
+	volumeID, err := isoeditor.VolumeIdentifier(a.isoPath)
 	if err != nil {
 		return err
 	}
 	a.volumeID = volumeID
+
+	err = a.updateIgnitionImg(agentArtifacts.IgnitionByte)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -158,56 +86,6 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 	defer ignitionImg.Close()
 
 	_, err = ignitionImg.Write(ignitionBuff)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (a *AgentImage) appendAgentFilesToInitrd(additionalFiles []string) error {
-	ca := NewCpioArchive()
-
-	dstPath := "/agent-files/"
-	err := ca.StorePath(dstPath)
-	if err != nil {
-		return err
-	}
-
-	// Add the required agent files to the archive
-	for _, f := range additionalFiles {
-		err := ca.StoreFile(f, dstPath)
-		if err != nil {
-			return err
-		}
-	}
-
-	// Add a dracut hook to copy the files. The $NEWROOT environment variable is exported by
-	// dracut during the startup and it refers the mountpoint for the root filesystem.
-	dracutHookScript := `#!/bin/sh
-cp -R /agent-files/* $NEWROOT/usr/local/bin/
-# Fix the selinux label
-for i in $(find /agent-files/ -printf "%P\n"); do chcon system_u:object_r:bin_t:s0 $NEWROOT/usr/local/bin/$i; done`
-
-	err = ca.StoreBytes("/usr/lib/dracut/hooks/pre-pivot/99-agent-copy-files.sh", []byte(dracutHookScript), 0o755)
-	if err != nil {
-		return err
-	}
-
-	buff, err := ca.SaveBuffer()
-	if err != nil {
-		return err
-	}
-
-	// Append the archive to initrd.img
-	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
-	initrdImg, err := os.OpenFile(initrdImgPath, os.O_WRONLY|os.O_APPEND, 0)
-	if err != nil {
-		return err
-	}
-	defer initrdImg.Close()
-
-	_, err = initrdImg.Write(buff)
 	if err != nil {
 		return err
 	}
