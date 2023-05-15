@@ -59,6 +59,14 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 		installConfigOverrides: `{"capabilities":{"baselineCapabilitySet":"None","additionalEnabledCapabilities":["marketplace"]}}`,
 	})
 
+	installConfigWithAdditionalTrustBundle := getValidOptionalInstallConfig()
+	installConfigWithAdditionalTrustBundle.Config.AdditionalTrustBundle = `-----BEGIN CERTIFICATE-----MIIDZTCCAk2gAwIBAgIURbA8lR+5xlJZUoOXK66AHFWd3uswDQYJKoZIhvcNAQELBQAwQjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UECgwTRGVmYXVsdCBDb21wYW55IEx0ZDAeFw0yMjA3MDgxOTUzMTVaFw0yMjA4MDcxOTUzMTVaMEIxCzAJBgNVBAYTAlhYMRUwEwYDVQQHDAxEZWZhdWx0IENpdHkxHDAaBgNVBAoME0RlZmF1bHQgQ29tcGFueSBMdGQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCroH9c2PLWI0O/nBrmKtS2IuReyWaR0DOMJY7C/vc12l9zlH0DxTOUfEtdqRktjVsUn1vIIiFakxd0QLIPcMyKplmbavIBUQp+MZr0pNVX+lwcctbA7FVHEnbWYNVepoV7kZkTVvMXAqFylMXU4gDmuZzIxhVMMxjialJNED+3ngqvX4w34q4KSk1ytaHGwjREIErwPJjv5PK48KVJL2nlCuA+tbxu1r8eVkOUvZlxAuNNXk/Umf3QX5EiUlTtsmRAct6fIUT3jkrsHSS/tZ66EYJ9Q0OBoX2lL/Msmi27OQvA7uYnuqYlwJzU43tCsiip9E9z/UrLcMYyXx3oPJyPAgMBAAGjUzBRMB0GA1UdDgQWBBTIahE8DDT4T1vta6cXVVaRjnel0zAfBgNVHSMEGDAWgBTIahE8DDT4T1vta6cXVVaRjnel0zAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCQbsMtPFkqPxwOAIds3IoupuyIKmsF32ECEH/OlS+7Sj7MUJnGTQrwgjrsVS5sl8AmnGx4hPdLVX98nEcKMNkph3Hkvh4EvgjSfmYGUXuJBcYU5jqNQrlrGv37rEf5FnvdHV1F3MG8A0Mj0TLtcTdtaJFoOrnQuD/k0/1d+cMiYGTSaT5XK/unARqGEMd4BlWPh5P3SflV/Vy2hHlMpv7OcZ8yaAI3htENZLus+L5kjHWKu6dxlPHKu6ef5k64su2LTNE07Vr9S655uiFW5AX2wDVUcQEDCOiEn6SI9DTt5oQjWPMxPf+rEyfQ2f1QwVez7cyr6Qc5OIUk31HnM/Fj-----END CERTIFICATE-----`
+
+	goodAdditionalTrustBundleACI := getGoodACI()
+	goodAdditionalTrustBundleACI.SetAnnotations(map[string]string{
+		installConfigOverrides: `{"additionalTrustBundle":"-----BEGIN CERTIFICATE-----MIIDZTCCAk2gAwIBAgIURbA8lR+5xlJZUoOXK66AHFWd3uswDQYJKoZIhvcNAQELBQAwQjELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQgQ2l0eTEcMBoGA1UECgwTRGVmYXVsdCBDb21wYW55IEx0ZDAeFw0yMjA3MDgxOTUzMTVaFw0yMjA4MDcxOTUzMTVaMEIxCzAJBgNVBAYTAlhYMRUwEwYDVQQHDAxEZWZhdWx0IENpdHkxHDAaBgNVBAoME0RlZmF1bHQgQ29tcGFueSBMdGQwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCroH9c2PLWI0O/nBrmKtS2IuReyWaR0DOMJY7C/vc12l9zlH0DxTOUfEtdqRktjVsUn1vIIiFakxd0QLIPcMyKplmbavIBUQp+MZr0pNVX+lwcctbA7FVHEnbWYNVepoV7kZkTVvMXAqFylMXU4gDmuZzIxhVMMxjialJNED+3ngqvX4w34q4KSk1ytaHGwjREIErwPJjv5PK48KVJL2nlCuA+tbxu1r8eVkOUvZlxAuNNXk/Umf3QX5EiUlTtsmRAct6fIUT3jkrsHSS/tZ66EYJ9Q0OBoX2lL/Msmi27OQvA7uYnuqYlwJzU43tCsiip9E9z/UrLcMYyXx3oPJyPAgMBAAGjUzBRMB0GA1UdDgQWBBTIahE8DDT4T1vta6cXVVaRjnel0zAfBgNVHSMEGDAWgBTIahE8DDT4T1vta6cXVVaRjnel0zAPBgNVHRMBAf8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCQbsMtPFkqPxwOAIds3IoupuyIKmsF32ECEH/OlS+7Sj7MUJnGTQrwgjrsVS5sl8AmnGx4hPdLVX98nEcKMNkph3Hkvh4EvgjSfmYGUXuJBcYU5jqNQrlrGv37rEf5FnvdHV1F3MG8A0Mj0TLtcTdtaJFoOrnQuD/k0/1d+cMiYGTSaT5XK/unARqGEMd4BlWPh5P3SflV/Vy2hHlMpv7OcZ8yaAI3htENZLus+L5kjHWKu6dxlPHKu6ef5k64su2LTNE07Vr9S655uiFW5AX2wDVUcQEDCOiEn6SI9DTt5oQjWPMxPf+rEyfQ2f1QwVez7cyr6Qc5OIUk31HnM/Fj-----END CERTIFICATE-----"}`,
+	})
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -120,6 +128,13 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				installConfigWithCapabilities,
 			},
 			expectedConfig: goodCapabilitiesACI,
+		},
+		{
+			name: "valid configuration with AdditionalTrutBundle and no mirror",
+			dependencies: []asset.Asset{
+				installConfigWithAdditionalTrustBundle,
+			},
+			expectedConfig: goodAdditionalTrustBundleACI,
 		},
 	}
 	for _, tc := range cases {
