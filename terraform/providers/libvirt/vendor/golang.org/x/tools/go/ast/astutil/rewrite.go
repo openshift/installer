@@ -9,8 +9,6 @@ import (
 	"go/ast"
 	"reflect"
 	"sort"
-
-	"golang.org/x/tools/internal/typeparams"
 )
 
 // An ApplyFunc is invoked by Apply for each node n, even if n is nil,
@@ -252,10 +250,6 @@ func (a *application) apply(parent ast.Node, name string, iter *iterator, n ast.
 	case *ast.IndexExpr:
 		a.apply(n, "X", nil, n.X)
 		a.apply(n, "Index", nil, n.Index)
-
-	case *typeparams.IndexListExpr:
-		a.apply(n, "X", nil, n.X)
-		a.applyList(n, "Indices")
 
 	case *ast.SliceExpr:
 		a.apply(n, "X", nil, n.X)

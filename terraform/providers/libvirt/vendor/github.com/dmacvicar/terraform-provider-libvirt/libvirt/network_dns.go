@@ -1,7 +1,6 @@
 package libvirt
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"reflect"
@@ -9,8 +8,8 @@ import (
 	"strconv"
 
 	libvirt "github.com/digitalocean/go-libvirt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	libvirtxml "github.com/libvirt/libvirt-go-xml"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"libvirt.org/go/libvirtxml"
 )
 
 // updateDNSHosts detects changes in the DNS hosts entries
@@ -50,8 +49,8 @@ func updateDNSHosts(d *schema.ResourceData, meta interface{}, network libvirt.Ne
 				return fmt.Errorf("serialize update: %s", err)
 			}
 
-			// See networkUpdateWorkAroundLibvirt for more information about why this wrapper method exists
-			err = (&networkUpdateWorkaroundLibvirt{virConn}).NetworkUpdate(network, uint32(libvirt.NetworkUpdateCommandDelete), uint32(libvirt.NetworkSectionDNSHost), -1, data, libvirt.NetworkUpdateAffectLive|libvirt.NetworkUpdateAffectConfig)
+			err = virConn.NetworkUpdateCompat(network, libvirt.NetworkUpdateCommandDelete,
+				libvirt.NetworkSectionDNSHost, -1, data, libvirt.NetworkUpdateAffectLive|libvirt.NetworkUpdateAffectConfig)
 			if err != nil {
 				return fmt.Errorf("delete %s: %s", oldEntry.IP, err)
 			}
@@ -75,27 +74,25 @@ func updateDNSHosts(d *schema.ResourceData, meta interface{}, network libvirt.Ne
 				return fmt.Errorf("serialize update: %s", err)
 			}
 
-			// See networkUpdateWorkAroundLibvirt for more information about why this wrapper method exists
-			err = (&networkUpdateWorkaroundLibvirt{virConn}).NetworkUpdate(network, uint32(libvirt.NetworkUpdateCommandAddLast), uint32(libvirt.NetworkSectionDNSHost), -1, data, libvirt.NetworkUpdateAffectLive|libvirt.NetworkUpdateAffectConfig)
+			err = virConn.NetworkUpdateCompat(network, libvirt.NetworkUpdateCommandAddLast,
+				libvirt.NetworkSectionDNSHost, -1, data, libvirt.NetworkUpdateAffectLive|libvirt.NetworkUpdateAffectConfig)
 			if err != nil {
 				return fmt.Errorf("add %v: %s", newEntry, err)
 			}
 		}
-
-		d.SetPartial(hostsKey)
 	}
 
 	return nil
 }
 
 func parseNetworkDNSHostsChange(change interface{}) (entries []libvirtxml.NetworkDNSHost, err error) {
-	slice, ok := change.([]interface{})
+	slice, ok := change.(*schema.Set)
 	if !ok {
-		return entries, errors.New("not slice")
+		return entries, fmt.Errorf("not set %v", change)
 	}
 
 	mapEntries := map[string][]string{}
-	for i, entryInterface := range slice {
+	for i, entryInterface := range slice.List() {
 		entryMap, ok := entryInterface.(map[string]interface{})
 		if !ok {
 			return nil, fmt.Errorf("entry %d is not a map", i)
@@ -151,16 +148,14 @@ func parseNetworkDNSHostsChange(change interface{}) (entries []libvirtxml.Networ
 // from the network definition
 func getDNSHostsFromResource(d *schema.ResourceData) ([]libvirtxml.NetworkDNSHost, error) {
 	dnsHostsMap := map[string][]string{}
-	if dnsHostCount, ok := d.GetOk(dnsPrefix + ".hosts.#"); ok {
-		for i := 0; i < dnsHostCount.(int); i++ {
-			hostPrefix := fmt.Sprintf(dnsPrefix+".hosts.%d", i)
-
-			address := d.Get(hostPrefix + ".ip").(string)
+	if dnsHosts, ok := d.GetOk(dnsPrefix + ".hosts"); ok {
+		for _, hostEntry := range dnsHosts.(*schema.Set).List() {
+			hostEntryMap := hostEntry.(map[string]interface{})
+			address := hostEntryMap["ip"].(string)
 			if net.ParseIP(address) == nil {
 				return nil, fmt.Errorf("could not parse address '%s'", address)
 			}
-
-			dnsHostsMap[address] = append(dnsHostsMap[address], d.Get(hostPrefix+".hostname").(string))
+			dnsHostsMap[address] = append(dnsHostsMap[address], hostEntryMap["hostname"].(string))
 		}
 	}
 
@@ -208,12 +203,13 @@ func getDNSForwardersFromResource(d *schema.ResourceData) ([]libvirtxml.NetworkD
 // getDNSEnableFromResource returns string to enable ("yes") or disable ("no") dns
 // in the network definition
 func getDNSEnableFromResource(d *schema.ResourceData) (string, error) {
-	if dnsLocalOnly, ok := d.GetOk(dnsPrefix + ".enabled"); ok {
-		if dnsLocalOnly.(bool) {
+	if dnsEnabled, ok := d.GetOk(dnsPrefix + ".enabled"); ok {
+		if dnsEnabled.(bool) {
 			return "yes", nil // this "boolean" must be "yes"|"no"
 		}
+		return "no", nil
 	}
-	return "no", nil
+	return "", nil
 }
 
 // getDNSSRVFromResource returns a list of libvirt's DNS SRVs

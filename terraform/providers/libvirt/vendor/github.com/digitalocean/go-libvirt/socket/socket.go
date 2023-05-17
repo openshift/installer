@@ -14,7 +14,7 @@ import (
 	"github.com/digitalocean/go-libvirt/internal/constants"
 )
 
-const disconnectTimeout = 5*time.Second
+const disconnectTimeout = 5 * time.Second
 
 // request and response statuses
 const (
@@ -56,6 +56,11 @@ const (
 	ReplyWithFDs
 )
 
+// Dialer is an interface for connecting to libvirt's underlying socket.
+type Dialer interface {
+	Dial() (net.Conn, error)
+}
+
 // Router is an interface used to route packets to the appropriate clients.
 type Router interface {
 	Route(*Header, []byte)
@@ -63,6 +68,7 @@ type Router interface {
 
 // Socket represents a libvirt Socket and its connection state
 type Socket struct {
+	dialer Dialer
 	router Router
 
 	conn   net.Conn
@@ -109,10 +115,32 @@ type Header struct {
 }
 
 // New initializes a new type for managing the Socket.
-func New(conn net.Conn, router Router) *Socket {
+func New(dialer Dialer, router Router) *Socket {
 	s := &Socket{
-		router: router,
-		mu:     &sync.Mutex{},
+		dialer:       dialer,
+		router:       router,
+		disconnected: make(chan struct{}),
+		mu:           &sync.Mutex{},
+	}
+
+	// we start with a closed channel since that indicates no connection
+	close(s.disconnected)
+
+	return s
+}
+
+// Connect uses the dialer provided on creation to establish
+// underlying physical connection to the desired libvirt.
+func (s *Socket) Connect() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.isDisconnected() {
+		return errors.New("already connected to socket")
+	}
+	conn, err := s.dialer.Dial()
+	if err != nil {
+		return err
 	}
 
 	s.conn = conn
@@ -120,12 +148,9 @@ func New(conn net.Conn, router Router) *Socket {
 	s.writer = bufio.NewWriter(conn)
 	s.disconnected = make(chan struct{})
 
-	// TODO:  The connection and listen goroutine should be moved to the
-	//  Connect function, but this is going to impact the exported API, so
-	//  trying to do as much as possible before doing that.
 	go s.listenAndRoute()
 
-	return s
+	return nil
 }
 
 // Disconnect closes the Socket connection to libvirt and waits for the reader

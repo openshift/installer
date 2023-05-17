@@ -13,9 +13,9 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	libvirt "github.com/digitalocean/go-libvirt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	libvirtxml "github.com/libvirt/libvirt-go-xml"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"libvirt.org/go/libvirtxml"
 )
 
 const domWaitLeaseStillWaiting = "waiting-addresses"
@@ -187,6 +187,9 @@ func domainGetIfacesInfo(virConn *libvirt.Libvirt, domain libvirt.Domain, rd *sc
 
 func newDiskForCloudInit(virConn *libvirt.Libvirt, volumeKey string) (libvirtxml.DomainDisk, error) {
 	disk := libvirtxml.DomainDisk{
+		// HACK mark the disk as belonging to the cloudinit
+		// resource so we can ignore it
+		Serial: "cloudinit",
 		Device: "cdrom",
 		Target: &libvirtxml.DomainDiskTarget{
 			// Last device letter possible with a single IDE controller on i440FX
@@ -461,19 +464,25 @@ func setConsoles(d *schema.ResourceData, domainDef *libvirtxml.Domain) {
 func setDisks(d *schema.ResourceData, domainDef *libvirtxml.Domain, virConn *libvirt.Libvirt) error {
 	var scsiDisk = false
 	var numOfISOs = 0
+	var numOfSCSIs = 0
 
 	for i := 0; i < d.Get("disk.#").(int); i++ {
 		disk := newDefDisk(i)
 
 		prefix := fmt.Sprintf("disk.%d", i)
 		if d.Get(prefix + ".scsi").(bool) {
-			disk.Target.Bus = "scsi"
+			disk.Target = &libvirtxml.DomainDiskTarget{
+				Dev: fmt.Sprintf("sd%s", diskLetterForIndex(numOfSCSIs)),
+				Bus: "scsi",
+			}
 			scsiDisk = true
 			if wwn, ok := d.GetOk(prefix + ".wwn"); ok {
 				disk.WWN = wwn.(string)
 			} else {
 				disk.WWN = randomWWN(10)
 			}
+
+			numOfSCSIs++
 		}
 
 		if volumeKey, ok := d.GetOk(prefix + ".volume_id"); ok {

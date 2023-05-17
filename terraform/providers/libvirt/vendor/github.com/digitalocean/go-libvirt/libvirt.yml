@@ -27,7 +27,7 @@ PARSER:
     # rely on our caller to link the libvirt source directory to lv_source/, and
     # run on that code. This isn't ideal, but changes to c-for-go are needed to
     # fix it.
-    IncludePaths: [./lv_source/include]
+    IncludePaths: [./lv_source/include, ./lv_source/build/include]
     SourcesPaths:
         - libvirt/libvirt.h
         - libvirt/virterror.h

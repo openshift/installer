@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -260,9 +259,6 @@ func Serve(opts *ServeConfig) {
 	// start with default version in the handshake config
 	protoVersion, protoType, pluginSet := protocolVersion(opts)
 
-	// Logging goes to the original stderr
-	log.SetOutput(os.Stderr)
-
 	logger := opts.Logger
 	if logger == nil {
 		// internal logger to os.Stderr
@@ -308,13 +304,13 @@ func Serve(opts *ServeConfig) {
 
 		certPEM, keyPEM, err := generateCert()
 		if err != nil {
-			logger.Error("failed to generate client certificate", "error", err)
+			logger.Error("failed to generate server certificate", "error", err)
 			panic(err)
 		}
 
 		cert, err := tls.X509KeyPair(certPEM, keyPEM)
 		if err != nil {
-			logger.Error("failed to parse client certificate", "error", err)
+			logger.Error("failed to parse server certificate", "error", err)
 			panic(err)
 		}
 
@@ -323,6 +319,8 @@ func Serve(opts *ServeConfig) {
 			ClientAuth:   tls.RequireAndVerifyClientCert,
 			ClientCAs:    clientCertPool,
 			MinVersion:   tls.VersionTLS12,
+			RootCAs:      clientCertPool,
+			ServerName:   "localhost",
 		}
 
 		// We send back the raw leaf cert data for the client rather than the
@@ -419,10 +417,11 @@ func Serve(opts *ServeConfig) {
 		// quite ready if they connect immediately but the client should
 		// retry a few times.
 		ch <- &ReattachConfig{
-			Protocol: protoType,
-			Addr:     listener.Addr(),
-			Pid:      os.Getpid(),
-			Test:     true,
+			Protocol:        protoType,
+			ProtocolVersion: protoVersion,
+			Addr:            listener.Addr(),
+			Pid:             os.Getpid(),
+			Test:            true,
 		}
 	}
 
