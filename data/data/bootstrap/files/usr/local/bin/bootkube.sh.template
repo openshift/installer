@@ -352,6 +352,7 @@ then
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			--image-references=assets/image-references \
+			--payload-version="${VERSION}" \
 			${ADDITIONAL_FLAGS}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
