@@ -366,6 +366,38 @@ func validateBootMode(hosts []*baremetal.Host, fldPath *field.Path) (errors fiel
 	return
 }
 
+// ValidateHostRootDeviceHints checks that a rootDeviceHints field contains no
+// invalid values.
+func ValidateHostRootDeviceHints(rdh *baremetal.RootDeviceHints, fldPath *field.Path) (errors field.ErrorList) {
+	if rdh == nil || rdh.DeviceName == "" {
+		return
+	}
+	devField := fldPath.Child("deviceName")
+	subpath := strings.TrimPrefix(rdh.DeviceName, "/dev/")
+	if rdh.DeviceName == subpath {
+		errors = append(errors, field.Invalid(devField, rdh.DeviceName,
+			"Device Name of root device hint must be a /dev/ path"))
+	}
+
+	subpath = strings.TrimPrefix(subpath, "disk/by-path/")
+	if strings.Contains(subpath, "/") {
+		errors = append(errors, field.Invalid(devField, rdh.DeviceName,
+			"Device Name of root device hint must be path in /dev/ or /dev/disk/by-path/"))
+	}
+	return
+}
+
+// ensure that none of the rootDeviceHints fields contain invalid values.
+func validateRootDeviceHints(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
+	for idx, host := range hosts {
+		if host == nil || host.RootDeviceHints == nil {
+			continue
+		}
+		errors = append(errors, ValidateHostRootDeviceHints(host.RootDeviceHints, fldPath.Index(idx).Child("rootDeviceHints"))...)
+	}
+	return
+}
+
 // validateProvisioningNetworkDisabledSupported validates hosts bmc address support provisioning network is disabled
 func validateProvisioningNetworkDisabledSupported(hosts []*baremetal.Host, fldPath *field.Path) (errors field.ErrorList) {
 	for idx, host := range hosts {
@@ -419,6 +451,7 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 		allErrs = append(allErrs, validateHostsWithoutBMC(p.Hosts, fldPath)...)
 		allErrs = append(allErrs, validateBootMode(p.Hosts, fldPath.Child("Hosts"))...)
+		allErrs = append(allErrs, validateRootDeviceHints(p.Hosts, fldPath.Child("Hosts"))...)
 		allErrs = append(allErrs, validateNetworkConfig(p.Hosts, fldPath.Child("Hosts"))...)
 
 		allErrs = append(allErrs, validateHostsName(p.Hosts, fldPath.Child("Hosts"))...)
