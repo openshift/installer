@@ -99,6 +99,12 @@ variable "aws_master_instance_metadata_authentication" {
   description = "The session tokens requirement, also referred to as Instance Metadata Service Version 2 (IMDSv2). Values are optional or required. Defaults to optional."
 }
 
+variable "aws_bootstrap_instance_metadata_authentication" {
+  type        = string
+  default     = "optional"
+  description = "The session tokens requirement, also referred to as Instance Metadata Service Version 2 (IMDSv2). Values are optional or required. Defaults to optional."
+}
+
 variable "aws_region" {
   type        = string
   description = "The target AWS region for the cluster."
