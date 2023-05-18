@@ -153,6 +153,24 @@ hosts:
 			expectedError: "invalid Agent Config configuration: Hosts[0].Interfaces[0].macAddress: Required value: each interface must have a MAC address defined",
 		},
 		{
+			name: "unsupported device name root device hint",
+			data: `
+apiVersion: v1beta1
+metadata:
+  name: agent-config-cluster0
+rendezvousIP: 192.168.111.80
+hosts:
+  - hostname: control-0.example.org
+    interfaces:
+      - name: enp2s0
+        macAddress: 98:af:65:a5:8d:01
+    rootDeviceHints:
+      deviceName: "/dev/disk/by-id/wwn-0x600508e000000000ce506dc50ab0ad05"`,
+
+			expectedFound: false,
+			expectedError: "invalid Agent Config configuration: Hosts[0].rootDeviceHints.deviceName: Invalid value: \"/dev/disk/by-id/wwn-0x600508e000000000ce506dc50ab0ad05\": Device Name of root device hint must be path in /dev/ or /dev/disk/by-path/",
+		},
+		{
 			name: "unsupported wwn extension root device hint",
 			data: `
 apiVersion: v1beta1
@@ -168,7 +186,7 @@ hosts:
       wwnWithExtension: "wwn-with-extension-value"`,
 
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: Hosts[0].RootDeviceHints.WWNWithExtension: Forbidden: WWN extensions are not supported in root device hints",
+			expectedError: "invalid Agent Config configuration: Hosts[0].rootDeviceHints.wwnWithExtension: Forbidden: WWN extensions are not supported in root device hints",
 		},
 		{
 			name: "unsupported wwn vendor extension root device hint",
@@ -186,7 +204,7 @@ hosts:
       wwnVendorExtension: "wwn-with-vendor-extension-value"`,
 
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: Hosts[0].RootDeviceHints.WWNVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
+			expectedError: "invalid Agent Config configuration: Hosts[0].rootDeviceHints.wwnVendorExtension: Forbidden: WWN vendor extensions are not supported in root device hints",
 		},
 		{
 			name: "node-hostname-and-role-are-not-required",
