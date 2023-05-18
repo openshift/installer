@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -92,6 +92,10 @@ func SendRequest(ctx context.Context, c *Config, verb, url string, body *bytes.B
 		}
 	}
 
+	if body == nil {
+		// A nil value indicates an empty request body.
+		body = &bytes.Buffer{}
+	}
 	bodyBytes := body.Bytes()
 	req, err := http.NewRequestWithContext(ctx, verb, u, bytes.NewReader(bodyBytes))
 	if err != nil {

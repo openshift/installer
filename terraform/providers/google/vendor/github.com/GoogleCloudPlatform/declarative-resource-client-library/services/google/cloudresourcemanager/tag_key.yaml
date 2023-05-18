@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a TagKey
     parameters:
-    - name: TagKey
+    - name: tagKey
       required: true
       description: A full instance of a TagKey
   apply:
     description: The function used to apply information about a TagKey
     parameters:
-    - name: TagKey
+    - name: tagKey
       required: true
       description: A full instance of a TagKey
   delete:
     description: The function used to delete a TagKey
     parameters:
-    - name: TagKey
+    - name: tagKey
       required: true
       description: A full instance of a TagKey
 components:
@@ -40,7 +40,11 @@ components:
     TagKey:
       title: TagKey
       x-dcl-id: tagKeys/{{name}}
+      x-dcl-has-create: true
       x-dcl-has-iam: true
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - parent

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,14 +21,14 @@ import (
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 )
 
-func expandPolicyName(r *Policy, name *string) (*string, error) {
+func expandPolicyName(_ *Client, name *string, res *Policy) (*string, error) {
 	nameParts := strings.Split(dcl.ValueOrEmptyString(name), "/")
 	if len(nameParts) == 4 {
 		fullName := strings.Join(nameParts, "/")
 		return &fullName, nil
 	}
 	shortName := nameParts[len(nameParts)-1]
-	fullName := fmt.Sprintf("%s/policies/%s", dcl.ValueOrEmptyString(r.Parent), shortName)
+	fullName := fmt.Sprintf("%s/policies/%s", dcl.ValueOrEmptyString(res.Parent), shortName)
 	return &fullName, nil
 }
 

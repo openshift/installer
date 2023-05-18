@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -142,4 +142,14 @@ type OperationNotDone struct {
 
 func (e OperationNotDone) Error() string {
 	return "operation not done."
+}
+
+// AttemptToIndexNilArray is returned when GetMapEntry is called with a path that includes an array
+// index and that array is unset in the map.
+type AttemptToIndexNilArray struct {
+	FieldName string
+}
+
+func (e AttemptToIndexNilArray) Error() string {
+	return fmt.Sprintf("field %s was nil, could not index array", e.FieldName)
 }

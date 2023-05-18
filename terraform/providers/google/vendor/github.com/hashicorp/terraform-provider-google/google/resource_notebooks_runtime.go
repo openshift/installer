@@ -18,12 +18,10 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const notebooksRuntimeGoogleProvidedLabel = "goog-caip-managed-notebook"
@@ -48,7 +46,7 @@ func NotReturnedByAPIDiffSuppress(k, old, new string, d *schema.ResourceData) bo
 	return true
 }
 
-func resourceNotebooksRuntime() *schema.Resource {
+func ResourceNotebooksRuntime() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceNotebooksRuntimeCreate,
 		Read:   resourceNotebooksRuntimeRead,
@@ -60,9 +58,9 @@ func resourceNotebooksRuntime() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(15 * time.Minute),
-			Update: schema.DefaultTimeout(15 * time.Minute),
-			Delete: schema.DefaultTimeout(15 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -77,7 +75,7 @@ func resourceNotebooksRuntime() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: `The name specified for the Notebook instance.`,
+				Description: `The name specified for the Notebook runtime.`,
 			},
 			"access_config": {
 				Type:        schema.TypeList,
@@ -109,6 +107,7 @@ Currently supports one owner only.`,
 			},
 			"software_config": {
 				Type:        schema.TypeList,
+				Computed:    true,
 				Optional:    true,
 				Description: `The config settings for software inside the runtime.`,
 				MaxItems:    1,
@@ -144,6 +143,26 @@ Default: 180 minutes`,
 							Optional:    true,
 							Description: `Install Nvidia Driver automatically.`,
 						},
+						"kernels": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Use a list of container images to use as Kernels in the notebook instance.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"repository": {
+										Type:     schema.TypeString,
+										Required: true,
+										Description: `The path to the container image repository.
+For example: gcr.io/{project_id}/{imageName}`,
+									},
+									"tag": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The tag of the container image. If not specified, this defaults to the latest tag.`,
+									},
+								},
+							},
+						},
 						"notebook_upgrade_schedule": {
 							Type:     schema.TypeString,
 							Optional: true,
@@ -156,6 +175,17 @@ Please follow the [cron format](https://en.wikipedia.org/wiki/Cron).`,
 							Description: `Path to a Bash script that automatically runs after a notebook instance
 fully boots up. The path must be a URL or
 Cloud Storage path (gs://path-to-file/file-name).`,
+						},
+						"post_startup_script_behavior": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validateEnum([]string{"POST_STARTUP_SCRIPT_BEHAVIOR_UNSPECIFIED", "RUN_EVERY_START", "DOWNLOAD_AND_RUN_EVERY_START", ""}),
+							Description:  `Behavior for the post startup script. Possible values: ["POST_STARTUP_SCRIPT_BEHAVIOR_UNSPECIFIED", "RUN_EVERY_START", "DOWNLOAD_AND_RUN_EVERY_START"]`,
+						},
+						"upgradeable": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: `Bool indicating whether an newer image is available in an image family.`,
 						},
 					},
 				},
@@ -355,10 +385,11 @@ rest/v1/projects.locations.runtimes#AcceleratorType'`,
 										},
 									},
 									"container_images": {
-										Type:             schema.TypeList,
-										Optional:         true,
-										DiffSuppressFunc: NotReturnedByAPIDiffSuppress,
-										Description:      `Use a list of container images to start the notebook instance.`,
+										Type:        schema.TypeList,
+										Computed:    true,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Use a list of container images to start the notebook instance.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"repository": {
@@ -378,6 +409,7 @@ For example: gcr.io/{project_id}/{imageName}`,
 									"encryption_config": {
 										Type:        schema.TypeList,
 										Optional:    true,
+										ForceNew:    true,
 										Description: `Encryption settings for virtual machine data disk.`,
 										MaxItems:    1,
 										Elem: &schema.Resource{
@@ -397,6 +429,7 @@ It has the following format:
 									"internal_ip_only": {
 										Type:     schema.TypeBool,
 										Optional: true,
+										ForceNew: true,
 										Description: `If true, runtime will only have internal IP addresses. By default,
 runtimes are not restricted to internal IP addresses, and will
 have ephemeral external IP addresses assigned to each vm. This
@@ -430,6 +463,7 @@ _metadata)).`,
 									"network": {
 										Type:     schema.TypeString,
 										Optional: true,
+										ForceNew: true,
 										Description: `The Compute Engine network to be used for machine communications.
 Cannot be specified with subnetwork. If neither 'network' nor
 'subnet' is specified, the "default" network of the project is
@@ -448,13 +482,22 @@ Runtimes support the following network configurations:
 									"nic_type": {
 										Type:         schema.TypeString,
 										Optional:     true,
-										ValidateFunc: validation.StringInSlice([]string{"UNSPECIFIED_NIC_TYPE", "VIRTIO_NET", "GVNIC", ""}, false),
+										ForceNew:     true,
+										ValidateFunc: validateEnum([]string{"UNSPECIFIED_NIC_TYPE", "VIRTIO_NET", "GVNIC", ""}),
 										Description: `The type of vNIC to be used on this interface. This may be gVNIC
 or VirtioNet. Possible values: ["UNSPECIFIED_NIC_TYPE", "VIRTIO_NET", "GVNIC"]`,
+									},
+									"reserved_ip_range": {
+										Type:     schema.TypeString,
+										Optional: true,
+										ForceNew: true,
+										Description: `Reserved IP Range name is used for VPC Peering. The
+subnetwork allocation will use the range *name* if it's assigned.`,
 									},
 									"shielded_instance_config": {
 										Type:        schema.TypeList,
 										Optional:    true,
+										ForceNew:    true,
 										Description: `Shielded VM Instance configuration settings.`,
 										MaxItems:    1,
 										Elem: &schema.Resource{
@@ -490,6 +533,7 @@ default.`,
 									"subnet": {
 										Type:     schema.TypeString,
 										Optional: true,
+										ForceNew: true,
 										Description: `The Compute Engine subnetwork to be used for machine
 communications. Cannot be specified with network. A full URL or
 partial URI are valid. Examples:
@@ -580,7 +624,7 @@ sessions stats.`,
 
 func resourceNotebooksRuntimeCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -624,7 +668,7 @@ func resourceNotebooksRuntimeCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Runtime: %s", err)
 	}
@@ -639,12 +683,13 @@ func resourceNotebooksRuntimeCreate(d *schema.ResourceData, meta interface{}) er
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = notebooksOperationWaitTimeWithResponse(
+	err = NotebooksOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Runtime", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Runtime: %s", err)
 	}
 
@@ -662,7 +707,7 @@ func resourceNotebooksRuntimeCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceNotebooksRuntimeRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -685,7 +730,7 @@ func resourceNotebooksRuntimeRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("NotebooksRuntime %q", d.Id()))
 	}
@@ -718,7 +763,7 @@ func resourceNotebooksRuntimeRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourceNotebooksRuntimeUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -757,13 +802,35 @@ func resourceNotebooksRuntimeUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating Runtime %q: %#v", d.Id(), obj)
+	updateMask := []string{}
+
+	if d.HasChange("virtual_machine") {
+		updateMask = append(updateMask, "virtualMachine")
+	}
+
+	if d.HasChange("access_config") {
+		updateMask = append(updateMask, "accessConfig")
+	}
+
+	if d.HasChange("software_config") {
+		updateMask = append(updateMask, "softwareConfig.idleShutdown",
+			"softwareConfig.idleShutdownTimeout",
+			"softwareConfig.customGpuDriverPath",
+			"softwareConfig.postStartupScript")
+	}
+	// updateMask is a URL parameter but not present in the schema, so replaceVars
+	// won't set it
+	url, err = addQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
+	if err != nil {
+		return err
+	}
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Runtime %q: %s", d.Id(), err)
@@ -771,7 +838,7 @@ func resourceNotebooksRuntimeUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[DEBUG] Finished updating Runtime %q: %#v", d.Id(), res)
 	}
 
-	err = notebooksOperationWaitTime(
+	err = NotebooksOperationWaitTime(
 		config, res, project, "Updating Runtime", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -784,7 +851,7 @@ func resourceNotebooksRuntimeUpdate(d *schema.ResourceData, meta interface{}) er
 
 func resourceNotebooksRuntimeDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -810,12 +877,12 @@ func resourceNotebooksRuntimeDelete(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Runtime")
 	}
 
-	err = notebooksOperationWaitTime(
+	err = NotebooksOperationWaitTime(
 		config, res, project, "Deleting Runtime", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -911,6 +978,8 @@ func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfig(v interface{}, d 
 		flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigLabels(original["labels"], d, config)
 	transformed["nic_type"] =
 		flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigNicType(original["nicType"], d, config)
+	transformed["reserved_ip_range"] =
+		flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigReservedIpRange(original["reservedIpRange"], d, config)
 	return []interface{}{transformed}
 }
 func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigZone(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -975,7 +1044,7 @@ func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigDataDiskGuestOsFea
 func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigDataDiskIndex(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1021,7 +1090,7 @@ func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigDataDiskInitialize
 func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigDataDiskInitializeParamsDiskSizeGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1162,7 +1231,7 @@ func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigAcceleratorConfigT
 func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigAcceleratorConfigCoreCount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1205,6 +1274,10 @@ func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigLabels(v interface
 }
 
 func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigNicType(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksRuntimeVirtualMachineVirtualMachineConfigReservedIpRange(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1264,10 +1337,16 @@ func flattenNotebooksRuntimeSoftwareConfig(v interface{}, d *schema.ResourceData
 		flattenNotebooksRuntimeSoftwareConfigIdleShutdownTimeout(original["idleShutdownTimeout"], d, config)
 	transformed["install_gpu_driver"] =
 		flattenNotebooksRuntimeSoftwareConfigInstallGpuDriver(original["installGpuDriver"], d, config)
+	transformed["upgradeable"] =
+		flattenNotebooksRuntimeSoftwareConfigUpgradeable(original["upgradeable"], d, config)
 	transformed["custom_gpu_driver_path"] =
 		flattenNotebooksRuntimeSoftwareConfigCustomGpuDriverPath(original["customGpuDriverPath"], d, config)
 	transformed["post_startup_script"] =
 		flattenNotebooksRuntimeSoftwareConfigPostStartupScript(original["postStartupScript"], d, config)
+	transformed["post_startup_script_behavior"] =
+		flattenNotebooksRuntimeSoftwareConfigPostStartupScriptBehavior(original["postStartupScriptBehavior"], d, config)
+	transformed["kernels"] =
+		flattenNotebooksRuntimeSoftwareConfigKernels(original["kernels"], d, config)
 	return []interface{}{transformed}
 }
 func flattenNotebooksRuntimeSoftwareConfigNotebookUpgradeSchedule(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1285,7 +1364,7 @@ func flattenNotebooksRuntimeSoftwareConfigIdleShutdown(v interface{}, d *schema.
 func flattenNotebooksRuntimeSoftwareConfigIdleShutdownTimeout(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1303,11 +1382,46 @@ func flattenNotebooksRuntimeSoftwareConfigInstallGpuDriver(v interface{}, d *sch
 	return v
 }
 
+func flattenNotebooksRuntimeSoftwareConfigUpgradeable(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenNotebooksRuntimeSoftwareConfigCustomGpuDriverPath(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
 func flattenNotebooksRuntimeSoftwareConfigPostStartupScript(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksRuntimeSoftwareConfigPostStartupScriptBehavior(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksRuntimeSoftwareConfigKernels(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"repository": flattenNotebooksRuntimeSoftwareConfigKernelsRepository(original["repository"], d, config),
+			"tag":        flattenNotebooksRuntimeSoftwareConfigKernelsTag(original["tag"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenNotebooksRuntimeSoftwareConfigKernelsRepository(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksRuntimeSoftwareConfigKernelsTag(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1481,6 +1595,13 @@ func expandNotebooksRuntimeVirtualMachineVirtualMachineConfig(v interface{}, d T
 		return nil, err
 	} else if val := reflect.ValueOf(transformedNicType); val.IsValid() && !isEmptyValue(val) {
 		transformed["nicType"] = transformedNicType
+	}
+
+	transformedReservedIpRange, err := expandNotebooksRuntimeVirtualMachineVirtualMachineConfigReservedIpRange(original["reserved_ip_range"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedReservedIpRange); val.IsValid() && !isEmptyValue(val) {
+		transformed["reservedIpRange"] = transformedReservedIpRange
 	}
 
 	return transformed, nil
@@ -1900,6 +2021,10 @@ func expandNotebooksRuntimeVirtualMachineVirtualMachineConfigNicType(v interface
 	return v, nil
 }
 
+func expandNotebooksRuntimeVirtualMachineVirtualMachineConfigReservedIpRange(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandNotebooksRuntimeAccessConfig(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -1989,6 +2114,13 @@ func expandNotebooksRuntimeSoftwareConfig(v interface{}, d TerraformResourceData
 		transformed["installGpuDriver"] = transformedInstallGpuDriver
 	}
 
+	transformedUpgradeable, err := expandNotebooksRuntimeSoftwareConfigUpgradeable(original["upgradeable"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUpgradeable); val.IsValid() && !isEmptyValue(val) {
+		transformed["upgradeable"] = transformedUpgradeable
+	}
+
 	transformedCustomGpuDriverPath, err := expandNotebooksRuntimeSoftwareConfigCustomGpuDriverPath(original["custom_gpu_driver_path"], d, config)
 	if err != nil {
 		return nil, err
@@ -2001,6 +2133,20 @@ func expandNotebooksRuntimeSoftwareConfig(v interface{}, d TerraformResourceData
 		return nil, err
 	} else if val := reflect.ValueOf(transformedPostStartupScript); val.IsValid() && !isEmptyValue(val) {
 		transformed["postStartupScript"] = transformedPostStartupScript
+	}
+
+	transformedPostStartupScriptBehavior, err := expandNotebooksRuntimeSoftwareConfigPostStartupScriptBehavior(original["post_startup_script_behavior"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPostStartupScriptBehavior); val.IsValid() && !isEmptyValue(val) {
+		transformed["postStartupScriptBehavior"] = transformedPostStartupScriptBehavior
+	}
+
+	transformedKernels, err := expandNotebooksRuntimeSoftwareConfigKernels(original["kernels"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKernels); val.IsValid() && !isEmptyValue(val) {
+		transformed["kernels"] = transformedKernels
 	}
 
 	return transformed, nil
@@ -2026,10 +2172,55 @@ func expandNotebooksRuntimeSoftwareConfigInstallGpuDriver(v interface{}, d Terra
 	return v, nil
 }
 
+func expandNotebooksRuntimeSoftwareConfigUpgradeable(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandNotebooksRuntimeSoftwareConfigCustomGpuDriverPath(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandNotebooksRuntimeSoftwareConfigPostStartupScript(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksRuntimeSoftwareConfigPostStartupScriptBehavior(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksRuntimeSoftwareConfigKernels(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedRepository, err := expandNotebooksRuntimeSoftwareConfigKernelsRepository(original["repository"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedRepository); val.IsValid() && !isEmptyValue(val) {
+			transformed["repository"] = transformedRepository
+		}
+
+		transformedTag, err := expandNotebooksRuntimeSoftwareConfigKernelsTag(original["tag"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedTag); val.IsValid() && !isEmptyValue(val) {
+			transformed["tag"] = transformedTag
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandNotebooksRuntimeSoftwareConfigKernelsRepository(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksRuntimeSoftwareConfigKernelsTag(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }

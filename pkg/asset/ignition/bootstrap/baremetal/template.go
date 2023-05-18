@@ -65,6 +65,9 @@ type TemplateData struct {
 	// ExternalStaticIP is the static gateway of the bootstrap node
 	ExternalStaticGateway string
 
+	// ExternalStaticDNS is the static DNS of the bootstrap node
+	ExternalStaticDNS string
+
 	ExternalSubnetCIDR int
 
 	ExternalMACAddress string
@@ -80,6 +83,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	templateData.ProvisioningNetwork = string(config.ProvisioningNetwork)
 	templateData.ExternalStaticIP = config.BootstrapExternalStaticIP
 	templateData.ExternalStaticGateway = config.BootstrapExternalStaticGateway
+	templateData.ExternalStaticDNS = config.BootstrapExternalStaticDNS
 	templateData.ExternalMACAddress = config.ExternalMACAddress
 
 	if len(config.APIVIPs) > 0 {

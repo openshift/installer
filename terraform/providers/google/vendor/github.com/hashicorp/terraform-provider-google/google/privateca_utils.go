@@ -2,7 +2,6 @@ package google
 
 import (
 	"fmt"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -231,6 +230,37 @@ func expandPrivatecaCertificateConfigX509ConfigAiaOcspServers(v interface{}, d T
 	return v, nil
 }
 
+func expandPrivatecaCertificateConfigX509ConfigNameConstraints(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	if v == nil {
+		return nil, nil
+	}
+
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	if len(original) == 0 {
+		// Ignore empty name constraints
+		return nil, nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformed["critical"] = original["critical"]
+	transformed["permittedDnsNames"] = original["permitted_dns_names"]
+	transformed["excludedDnsNames"] = original["excluded_dns_names"]
+	transformed["permittedIpRanges"] = original["permitted_ip_ranges"]
+	transformed["excludedIpRanges"] = original["excluded_ip_ranges"]
+	transformed["permittedEmailAddresses"] = original["permitted_email_addresses"]
+	transformed["excludedEmailAddresses"] = original["excluded_email_addresses"]
+	transformed["permittedUris"] = original["permitted_uris"]
+	transformed["excludedUris"] = original["excluded_uris"]
+
+	return transformed, nil
+}
+
 // Flattener utilities
 
 func flattenPrivatecaCertificateConfigX509ConfigAdditionalExtensions(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -336,7 +366,7 @@ func flattenPrivatecaCertificateConfigX509ConfigCaOptionsIsCa(v interface{}, d *
 func flattenPrivatecaCertificateConfigX509ConfigCaOptionsMaxIssuerPathLength(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -490,4 +520,24 @@ func flattenPrivatecaCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages
 }
 func flattenPrivatecaCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesObjectIdPath(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
+}
+
+func flattenPrivatecaCertificateConfigX509ConfigNameConstraints(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformed["critical"] = original["critical"]
+	transformed["permitted_dns_names"] = original["permittedDnsNames"]
+	transformed["excluded_dns_names"] = original["excludedDnsNames"]
+	transformed["permitted_ip_ranges"] = original["permittedIpRanges"]
+	transformed["excluded_ip_ranges"] = original["excludedIpRanges"]
+	transformed["permitted_email_addresses"] = original["permittedEmailAddresses"]
+	transformed["excluded_email_addresses"] = original["excludedEmailAddresses"]
+	transformed["permitted_uris"] = original["permittedUris"]
+	transformed["excluded_uris"] = original["excludedUris"]
+
+	return []interface{}{transformed}
 }

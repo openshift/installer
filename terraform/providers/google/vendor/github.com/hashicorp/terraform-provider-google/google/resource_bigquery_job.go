@@ -19,7 +19,6 @@ import (
 	"log"
 	"reflect"
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -32,7 +31,7 @@ var (
 	bigqueryTableRegexp   = regexp.MustCompile("projects/(.+)/datasets/(.+)/tables/(.+)")
 )
 
-func resourceBigQueryJob() *schema.Resource {
+func ResourceBigQueryJob() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBigQueryJobCreate,
 		Read:   resourceBigQueryJobRead,
@@ -43,8 +42,8 @@ func resourceBigQueryJob() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -92,7 +91,7 @@ or of the form 'projects/{{project}}/datasets/{{dataset_id}}/tables/{{table_id}}
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"CREATE_IF_NEEDED", "CREATE_NEVER", ""}, false),
+							ValidateFunc: validateEnum([]string{"CREATE_IF_NEEDED", "CREATE_NEVER", ""}),
 							Description: `Specifies whether the job is allowed to create new tables. The following values are supported:
 CREATE_IF_NEEDED: If the table does not exist, BigQuery creates the table.
 CREATE_NEVER: The table must already exist. If it does not, a 'notFound' error is returned in the job result.
@@ -159,7 +158,7 @@ or of the form 'projects/{{project}}/datasets/{{dataset_id}}/tables/{{table_id}}
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WRITE_TRUNCATE", "WRITE_APPEND", "WRITE_EMPTY", ""}, false),
+							ValidateFunc: validateEnum([]string{"WRITE_TRUNCATE", "WRITE_APPEND", "WRITE_EMPTY", ""}),
 							Description: `Specifies the action that occurs if the destination table already exists. The following values are supported:
 WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data and uses the schema from the query result.
 WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
@@ -354,11 +353,11 @@ or of the form 'projects/{{project}}/datasets/{{dataset_id}}/tables/{{table_id}}
 							Required: true,
 							ForceNew: true,
 							Description: `The fully-qualified URIs that point to your data in Google Cloud.
-For Google Cloud Storage URIs: Each URI can contain one '*' wildcard character
+For Google Cloud Storage URIs: Each URI can contain one '\*' wildcard character
 and it must come after the 'bucket' name. Size limits related to load jobs apply
 to external data sources. For Google Cloud Bigtable URIs: Exactly one URI can be
 specified and it has be a fully specified and valid HTTPS URL for a Google Cloud Bigtable table.
-For Google Cloud Datastore backups: Exactly one URI can be specified. Also, the '*' wildcard character is not allowed.`,
+For Google Cloud Datastore backups: Exactly one URI can be specified. Also, the '\*' wildcard character is not allowed.`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -390,7 +389,7 @@ The default value is false.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"CREATE_IF_NEEDED", "CREATE_NEVER", ""}, false),
+							ValidateFunc: validateEnum([]string{"CREATE_IF_NEEDED", "CREATE_NEVER", ""}),
 							Description: `Specifies whether the job is allowed to create new tables. The following values are supported:
 CREATE_IF_NEEDED: If the table does not exist, BigQuery creates the table.
 CREATE_NEVER: The table must already exist. If it does not, a 'notFound' error is returned in the job result.
@@ -451,6 +450,14 @@ The default value is false. The sourceFormat property determines what BigQuery t
 CSV: Trailing columns
 JSON: Named values that don't match any column names`,
 							Default: false,
+						},
+						"json_extension": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Description: `If sourceFormat is set to newline-delimited JSON, indicates whether it should be processed as a JSON variant such as GeoJSON.
+For a sourceFormat other than JSON, omit this field. If the sourceFormat is newline-delimited JSON: - for newline-delimited
+GeoJSON: set to GEOJSON.`,
 						},
 						"max_bad_records": {
 							Type:     schema.TypeInt,
@@ -566,7 +573,7 @@ A wrapper is used here because an empty string is an invalid value.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WRITE_TRUNCATE", "WRITE_APPEND", "WRITE_EMPTY", ""}, false),
+							ValidateFunc: validateEnum([]string{"WRITE_TRUNCATE", "WRITE_APPEND", "WRITE_EMPTY", ""}),
 							Description: `Specifies the action that occurs if the destination table already exists. The following values are supported:
 WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data and uses the schema from the query result.
 WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
@@ -607,7 +614,7 @@ However, you must still set destinationTable when result size exceeds the allowe
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"CREATE_IF_NEEDED", "CREATE_NEVER", ""}, false),
+							ValidateFunc: validateEnum([]string{"CREATE_IF_NEEDED", "CREATE_NEVER", ""}),
 							Description: `Specifies whether the job is allowed to create new tables. The following values are supported:
 CREATE_IF_NEEDED: If the table does not exist, BigQuery creates the table.
 CREATE_NEVER: The table must already exist. If it does not, a 'notFound' error is returned in the job result.
@@ -665,6 +672,7 @@ The BigQuery Service Account associated with your project requires access to thi
 						},
 						"destination_table": {
 							Type:     schema.TypeList,
+							Computed: true,
 							Optional: true,
 							ForceNew: true,
 							Description: `Describes the table where the query results should be stored.
@@ -729,7 +737,7 @@ If unspecified, this will be set to your project default.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"INTERACTIVE", "BATCH", ""}, false),
+							ValidateFunc: validateEnum([]string{"INTERACTIVE", "BATCH", ""}),
 							Description:  `Specifies a priority for the query. Default value: "INTERACTIVE" Possible values: ["INTERACTIVE", "BATCH"]`,
 							Default:      "INTERACTIVE",
 						},
@@ -760,7 +768,7 @@ ALLOW_FIELD_RELAXATION: allow relaxing a required field in the original schema t
 										Type:         schema.TypeString,
 										Optional:     true,
 										ForceNew:     true,
-										ValidateFunc: validation.StringInSlice([]string{"LAST", "FIRST_SELECT", ""}, false),
+										ValidateFunc: validateEnum([]string{"LAST", "FIRST_SELECT", ""}),
 										Description: `Determines which statement in the script represents the "key result",
 used to populate the schema and query results of the script job. Possible values: ["LAST", "FIRST_SELECT"]`,
 										AtLeastOneOf: []string{"query.0.script_options.0.statement_timeout_ms", "query.0.script_options.0.statement_byte_budget", "query.0.script_options.0.key_result_statement"},
@@ -825,7 +833,7 @@ Providing a inline code resource is equivalent to providing a URI for a file con
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"WRITE_TRUNCATE", "WRITE_APPEND", "WRITE_EMPTY", ""}, false),
+							ValidateFunc: validateEnum([]string{"WRITE_TRUNCATE", "WRITE_APPEND", "WRITE_EMPTY", ""}),
 							Description: `Specifies the action that occurs if the destination table already exists. The following values are supported:
 WRITE_TRUNCATE: If the table already exists, BigQuery overwrites the table data and uses the schema from the query result.
 WRITE_APPEND: If the table already exists, BigQuery appends the data to the table.
@@ -940,7 +948,7 @@ not necessarily mean that the job has not completed or was unsuccessful.`,
 
 func resourceBigQueryJobCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -983,7 +991,7 @@ func resourceBigQueryJobCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Job: %s", err)
 	}
@@ -1027,12 +1035,12 @@ func resourceBigQueryJobPollRead(d *schema.ResourceData, meta interface{}) PollR
 			billingProject = bp
 		}
 
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+		res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 		if err != nil {
 			return res, err
 		}
@@ -1042,7 +1050,7 @@ func resourceBigQueryJobPollRead(d *schema.ResourceData, meta interface{}) PollR
 
 func resourceBigQueryJobRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1065,7 +1073,7 @@ func resourceBigQueryJobRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("BigQueryJob %q", d.Id()))
 	}
@@ -1329,7 +1337,7 @@ func flattenBigQueryJobConfigurationQueryFlattenResults(v interface{}, d *schema
 func flattenBigQueryJobConfigurationQueryMaximumBillingTier(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1446,6 +1454,8 @@ func flattenBigQueryJobConfigurationLoad(v interface{}, d *schema.ResourceData, 
 		flattenBigQueryJobConfigurationLoadAllowQuotedNewlines(original["allowQuotedNewlines"], d, config)
 	transformed["source_format"] =
 		flattenBigQueryJobConfigurationLoadSourceFormat(original["sourceFormat"], d, config)
+	transformed["json_extension"] =
+		flattenBigQueryJobConfigurationLoadJsonExtension(original["jsonExtension"], d, config)
 	transformed["allow_jagged_rows"] =
 		flattenBigQueryJobConfigurationLoadAllowJaggedRows(original["allowJaggedRows"], d, config)
 	transformed["ignore_unknown_values"] =
@@ -1505,7 +1515,7 @@ func flattenBigQueryJobConfigurationLoadFieldDelimiter(v interface{}, d *schema.
 func flattenBigQueryJobConfigurationLoadSkipLeadingRows(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1530,7 +1540,7 @@ func flattenBigQueryJobConfigurationLoadQuote(v interface{}, d *schema.ResourceD
 func flattenBigQueryJobConfigurationLoadMaxBadRecords(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1549,6 +1559,10 @@ func flattenBigQueryJobConfigurationLoadAllowQuotedNewlines(v interface{}, d *sc
 }
 
 func flattenBigQueryJobConfigurationLoadSourceFormat(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenBigQueryJobConfigurationLoadJsonExtension(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -2454,6 +2468,13 @@ func expandBigQueryJobConfigurationLoad(v interface{}, d TerraformResourceData, 
 		transformed["sourceFormat"] = transformedSourceFormat
 	}
 
+	transformedJsonExtension, err := expandBigQueryJobConfigurationLoadJsonExtension(original["json_extension"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedJsonExtension); val.IsValid() && !isEmptyValue(val) {
+		transformed["jsonExtension"] = transformedJsonExtension
+	}
+
 	transformedAllowJaggedRows, err := expandBigQueryJobConfigurationLoadAllowJaggedRows(original["allow_jagged_rows"], d, config)
 	if err != nil {
 		return nil, err
@@ -2580,6 +2601,10 @@ func expandBigQueryJobConfigurationLoadAllowQuotedNewlines(v interface{}, d Terr
 }
 
 func expandBigQueryJobConfigurationLoadSourceFormat(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandBigQueryJobConfigurationLoadJsonExtension(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

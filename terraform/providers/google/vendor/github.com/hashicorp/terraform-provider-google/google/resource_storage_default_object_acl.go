@@ -2,11 +2,12 @@ package google
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/storage/v1"
 )
 
-func resourceStorageDefaultObjectAcl() *schema.Resource {
+func ResourceStorageDefaultObjectAcl() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceStorageDefaultObjectAclCreateUpdate,
 		Read:   resourceStorageDefaultObjectAclRead,
@@ -36,7 +37,7 @@ func resourceStorageDefaultObjectAcl() *schema.Resource {
 
 func resourceStorageDefaultObjectAclCreateUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func resourceStorageDefaultObjectAclCreateUpdate(d *schema.ResourceData, meta in
 
 func resourceStorageDefaultObjectAclRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -111,7 +112,7 @@ func resourceStorageDefaultObjectAclRead(d *schema.ResourceData, meta interface{
 
 func resourceStorageDefaultObjectAclDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

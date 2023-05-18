@@ -27,7 +27,7 @@ import (
 	containerazure "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containerazure"
 )
 
-func resourceContainerAzureCluster() *schema.Resource {
+func ResourceContainerAzureCluster() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceContainerAzureClusterCreate,
 		Read:   resourceContainerAzureClusterRead,
@@ -39,17 +39,16 @@ func resourceContainerAzureCluster() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
 			"authorization": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Configuration related to the cluster RBAC settings.",
+				Description: "Configuration related to the cluster RBAC settings.",
 				MaxItems:    1,
 				Elem:        ContainerAzureClusterAuthorizationSchema(),
 			},
@@ -58,20 +57,13 @@ func resourceContainerAzureCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The Azure region where the cluster runs. Each Google Cloud region supports a subset of nearby Azure regions. You can call to list all supported Azure regions within a given Google Cloud region.",
-			},
-
-			"client": {
-				Type:             schema.TypeString,
-				Required:         true,
-				DiffSuppressFunc: compareSelfLinkOrResourceName,
-				Description:      "Required. Name of the AzureClient. The `AzureClient` resource must reside on the same GCP project and region as the `AzureCluster`. `AzureClient` names are formatted as `projects/<project-number>/locations/<region>/azureClients/<client-id>`. See Resource Names (https:cloud.google.com/apis/design/resource_names) for more details on Google Cloud resource names.",
+				Description: "The Azure region where the cluster runs. Each Google Cloud region supports a subset of nearby Azure regions. You can call to list all supported Azure regions within a given Google Cloud region.",
 			},
 
 			"control_plane": {
 				Type:        schema.TypeList,
 				Required:    true,
-				Description: "Required. Configuration related to the cluster control plane.",
+				Description: "Configuration related to the cluster control plane.",
 				MaxItems:    1,
 				Elem:        ContainerAzureClusterControlPlaneSchema(),
 			},
@@ -103,7 +95,7 @@ func resourceContainerAzureCluster() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. Cluster-wide networking configuration.",
+				Description: "Cluster-wide networking configuration.",
 				MaxItems:    1,
 				Elem:        ContainerAzureClusterNetworkingSchema(),
 			},
@@ -112,7 +104,7 @@ func resourceContainerAzureCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The ARM ID of the resource group where the cluster resources are deployed. For example: `/subscriptions/*/resourceGroups/*`",
+				Description: "The ARM ID of the resource group where the cluster resources are deployed. For example: `/subscriptions/*/resourceGroups/*`",
 			},
 
 			"annotations": {
@@ -121,6 +113,23 @@ func resourceContainerAzureCluster() *schema.Resource {
 				ForceNew:    true,
 				Description: "Optional. Annotations on the cluster. This field has the same restrictions as Kubernetes annotations. The total size of all keys and values combined is limited to 256k. Keys can have 2 segments: prefix (optional) and name (required), separated by a slash (/). Prefix must be a DNS subdomain. Name must be 63 characters or less, begin and end with alphanumerics, with dashes (-), underscores (_), dots (.), and alphanumerics between.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+
+			"azure_services_authentication": {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Description:   "Azure authentication configuration for management of Azure resources",
+				MaxItems:      1,
+				Elem:          ContainerAzureClusterAzureServicesAuthenticationSchema(),
+				ConflictsWith: []string{"client"},
+			},
+
+			"client": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				Description:      "Name of the AzureClient. The `AzureClient` resource must reside on the same GCP project and region as the `AzureCluster`. `AzureClient` names are formatted as `projects/<project-number>/locations/<region>/azureClients/<client-id>`. See Resource Names (https:cloud.google.com/apis/design/resource_names) for more details on Google Cloud resource names.",
+				ConflictsWith:    []string{"azure_services_authentication"},
 			},
 
 			"description": {
@@ -196,8 +205,7 @@ func ContainerAzureClusterAuthorizationSchema() *schema.Resource {
 			"admin_users": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Users that can perform operations as a cluster admin. A new ClusterRoleBinding will be created to grant the cluster-admin ClusterRole to the users. At most one user can be specified. For more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
+				Description: "Users that can perform operations as a cluster admin. A new ClusterRoleBinding will be created to grant the cluster-admin ClusterRole to the users. Up to ten admin users can be provided. For more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
 				Elem:        ContainerAzureClusterAuthorizationAdminUsersSchema(),
 			},
 		},
@@ -210,8 +218,7 @@ func ContainerAzureClusterAuthorizationAdminUsersSchema() *schema.Resource {
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The name of the user, e.g. `my-gcp-id@gmail.com`.",
+				Description: "The name of the user, e.g. `my-gcp-id@gmail.com`.",
 			},
 		},
 	}
@@ -223,8 +230,7 @@ func ContainerAzureClusterControlPlaneSchema() *schema.Resource {
 			"ssh_config": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. SSH configuration for how to access the underlying control plane machines.",
+				Description: "SSH configuration for how to access the underlying control plane machines.",
 				MaxItems:    1,
 				Elem:        ContainerAzureClusterControlPlaneSshConfigSchema(),
 			},
@@ -233,13 +239,13 @@ func ContainerAzureClusterControlPlaneSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The ARM ID of the subnet where the control plane VMs are deployed. Example: `/subscriptions//resourceGroups//providers/Microsoft.Network/virtualNetworks//subnets/default`.",
+				Description: "The ARM ID of the subnet where the control plane VMs are deployed. Example: `/subscriptions//resourceGroups//providers/Microsoft.Network/virtualNetworks//subnets/default`.",
 			},
 
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Required. The Kubernetes version to run on control plane replicas (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling GetAzureServerConfig.",
+				Description: "The Kubernetes version to run on control plane replicas (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling GetAzureServerConfig.",
 			},
 
 			"database_encryption": {
@@ -300,7 +306,6 @@ func ContainerAzureClusterControlPlaneSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The Azure VM size name. Example: `Standard_DS2_v2`. For available VM sizes, see https://docs.microsoft.com/en-us/azure/virtual-machines/vm-naming-conventions. When unspecified, it defaults to `Standard_DS2_v2`.",
 			},
 		},
@@ -313,8 +318,7 @@ func ContainerAzureClusterControlPlaneSshConfigSchema() *schema.Resource {
 			"authorized_key": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The SSH public key data for VMs managed by Anthos. This accepts the authorized_keys file format used in OpenSSH according to the sshd(8) manual page.",
+				Description: "The SSH public key data for VMs managed by Anthos. This accepts the authorized_keys file format used in OpenSSH according to the sshd(8) manual page.",
 			},
 		},
 	}
@@ -429,7 +433,7 @@ func ContainerAzureClusterNetworkingSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The IP address range of the pods in this cluster, in CIDR notation (e.g. `10.96.0.0/14`). All pods in the cluster get assigned a unique RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creation.",
+				Description: "The IP address range of the pods in this cluster, in CIDR notation (e.g. `10.96.0.0/14`). All pods in the cluster get assigned a unique RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creation.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -437,7 +441,7 @@ func ContainerAzureClusterNetworkingSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The IP address range for services in this cluster, in CIDR notation (e.g. `10.96.0.0/14`). All services in the cluster get assigned a unique RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creating a cluster.",
+				Description: "The IP address range for services in this cluster, in CIDR notation (e.g. `10.96.0.0/14`). All services in the cluster get assigned a unique RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creating a cluster.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -445,7 +449,25 @@ func ContainerAzureClusterNetworkingSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The Azure Resource Manager (ARM) ID of the VNet associated with your cluster. All components in the cluster (i.e. control plane and node pools) run on a single VNet. Example: `/subscriptions/*/resourceGroups/*/providers/Microsoft.Network/virtualNetworks/*` This field cannot be changed after creation.",
+				Description: "The Azure Resource Manager (ARM) ID of the VNet associated with your cluster. All components in the cluster (i.e. control plane and node pools) run on a single VNet. Example: `/subscriptions/*/resourceGroups/*/providers/Microsoft.Network/virtualNetworks/*` This field cannot be changed after creation.",
+			},
+		},
+	}
+}
+
+func ContainerAzureClusterAzureServicesAuthenticationSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"application_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The Azure Active Directory Application ID for Authentication configuration.",
+			},
+
+			"tenant_id": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The Azure Active Directory Tenant ID for Authentication configuration.",
 			},
 		},
 	}
@@ -483,27 +505,28 @@ func resourceContainerAzureClusterCreate(d *schema.ResourceData, meta interface{
 	}
 
 	obj := &containerazure.Cluster{
-		Authorization:   expandContainerAzureClusterAuthorization(d.Get("authorization")),
-		AzureRegion:     dcl.String(d.Get("azure_region").(string)),
-		Client:          dcl.String(d.Get("client").(string)),
-		ControlPlane:    expandContainerAzureClusterControlPlane(d.Get("control_plane")),
-		Fleet:           expandContainerAzureClusterFleet(d.Get("fleet")),
-		Location:        dcl.String(d.Get("location").(string)),
-		Name:            dcl.String(d.Get("name").(string)),
-		Networking:      expandContainerAzureClusterNetworking(d.Get("networking")),
-		ResourceGroupId: dcl.String(d.Get("resource_group_id").(string)),
-		Annotations:     checkStringMap(d.Get("annotations")),
-		Description:     dcl.String(d.Get("description").(string)),
-		Project:         dcl.String(project),
+		Authorization:               expandContainerAzureClusterAuthorization(d.Get("authorization")),
+		AzureRegion:                 dcl.String(d.Get("azure_region").(string)),
+		ControlPlane:                expandContainerAzureClusterControlPlane(d.Get("control_plane")),
+		Fleet:                       expandContainerAzureClusterFleet(d.Get("fleet")),
+		Location:                    dcl.String(d.Get("location").(string)),
+		Name:                        dcl.String(d.Get("name").(string)),
+		Networking:                  expandContainerAzureClusterNetworking(d.Get("networking")),
+		ResourceGroupId:             dcl.String(d.Get("resource_group_id").(string)),
+		Annotations:                 checkStringMap(d.Get("annotations")),
+		AzureServicesAuthentication: expandContainerAzureClusterAzureServicesAuthentication(d.Get("azure_services_authentication")),
+		Client:                      dcl.String(d.Get("client").(string)),
+		Description:                 dcl.String(d.Get("description").(string)),
+		Project:                     dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/azureClusters/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -519,7 +542,7 @@ func resourceContainerAzureClusterCreate(d *schema.ResourceData, meta interface{
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyCluster(context.Background(), obj, createDirective...)
+	res, err := client.ApplyCluster(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -542,21 +565,22 @@ func resourceContainerAzureClusterRead(d *schema.ResourceData, meta interface{})
 	}
 
 	obj := &containerazure.Cluster{
-		Authorization:   expandContainerAzureClusterAuthorization(d.Get("authorization")),
-		AzureRegion:     dcl.String(d.Get("azure_region").(string)),
-		Client:          dcl.String(d.Get("client").(string)),
-		ControlPlane:    expandContainerAzureClusterControlPlane(d.Get("control_plane")),
-		Fleet:           expandContainerAzureClusterFleet(d.Get("fleet")),
-		Location:        dcl.String(d.Get("location").(string)),
-		Name:            dcl.String(d.Get("name").(string)),
-		Networking:      expandContainerAzureClusterNetworking(d.Get("networking")),
-		ResourceGroupId: dcl.String(d.Get("resource_group_id").(string)),
-		Annotations:     checkStringMap(d.Get("annotations")),
-		Description:     dcl.String(d.Get("description").(string)),
-		Project:         dcl.String(project),
+		Authorization:               expandContainerAzureClusterAuthorization(d.Get("authorization")),
+		AzureRegion:                 dcl.String(d.Get("azure_region").(string)),
+		ControlPlane:                expandContainerAzureClusterControlPlane(d.Get("control_plane")),
+		Fleet:                       expandContainerAzureClusterFleet(d.Get("fleet")),
+		Location:                    dcl.String(d.Get("location").(string)),
+		Name:                        dcl.String(d.Get("name").(string)),
+		Networking:                  expandContainerAzureClusterNetworking(d.Get("networking")),
+		ResourceGroupId:             dcl.String(d.Get("resource_group_id").(string)),
+		Annotations:                 checkStringMap(d.Get("annotations")),
+		AzureServicesAuthentication: expandContainerAzureClusterAzureServicesAuthentication(d.Get("azure_services_authentication")),
+		Client:                      dcl.String(d.Get("client").(string)),
+		Description:                 dcl.String(d.Get("description").(string)),
+		Project:                     dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -584,9 +608,6 @@ func resourceContainerAzureClusterRead(d *schema.ResourceData, meta interface{})
 	if err = d.Set("azure_region", res.AzureRegion); err != nil {
 		return fmt.Errorf("error setting azure_region in state: %s", err)
 	}
-	if err = d.Set("client", res.Client); err != nil {
-		return fmt.Errorf("error setting client in state: %s", err)
-	}
 	if err = d.Set("control_plane", flattenContainerAzureClusterControlPlane(res.ControlPlane)); err != nil {
 		return fmt.Errorf("error setting control_plane in state: %s", err)
 	}
@@ -607,6 +628,12 @@ func resourceContainerAzureClusterRead(d *schema.ResourceData, meta interface{})
 	}
 	if err = d.Set("annotations", res.Annotations); err != nil {
 		return fmt.Errorf("error setting annotations in state: %s", err)
+	}
+	if err = d.Set("azure_services_authentication", flattenContainerAzureClusterAzureServicesAuthentication(res.AzureServicesAuthentication)); err != nil {
+		return fmt.Errorf("error setting azure_services_authentication in state: %s", err)
+	}
+	if err = d.Set("client", res.Client); err != nil {
+		return fmt.Errorf("error setting client in state: %s", err)
 	}
 	if err = d.Set("description", res.Description); err != nil {
 		return fmt.Errorf("error setting description in state: %s", err)
@@ -649,21 +676,22 @@ func resourceContainerAzureClusterUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	obj := &containerazure.Cluster{
-		Authorization:   expandContainerAzureClusterAuthorization(d.Get("authorization")),
-		AzureRegion:     dcl.String(d.Get("azure_region").(string)),
-		Client:          dcl.String(d.Get("client").(string)),
-		ControlPlane:    expandContainerAzureClusterControlPlane(d.Get("control_plane")),
-		Fleet:           expandContainerAzureClusterFleet(d.Get("fleet")),
-		Location:        dcl.String(d.Get("location").(string)),
-		Name:            dcl.String(d.Get("name").(string)),
-		Networking:      expandContainerAzureClusterNetworking(d.Get("networking")),
-		ResourceGroupId: dcl.String(d.Get("resource_group_id").(string)),
-		Annotations:     checkStringMap(d.Get("annotations")),
-		Description:     dcl.String(d.Get("description").(string)),
-		Project:         dcl.String(project),
+		Authorization:               expandContainerAzureClusterAuthorization(d.Get("authorization")),
+		AzureRegion:                 dcl.String(d.Get("azure_region").(string)),
+		ControlPlane:                expandContainerAzureClusterControlPlane(d.Get("control_plane")),
+		Fleet:                       expandContainerAzureClusterFleet(d.Get("fleet")),
+		Location:                    dcl.String(d.Get("location").(string)),
+		Name:                        dcl.String(d.Get("name").(string)),
+		Networking:                  expandContainerAzureClusterNetworking(d.Get("networking")),
+		ResourceGroupId:             dcl.String(d.Get("resource_group_id").(string)),
+		Annotations:                 checkStringMap(d.Get("annotations")),
+		AzureServicesAuthentication: expandContainerAzureClusterAzureServicesAuthentication(d.Get("azure_services_authentication")),
+		Client:                      dcl.String(d.Get("client").(string)),
+		Description:                 dcl.String(d.Get("description").(string)),
+		Project:                     dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -703,22 +731,23 @@ func resourceContainerAzureClusterDelete(d *schema.ResourceData, meta interface{
 	}
 
 	obj := &containerazure.Cluster{
-		Authorization:   expandContainerAzureClusterAuthorization(d.Get("authorization")),
-		AzureRegion:     dcl.String(d.Get("azure_region").(string)),
-		Client:          dcl.String(d.Get("client").(string)),
-		ControlPlane:    expandContainerAzureClusterControlPlane(d.Get("control_plane")),
-		Fleet:           expandContainerAzureClusterFleet(d.Get("fleet")),
-		Location:        dcl.String(d.Get("location").(string)),
-		Name:            dcl.String(d.Get("name").(string)),
-		Networking:      expandContainerAzureClusterNetworking(d.Get("networking")),
-		ResourceGroupId: dcl.String(d.Get("resource_group_id").(string)),
-		Annotations:     checkStringMap(d.Get("annotations")),
-		Description:     dcl.String(d.Get("description").(string)),
-		Project:         dcl.String(project),
+		Authorization:               expandContainerAzureClusterAuthorization(d.Get("authorization")),
+		AzureRegion:                 dcl.String(d.Get("azure_region").(string)),
+		ControlPlane:                expandContainerAzureClusterControlPlane(d.Get("control_plane")),
+		Fleet:                       expandContainerAzureClusterFleet(d.Get("fleet")),
+		Location:                    dcl.String(d.Get("location").(string)),
+		Name:                        dcl.String(d.Get("name").(string)),
+		Networking:                  expandContainerAzureClusterNetworking(d.Get("networking")),
+		ResourceGroupId:             dcl.String(d.Get("resource_group_id").(string)),
+		Annotations:                 checkStringMap(d.Get("annotations")),
+		AzureServicesAuthentication: expandContainerAzureClusterAzureServicesAuthentication(d.Get("azure_services_authentication")),
+		Client:                      dcl.String(d.Get("client").(string)),
+		Description:                 dcl.String(d.Get("description").(string)),
+		Project:                     dcl.String(project),
 	}
 
 	log.Printf("[DEBUG] Deleting Cluster %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -744,6 +773,7 @@ func resourceContainerAzureClusterDelete(d *schema.ResourceData, meta interface{
 
 func resourceContainerAzureClusterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/azureClusters/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -767,7 +797,7 @@ func expandContainerAzureClusterAuthorization(o interface{}) *containerazure.Clu
 		return containerazure.EmptyClusterAuthorization
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterAuthorization
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -793,7 +823,7 @@ func expandContainerAzureClusterAuthorizationAdminUsersArray(o interface{}) []co
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]containerazure.ClusterAuthorizationAdminUsers, 0)
 	}
 
@@ -848,7 +878,7 @@ func expandContainerAzureClusterControlPlane(o interface{}) *containerazure.Clus
 		return containerazure.EmptyClusterControlPlane
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterControlPlane
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -892,7 +922,7 @@ func expandContainerAzureClusterControlPlaneSshConfig(o interface{}) *containera
 		return containerazure.EmptyClusterControlPlaneSshConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterControlPlaneSshConfig
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -918,7 +948,7 @@ func expandContainerAzureClusterControlPlaneDatabaseEncryption(o interface{}) *c
 		return containerazure.EmptyClusterControlPlaneDatabaseEncryption
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterControlPlaneDatabaseEncryption
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -944,7 +974,7 @@ func expandContainerAzureClusterControlPlaneMainVolume(o interface{}) *container
 		return nil
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return nil
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -970,7 +1000,7 @@ func expandContainerAzureClusterControlPlaneProxyConfig(o interface{}) *containe
 		return containerazure.EmptyClusterControlPlaneProxyConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterControlPlaneProxyConfig
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -998,7 +1028,7 @@ func expandContainerAzureClusterControlPlaneReplicaPlacementsArray(o interface{}
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]containerazure.ClusterControlPlaneReplicaPlacements, 0)
 	}
 
@@ -1055,7 +1085,7 @@ func expandContainerAzureClusterControlPlaneRootVolume(o interface{}) *container
 		return nil
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return nil
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1081,7 +1111,7 @@ func expandContainerAzureClusterFleet(o interface{}) *containerazure.ClusterFlee
 		return containerazure.EmptyClusterFleet
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterFleet
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1108,7 +1138,7 @@ func expandContainerAzureClusterNetworking(o interface{}) *containerazure.Cluste
 		return containerazure.EmptyClusterNetworking
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containerazure.EmptyClusterNetworking
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1127,6 +1157,34 @@ func flattenContainerAzureClusterNetworking(obj *containerazure.ClusterNetworkin
 		"pod_address_cidr_blocks":     obj.PodAddressCidrBlocks,
 		"service_address_cidr_blocks": obj.ServiceAddressCidrBlocks,
 		"virtual_network_id":          obj.VirtualNetworkId,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandContainerAzureClusterAzureServicesAuthentication(o interface{}) *containerazure.ClusterAzureServicesAuthentication {
+	if o == nil {
+		return containerazure.EmptyClusterAzureServicesAuthentication
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return containerazure.EmptyClusterAzureServicesAuthentication
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containerazure.ClusterAzureServicesAuthentication{
+		ApplicationId: dcl.String(obj["application_id"].(string)),
+		TenantId:      dcl.String(obj["tenant_id"].(string)),
+	}
+}
+
+func flattenContainerAzureClusterAzureServicesAuthentication(obj *containerazure.ClusterAzureServicesAuthentication) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"application_id": obj.ApplicationId,
+		"tenant_id":      obj.TenantId,
 	}
 
 	return []interface{}{transformed}

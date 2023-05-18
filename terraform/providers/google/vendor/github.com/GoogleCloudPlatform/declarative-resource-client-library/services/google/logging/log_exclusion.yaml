@@ -1,0 +1,128 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Logging/LogExclusion
+  description: The Logging LogExclusion resource
+  x-dcl-struct-name: LogExclusion
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a LogExclusion
+    parameters:
+    - name: logExclusion
+      required: true
+      description: A full instance of a LogExclusion
+  apply:
+    description: The function used to apply information about a LogExclusion
+    parameters:
+    - name: logExclusion
+      required: true
+      description: A full instance of a LogExclusion
+  delete:
+    description: The function used to delete a LogExclusion
+    parameters:
+    - name: logExclusion
+      required: true
+      description: A full instance of a LogExclusion
+  deleteAll:
+    description: The function used to delete all LogExclusion
+    parameters:
+    - name: parent
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many LogExclusion
+    parameters:
+    - name: parent
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    LogExclusion:
+      title: LogExclusion
+      x-dcl-id: '{{parent}}/exclusions/{{name}}'
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - filter
+      properties:
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The creation timestamp of the exclusion. This
+            field may not be present for older exclusions.
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: Optional. A description of this exclusion.
+        disabled:
+          type: boolean
+          x-dcl-go-name: Disabled
+          description: Optional. If set to True, then this exclusion is disabled and
+            it does not exclude any log entries. You can update an exclusion to change
+            the value of this field.
+        filter:
+          type: string
+          x-dcl-go-name: Filter
+          description: 'Required. An (https://cloud.google.com/logging/docs/view/advanced-queries#sample),
+            you can exclude less than 100% of the matching log entries. For example,
+            the following query matches 99% of low-severity log entries from Google
+            Cloud Storage buckets: `"resource.type=gcs_bucket severity'
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: Required. A client-assigned identifier, such as `"load-balancer-exclusion"`.
+            Identifiers are limited to 100 characters and can include only letters,
+            digits, underscores, hyphens, and periods. First character has to be alphanumeric.
+          x-kubernetes-immutable: true
+        parent:
+          type: string
+          x-dcl-go-name: Parent
+          description: 'The parent resource in which to create the exclusion: "projects/[PROJECT_ID]"
+            "organizations/[ORGANIZATION_ID]" "billingAccounts/[BILLING_ACCOUNT_ID]"
+            "folders/[FOLDER_ID]" Examples: "projects/my-logging-project", "organizations/123456789".
+            Authorization requires the following IAM permission on the specified resource
+            parent: logging.exclusions.create'
+          x-kubernetes-immutable: true
+          x-dcl-forward-slash-allowed: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+          - resource: Cloudresourcemanager/Folder
+            field: name
+            parent: true
+          - resource: Cloudresourcemanager/Organization
+            field: name
+            parent: true
+          - resource: Cloudresourcemanager/BillingAccount
+            field: name
+            parent: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The last update timestamp of the exclusion. This
+            field may not be present for older exclusions.
+          x-kubernetes-immutable: true

@@ -67,6 +67,8 @@ COREDNS_IMAGE=$(image_for coredns)
 HAPROXY_IMAGE=$(image_for haproxy-router)
 BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
+VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${RELEASE_IMAGE_DIGEST}")"
+
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
@@ -75,6 +77,39 @@ then
 	echo "Moving OpenShift manifests in with the rest of them"
 	cp openshift/* manifests/
 	touch openshift-manifests.done
+    record_service_stage_success
+fi
+
+
+if [ ! -f config-bootstrap.done ]
+then
+    record_service_stage_start "config-bootstrap"
+	echo "Rendering cluster config manifests..."
+
+	rm --recursive --force config-bootstrap
+
+	ADDITIONAL_FLAGS=()
+	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
+		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
+	fi
+
+	bootkube_podman_run \
+		--name config-render \
+		--volume "$PWD:/assets:z" \
+		"${CONFIG_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-config-operator render \
+		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
+		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
+		--config-output-file=/assets/config-bootstrap/config \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/config-bootstrap \
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION \
+		"${ADDITIONAL_FLAGS[@]}"
+
+	cp config-bootstrap/manifests/* manifests/
+
+	touch config-bootstrap.done
     record_service_stage_success
 fi
 
@@ -135,50 +170,12 @@ then
     record_service_stage_success
 fi
 
-if [ ! -f config-bootstrap.done ]
-then
-    record_service_stage_start "config-bootstrap"
-	echo "Rendering cluster config manifests..."
-
-	rm --recursive --force config-bootstrap
-
-	ADDITIONAL_FLAGS=()
-	if [ -f "$PWD/manifests/cloud-provider-config.yaml" ]; then
-		ADDITIONAL_FLAGS+=("--cloud-provider-config-input-file=/assets/manifests/cloud-provider-config.yaml")
-	fi
-	{{- if .FeatureSet }}
-	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
-	{{- end}}
-
-	bootkube_podman_run \
-		--name config-render \
-		--volume "$PWD:/assets:z" \
-		"${CONFIG_OPERATOR_IMAGE}" \
-		/usr/bin/cluster-config-operator render \
-		--cluster-infrastructure-input-file=/assets/manifests/cluster-infrastructure-02-config.yml \
-		--cloud-provider-config-output-file=/assets/config-bootstrap/cloud-provider-config-generated.yaml \
-		--config-output-file=/assets/config-bootstrap/config \
-		--asset-input-dir=/assets/tls \
-		--asset-output-dir=/assets/config-bootstrap \
-		"${ADDITIONAL_FLAGS[@]}"
-
-	cp config-bootstrap/manifests/* manifests/
-
-	touch config-bootstrap.done
-    record_service_stage_success
-fi
-
 if [ ! -f kube-apiserver-bootstrap.done ]
 then
     record_service_stage_start "kube-apiserver-bootstrap"
 	echo "Rendering Kubernetes API server core manifests..."
 
 	rm --recursive --force kube-apiserver-bootstrap
-
-  ADDITIONAL_FLAGS=()
-	{{- if .FeatureSet }}
-	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
-	{{- end}}
 
 	bootkube_podman_run  \
 		--name kube-apiserver-render \
@@ -195,7 +192,8 @@ then
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
 		--cluster-auth-file=/assets/manifests/cluster-authentication-02-config.yaml \
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
-		"${ADDITIONAL_FLAGS[@]}"
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -212,10 +210,6 @@ then
 
 	rm --recursive --force kube-controller-manager-bootstrap
 
-  ADDITIONAL_FLAGS=()
-	{{- if .FeatureSet }}
-	ADDITIONAL_FLAGS+=("--feature-set={{.FeatureSet}}")
-	{{- end}}
 
 	bootkube_podman_run \
 		--name kube-controller-render \
@@ -229,7 +223,8 @@ then
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
 		--cpc-config-output-file=/assets/kube-controller-manager-bootstrap/cpc-config \
 		--cluster-config-file=/assets/manifests/cluster-network-02-config.yml \
-    "${ADDITIONAL_FLAGS[@]}"
+		--rendered-manifest-files=/assets/manifests \
+		--payload-version=$VERSION
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/cpc-config /etc/kubernetes/bootstrap-configs/cluster-policy-controller-config.yaml
@@ -357,6 +352,7 @@ then
 			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			--image-references=assets/image-references \
+			--payload-version="${VERSION}" \
 			${ADDITIONAL_FLAGS}
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to

@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a InstanceTemplate
     parameters:
-    - name: InstanceTemplate
+    - name: instanceTemplate
       required: true
       description: A full instance of a InstanceTemplate
   apply:
     description: The function used to apply information about a InstanceTemplate
     parameters:
-    - name: InstanceTemplate
+    - name: instanceTemplate
       required: true
       description: A full instance of a InstanceTemplate
   delete:
     description: The function used to delete a InstanceTemplate
     parameters:
-    - name: InstanceTemplate
+    - name: instanceTemplate
       required: true
       description: A full instance of a InstanceTemplate
   deleteAll:
@@ -58,7 +58,11 @@ components:
       - global
       x-dcl-parent-container: project
       x-dcl-labels: properties.labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -628,9 +632,9 @@ components:
                     To target a SPECIFIC_RESERVATION by name, specify googleapis.com/reservation-name
                     as the key and specify the name of your reservation as its value.
                   x-kubernetes-immutable: true
-                value:
+                values:
                   type: array
-                  x-dcl-go-name: Value
+                  x-dcl-go-name: Values
                   description: Corresponds to the label values of a reservation resource.
                   x-kubernetes-immutable: true
                   x-dcl-send-empty: true

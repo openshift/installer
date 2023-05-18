@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a CertificateAuthority
     parameters:
-    - name: CertificateAuthority
+    - name: certificateAuthority
       required: true
       description: A full instance of a CertificateAuthority
   apply:
     description: The function used to apply information about a CertificateAuthority
     parameters:
-    - name: CertificateAuthority
+    - name: certificateAuthority
       required: true
       description: A full instance of a CertificateAuthority
   delete:
     description: The function used to delete a CertificateAuthority
     parameters:
-    - name: CertificateAuthority
+    - name: certificateAuthority
       required: true
       description: A full instance of a CertificateAuthority
   deleteAll:
@@ -46,7 +46,7 @@ paths:
       required: true
       schema:
         type: string
-    - name: capool
+    - name: caPool
       required: true
       schema:
         type: string
@@ -61,7 +61,7 @@ paths:
       required: true
       schema:
         type: string
-    - name: capool
+    - name: caPool
       required: true
       schema:
         type: string
@@ -72,7 +72,11 @@ components:
       x-dcl-id: projects/{{project}}/locations/{{location}}/caPools/{{ca_pool}}/certificateAuthorities/{{name}}
       x-dcl-parent-container: project
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -241,9 +245,6 @@ components:
                         type: string
                         x-dcl-go-name: Organization
                         description: The organization of the subject.
-                        x-dcl-references:
-                        - resource: Cloudresourcemanager/Organization
-                          field: name
                       organizationalUnit:
                         type: string
                         x-dcl-go-name: OrganizationalUnit
@@ -672,9 +673,6 @@ components:
                       x-dcl-go-name: Organization
                       description: The organization of the subject.
                       x-kubernetes-immutable: true
-                      x-dcl-references:
-                      - resource: Cloudresourcemanager/Organization
-                        field: name
                     organizationalUnit:
                       type: string
                       x-dcl-go-name: OrganizationalUnit
@@ -1081,6 +1079,9 @@ components:
             you would simply specify `my-bucket`. If not specified, a managed bucket
             will be created.
           x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Storage/Bucket
+            field: name
         keySpec:
           type: object
           x-dcl-go-name: KeySpec
@@ -1101,6 +1102,8 @@ components:
                 RSA_PSS_3072_SHA256, RSA_PSS_4096_SHA256, RSA_PKCS1_2048_SHA256, RSA_PKCS1_3072_SHA256,
                 RSA_PKCS1_4096_SHA256, EC_P256_SHA256, EC_P384_SHA384'
               x-kubernetes-immutable: true
+              x-dcl-conflicts:
+              - cloudKmsKeyVersion
               enum:
               - RSA_PSS_2048_SHA256
               - RSA_PSS_3072_SHA256
@@ -1118,6 +1121,8 @@ components:
                 This option enables full flexibility in the key's capabilities and
                 properties.
               x-kubernetes-immutable: true
+              x-dcl-conflicts:
+              - algorithm
               x-dcl-references:
               - resource: Cloudkms/CryptoKeyVersion
                 field: name
@@ -1201,6 +1206,8 @@ components:
                 This field is used for information and usability purposes only. The
                 resource name is in the format `projects/*/locations/*/caPools/*/certificateAuthorities/*`.
               x-kubernetes-immutable: true
+              x-dcl-conflicts:
+              - pemIssuerChain
               x-dcl-references:
               - resource: Privateca/CertificateAuthority
                 field: selfLink
@@ -1212,6 +1219,8 @@ components:
                 of this CertificateAuthority, but not pem certificate for this CA
                 itself.
               x-kubernetes-immutable: true
+              x-dcl-conflicts:
+              - certificateAuthority
               required:
               - pemCertificates
               properties:

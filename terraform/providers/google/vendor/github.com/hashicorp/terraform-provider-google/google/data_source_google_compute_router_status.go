@@ -7,8 +7,8 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeRouterStatus() *schema.Resource {
-	routeElemSchema := datasourceSchemaFromResourceSchema(resourceComputeRoute().Schema)
+func DataSourceGoogleComputeRouterStatus() *schema.Resource {
+	routeElemSchema := datasourceSchemaFromResourceSchema(ResourceComputeRoute().Schema)
 
 	return &schema.Resource{
 		Read: dataSourceComputeRouterStatusRead,
@@ -58,7 +58,7 @@ func dataSourceGoogleComputeRouterStatus() *schema.Resource {
 
 func dataSourceComputeRouterStatusRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

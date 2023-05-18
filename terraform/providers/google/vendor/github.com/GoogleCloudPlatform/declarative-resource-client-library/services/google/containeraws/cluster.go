@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -163,8 +163,8 @@ func (r *ClusterNetworking) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterNetworking is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterNetworking *ClusterNetworking = &ClusterNetworking{empty: true}
 
 func (r *ClusterNetworking) Empty() bool {
@@ -245,8 +245,8 @@ func (r *ClusterControlPlane) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterControlPlane is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlane *ClusterControlPlane = &ClusterControlPlane{empty: true}
 
 func (r *ClusterControlPlane) Empty() bool {
@@ -291,8 +291,8 @@ func (r *ClusterControlPlaneSshConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneSshConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneSshConfig *ClusterControlPlaneSshConfig = &ClusterControlPlaneSshConfig{empty: true}
 
 func (r *ClusterControlPlaneSshConfig) Empty() bool {
@@ -337,8 +337,8 @@ func (r *ClusterControlPlaneConfigEncryption) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneConfigEncryption is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneConfigEncryption *ClusterControlPlaneConfigEncryption = &ClusterControlPlaneConfigEncryption{empty: true}
 
 func (r *ClusterControlPlaneConfigEncryption) Empty() bool {
@@ -392,8 +392,8 @@ func (r *ClusterControlPlaneRootVolume) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneRootVolume is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneRootVolume *ClusterControlPlaneRootVolume = &ClusterControlPlaneRootVolume{empty: true}
 
 func (r *ClusterControlPlaneRootVolume) Empty() bool {
@@ -447,8 +447,8 @@ func (r *ClusterControlPlaneMainVolume) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneMainVolume is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneMainVolume *ClusterControlPlaneMainVolume = &ClusterControlPlaneMainVolume{empty: true}
 
 func (r *ClusterControlPlaneMainVolume) Empty() bool {
@@ -493,8 +493,8 @@ func (r *ClusterControlPlaneDatabaseEncryption) UnmarshalJSON(data []byte) error
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneDatabaseEncryption is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneDatabaseEncryption *ClusterControlPlaneDatabaseEncryption = &ClusterControlPlaneDatabaseEncryption{empty: true}
 
 func (r *ClusterControlPlaneDatabaseEncryption) Empty() bool {
@@ -542,8 +542,8 @@ func (r *ClusterControlPlaneAwsServicesAuthentication) UnmarshalJSON(data []byte
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneAwsServicesAuthentication is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneAwsServicesAuthentication *ClusterControlPlaneAwsServicesAuthentication = &ClusterControlPlaneAwsServicesAuthentication{empty: true}
 
 func (r *ClusterControlPlaneAwsServicesAuthentication) Empty() bool {
@@ -591,8 +591,8 @@ func (r *ClusterControlPlaneProxyConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterControlPlaneProxyConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterControlPlaneProxyConfig *ClusterControlPlaneProxyConfig = &ClusterControlPlaneProxyConfig{empty: true}
 
 func (r *ClusterControlPlaneProxyConfig) Empty() bool {
@@ -637,8 +637,8 @@ func (r *ClusterAuthorization) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterAuthorization is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterAuthorization *ClusterAuthorization = &ClusterAuthorization{empty: true}
 
 func (r *ClusterAuthorization) Empty() bool {
@@ -683,8 +683,8 @@ func (r *ClusterAuthorizationAdminUsers) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterAuthorizationAdminUsers is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterAuthorizationAdminUsers *ClusterAuthorizationAdminUsers = &ClusterAuthorizationAdminUsers{empty: true}
 
 func (r *ClusterAuthorizationAdminUsers) Empty() bool {
@@ -735,8 +735,8 @@ func (r *ClusterWorkloadIdentityConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterWorkloadIdentityConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterWorkloadIdentityConfig *ClusterWorkloadIdentityConfig = &ClusterWorkloadIdentityConfig{empty: true}
 
 func (r *ClusterWorkloadIdentityConfig) Empty() bool {
@@ -784,8 +784,8 @@ func (r *ClusterFleet) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ClusterFleet is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyClusterFleet *ClusterFleet = &ClusterFleet{empty: true}
 
 func (r *ClusterFleet) Empty() bool {
@@ -819,24 +819,24 @@ func (r *Cluster) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                   dcl.ValueOrEmptyString(nr.Name),
-		"description":            dcl.ValueOrEmptyString(nr.Description),
-		"networking":             dcl.ValueOrEmptyString(nr.Networking),
-		"awsRegion":              dcl.ValueOrEmptyString(nr.AwsRegion),
-		"controlPlane":           dcl.ValueOrEmptyString(nr.ControlPlane),
-		"authorization":          dcl.ValueOrEmptyString(nr.Authorization),
-		"state":                  dcl.ValueOrEmptyString(nr.State),
-		"endpoint":               dcl.ValueOrEmptyString(nr.Endpoint),
-		"uid":                    dcl.ValueOrEmptyString(nr.Uid),
-		"reconciling":            dcl.ValueOrEmptyString(nr.Reconciling),
-		"createTime":             dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":             dcl.ValueOrEmptyString(nr.UpdateTime),
-		"etag":                   dcl.ValueOrEmptyString(nr.Etag),
-		"annotations":            dcl.ValueOrEmptyString(nr.Annotations),
-		"workloadIdentityConfig": dcl.ValueOrEmptyString(nr.WorkloadIdentityConfig),
-		"project":                dcl.ValueOrEmptyString(nr.Project),
-		"location":               dcl.ValueOrEmptyString(nr.Location),
-		"fleet":                  dcl.ValueOrEmptyString(nr.Fleet),
+		"name":                     dcl.ValueOrEmptyString(nr.Name),
+		"description":              dcl.ValueOrEmptyString(nr.Description),
+		"networking":               dcl.ValueOrEmptyString(nr.Networking),
+		"aws_region":               dcl.ValueOrEmptyString(nr.AwsRegion),
+		"control_plane":            dcl.ValueOrEmptyString(nr.ControlPlane),
+		"authorization":            dcl.ValueOrEmptyString(nr.Authorization),
+		"state":                    dcl.ValueOrEmptyString(nr.State),
+		"endpoint":                 dcl.ValueOrEmptyString(nr.Endpoint),
+		"uid":                      dcl.ValueOrEmptyString(nr.Uid),
+		"reconciling":              dcl.ValueOrEmptyString(nr.Reconciling),
+		"create_time":              dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":              dcl.ValueOrEmptyString(nr.UpdateTime),
+		"etag":                     dcl.ValueOrEmptyString(nr.Etag),
+		"annotations":              dcl.ValueOrEmptyString(nr.Annotations),
+		"workload_identity_config": dcl.ValueOrEmptyString(nr.WorkloadIdentityConfig),
+		"project":                  dcl.ValueOrEmptyString(nr.Project),
+		"location":                 dcl.ValueOrEmptyString(nr.Location),
+		"fleet":                    dcl.ValueOrEmptyString(nr.Fleet),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/awsClusters/{{name}}", params), nil
 }
@@ -923,7 +923,7 @@ func (c *Client) GetCluster(ctx context.Context, r *Cluster) (*Cluster, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalCluster(b, c)
+	result, err := unmarshalCluster(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -1080,7 +1080,7 @@ func applyClusterHelper(c *Client, ctx context.Context, rawDesired *Cluster, opt
 func applyClusterDiff(c *Client, ctx context.Context, desired *Cluster, rawDesired *Cluster, ops []clusterApiOperation, opts ...dcl.ApplyOption) (*Cluster, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetCluster(ctx, desired.urlNormalized())
+	rawNew, err := c.GetCluster(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -1093,7 +1093,7 @@ func applyClusterDiff(c *Client, ctx context.Context, desired *Cluster, rawDesir
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapCluster(r, c)
+				fullResp, err := unmarshalMapCluster(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

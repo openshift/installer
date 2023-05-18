@@ -17,34 +17,11 @@
 
 package xdsclient
 
-import (
-	"google.golang.org/grpc/resolver"
-	"google.golang.org/grpc/xds/internal/xdsclient/bootstrap"
-	"google.golang.org/grpc/xds/internal/xdsclient/load"
-)
+import "google.golang.org/grpc/resolver"
 
 type clientKeyType string
 
 const clientKey = clientKeyType("grpc.xds.internal.client.Client")
-
-// XDSClient is a full fledged gRPC client which queries a set of discovery APIs
-// (collectively termed as xDS) on a remote management server, to discover
-// various dynamic resources.
-type XDSClient interface {
-	WatchListener(string, func(ListenerUpdate, error)) func()
-	WatchRouteConfig(string, func(RouteConfigUpdate, error)) func()
-	WatchCluster(string, func(ClusterUpdate, error)) func()
-	WatchEndpoints(clusterName string, edsCb func(EndpointsUpdate, error)) (cancel func())
-	ReportLoad(server string) (*load.Store, func())
-
-	DumpLDS() (string, map[string]UpdateWithMD)
-	DumpRDS() (string, map[string]UpdateWithMD)
-	DumpCDS() (string, map[string]UpdateWithMD)
-	DumpEDS() (string, map[string]UpdateWithMD)
-
-	BootstrapConfig() *bootstrap.Config
-	Close()
-}
 
 // FromResolverState returns the Client from state, or nil if not present.
 func FromResolverState(state resolver.State) XDSClient {
@@ -54,6 +31,6 @@ func FromResolverState(state resolver.State) XDSClient {
 
 // SetClient sets c in state and returns the new state.
 func SetClient(state resolver.State, c XDSClient) resolver.State {
-	state.Attributes = state.Attributes.WithValues(clientKey, c)
+	state.Attributes = state.Attributes.WithValue(clientKey, c)
 	return state
 }

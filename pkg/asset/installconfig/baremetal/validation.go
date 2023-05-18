@@ -29,8 +29,24 @@ func ValidateStaticBootstrapNetworking(ic *types.InstallConfig) error {
 		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticGateway when BootstrapExternalStaticIP is set.").Error())
 	}
 
+	if ic.Platform.BareMetal.BootstrapExternalStaticIP != "" && ic.Platform.BareMetal.BootstrapExternalStaticDNS == "" {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticDNS when BootstrapExternalStaticIP is set.").Error())
+	}
+
 	if ic.Platform.BareMetal.BootstrapExternalStaticGateway != "" && ic.Platform.BareMetal.BootstrapExternalStaticIP == "" {
 		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticIP when BootstrapExternalStaticGateway is set.").Error())
+	}
+
+	if ic.Platform.BareMetal.BootstrapExternalStaticGateway != "" && ic.Platform.BareMetal.BootstrapExternalStaticDNS == "" {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticDNS when BootstrapExternalStaticGateway is set.").Error())
+	}
+
+	if ic.Platform.BareMetal.BootstrapExternalStaticDNS != "" && ic.Platform.BareMetal.BootstrapExternalStaticIP == "" {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticIP when BootstrapExternalStaticDNS is set.").Error())
+	}
+
+	if ic.Platform.BareMetal.BootstrapExternalStaticDNS != "" && ic.Platform.BareMetal.BootstrapExternalStaticGateway == "" {
+		return errors.New(field.Required(field.NewPath("platform", "baremetal"), "You must specify a value for BootstrapExternalStaticGateway when BootstrapExternalStaticDNS is set.").Error())
 	}
 
 	return nil

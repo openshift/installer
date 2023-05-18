@@ -72,20 +72,53 @@ func parseCloudFunctionId(d *schema.ResourceData, config *Config) (*cloudFunctio
 	}, nil
 }
 
-// Differs from validateGcpName because Cloud Functions allow capital letters
+// Differs from validateGCEName because Cloud Functions allow capital letters
 // at start/end
 func validateResourceCloudFunctionsFunctionName(v interface{}, k string) (ws []string, errors []error) {
 	re := `^(?:[a-zA-Z](?:[-_a-zA-Z0-9]{0,61}[a-zA-Z0-9])?)$`
 	return validateRegexp(re)(v, k)
 }
 
+func partsCompare(a, b, reg string) bool {
+
+	regex := regexp.MustCompile(reg)
+	if regex.MatchString(a) && regex.MatchString(b) {
+		aParts := regex.FindStringSubmatch(a)
+		bParts := regex.FindStringSubmatch(b)
+		for i := 0; i < len(aParts); i++ {
+			if aParts[i] != bParts[i] {
+				return false
+			}
+		}
+	} else if regex.MatchString(a) {
+		aParts := regex.FindStringSubmatch(a)
+		if aParts[len(aParts)-1] != b {
+			return false
+		}
+	} else if regex.MatchString(b) {
+		bParts := regex.FindStringSubmatch(b)
+		if bParts[len(bParts)-1] != a {
+			return false
+		}
+	} else {
+		if a != b {
+			return false
+		}
+	}
+
+	return true
+}
+
 // based on compareSelfLinkOrResourceName, but less reusable and allows multi-/
 // strings in the new state (config) part
 func compareSelfLinkOrResourceNameWithMultipleParts(_, old, new string, _ *schema.ResourceData) bool {
-	return strings.HasSuffix(old, new)
+	// two formats based on expandEventTrigger()
+	regex1 := "projects/(.+)/databases/\\(default\\)/documents/(.+)"
+	regex2 := "projects/(.+)/(.+)/(.+)"
+	return partsCompare(old, new, regex1) || partsCompare(old, new, regex2)
 }
 
-func resourceCloudFunctionsFunction() *schema.Resource {
+func ResourceCloudFunctionsFunction() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudFunctionsCreate,
 		Read:   resourceCloudFunctionsRead,
@@ -110,6 +143,12 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 				ForceNew:     true,
 				Description:  `A user-defined name of the function. Function names must be unique globally.`,
 				ValidateFunc: validateResourceCloudFunctionsFunctionName,
+			},
+
+			"build_worker_pool": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `Name of the Cloud Build Custom Worker Pool that should be used to build the function.`,
 			},
 
 			"source_archive_bucket": {
@@ -144,6 +183,25 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 						},
 					},
 				},
+			},
+
+			"docker_registry": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: `Docker Registry to use for storing the function's Docker images. Allowed values are CONTAINER_REGISTRY (default) and ARTIFACT_REGISTRY.`,
+			},
+
+			"docker_repository": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `User managed repository created in Artifact Registry optionally with a customer managed encryption key. If specified, deployments will use Artifact Registry for storing images built with Cloud Build.`,
+			},
+
+			"kms_key_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `Resource name of a KMS crypto key (managed by the user) used to encrypt/decrypt function resources.`,
 			},
 
 			"description": {
@@ -285,10 +343,17 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 				Description: `URL which triggers function execution. Returned only if trigger_http is used.`,
 			},
 
+			"https_trigger_security_level": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: `The security level for the function. Defaults to SECURE_OPTIONAL. Valid only if trigger_http is used.`,
+			},
+
 			"max_instances": {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Default:      0,
+				Computed:     true,
 				ValidateFunc: validation.IntAtLeast(0),
 				Description:  `The limit on the maximum number of function instances that may coexist at a given time.`,
 			},
@@ -315,6 +380,82 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 				ForceNew:    true,
 				Description: `Region of function. If it is not provided, the provider region is used.`,
 			},
+
+			"secret_environment_variables": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Secret environment variables configuration`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Name of the environment variable.`,
+						},
+						"project_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: `Project identifier (due to a known limitation, only project number is supported by this field) of the project that contains the secret. If not set, it will be populated with the function's project, assuming that the secret exists in the same project as of the function.`,
+						},
+						"secret": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `ID of the secret in secret manager (not the full resource name).`,
+						},
+						"version": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `Version of the secret (version number or the string "latest"). It is recommended to use a numeric version for secret environment variables as any updates to the secret value is not reflected until new clones start.`,
+						},
+					},
+				},
+			},
+
+			"secret_volumes": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Secret volumes configuration.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"mount_path": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `The path within the container to mount the secret volume. For example, setting the mount_path as "/etc/secrets" would mount the secret value files under the "/etc/secrets" directory. This directory will also be completely shadowed and unavailable to mount any other secrets. Recommended mount paths: "/etc/secrets" Restricted mount paths: "/cloudsql", "/dev/log", "/pod", "/proc", "/var/log".`,
+						},
+						"project_id": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: `Project identifier (due to a known limitation, only project number is supported by this field) of the project that contains the secret. If not set, it will be populated with the function's project, assuming that the secret exists in the same project as of the function.`,
+						},
+						"secret": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `ID of the secret in secret manager (not the full resource name).`,
+						},
+						"versions": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `List of secret versions to mount for this secret. If empty, the "latest" version of the secret will be made available in a file named after the secret under the mount point.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"path": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Relative path of the file under the mount path where the secret value for this version will be fetched and made available. For example, setting the mount_path as "/etc/secrets" and path as "/secret_foo" would mount the secret value file at "/etc/secrets/secret_foo".`,
+									},
+									"version": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Version of the secret (version number or the string "latest"). It is preferable to use "latest" version with secret volumes as secret value changes are reflected immediately.`,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -322,7 +463,7 @@ func resourceCloudFunctionsFunction() *schema.Resource {
 
 func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -362,6 +503,16 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 		function.SourceArchiveUrl = fmt.Sprintf("gs://%v/%v", sourceArchiveBucket, sourceArchiveObj)
 	}
 
+	secretEnv := d.Get("secret_environment_variables").([]interface{})
+	if len(secretEnv) > 0 {
+		function.SecretEnvironmentVariables = expandSecretEnvironmentVariables(secretEnv)
+	}
+
+	secretVolume := d.Get("secret_volumes").([]interface{})
+	if len(secretVolume) > 0 {
+		function.SecretVolumes = expandSecretVolumes(secretVolume)
+	}
+
 	if v, ok := d.GetOk("available_memory_mb"); ok {
 		availableMemoryMb := v.(int)
 		function.AvailableMemoryMb = int64(availableMemoryMb)
@@ -369,6 +520,10 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 
 	if v, ok := d.GetOk("description"); ok {
 		function.Description = v.(string)
+	}
+
+	if v, ok := d.GetOk("build_worker_pool"); ok {
+		function.BuildWorkerPool = v.(string)
 	}
 
 	if v, ok := d.GetOk("entry_point"); ok {
@@ -383,6 +538,7 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 		function.EventTrigger = expandEventTrigger(v.([]interface{}), project)
 	} else if v, ok := d.GetOk("trigger_http"); ok && v.(bool) {
 		function.HttpsTrigger = &cloudfunctions.HttpsTrigger{}
+		function.HttpsTrigger.SecurityLevel = d.Get("https_trigger_security_level").(string)
 	} else {
 		return fmt.Errorf("One of `event_trigger` or `trigger_http` is required: " +
 			"You must specify a trigger when deploying a new function.")
@@ -412,6 +568,18 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 		function.VpcConnectorEgressSettings = v.(string)
 	}
 
+	if v, ok := d.GetOk("docker_registry"); ok {
+		function.DockerRegistry = v.(string)
+	}
+
+	if v, ok := d.GetOk("docker_repository"); ok {
+		function.DockerRepository = v.(string)
+	}
+
+	if v, ok := d.GetOk("kms_key_name"); ok {
+		function.KmsKeyName = v.(string)
+	}
+
 	if v, ok := d.GetOk("max_instances"); ok {
 		function.MaxInstances = int64(v.(int))
 	}
@@ -425,7 +593,7 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 	// We retry the whole create-and-wait because Cloud Functions
 	// will sometimes fail a creation operation entirely if it fails to pull
 	// source code and we need to try the whole creation again.
-	rerr := retryTimeDuration(func() error {
+	rerr := RetryTimeDuration(func() error {
 		op, err := config.NewCloudFunctionsClient(userAgent).Projects.Locations.Functions.Create(
 			cloudFuncId.locationId(), function).Do()
 		if err != nil {
@@ -447,7 +615,7 @@ func resourceCloudFunctionsCreate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceCloudFunctionsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -467,6 +635,9 @@ func resourceCloudFunctionsRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	if err := d.Set("description", function.Description); err != nil {
 		return fmt.Errorf("Error setting description: %s", err)
+	}
+	if err := d.Set("build_worker_pool", function.BuildWorkerPool); err != nil {
+		return fmt.Errorf("Error setting build_worker_pool: %s", err)
 	}
 	if err := d.Set("entry_point", function.EntryPoint); err != nil {
 		return fmt.Errorf("Error setting entry_point: %s", err)
@@ -523,6 +694,14 @@ func resourceCloudFunctionsRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error setting source_repository: %s", err)
 	}
 
+	if err := d.Set("secret_environment_variables", flattenSecretEnvironmentVariables(function.SecretEnvironmentVariables)); err != nil {
+		return fmt.Errorf("Error setting secret_environment_variables: %s", err)
+	}
+
+	if err := d.Set("secret_volumes", flattenSecretVolumes(function.SecretVolumes)); err != nil {
+		return fmt.Errorf("Error setting secret_volumes: %s", err)
+	}
+
 	if function.HttpsTrigger != nil {
 		if err := d.Set("trigger_http", true); err != nil {
 			return fmt.Errorf("Error setting trigger_http: %s", err)
@@ -530,10 +709,22 @@ func resourceCloudFunctionsRead(d *schema.ResourceData, meta interface{}) error 
 		if err := d.Set("https_trigger_url", function.HttpsTrigger.Url); err != nil {
 			return fmt.Errorf("Error setting https_trigger_url: %s", err)
 		}
+		if err := d.Set("https_trigger_security_level", function.HttpsTrigger.SecurityLevel); err != nil {
+			return fmt.Errorf("Error setting https_trigger_security_level: %s", err)
+		}
 	}
 
 	if err := d.Set("event_trigger", flattenEventTrigger(function.EventTrigger)); err != nil {
 		return fmt.Errorf("Error setting event_trigger: %s", err)
+	}
+	if err := d.Set("docker_registry", function.DockerRegistry); err != nil {
+		return fmt.Errorf("Error setting docker_registry: %s", err)
+	}
+	if err := d.Set("docker_repository", function.DockerRepository); err != nil {
+		return fmt.Errorf("Error setting docker_repository: %s", err)
+	}
+	if err := d.Set("kms_key_name", function.KmsKeyName); err != nil {
+		return fmt.Errorf("Error setting kms_key_name: %s", err)
 	}
 	if err := d.Set("max_instances", function.MaxInstances); err != nil {
 		return fmt.Errorf("Error setting max_instances: %s", err)
@@ -554,7 +745,7 @@ func resourceCloudFunctionsRead(d *schema.ResourceData, meta interface{}) error 
 func resourceCloudFunctionsUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG]: Updating google_cloudfunctions_function")
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -600,9 +791,24 @@ func resourceCloudFunctionsUpdate(d *schema.ResourceData, meta interface{}) erro
 		updateMaskArr = append(updateMaskArr, "sourceRepository")
 	}
 
+	if d.HasChange("secret_environment_variables") {
+		function.SecretEnvironmentVariables = expandSecretEnvironmentVariables(d.Get("secret_environment_variables").([]interface{}))
+		updateMaskArr = append(updateMaskArr, "secretEnvironmentVariables")
+	}
+
+	if d.HasChange("secret_volumes") {
+		function.SecretVolumes = expandSecretVolumes(d.Get("secret_volumes").([]interface{}))
+		updateMaskArr = append(updateMaskArr, "secretVolumes")
+	}
+
 	if d.HasChange("description") {
 		function.Description = d.Get("description").(string)
 		updateMaskArr = append(updateMaskArr, "description")
+	}
+
+	if d.HasChange("build_worker_pool") {
+		function.BuildWorkerPool = d.Get("build_worker_pool").(string)
+		updateMaskArr = append(updateMaskArr, "build_worker_pool")
 	}
 
 	if d.HasChange("timeout") {
@@ -650,6 +856,29 @@ func resourceCloudFunctionsUpdate(d *schema.ResourceData, meta interface{}) erro
 		updateMaskArr = append(updateMaskArr, "eventTrigger", "eventTrigger.failurePolicy.retry")
 	}
 
+	if d.HasChange("https_trigger_security_level") {
+		if function.HttpsTrigger == nil {
+			function.HttpsTrigger = &cloudfunctions.HttpsTrigger{}
+		}
+		function.HttpsTrigger.SecurityLevel = d.Get("https_trigger_security_level").(string)
+		updateMaskArr = append(updateMaskArr, "httpsTrigger", "httpsTrigger.securityLevel")
+	}
+
+	if d.HasChange("docker_registry") {
+		function.DockerRegistry = d.Get("docker_registry").(string)
+		updateMaskArr = append(updateMaskArr, "dockerRegistry")
+	}
+
+	if d.HasChange("docker_repository") {
+		function.DockerRepository = d.Get("docker_repository").(string)
+		updateMaskArr = append(updateMaskArr, "dockerRepository")
+	}
+
+	if d.HasChange("kms_key_name") {
+		function.KmsKeyName = d.Get("kms_key_name").(string)
+		updateMaskArr = append(updateMaskArr, "kmsKeyName")
+	}
+
 	if d.HasChange("max_instances") {
 		function.MaxInstances = int64(d.Get("max_instances").(int))
 		updateMaskArr = append(updateMaskArr, "maxInstances")
@@ -663,7 +892,7 @@ func resourceCloudFunctionsUpdate(d *schema.ResourceData, meta interface{}) erro
 	if len(updateMaskArr) > 0 {
 		log.Printf("[DEBUG] Send Patch CloudFunction Configuration request: %#v", function)
 		updateMask := strings.Join(updateMaskArr, ",")
-		rerr := retryTimeDuration(func() error {
+		rerr := RetryTimeDuration(func() error {
 			op, err := config.NewCloudFunctionsClient(userAgent).Projects.Locations.Functions.Patch(function.Name, function).
 				UpdateMask(updateMask).Do()
 			if err != nil {
@@ -684,7 +913,7 @@ func resourceCloudFunctionsUpdate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceCloudFunctionsDestroy(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -816,5 +1045,112 @@ func flattenSourceRepository(sourceRepo *cloudfunctions.SourceRepository) []map[
 		"deployed_url": sourceRepo.DeployedUrl,
 	})
 
+	return result
+}
+
+func expandSecretEnvironmentVariables(configured []interface{}) []*cloudfunctions.SecretEnvVar {
+	if len(configured) == 0 {
+		return nil
+	}
+	result := make([]*cloudfunctions.SecretEnvVar, 0, len(configured))
+	for _, e := range configured {
+		data := e.(map[string]interface{})
+		result = append(result, &cloudfunctions.SecretEnvVar{
+			Key:       data["key"].(string),
+			ProjectId: data["project_id"].(string),
+			Secret:    data["secret"].(string),
+			Version:   data["version"].(string),
+		})
+	}
+	return result
+}
+
+func flattenSecretEnvironmentVariables(envVars []*cloudfunctions.SecretEnvVar) []map[string]interface{} {
+	if envVars == nil {
+		return nil
+	}
+	var result []map[string]interface{}
+
+	for _, envVar := range envVars {
+		if envVar != nil {
+			data := map[string]interface{}{
+				"key":        envVar.Key,
+				"project_id": envVar.ProjectId,
+				"secret":     envVar.Secret,
+				"version":    envVar.Version,
+			}
+			result = append(result, data)
+		}
+	}
+	return result
+}
+
+func expandSecretVolumes(configured []interface{}) []*cloudfunctions.SecretVolume {
+	if len(configured) == 0 {
+		return nil
+	}
+	result := make([]*cloudfunctions.SecretVolume, 0, len(configured))
+	for _, e := range configured {
+		data := e.(map[string]interface{})
+		result = append(result, &cloudfunctions.SecretVolume{
+			MountPath: data["mount_path"].(string),
+			ProjectId: data["project_id"].(string),
+			Secret:    data["secret"].(string),
+			Versions:  expandSecretVersion(data["versions"].([]interface{})), //TODO
+		})
+	}
+	return result
+}
+
+func flattenSecretVolumes(secretVolumes []*cloudfunctions.SecretVolume) []map[string]interface{} {
+	if secretVolumes == nil {
+		return nil
+	}
+	var result []map[string]interface{}
+
+	for _, secretVolume := range secretVolumes {
+		if secretVolume != nil {
+			data := map[string]interface{}{
+				"mount_path": secretVolume.MountPath,
+				"project_id": secretVolume.ProjectId,
+				"secret":     secretVolume.Secret,
+				"versions":   flattenSecretVersion(secretVolume.Versions),
+			}
+			result = append(result, data)
+		}
+	}
+	return result
+}
+
+func expandSecretVersion(configured []interface{}) []*cloudfunctions.SecretVersion {
+	if len(configured) == 0 {
+		return nil
+	}
+	result := make([]*cloudfunctions.SecretVersion, 0, len(configured))
+	for _, e := range configured {
+		data := e.(map[string]interface{})
+		result = append(result, &cloudfunctions.SecretVersion{
+			Path:    data["path"].(string),
+			Version: data["version"].(string),
+		})
+	}
+	return result
+}
+
+func flattenSecretVersion(secretVersions []*cloudfunctions.SecretVersion) []map[string]interface{} {
+	if secretVersions == nil {
+		return nil
+	}
+	var result []map[string]interface{}
+
+	for _, secretVersion := range secretVersions {
+		if secretVersion != nil {
+			data := map[string]interface{}{
+				"path":    secretVersion.Path,
+				"version": secretVersion.Version,
+			}
+			result = append(result, data)
+		}
+	}
 	return result
 }

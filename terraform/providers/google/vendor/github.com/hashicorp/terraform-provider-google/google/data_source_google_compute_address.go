@@ -13,7 +13,7 @@ var (
 	computeAddressLinkRegex  = regexp.MustCompile("projects/(.+)/regions/(.+)/addresses/(.+)$")
 )
 
-func dataSourceGoogleComputeAddress() *schema.Resource {
+func DataSourceGoogleComputeAddress() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeAddressRead,
 
@@ -55,7 +55,7 @@ func dataSourceGoogleComputeAddress() *schema.Resource {
 
 func dataSourceGoogleComputeAddressRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

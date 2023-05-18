@@ -25,7 +25,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceTagsTagKey() *schema.Resource {
+func ResourceTagsTagKey() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceTagsTagKeyCreate,
 		Read:   resourceTagsTagKeyRead,
@@ -37,9 +37,9 @@ func resourceTagsTagKey() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -63,6 +63,24 @@ The short name must be 1-63 characters, beginning and ending with an alphanumeri
 				Optional:     true,
 				ValidateFunc: validation.StringLenBetween(0, 256),
 				Description:  `User-assigned description of the TagKey. Must not exceed 256 characters.`,
+			},
+			"purpose": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateEnum([]string{"GCE_FIREWALL", ""}),
+				Description: `Optional. A purpose cannot be changed once set.
+
+A purpose denotes that this Tag is intended for use in policies of a specific policy engine, and will involve that policy engine in management operations involving this Tag. Possible values: ["GCE_FIREWALL"]`,
+			},
+			"purpose_data": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true,
+				Description: `Optional. Purpose data cannot be changed once set.
+
+Purpose data corresponds to the policy system that the tag is intended for. For example, the GCE_FIREWALL purpose expects data in the following format: 'network = "<project-name>/<vpc-name>"'.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"create_time": {
 				Type:     schema.TypeString,
@@ -95,7 +113,7 @@ A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to n
 
 func resourceTagsTagKeyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -119,6 +137,18 @@ func resourceTagsTagKeyCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(descriptionProp)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
+	purposeProp, err := expandTagsTagKeyPurpose(d.Get("purpose"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("purpose"); !isEmptyValue(reflect.ValueOf(purposeProp)) && (ok || !reflect.DeepEqual(v, purposeProp)) {
+		obj["purpose"] = purposeProp
+	}
+	purposeDataProp, err := expandTagsTagKeyPurposeData(d.Get("purpose_data"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("purpose_data"); !isEmptyValue(reflect.ValueOf(purposeDataProp)) && (ok || !reflect.DeepEqual(v, purposeDataProp)) {
+		obj["purposeData"] = purposeDataProp
+	}
 
 	lockName, err := replaceVars(d, config, "tagKeys/{{parent}}")
 	if err != nil {
@@ -140,7 +170,7 @@ func resourceTagsTagKeyCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating TagKey: %s", err)
 	}
@@ -155,12 +185,13 @@ func resourceTagsTagKeyCreate(d *schema.ResourceData, meta interface{}) error {
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = tagsOperationWaitTimeWithResponse(
+	err = TagsOperationWaitTimeWithResponse(
 		config, res, &opRes, "Creating TagKey", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create TagKey: %s", err)
 	}
 
@@ -182,7 +213,7 @@ func resourceTagsTagKeyCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceTagsTagKeyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -199,7 +230,7 @@ func resourceTagsTagKeyRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("TagsTagKey %q", d.Id()))
 	}
@@ -225,13 +256,16 @@ func resourceTagsTagKeyRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("update_time", flattenTagsTagKeyUpdateTime(res["updateTime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading TagKey: %s", err)
 	}
+	if err := d.Set("purpose", flattenTagsTagKeyPurpose(res["purpose"], d, config)); err != nil {
+		return fmt.Errorf("Error reading TagKey: %s", err)
+	}
 
 	return nil
 }
 
 func resourceTagsTagKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -276,7 +310,7 @@ func resourceTagsTagKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating TagKey %q: %s", d.Id(), err)
@@ -284,7 +318,7 @@ func resourceTagsTagKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] Finished updating TagKey %q: %#v", d.Id(), res)
 	}
 
-	err = tagsOperationWaitTime(
+	err = TagsOperationWaitTime(
 		config, res, "Updating TagKey", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -297,7 +331,7 @@ func resourceTagsTagKeyUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceTagsTagKeyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -324,12 +358,12 @@ func resourceTagsTagKeyDelete(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "TagKey")
 	}
 
-	err = tagsOperationWaitTime(
+	err = TagsOperationWaitTime(
 		config, res, "Deleting TagKey", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -391,6 +425,10 @@ func flattenTagsTagKeyUpdateTime(v interface{}, d *schema.ResourceData, config *
 	return v
 }
 
+func flattenTagsTagKeyPurpose(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func expandTagsTagKeyParent(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -401,4 +439,19 @@ func expandTagsTagKeyShortName(v interface{}, d TerraformResourceData, config *C
 
 func expandTagsTagKeyDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandTagsTagKeyPurpose(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandTagsTagKeyPurposeData(v interface{}, d TerraformResourceData, config *Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }

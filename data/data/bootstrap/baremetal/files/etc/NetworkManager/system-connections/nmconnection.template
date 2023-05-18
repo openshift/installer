@@ -11,5 +11,5 @@ mac-address={{.PlatformData.BareMetal.ExternalMACAddress}}
 method=manual
 addresses={{.PlatformData.BareMetal.ExternalStaticIP}}/{{.PlatformData.BareMetal.ExternalSubnetCIDR}}
 gateway={{.PlatformData.BareMetal.ExternalStaticGateway}}
-dns={{.PlatformData.BareMetal.ExternalStaticGateway}}
+dns={{.PlatformData.BareMetal.ExternalStaticDNS}}
 {{end}}

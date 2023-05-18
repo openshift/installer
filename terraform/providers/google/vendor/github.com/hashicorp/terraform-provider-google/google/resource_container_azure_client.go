@@ -27,7 +27,7 @@ import (
 	containerazure "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containerazure"
 )
 
-func resourceContainerAzureClient() *schema.Resource {
+func ResourceContainerAzureClient() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceContainerAzureClientCreate,
 		Read:   resourceContainerAzureClientRead,
@@ -38,8 +38,8 @@ func resourceContainerAzureClient() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -47,7 +47,7 @@ func resourceContainerAzureClient() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The Azure Active Directory Application ID.",
+				Description: "The Azure Active Directory Application ID.",
 			},
 
 			"location": {
@@ -68,7 +68,7 @@ func resourceContainerAzureClient() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The Azure Active Directory Tenant ID.",
+				Description: "The Azure Active Directory Tenant ID.",
 			},
 
 			"project": {
@@ -116,13 +116,13 @@ func resourceContainerAzureClientCreate(d *schema.ResourceData, meta interface{}
 		Project:       dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/azureClients/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -138,7 +138,7 @@ func resourceContainerAzureClientCreate(d *schema.ResourceData, meta interface{}
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyClient(context.Background(), obj, createDirective...)
+	res, err := client.ApplyClient(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -168,7 +168,7 @@ func resourceContainerAzureClientRead(d *schema.ResourceData, meta interface{}) 
 		Project:       dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -234,7 +234,7 @@ func resourceContainerAzureClientDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Deleting Client %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -260,6 +260,7 @@ func resourceContainerAzureClientDelete(d *schema.ResourceData, meta interface{}
 
 func resourceContainerAzureClientImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/azureClients/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",

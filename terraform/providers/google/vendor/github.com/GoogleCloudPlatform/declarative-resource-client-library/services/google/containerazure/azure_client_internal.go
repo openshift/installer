@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -144,7 +143,7 @@ func (c *Client) listClient(ctx context.Context, r *AzureClient, pageToken strin
 
 	var l []*AzureClient
 	for _, v := range m.AzureClients {
-		res, err := unmarshalMapClient(v, c)
+		res, err := unmarshalMapClient(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -208,20 +207,20 @@ func (op *deleteClientOperation) do(ctx context.Context, r *AzureClient, c *Clie
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetClient(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetClient(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -320,6 +319,11 @@ func (c *Client) clientDiffsForRawDesired(ctx context.Context, rawDesired *Azure
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Client: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Client: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractClientFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeClientInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -385,13 +389,12 @@ func canonicalizeClientDesiredState(rawDesired, rawInitial *AzureClient, opts ..
 	} else {
 		canonicalDesired.Location = rawDesired.Location
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeClientNewState(c *Client, rawNew, rawDesired *AzureClient) (*AzureClient, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawNew.Name) {
@@ -399,7 +402,7 @@ func canonicalizeClientNewState(c *Client, rawNew, rawDesired *AzureClient) (*Az
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.TenantId) && dcl.IsNotReturnedByServer(rawDesired.TenantId) {
+	if dcl.IsEmptyValueIndirect(rawNew.TenantId) && dcl.IsEmptyValueIndirect(rawDesired.TenantId) {
 		rawNew.TenantId = rawDesired.TenantId
 	} else {
 		if dcl.StringCanonicalize(rawDesired.TenantId, rawNew.TenantId) {
@@ -407,7 +410,7 @@ func canonicalizeClientNewState(c *Client, rawNew, rawDesired *AzureClient) (*Az
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ApplicationId) && dcl.IsNotReturnedByServer(rawDesired.ApplicationId) {
+	if dcl.IsEmptyValueIndirect(rawNew.ApplicationId) && dcl.IsEmptyValueIndirect(rawDesired.ApplicationId) {
 		rawNew.ApplicationId = rawDesired.ApplicationId
 	} else {
 		if dcl.StringCanonicalize(rawDesired.ApplicationId, rawNew.ApplicationId) {
@@ -415,7 +418,7 @@ func canonicalizeClientNewState(c *Client, rawNew, rawDesired *AzureClient) (*Az
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Certificate) && dcl.IsNotReturnedByServer(rawDesired.Certificate) {
+	if dcl.IsEmptyValueIndirect(rawNew.Certificate) && dcl.IsEmptyValueIndirect(rawDesired.Certificate) {
 		rawNew.Certificate = rawDesired.Certificate
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Certificate, rawNew.Certificate) {
@@ -423,7 +426,7 @@ func canonicalizeClientNewState(c *Client, rawNew, rawDesired *AzureClient) (*Az
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Uid) && dcl.IsNotReturnedByServer(rawDesired.Uid) {
+	if dcl.IsEmptyValueIndirect(rawNew.Uid) && dcl.IsEmptyValueIndirect(rawDesired.Uid) {
 		rawNew.Uid = rawDesired.Uid
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Uid, rawNew.Uid) {
@@ -431,7 +434,7 @@ func canonicalizeClientNewState(c *Client, rawNew, rawDesired *AzureClient) (*Az
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreateTime) && dcl.IsNotReturnedByServer(rawDesired.CreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreateTime) && dcl.IsEmptyValueIndirect(rawDesired.CreateTime) {
 		rawNew.CreateTime = rawDesired.CreateTime
 	} else {
 	}
@@ -461,62 +464,65 @@ func diffClient(c *Client, desired, actual *AzureClient, opts ...dcl.ApplyOption
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TenantId, actual.TenantId, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TenantId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TenantId, actual.TenantId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TenantId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ApplicationId, actual.ApplicationId, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ApplicationId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ApplicationId, actual.ApplicationId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ApplicationId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Certificate, actual.Certificate, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCertificate")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Certificate, actual.Certificate, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCertificate")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 
@@ -552,17 +558,17 @@ func (r *AzureClient) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalClient decodes JSON responses into the Client resource schema.
-func unmarshalClient(b []byte, c *Client) (*AzureClient, error) {
+func unmarshalClient(b []byte, c *Client, res *AzureClient) (*AzureClient, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapClient(m, c)
+	return unmarshalMapClient(m, c, res)
 }
 
-func unmarshalMapClient(m map[string]interface{}, c *Client) (*AzureClient, error) {
+func unmarshalMapClient(m map[string]interface{}, c *Client, res *AzureClient) (*AzureClient, error) {
 
-	flattened := flattenClient(c, m)
+	flattened := flattenClient(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -572,9 +578,11 @@ func unmarshalMapClient(m map[string]interface{}, c *Client) (*AzureClient, erro
 // expandClient expands Client into a JSON request object.
 func expandClient(c *Client, f *AzureClient) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/azureClients/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.TenantId; dcl.ValueShouldBeSent(v) {
@@ -585,12 +593,12 @@ func expandClient(c *Client, f *AzureClient) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
 
@@ -599,7 +607,7 @@ func expandClient(c *Client, f *AzureClient) (map[string]interface{}, error) {
 
 // flattenClient flattens Client from a JSON request object into the
 // Client type.
-func flattenClient(c *Client, i interface{}) *AzureClient {
+func flattenClient(c *Client, i interface{}, res *AzureClient) *AzureClient {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -608,17 +616,17 @@ func flattenClient(c *Client, i interface{}) *AzureClient {
 		return nil
 	}
 
-	res := &AzureClient{}
-	res.Name = dcl.FlattenString(m["name"])
-	res.TenantId = dcl.FlattenString(m["tenantId"])
-	res.ApplicationId = dcl.FlattenString(m["applicationId"])
-	res.Certificate = dcl.FlattenString(m["pemCertificate"])
-	res.Uid = dcl.FlattenString(m["uid"])
-	res.CreateTime = dcl.FlattenString(m["createTime"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
+	resultRes := &AzureClient{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.TenantId = dcl.FlattenString(m["tenantId"])
+	resultRes.ApplicationId = dcl.FlattenString(m["applicationId"])
+	resultRes.Certificate = dcl.FlattenString(m["pemCertificate"])
+	resultRes.Uid = dcl.FlattenString(m["uid"])
+	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
 
-	return res
+	return resultRes
 }
 
 // This function returns a matcher that checks whether a serialized resource matches this resource
@@ -626,7 +634,7 @@ func flattenClient(c *Client, i interface{}) *AzureClient {
 // identity).  This is useful in extracting the element from a List call.
 func (r *AzureClient) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalClient(b, c)
+		cr, err := unmarshalClient(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -667,6 +675,7 @@ type clientDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         clientApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToClientDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]clientDiff, error) {
@@ -686,7 +695,8 @@ func convertFieldDiffsToClientDiffs(config *dcl.Config, fds []*dcl.FieldDiff, op
 	var diffs []clientDiff
 	// For each operation name, create a clientDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := clientDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := clientDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {

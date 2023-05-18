@@ -10,6 +10,7 @@ controlPlane:
       serverGroupPolicy: anti-affinity
       zones:
       - zoneone
+      - zonetwo
   replicas: 3
 compute:
 - name: worker

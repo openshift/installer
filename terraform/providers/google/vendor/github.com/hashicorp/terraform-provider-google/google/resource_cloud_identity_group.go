@@ -22,10 +22,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceCloudIdentityGroup() *schema.Resource {
+func ResourceCloudIdentityGroup() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudIdentityGroupCreate,
 		Read:   resourceCloudIdentityGroupRead,
@@ -37,9 +36,9 @@ func resourceCloudIdentityGroup() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -84,12 +83,15 @@ and must be in the form of 'identitysources/{identity_source_id}'.`,
 			"labels": {
 				Type:     schema.TypeMap,
 				Required: true,
-				ForceNew: true,
-				Description: `The labels that apply to the Group.
+				Description: `One or more label entries that apply to the Group. Currently supported labels contain a key with an empty value.
 
-Must not contain more than one entry. Must contain the entry
-'cloudidentity.googleapis.com/groups.discussion_forum': '' if the Group is a Google Group or
-'system/groups/external': '' if the Group is an external-identity-mapped group.`,
+Google Groups are the default type of group and have a label with a key of cloudidentity.googleapis.com/groups.discussion_forum and an empty value.
+
+Existing Google Groups can have an additional label with a key of cloudidentity.googleapis.com/groups.security and an empty value added to them. This is an immutable change and the security label cannot be removed once added.
+
+Dynamic groups have a label with a key of cloudidentity.googleapis.com/groups.dynamic.
+
+Identity-mapped groups for Cloud Search have a label with a key of system/groups/external and an empty value.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
 			"parent": {
@@ -116,7 +118,7 @@ Must not be longer than 4,096 characters.`,
 			"initial_group_config": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"INITIAL_GROUP_CONFIG_UNSPECIFIED", "WITH_INITIAL_OWNER", "EMPTY", ""}, false),
+				ValidateFunc: validateEnum([]string{"INITIAL_GROUP_CONFIG_UNSPECIFIED", "WITH_INITIAL_OWNER", "EMPTY", ""}),
 				Description: `The initial configuration options for creating a Group.
 
 See the
@@ -147,7 +149,7 @@ is the unique ID assigned to the Group.`,
 
 func resourceCloudIdentityGroupCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -197,7 +199,7 @@ func resourceCloudIdentityGroupCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Group: %s", err)
 	}
@@ -256,12 +258,12 @@ func resourceCloudIdentityGroupPollRead(d *schema.ResourceData, meta interface{}
 			billingProject = bp
 		}
 
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+		res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 		if err != nil {
 			return res, err
 		}
@@ -271,7 +273,7 @@ func resourceCloudIdentityGroupPollRead(d *schema.ResourceData, meta interface{}
 
 func resourceCloudIdentityGroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -288,7 +290,7 @@ func resourceCloudIdentityGroupRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("CloudIdentityGroup %q", d.Id()))
 	}
@@ -323,7 +325,7 @@ func resourceCloudIdentityGroupRead(d *schema.ResourceData, meta interface{}) er
 
 func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -343,6 +345,12 @@ func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("description"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
+	labelsProp, err := expandCloudIdentityGroupLabels(d.Get("labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("labels"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
 
 	url, err := replaceVars(d, config, "{{CloudIdentityBasePath}}{{name}}")
 	if err != nil {
@@ -359,6 +367,10 @@ func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
 	}
+
+	if d.HasChange("labels") {
+		updateMask = append(updateMask, "labels")
+	}
 	// updateMask is a URL parameter but not present in the schema, so replaceVars
 	// won't set it
 	url, err = addQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
@@ -371,7 +383,7 @@ func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Group %q: %s", d.Id(), err)
@@ -379,12 +391,17 @@ func resourceCloudIdentityGroupUpdate(d *schema.ResourceData, meta interface{}) 
 		log.Printf("[DEBUG] Finished updating Group %q: %#v", d.Id(), res)
 	}
 
+	err = PollingWaitTime(resourceCloudIdentityGroupPollRead(d, meta), PollCheckForExistenceWith403, "Updating Group", d.Timeout(schema.TimeoutUpdate), 10)
+	if err != nil {
+		return err
+	}
+
 	return resourceCloudIdentityGroupRead(d, meta)
 }
 
 func resourceCloudIdentityGroupDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -404,9 +421,14 @@ func resourceCloudIdentityGroupDelete(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Group")
+	}
+
+	err = PollingWaitTime(resourceCloudIdentityGroupPollRead(d, meta), PollCheckForAbsenceWith403, "Deleting Group", d.Timeout(schema.TimeoutCreate), 10)
+	if err != nil {
+		return fmt.Errorf("Error waiting to delete Group: %s", err)
 	}
 
 	log.Printf("[DEBUG] Finished deleting Group %q: %#v", d.Id(), res)
@@ -422,6 +444,10 @@ func resourceCloudIdentityGroupImport(d *schema.ResourceData, meta interface{}) 
 	}
 
 	name := d.Get("name").(string)
+
+	if d.Get("initial_group_config") == nil {
+		d.Set("initial_group_config", "EMPTY")
+	}
 
 	if err := d.Set("name", name); err != nil {
 		return nil, fmt.Errorf("Error setting name: %s", err)

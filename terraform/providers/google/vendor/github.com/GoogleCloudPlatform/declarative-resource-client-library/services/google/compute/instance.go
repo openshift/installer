@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -326,8 +326,8 @@ func (r *InstanceDisks) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceDisks is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceDisks *InstanceDisks = &InstanceDisks{empty: true}
 
 func (r *InstanceDisks) Empty() bool {
@@ -378,8 +378,8 @@ func (r *InstanceDisksDiskEncryptionKey) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceDisksDiskEncryptionKey is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceDisksDiskEncryptionKey *InstanceDisksDiskEncryptionKey = &InstanceDisksDiskEncryptionKey{empty: true}
 
 func (r *InstanceDisksDiskEncryptionKey) Empty() bool {
@@ -436,8 +436,8 @@ func (r *InstanceDisksInitializeParams) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceDisksInitializeParams is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceDisksInitializeParams *InstanceDisksInitializeParams = &InstanceDisksInitializeParams{empty: true}
 
 func (r *InstanceDisksInitializeParams) Empty() bool {
@@ -485,8 +485,8 @@ func (r *InstanceDisksInitializeParamsSourceImageEncryptionKey) UnmarshalJSON(da
 }
 
 // This object is used to assert a desired state where this InstanceDisksInitializeParamsSourceImageEncryptionKey is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceDisksInitializeParamsSourceImageEncryptionKey *InstanceDisksInitializeParamsSourceImageEncryptionKey = &InstanceDisksInitializeParamsSourceImageEncryptionKey{empty: true}
 
 func (r *InstanceDisksInitializeParamsSourceImageEncryptionKey) Empty() bool {
@@ -534,8 +534,8 @@ func (r *InstanceGuestAccelerators) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceGuestAccelerators is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceGuestAccelerators *InstanceGuestAccelerators = &InstanceGuestAccelerators{empty: true}
 
 func (r *InstanceGuestAccelerators) Empty() bool {
@@ -598,8 +598,8 @@ func (r *InstanceNetworkInterfaces) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceNetworkInterfaces is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceNetworkInterfaces *InstanceNetworkInterfaces = &InstanceNetworkInterfaces{empty: true}
 
 func (r *InstanceNetworkInterfaces) Empty() bool {
@@ -665,8 +665,8 @@ func (r *InstanceNetworkInterfacesAccessConfigs) UnmarshalJSON(data []byte) erro
 }
 
 // This object is used to assert a desired state where this InstanceNetworkInterfacesAccessConfigs is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceNetworkInterfacesAccessConfigs *InstanceNetworkInterfacesAccessConfigs = &InstanceNetworkInterfacesAccessConfigs{empty: true}
 
 func (r *InstanceNetworkInterfacesAccessConfigs) Empty() bool {
@@ -732,8 +732,8 @@ func (r *InstanceNetworkInterfacesIPv6AccessConfigs) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this InstanceNetworkInterfacesIPv6AccessConfigs is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceNetworkInterfacesIPv6AccessConfigs *InstanceNetworkInterfacesIPv6AccessConfigs = &InstanceNetworkInterfacesIPv6AccessConfigs{empty: true}
 
 func (r *InstanceNetworkInterfacesIPv6AccessConfigs) Empty() bool {
@@ -781,8 +781,8 @@ func (r *InstanceNetworkInterfacesAliasIPRanges) UnmarshalJSON(data []byte) erro
 }
 
 // This object is used to assert a desired state where this InstanceNetworkInterfacesAliasIPRanges is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceNetworkInterfacesAliasIPRanges *InstanceNetworkInterfacesAliasIPRanges = &InstanceNetworkInterfacesAliasIPRanges{empty: true}
 
 func (r *InstanceNetworkInterfacesAliasIPRanges) Empty() bool {
@@ -833,8 +833,8 @@ func (r *InstanceScheduling) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceScheduling is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceScheduling *InstanceScheduling = &InstanceScheduling{empty: true}
 
 func (r *InstanceScheduling) Empty() bool {
@@ -882,8 +882,8 @@ func (r *InstanceServiceAccounts) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceServiceAccounts is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceServiceAccounts *InstanceServiceAccounts = &InstanceServiceAccounts{empty: true}
 
 func (r *InstanceServiceAccounts) Empty() bool {
@@ -934,8 +934,8 @@ func (r *InstanceShieldedInstanceConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this InstanceShieldedInstanceConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInstanceShieldedInstanceConfig *InstanceShieldedInstanceConfig = &InstanceShieldedInstanceConfig{empty: true}
 
 func (r *InstanceShieldedInstanceConfig) Empty() bool {
@@ -969,30 +969,30 @@ func (r *Instance) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"canIPForward":           dcl.ValueOrEmptyString(nr.CanIPForward),
-		"cpuPlatform":            dcl.ValueOrEmptyString(nr.CpuPlatform),
-		"creationTimestamp":      dcl.ValueOrEmptyString(nr.CreationTimestamp),
-		"deletionProtection":     dcl.ValueOrEmptyString(nr.DeletionProtection),
-		"description":            dcl.ValueOrEmptyString(nr.Description),
-		"disks":                  dcl.ValueOrEmptyString(nr.Disks),
-		"guestAccelerators":      dcl.ValueOrEmptyString(nr.GuestAccelerators),
-		"hostname":               dcl.ValueOrEmptyString(nr.Hostname),
-		"id":                     dcl.ValueOrEmptyString(nr.Id),
-		"labels":                 dcl.ValueOrEmptyString(nr.Labels),
-		"metadata":               dcl.ValueOrEmptyString(nr.Metadata),
-		"machineType":            dcl.ValueOrEmptyString(nr.MachineType),
-		"minCpuPlatform":         dcl.ValueOrEmptyString(nr.MinCpuPlatform),
-		"name":                   dcl.ValueOrEmptyString(nr.Name),
-		"networkInterfaces":      dcl.ValueOrEmptyString(nr.NetworkInterfaces),
-		"scheduling":             dcl.ValueOrEmptyString(nr.Scheduling),
-		"serviceAccounts":        dcl.ValueOrEmptyString(nr.ServiceAccounts),
-		"shieldedInstanceConfig": dcl.ValueOrEmptyString(nr.ShieldedInstanceConfig),
-		"status":                 dcl.ValueOrEmptyString(nr.Status),
-		"statusMessage":          dcl.ValueOrEmptyString(nr.StatusMessage),
-		"tags":                   dcl.ValueOrEmptyString(nr.Tags),
-		"zone":                   dcl.ValueOrEmptyString(nr.Zone),
-		"project":                dcl.ValueOrEmptyString(nr.Project),
-		"selfLink":               dcl.ValueOrEmptyString(nr.SelfLink),
+		"can_ip_forward":           dcl.ValueOrEmptyString(nr.CanIPForward),
+		"cpu_platform":             dcl.ValueOrEmptyString(nr.CpuPlatform),
+		"creation_timestamp":       dcl.ValueOrEmptyString(nr.CreationTimestamp),
+		"deletion_protection":      dcl.ValueOrEmptyString(nr.DeletionProtection),
+		"description":              dcl.ValueOrEmptyString(nr.Description),
+		"disks":                    dcl.ValueOrEmptyString(nr.Disks),
+		"guest_accelerators":       dcl.ValueOrEmptyString(nr.GuestAccelerators),
+		"hostname":                 dcl.ValueOrEmptyString(nr.Hostname),
+		"id":                       dcl.ValueOrEmptyString(nr.Id),
+		"labels":                   dcl.ValueOrEmptyString(nr.Labels),
+		"metadata":                 dcl.ValueOrEmptyString(nr.Metadata),
+		"machine_type":             dcl.ValueOrEmptyString(nr.MachineType),
+		"min_cpu_platform":         dcl.ValueOrEmptyString(nr.MinCpuPlatform),
+		"name":                     dcl.ValueOrEmptyString(nr.Name),
+		"network_interfaces":       dcl.ValueOrEmptyString(nr.NetworkInterfaces),
+		"scheduling":               dcl.ValueOrEmptyString(nr.Scheduling),
+		"service_accounts":         dcl.ValueOrEmptyString(nr.ServiceAccounts),
+		"shielded_instance_config": dcl.ValueOrEmptyString(nr.ShieldedInstanceConfig),
+		"status":                   dcl.ValueOrEmptyString(nr.Status),
+		"status_message":           dcl.ValueOrEmptyString(nr.StatusMessage),
+		"tags":                     dcl.ValueOrEmptyString(nr.Tags),
+		"zone":                     dcl.ValueOrEmptyString(nr.Zone),
+		"project":                  dcl.ValueOrEmptyString(nr.Project),
+		"self_link":                dcl.ValueOrEmptyString(nr.SelfLink),
 	}
 	return dcl.Nprintf("projects/{{project}}/zones/{{zone}}/instances/{{name}}", params), nil
 }
@@ -1079,7 +1079,7 @@ func (c *Client) GetInstance(ctx context.Context, r *Instance) (*Instance, error
 		}
 		return nil, err
 	}
-	result, err := unmarshalInstance(b, c)
+	result, err := unmarshalInstance(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -1236,7 +1236,7 @@ func applyInstanceHelper(c *Client, ctx context.Context, rawDesired *Instance, o
 func applyInstanceDiff(c *Client, ctx context.Context, desired *Instance, rawDesired *Instance, ops []instanceApiOperation, opts ...dcl.ApplyOption) (*Instance, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetInstance(ctx, desired.urlNormalized())
+	rawNew, err := c.GetInstance(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -1249,7 +1249,7 @@ func applyInstanceDiff(c *Client, ctx context.Context, desired *Instance, rawDes
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapInstance(r, c)
+				fullResp, err := unmarshalMapInstance(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

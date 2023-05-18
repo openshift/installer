@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
-	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
 )
 
 func (r *OSPolicyAssignment) validate() error {
@@ -172,7 +170,7 @@ func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) validate() e
 	}
 	return nil
 }
-func (r *OSPolicyAssignmentFile) validate() error {
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource) validate() error {
 	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Remote", "Gcs", "LocalPath"}, r.Remote, r.Gcs, r.LocalPath); err != nil {
 		return err
 	}
@@ -188,13 +186,13 @@ func (r *OSPolicyAssignmentFile) validate() error {
 	}
 	return nil
 }
-func (r *OSPolicyAssignmentFileRemote) validate() error {
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote) validate() error {
 	if err := dcl.Required(r, "uri"); err != nil {
 		return err
 	}
 	return nil
 }
-func (r *OSPolicyAssignmentFileGcs) validate() error {
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs) validate() error {
 	if err := dcl.Required(r, "bucket"); err != nil {
 		return err
 	}
@@ -226,6 +224,37 @@ func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) validate() e
 	}
 	return nil
 }
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource) validate() error {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Remote", "Gcs", "LocalPath"}, r.Remote, r.Gcs, r.LocalPath); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(r.Remote) {
+		if err := r.Remote.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Gcs) {
+		if err := r.Gcs.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs) validate() error {
+	if err := dcl.Required(r, "bucket"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "object"); err != nil {
+		return err
+	}
+	return nil
+}
 func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) validate() error {
 	if err := dcl.Required(r, "name"); err != nil {
 		return err
@@ -240,6 +269,37 @@ func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) validate() e
 		if err := r.Source.validate(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource) validate() error {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Remote", "Gcs", "LocalPath"}, r.Remote, r.Gcs, r.LocalPath); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(r.Remote) {
+		if err := r.Remote.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Gcs) {
+		if err := r.Gcs.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs) validate() error {
+	if err := dcl.Required(r, "bucket"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "object"); err != nil {
+		return err
 	}
 	return nil
 }
@@ -327,7 +387,7 @@ func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) validate() err
 	}
 	return nil
 }
-func (r *OSPolicyAssignmentExec) validate() error {
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate) validate() error {
 	if err := dcl.Required(r, "interpreter"); err != nil {
 		return err
 	}
@@ -338,6 +398,82 @@ func (r *OSPolicyAssignmentExec) validate() error {
 		if err := r.File.validate(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile) validate() error {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Remote", "Gcs", "LocalPath"}, r.Remote, r.Gcs, r.LocalPath); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(r.Remote) {
+		if err := r.Remote.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Gcs) {
+		if err := r.Gcs.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs) validate() error {
+	if err := dcl.Required(r, "bucket"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "object"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce) validate() error {
+	if err := dcl.Required(r, "interpreter"); err != nil {
+		return err
+	}
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"File", "Script"}, r.File, r.Script); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(r.File) {
+		if err := r.File.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile) validate() error {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Remote", "Gcs", "LocalPath"}, r.Remote, r.Gcs, r.LocalPath); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(r.Remote) {
+		if err := r.Remote.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Gcs) {
+		if err := r.Gcs.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs) validate() error {
+	if err := dcl.Required(r, "bucket"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "object"); err != nil {
+		return err
 	}
 	return nil
 }
@@ -355,6 +491,37 @@ func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) validate() err
 		if err := r.File.validate(); err != nil {
 			return err
 		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile) validate() error {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Remote", "Gcs", "LocalPath"}, r.Remote, r.Gcs, r.LocalPath); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(r.Remote) {
+		if err := r.Remote.validate(); err != nil {
+			return err
+		}
+	}
+	if !dcl.IsEmptyValueIndirect(r.Gcs) {
+		if err := r.Gcs.validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote) validate() error {
+	if err := dcl.Required(r, "uri"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs) validate() error {
+	if err := dcl.Required(r, "bucket"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "object"); err != nil {
+		return err
 	}
 	return nil
 }
@@ -450,41 +617,29 @@ type oSPolicyAssignmentApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateOSPolicyAssignmentUpdateOSPolicyAssignmentRequest(ctx context.Context, f *OSPolicyAssignment, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesSlice(c, f.OSPolicies); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesSlice(c, f.OSPolicies, res); err != nil {
 		return nil, fmt.Errorf("error expanding OSPolicies into osPolicies: %w", err)
 	} else if v != nil {
 		req["osPolicies"] = v
 	}
-	if v, err := expandOSPolicyAssignmentInstanceFilter(c, f.InstanceFilter); err != nil {
+	if v, err := expandOSPolicyAssignmentInstanceFilter(c, f.InstanceFilter, res); err != nil {
 		return nil, fmt.Errorf("error expanding InstanceFilter into instanceFilter: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["instanceFilter"] = v
 	}
-	if v, err := expandOSPolicyAssignmentRollout(c, f.Rollout); err != nil {
+	if v, err := expandOSPolicyAssignmentRollout(c, f.Rollout, res); err != nil {
 		return nil, fmt.Errorf("error expanding Rollout into rollout: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["rollout"] = v
 	}
-	b, err := c.getOSPolicyAssignmentRaw(ctx, f)
-	if err != nil {
-		return nil, err
-	}
-	var m map[string]interface{}
-	if err := json.Unmarshal(b, &m); err != nil {
-		return nil, err
-	}
-	rawEtag, err := dcl.GetMapEntry(
-		m,
-		[]string{"etag"},
-	)
-	if err != nil {
-		c.Config.Logger.WarningWithContextf(ctx, "Failed to fetch from JSON Path: %v", err)
-	} else {
-		req["etag"] = rawEtag.(string)
+	if v := f.SkipAwaitRollout; !dcl.IsEmptyValueIndirect(v) {
+		req["skipAwaitRollout"] = v
 	}
 	return req, nil
 }
@@ -493,6 +648,11 @@ func newUpdateOSPolicyAssignmentUpdateOSPolicyAssignmentRequest(ctx context.Cont
 // the final JSON request body.
 func marshalUpdateOSPolicyAssignmentUpdateOSPolicyAssignmentRequest(c *Client, m map[string]interface{}) ([]byte, error) {
 
+	dcl.MoveMapEntry(
+		m,
+		[]string{"skipAwaitRollout"},
+		[]string{},
+	)
 	return json.Marshal(m)
 }
 
@@ -507,50 +667,6 @@ type updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation struct {
 // do creates a request and sends it to the appropriate URL. In most operations,
 // do will transcribe a subset of the resource into a request object and send a
 // PUT request to a single URL.
-
-func (op *updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation) do(ctx context.Context, r *OSPolicyAssignment, c *Client) error {
-	_, err := c.GetOSPolicyAssignment(ctx, r)
-	if err != nil {
-		return err
-	}
-
-	u, err := r.updateURL(c.Config.BasePath, "UpdateOSPolicyAssignment")
-	if err != nil {
-		return err
-	}
-	mask := dcl.TopLevelUpdateMask(op.FieldDiffs)
-	u, err = dcl.AddQueryParams(u, map[string]string{"updateMask": mask})
-	if err != nil {
-		return err
-	}
-
-	req, err := newUpdateOSPolicyAssignmentUpdateOSPolicyAssignmentRequest(ctx, r, c)
-	if err != nil {
-		return err
-	}
-
-	c.Config.Logger.InfoWithContextf(ctx, "Created update: %#v", req)
-	body, err := marshalUpdateOSPolicyAssignmentUpdateOSPolicyAssignmentRequest(c, req)
-	if err != nil {
-		return err
-	}
-	resp, err := dcl.SendRequest(ctx, c.Config, "PATCH", u, bytes.NewBuffer(body), c.Config.RetryProvider)
-	if err != nil {
-		return err
-	}
-
-	var o operations.StandardGCPOperation
-	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
-		return err
-	}
-	err = o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET")
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
 
 func (c *Client) listOSPolicyAssignmentRaw(ctx context.Context, r *OSPolicyAssignment, pageToken string, pageSize int32) ([]byte, error) {
 	u, err := r.urlNormalized().listURL(c.Config.BasePath)
@@ -597,7 +713,7 @@ func (c *Client) listOSPolicyAssignment(ctx context.Context, r *OSPolicyAssignme
 
 	var l []*OSPolicyAssignment
 	for _, v := range m.OsPolicyAssignments {
-		res, err := unmarshalMapOSPolicyAssignment(v, c)
+		res, err := unmarshalMapOSPolicyAssignment(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -629,59 +745,6 @@ func (c *Client) deleteAllOSPolicyAssignment(ctx context.Context, f func(*OSPoli
 
 type deleteOSPolicyAssignmentOperation struct{}
 
-func (op *deleteOSPolicyAssignmentOperation) do(ctx context.Context, r *OSPolicyAssignment, c *Client) error {
-	r, err := c.GetOSPolicyAssignment(ctx, r)
-	if err != nil {
-		if dcl.IsNotFound(err) {
-			c.Config.Logger.InfoWithContextf(ctx, "OSPolicyAssignment not found, returning. Original error: %v", err)
-			return nil
-		}
-		c.Config.Logger.WarningWithContextf(ctx, "GetOSPolicyAssignment checking for existence. error: %v", err)
-		return err
-	}
-
-	err = r.waitForNotReconciling(ctx, c)
-	if err != nil {
-		return err
-	}
-	u, err := r.deleteURL(c.Config.BasePath)
-	if err != nil {
-		return err
-	}
-
-	// Delete should never have a body
-	body := &bytes.Buffer{}
-	resp, err := dcl.SendRequest(ctx, c.Config, "DELETE", u, body, c.Config.RetryProvider)
-	if err != nil {
-		return err
-	}
-
-	// wait for object to be deleted.
-	var o operations.StandardGCPOperation
-	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
-		return err
-	}
-	if err := o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET"); err != nil {
-		return err
-	}
-
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetOSPolicyAssignment(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
-		}
-	}
-	return nil
-}
-
 // Create operations are similar to Update operations, although they do not have
 // specific request objects. The Create request object is the json encoding of
 // the resource, which is modified by res.marshal to form the base request body.
@@ -691,41 +754,6 @@ type createOSPolicyAssignmentOperation struct {
 
 func (op *createOSPolicyAssignmentOperation) FirstResponse() (map[string]interface{}, bool) {
 	return op.response, len(op.response) > 0
-}
-
-func (op *createOSPolicyAssignmentOperation) do(ctx context.Context, r *OSPolicyAssignment, c *Client) error {
-	c.Config.Logger.InfoWithContextf(ctx, "Attempting to create %v", r)
-	u, err := r.createURL(c.Config.BasePath)
-	if err != nil {
-		return err
-	}
-
-	req, err := r.marshal(c)
-	if err != nil {
-		return err
-	}
-	resp, err := dcl.SendRequest(ctx, c.Config, "POST", u, bytes.NewBuffer(req), c.Config.RetryProvider)
-	if err != nil {
-		return err
-	}
-	// wait for object to be created.
-	var o operations.StandardGCPOperation
-	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
-		return err
-	}
-	if err := o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET"); err != nil {
-		c.Config.Logger.Warningf("Creation failed after waiting for operation: %v", err)
-		return err
-	}
-	c.Config.Logger.InfoWithContextf(ctx, "Successfully waited for operation")
-	op.response, _ = o.FirstResponse()
-
-	if _, err := c.GetOSPolicyAssignment(ctx, r); err != nil {
-		c.Config.Logger.WarningWithContextf(ctx, "get returned error: %v", err)
-		return err
-	}
-
-	return nil
 }
 
 func (c *Client) getOSPolicyAssignmentRaw(ctx context.Context, r *OSPolicyAssignment) ([]byte, error) {
@@ -776,6 +804,11 @@ func (c *Client) oSPolicyAssignmentDiffsForRawDesired(ctx context.Context, rawDe
 	}
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for OSPolicyAssignment: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for OSPolicyAssignment: %v", rawDesired)
+
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractOSPolicyAssignmentFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
 
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeOSPolicyAssignmentInitialState(rawInitial, rawDesired)
@@ -842,13 +875,17 @@ func canonicalizeOSPolicyAssignmentDesiredState(rawDesired, rawInitial *OSPolicy
 	} else {
 		canonicalDesired.Location = rawDesired.Location
 	}
-
+	if dcl.BoolCanonicalize(rawDesired.SkipAwaitRollout, rawInitial.SkipAwaitRollout) {
+		canonicalDesired.SkipAwaitRollout = rawInitial.SkipAwaitRollout
+	} else {
+		canonicalDesired.SkipAwaitRollout = rawDesired.SkipAwaitRollout
+	}
 	return canonicalDesired, nil
 }
 
 func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPolicyAssignment) (*OSPolicyAssignment, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawNew.Name) {
@@ -856,7 +893,7 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -864,25 +901,25 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.OSPolicies) && dcl.IsNotReturnedByServer(rawDesired.OSPolicies) {
+	if dcl.IsEmptyValueIndirect(rawNew.OSPolicies) && dcl.IsEmptyValueIndirect(rawDesired.OSPolicies) {
 		rawNew.OSPolicies = rawDesired.OSPolicies
 	} else {
 		rawNew.OSPolicies = canonicalizeNewOSPolicyAssignmentOSPoliciesSlice(c, rawDesired.OSPolicies, rawNew.OSPolicies)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.InstanceFilter) && dcl.IsNotReturnedByServer(rawDesired.InstanceFilter) {
+	if dcl.IsEmptyValueIndirect(rawNew.InstanceFilter) && dcl.IsEmptyValueIndirect(rawDesired.InstanceFilter) {
 		rawNew.InstanceFilter = rawDesired.InstanceFilter
 	} else {
 		rawNew.InstanceFilter = canonicalizeNewOSPolicyAssignmentInstanceFilter(c, rawDesired.InstanceFilter, rawNew.InstanceFilter)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Rollout) && dcl.IsNotReturnedByServer(rawDesired.Rollout) {
+	if dcl.IsEmptyValueIndirect(rawNew.Rollout) && dcl.IsEmptyValueIndirect(rawDesired.Rollout) {
 		rawNew.Rollout = rawDesired.Rollout
 	} else {
 		rawNew.Rollout = canonicalizeNewOSPolicyAssignmentRollout(c, rawDesired.Rollout, rawNew.Rollout)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.RevisionId) && dcl.IsNotReturnedByServer(rawDesired.RevisionId) {
+	if dcl.IsEmptyValueIndirect(rawNew.RevisionId) && dcl.IsEmptyValueIndirect(rawDesired.RevisionId) {
 		rawNew.RevisionId = rawDesired.RevisionId
 	} else {
 		if dcl.StringCanonicalize(rawDesired.RevisionId, rawNew.RevisionId) {
@@ -890,12 +927,12 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.RevisionCreateTime) && dcl.IsNotReturnedByServer(rawDesired.RevisionCreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.RevisionCreateTime) && dcl.IsEmptyValueIndirect(rawDesired.RevisionCreateTime) {
 		rawNew.RevisionCreateTime = rawDesired.RevisionCreateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Etag) && dcl.IsNotReturnedByServer(rawDesired.Etag) {
+	if dcl.IsEmptyValueIndirect(rawNew.Etag) && dcl.IsEmptyValueIndirect(rawDesired.Etag) {
 		rawNew.Etag = rawDesired.Etag
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Etag, rawNew.Etag) {
@@ -903,12 +940,12 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.RolloutState) && dcl.IsNotReturnedByServer(rawDesired.RolloutState) {
+	if dcl.IsEmptyValueIndirect(rawNew.RolloutState) && dcl.IsEmptyValueIndirect(rawDesired.RolloutState) {
 		rawNew.RolloutState = rawDesired.RolloutState
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Baseline) && dcl.IsNotReturnedByServer(rawDesired.Baseline) {
+	if dcl.IsEmptyValueIndirect(rawNew.Baseline) && dcl.IsEmptyValueIndirect(rawDesired.Baseline) {
 		rawNew.Baseline = rawDesired.Baseline
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.Baseline, rawNew.Baseline) {
@@ -916,7 +953,7 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Deleted) && dcl.IsNotReturnedByServer(rawDesired.Deleted) {
+	if dcl.IsEmptyValueIndirect(rawNew.Deleted) && dcl.IsEmptyValueIndirect(rawDesired.Deleted) {
 		rawNew.Deleted = rawDesired.Deleted
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.Deleted, rawNew.Deleted) {
@@ -924,7 +961,7 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Reconciling) && dcl.IsNotReturnedByServer(rawDesired.Reconciling) {
+	if dcl.IsEmptyValueIndirect(rawNew.Reconciling) && dcl.IsEmptyValueIndirect(rawDesired.Reconciling) {
 		rawNew.Reconciling = rawDesired.Reconciling
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.Reconciling, rawNew.Reconciling) {
@@ -932,7 +969,7 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Uid) && dcl.IsNotReturnedByServer(rawDesired.Uid) {
+	if dcl.IsEmptyValueIndirect(rawNew.Uid) && dcl.IsEmptyValueIndirect(rawDesired.Uid) {
 		rawNew.Uid = rawDesired.Uid
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Uid, rawNew.Uid) {
@@ -943,6 +980,12 @@ func canonicalizeOSPolicyAssignmentNewState(c *Client, rawNew, rawDesired *OSPol
 	rawNew.Project = rawDesired.Project
 
 	rawNew.Location = rawDesired.Location
+
+	if dcl.IsEmptyValueIndirect(rawNew.SkipAwaitRollout) && dcl.IsEmptyValueIndirect(rawDesired.SkipAwaitRollout) {
+		rawNew.SkipAwaitRollout = rawDesired.SkipAwaitRollout
+	} else {
+		rawNew.SkipAwaitRollout = rawDesired.SkipAwaitRollout
+	}
 
 	return rawNew, nil
 }
@@ -971,7 +1014,8 @@ func canonicalizeOSPolicyAssignmentOSPolicies(des, initial *OSPolicyAssignmentOS
 	} else {
 		cDes.Description = des.Description
 	}
-	if dcl.IsZeroValue(des.Mode) {
+	if dcl.IsZeroValue(des.Mode) || (dcl.IsEmptyValueIndirect(des.Mode) && dcl.IsEmptyValueIndirect(initial.Mode)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Mode = initial.Mode
 	} else {
 		cDes.Mode = des.Mode
@@ -1021,7 +1065,7 @@ func canonicalizeNewOSPolicyAssignmentOSPolicies(c *Client, des, nw *OSPolicyAss
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPolicies while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1046,23 +1090,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesSet(c *Client, des, nw []OSPolic
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPolicies
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPolicies
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPolicies(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesSlice(c *Client, des, nw []OSPolicyAssignmentOSPolicies) []OSPolicyAssignmentOSPolicies {
@@ -1140,7 +1187,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, des, n
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroups while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1157,23 +1204,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsSet(c *Client, des
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroups
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroups
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroups(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroups) []OSPolicyAssignmentOSPoliciesResourceGroups {
@@ -1259,7 +1309,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1280,23 +1330,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSe
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters) []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
@@ -1421,7 +1474,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Clien
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResources while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1443,23 +1496,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSet(c *Cl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResources
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResources
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResources) []OSPolicyAssignmentOSPoliciesResourceGroupsResources {
@@ -1566,7 +1622,8 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(des, ini
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg{}
 
-	if dcl.IsZeroValue(des.DesiredState) {
+	if dcl.IsZeroValue(des.DesiredState) || (dcl.IsEmptyValueIndirect(des.DesiredState) && dcl.IsEmptyValueIndirect(initial.DesiredState)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.DesiredState = initial.DesiredState
 	} else {
 		cDes.DesiredState = des.DesiredState
@@ -1583,7 +1640,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(des, ini
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1617,7 +1674,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Cl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1639,23 +1696,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSet(c 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
@@ -1702,7 +1762,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(des, 
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1736,7 +1796,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1754,23 +1814,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
@@ -1807,7 +1870,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(des, 
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb{}
 
-	cDes.Source = canonicalizeOSPolicyAssignmentFile(des.Source, initial.Source, opts...)
+	cDes.Source = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(des.Source, initial.Source, opts...)
 	if dcl.BoolCanonicalize(des.PullDeps, initial.PullDeps) || dcl.IsZeroValue(des.PullDeps) {
 		cDes.PullDeps = initial.PullDeps
 	} else {
@@ -1818,7 +1881,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(des, 
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1852,14 +1915,14 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.Source = canonicalizeNewOSPolicyAssignmentFile(c, des.Source, nw.Source)
+	nw.Source = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, des.Source, nw.Source)
 	if dcl.BoolCanonicalize(des.PullDeps, nw.PullDeps) {
 		nw.PullDeps = des.PullDeps
 	}
@@ -1871,23 +1934,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
@@ -1910,7 +1976,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSli
 	return items
 }
 
-func canonicalizeOSPolicyAssignmentFile(des, initial *OSPolicyAssignmentFile, opts ...dcl.ApplyOption) *OSPolicyAssignmentFile {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 	if des == nil {
 		return initial
 	}
@@ -1952,10 +2018,10 @@ func canonicalizeOSPolicyAssignmentFile(des, initial *OSPolicyAssignmentFile, op
 		return des
 	}
 
-	cDes := &OSPolicyAssignmentFile{}
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
 
-	cDes.Remote = canonicalizeOSPolicyAssignmentFileRemote(des.Remote, initial.Remote, opts...)
-	cDes.Gcs = canonicalizeOSPolicyAssignmentFileGcs(des.Gcs, initial.Gcs, opts...)
+	cDes.Remote = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(des.Remote, initial.Remote, opts...)
+	cDes.Gcs = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(des.Gcs, initial.Gcs, opts...)
 	if dcl.StringCanonicalize(des.LocalPath, initial.LocalPath) || dcl.IsZeroValue(des.LocalPath) {
 		cDes.LocalPath = initial.LocalPath
 	} else {
@@ -1970,16 +2036,16 @@ func canonicalizeOSPolicyAssignmentFile(des, initial *OSPolicyAssignmentFile, op
 	return cDes
 }
 
-func canonicalizeOSPolicyAssignmentFileSlice(des, initial []OSPolicyAssignmentFile, opts ...dcl.ApplyOption) []OSPolicyAssignmentFile {
-	if des == nil {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
 	if len(des) != len(initial) {
 
-		items := make([]OSPolicyAssignmentFile, 0, len(des))
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, 0, len(des))
 		for _, d := range des {
-			cd := canonicalizeOSPolicyAssignmentFile(&d, nil, opts...)
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(&d, nil, opts...)
 			if cd != nil {
 				items = append(items, *cd)
 			}
@@ -1987,9 +2053,9 @@ func canonicalizeOSPolicyAssignmentFileSlice(des, initial []OSPolicyAssignmentFi
 		return items
 	}
 
-	items := make([]OSPolicyAssignmentFile, 0, len(des))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, 0, len(des))
 	for i, d := range des {
-		cd := canonicalizeOSPolicyAssignmentFile(&d, &initial[i], opts...)
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(&d, &initial[i], opts...)
 		if cd != nil {
 			items = append(items, *cd)
 		}
@@ -1998,22 +2064,22 @@ func canonicalizeOSPolicyAssignmentFileSlice(des, initial []OSPolicyAssignmentFi
 
 }
 
-func canonicalizeNewOSPolicyAssignmentFile(c *Client, des, nw *OSPolicyAssignmentFile) *OSPolicyAssignmentFile {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 
 	if des == nil {
 		return nw
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
-			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentFile while comparing non-nil desired to nil actual.  Returning desired object.")
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.Remote = canonicalizeNewOSPolicyAssignmentFileRemote(c, des.Remote, nw.Remote)
-	nw.Gcs = canonicalizeNewOSPolicyAssignmentFileGcs(c, des.Gcs, nw.Gcs)
+	nw.Remote = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, des.Remote, nw.Remote)
+	nw.Gcs = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, des.Gcs, nw.Gcs)
 	if dcl.StringCanonicalize(des.LocalPath, nw.LocalPath) {
 		nw.LocalPath = des.LocalPath
 	}
@@ -2024,30 +2090,33 @@ func canonicalizeNewOSPolicyAssignmentFile(c *Client, des, nw *OSPolicyAssignmen
 	return nw
 }
 
-func canonicalizeNewOSPolicyAssignmentFileSet(c *Client, des, nw []OSPolicyAssignmentFile) []OSPolicyAssignmentFile {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentFile
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
-			if diffs, _ := compareOSPolicyAssignmentFileNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
-func canonicalizeNewOSPolicyAssignmentFileSlice(c *Client, des, nw []OSPolicyAssignmentFile) []OSPolicyAssignmentFile {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 	if des == nil {
 		return nw
 	}
@@ -2058,16 +2127,16 @@ func canonicalizeNewOSPolicyAssignmentFileSlice(c *Client, des, nw []OSPolicyAss
 		return nw
 	}
 
-	var items []OSPolicyAssignmentFile
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource
 	for i, d := range des {
 		n := nw[i]
-		items = append(items, *canonicalizeNewOSPolicyAssignmentFile(c, &d, &n))
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, &d, &n))
 	}
 
 	return items
 }
 
-func canonicalizeOSPolicyAssignmentFileRemote(des, initial *OSPolicyAssignmentFileRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentFileRemote {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 	if des == nil {
 		return initial
 	}
@@ -2079,7 +2148,7 @@ func canonicalizeOSPolicyAssignmentFileRemote(des, initial *OSPolicyAssignmentFi
 		return des
 	}
 
-	cDes := &OSPolicyAssignmentFileRemote{}
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 
 	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
 		cDes.Uri = initial.Uri
@@ -2095,16 +2164,16 @@ func canonicalizeOSPolicyAssignmentFileRemote(des, initial *OSPolicyAssignmentFi
 	return cDes
 }
 
-func canonicalizeOSPolicyAssignmentFileRemoteSlice(des, initial []OSPolicyAssignmentFileRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentFileRemote {
-	if des == nil {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
 	if len(des) != len(initial) {
 
-		items := make([]OSPolicyAssignmentFileRemote, 0, len(des))
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, 0, len(des))
 		for _, d := range des {
-			cd := canonicalizeOSPolicyAssignmentFileRemote(&d, nil, opts...)
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(&d, nil, opts...)
 			if cd != nil {
 				items = append(items, *cd)
 			}
@@ -2112,9 +2181,9 @@ func canonicalizeOSPolicyAssignmentFileRemoteSlice(des, initial []OSPolicyAssign
 		return items
 	}
 
-	items := make([]OSPolicyAssignmentFileRemote, 0, len(des))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, 0, len(des))
 	for i, d := range des {
-		cd := canonicalizeOSPolicyAssignmentFileRemote(&d, &initial[i], opts...)
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(&d, &initial[i], opts...)
 		if cd != nil {
 			items = append(items, *cd)
 		}
@@ -2123,15 +2192,15 @@ func canonicalizeOSPolicyAssignmentFileRemoteSlice(des, initial []OSPolicyAssign
 
 }
 
-func canonicalizeNewOSPolicyAssignmentFileRemote(c *Client, des, nw *OSPolicyAssignmentFileRemote) *OSPolicyAssignmentFileRemote {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 
 	if des == nil {
 		return nw
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
-			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentFileRemote while comparing non-nil desired to nil actual.  Returning desired object.")
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
@@ -2147,30 +2216,33 @@ func canonicalizeNewOSPolicyAssignmentFileRemote(c *Client, des, nw *OSPolicyAss
 	return nw
 }
 
-func canonicalizeNewOSPolicyAssignmentFileRemoteSet(c *Client, des, nw []OSPolicyAssignmentFileRemote) []OSPolicyAssignmentFileRemote {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentFileRemote
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
-			if diffs, _ := compareOSPolicyAssignmentFileRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
-func canonicalizeNewOSPolicyAssignmentFileRemoteSlice(c *Client, des, nw []OSPolicyAssignmentFileRemote) []OSPolicyAssignmentFileRemote {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 	if des == nil {
 		return nw
 	}
@@ -2181,16 +2253,16 @@ func canonicalizeNewOSPolicyAssignmentFileRemoteSlice(c *Client, des, nw []OSPol
 		return nw
 	}
 
-	var items []OSPolicyAssignmentFileRemote
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote
 	for i, d := range des {
 		n := nw[i]
-		items = append(items, *canonicalizeNewOSPolicyAssignmentFileRemote(c, &d, &n))
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, &d, &n))
 	}
 
 	return items
 }
 
-func canonicalizeOSPolicyAssignmentFileGcs(des, initial *OSPolicyAssignmentFileGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentFileGcs {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 	if des == nil {
 		return initial
 	}
@@ -2202,7 +2274,7 @@ func canonicalizeOSPolicyAssignmentFileGcs(des, initial *OSPolicyAssignmentFileG
 		return des
 	}
 
-	cDes := &OSPolicyAssignmentFileGcs{}
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 
 	if dcl.StringCanonicalize(des.Bucket, initial.Bucket) || dcl.IsZeroValue(des.Bucket) {
 		cDes.Bucket = initial.Bucket
@@ -2214,7 +2286,8 @@ func canonicalizeOSPolicyAssignmentFileGcs(des, initial *OSPolicyAssignmentFileG
 	} else {
 		cDes.Object = des.Object
 	}
-	if dcl.IsZeroValue(des.Generation) {
+	if dcl.IsZeroValue(des.Generation) || (dcl.IsEmptyValueIndirect(des.Generation) && dcl.IsEmptyValueIndirect(initial.Generation)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Generation = initial.Generation
 	} else {
 		cDes.Generation = des.Generation
@@ -2223,16 +2296,16 @@ func canonicalizeOSPolicyAssignmentFileGcs(des, initial *OSPolicyAssignmentFileG
 	return cDes
 }
 
-func canonicalizeOSPolicyAssignmentFileGcsSlice(des, initial []OSPolicyAssignmentFileGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentFileGcs {
-	if des == nil {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
 	if len(des) != len(initial) {
 
-		items := make([]OSPolicyAssignmentFileGcs, 0, len(des))
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, 0, len(des))
 		for _, d := range des {
-			cd := canonicalizeOSPolicyAssignmentFileGcs(&d, nil, opts...)
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(&d, nil, opts...)
 			if cd != nil {
 				items = append(items, *cd)
 			}
@@ -2240,9 +2313,9 @@ func canonicalizeOSPolicyAssignmentFileGcsSlice(des, initial []OSPolicyAssignmen
 		return items
 	}
 
-	items := make([]OSPolicyAssignmentFileGcs, 0, len(des))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, 0, len(des))
 	for i, d := range des {
-		cd := canonicalizeOSPolicyAssignmentFileGcs(&d, &initial[i], opts...)
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(&d, &initial[i], opts...)
 		if cd != nil {
 			items = append(items, *cd)
 		}
@@ -2251,15 +2324,15 @@ func canonicalizeOSPolicyAssignmentFileGcsSlice(des, initial []OSPolicyAssignmen
 
 }
 
-func canonicalizeNewOSPolicyAssignmentFileGcs(c *Client, des, nw *OSPolicyAssignmentFileGcs) *OSPolicyAssignmentFileGcs {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 
 	if des == nil {
 		return nw
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
-			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentFileGcs while comparing non-nil desired to nil actual.  Returning desired object.")
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
@@ -2275,30 +2348,33 @@ func canonicalizeNewOSPolicyAssignmentFileGcs(c *Client, des, nw *OSPolicyAssign
 	return nw
 }
 
-func canonicalizeNewOSPolicyAssignmentFileGcsSet(c *Client, des, nw []OSPolicyAssignmentFileGcs) []OSPolicyAssignmentFileGcs {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentFileGcs
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
-			if diffs, _ := compareOSPolicyAssignmentFileGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
-func canonicalizeNewOSPolicyAssignmentFileGcsSlice(c *Client, des, nw []OSPolicyAssignmentFileGcs) []OSPolicyAssignmentFileGcs {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 	if des == nil {
 		return nw
 	}
@@ -2309,10 +2385,10 @@ func canonicalizeNewOSPolicyAssignmentFileGcsSlice(c *Client, des, nw []OSPolicy
 		return nw
 	}
 
-	var items []OSPolicyAssignmentFileGcs
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs
 	for i, d := range des {
 		n := nw[i]
-		items = append(items, *canonicalizeNewOSPolicyAssignmentFileGcs(c, &d, &n))
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, &d, &n))
 	}
 
 	return items
@@ -2342,7 +2418,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(des, 
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2376,7 +2452,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2394,23 +2470,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
@@ -2457,7 +2536,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(de
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2491,7 +2570,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2509,23 +2588,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
@@ -2562,7 +2644,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(des, 
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm{}
 
-	cDes.Source = canonicalizeOSPolicyAssignmentFile(des.Source, initial.Source, opts...)
+	cDes.Source = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(des.Source, initial.Source, opts...)
 	if dcl.BoolCanonicalize(des.PullDeps, initial.PullDeps) || dcl.IsZeroValue(des.PullDeps) {
 		cDes.PullDeps = initial.PullDeps
 	} else {
@@ -2573,7 +2655,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(des, 
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2607,14 +2689,14 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.Source = canonicalizeNewOSPolicyAssignmentFile(c, des.Source, nw.Source)
+	nw.Source = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, des.Source, nw.Source)
 	if dcl.BoolCanonicalize(des.PullDeps, nw.PullDeps) {
 		nw.PullDeps = des.PullDeps
 	}
@@ -2626,23 +2708,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
@@ -2660,6 +2745,424 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSli
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if des.Remote != nil || (initial != nil && initial.Remote != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Gcs, des.LocalPath) {
+			des.Remote = nil
+			if initial != nil {
+				initial.Remote = nil
+			}
+		}
+	}
+
+	if des.Gcs != nil || (initial != nil && initial.Gcs != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.LocalPath) {
+			des.Gcs = nil
+			if initial != nil {
+				initial.Gcs = nil
+			}
+		}
+	}
+
+	if des.LocalPath != nil || (initial != nil && initial.LocalPath != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.Gcs) {
+			des.LocalPath = nil
+			if initial != nil {
+				initial.LocalPath = nil
+			}
+		}
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+
+	cDes.Remote = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(des.Remote, initial.Remote, opts...)
+	cDes.Gcs = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(des.Gcs, initial.Gcs, opts...)
+	if dcl.StringCanonicalize(des.LocalPath, initial.LocalPath) || dcl.IsZeroValue(des.LocalPath) {
+		cDes.LocalPath = initial.LocalPath
+	} else {
+		cDes.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, initial.AllowInsecure) || dcl.IsZeroValue(des.AllowInsecure) {
+		cDes.AllowInsecure = initial.AllowInsecure
+	} else {
+		cDes.AllowInsecure = des.AllowInsecure
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	nw.Remote = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, des.Remote, nw.Remote)
+	nw.Gcs = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, des.Gcs, nw.Gcs)
+	if dcl.StringCanonicalize(des.LocalPath, nw.LocalPath) {
+		nw.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, nw.AllowInsecure) {
+		nw.AllowInsecure = des.AllowInsecure
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+
+	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, initial.Sha256Checksum) || dcl.IsZeroValue(des.Sha256Checksum) {
+		cDes.Sha256Checksum = initial.Sha256Checksum
+	} else {
+		cDes.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Uri, nw.Uri) {
+		nw.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, nw.Sha256Checksum) {
+		nw.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+
+	if dcl.StringCanonicalize(des.Bucket, initial.Bucket) || dcl.IsZeroValue(des.Bucket) {
+		cDes.Bucket = initial.Bucket
+	} else {
+		cDes.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, initial.Object) || dcl.IsZeroValue(des.Object) {
+		cDes.Object = initial.Object
+	} else {
+		cDes.Object = des.Object
+	}
+	if dcl.IsZeroValue(des.Generation) || (dcl.IsEmptyValueIndirect(des.Generation) && dcl.IsEmptyValueIndirect(initial.Generation)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Generation = initial.Generation
+	} else {
+		cDes.Generation = des.Generation
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Bucket, nw.Bucket) {
+		nw.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, nw.Object) {
+		nw.Object = des.Object
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, &d, &n))
 	}
 
 	return items
@@ -2689,7 +3192,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(de
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2723,7 +3226,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2741,23 +3244,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
@@ -2794,8 +3300,8 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(des, 
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi{}
 
-	cDes.Source = canonicalizeOSPolicyAssignmentFile(des.Source, initial.Source, opts...)
-	if dcl.StringArrayCanonicalize(des.Properties, initial.Properties) || dcl.IsZeroValue(des.Properties) {
+	cDes.Source = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(des.Source, initial.Source, opts...)
+	if dcl.StringArrayCanonicalize(des.Properties, initial.Properties) {
 		cDes.Properties = initial.Properties
 	} else {
 		cDes.Properties = des.Properties
@@ -2805,7 +3311,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(des, 
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2839,14 +3345,14 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.Source = canonicalizeNewOSPolicyAssignmentFile(c, des.Source, nw.Source)
+	nw.Source = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, des.Source, nw.Source)
 	if dcl.StringArrayCanonicalize(des.Properties, nw.Properties) {
 		nw.Properties = des.Properties
 	}
@@ -2858,23 +3364,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
@@ -2892,6 +3401,424 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSli
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if des.Remote != nil || (initial != nil && initial.Remote != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Gcs, des.LocalPath) {
+			des.Remote = nil
+			if initial != nil {
+				initial.Remote = nil
+			}
+		}
+	}
+
+	if des.Gcs != nil || (initial != nil && initial.Gcs != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.LocalPath) {
+			des.Gcs = nil
+			if initial != nil {
+				initial.Gcs = nil
+			}
+		}
+	}
+
+	if des.LocalPath != nil || (initial != nil && initial.LocalPath != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.Gcs) {
+			des.LocalPath = nil
+			if initial != nil {
+				initial.LocalPath = nil
+			}
+		}
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+
+	cDes.Remote = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(des.Remote, initial.Remote, opts...)
+	cDes.Gcs = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(des.Gcs, initial.Gcs, opts...)
+	if dcl.StringCanonicalize(des.LocalPath, initial.LocalPath) || dcl.IsZeroValue(des.LocalPath) {
+		cDes.LocalPath = initial.LocalPath
+	} else {
+		cDes.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, initial.AllowInsecure) || dcl.IsZeroValue(des.AllowInsecure) {
+		cDes.AllowInsecure = initial.AllowInsecure
+	} else {
+		cDes.AllowInsecure = des.AllowInsecure
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	nw.Remote = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, des.Remote, nw.Remote)
+	nw.Gcs = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, des.Gcs, nw.Gcs)
+	if dcl.StringCanonicalize(des.LocalPath, nw.LocalPath) {
+		nw.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, nw.AllowInsecure) {
+		nw.AllowInsecure = des.AllowInsecure
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+
+	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, initial.Sha256Checksum) || dcl.IsZeroValue(des.Sha256Checksum) {
+		cDes.Sha256Checksum = initial.Sha256Checksum
+	} else {
+		cDes.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Uri, nw.Uri) {
+		nw.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, nw.Sha256Checksum) {
+		nw.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+
+	if dcl.StringCanonicalize(des.Bucket, initial.Bucket) || dcl.IsZeroValue(des.Bucket) {
+		cDes.Bucket = initial.Bucket
+	} else {
+		cDes.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, initial.Object) || dcl.IsZeroValue(des.Object) {
+		cDes.Object = initial.Object
+	} else {
+		cDes.Object = des.Object
+	}
+	if dcl.IsZeroValue(des.Generation) || (dcl.IsEmptyValueIndirect(des.Generation) && dcl.IsEmptyValueIndirect(initial.Generation)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Generation = initial.Generation
+	} else {
+		cDes.Generation = des.Generation
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Bucket, nw.Bucket) {
+		nw.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, nw.Object) {
+		nw.Object = des.Object
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, &d, &n))
 	}
 
 	return items
@@ -2960,7 +3887,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(d
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2994,7 +3921,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3013,23 +3940,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
@@ -3066,7 +3996,8 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAp
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt{}
 
-	if dcl.IsZeroValue(des.ArchiveType) {
+	if dcl.IsZeroValue(des.ArchiveType) || (dcl.IsEmptyValueIndirect(des.ArchiveType) && dcl.IsEmptyValueIndirect(initial.ArchiveType)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ArchiveType = initial.ArchiveType
 	} else {
 		cDes.ArchiveType = des.ArchiveType
@@ -3081,7 +4012,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAp
 	} else {
 		cDes.Distribution = des.Distribution
 	}
-	if dcl.StringArrayCanonicalize(des.Components, initial.Components) || dcl.IsZeroValue(des.Components) {
+	if dcl.StringArrayCanonicalize(des.Components, initial.Components) {
 		cDes.Components = initial.Components
 	} else {
 		cDes.Components = des.Components
@@ -3096,7 +4027,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAp
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3130,7 +4061,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3157,23 +4088,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
@@ -3225,7 +4159,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYu
 	} else {
 		cDes.BaseUrl = des.BaseUrl
 	}
-	if dcl.StringArrayCanonicalize(des.GpgKeys, initial.GpgKeys) || dcl.IsZeroValue(des.GpgKeys) {
+	if dcl.StringArrayCanonicalize(des.GpgKeys, initial.GpgKeys) {
 		cDes.GpgKeys = initial.GpgKeys
 	} else {
 		cDes.GpgKeys = des.GpgKeys
@@ -3235,7 +4169,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYu
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3269,7 +4203,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3296,23 +4230,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
@@ -3364,7 +4301,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZy
 	} else {
 		cDes.BaseUrl = des.BaseUrl
 	}
-	if dcl.StringArrayCanonicalize(des.GpgKeys, initial.GpgKeys) || dcl.IsZeroValue(des.GpgKeys) {
+	if dcl.StringArrayCanonicalize(des.GpgKeys, initial.GpgKeys) {
 		cDes.GpgKeys = initial.GpgKeys
 	} else {
 		cDes.GpgKeys = des.GpgKeys
@@ -3374,7 +4311,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZy
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3408,7 +4345,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3435,23 +4372,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
@@ -3503,7 +4443,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGo
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3537,7 +4477,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3558,23 +4498,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
@@ -3611,14 +4554,14 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(des, in
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec{}
 
-	cDes.Validate = canonicalizeOSPolicyAssignmentExec(des.Validate, initial.Validate, opts...)
-	cDes.Enforce = canonicalizeOSPolicyAssignmentExec(des.Enforce, initial.Enforce, opts...)
+	cDes.Validate = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(des.Validate, initial.Validate, opts...)
+	cDes.Enforce = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(des.Enforce, initial.Enforce, opts...)
 
 	return cDes
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3652,15 +4595,15 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *C
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.Validate = canonicalizeNewOSPolicyAssignmentExec(c, des.Validate, nw.Validate)
-	nw.Enforce = canonicalizeNewOSPolicyAssignmentExec(c, des.Enforce, nw.Enforce)
+	nw.Validate = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, des.Validate, nw.Validate)
+	nw.Enforce = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, des.Enforce, nw.Enforce)
 
 	return nw
 }
@@ -3669,23 +4612,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSet(c
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
@@ -3708,7 +4654,7 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice
 	return items
 }
 
-func canonicalizeOSPolicyAssignmentExec(des, initial *OSPolicyAssignmentExec, opts ...dcl.ApplyOption) *OSPolicyAssignmentExec {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 	if des == nil {
 		return initial
 	}
@@ -3740,20 +4686,21 @@ func canonicalizeOSPolicyAssignmentExec(des, initial *OSPolicyAssignmentExec, op
 		return des
 	}
 
-	cDes := &OSPolicyAssignmentExec{}
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
 
-	cDes.File = canonicalizeOSPolicyAssignmentFile(des.File, initial.File, opts...)
+	cDes.File = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(des.File, initial.File, opts...)
 	if dcl.StringCanonicalize(des.Script, initial.Script) || dcl.IsZeroValue(des.Script) {
 		cDes.Script = initial.Script
 	} else {
 		cDes.Script = des.Script
 	}
-	if dcl.StringArrayCanonicalize(des.Args, initial.Args) || dcl.IsZeroValue(des.Args) {
+	if dcl.StringArrayCanonicalize(des.Args, initial.Args) {
 		cDes.Args = initial.Args
 	} else {
 		cDes.Args = des.Args
 	}
-	if dcl.IsZeroValue(des.Interpreter) {
+	if dcl.IsZeroValue(des.Interpreter) || (dcl.IsEmptyValueIndirect(des.Interpreter) && dcl.IsEmptyValueIndirect(initial.Interpreter)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Interpreter = initial.Interpreter
 	} else {
 		cDes.Interpreter = des.Interpreter
@@ -3767,16 +4714,16 @@ func canonicalizeOSPolicyAssignmentExec(des, initial *OSPolicyAssignmentExec, op
 	return cDes
 }
 
-func canonicalizeOSPolicyAssignmentExecSlice(des, initial []OSPolicyAssignmentExec, opts ...dcl.ApplyOption) []OSPolicyAssignmentExec {
-	if des == nil {
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
 	if len(des) != len(initial) {
 
-		items := make([]OSPolicyAssignmentExec, 0, len(des))
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, 0, len(des))
 		for _, d := range des {
-			cd := canonicalizeOSPolicyAssignmentExec(&d, nil, opts...)
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(&d, nil, opts...)
 			if cd != nil {
 				items = append(items, *cd)
 			}
@@ -3784,9 +4731,9 @@ func canonicalizeOSPolicyAssignmentExecSlice(des, initial []OSPolicyAssignmentEx
 		return items
 	}
 
-	items := make([]OSPolicyAssignmentExec, 0, len(des))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, 0, len(des))
 	for i, d := range des {
-		cd := canonicalizeOSPolicyAssignmentExec(&d, &initial[i], opts...)
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(&d, &initial[i], opts...)
 		if cd != nil {
 			items = append(items, *cd)
 		}
@@ -3795,21 +4742,21 @@ func canonicalizeOSPolicyAssignmentExecSlice(des, initial []OSPolicyAssignmentEx
 
 }
 
-func canonicalizeNewOSPolicyAssignmentExec(c *Client, des, nw *OSPolicyAssignmentExec) *OSPolicyAssignmentExec {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 
 	if des == nil {
 		return nw
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
-			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentExec while comparing non-nil desired to nil actual.  Returning desired object.")
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.File = canonicalizeNewOSPolicyAssignmentFile(c, des.File, nw.File)
+	nw.File = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, des.File, nw.File)
 	if dcl.StringCanonicalize(des.Script, nw.Script) {
 		nw.Script = des.Script
 	}
@@ -3823,30 +4770,33 @@ func canonicalizeNewOSPolicyAssignmentExec(c *Client, des, nw *OSPolicyAssignmen
 	return nw
 }
 
-func canonicalizeNewOSPolicyAssignmentExecSet(c *Client, des, nw []OSPolicyAssignmentExec) []OSPolicyAssignmentExec {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentExec
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
-			if diffs, _ := compareOSPolicyAssignmentExecNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
-func canonicalizeNewOSPolicyAssignmentExecSlice(c *Client, des, nw []OSPolicyAssignmentExec) []OSPolicyAssignmentExec {
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 	if des == nil {
 		return nw
 	}
@@ -3857,10 +4807,1008 @@ func canonicalizeNewOSPolicyAssignmentExecSlice(c *Client, des, nw []OSPolicyAss
 		return nw
 	}
 
-	var items []OSPolicyAssignmentExec
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate
 	for i, d := range des {
 		n := nw[i]
-		items = append(items, *canonicalizeNewOSPolicyAssignmentExec(c, &d, &n))
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if des.Remote != nil || (initial != nil && initial.Remote != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Gcs, des.LocalPath) {
+			des.Remote = nil
+			if initial != nil {
+				initial.Remote = nil
+			}
+		}
+	}
+
+	if des.Gcs != nil || (initial != nil && initial.Gcs != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.LocalPath) {
+			des.Gcs = nil
+			if initial != nil {
+				initial.Gcs = nil
+			}
+		}
+	}
+
+	if des.LocalPath != nil || (initial != nil && initial.LocalPath != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.Gcs) {
+			des.LocalPath = nil
+			if initial != nil {
+				initial.LocalPath = nil
+			}
+		}
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+
+	cDes.Remote = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(des.Remote, initial.Remote, opts...)
+	cDes.Gcs = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(des.Gcs, initial.Gcs, opts...)
+	if dcl.StringCanonicalize(des.LocalPath, initial.LocalPath) || dcl.IsZeroValue(des.LocalPath) {
+		cDes.LocalPath = initial.LocalPath
+	} else {
+		cDes.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, initial.AllowInsecure) || dcl.IsZeroValue(des.AllowInsecure) {
+		cDes.AllowInsecure = initial.AllowInsecure
+	} else {
+		cDes.AllowInsecure = des.AllowInsecure
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	nw.Remote = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, des.Remote, nw.Remote)
+	nw.Gcs = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, des.Gcs, nw.Gcs)
+	if dcl.StringCanonicalize(des.LocalPath, nw.LocalPath) {
+		nw.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, nw.AllowInsecure) {
+		nw.AllowInsecure = des.AllowInsecure
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+
+	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, initial.Sha256Checksum) || dcl.IsZeroValue(des.Sha256Checksum) {
+		cDes.Sha256Checksum = initial.Sha256Checksum
+	} else {
+		cDes.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Uri, nw.Uri) {
+		nw.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, nw.Sha256Checksum) {
+		nw.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+
+	if dcl.StringCanonicalize(des.Bucket, initial.Bucket) || dcl.IsZeroValue(des.Bucket) {
+		cDes.Bucket = initial.Bucket
+	} else {
+		cDes.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, initial.Object) || dcl.IsZeroValue(des.Object) {
+		cDes.Object = initial.Object
+	} else {
+		cDes.Object = des.Object
+	}
+	if dcl.IsZeroValue(des.Generation) || (dcl.IsEmptyValueIndirect(des.Generation) && dcl.IsEmptyValueIndirect(initial.Generation)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Generation = initial.Generation
+	} else {
+		cDes.Generation = des.Generation
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Bucket, nw.Bucket) {
+		nw.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, nw.Object) {
+		nw.Object = des.Object
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if des.File != nil || (initial != nil && initial.File != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Script) {
+			des.File = nil
+			if initial != nil {
+				initial.File = nil
+			}
+		}
+	}
+
+	if des.Script != nil || (initial != nil && initial.Script != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.File) {
+			des.Script = nil
+			if initial != nil {
+				initial.Script = nil
+			}
+		}
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+
+	cDes.File = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(des.File, initial.File, opts...)
+	if dcl.StringCanonicalize(des.Script, initial.Script) || dcl.IsZeroValue(des.Script) {
+		cDes.Script = initial.Script
+	} else {
+		cDes.Script = des.Script
+	}
+	if dcl.StringArrayCanonicalize(des.Args, initial.Args) {
+		cDes.Args = initial.Args
+	} else {
+		cDes.Args = des.Args
+	}
+	if dcl.IsZeroValue(des.Interpreter) || (dcl.IsEmptyValueIndirect(des.Interpreter) && dcl.IsEmptyValueIndirect(initial.Interpreter)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Interpreter = initial.Interpreter
+	} else {
+		cDes.Interpreter = des.Interpreter
+	}
+	if dcl.StringCanonicalize(des.OutputFilePath, initial.OutputFilePath) || dcl.IsZeroValue(des.OutputFilePath) {
+		cDes.OutputFilePath = initial.OutputFilePath
+	} else {
+		cDes.OutputFilePath = des.OutputFilePath
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	nw.File = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, des.File, nw.File)
+	if dcl.StringCanonicalize(des.Script, nw.Script) {
+		nw.Script = des.Script
+	}
+	if dcl.StringArrayCanonicalize(des.Args, nw.Args) {
+		nw.Args = des.Args
+	}
+	if dcl.StringCanonicalize(des.OutputFilePath, nw.OutputFilePath) {
+		nw.OutputFilePath = des.OutputFilePath
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if des.Remote != nil || (initial != nil && initial.Remote != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Gcs, des.LocalPath) {
+			des.Remote = nil
+			if initial != nil {
+				initial.Remote = nil
+			}
+		}
+	}
+
+	if des.Gcs != nil || (initial != nil && initial.Gcs != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.LocalPath) {
+			des.Gcs = nil
+			if initial != nil {
+				initial.Gcs = nil
+			}
+		}
+	}
+
+	if des.LocalPath != nil || (initial != nil && initial.LocalPath != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.Gcs) {
+			des.LocalPath = nil
+			if initial != nil {
+				initial.LocalPath = nil
+			}
+		}
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+
+	cDes.Remote = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(des.Remote, initial.Remote, opts...)
+	cDes.Gcs = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(des.Gcs, initial.Gcs, opts...)
+	if dcl.StringCanonicalize(des.LocalPath, initial.LocalPath) || dcl.IsZeroValue(des.LocalPath) {
+		cDes.LocalPath = initial.LocalPath
+	} else {
+		cDes.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, initial.AllowInsecure) || dcl.IsZeroValue(des.AllowInsecure) {
+		cDes.AllowInsecure = initial.AllowInsecure
+	} else {
+		cDes.AllowInsecure = des.AllowInsecure
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	nw.Remote = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, des.Remote, nw.Remote)
+	nw.Gcs = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, des.Gcs, nw.Gcs)
+	if dcl.StringCanonicalize(des.LocalPath, nw.LocalPath) {
+		nw.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, nw.AllowInsecure) {
+		nw.AllowInsecure = des.AllowInsecure
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+
+	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, initial.Sha256Checksum) || dcl.IsZeroValue(des.Sha256Checksum) {
+		cDes.Sha256Checksum = initial.Sha256Checksum
+	} else {
+		cDes.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Uri, nw.Uri) {
+		nw.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, nw.Sha256Checksum) {
+		nw.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+
+	if dcl.StringCanonicalize(des.Bucket, initial.Bucket) || dcl.IsZeroValue(des.Bucket) {
+		cDes.Bucket = initial.Bucket
+	} else {
+		cDes.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, initial.Object) || dcl.IsZeroValue(des.Object) {
+		cDes.Object = initial.Object
+	} else {
+		cDes.Object = des.Object
+	}
+	if dcl.IsZeroValue(des.Generation) || (dcl.IsEmptyValueIndirect(des.Generation) && dcl.IsEmptyValueIndirect(initial.Generation)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Generation = initial.Generation
+	} else {
+		cDes.Generation = des.Generation
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Bucket, nw.Bucket) {
+		nw.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, nw.Object) {
+		nw.Object = des.Object
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, &d, &n))
 	}
 
 	return items
@@ -3900,7 +5848,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(des, in
 
 	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile{}
 
-	cDes.File = canonicalizeOSPolicyAssignmentFile(des.File, initial.File, opts...)
+	cDes.File = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(des.File, initial.File, opts...)
 	if dcl.StringCanonicalize(des.Content, initial.Content) || dcl.IsZeroValue(des.Content) {
 		cDes.Content = initial.Content
 	} else {
@@ -3911,7 +5859,8 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(des, in
 	} else {
 		cDes.Path = des.Path
 	}
-	if dcl.IsZeroValue(des.State) {
+	if dcl.IsZeroValue(des.State) || (dcl.IsEmptyValueIndirect(des.State) && dcl.IsEmptyValueIndirect(initial.State)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.State = initial.State
 	} else {
 		cDes.State = des.State
@@ -3921,7 +5870,7 @@ func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(des, in
 }
 
 func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3955,14 +5904,14 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *C
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	nw.File = canonicalizeNewOSPolicyAssignmentFile(c, des.File, nw.File)
+	nw.File = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, des.File, nw.File)
 	if dcl.StringCanonicalize(des.Content, nw.Content) {
 		nw.Content = des.Content
 	}
@@ -3980,23 +5929,26 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSet(c
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
@@ -4014,6 +5966,424 @@ func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice
 	for i, d := range des {
 		n := nw[i]
 		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if des.Remote != nil || (initial != nil && initial.Remote != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Gcs, des.LocalPath) {
+			des.Remote = nil
+			if initial != nil {
+				initial.Remote = nil
+			}
+		}
+	}
+
+	if des.Gcs != nil || (initial != nil && initial.Gcs != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.LocalPath) {
+			des.Gcs = nil
+			if initial != nil {
+				initial.Gcs = nil
+			}
+		}
+	}
+
+	if des.LocalPath != nil || (initial != nil && initial.LocalPath != nil) {
+		// Check if anything else is set.
+		if dcl.AnySet(des.Remote, des.Gcs) {
+			des.LocalPath = nil
+			if initial != nil {
+				initial.LocalPath = nil
+			}
+		}
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+
+	cDes.Remote = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(des.Remote, initial.Remote, opts...)
+	cDes.Gcs = canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(des.Gcs, initial.Gcs, opts...)
+	if dcl.StringCanonicalize(des.LocalPath, initial.LocalPath) || dcl.IsZeroValue(des.LocalPath) {
+		cDes.LocalPath = initial.LocalPath
+	} else {
+		cDes.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, initial.AllowInsecure) || dcl.IsZeroValue(des.AllowInsecure) {
+		cDes.AllowInsecure = initial.AllowInsecure
+	} else {
+		cDes.AllowInsecure = des.AllowInsecure
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	nw.Remote = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, des.Remote, nw.Remote)
+	nw.Gcs = canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, des.Gcs, nw.Gcs)
+	if dcl.StringCanonicalize(des.LocalPath, nw.LocalPath) {
+		nw.LocalPath = des.LocalPath
+	}
+	if dcl.BoolCanonicalize(des.AllowInsecure, nw.AllowInsecure) {
+		nw.AllowInsecure = des.AllowInsecure
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+
+	if dcl.StringCanonicalize(des.Uri, initial.Uri) || dcl.IsZeroValue(des.Uri) {
+		cDes.Uri = initial.Uri
+	} else {
+		cDes.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, initial.Sha256Checksum) || dcl.IsZeroValue(des.Sha256Checksum) {
+		cDes.Sha256Checksum = initial.Sha256Checksum
+	} else {
+		cDes.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Uri, nw.Uri) {
+		nw.Uri = des.Uri
+	}
+	if dcl.StringCanonicalize(des.Sha256Checksum, nw.Sha256Checksum) {
+		nw.Sha256Checksum = des.Sha256Checksum
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, &d, &n))
+	}
+
+	return items
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(des, initial *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, opts ...dcl.ApplyOption) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+
+	if dcl.StringCanonicalize(des.Bucket, initial.Bucket) || dcl.IsZeroValue(des.Bucket) {
+		cDes.Bucket = initial.Bucket
+	} else {
+		cDes.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, initial.Object) || dcl.IsZeroValue(des.Object) {
+		cDes.Object = initial.Object
+	} else {
+		cDes.Object = des.Object
+	}
+	if dcl.IsZeroValue(des.Generation) || (dcl.IsEmptyValueIndirect(des.Generation) && dcl.IsEmptyValueIndirect(initial.Generation)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Generation = initial.Generation
+	} else {
+		cDes.Generation = des.Generation
+	}
+
+	return cDes
+}
+
+func canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSlice(des, initial []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, opts ...dcl.ApplyOption) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c *Client, des, nw *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Bucket, nw.Bucket) {
+		nw.Bucket = des.Bucket
+	}
+	if dcl.StringCanonicalize(des.Object, nw.Object) {
+		nw.Object = des.Object
+	}
+
+	return nw
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSet(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSlice(c *Client, des, nw []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, &d, &n))
 	}
 
 	return items
@@ -4046,7 +6416,7 @@ func canonicalizeOSPolicyAssignmentInstanceFilter(des, initial *OSPolicyAssignme
 }
 
 func canonicalizeOSPolicyAssignmentInstanceFilterSlice(des, initial []OSPolicyAssignmentInstanceFilter, opts ...dcl.ApplyOption) []OSPolicyAssignmentInstanceFilter {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4080,7 +6450,7 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilter(c *Client, des, nw *OSPolic
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentInstanceFilter while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4101,23 +6471,26 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterSet(c *Client, des, nw []OSP
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentInstanceFilter
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentInstanceFilter
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentInstanceFilterNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentInstanceFilter(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentInstanceFilterSlice(c *Client, des, nw []OSPolicyAssignmentInstanceFilter) []OSPolicyAssignmentInstanceFilter {
@@ -4154,7 +6527,8 @@ func canonicalizeOSPolicyAssignmentInstanceFilterInclusionLabels(des, initial *O
 
 	cDes := &OSPolicyAssignmentInstanceFilterInclusionLabels{}
 
-	if dcl.IsZeroValue(des.Labels) {
+	if dcl.IsZeroValue(des.Labels) || (dcl.IsEmptyValueIndirect(des.Labels) && dcl.IsEmptyValueIndirect(initial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Labels = initial.Labels
 	} else {
 		cDes.Labels = des.Labels
@@ -4198,7 +6572,7 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, d
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentInstanceFilterInclusionLabels while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4212,23 +6586,26 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterInclusionLabelsSet(c *Client
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentInstanceFilterInclusionLabels
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentInstanceFilterInclusionLabels
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentInstanceFilterInclusionLabelsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentInstanceFilterInclusionLabels(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, des, nw []OSPolicyAssignmentInstanceFilterInclusionLabels) []OSPolicyAssignmentInstanceFilterInclusionLabels {
@@ -4265,7 +6642,8 @@ func canonicalizeOSPolicyAssignmentInstanceFilterExclusionLabels(des, initial *O
 
 	cDes := &OSPolicyAssignmentInstanceFilterExclusionLabels{}
 
-	if dcl.IsZeroValue(des.Labels) {
+	if dcl.IsZeroValue(des.Labels) || (dcl.IsEmptyValueIndirect(des.Labels) && dcl.IsEmptyValueIndirect(initial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Labels = initial.Labels
 	} else {
 		cDes.Labels = des.Labels
@@ -4309,7 +6687,7 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, d
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentInstanceFilterExclusionLabels while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4323,23 +6701,26 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterExclusionLabelsSet(c *Client
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentInstanceFilterExclusionLabels
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentInstanceFilterExclusionLabels
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentInstanceFilterExclusionLabelsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentInstanceFilterExclusionLabels(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, des, nw []OSPolicyAssignmentInstanceFilterExclusionLabels) []OSPolicyAssignmentInstanceFilterExclusionLabels {
@@ -4425,7 +6806,7 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterInventories(c *Client, des, 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentInstanceFilterInventories while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4446,23 +6827,26 @@ func canonicalizeNewOSPolicyAssignmentInstanceFilterInventoriesSet(c *Client, de
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentInstanceFilterInventories
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentInstanceFilterInventories
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentInstanceFilterInventoriesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentInstanceFilterInventories(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, des, nw []OSPolicyAssignmentInstanceFilterInventories) []OSPolicyAssignmentInstanceFilterInventories {
@@ -4510,7 +6894,7 @@ func canonicalizeOSPolicyAssignmentRollout(des, initial *OSPolicyAssignmentRollo
 }
 
 func canonicalizeOSPolicyAssignmentRolloutSlice(des, initial []OSPolicyAssignmentRollout, opts ...dcl.ApplyOption) []OSPolicyAssignmentRollout {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4544,7 +6928,7 @@ func canonicalizeNewOSPolicyAssignmentRollout(c *Client, des, nw *OSPolicyAssign
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentRollout while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4563,23 +6947,26 @@ func canonicalizeNewOSPolicyAssignmentRolloutSet(c *Client, des, nw []OSPolicyAs
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentRollout
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentRollout
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentRolloutNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentRollout(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentRolloutSlice(c *Client, des, nw []OSPolicyAssignmentRollout) []OSPolicyAssignmentRollout {
@@ -4636,12 +7023,14 @@ func canonicalizeOSPolicyAssignmentRolloutDisruptionBudget(des, initial *OSPolic
 
 	cDes := &OSPolicyAssignmentRolloutDisruptionBudget{}
 
-	if dcl.IsZeroValue(des.Fixed) {
+	if dcl.IsZeroValue(des.Fixed) || (dcl.IsEmptyValueIndirect(des.Fixed) && dcl.IsEmptyValueIndirect(initial.Fixed)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Fixed = initial.Fixed
 	} else {
 		cDes.Fixed = des.Fixed
 	}
-	if dcl.IsZeroValue(des.Percent) {
+	if dcl.IsZeroValue(des.Percent) || (dcl.IsEmptyValueIndirect(des.Percent) && dcl.IsEmptyValueIndirect(initial.Percent)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Percent = initial.Percent
 	} else {
 		cDes.Percent = des.Percent
@@ -4651,7 +7040,7 @@ func canonicalizeOSPolicyAssignmentRolloutDisruptionBudget(des, initial *OSPolic
 }
 
 func canonicalizeOSPolicyAssignmentRolloutDisruptionBudgetSlice(des, initial []OSPolicyAssignmentRolloutDisruptionBudget, opts ...dcl.ApplyOption) []OSPolicyAssignmentRolloutDisruptionBudget {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4685,7 +7074,7 @@ func canonicalizeNewOSPolicyAssignmentRolloutDisruptionBudget(c *Client, des, nw
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for OSPolicyAssignmentRolloutDisruptionBudget while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4699,23 +7088,26 @@ func canonicalizeNewOSPolicyAssignmentRolloutDisruptionBudgetSet(c *Client, des,
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []OSPolicyAssignmentRolloutDisruptionBudget
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []OSPolicyAssignmentRolloutDisruptionBudget
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareOSPolicyAssignmentRolloutDisruptionBudgetNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewOSPolicyAssignmentRolloutDisruptionBudget(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, des, nw []OSPolicyAssignmentRolloutDisruptionBudget) []OSPolicyAssignmentRolloutDisruptionBudget {
@@ -4756,111 +7148,121 @@ func diffOSPolicyAssignment(c *Client, desired, actual *OSPolicyAssignment, opts
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OSPolicies, actual.OSPolicies, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPolicies, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsPolicies")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OSPolicies, actual.OSPolicies, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPolicies, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsPolicies")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.InstanceFilter, actual.InstanceFilter, dcl.Info{ObjectFunction: compareOSPolicyAssignmentInstanceFilterNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilter, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("InstanceFilter")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.InstanceFilter, actual.InstanceFilter, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentInstanceFilterNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilter, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("InstanceFilter")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Rollout, actual.Rollout, dcl.Info{ObjectFunction: compareOSPolicyAssignmentRolloutNewStyle, EmptyObject: EmptyOSPolicyAssignmentRollout, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Rollout")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Rollout, actual.Rollout, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentRolloutNewStyle, EmptyObject: EmptyOSPolicyAssignmentRollout, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Rollout")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RevisionId, actual.RevisionId, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevisionId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RevisionId, actual.RevisionId, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevisionId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RevisionCreateTime, actual.RevisionCreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevisionCreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RevisionCreateTime, actual.RevisionCreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevisionCreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RolloutState, actual.RolloutState, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RolloutState")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RolloutState, actual.RolloutState, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RolloutState")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Baseline, actual.Baseline, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Baseline")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Baseline, actual.Baseline, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Baseline")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Deleted, actual.Deleted, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Deleted")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Deleted, actual.Deleted, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Deleted")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Reconciling, actual.Reconciling, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Reconciling")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Reconciling, actual.Reconciling, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Reconciling")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.SkipAwaitRollout, actual.SkipAwaitRollout, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("SkipAwaitRollout")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareOSPolicyAssignmentOSPoliciesNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -4883,35 +7285,35 @@ func compareOSPolicyAssignmentOSPoliciesNewStyle(d, a interface{}, fn dcl.FieldN
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Mode, actual.Mode, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Mode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Mode, actual.Mode, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Mode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ResourceGroups, actual.ResourceGroups, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroups, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("ResourceGroups")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ResourceGroups, actual.ResourceGroups, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroups, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("ResourceGroups")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AllowNoResourceGroupMatch, actual.AllowNoResourceGroupMatch, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowNoResourceGroupMatch")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AllowNoResourceGroupMatch, actual.AllowNoResourceGroupMatch, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowNoResourceGroupMatch")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -4940,14 +7342,14 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsNewStyle(d, a interface{},
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.InventoryFilters, actual.InventoryFilters, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("InventoryFilters")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.InventoryFilters, actual.InventoryFilters, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("InventoryFilters")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Resources, actual.Resources, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResources, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Resources")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Resources, actual.Resources, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResources, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Resources")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -4976,14 +7378,14 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersNewStyle(d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.OSShortName, actual.OSShortName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsShortName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OSShortName, actual.OSShortName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsShortName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OSVersion, actual.OSVersion, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsVersion")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OSVersion, actual.OSVersion, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsVersion")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5012,35 +7414,35 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesNewStyle(d, a int
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Pkg, actual.Pkg, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Pkg")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Pkg, actual.Pkg, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Pkg")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Repository, actual.Repository, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Repository")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Repository, actual.Repository, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Repository")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Exec, actual.Exec, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Exec")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Exec, actual.Exec, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Exec")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.File, actual.File, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.File, actual.File, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5069,56 +7471,56 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgNewStyle(d, a 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DesiredState, actual.DesiredState, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DesiredState")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DesiredState, actual.DesiredState, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DesiredState")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Apt, actual.Apt, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Apt")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Apt, actual.Apt, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Apt")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Deb, actual.Deb, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Deb")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Deb, actual.Deb, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Deb")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Yum, actual.Yum, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Yum")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Yum, actual.Yum, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Yum")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Zypper, actual.Zypper, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Zypper")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Zypper, actual.Zypper, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Zypper")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Rpm, actual.Rpm, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Rpm")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Rpm, actual.Rpm, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Rpm")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Googet, actual.Googet, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Googet")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Googet, actual.Googet, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Googet")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Msi, actual.Msi, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Msi")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Msi, actual.Msi, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Msi")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5147,7 +7549,7 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5176,64 +7578,14 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PullDeps, actual.PullDeps, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("PullDeps")); len(ds) != 0 || err != nil {
-		if err != nil {
-			return nil, err
-		}
-		diffs = append(diffs, ds...)
-	}
-	return diffs, nil
-}
-
-func compareOSPolicyAssignmentFileNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
-	var diffs []*dcl.FieldDiff
-
-	desired, ok := d.(*OSPolicyAssignmentFile)
-	if !ok {
-		desiredNotPointer, ok := d.(OSPolicyAssignmentFile)
-		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentFile or *OSPolicyAssignmentFile", d)
-		}
-		desired = &desiredNotPointer
-	}
-	actual, ok := a.(*OSPolicyAssignmentFile)
-	if !ok {
-		actualNotPointer, ok := a.(OSPolicyAssignmentFile)
-		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentFile", a)
-		}
-		actual = &actualNotPointer
-	}
-
-	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentFileRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
-		if err != nil {
-			return nil, err
-		}
-		diffs = append(diffs, ds...)
-	}
-
-	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentFileGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
-		if err != nil {
-			return nil, err
-		}
-		diffs = append(diffs, ds...)
-	}
-
-	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
-		if err != nil {
-			return nil, err
-		}
-		diffs = append(diffs, ds...)
-	}
-
-	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PullDeps, actual.PullDeps, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("PullDeps")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5242,34 +7594,48 @@ func compareOSPolicyAssignmentFileNewStyle(d, a interface{}, fn dcl.FieldName) (
 	return diffs, nil
 }
 
-func compareOSPolicyAssignmentFileRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
 	var diffs []*dcl.FieldDiff
 
-	desired, ok := d.(*OSPolicyAssignmentFileRemote)
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource)
 	if !ok {
-		desiredNotPointer, ok := d.(OSPolicyAssignmentFileRemote)
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource)
 		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentFileRemote or *OSPolicyAssignmentFileRemote", d)
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource", d)
 		}
 		desired = &desiredNotPointer
 	}
-	actual, ok := a.(*OSPolicyAssignmentFileRemote)
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource)
 	if !ok {
-		actualNotPointer, ok := a.(OSPolicyAssignmentFileRemote)
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource)
 		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentFileRemote", a)
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource", a)
 		}
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5278,41 +7644,77 @@ func compareOSPolicyAssignmentFileRemoteNewStyle(d, a interface{}, fn dcl.FieldN
 	return diffs, nil
 }
 
-func compareOSPolicyAssignmentFileGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
 	var diffs []*dcl.FieldDiff
 
-	desired, ok := d.(*OSPolicyAssignmentFileGcs)
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote)
 	if !ok {
-		desiredNotPointer, ok := d.(OSPolicyAssignmentFileGcs)
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote)
 		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentFileGcs or *OSPolicyAssignmentFileGcs", d)
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote", d)
 		}
 		desired = &desiredNotPointer
 	}
-	actual, ok := a.(*OSPolicyAssignmentFileGcs)
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote)
 	if !ok {
-		actualNotPointer, ok := a.(OSPolicyAssignmentFileGcs)
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote)
 		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentFileGcs", a)
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote", a)
 		}
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5341,7 +7743,7 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5370,7 +7772,7 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperNewStyle
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5399,14 +7801,143 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PullDeps, actual.PullDeps, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("PullDeps")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PullDeps, actual.PullDeps, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("PullDeps")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5435,7 +7966,7 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetNewStyle
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5464,14 +7995,143 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Source, actual.Source, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Source")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Properties, actual.Properties, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Properties")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Properties, actual.Properties, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Properties")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5500,28 +8160,28 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryNewStyl
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Apt, actual.Apt, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Apt")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Apt, actual.Apt, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Apt")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Yum, actual.Yum, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Yum")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Yum, actual.Yum, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Yum")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Zypper, actual.Zypper, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Zypper")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Zypper, actual.Zypper, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Zypper")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Goo, actual.Goo, dcl.Info{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Goo")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Goo, actual.Goo, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Goo")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5550,35 +8210,35 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptNewS
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ArchiveType, actual.ArchiveType, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("ArchiveType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ArchiveType, actual.ArchiveType, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("ArchiveType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Distribution, actual.Distribution, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Distribution")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Distribution, actual.Distribution, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Distribution")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Components, actual.Components, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Components")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Components, actual.Components, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Components")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.GpgKey, actual.GpgKey, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("GpgKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.GpgKey, actual.GpgKey, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("GpgKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5607,28 +8267,28 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumNewS
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.BaseUrl, actual.BaseUrl, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("BaseUrl")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.BaseUrl, actual.BaseUrl, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("BaseUrl")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.GpgKeys, actual.GpgKeys, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("GpgKeys")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.GpgKeys, actual.GpgKeys, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("GpgKeys")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5657,28 +8317,28 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperN
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DisplayName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.BaseUrl, actual.BaseUrl, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("BaseUrl")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.BaseUrl, actual.BaseUrl, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("BaseUrl")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.GpgKeys, actual.GpgKeys, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("GpgKeys")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.GpgKeys, actual.GpgKeys, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("GpgKeys")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5707,14 +8367,14 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooNewS
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Url, actual.Url, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Url")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Url, actual.Url, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Url")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5743,14 +8403,14 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecNewStyle(d, a
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Validate, actual.Validate, dcl.Info{ObjectFunction: compareOSPolicyAssignmentExecNewStyle, EmptyObject: EmptyOSPolicyAssignmentExec, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Validate")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Validate, actual.Validate, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Validate")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Enforce, actual.Enforce, dcl.Info{ObjectFunction: compareOSPolicyAssignmentExecNewStyle, EmptyObject: EmptyOSPolicyAssignmentExec, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Enforce")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Enforce, actual.Enforce, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Enforce")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5759,55 +8419,370 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecNewStyle(d, a
 	return diffs, nil
 }
 
-func compareOSPolicyAssignmentExecNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
 	var diffs []*dcl.FieldDiff
 
-	desired, ok := d.(*OSPolicyAssignmentExec)
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate)
 	if !ok {
-		desiredNotPointer, ok := d.(OSPolicyAssignmentExec)
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate)
 		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentExec or *OSPolicyAssignmentExec", d)
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate", d)
 		}
 		desired = &desiredNotPointer
 	}
-	actual, ok := a.(*OSPolicyAssignmentExec)
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate)
 	if !ok {
-		actualNotPointer, ok := a.(OSPolicyAssignmentExec)
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate)
 		if !ok {
-			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentExec", a)
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate", a)
 		}
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.File, actual.File, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.File, actual.File, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Script, actual.Script, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Script")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Script, actual.Script, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Script")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Args, actual.Args, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Args")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Args, actual.Args, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Args")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Interpreter, actual.Interpreter, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Interpreter")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Interpreter, actual.Interpreter, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Interpreter")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OutputFilePath, actual.OutputFilePath, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OutputFilePath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OutputFilePath, actual.OutputFilePath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OutputFilePath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.File, actual.File, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Script, actual.Script, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Script")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Args, actual.Args, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Args")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Interpreter, actual.Interpreter, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Interpreter")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.OutputFilePath, actual.OutputFilePath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OutputFilePath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5836,35 +8811,164 @@ func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileNewStyle(d, a
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.File, actual.File, dcl.Info{ObjectFunction: compareOSPolicyAssignmentFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.File, actual.File, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("File")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Content, actual.Content, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Content")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Content, actual.Content, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Content")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Path, actual.Path, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Path")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Path, actual.Path, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Path")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.State, actual.State, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("State")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.State, actual.State, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("State")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Permissions, actual.Permissions, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Permissions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Permissions, actual.Permissions, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Permissions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Remote, actual.Remote, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Remote")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Gcs, actual.Gcs, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsNewStyle, EmptyObject: EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Gcs")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.LocalPath, actual.LocalPath, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("LocalPath")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.AllowInsecure, actual.AllowInsecure, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("AllowInsecure")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Uri, actual.Uri, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Uri")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Sha256Checksum, actual.Sha256Checksum, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Sha256Checksum")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs)
+	if !ok {
+		desiredNotPointer, ok := d.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs or *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs)
+	if !ok {
+		actualNotPointer, ok := a.(OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Bucket, actual.Bucket, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Bucket")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Object, actual.Object, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Object")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Generation, actual.Generation, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Generation")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5893,28 +8997,28 @@ func compareOSPolicyAssignmentInstanceFilterNewStyle(d, a interface{}, fn dcl.Fi
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.All, actual.All, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("All")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.All, actual.All, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("All")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.InclusionLabels, actual.InclusionLabels, dcl.Info{ObjectFunction: compareOSPolicyAssignmentInstanceFilterInclusionLabelsNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilterInclusionLabels, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("InclusionLabels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.InclusionLabels, actual.InclusionLabels, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentInstanceFilterInclusionLabelsNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilterInclusionLabels, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("InclusionLabels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExclusionLabels, actual.ExclusionLabels, dcl.Info{ObjectFunction: compareOSPolicyAssignmentInstanceFilterExclusionLabelsNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilterExclusionLabels, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("ExclusionLabels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExclusionLabels, actual.ExclusionLabels, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentInstanceFilterExclusionLabelsNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilterExclusionLabels, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("ExclusionLabels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Inventories, actual.Inventories, dcl.Info{ObjectFunction: compareOSPolicyAssignmentInstanceFilterInventoriesNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilterInventories, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Inventories")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Inventories, actual.Inventories, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentInstanceFilterInventoriesNewStyle, EmptyObject: EmptyOSPolicyAssignmentInstanceFilterInventories, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Inventories")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5943,7 +9047,7 @@ func compareOSPolicyAssignmentInstanceFilterInclusionLabelsNewStyle(d, a interfa
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5972,7 +9076,7 @@ func compareOSPolicyAssignmentInstanceFilterExclusionLabelsNewStyle(d, a interfa
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6001,14 +9105,14 @@ func compareOSPolicyAssignmentInstanceFilterInventoriesNewStyle(d, a interface{}
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.OSShortName, actual.OSShortName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsShortName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OSShortName, actual.OSShortName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsShortName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OSVersion, actual.OSVersion, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsVersion")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OSVersion, actual.OSVersion, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("OsVersion")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6037,14 +9141,14 @@ func compareOSPolicyAssignmentRolloutNewStyle(d, a interface{}, fn dcl.FieldName
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DisruptionBudget, actual.DisruptionBudget, dcl.Info{ObjectFunction: compareOSPolicyAssignmentRolloutDisruptionBudgetNewStyle, EmptyObject: EmptyOSPolicyAssignmentRolloutDisruptionBudget, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DisruptionBudget")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DisruptionBudget, actual.DisruptionBudget, dcl.DiffInfo{ObjectFunction: compareOSPolicyAssignmentRolloutDisruptionBudgetNewStyle, EmptyObject: EmptyOSPolicyAssignmentRolloutDisruptionBudget, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("DisruptionBudget")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MinWaitDuration, actual.MinWaitDuration, dcl.Info{CustomDiff: canonicalizeOSPolicyAssignmentRolloutMinWaitDuration, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("MinWaitDuration")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MinWaitDuration, actual.MinWaitDuration, dcl.DiffInfo{CustomDiff: canonicalizeOSPolicyAssignmentRolloutMinWaitDuration, OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("MinWaitDuration")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6073,14 +9177,14 @@ func compareOSPolicyAssignmentRolloutDisruptionBudgetNewStyle(d, a interface{}, 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Fixed, actual.Fixed, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Fixed")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Fixed, actual.Fixed, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Fixed")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Percent, actual.Percent, dcl.Info{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Percent")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Percent, actual.Percent, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateOSPolicyAssignmentUpdateOSPolicyAssignmentOperation")}, fn.AddNest("Percent")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6127,22 +9231,27 @@ func (r *OSPolicyAssignment) marshal(c *Client) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling OSPolicyAssignment: %w", err)
 	}
+	dcl.MoveMapEntry(
+		m,
+		[]string{"skipAwaitRollout"},
+		[]string{},
+	)
 
 	return json.Marshal(m)
 }
 
 // unmarshalOSPolicyAssignment decodes JSON responses into the OSPolicyAssignment resource schema.
-func unmarshalOSPolicyAssignment(b []byte, c *Client) (*OSPolicyAssignment, error) {
+func unmarshalOSPolicyAssignment(b []byte, c *Client, res *OSPolicyAssignment) (*OSPolicyAssignment, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapOSPolicyAssignment(m, c)
+	return unmarshalMapOSPolicyAssignment(m, c, res)
 }
 
-func unmarshalMapOSPolicyAssignment(m map[string]interface{}, c *Client) (*OSPolicyAssignment, error) {
+func unmarshalMapOSPolicyAssignment(m map[string]interface{}, c *Client, res *OSPolicyAssignment) (*OSPolicyAssignment, error) {
 
-	flattened := flattenOSPolicyAssignment(c, m)
+	flattened := flattenOSPolicyAssignment(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -6152,38 +9261,43 @@ func unmarshalMapOSPolicyAssignment(m map[string]interface{}, c *Client) (*OSPol
 // expandOSPolicyAssignment expands OSPolicyAssignment into a JSON request object.
 func expandOSPolicyAssignment(c *Client, f *OSPolicyAssignment) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/osPolicyAssignments/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.Description; dcl.ValueShouldBeSent(v) {
 		m["description"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesSlice(c, f.OSPolicies); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesSlice(c, f.OSPolicies, res); err != nil {
 		return nil, fmt.Errorf("error expanding OSPolicies into osPolicies: %w", err)
-	} else {
+	} else if v != nil {
 		m["osPolicies"] = v
 	}
-	if v, err := expandOSPolicyAssignmentInstanceFilter(c, f.InstanceFilter); err != nil {
+	if v, err := expandOSPolicyAssignmentInstanceFilter(c, f.InstanceFilter, res); err != nil {
 		return nil, fmt.Errorf("error expanding InstanceFilter into instanceFilter: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["instanceFilter"] = v
 	}
-	if v, err := expandOSPolicyAssignmentRollout(c, f.Rollout); err != nil {
+	if v, err := expandOSPolicyAssignmentRollout(c, f.Rollout, res); err != nil {
 		return nil, fmt.Errorf("error expanding Rollout into rollout: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["rollout"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
+	}
+	if v := f.SkipAwaitRollout; dcl.ValueShouldBeSent(v) {
+		m["skipAwaitRollout"] = v
 	}
 
 	return m, nil
@@ -6191,7 +9305,7 @@ func expandOSPolicyAssignment(c *Client, f *OSPolicyAssignment) (map[string]inte
 
 // flattenOSPolicyAssignment flattens OSPolicyAssignment from a JSON request object into the
 // OSPolicyAssignment type.
-func flattenOSPolicyAssignment(c *Client, i interface{}) *OSPolicyAssignment {
+func flattenOSPolicyAssignment(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignment {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6200,36 +9314,37 @@ func flattenOSPolicyAssignment(c *Client, i interface{}) *OSPolicyAssignment {
 		return nil
 	}
 
-	res := &OSPolicyAssignment{}
-	res.Name = dcl.FlattenString(m["name"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.OSPolicies = flattenOSPolicyAssignmentOSPoliciesSlice(c, m["osPolicies"])
-	res.InstanceFilter = flattenOSPolicyAssignmentInstanceFilter(c, m["instanceFilter"])
-	res.Rollout = flattenOSPolicyAssignmentRollout(c, m["rollout"])
-	res.RevisionId = dcl.FlattenString(m["revisionId"])
-	res.RevisionCreateTime = dcl.FlattenString(m["revisionCreateTime"])
-	res.Etag = dcl.FlattenString(m["etag"])
-	res.RolloutState = flattenOSPolicyAssignmentRolloutStateEnum(m["rolloutState"])
-	res.Baseline = dcl.FlattenBool(m["baseline"])
-	res.Deleted = dcl.FlattenBool(m["deleted"])
-	res.Reconciling = dcl.FlattenBool(m["reconciling"])
-	res.Uid = dcl.FlattenString(m["uid"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
+	resultRes := &OSPolicyAssignment{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.OSPolicies = flattenOSPolicyAssignmentOSPoliciesSlice(c, m["osPolicies"], res)
+	resultRes.InstanceFilter = flattenOSPolicyAssignmentInstanceFilter(c, m["instanceFilter"], res)
+	resultRes.Rollout = flattenOSPolicyAssignmentRollout(c, m["rollout"], res)
+	resultRes.RevisionId = dcl.FlattenString(m["revisionId"])
+	resultRes.RevisionCreateTime = dcl.FlattenString(m["revisionCreateTime"])
+	resultRes.Etag = dcl.FlattenString(m["etag"])
+	resultRes.RolloutState = flattenOSPolicyAssignmentRolloutStateEnum(m["rolloutState"])
+	resultRes.Baseline = dcl.FlattenBool(m["baseline"])
+	resultRes.Deleted = dcl.FlattenBool(m["deleted"])
+	resultRes.Reconciling = dcl.FlattenBool(m["reconciling"])
+	resultRes.Uid = dcl.FlattenString(m["uid"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
+	resultRes.SkipAwaitRollout = dcl.FlattenBool(m["skipAwaitRollout"])
 
-	return res
+	return resultRes
 }
 
 // expandOSPolicyAssignmentOSPoliciesMap expands the contents of OSPolicyAssignmentOSPolicies into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesMap(c *Client, f map[string]OSPolicyAssignmentOSPolicies) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesMap(c *Client, f map[string]OSPolicyAssignmentOSPolicies, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPolicies(c, &item)
+		i, err := expandOSPolicyAssignmentOSPolicies(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6243,14 +9358,14 @@ func expandOSPolicyAssignmentOSPoliciesMap(c *Client, f map[string]OSPolicyAssig
 
 // expandOSPolicyAssignmentOSPoliciesSlice expands the contents of OSPolicyAssignmentOSPolicies into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesSlice(c *Client, f []OSPolicyAssignmentOSPolicies) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesSlice(c *Client, f []OSPolicyAssignmentOSPolicies, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPolicies(c, &item)
+		i, err := expandOSPolicyAssignmentOSPolicies(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6263,7 +9378,7 @@ func expandOSPolicyAssignmentOSPoliciesSlice(c *Client, f []OSPolicyAssignmentOS
 
 // flattenOSPolicyAssignmentOSPoliciesMap flattens the contents of OSPolicyAssignmentOSPolicies from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPolicies {
+func flattenOSPolicyAssignmentOSPoliciesMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPolicies {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPolicies{}
@@ -6275,7 +9390,7 @@ func flattenOSPolicyAssignmentOSPoliciesMap(c *Client, i interface{}) map[string
 
 	items := make(map[string]OSPolicyAssignmentOSPolicies)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPolicies(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPolicies(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6283,7 +9398,7 @@ func flattenOSPolicyAssignmentOSPoliciesMap(c *Client, i interface{}) map[string
 
 // flattenOSPolicyAssignmentOSPoliciesSlice flattens the contents of OSPolicyAssignmentOSPolicies from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPolicies {
+func flattenOSPolicyAssignmentOSPoliciesSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPolicies {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPolicies{}
@@ -6295,7 +9410,7 @@ func flattenOSPolicyAssignmentOSPoliciesSlice(c *Client, i interface{}) []OSPoli
 
 	items := make([]OSPolicyAssignmentOSPolicies, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPolicies(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPolicies(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6303,8 +9418,8 @@ func flattenOSPolicyAssignmentOSPoliciesSlice(c *Client, i interface{}) []OSPoli
 
 // expandOSPolicyAssignmentOSPolicies expands an instance of OSPolicyAssignmentOSPolicies into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPolicies(c *Client, f *OSPolicyAssignmentOSPolicies) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentOSPolicies(c *Client, f *OSPolicyAssignmentOSPolicies, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -6318,7 +9433,7 @@ func expandOSPolicyAssignmentOSPolicies(c *Client, f *OSPolicyAssignmentOSPolici
 	if v := f.Mode; !dcl.IsEmptyValueIndirect(v) {
 		m["mode"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c, f.ResourceGroups); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c, f.ResourceGroups, res); err != nil {
 		return nil, fmt.Errorf("error expanding ResourceGroups into resourceGroups: %w", err)
 	} else if v != nil {
 		m["resourceGroups"] = v
@@ -6332,7 +9447,7 @@ func expandOSPolicyAssignmentOSPolicies(c *Client, f *OSPolicyAssignmentOSPolici
 
 // flattenOSPolicyAssignmentOSPolicies flattens an instance of OSPolicyAssignmentOSPolicies from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPolicies(c *Client, i interface{}) *OSPolicyAssignmentOSPolicies {
+func flattenOSPolicyAssignmentOSPolicies(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPolicies {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6346,7 +9461,7 @@ func flattenOSPolicyAssignmentOSPolicies(c *Client, i interface{}) *OSPolicyAssi
 	r.Id = dcl.FlattenString(m["id"])
 	r.Description = dcl.FlattenString(m["description"])
 	r.Mode = flattenOSPolicyAssignmentOSPoliciesModeEnum(m["mode"])
-	r.ResourceGroups = flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c, m["resourceGroups"])
+	r.ResourceGroups = flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c, m["resourceGroups"], res)
 	r.AllowNoResourceGroupMatch = dcl.FlattenBool(m["allowNoResourceGroupMatch"])
 
 	return r
@@ -6354,14 +9469,14 @@ func flattenOSPolicyAssignmentOSPolicies(c *Client, i interface{}) *OSPolicyAssi
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroups into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroups) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroups, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroups(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroups(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6375,14 +9490,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, f map[string
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroups into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroups) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroups, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroups(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroups(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6395,7 +9510,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, f []OSPoli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroups from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroups {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroups {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroups{}
@@ -6407,7 +9522,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, i interface
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroups)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroups(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroups(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6415,7 +9530,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsMap(c *Client, i interface
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroups from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroups {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroups {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroups{}
@@ -6427,7 +9542,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, i interfa
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroups, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroups(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroups(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6435,18 +9550,18 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsSlice(c *Client, i interfa
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroups expands an instance of OSPolicyAssignmentOSPoliciesResourceGroups into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroups) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroups, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c, f.InventoryFilters); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c, f.InventoryFilters, res); err != nil {
 		return nil, fmt.Errorf("error expanding InventoryFilters into inventoryFilters: %w", err)
 	} else if v != nil {
 		m["inventoryFilters"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c, f.Resources); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c, f.Resources, res); err != nil {
 		return nil, fmt.Errorf("error expanding Resources into resources: %w", err)
 	} else if v != nil {
 		m["resources"] = v
@@ -6457,7 +9572,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, f *OSPolicyAssi
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroups flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroups from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroups {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroups {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6468,22 +9583,22 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroups(c *Client, i interface{})
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroups
 	}
-	r.InventoryFilters = flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c, m["inventoryFilters"])
-	r.Resources = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c, m["resources"])
+	r.InventoryFilters = flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c, m["inventoryFilters"], res)
+	r.Resources = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c, m["resources"], res)
 
 	return r
 }
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6497,14 +9612,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Clie
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6517,7 +9632,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *Cl
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters{}
@@ -6529,7 +9644,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Cli
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6537,7 +9652,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersMap(c *Cli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters{}
@@ -6549,7 +9664,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *C
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6557,8 +9672,8 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFiltersSlice(c *C
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -6575,7 +9690,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c *Client,
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6594,14 +9709,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsInventoryFilters(c *Client
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResources into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResources) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResources, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6615,14 +9730,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, f m
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResources into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResources) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResources, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6635,7 +9750,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, f
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResources from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResources {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResources {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResources{}
@@ -6647,7 +9762,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, i 
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResources)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6655,7 +9770,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesMap(c *Client, i 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResources from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResources {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResources {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResources{}
@@ -6667,7 +9782,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, 
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResources, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6675,8 +9790,8 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesSlice(c *Client, 
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResources expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResources into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResources) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResources, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -6684,22 +9799,22 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, f *OSP
 	if v := f.Id; !dcl.IsEmptyValueIndirect(v) {
 		m["id"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, f.Pkg); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, f.Pkg, res); err != nil {
 		return nil, fmt.Errorf("error expanding Pkg into pkg: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["pkg"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, f.Repository); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, f.Repository, res); err != nil {
 		return nil, fmt.Errorf("error expanding Repository into repository: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["repository"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, f.Exec); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, f.Exec, res); err != nil {
 		return nil, fmt.Errorf("error expanding Exec into exec: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["exec"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, f.File); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, f.File, res); err != nil {
 		return nil, fmt.Errorf("error expanding File into file: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["file"] = v
@@ -6710,7 +9825,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, f *OSP
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResources from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResources {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResources {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6722,24 +9837,24 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResources(c *Client, i int
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResources
 	}
 	r.Id = dcl.FlattenString(m["id"])
-	r.Pkg = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, m["pkg"])
-	r.Repository = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, m["repository"])
-	r.Exec = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, m["exec"])
-	r.File = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, m["file"])
+	r.Pkg = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, m["pkg"], res)
+	r.Repository = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, m["repository"], res)
+	r.Exec = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, m["exec"], res)
+	r.File = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, m["file"], res)
 
 	return r
 }
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6753,14 +9868,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client, 
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6773,7 +9888,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Client
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg{}
@@ -6785,7 +9900,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client,
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6793,7 +9908,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMap(c *Client,
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg{}
@@ -6805,7 +9920,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Clien
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6813,7 +9928,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgSlice(c *Clien
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -6822,37 +9937,37 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, f *
 	if v := f.DesiredState; !dcl.IsEmptyValueIndirect(v) {
 		m["desiredState"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, f.Apt); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, f.Apt, res); err != nil {
 		return nil, fmt.Errorf("error expanding Apt into apt: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["apt"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, f.Deb); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, f.Deb, res); err != nil {
 		return nil, fmt.Errorf("error expanding Deb into deb: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["deb"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, f.Yum); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, f.Yum, res); err != nil {
 		return nil, fmt.Errorf("error expanding Yum into yum: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["yum"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, f.Zypper); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, f.Zypper, res); err != nil {
 		return nil, fmt.Errorf("error expanding Zypper into zypper: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["zypper"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, f.Rpm); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, f.Rpm, res); err != nil {
 		return nil, fmt.Errorf("error expanding Rpm into rpm: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["rpm"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, f.Googet); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, f.Googet, res); err != nil {
 		return nil, fmt.Errorf("error expanding Googet into googet: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["googet"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, f.Msi); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, f.Msi, res); err != nil {
 		return nil, fmt.Errorf("error expanding Msi into msi: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["msi"] = v
@@ -6863,7 +9978,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, f *
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -6875,27 +9990,27 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg(c *Client, i 
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkg
 	}
 	r.DesiredState = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum(m["desiredState"])
-	r.Apt = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, m["apt"])
-	r.Deb = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, m["deb"])
-	r.Yum = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, m["yum"])
-	r.Zypper = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, m["zypper"])
-	r.Rpm = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, m["rpm"])
-	r.Googet = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, m["googet"])
-	r.Msi = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, m["msi"])
+	r.Apt = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, m["apt"], res)
+	r.Deb = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, m["deb"], res)
+	r.Yum = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, m["yum"], res)
+	r.Zypper = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, m["zypper"], res)
+	r.Rpm = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, m["rpm"], res)
+	r.Googet = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, m["googet"], res)
+	r.Msi = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, m["msi"], res)
 
 	return r
 }
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6909,14 +10024,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Clien
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -6929,7 +10044,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Cli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt{}
@@ -6941,7 +10056,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Clie
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -6949,7 +10064,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptMap(c *Clie
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt{}
@@ -6961,7 +10076,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Cl
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -6969,7 +10084,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptSlice(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -6984,7 +10099,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c *Client, 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7002,14 +10117,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgApt(c *Client,
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7023,14 +10138,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Clien
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7043,7 +10158,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Cli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb{}
@@ -7055,7 +10170,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Clie
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7063,7 +10178,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebMap(c *Clie
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb{}
@@ -7075,7 +10190,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Cl
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7083,13 +10198,13 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSlice(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentFile(c, f.Source); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, f.Source, res); err != nil {
 		return nil, fmt.Errorf("error expanding Source into source: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["source"] = v
@@ -7103,7 +10218,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c *Client, 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7114,22 +10229,22 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb(c *Client,
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb
 	}
-	r.Source = flattenOSPolicyAssignmentFile(c, m["source"])
+	r.Source = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, m["source"], res)
 	r.PullDeps = dcl.FlattenBool(m["pullDeps"])
 
 	return r
 }
 
-// expandOSPolicyAssignmentFileMap expands the contents of OSPolicyAssignmentFile into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource into a JSON
 // request object.
-func expandOSPolicyAssignmentFileMap(c *Client, f map[string]OSPolicyAssignmentFile) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentFile(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7141,16 +10256,16 @@ func expandOSPolicyAssignmentFileMap(c *Client, f map[string]OSPolicyAssignmentF
 	return items, nil
 }
 
-// expandOSPolicyAssignmentFileSlice expands the contents of OSPolicyAssignmentFile into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource into a JSON
 // request object.
-func expandOSPolicyAssignmentFileSlice(c *Client, f []OSPolicyAssignmentFile) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentFile(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7161,60 +10276,60 @@ func expandOSPolicyAssignmentFileSlice(c *Client, f []OSPolicyAssignmentFile) ([
 	return items, nil
 }
 
-// flattenOSPolicyAssignmentFileMap flattens the contents of OSPolicyAssignmentFile from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileMap(c *Client, i interface{}) map[string]OSPolicyAssignmentFile {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 	a, ok := i.(map[string]interface{})
 	if !ok {
-		return map[string]OSPolicyAssignmentFile{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
 	}
 
 	if len(a) == 0 {
-		return map[string]OSPolicyAssignmentFile{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
 	}
 
-	items := make(map[string]OSPolicyAssignmentFile)
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentFile(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, item.(map[string]interface{}), res)
 	}
 
 	return items
 }
 
-// flattenOSPolicyAssignmentFileSlice flattens the contents of OSPolicyAssignmentFile from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileSlice(c *Client, i interface{}) []OSPolicyAssignmentFile {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 	a, ok := i.([]interface{})
 	if !ok {
-		return []OSPolicyAssignmentFile{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
 	}
 
 	if len(a) == 0 {
-		return []OSPolicyAssignmentFile{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
 	}
 
-	items := make([]OSPolicyAssignmentFile, 0, len(a))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentFile(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c, item.(map[string]interface{}), res))
 	}
 
 	return items
 }
 
-// expandOSPolicyAssignmentFile expands an instance of OSPolicyAssignmentFile into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource into a JSON
 // request object.
-func expandOSPolicyAssignmentFile(c *Client, f *OSPolicyAssignmentFile) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentFileRemote(c, f.Remote); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, f.Remote, res); err != nil {
 		return nil, fmt.Errorf("error expanding Remote into remote: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["remote"] = v
 	}
-	if v, err := expandOSPolicyAssignmentFileGcs(c, f.Gcs); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, f.Gcs, res); err != nil {
 		return nil, fmt.Errorf("error expanding Gcs into gcs: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["gcs"] = v
@@ -7229,37 +10344,37 @@ func expandOSPolicyAssignmentFile(c *Client, f *OSPolicyAssignmentFile) (map[str
 	return m, nil
 }
 
-// flattenOSPolicyAssignmentFile flattens an instance of OSPolicyAssignmentFile from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource from a JSON
 // response object.
-func flattenOSPolicyAssignmentFile(c *Client, i interface{}) *OSPolicyAssignmentFile {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
-	r := &OSPolicyAssignmentFile{}
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
 
 	if dcl.IsEmptyValueIndirect(i) {
-		return EmptyOSPolicyAssignmentFile
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource
 	}
-	r.Remote = flattenOSPolicyAssignmentFileRemote(c, m["remote"])
-	r.Gcs = flattenOSPolicyAssignmentFileGcs(c, m["gcs"])
+	r.Remote = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, m["remote"], res)
+	r.Gcs = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, m["gcs"], res)
 	r.LocalPath = dcl.FlattenString(m["localPath"])
 	r.AllowInsecure = dcl.FlattenBool(m["allowInsecure"])
 
 	return r
 }
 
-// expandOSPolicyAssignmentFileRemoteMap expands the contents of OSPolicyAssignmentFileRemote into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote into a JSON
 // request object.
-func expandOSPolicyAssignmentFileRemoteMap(c *Client, f map[string]OSPolicyAssignmentFileRemote) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentFileRemote(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7271,16 +10386,16 @@ func expandOSPolicyAssignmentFileRemoteMap(c *Client, f map[string]OSPolicyAssig
 	return items, nil
 }
 
-// expandOSPolicyAssignmentFileRemoteSlice expands the contents of OSPolicyAssignmentFileRemote into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote into a JSON
 // request object.
-func expandOSPolicyAssignmentFileRemoteSlice(c *Client, f []OSPolicyAssignmentFileRemote) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentFileRemote(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7291,49 +10406,49 @@ func expandOSPolicyAssignmentFileRemoteSlice(c *Client, f []OSPolicyAssignmentFi
 	return items, nil
 }
 
-// flattenOSPolicyAssignmentFileRemoteMap flattens the contents of OSPolicyAssignmentFileRemote from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileRemoteMap(c *Client, i interface{}) map[string]OSPolicyAssignmentFileRemote {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 	a, ok := i.(map[string]interface{})
 	if !ok {
-		return map[string]OSPolicyAssignmentFileRemote{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 	}
 
 	if len(a) == 0 {
-		return map[string]OSPolicyAssignmentFileRemote{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 	}
 
-	items := make(map[string]OSPolicyAssignmentFileRemote)
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentFileRemote(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, item.(map[string]interface{}), res)
 	}
 
 	return items
 }
 
-// flattenOSPolicyAssignmentFileRemoteSlice flattens the contents of OSPolicyAssignmentFileRemote from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileRemoteSlice(c *Client, i interface{}) []OSPolicyAssignmentFileRemote {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 	a, ok := i.([]interface{})
 	if !ok {
-		return []OSPolicyAssignmentFileRemote{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 	}
 
 	if len(a) == 0 {
-		return []OSPolicyAssignmentFileRemote{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 	}
 
-	items := make([]OSPolicyAssignmentFileRemote, 0, len(a))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentFileRemote(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c, item.(map[string]interface{}), res))
 	}
 
 	return items
 }
 
-// expandOSPolicyAssignmentFileRemote expands an instance of OSPolicyAssignmentFileRemote into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote into a JSON
 // request object.
-func expandOSPolicyAssignmentFileRemote(c *Client, f *OSPolicyAssignmentFileRemote) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7349,18 +10464,18 @@ func expandOSPolicyAssignmentFileRemote(c *Client, f *OSPolicyAssignmentFileRemo
 	return m, nil
 }
 
-// flattenOSPolicyAssignmentFileRemote flattens an instance of OSPolicyAssignmentFileRemote from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileRemote(c *Client, i interface{}) *OSPolicyAssignmentFileRemote {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
-	r := &OSPolicyAssignmentFileRemote{}
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 
 	if dcl.IsEmptyValueIndirect(i) {
-		return EmptyOSPolicyAssignmentFileRemote
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote
 	}
 	r.Uri = dcl.FlattenString(m["uri"])
 	r.Sha256Checksum = dcl.FlattenString(m["sha256Checksum"])
@@ -7368,16 +10483,16 @@ func flattenOSPolicyAssignmentFileRemote(c *Client, i interface{}) *OSPolicyAssi
 	return r
 }
 
-// expandOSPolicyAssignmentFileGcsMap expands the contents of OSPolicyAssignmentFileGcs into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs into a JSON
 // request object.
-func expandOSPolicyAssignmentFileGcsMap(c *Client, f map[string]OSPolicyAssignmentFileGcs) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentFileGcs(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7389,16 +10504,16 @@ func expandOSPolicyAssignmentFileGcsMap(c *Client, f map[string]OSPolicyAssignme
 	return items, nil
 }
 
-// expandOSPolicyAssignmentFileGcsSlice expands the contents of OSPolicyAssignmentFileGcs into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs into a JSON
 // request object.
-func expandOSPolicyAssignmentFileGcsSlice(c *Client, f []OSPolicyAssignmentFileGcs) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentFileGcs(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7409,49 +10524,49 @@ func expandOSPolicyAssignmentFileGcsSlice(c *Client, f []OSPolicyAssignmentFileG
 	return items, nil
 }
 
-// flattenOSPolicyAssignmentFileGcsMap flattens the contents of OSPolicyAssignmentFileGcs from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileGcsMap(c *Client, i interface{}) map[string]OSPolicyAssignmentFileGcs {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 	a, ok := i.(map[string]interface{})
 	if !ok {
-		return map[string]OSPolicyAssignmentFileGcs{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 	}
 
 	if len(a) == 0 {
-		return map[string]OSPolicyAssignmentFileGcs{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 	}
 
-	items := make(map[string]OSPolicyAssignmentFileGcs)
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentFileGcs(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, item.(map[string]interface{}), res)
 	}
 
 	return items
 }
 
-// flattenOSPolicyAssignmentFileGcsSlice flattens the contents of OSPolicyAssignmentFileGcs from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileGcsSlice(c *Client, i interface{}) []OSPolicyAssignmentFileGcs {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 	a, ok := i.([]interface{})
 	if !ok {
-		return []OSPolicyAssignmentFileGcs{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 	}
 
 	if len(a) == 0 {
-		return []OSPolicyAssignmentFileGcs{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 	}
 
-	items := make([]OSPolicyAssignmentFileGcs, 0, len(a))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentFileGcs(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c, item.(map[string]interface{}), res))
 	}
 
 	return items
 }
 
-// expandOSPolicyAssignmentFileGcs expands an instance of OSPolicyAssignmentFileGcs into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs into a JSON
 // request object.
-func expandOSPolicyAssignmentFileGcs(c *Client, f *OSPolicyAssignmentFileGcs) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7470,18 +10585,18 @@ func expandOSPolicyAssignmentFileGcs(c *Client, f *OSPolicyAssignmentFileGcs) (m
 	return m, nil
 }
 
-// flattenOSPolicyAssignmentFileGcs flattens an instance of OSPolicyAssignmentFileGcs from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs from a JSON
 // response object.
-func flattenOSPolicyAssignmentFileGcs(c *Client, i interface{}) *OSPolicyAssignmentFileGcs {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
-	r := &OSPolicyAssignmentFileGcs{}
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 
 	if dcl.IsEmptyValueIndirect(i) {
-		return EmptyOSPolicyAssignmentFileGcs
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs
 	}
 	r.Bucket = dcl.FlattenString(m["bucket"])
 	r.Object = dcl.FlattenString(m["object"])
@@ -7492,14 +10607,14 @@ func flattenOSPolicyAssignmentFileGcs(c *Client, i interface{}) *OSPolicyAssignm
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7513,14 +10628,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Clien
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7533,7 +10648,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Cli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum{}
@@ -7545,7 +10660,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Clie
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7553,7 +10668,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumMap(c *Clie
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum{}
@@ -7565,7 +10680,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Cl
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7573,7 +10688,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumSlice(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7588,7 +10703,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c *Client, 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7606,14 +10721,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum(c *Client,
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7627,14 +10742,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7647,7 +10762,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c *
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper{}
@@ -7659,7 +10774,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *C
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7667,7 +10782,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperMap(c *C
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper{}
@@ -7679,7 +10794,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c 
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7687,7 +10802,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperSlice(c 
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7702,7 +10817,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c *Clien
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7720,14 +10835,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper(c *Clie
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7741,14 +10856,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Clien
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7761,7 +10876,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Cli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm{}
@@ -7773,7 +10888,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Clie
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7781,7 +10896,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmMap(c *Clie
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm{}
@@ -7793,7 +10908,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Cl
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7801,13 +10916,13 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSlice(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentFile(c, f.Source); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, f.Source, res); err != nil {
 		return nil, fmt.Errorf("error expanding Source into source: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["source"] = v
@@ -7821,7 +10936,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c *Client, 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7832,22 +10947,392 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm(c *Client,
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm
 	}
-	r.Source = flattenOSPolicyAssignmentFile(c, m["source"])
+	r.Source = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, m["source"], res)
 	r.PullDeps = dcl.FlattenBool(m["pullDeps"])
 
 	return r
 }
 
-// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, f.Remote, res); err != nil {
+		return nil, fmt.Errorf("error expanding Remote into remote: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["remote"] = v
+	}
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, f.Gcs, res); err != nil {
+		return nil, fmt.Errorf("error expanding Gcs into gcs: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["gcs"] = v
+	}
+	if v := f.LocalPath; !dcl.IsEmptyValueIndirect(v) {
+		m["localPath"] = v
+	}
+	if v := f.AllowInsecure; !dcl.IsEmptyValueIndirect(v) {
+		m["allowInsecure"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource
+	}
+	r.Remote = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, m["remote"], res)
+	r.Gcs = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, m["gcs"], res)
+	r.LocalPath = dcl.FlattenString(m["localPath"])
+	r.AllowInsecure = dcl.FlattenBool(m["allowInsecure"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+	if v := f.Sha256Checksum; !dcl.IsEmptyValueIndirect(v) {
+		m["sha256Checksum"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+	r.Sha256Checksum = dcl.FlattenString(m["sha256Checksum"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Bucket; !dcl.IsEmptyValueIndirect(v) {
+		m["bucket"] = v
+	}
+	if v := f.Object; !dcl.IsEmptyValueIndirect(v) {
+		m["object"] = v
+	}
+	if v := f.Generation; !dcl.IsEmptyValueIndirect(v) {
+		m["generation"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs
+	}
+	r.Bucket = dcl.FlattenString(m["bucket"])
+	r.Object = dcl.FlattenString(m["object"])
+	r.Generation = dcl.FlattenInteger(m["generation"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7861,14 +11346,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7881,7 +11366,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c *
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget{}
@@ -7893,7 +11378,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *C
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7901,7 +11386,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetMap(c *C
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget{}
@@ -7913,7 +11398,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c 
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7921,7 +11406,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetSlice(c 
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7936,7 +11421,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c *Clien
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7954,14 +11439,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget(c *Clie
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7975,14 +11460,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Clien
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7995,7 +11480,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Cli
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi{}
@@ -8007,7 +11492,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Clie
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8015,7 +11500,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiMap(c *Clie
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi{}
@@ -8027,7 +11512,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Cl
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8035,13 +11520,13 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSlice(c *Cl
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentFile(c, f.Source); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, f.Source, res); err != nil {
 		return nil, fmt.Errorf("error expanding Source into source: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["source"] = v
@@ -8055,7 +11540,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c *Client, 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8066,22 +11551,392 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi(c *Client,
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi
 	}
-	r.Source = flattenOSPolicyAssignmentFile(c, m["source"])
+	r.Source = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, m["source"], res)
 	r.Properties = dcl.FlattenStringSlice(m["properties"])
 
 	return r
 }
 
-// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, f.Remote, res); err != nil {
+		return nil, fmt.Errorf("error expanding Remote into remote: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["remote"] = v
+	}
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, f.Gcs, res); err != nil {
+		return nil, fmt.Errorf("error expanding Gcs into gcs: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["gcs"] = v
+	}
+	if v := f.LocalPath; !dcl.IsEmptyValueIndirect(v) {
+		m["localPath"] = v
+	}
+	if v := f.AllowInsecure; !dcl.IsEmptyValueIndirect(v) {
+		m["allowInsecure"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource
+	}
+	r.Remote = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, m["remote"], res)
+	r.Gcs = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, m["gcs"], res)
+	r.LocalPath = dcl.FlattenString(m["localPath"])
+	r.AllowInsecure = dcl.FlattenBool(m["allowInsecure"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+	if v := f.Sha256Checksum; !dcl.IsEmptyValueIndirect(v) {
+		m["sha256Checksum"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+	r.Sha256Checksum = dcl.FlattenString(m["sha256Checksum"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Bucket; !dcl.IsEmptyValueIndirect(v) {
+		m["bucket"] = v
+	}
+	if v := f.Object; !dcl.IsEmptyValueIndirect(v) {
+		m["object"] = v
+	}
+	if v := f.Generation; !dcl.IsEmptyValueIndirect(v) {
+		m["generation"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs
+	}
+	r.Bucket = dcl.FlattenString(m["bucket"])
+	r.Object = dcl.FlattenString(m["object"])
+	r.Generation = dcl.FlattenInteger(m["generation"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8095,14 +11950,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *C
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8115,7 +11970,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository{}
@@ -8127,7 +11982,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8135,7 +11990,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryMap(c *
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository{}
@@ -8147,7 +12002,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8155,28 +12010,28 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositorySlice(c
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, f.Apt); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, f.Apt, res); err != nil {
 		return nil, fmt.Errorf("error expanding Apt into apt: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["apt"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, f.Yum); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, f.Yum, res); err != nil {
 		return nil, fmt.Errorf("error expanding Yum into yum: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["yum"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, f.Zypper); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, f.Zypper, res); err != nil {
 		return nil, fmt.Errorf("error expanding Zypper into zypper: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["zypper"] = v
 	}
-	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, f.Goo); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, f.Goo, res); err != nil {
 		return nil, fmt.Errorf("error expanding Goo into goo: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["goo"] = v
@@ -8187,7 +12042,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c *Clie
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8198,24 +12053,24 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository(c *Cli
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository
 	}
-	r.Apt = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, m["apt"])
-	r.Yum = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, m["yum"])
-	r.Zypper = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, m["zypper"])
-	r.Goo = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, m["goo"])
+	r.Apt = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, m["apt"], res)
+	r.Yum = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, m["yum"], res)
+	r.Zypper = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, m["zypper"], res)
+	r.Goo = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, m["goo"], res)
 
 	return r
 }
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8229,14 +12084,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(c
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8249,7 +12104,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt{}
@@ -8261,7 +12116,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8269,7 +12124,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptMap(
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt{}
@@ -8281,7 +12136,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlic
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8289,7 +12144,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptSlic
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8316,7 +12171,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c *C
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8338,14 +12193,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryApt(c *
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8359,14 +12214,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(c
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8379,7 +12234,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum{}
@@ -8391,7 +12246,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8399,7 +12254,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumMap(
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum{}
@@ -8411,7 +12266,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlic
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8419,7 +12274,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumSlic
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8443,7 +12298,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c *C
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8464,14 +12319,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYum(c *
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8485,14 +12340,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMa
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8505,7 +12360,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSl
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper{}
@@ -8517,7 +12372,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperM
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8525,7 +12380,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperM
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper{}
@@ -8537,7 +12392,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperS
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8545,7 +12400,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperS
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8569,7 +12424,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8590,14 +12445,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypper(
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8611,14 +12466,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(c
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8631,7 +12486,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo{}
@@ -8643,7 +12498,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8651,7 +12506,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooMap(
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo{}
@@ -8663,7 +12518,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlic
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8671,7 +12526,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooSlic
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8689,7 +12544,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c *C
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8708,14 +12563,14 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGoo(c *
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8729,14 +12584,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client,
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8749,7 +12604,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Clien
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec{}
@@ -8761,7 +12616,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8769,7 +12624,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecMap(c *Client
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec{}
@@ -8781,7 +12636,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Clie
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8789,18 +12644,18 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecSlice(c *Clie
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentExec(c, f.Validate); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, f.Validate, res); err != nil {
 		return nil, fmt.Errorf("error expanding Validate into validate: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["validate"] = v
 	}
-	if v, err := expandOSPolicyAssignmentExec(c, f.Enforce); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, f.Enforce, res); err != nil {
 		return nil, fmt.Errorf("error expanding Enforce into enforce: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["enforce"] = v
@@ -8811,7 +12666,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *Client, f 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8822,22 +12677,22 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec(c *Client, i
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec
 	}
-	r.Validate = flattenOSPolicyAssignmentExec(c, m["validate"])
-	r.Enforce = flattenOSPolicyAssignmentExec(c, m["enforce"])
+	r.Validate = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, m["validate"], res)
+	r.Enforce = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, m["enforce"], res)
 
 	return r
 }
 
-// expandOSPolicyAssignmentExecMap expands the contents of OSPolicyAssignmentExec into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate into a JSON
 // request object.
-func expandOSPolicyAssignmentExecMap(c *Client, f map[string]OSPolicyAssignmentExec) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentExec(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8849,16 +12704,16 @@ func expandOSPolicyAssignmentExecMap(c *Client, f map[string]OSPolicyAssignmentE
 	return items, nil
 }
 
-// expandOSPolicyAssignmentExecSlice expands the contents of OSPolicyAssignmentExec into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate into a JSON
 // request object.
-func expandOSPolicyAssignmentExecSlice(c *Client, f []OSPolicyAssignmentExec) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentExec(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8869,55 +12724,55 @@ func expandOSPolicyAssignmentExecSlice(c *Client, f []OSPolicyAssignmentExec) ([
 	return items, nil
 }
 
-// flattenOSPolicyAssignmentExecMap flattens the contents of OSPolicyAssignmentExec from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate from a JSON
 // response object.
-func flattenOSPolicyAssignmentExecMap(c *Client, i interface{}) map[string]OSPolicyAssignmentExec {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 	a, ok := i.(map[string]interface{})
 	if !ok {
-		return map[string]OSPolicyAssignmentExec{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
 	}
 
 	if len(a) == 0 {
-		return map[string]OSPolicyAssignmentExec{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
 	}
 
-	items := make(map[string]OSPolicyAssignmentExec)
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentExec(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, item.(map[string]interface{}), res)
 	}
 
 	return items
 }
 
-// flattenOSPolicyAssignmentExecSlice flattens the contents of OSPolicyAssignmentExec from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate from a JSON
 // response object.
-func flattenOSPolicyAssignmentExecSlice(c *Client, i interface{}) []OSPolicyAssignmentExec {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 	a, ok := i.([]interface{})
 	if !ok {
-		return []OSPolicyAssignmentExec{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
 	}
 
 	if len(a) == 0 {
-		return []OSPolicyAssignmentExec{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
 	}
 
-	items := make([]OSPolicyAssignmentExec, 0, len(a))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentExec(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c, item.(map[string]interface{}), res))
 	}
 
 	return items
 }
 
-// expandOSPolicyAssignmentExec expands an instance of OSPolicyAssignmentExec into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate into a JSON
 // request object.
-func expandOSPolicyAssignmentExec(c *Client, f *OSPolicyAssignmentExec) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentFile(c, f.File); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, f.File, res); err != nil {
 		return nil, fmt.Errorf("error expanding File into file: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["file"] = v
@@ -8938,38 +12793,910 @@ func expandOSPolicyAssignmentExec(c *Client, f *OSPolicyAssignmentExec) (map[str
 	return m, nil
 }
 
-// flattenOSPolicyAssignmentExec flattens an instance of OSPolicyAssignmentExec from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate from a JSON
 // response object.
-func flattenOSPolicyAssignmentExec(c *Client, i interface{}) *OSPolicyAssignmentExec {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
 	}
 
-	r := &OSPolicyAssignmentExec{}
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
 
 	if dcl.IsEmptyValueIndirect(i) {
-		return EmptyOSPolicyAssignmentExec
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate
 	}
-	r.File = flattenOSPolicyAssignmentFile(c, m["file"])
+	r.File = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, m["file"], res)
 	r.Script = dcl.FlattenString(m["script"])
 	r.Args = dcl.FlattenStringSlice(m["args"])
-	r.Interpreter = flattenOSPolicyAssignmentExecInterpreterEnum(m["interpreter"])
+	r.Interpreter = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum(m["interpreter"])
 	r.OutputFilePath = dcl.FlattenString(m["outputFilePath"])
 
 	return r
 }
 
-// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, f.Remote, res); err != nil {
+		return nil, fmt.Errorf("error expanding Remote into remote: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["remote"] = v
+	}
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, f.Gcs, res); err != nil {
+		return nil, fmt.Errorf("error expanding Gcs into gcs: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["gcs"] = v
+	}
+	if v := f.LocalPath; !dcl.IsEmptyValueIndirect(v) {
+		m["localPath"] = v
+	}
+	if v := f.AllowInsecure; !dcl.IsEmptyValueIndirect(v) {
+		m["allowInsecure"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile
+	}
+	r.Remote = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, m["remote"], res)
+	r.Gcs = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, m["gcs"], res)
+	r.LocalPath = dcl.FlattenString(m["localPath"])
+	r.AllowInsecure = dcl.FlattenBool(m["allowInsecure"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+	if v := f.Sha256Checksum; !dcl.IsEmptyValueIndirect(v) {
+		m["sha256Checksum"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+	r.Sha256Checksum = dcl.FlattenString(m["sha256Checksum"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Bucket; !dcl.IsEmptyValueIndirect(v) {
+		m["bucket"] = v
+	}
+	if v := f.Object; !dcl.IsEmptyValueIndirect(v) {
+		m["object"] = v
+	}
+	if v := f.Generation; !dcl.IsEmptyValueIndirect(v) {
+		m["generation"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs
+	}
+	r.Bucket = dcl.FlattenString(m["bucket"])
+	r.Object = dcl.FlattenString(m["object"])
+	r.Generation = dcl.FlattenInteger(m["generation"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, f.File, res); err != nil {
+		return nil, fmt.Errorf("error expanding File into file: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["file"] = v
+	}
+	if v := f.Script; !dcl.IsEmptyValueIndirect(v) {
+		m["script"] = v
+	}
+	if v := f.Args; v != nil {
+		m["args"] = v
+	}
+	if v := f.Interpreter; !dcl.IsEmptyValueIndirect(v) {
+		m["interpreter"] = v
+	}
+	if v := f.OutputFilePath; !dcl.IsEmptyValueIndirect(v) {
+		m["outputFilePath"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce
+	}
+	r.File = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, m["file"], res)
+	r.Script = dcl.FlattenString(m["script"])
+	r.Args = dcl.FlattenStringSlice(m["args"])
+	r.Interpreter = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum(m["interpreter"])
+	r.OutputFilePath = dcl.FlattenString(m["outputFilePath"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, f.Remote, res); err != nil {
+		return nil, fmt.Errorf("error expanding Remote into remote: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["remote"] = v
+	}
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, f.Gcs, res); err != nil {
+		return nil, fmt.Errorf("error expanding Gcs into gcs: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["gcs"] = v
+	}
+	if v := f.LocalPath; !dcl.IsEmptyValueIndirect(v) {
+		m["localPath"] = v
+	}
+	if v := f.AllowInsecure; !dcl.IsEmptyValueIndirect(v) {
+		m["allowInsecure"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile
+	}
+	r.Remote = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, m["remote"], res)
+	r.Gcs = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, m["gcs"], res)
+	r.LocalPath = dcl.FlattenString(m["localPath"])
+	r.AllowInsecure = dcl.FlattenBool(m["allowInsecure"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+	if v := f.Sha256Checksum; !dcl.IsEmptyValueIndirect(v) {
+		m["sha256Checksum"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+	r.Sha256Checksum = dcl.FlattenString(m["sha256Checksum"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Bucket; !dcl.IsEmptyValueIndirect(v) {
+		m["bucket"] = v
+	}
+	if v := f.Object; !dcl.IsEmptyValueIndirect(v) {
+		m["object"] = v
+	}
+	if v := f.Generation; !dcl.IsEmptyValueIndirect(v) {
+		m["generation"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs
+	}
+	r.Bucket = dcl.FlattenString(m["bucket"])
+	r.Object = dcl.FlattenString(m["object"])
+	r.Generation = dcl.FlattenInteger(m["generation"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8983,14 +13710,14 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client,
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9003,7 +13730,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Clien
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile{}
@@ -9015,7 +13742,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client
 
 	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9023,7 +13750,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileMap(c *Client
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile{}
@@ -9035,7 +13762,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Clie
 
 	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9043,13 +13770,13 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileSlice(c *Clie
 
 // expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile into a JSON
 // request object.
-func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentFile(c, f.File); err != nil {
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, f.File, res); err != nil {
 		return nil, fmt.Errorf("error expanding File into file: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["file"] = v
@@ -9069,7 +13796,7 @@ func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, f 
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9080,7 +13807,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, i
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile
 	}
-	r.File = flattenOSPolicyAssignmentFile(c, m["file"])
+	r.File = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, m["file"], res)
 	r.Content = dcl.FlattenString(m["content"])
 	r.Path = dcl.FlattenString(m["path"])
 	r.State = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum(m["state"])
@@ -9089,16 +13816,386 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile(c *Client, i
 	return r
 }
 
-// expandOSPolicyAssignmentInstanceFilterMap expands the contents of OSPolicyAssignmentInstanceFilter into a JSON
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilter) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilter(c, &item)
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, f.Remote, res); err != nil {
+		return nil, fmt.Errorf("error expanding Remote into remote: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["remote"] = v
+	}
+	if v, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, f.Gcs, res); err != nil {
+		return nil, fmt.Errorf("error expanding Gcs into gcs: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["gcs"] = v
+	}
+	if v := f.LocalPath; !dcl.IsEmptyValueIndirect(v) {
+		m["localPath"] = v
+	}
+	if v := f.AllowInsecure; !dcl.IsEmptyValueIndirect(v) {
+		m["allowInsecure"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile
+	}
+	r.Remote = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, m["remote"], res)
+	r.Gcs = flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, m["gcs"], res)
+	r.LocalPath = dcl.FlattenString(m["localPath"])
+	r.AllowInsecure = dcl.FlattenBool(m["allowInsecure"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Uri; !dcl.IsEmptyValueIndirect(v) {
+		m["uri"] = v
+	}
+	if v := f.Sha256Checksum; !dcl.IsEmptyValueIndirect(v) {
+		m["sha256Checksum"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote
+	}
+	r.Uri = dcl.FlattenString(m["uri"])
+	r.Sha256Checksum = dcl.FlattenString(m["sha256Checksum"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsMap expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsMap(c *Client, f map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSlice expands the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSlice(c *Client, f []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs expands an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs into a JSON
+// request object.
+func expandOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c *Client, f *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Bucket; !dcl.IsEmptyValueIndirect(v) {
+		m["bucket"] = v
+	}
+	if v := f.Object; !dcl.IsEmptyValueIndirect(v) {
+		m["object"] = v
+	}
+	if v := f.Generation; !dcl.IsEmptyValueIndirect(v) {
+		m["generation"] = v
+	}
+
+	return m, nil
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs flattens an instance of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs
+	}
+	r.Bucket = dcl.FlattenString(m["bucket"])
+	r.Object = dcl.FlattenString(m["object"])
+	r.Generation = dcl.FlattenInteger(m["generation"])
+
+	return r
+}
+
+// expandOSPolicyAssignmentInstanceFilterMap expands the contents of OSPolicyAssignmentInstanceFilter into a JSON
+// request object.
+func expandOSPolicyAssignmentInstanceFilterMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilter, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandOSPolicyAssignmentInstanceFilter(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9112,14 +14209,14 @@ func expandOSPolicyAssignmentInstanceFilterMap(c *Client, f map[string]OSPolicyA
 
 // expandOSPolicyAssignmentInstanceFilterSlice expands the contents of OSPolicyAssignmentInstanceFilter into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterSlice(c *Client, f []OSPolicyAssignmentInstanceFilter) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterSlice(c *Client, f []OSPolicyAssignmentInstanceFilter, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilter(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilter(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9132,7 +14229,7 @@ func expandOSPolicyAssignmentInstanceFilterSlice(c *Client, f []OSPolicyAssignme
 
 // flattenOSPolicyAssignmentInstanceFilterMap flattens the contents of OSPolicyAssignmentInstanceFilter from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterMap(c *Client, i interface{}) map[string]OSPolicyAssignmentInstanceFilter {
+func flattenOSPolicyAssignmentInstanceFilterMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentInstanceFilter {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentInstanceFilter{}
@@ -9144,7 +14241,7 @@ func flattenOSPolicyAssignmentInstanceFilterMap(c *Client, i interface{}) map[st
 
 	items := make(map[string]OSPolicyAssignmentInstanceFilter)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentInstanceFilter(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentInstanceFilter(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9152,7 +14249,7 @@ func flattenOSPolicyAssignmentInstanceFilterMap(c *Client, i interface{}) map[st
 
 // flattenOSPolicyAssignmentInstanceFilterSlice flattens the contents of OSPolicyAssignmentInstanceFilter from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterSlice(c *Client, i interface{}) []OSPolicyAssignmentInstanceFilter {
+func flattenOSPolicyAssignmentInstanceFilterSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentInstanceFilter {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentInstanceFilter{}
@@ -9164,7 +14261,7 @@ func flattenOSPolicyAssignmentInstanceFilterSlice(c *Client, i interface{}) []OS
 
 	items := make([]OSPolicyAssignmentInstanceFilter, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentInstanceFilter(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentInstanceFilter(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9172,7 +14269,7 @@ func flattenOSPolicyAssignmentInstanceFilterSlice(c *Client, i interface{}) []OS
 
 // expandOSPolicyAssignmentInstanceFilter expands an instance of OSPolicyAssignmentInstanceFilter into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilter(c *Client, f *OSPolicyAssignmentInstanceFilter) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilter(c *Client, f *OSPolicyAssignmentInstanceFilter, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -9181,17 +14278,17 @@ func expandOSPolicyAssignmentInstanceFilter(c *Client, f *OSPolicyAssignmentInst
 	if v := f.All; v != nil {
 		m["all"] = v
 	}
-	if v, err := expandOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c, f.InclusionLabels); err != nil {
+	if v, err := expandOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c, f.InclusionLabels, res); err != nil {
 		return nil, fmt.Errorf("error expanding InclusionLabels into inclusionLabels: %w", err)
 	} else if v != nil {
 		m["inclusionLabels"] = v
 	}
-	if v, err := expandOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c, f.ExclusionLabels); err != nil {
+	if v, err := expandOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c, f.ExclusionLabels, res); err != nil {
 		return nil, fmt.Errorf("error expanding ExclusionLabels into exclusionLabels: %w", err)
 	} else if v != nil {
 		m["exclusionLabels"] = v
 	}
-	if v, err := expandOSPolicyAssignmentInstanceFilterInventoriesSlice(c, f.Inventories); err != nil {
+	if v, err := expandOSPolicyAssignmentInstanceFilterInventoriesSlice(c, f.Inventories, res); err != nil {
 		return nil, fmt.Errorf("error expanding Inventories into inventories: %w", err)
 	} else if v != nil {
 		m["inventories"] = v
@@ -9202,7 +14299,7 @@ func expandOSPolicyAssignmentInstanceFilter(c *Client, f *OSPolicyAssignmentInst
 
 // flattenOSPolicyAssignmentInstanceFilter flattens an instance of OSPolicyAssignmentInstanceFilter from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilter(c *Client, i interface{}) *OSPolicyAssignmentInstanceFilter {
+func flattenOSPolicyAssignmentInstanceFilter(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentInstanceFilter {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9214,23 +14311,23 @@ func flattenOSPolicyAssignmentInstanceFilter(c *Client, i interface{}) *OSPolicy
 		return EmptyOSPolicyAssignmentInstanceFilter
 	}
 	r.All = dcl.FlattenBool(m["all"])
-	r.InclusionLabels = flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c, m["inclusionLabels"])
-	r.ExclusionLabels = flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c, m["exclusionLabels"])
-	r.Inventories = flattenOSPolicyAssignmentInstanceFilterInventoriesSlice(c, m["inventories"])
+	r.InclusionLabels = flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c, m["inclusionLabels"], res)
+	r.ExclusionLabels = flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c, m["exclusionLabels"], res)
+	r.Inventories = flattenOSPolicyAssignmentInstanceFilterInventoriesSlice(c, m["inventories"], res)
 
 	return r
 }
 
 // expandOSPolicyAssignmentInstanceFilterInclusionLabelsMap expands the contents of OSPolicyAssignmentInstanceFilterInclusionLabels into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilterInclusionLabels) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilterInclusionLabels, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilterInclusionLabels(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilterInclusionLabels(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9244,14 +14341,14 @@ func expandOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, f map[s
 
 // expandOSPolicyAssignmentInstanceFilterInclusionLabelsSlice expands the contents of OSPolicyAssignmentInstanceFilterInclusionLabels into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, f []OSPolicyAssignmentInstanceFilterInclusionLabels) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, f []OSPolicyAssignmentInstanceFilterInclusionLabels, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilterInclusionLabels(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilterInclusionLabels(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9264,7 +14361,7 @@ func expandOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, f []O
 
 // flattenOSPolicyAssignmentInstanceFilterInclusionLabelsMap flattens the contents of OSPolicyAssignmentInstanceFilterInclusionLabels from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, i interface{}) map[string]OSPolicyAssignmentInstanceFilterInclusionLabels {
+func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentInstanceFilterInclusionLabels {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentInstanceFilterInclusionLabels{}
@@ -9276,7 +14373,7 @@ func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, i inte
 
 	items := make(map[string]OSPolicyAssignmentInstanceFilterInclusionLabels)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9284,7 +14381,7 @@ func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsMap(c *Client, i inte
 
 // flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice flattens the contents of OSPolicyAssignmentInstanceFilterInclusionLabels from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, i interface{}) []OSPolicyAssignmentInstanceFilterInclusionLabels {
+func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentInstanceFilterInclusionLabels {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentInstanceFilterInclusionLabels{}
@@ -9296,7 +14393,7 @@ func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, i in
 
 	items := make([]OSPolicyAssignmentInstanceFilterInclusionLabels, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9304,8 +14401,8 @@ func flattenOSPolicyAssignmentInstanceFilterInclusionLabelsSlice(c *Client, i in
 
 // expandOSPolicyAssignmentInstanceFilterInclusionLabels expands an instance of OSPolicyAssignmentInstanceFilterInclusionLabels into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, f *OSPolicyAssignmentInstanceFilterInclusionLabels) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, f *OSPolicyAssignmentInstanceFilterInclusionLabels, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -9319,7 +14416,7 @@ func expandOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, f *OSPolic
 
 // flattenOSPolicyAssignmentInstanceFilterInclusionLabels flattens an instance of OSPolicyAssignmentInstanceFilterInclusionLabels from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, i interface{}) *OSPolicyAssignmentInstanceFilterInclusionLabels {
+func flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentInstanceFilterInclusionLabels {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9337,14 +14434,14 @@ func flattenOSPolicyAssignmentInstanceFilterInclusionLabels(c *Client, i interfa
 
 // expandOSPolicyAssignmentInstanceFilterExclusionLabelsMap expands the contents of OSPolicyAssignmentInstanceFilterExclusionLabels into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilterExclusionLabels) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilterExclusionLabels, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilterExclusionLabels(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilterExclusionLabels(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9358,14 +14455,14 @@ func expandOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, f map[s
 
 // expandOSPolicyAssignmentInstanceFilterExclusionLabelsSlice expands the contents of OSPolicyAssignmentInstanceFilterExclusionLabels into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, f []OSPolicyAssignmentInstanceFilterExclusionLabels) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, f []OSPolicyAssignmentInstanceFilterExclusionLabels, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilterExclusionLabels(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilterExclusionLabels(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9378,7 +14475,7 @@ func expandOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, f []O
 
 // flattenOSPolicyAssignmentInstanceFilterExclusionLabelsMap flattens the contents of OSPolicyAssignmentInstanceFilterExclusionLabels from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, i interface{}) map[string]OSPolicyAssignmentInstanceFilterExclusionLabels {
+func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentInstanceFilterExclusionLabels {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentInstanceFilterExclusionLabels{}
@@ -9390,7 +14487,7 @@ func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, i inte
 
 	items := make(map[string]OSPolicyAssignmentInstanceFilterExclusionLabels)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9398,7 +14495,7 @@ func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsMap(c *Client, i inte
 
 // flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice flattens the contents of OSPolicyAssignmentInstanceFilterExclusionLabels from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, i interface{}) []OSPolicyAssignmentInstanceFilterExclusionLabels {
+func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentInstanceFilterExclusionLabels {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentInstanceFilterExclusionLabels{}
@@ -9410,7 +14507,7 @@ func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, i in
 
 	items := make([]OSPolicyAssignmentInstanceFilterExclusionLabels, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9418,8 +14515,8 @@ func flattenOSPolicyAssignmentInstanceFilterExclusionLabelsSlice(c *Client, i in
 
 // expandOSPolicyAssignmentInstanceFilterExclusionLabels expands an instance of OSPolicyAssignmentInstanceFilterExclusionLabels into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, f *OSPolicyAssignmentInstanceFilterExclusionLabels) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, f *OSPolicyAssignmentInstanceFilterExclusionLabels, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -9433,7 +14530,7 @@ func expandOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, f *OSPolic
 
 // flattenOSPolicyAssignmentInstanceFilterExclusionLabels flattens an instance of OSPolicyAssignmentInstanceFilterExclusionLabels from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, i interface{}) *OSPolicyAssignmentInstanceFilterExclusionLabels {
+func flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentInstanceFilterExclusionLabels {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9451,14 +14548,14 @@ func flattenOSPolicyAssignmentInstanceFilterExclusionLabels(c *Client, i interfa
 
 // expandOSPolicyAssignmentInstanceFilterInventoriesMap expands the contents of OSPolicyAssignmentInstanceFilterInventories into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilterInventories) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, f map[string]OSPolicyAssignmentInstanceFilterInventories, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilterInventories(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilterInventories(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9472,14 +14569,14 @@ func expandOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, f map[strin
 
 // expandOSPolicyAssignmentInstanceFilterInventoriesSlice expands the contents of OSPolicyAssignmentInstanceFilterInventories into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, f []OSPolicyAssignmentInstanceFilterInventories) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, f []OSPolicyAssignmentInstanceFilterInventories, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentInstanceFilterInventories(c, &item)
+		i, err := expandOSPolicyAssignmentInstanceFilterInventories(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9492,7 +14589,7 @@ func expandOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, f []OSPol
 
 // flattenOSPolicyAssignmentInstanceFilterInventoriesMap flattens the contents of OSPolicyAssignmentInstanceFilterInventories from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, i interface{}) map[string]OSPolicyAssignmentInstanceFilterInventories {
+func flattenOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentInstanceFilterInventories {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentInstanceFilterInventories{}
@@ -9504,7 +14601,7 @@ func flattenOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, i interfac
 
 	items := make(map[string]OSPolicyAssignmentInstanceFilterInventories)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentInstanceFilterInventories(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentInstanceFilterInventories(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9512,7 +14609,7 @@ func flattenOSPolicyAssignmentInstanceFilterInventoriesMap(c *Client, i interfac
 
 // flattenOSPolicyAssignmentInstanceFilterInventoriesSlice flattens the contents of OSPolicyAssignmentInstanceFilterInventories from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, i interface{}) []OSPolicyAssignmentInstanceFilterInventories {
+func flattenOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentInstanceFilterInventories {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentInstanceFilterInventories{}
@@ -9524,7 +14621,7 @@ func flattenOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, i interf
 
 	items := make([]OSPolicyAssignmentInstanceFilterInventories, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentInstanceFilterInventories(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentInstanceFilterInventories(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9532,8 +14629,8 @@ func flattenOSPolicyAssignmentInstanceFilterInventoriesSlice(c *Client, i interf
 
 // expandOSPolicyAssignmentInstanceFilterInventories expands an instance of OSPolicyAssignmentInstanceFilterInventories into a JSON
 // request object.
-func expandOSPolicyAssignmentInstanceFilterInventories(c *Client, f *OSPolicyAssignmentInstanceFilterInventories) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandOSPolicyAssignmentInstanceFilterInventories(c *Client, f *OSPolicyAssignmentInstanceFilterInventories, res *OSPolicyAssignment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -9550,7 +14647,7 @@ func expandOSPolicyAssignmentInstanceFilterInventories(c *Client, f *OSPolicyAss
 
 // flattenOSPolicyAssignmentInstanceFilterInventories flattens an instance of OSPolicyAssignmentInstanceFilterInventories from a JSON
 // response object.
-func flattenOSPolicyAssignmentInstanceFilterInventories(c *Client, i interface{}) *OSPolicyAssignmentInstanceFilterInventories {
+func flattenOSPolicyAssignmentInstanceFilterInventories(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentInstanceFilterInventories {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9569,14 +14666,14 @@ func flattenOSPolicyAssignmentInstanceFilterInventories(c *Client, i interface{}
 
 // expandOSPolicyAssignmentRolloutMap expands the contents of OSPolicyAssignmentRollout into a JSON
 // request object.
-func expandOSPolicyAssignmentRolloutMap(c *Client, f map[string]OSPolicyAssignmentRollout) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentRolloutMap(c *Client, f map[string]OSPolicyAssignmentRollout, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentRollout(c, &item)
+		i, err := expandOSPolicyAssignmentRollout(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9590,14 +14687,14 @@ func expandOSPolicyAssignmentRolloutMap(c *Client, f map[string]OSPolicyAssignme
 
 // expandOSPolicyAssignmentRolloutSlice expands the contents of OSPolicyAssignmentRollout into a JSON
 // request object.
-func expandOSPolicyAssignmentRolloutSlice(c *Client, f []OSPolicyAssignmentRollout) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentRolloutSlice(c *Client, f []OSPolicyAssignmentRollout, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentRollout(c, &item)
+		i, err := expandOSPolicyAssignmentRollout(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9610,7 +14707,7 @@ func expandOSPolicyAssignmentRolloutSlice(c *Client, f []OSPolicyAssignmentRollo
 
 // flattenOSPolicyAssignmentRolloutMap flattens the contents of OSPolicyAssignmentRollout from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutMap(c *Client, i interface{}) map[string]OSPolicyAssignmentRollout {
+func flattenOSPolicyAssignmentRolloutMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentRollout {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentRollout{}
@@ -9622,7 +14719,7 @@ func flattenOSPolicyAssignmentRolloutMap(c *Client, i interface{}) map[string]OS
 
 	items := make(map[string]OSPolicyAssignmentRollout)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentRollout(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentRollout(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9630,7 +14727,7 @@ func flattenOSPolicyAssignmentRolloutMap(c *Client, i interface{}) map[string]OS
 
 // flattenOSPolicyAssignmentRolloutSlice flattens the contents of OSPolicyAssignmentRollout from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutSlice(c *Client, i interface{}) []OSPolicyAssignmentRollout {
+func flattenOSPolicyAssignmentRolloutSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentRollout {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentRollout{}
@@ -9642,7 +14739,7 @@ func flattenOSPolicyAssignmentRolloutSlice(c *Client, i interface{}) []OSPolicyA
 
 	items := make([]OSPolicyAssignmentRollout, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentRollout(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentRollout(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9650,13 +14747,13 @@ func flattenOSPolicyAssignmentRolloutSlice(c *Client, i interface{}) []OSPolicyA
 
 // expandOSPolicyAssignmentRollout expands an instance of OSPolicyAssignmentRollout into a JSON
 // request object.
-func expandOSPolicyAssignmentRollout(c *Client, f *OSPolicyAssignmentRollout) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentRollout(c *Client, f *OSPolicyAssignmentRollout, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandOSPolicyAssignmentRolloutDisruptionBudget(c, f.DisruptionBudget); err != nil {
+	if v, err := expandOSPolicyAssignmentRolloutDisruptionBudget(c, f.DisruptionBudget, res); err != nil {
 		return nil, fmt.Errorf("error expanding DisruptionBudget into disruptionBudget: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["disruptionBudget"] = v
@@ -9670,7 +14767,7 @@ func expandOSPolicyAssignmentRollout(c *Client, f *OSPolicyAssignmentRollout) (m
 
 // flattenOSPolicyAssignmentRollout flattens an instance of OSPolicyAssignmentRollout from a JSON
 // response object.
-func flattenOSPolicyAssignmentRollout(c *Client, i interface{}) *OSPolicyAssignmentRollout {
+func flattenOSPolicyAssignmentRollout(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentRollout {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9681,7 +14778,7 @@ func flattenOSPolicyAssignmentRollout(c *Client, i interface{}) *OSPolicyAssignm
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyOSPolicyAssignmentRollout
 	}
-	r.DisruptionBudget = flattenOSPolicyAssignmentRolloutDisruptionBudget(c, m["disruptionBudget"])
+	r.DisruptionBudget = flattenOSPolicyAssignmentRolloutDisruptionBudget(c, m["disruptionBudget"], res)
 	r.MinWaitDuration = dcl.FlattenString(m["minWaitDuration"])
 
 	return r
@@ -9689,14 +14786,14 @@ func flattenOSPolicyAssignmentRollout(c *Client, i interface{}) *OSPolicyAssignm
 
 // expandOSPolicyAssignmentRolloutDisruptionBudgetMap expands the contents of OSPolicyAssignmentRolloutDisruptionBudget into a JSON
 // request object.
-func expandOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, f map[string]OSPolicyAssignmentRolloutDisruptionBudget) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, f map[string]OSPolicyAssignmentRolloutDisruptionBudget, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandOSPolicyAssignmentRolloutDisruptionBudget(c, &item)
+		i, err := expandOSPolicyAssignmentRolloutDisruptionBudget(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9710,14 +14807,14 @@ func expandOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, f map[string]
 
 // expandOSPolicyAssignmentRolloutDisruptionBudgetSlice expands the contents of OSPolicyAssignmentRolloutDisruptionBudget into a JSON
 // request object.
-func expandOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, f []OSPolicyAssignmentRolloutDisruptionBudget) ([]map[string]interface{}, error) {
+func expandOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, f []OSPolicyAssignmentRolloutDisruptionBudget, res *OSPolicyAssignment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandOSPolicyAssignmentRolloutDisruptionBudget(c, &item)
+		i, err := expandOSPolicyAssignmentRolloutDisruptionBudget(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9730,7 +14827,7 @@ func expandOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, f []OSPolic
 
 // flattenOSPolicyAssignmentRolloutDisruptionBudgetMap flattens the contents of OSPolicyAssignmentRolloutDisruptionBudget from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, i interface{}) map[string]OSPolicyAssignmentRolloutDisruptionBudget {
+func flattenOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentRolloutDisruptionBudget {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentRolloutDisruptionBudget{}
@@ -9742,7 +14839,7 @@ func flattenOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, i interface{
 
 	items := make(map[string]OSPolicyAssignmentRolloutDisruptionBudget)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentRolloutDisruptionBudget(c, item.(map[string]interface{}))
+		items[k] = *flattenOSPolicyAssignmentRolloutDisruptionBudget(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9750,7 +14847,7 @@ func flattenOSPolicyAssignmentRolloutDisruptionBudgetMap(c *Client, i interface{
 
 // flattenOSPolicyAssignmentRolloutDisruptionBudgetSlice flattens the contents of OSPolicyAssignmentRolloutDisruptionBudget from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, i interface{}) []OSPolicyAssignmentRolloutDisruptionBudget {
+func flattenOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentRolloutDisruptionBudget {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentRolloutDisruptionBudget{}
@@ -9762,7 +14859,7 @@ func flattenOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, i interfac
 
 	items := make([]OSPolicyAssignmentRolloutDisruptionBudget, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentRolloutDisruptionBudget(c, item.(map[string]interface{})))
+		items = append(items, *flattenOSPolicyAssignmentRolloutDisruptionBudget(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9770,7 +14867,7 @@ func flattenOSPolicyAssignmentRolloutDisruptionBudgetSlice(c *Client, i interfac
 
 // expandOSPolicyAssignmentRolloutDisruptionBudget expands an instance of OSPolicyAssignmentRolloutDisruptionBudget into a JSON
 // request object.
-func expandOSPolicyAssignmentRolloutDisruptionBudget(c *Client, f *OSPolicyAssignmentRolloutDisruptionBudget) (map[string]interface{}, error) {
+func expandOSPolicyAssignmentRolloutDisruptionBudget(c *Client, f *OSPolicyAssignmentRolloutDisruptionBudget, res *OSPolicyAssignment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -9788,7 +14885,7 @@ func expandOSPolicyAssignmentRolloutDisruptionBudget(c *Client, f *OSPolicyAssig
 
 // flattenOSPolicyAssignmentRolloutDisruptionBudget flattens an instance of OSPolicyAssignmentRolloutDisruptionBudget from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutDisruptionBudget(c *Client, i interface{}) *OSPolicyAssignmentRolloutDisruptionBudget {
+func flattenOSPolicyAssignmentRolloutDisruptionBudget(c *Client, i interface{}, res *OSPolicyAssignment) *OSPolicyAssignmentRolloutDisruptionBudget {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9807,7 +14904,7 @@ func flattenOSPolicyAssignmentRolloutDisruptionBudget(c *Client, i interface{}) 
 
 // flattenOSPolicyAssignmentOSPoliciesModeEnumMap flattens the contents of OSPolicyAssignmentOSPoliciesModeEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesModeEnumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesModeEnum {
+func flattenOSPolicyAssignmentOSPoliciesModeEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesModeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesModeEnum{}
@@ -9827,7 +14924,7 @@ func flattenOSPolicyAssignmentOSPoliciesModeEnumMap(c *Client, i interface{}) ma
 
 // flattenOSPolicyAssignmentOSPoliciesModeEnumSlice flattens the contents of OSPolicyAssignmentOSPoliciesModeEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesModeEnumSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesModeEnum {
+func flattenOSPolicyAssignmentOSPoliciesModeEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesModeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesModeEnum{}
@@ -9850,7 +14947,7 @@ func flattenOSPolicyAssignmentOSPoliciesModeEnumSlice(c *Client, i interface{}) 
 func flattenOSPolicyAssignmentOSPoliciesModeEnum(i interface{}) *OSPolicyAssignmentOSPoliciesModeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return OSPolicyAssignmentOSPoliciesModeEnumRef("")
+		return nil
 	}
 
 	return OSPolicyAssignmentOSPoliciesModeEnumRef(s)
@@ -9858,7 +14955,7 @@ func flattenOSPolicyAssignmentOSPoliciesModeEnum(i interface{}) *OSPolicyAssignm
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum{}
@@ -9878,7 +14975,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEn
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum{}
@@ -9901,7 +14998,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEn
 func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum(i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumRef("")
+		return nil
 	}
 
 	return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEnumRef(s)
@@ -9909,7 +15006,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDesiredStateEn
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum{}
@@ -9929,7 +15026,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArch
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum{}
@@ -9952,66 +15049,117 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArch
 func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum(i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumRef("")
+		return nil
 	}
 
 	return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptArchiveTypeEnumRef(s)
 }
 
-// flattenOSPolicyAssignmentExecInterpreterEnumMap flattens the contents of OSPolicyAssignmentExecInterpreterEnum from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentExecInterpreterEnumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentExecInterpreterEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
-		return map[string]OSPolicyAssignmentExecInterpreterEnum{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum{}
 	}
 
 	if len(a) == 0 {
-		return map[string]OSPolicyAssignmentExecInterpreterEnum{}
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum{}
 	}
 
-	items := make(map[string]OSPolicyAssignmentExecInterpreterEnum)
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum)
 	for k, item := range a {
-		items[k] = *flattenOSPolicyAssignmentExecInterpreterEnum(item.(interface{}))
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum(item.(interface{}))
 	}
 
 	return items
 }
 
-// flattenOSPolicyAssignmentExecInterpreterEnumSlice flattens the contents of OSPolicyAssignmentExecInterpreterEnum from a JSON
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentExecInterpreterEnumSlice(c *Client, i interface{}) []OSPolicyAssignmentExecInterpreterEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum {
 	a, ok := i.([]interface{})
 	if !ok {
-		return []OSPolicyAssignmentExecInterpreterEnum{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum{}
 	}
 
 	if len(a) == 0 {
-		return []OSPolicyAssignmentExecInterpreterEnum{}
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum{}
 	}
 
-	items := make([]OSPolicyAssignmentExecInterpreterEnum, 0, len(a))
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenOSPolicyAssignmentExecInterpreterEnum(item.(interface{})))
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum(item.(interface{})))
 	}
 
 	return items
 }
 
-// flattenOSPolicyAssignmentExecInterpreterEnum asserts that an interface is a string, and returns a
-// pointer to a *OSPolicyAssignmentExecInterpreterEnum with the same value as that string.
-func flattenOSPolicyAssignmentExecInterpreterEnum(i interface{}) *OSPolicyAssignmentExecInterpreterEnum {
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum asserts that an interface is a string, and returns a
+// pointer to a *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum with the same value as that string.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum(i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnum {
 	s, ok := i.(string)
 	if !ok {
-		return OSPolicyAssignmentExecInterpreterEnumRef("")
+		return nil
 	}
 
-	return OSPolicyAssignmentExecInterpreterEnumRef(s)
+	return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateInterpreterEnumRef(s)
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum{}
+	}
+
+	items := make(map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum)
+	for k, item := range a {
+		items[k] = *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum from a JSON
+// response object.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum{}
+	}
+
+	if len(a) == 0 {
+		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum{}
+	}
+
+	items := make([]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum asserts that an interface is a string, and returns a
+// pointer to a *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum with the same value as that string.
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum(i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceInterpreterEnumRef(s)
 }
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumMap flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum{}
@@ -10031,7 +15179,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumMap(
 
 // flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumSlice flattens the contents of OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumSlice(c *Client, i interface{}) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum {
+func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum{}
@@ -10054,7 +15202,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumSlic
 func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum(i interface{}) *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumRef("")
+		return nil
 	}
 
 	return OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnumRef(s)
@@ -10062,7 +15210,7 @@ func flattenOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileStateEnum(i i
 
 // flattenOSPolicyAssignmentRolloutStateEnumMap flattens the contents of OSPolicyAssignmentRolloutStateEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutStateEnumMap(c *Client, i interface{}) map[string]OSPolicyAssignmentRolloutStateEnum {
+func flattenOSPolicyAssignmentRolloutStateEnumMap(c *Client, i interface{}, res *OSPolicyAssignment) map[string]OSPolicyAssignmentRolloutStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]OSPolicyAssignmentRolloutStateEnum{}
@@ -10082,7 +15230,7 @@ func flattenOSPolicyAssignmentRolloutStateEnumMap(c *Client, i interface{}) map[
 
 // flattenOSPolicyAssignmentRolloutStateEnumSlice flattens the contents of OSPolicyAssignmentRolloutStateEnum from a JSON
 // response object.
-func flattenOSPolicyAssignmentRolloutStateEnumSlice(c *Client, i interface{}) []OSPolicyAssignmentRolloutStateEnum {
+func flattenOSPolicyAssignmentRolloutStateEnumSlice(c *Client, i interface{}, res *OSPolicyAssignment) []OSPolicyAssignmentRolloutStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []OSPolicyAssignmentRolloutStateEnum{}
@@ -10105,7 +15253,7 @@ func flattenOSPolicyAssignmentRolloutStateEnumSlice(c *Client, i interface{}) []
 func flattenOSPolicyAssignmentRolloutStateEnum(i interface{}) *OSPolicyAssignmentRolloutStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return OSPolicyAssignmentRolloutStateEnumRef("")
+		return nil
 	}
 
 	return OSPolicyAssignmentRolloutStateEnumRef(s)
@@ -10116,7 +15264,7 @@ func flattenOSPolicyAssignmentRolloutStateEnum(i interface{}) *OSPolicyAssignmen
 // identity).  This is useful in extracting the element from a List call.
 func (r *OSPolicyAssignment) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalOSPolicyAssignment(b, c)
+		cr, err := unmarshalOSPolicyAssignment(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -10157,6 +15305,7 @@ type oSPolicyAssignmentDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         oSPolicyAssignmentApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToOSPolicyAssignmentDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]oSPolicyAssignmentDiff, error) {
@@ -10176,7 +15325,8 @@ func convertFieldDiffsToOSPolicyAssignmentDiffs(config *dcl.Config, fds []*dcl.F
 	var diffs []oSPolicyAssignmentDiff
 	// For each operation name, create a oSPolicyAssignmentDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := oSPolicyAssignmentDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := oSPolicyAssignmentDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -10211,7 +15361,7 @@ func extractOSPolicyAssignmentFields(r *OSPolicyAssignment) error {
 	if err := extractOSPolicyAssignmentInstanceFilterFields(r, vInstanceFilter); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vInstanceFilter) {
+	if !dcl.IsEmptyValueIndirect(vInstanceFilter) {
 		r.InstanceFilter = vInstanceFilter
 	}
 	vRollout := r.Rollout
@@ -10222,7 +15372,7 @@ func extractOSPolicyAssignmentFields(r *OSPolicyAssignment) error {
 	if err := extractOSPolicyAssignmentRolloutFields(r, vRollout); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRollout) {
+	if !dcl.IsEmptyValueIndirect(vRollout) {
 		r.Rollout = vRollout
 	}
 	return nil
@@ -10245,7 +15395,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r *OSPolic
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r, vPkg); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPkg) {
+	if !dcl.IsEmptyValueIndirect(vPkg) {
 		o.Pkg = vPkg
 	}
 	vRepository := o.Repository
@@ -10256,7 +15406,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r *OSPolic
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(r, vRepository); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRepository) {
+	if !dcl.IsEmptyValueIndirect(vRepository) {
 		o.Repository = vRepository
 	}
 	vExec := o.Exec
@@ -10267,7 +15417,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r *OSPolic
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecFields(r, vExec); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExec) {
+	if !dcl.IsEmptyValueIndirect(vExec) {
 		o.Exec = vExec
 	}
 	vFile := o.File
@@ -10278,7 +15428,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r *OSPolic
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFields(r, vFile); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vFile) {
+	if !dcl.IsEmptyValueIndirect(vFile) {
 		o.File = vFile
 	}
 	return nil
@@ -10292,7 +15442,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptFields(r, vApt); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vApt) {
+	if !dcl.IsEmptyValueIndirect(vApt) {
 		o.Apt = vApt
 	}
 	vDeb := o.Deb
@@ -10303,7 +15453,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebFields(r, vDeb); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDeb) {
+	if !dcl.IsEmptyValueIndirect(vDeb) {
 		o.Deb = vDeb
 	}
 	vYum := o.Yum
@@ -10314,7 +15464,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumFields(r, vYum); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vYum) {
+	if !dcl.IsEmptyValueIndirect(vYum) {
 		o.Yum = vYum
 	}
 	vZypper := o.Zypper
@@ -10325,7 +15475,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperFields(r, vZypper); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vZypper) {
+	if !dcl.IsEmptyValueIndirect(vZypper) {
 		o.Zypper = vZypper
 	}
 	vRpm := o.Rpm
@@ -10336,7 +15486,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmFields(r, vRpm); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRpm) {
+	if !dcl.IsEmptyValueIndirect(vRpm) {
 		o.Rpm = vRpm
 	}
 	vGooget := o.Googet
@@ -10347,7 +15497,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetFields(r, vGooget); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vGooget) {
+	if !dcl.IsEmptyValueIndirect(vGooget) {
 		o.Googet = vGooget
 	}
 	vMsi := o.Msi
@@ -10358,7 +15508,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r *OSPo
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiFields(r, vMsi); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vMsi) {
+	if !dcl.IsEmptyValueIndirect(vMsi) {
 		o.Msi = vMsi
 	}
 	return nil
@@ -10367,39 +15517,48 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptFields(r *O
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vSource := o.Source
+	if vSource == nil {
+		// note: explicitly not the empty object.
+		vSource = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceFields(r, vSource); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSource) {
+		o.Source = vSource
+	}
 	return nil
 }
-func extractOSPolicyAssignmentFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentFile) error {
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource) error {
 	vRemote := o.Remote
 	if vRemote == nil {
 		// note: explicitly not the empty object.
-		vRemote = &OSPolicyAssignmentFileRemote{}
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 	}
-	if err := extractOSPolicyAssignmentFileRemoteFields(r, vRemote); err != nil {
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteFields(r, vRemote); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRemote) {
+	if !dcl.IsEmptyValueIndirect(vRemote) {
 		o.Remote = vRemote
 	}
 	vGcs := o.Gcs
 	if vGcs == nil {
 		// note: explicitly not the empty object.
-		vGcs = &OSPolicyAssignmentFileGcs{}
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 	}
-	if err := extractOSPolicyAssignmentFileGcsFields(r, vGcs); err != nil {
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsFields(r, vGcs); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vGcs) {
+	if !dcl.IsEmptyValueIndirect(vGcs) {
 		o.Gcs = vGcs
 	}
 	return nil
 }
-func extractOSPolicyAssignmentFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentFileRemote) error {
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote) error {
 	return nil
 }
-func extractOSPolicyAssignmentFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentFileGcs) error {
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs) error {
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum) error {
@@ -10409,16 +15568,96 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperFields(r
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vSource := o.Source
+	if vSource == nil {
+		// note: explicitly not the empty object.
+		vSource = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceFields(r, vSource); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSource) {
+		o.Source = vSource
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote) error {
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs) error {
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) error {
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vSource := o.Source
+	if vSource == nil {
+		// note: explicitly not the empty object.
+		vSource = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceFields(r, vSource); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSource) {
+		o.Source = vSource
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote) error {
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs) error {
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository) error {
@@ -10430,7 +15669,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptFields(r, vApt); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vApt) {
+	if !dcl.IsEmptyValueIndirect(vApt) {
 		o.Apt = vApt
 	}
 	vYum := o.Yum
@@ -10441,7 +15680,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumFields(r, vYum); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vYum) {
+	if !dcl.IsEmptyValueIndirect(vYum) {
 		o.Yum = vYum
 	}
 	vZypper := o.Zypper
@@ -10452,7 +15691,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperFields(r, vZypper); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vZypper) {
+	if !dcl.IsEmptyValueIndirect(vZypper) {
 		o.Zypper = vZypper
 	}
 	vGoo := o.Goo
@@ -10463,7 +15702,7 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooFields(r, vGoo); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vGoo) {
+	if !dcl.IsEmptyValueIndirect(vGoo) {
 		o.Goo = vGoo
 	}
 	return nil
@@ -10481,20 +15720,163 @@ func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooFiel
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) error {
-	// *OSPolicyAssignmentExec is a reused type - that's not compatible with function extractors.
-
-	// *OSPolicyAssignmentExec is a reused type - that's not compatible with function extractors.
-
+	vValidate := o.Validate
+	if vValidate == nil {
+		// note: explicitly not the empty object.
+		vValidate = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFields(r, vValidate); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vValidate) {
+		o.Validate = vValidate
+	}
+	vEnforce := o.Enforce
+	if vEnforce == nil {
+		// note: explicitly not the empty object.
+		vEnforce = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFields(r, vEnforce); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vEnforce) {
+		o.Enforce = vEnforce
+	}
 	return nil
 }
-func extractOSPolicyAssignmentExecFields(r *OSPolicyAssignment, o *OSPolicyAssignmentExec) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate) error {
+	vFile := o.File
+	if vFile == nil {
+		// note: explicitly not the empty object.
+		vFile = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileFields(r, vFile); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vFile) {
+		o.File = vFile
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote) error {
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs) error {
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce) error {
+	vFile := o.File
+	if vFile == nil {
+		// note: explicitly not the empty object.
+		vFile = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileFields(r, vFile); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vFile) {
+		o.File = vFile
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote) error {
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs) error {
 	return nil
 }
 func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vFile := o.File
+	if vFile == nil {
+		// note: explicitly not the empty object.
+		vFile = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileFields(r, vFile); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vFile) {
+		o.File = vFile
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote) error {
+	return nil
+}
+func extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs) error {
 	return nil
 }
 func extractOSPolicyAssignmentInstanceFilterFields(r *OSPolicyAssignment, o *OSPolicyAssignmentInstanceFilter) error {
@@ -10518,7 +15900,7 @@ func extractOSPolicyAssignmentRolloutFields(r *OSPolicyAssignment, o *OSPolicyAs
 	if err := extractOSPolicyAssignmentRolloutDisruptionBudgetFields(r, vDisruptionBudget); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDisruptionBudget) {
+	if !dcl.IsEmptyValueIndirect(vDisruptionBudget) {
 		o.DisruptionBudget = vDisruptionBudget
 	}
 	return nil
@@ -10536,7 +15918,7 @@ func postReadExtractOSPolicyAssignmentFields(r *OSPolicyAssignment) error {
 	if err := postReadExtractOSPolicyAssignmentInstanceFilterFields(r, vInstanceFilter); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vInstanceFilter) {
+	if !dcl.IsEmptyValueIndirect(vInstanceFilter) {
 		r.InstanceFilter = vInstanceFilter
 	}
 	vRollout := r.Rollout
@@ -10547,7 +15929,7 @@ func postReadExtractOSPolicyAssignmentFields(r *OSPolicyAssignment) error {
 	if err := postReadExtractOSPolicyAssignmentRolloutFields(r, vRollout); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRollout) {
+	if !dcl.IsEmptyValueIndirect(vRollout) {
 		r.Rollout = vRollout
 	}
 	return nil
@@ -10570,7 +15952,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r 
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields(r, vPkg); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPkg) {
+	if !dcl.IsEmptyValueIndirect(vPkg) {
 		o.Pkg = vPkg
 	}
 	vRepository := o.Repository
@@ -10581,7 +15963,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r 
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(r, vRepository); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRepository) {
+	if !dcl.IsEmptyValueIndirect(vRepository) {
 		o.Repository = vRepository
 	}
 	vExec := o.Exec
@@ -10592,7 +15974,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r 
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecFields(r, vExec); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExec) {
+	if !dcl.IsEmptyValueIndirect(vExec) {
 		o.Exec = vExec
 	}
 	vFile := o.File
@@ -10603,7 +15985,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFields(r 
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFields(r, vFile); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vFile) {
+	if !dcl.IsEmptyValueIndirect(vFile) {
 		o.File = vFile
 	}
 	return nil
@@ -10617,7 +15999,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptFields(r, vApt); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vApt) {
+	if !dcl.IsEmptyValueIndirect(vApt) {
 		o.Apt = vApt
 	}
 	vDeb := o.Deb
@@ -10628,7 +16010,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebFields(r, vDeb); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDeb) {
+	if !dcl.IsEmptyValueIndirect(vDeb) {
 		o.Deb = vDeb
 	}
 	vYum := o.Yum
@@ -10639,7 +16021,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumFields(r, vYum); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vYum) {
+	if !dcl.IsEmptyValueIndirect(vYum) {
 		o.Yum = vYum
 	}
 	vZypper := o.Zypper
@@ -10650,7 +16032,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypperFields(r, vZypper); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vZypper) {
+	if !dcl.IsEmptyValueIndirect(vZypper) {
 		o.Zypper = vZypper
 	}
 	vRpm := o.Rpm
@@ -10661,7 +16043,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmFields(r, vRpm); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRpm) {
+	if !dcl.IsEmptyValueIndirect(vRpm) {
 		o.Rpm = vRpm
 	}
 	vGooget := o.Googet
@@ -10672,7 +16054,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetFields(r, vGooget); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vGooget) {
+	if !dcl.IsEmptyValueIndirect(vGooget) {
 		o.Googet = vGooget
 	}
 	vMsi := o.Msi
@@ -10683,7 +16065,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgFields
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiFields(r, vMsi); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vMsi) {
+	if !dcl.IsEmptyValueIndirect(vMsi) {
 		o.Msi = vMsi
 	}
 	return nil
@@ -10692,39 +16074,48 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgAptFie
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDeb) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vSource := o.Source
+	if vSource == nil {
+		// note: explicitly not the empty object.
+		vSource = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceFields(r, vSource); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSource) {
+		o.Source = vSource
+	}
 	return nil
 }
-func postReadExtractOSPolicyAssignmentFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentFile) error {
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSource) error {
 	vRemote := o.Remote
 	if vRemote == nil {
 		// note: explicitly not the empty object.
-		vRemote = &OSPolicyAssignmentFileRemote{}
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote{}
 	}
-	if err := extractOSPolicyAssignmentFileRemoteFields(r, vRemote); err != nil {
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteFields(r, vRemote); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRemote) {
+	if !dcl.IsEmptyValueIndirect(vRemote) {
 		o.Remote = vRemote
 	}
 	vGcs := o.Gcs
 	if vGcs == nil {
 		// note: explicitly not the empty object.
-		vGcs = &OSPolicyAssignmentFileGcs{}
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs{}
 	}
-	if err := extractOSPolicyAssignmentFileGcsFields(r, vGcs); err != nil {
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsFields(r, vGcs); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vGcs) {
+	if !dcl.IsEmptyValueIndirect(vGcs) {
 		o.Gcs = vGcs
 	}
 	return nil
 }
-func postReadExtractOSPolicyAssignmentFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentFileRemote) error {
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceRemote) error {
 	return nil
 }
-func postReadExtractOSPolicyAssignmentFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentFileGcs) error {
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgDebSourceGcs) error {
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYumFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgYum) error {
@@ -10734,16 +16125,96 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgZypper
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpm) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vSource := o.Source
+	if vSource == nil {
+		// note: explicitly not the empty object.
+		vSource = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceFields(r, vSource); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSource) {
+		o.Source = vSource
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSource) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceRemote) error {
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgRpmSourceGcs) error {
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGoogetFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgGooget) error {
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsi) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vSource := o.Source
+	if vSource == nil {
+		// note: explicitly not the empty object.
+		vSource = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceFields(r, vSource); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vSource) {
+		o.Source = vSource
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSource) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceRemote) error {
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesPkgMsiSourceGcs) error {
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepository) error {
@@ -10755,7 +16226,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryAptFields(r, vApt); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vApt) {
+	if !dcl.IsEmptyValueIndirect(vApt) {
 		o.Apt = vApt
 	}
 	vYum := o.Yum
@@ -10766,7 +16237,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryYumFields(r, vYum); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vYum) {
+	if !dcl.IsEmptyValueIndirect(vYum) {
 		o.Yum = vYum
 	}
 	vZypper := o.Zypper
@@ -10777,7 +16248,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryZypperFields(r, vZypper); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vZypper) {
+	if !dcl.IsEmptyValueIndirect(vZypper) {
 		o.Zypper = vZypper
 	}
 	vGoo := o.Goo
@@ -10788,7 +16259,7 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositoryGooFields(r, vGoo); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vGoo) {
+	if !dcl.IsEmptyValueIndirect(vGoo) {
 		o.Goo = vGoo
 	}
 	return nil
@@ -10806,20 +16277,163 @@ func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesRepositor
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExec) error {
-	// *OSPolicyAssignmentExec is a reused type - that's not compatible with function extractors.
-
-	// *OSPolicyAssignmentExec is a reused type - that's not compatible with function extractors.
-
+	vValidate := o.Validate
+	if vValidate == nil {
+		// note: explicitly not the empty object.
+		vValidate = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFields(r, vValidate); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vValidate) {
+		o.Validate = vValidate
+	}
+	vEnforce := o.Enforce
+	if vEnforce == nil {
+		// note: explicitly not the empty object.
+		vEnforce = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFields(r, vEnforce); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vEnforce) {
+		o.Enforce = vEnforce
+	}
 	return nil
 }
-func postReadExtractOSPolicyAssignmentExecFields(r *OSPolicyAssignment, o *OSPolicyAssignmentExec) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidate) error {
+	vFile := o.File
+	if vFile == nil {
+		// note: explicitly not the empty object.
+		vFile = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileFields(r, vFile); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vFile) {
+		o.File = vFile
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFile) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileRemote) error {
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecValidateFileGcs) error {
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforce) error {
+	vFile := o.File
+	if vFile == nil {
+		// note: explicitly not the empty object.
+		vFile = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileFields(r, vFile); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vFile) {
+		o.File = vFile
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFile) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileRemote) error {
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesExecEnforceFileGcs) error {
 	return nil
 }
 func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFile) error {
-	// *OSPolicyAssignmentFile is a reused type - that's not compatible with function extractors.
-
+	vFile := o.File
+	if vFile == nil {
+		// note: explicitly not the empty object.
+		vFile = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileFields(r, vFile); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vFile) {
+		o.File = vFile
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFile) error {
+	vRemote := o.Remote
+	if vRemote == nil {
+		// note: explicitly not the empty object.
+		vRemote = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteFields(r, vRemote); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRemote) {
+		o.Remote = vRemote
+	}
+	vGcs := o.Gcs
+	if vGcs == nil {
+		// note: explicitly not the empty object.
+		vGcs = &OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs{}
+	}
+	if err := extractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsFields(r, vGcs); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vGcs) {
+		o.Gcs = vGcs
+	}
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemoteFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileRemote) error {
+	return nil
+}
+func postReadExtractOSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcsFields(r *OSPolicyAssignment, o *OSPolicyAssignmentOSPoliciesResourceGroupsResourcesFileFileGcs) error {
 	return nil
 }
 func postReadExtractOSPolicyAssignmentInstanceFilterFields(r *OSPolicyAssignment, o *OSPolicyAssignmentInstanceFilter) error {
@@ -10843,7 +16457,7 @@ func postReadExtractOSPolicyAssignmentRolloutFields(r *OSPolicyAssignment, o *OS
 	if err := extractOSPolicyAssignmentRolloutDisruptionBudgetFields(r, vDisruptionBudget); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDisruptionBudget) {
+	if !dcl.IsEmptyValueIndirect(vDisruptionBudget) {
 		o.DisruptionBudget = vDisruptionBudget
 	}
 	return nil
