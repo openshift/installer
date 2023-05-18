@@ -1006,3 +1006,84 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 		})
 	}
 }
+
+func TestAzureStackDiskType(t *testing.T) {
+	const unsupportedDiskType = "StandardSSD_LRS"
+
+	validDefaultDiskType := func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.DiskType = "Premium_LRS"
+	}
+	invalidDefaultDiskType := func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.DiskType = unsupportedDiskType
+	}
+	validControlPlaneDiskType := func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.DiskType = "Standard_LRS"
+	}
+	invalidControlPlaneDiskType := func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.DiskType = unsupportedDiskType
+	}
+	validComputeDiskType := func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.DiskType = "Standard_LRS"
+	}
+	invalidComputeDiskType := func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.DiskType = unsupportedDiskType
+	}
+
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name:     "Valid defaultMachinePlatform DiskType",
+			edits:    editFunctions{validDefaultDiskType},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid defaultMachinePlatform DiskType",
+			edits:    editFunctions{invalidDefaultDiskType},
+			errorMsg: `\[controlPlane.platform.azure.OSDisk.diskType: Invalid value: "StandardSSD_LRS": disk format not supported. Must be one of \[Premium_LRS Standard_LRS\] compute\[0\].platform.azure.OSDisk.diskType: Invalid value: "StandardSSD_LRS": disk format not supported. Must be one of \[Premium_LRS Standard_LRS\]\]`,
+		},
+		{
+			name:     "Valid controlPlane DiskType",
+			edits:    editFunctions{validControlPlaneDiskType},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid controlPlane DiskType",
+			edits:    editFunctions{invalidControlPlaneDiskType},
+			errorMsg: `\[controlPlane.platform.azure.OSDisk.diskType: Invalid value: "StandardSSD_LRS": disk format not supported. Must be one of \[Premium_LRS Standard_LRS\]\]`,
+		},
+		{
+			name:     "Valid compute DiskType",
+			edits:    editFunctions{validComputeDiskType},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid compute DiskType",
+			edits:    editFunctions{invalidComputeDiskType},
+			errorMsg: `\[compute\[0\].platform.azure.OSDisk.diskType: Invalid value: "StandardSSD_LRS": disk format not supported. Must be one of \[Premium_LRS Standard_LRS\]\]`,
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureClient := mock.NewMockAPI(mockCtrl)
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := validateAzureStackDiskType(azureClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors.ToAggregate())
+			}
+		})
+	}
+}
