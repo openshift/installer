@@ -162,7 +162,7 @@ func Test_ValdidateSecurityGroups(t *testing.T) {
 		name:     "invalid security group config",
 		platform: &aws.Platform{Region: "us-east-1"},
 		pool:     &aws.MachinePool{AdditionalSecurityGroupIDs: []string{"sg-valid-security-group"}},
-		err:      "test-path.additionalSecurityGroupID: Required value: subnets must be provided for security groups",
+		err:      "test-path.platform.subnets: Required value: subnets must be provided when additional security groups are present",
 	},
 	}
 

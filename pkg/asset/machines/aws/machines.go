@@ -20,18 +20,19 @@ import (
 )
 
 type machineProviderInput struct {
-	clusterID      string
-	region         string
-	subnet         string
-	instanceType   string
-	osImage        string
-	zone           string
-	role           string
-	userDataSecret string
-	root           *aws.EC2RootVolume
-	imds           aws.EC2Metadata
-	userTags       map[string]string
-	publicSubnet   bool
+	clusterID        string
+	region           string
+	subnet           string
+	instanceType     string
+	osImage          string
+	zone             string
+	role             string
+	userDataSecret   string
+	root             *aws.EC2RootVolume
+	imds             aws.EC2Metadata
+	userTags         map[string]string
+	publicSubnet     bool
+	securityGroupIDs []string
 }
 
 // Machines returns a list of machines for a machinepool.
@@ -54,18 +55,19 @@ func Machines(clusterID string, region string, subnets map[string]string, pool *
 			return nil, nil, errors.Errorf("no subnet for zone %s", zone)
 		}
 		provider, err := provider(&machineProviderInput{
-			clusterID:      clusterID,
-			region:         region,
-			subnet:         subnet,
-			instanceType:   mpool.InstanceType,
-			osImage:        mpool.AMIID,
-			zone:           zone,
-			role:           role,
-			userDataSecret: userDataSecret,
-			root:           &mpool.EC2RootVolume,
-			imds:           mpool.EC2Metadata,
-			userTags:       userTags,
-			publicSubnet:   false,
+			clusterID:        clusterID,
+			region:           region,
+			subnet:           subnet,
+			instanceType:     mpool.InstanceType,
+			osImage:          mpool.AMIID,
+			zone:             zone,
+			role:             role,
+			userDataSecret:   userDataSecret,
+			root:             &mpool.EC2RootVolume,
+			imds:             mpool.EC2Metadata,
+			userTags:         userTags,
+			publicSubnet:     false,
+			securityGroupIDs: pool.Platform.AWS.AdditionalSecurityGroupIDs,
 		})
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to create provider")
@@ -175,6 +177,25 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create machineapi.TagSpecifications from UserTags")
 	}
+
+	securityGroups := []machineapi.AWSResourceReference{{
+		Filters: []machineapi.Filter{{
+			Name:   "tag:Name",
+			Values: []string{fmt.Sprintf("%s-%s-sg", in.clusterID, in.role)},
+		}},
+	}}
+	securityGroupsIn := []machineapi.AWSResourceReference{}
+	for _, sgID := range in.securityGroupIDs {
+		sgID := sgID
+		securityGroupsIn = append(securityGroupsIn, machineapi.AWSResourceReference{
+			ID: &sgID,
+		})
+	}
+	sort.SliceStable(securityGroupsIn, func(i, j int) bool {
+		return *securityGroupsIn[i].ID < *securityGroupsIn[j].ID
+	})
+	securityGroups = append(securityGroups, securityGroupsIn...)
+
 	config := &machineapi.AWSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -199,12 +220,7 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		UserDataSecret:    &corev1.LocalObjectReference{Name: in.userDataSecret},
 		CredentialsSecret: &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
 		Placement:         machineapi.Placement{Region: in.region, AvailabilityZone: in.zone},
-		SecurityGroups: []machineapi.AWSResourceReference{{
-			Filters: []machineapi.Filter{{
-				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s-%s-sg", in.clusterID, in.role)},
-			}},
-		}},
+		SecurityGroups:    securityGroups,
 	}
 
 	subnetName := fmt.Sprintf("%s-private-%s", in.clusterID, in.zone)

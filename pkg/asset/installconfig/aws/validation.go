@@ -256,7 +256,9 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		}
 	}
 
-	allErrs = append(allErrs, validateSecurityGroupIDs(ctx, meta, fldPath.Child("additionalSecurityGroupIDs"), platform, pool)...)
+	if len(pool.AdditionalSecurityGroupIDs) > 0 {
+		allErrs = append(allErrs, validateSecurityGroupIDs(ctx, meta, fldPath.Child("additionalSecurityGroupIDs"), platform, pool)...)
+	}
 
 	return allErrs
 }
@@ -264,27 +266,25 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	if len(pool.AdditionalSecurityGroupIDs) == 0 {
-		return allErrs
+	vpc, err := meta.VPC(ctx)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not determine cluster VPC: %s", err.Error())
+		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
 	}
 
-	vpcs, err := GetVpcsFromSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	securityGroups, err := DescribeSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
 	}
 
-	if len(vpcs) != 1 {
-		return append(allErrs, field.Invalid(fldPath, vpcs, "exactly 1 vpc should be found"))
-	}
-
-	vpcFromSecurityGroups := vpcs[0]
-	vpc, err := meta.VPC(ctx)
-	if err == nil {
-		if vpc != vpcFromSecurityGroups {
-			errMsg := fmt.Sprintf("vpcs do not match %s, %s", vpcFromSecurityGroups, vpc)
-			allErrs = append(allErrs, field.Invalid(fldPath, vpcFromSecurityGroups, errMsg))
+	for _, sg := range securityGroups {
+		sgVpcID := *sg.VpcId
+		if sgVpcID != vpc {
+			errMsg := fmt.Sprintf("sg %s is associated with vpc %s not the provided vpc %s", *sg.GroupId, sgVpcID, vpc)
+			allErrs = append(allErrs, field.Invalid(fldPath, sgVpcID, errMsg))
 		}
 	}
+
 	return allErrs
 }
 

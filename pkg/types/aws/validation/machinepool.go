@@ -56,7 +56,7 @@ func validateSecurityGroups(platform *aws.Platform, p *aws.MachinePool, fldPath 
 	allErrs := field.ErrorList{}
 
 	if len(p.AdditionalSecurityGroupIDs) > 0 && len(platform.Subnets) == 0 {
-		allErrs = append(allErrs, field.Required(fldPath.Child("additionalSecurityGroupID"), "subnets must be provided for security groups"))
+		allErrs = append(allErrs, field.Required(fldPath.Child("platform.subnets"), "subnets must be provided when additional security groups are present"))
 	}
 	return allErrs
 }
