@@ -56,22 +56,22 @@ type directoryEntryGroup struct {
 func parseDirectory(b []byte) (*directory, error) {
 	// must have at least one header
 	if _, err := parseDirectoryHeader(b); err != nil {
-		return nil, fmt.Errorf("Could not parse directory header: %v", err)
+		return nil, fmt.Errorf("could not parse directory header: %v", err)
 	}
 	entries := make([]*directoryEntryRaw, 0)
 	for pos := 0; pos+dirHeaderSize < len(b); {
 		directoryHeader, err := parseDirectoryHeader(b[pos:])
 		if err != nil {
-			return nil, fmt.Errorf("Could not parse directory header: %v", err)
+			return nil, fmt.Errorf("could not parse directory header: %v", err)
 		}
 		if directoryHeader.count+1 > maxDirEntries {
-			return nil, fmt.Errorf("Corrupted directory, had %d entries instead of max %d", directoryHeader.count+1, maxDirEntries)
+			return nil, fmt.Errorf("corrupted directory, had %d entries instead of max %d", directoryHeader.count+1, maxDirEntries)
 		}
 		pos += dirHeaderSize
 		for count := uint32(0); count < directoryHeader.count; count++ {
 			entry, size, err := parseDirectoryEntry(b[pos:], directoryHeader.inode)
 			if err != nil {
-				return nil, fmt.Errorf("Unable to parse entry at position %d: %v", pos, err)
+				return nil, fmt.Errorf("unable to parse entry at position %d: %v", pos, err)
 			}
 			entry.startBlock = directoryHeader.startBlock
 			entries = append(entries, entry)
@@ -141,7 +141,7 @@ func (d *directory) equal(b *directory) bool {
 // parse the header of a directory
 func parseDirectoryHeader(b []byte) (*directoryHeader, error) {
 	if len(b) < dirHeaderSize {
-		return nil, fmt.Errorf("Header was %d bytes, less than minimum %d", len(b), dirHeaderSize)
+		return nil, fmt.Errorf("header was %d bytes, less than minimum %d", len(b), dirHeaderSize)
 	}
 	return &directoryHeader{
 		count:      binary.LittleEndian.Uint32(b[0:4]) + 1,
@@ -162,7 +162,7 @@ func (d *directoryHeader) toBytes() []byte {
 func parseDirectoryEntry(b []byte, in uint32) (*directoryEntryRaw, int, error) {
 	// ensure we have enough bytes to parse
 	if len(b) < dirEntryMinSize {
-		return nil, 0, fmt.Errorf("Directory entry was %d bytes, less than minimum %d", len(b), dirEntryMinSize)
+		return nil, 0, fmt.Errorf("directory entry was %d bytes, less than minimum %d", len(b), dirEntryMinSize)
 	}
 
 	offset := binary.LittleEndian.Uint16(b[0:2])
@@ -173,10 +173,10 @@ func parseDirectoryEntry(b []byte, in uint32) (*directoryEntryRaw, int, error) {
 
 	// make sure name is legitimate size
 	if nameSize > dirNameMaxSize {
-		return nil, 0, fmt.Errorf("Name size was %d bytes, greater than maximum %d", nameSize, dirNameMaxSize)
+		return nil, 0, fmt.Errorf("name size was %d bytes, greater than maximum %d", nameSize, dirNameMaxSize)
 	}
 	if int(realNameSize+dirEntryMinSize) > len(b) {
-		return nil, 0, fmt.Errorf("Dir entry plus size of name is %d, larger than available bytes %d", nameSize+dirEntryMinSize, len(b))
+		return nil, 0, fmt.Errorf("dir entry plus size of name is %d, larger than available bytes %d", nameSize+dirEntryMinSize, len(b))
 	}
 
 	// read in the name

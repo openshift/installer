@@ -31,11 +31,11 @@ require (
 	github.com/coreos/ignition/v2 v2.14.0
 	github.com/coreos/stream-metadata-go v0.1.8
 	github.com/daixiang0/gci v0.9.0
-	github.com/diskfs/go-diskfs v1.2.1-0.20210727185522-a769efacd235
+	github.com/diskfs/go-diskfs v1.2.1-0.20221201153419-70aa09455238
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-openapi/errors v0.20.2
 	github.com/go-openapi/strfmt v0.21.2
-	github.com/go-playground/validator/v10 v10.2.0
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/golang/protobuf v1.5.2
@@ -57,7 +57,7 @@ require (
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.26.0
 	github.com/openshift/api v0.0.0-20230201213816-61d971884921
-	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
+	github.com/openshift/assisted-image-service v0.0.0-20230508133451-c15a62b72155
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0

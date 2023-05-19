@@ -390,8 +390,8 @@ github.com/daixiang0/gci/pkg/utils
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/diskfs/go-diskfs v1.2.1-0.20210727185522-a769efacd235
-## explicit; go 1.12
+# github.com/diskfs/go-diskfs v1.2.1-0.20221201153419-70aa09455238
+## explicit; go 1.16
 github.com/diskfs/go-diskfs
 github.com/diskfs/go-diskfs/disk
 github.com/diskfs/go-diskfs/filesystem
@@ -481,7 +481,7 @@ github.com/go-playground/locales/currency
 # github.com/go-playground/universal-translator v0.18.0
 ## explicit; go 1.13
 github.com/go-playground/universal-translator
-# github.com/go-playground/validator/v10 v10.2.0
+# github.com/go-playground/validator/v10 v10.4.1
 ## explicit; go 1.13
 github.com/go-playground/validator/v10
 # github.com/gobuffalo/flect v0.2.5
@@ -8708,8 +8708,8 @@ github.com/openshift/api/machine/v1beta1
 github.com/openshift/api/operator/v1
 github.com/openshift/api/operator/v1alpha1
 github.com/openshift/api/route/v1
-# github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
-## explicit; go 1.16
+# github.com/openshift/assisted-image-service v0.0.0-20230508133451-c15a62b72155
+## explicit; go 1.17
 github.com/openshift/assisted-image-service/pkg/isoeditor
 github.com/openshift/assisted-image-service/pkg/overlay
 # github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
@@ -9006,6 +9006,7 @@ golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/internal/subtle
 golang.org/x/crypto/pkcs12
 golang.org/x/crypto/pkcs12/internal/rc2
+golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf

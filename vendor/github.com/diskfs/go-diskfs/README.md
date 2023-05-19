@@ -98,7 +98,7 @@ diskSize int := espSize + 4*1024*1024 // 104 MB
 
 // create a disk image
 diskImg := "/tmp/disk.img"
-disk := diskfs.Create(diskImg, diskSize, diskfs.Raw)
+disk := diskfs.Create(diskImg, diskSize, diskfs.Raw, diskfs.SectorSizeDefault)
 // create a partition table
 blkSize int := 512
 partitionSectors int := espSize / blkSize
@@ -117,7 +117,7 @@ err = disk.Partition(table)
 /*
  * create an ESP partition with some contents
  */
-kernel, err := ioutil.ReadFile("/some/kernel/file")
+kernel, err := os.ReadFile("/some/kernel/file")
 
 fs, err := disk.CreateFilesystem(0, diskfs.TypeFat32)
 
