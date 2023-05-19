@@ -49,27 +49,13 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 
 	a.isoPath = baseImage.File.Filename
 
-	tmpdir, err := os.MkdirTemp("", pxeAssetsPath)
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tmpdir)
-
-	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", initrdimg)
-	dstfilename := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
-	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, dstfilename)
-	if err != nil {
-		return err
-	}
-
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
 		return err
 	}
 
 	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
-
-	custom, err := isoeditor.NewInitRamFSStreamReader(dstfilename, ignitionContent)
+	custom, err := isoeditor.NewInitRamFSStreamReaderFromISO(a.isoPath, ignitionContent)
 	if err != nil {
 		return err
 	}
