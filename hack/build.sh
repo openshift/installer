@@ -38,7 +38,7 @@ export CGO_ENABLED=0
 MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
 BUILD_TF_PROVIDERS="${BUILD_TF_PROVIDERS:-1}"
-if [ ${BUILD_TF_PROVIDERS} -ne 0 ]; then
+if [ "${BUILD_TF_PROVIDERS}" -ne 0 ]; then
 	make -C terraform all
 fi
 
