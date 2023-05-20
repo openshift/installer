@@ -6,7 +6,7 @@ FROM quay.io/rdossant/terraform-binaries:latest as tfbins
 ARG libvirt_version="8.0.0"
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS builder
-ARG libvirt_version
+ARG libvirt_version="8.0.0"
 ARG TAGS="libvirt baremetal"
 RUN dnf install -y libvirt-devel-$libvirt_version && \
     dnf clean all && rm -rf /var/cache/yum/*
@@ -17,7 +17,7 @@ RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" BUILD_TF_PROVIDERS=0 hack/build.sh
 
 
 FROM registry.ci.openshift.org/ocp/4.14:base
-ARG libvirt_version
+ARG libvirt_version="8.0.0"
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 
 RUN dnf upgrade -y && \
