@@ -2,6 +2,7 @@
 # the installer layered on top of the cluster-native Linux installer image.
 
 FROM quay.io/rdossant/terraform-binaries:latest as tfbins
+ARG BUILD_TF_PROVIDERS=0
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS macbuilder
 ARG TAGS=""

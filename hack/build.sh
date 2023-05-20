@@ -37,7 +37,10 @@ fi
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
 # build terraform binaries before setting environment variables since it messes up make
-make -C terraform all
+BUILD_TF_PROVIDERS="${BUILD_TF_PROVIDERS:-1}"
+if [ ${BUILD_TF_PROVIDERS} -ne 0 ]; then
+	make -C terraform all
+fi
 
 # Copy terraform parts to embedded mirror.
 copy_terraform_to_mirror

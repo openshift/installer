@@ -10,7 +10,7 @@ ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 COPY --from=tfbins /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
-RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
+RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" BUILD_TF_PROVIDERS=0 hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.10:cli as cli
 
