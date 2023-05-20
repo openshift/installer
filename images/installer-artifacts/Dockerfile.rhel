@@ -1,28 +1,34 @@
 # This Dockerfile builds an image containing Mac and Linux/AMD64 versions of
 # the installer layered on top of the cluster-native Linux installer image.
 
+FROM quay.io/rdossant/terraform-binaries:latest as tfbins
+
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS macbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=tfbins /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 RUN GOOS=darwin GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS macarmbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=tfbins /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 RUN GOOS=darwin GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS linuxbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=tfbins /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 RUN GOOS=linux GOARCH=amd64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/builder:rhel-8-golang-1.20-openshift-4.14 AS linuxarmbuilder
 ARG TAGS=""
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
+COPY --from=tfbins /go/src/github.com/openshift/installer/terraform/bin/ terraform/bin/
 RUN GOOS=linux GOARCH=arm64 DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 
 FROM registry.ci.openshift.org/ocp/4.14:installer
