@@ -1,45 +1,94 @@
 #!/bin/bash
-
 set -e
 
-AGENT_CONFIG_IMAGE_LABEL="agent_configimage"
+# shellcheck disable=SC1091
+source issue_status.sh
+
+status_issue="95_load_config_image"
+
 AGENT_CONFIG_ARCHIVE_FILE="config.gz"
-AGENT_CONFIG_MOUNT="/mnt/config_image"
-RENDEZVOUS_HOST_ENV="/etc/assisted/rendezvous-host.env"
+AGENT_CONFIG_MOUNT="/media/config-image"
 CLUSTER_IMAGE_SET="/etc/assisted/manifests/cluster-image-set.yaml"
+EXTRA_MANIFESTS="/etc/assisted/extra-manifests"
+ASSISTED_NETWORK_DIR="/etc/assisted/network"
+NM_CONNECTION_DIR="/etc/NetworkManager/system-connections"
 
 copy_archive_contents() {
-    
-    # Mount device
-    mkdir -p ${AGENT_CONFIG_MOUNT}
-    mount ${device} ${AGENT_CONFIG_MOUNT}
-
-    if [[ ! -f ${AGENT_CONFIG_MOUNT}/${AGENT_CONFIG_ARCHIVE_FILE} ]]; then
-       echo "Could not find file ${AGENT_CONFIG_ARCHIVE_FILE} on ${device}"
-       cleanup_files
-       return 1 
-    fi
-
-    cp ${AGENT_CONFIG_MOUNT}/${AGENT_CONFIG_ARCHIVE_FILE} /tmp
-    gunzip -f /tmp/${AGENT_CONFIG_ARCHIVE_FILE}
-    unzipped_file=`echo /tmp/${AGENT_CONFIG_ARCHIVE_FILE} | cut -d'.' -f1`
+    tmpdir=$(mktemp --tmpdir -d "config-image--XXXXXXXXXX")
+    cp ${AGENT_CONFIG_MOUNT}/${AGENT_CONFIG_ARCHIVE_FILE} "${tmpdir}"
+    gunzip -f "${tmpdir}"/${AGENT_CONFIG_ARCHIVE_FILE}
+    unzipped_file="${tmpdir}/${AGENT_CONFIG_ARCHIVE_FILE%.gz}"
+    filelist=$(cpio --list < "${unzipped_file}")
+    echo -e "List of files to copy: ${filelist}"
 
     # Get the releaseImage in the archive and verify it matches the current cluster-image-set
-    release_image=$(cat ${CLUSTER_IMAGE_SET} | grep releaseImage | sed -n -e 's/^.*releaseImage: //p')
-    arch_release_image=$(cpio -icv --to-stdout ${CLUSTER_IMAGE_SET} < ${unzipped_file} | grep releaseImage | sed -n -e 's/^.*releaseImage: //p')
-    if [[ ${release_image} != ${arch_release_image} ]]; then
-       echo "The release $arch_release_image in archive does not match the current release ${release_image}"
+    release_image=$(grep releaseImage ${CLUSTER_IMAGE_SET} | sed -n -e 's/^.*releaseImage: //p')
+    if ! diff "${CLUSTER_IMAGE_SET}" <(cpio -icv --to-stdout "${CLUSTER_IMAGE_SET}" <"${unzipped_file}"); then
+       echo "The cluster-image-set in archive does not match current release ${release_image}"
+       printf '\\e{lightred}Installation cannot proceed:\\e{reset} cluster-image-set in archive does not match current release' | set_issue "${status_issue}"
        cleanup_files
-       return 1 
+       return 1
     fi
-    echo "Archive on ${device} contains release ${arch_release_image}"
+    echo "Archive on ${devname} contains release ${release_image}"
 
-    # Copy all files from archive
-    # The rendezvousIP file must be copied last as it triggers set-node-zero.sh to continue configuration
-    cpio -icvd --nonmatching ${AGENT_RENDEZVOUS_IP_FILE} < ${unzipped_file}
-    cpio -icvd ${RENDEZVOUS_HOST_ENV} < ${unzipped_file}
+    # Get array from string
+    IFS=',' read -r -a files <<< "${CONFIG_IMAGE_FILES}"
 
-    echo "Successfully copied contents of ${AGENT_CONFIG_ARCHIVE_FILE} on ${device}"
+    # Copy expected files from archive, overwriting the existing file
+    for file in "${files[@]}"
+    do
+       if [[ "${file}" = *.* || "${file}" == "/etc/issue" ]]; then
+          cpio -icvdu "${file}" < "${unzipped_file}"
+          if [[ -f ${file} ]]; then
+             echo "Copied file ${file}"
+          else
+             echo "Expected file ${file} is not in archive"
+             printf '\\e{lightred}Installation cannot proceed:\\e{reset} Failure copying files from config-image, expected file %s is not in archive' "${file}" | set_issue "${status_issue}"
+	     return 1
+          fi
+       else
+	  # copy all files in directory
+          cpio -icvdu "${file}*" < "${unzipped_file}"
+
+	  # directory may not contain files
+          if [[ -d ${file} ]]; then
+             echo "Copied files in ${file}"
+	  fi
+       fi
+    done
+
+    # assisted-service expects the extra-manifests dir to exist
+    if [[ ! -d "${EXTRA_MANIFESTS}" ]]; then
+       mkdir -p "/etc/assisted/extra-manifests"
+    fi
+
+    echo "Successfully copied contents of ${AGENT_CONFIG_ARCHIVE_FILE} on ${devname}"
+
+    # Enable any services which are not enabled by default
+    declare -a servicelist=("start-cluster-installation.service")
+
+    for service in "${servicelist[@]}"
+    do
+       is_enabled=$(systemctl is-enabled "$service")
+       if [[ "${is_enabled}" == "disabled" ]]; then
+          echo "Service ${service} is disabled, enabling it"
+          systemctl enable "${service}"
+       fi
+    done
+
+    if [[ -d "${ASSISTED_NETWORK_DIR}" ]]; then
+       # Run script to generate NetworkManager keyfiles if network files exist
+       /usr/local/bin/pre-network-manager-config.sh
+
+       systemctl restart NetworkManager
+
+       # Ensure networking is up for created files
+       find ${NM_CONNECTION_DIR} -name "*.nmconnection" | while IFS= read -r nmconn_file; do
+           filename=$(basename -- "$nmconn_file")
+           interface="${filename%%.nmconnection*}"
+           sudo nmcli conn up "${interface}"
+       done
+    fi
 
     cleanup_files
     return 0
@@ -47,29 +96,31 @@ copy_archive_contents() {
 
 cleanup_files() {
 
-    if [[ -d  ${AGENT_CONFIG_MOUNT} ]]; then
-       umount ${AGENT_CONFIG_MOUNT}
-       rmdir ${AGENT_CONFIG_MOUNT}
+    if [[ -f "${unzipped_file}" ]]; then
+       rm "${unzipped_file}"
     fi
-    if [[ -f ${unzipped_file} ]]; then
-       rm ${unzipped_file}
+    if [[ -d "${tmpdir}" ]]; then
+       rmdir "${tmpdir}"
     fi
 }
 
-while true 
+# This script will be invoked by a udev rule when it detects a device with the correct label
+devname="$1"
+systemd-mount --no-block --automount=yes --collect "$devname" "${AGENT_CONFIG_MOUNT}"
+echo "Mounted ${devname} on ${AGENT_CONFIG_MOUNT}"
+
+while true
 do
-    # Look for devices matching config image label 
-    device=$(lsblk -p -o NAME,LABEL | grep ${AGENT_CONFIG_IMAGE_LABEL} | cut -d ' ' -f1)
-
-    if [[ ! -z ${device} ]]; then
-       echo "Found ${device} matching label ${AGENT_CONFIG_IMAGE_LABEL}"
-
+    if [[ -f ${AGENT_CONFIG_MOUNT}/${AGENT_CONFIG_ARCHIVE_FILE} ]]; then
+       # Copy contents from archive
        if copy_archive_contents; then
           break
        fi
+    else
+       echo "Could not find ${AGENT_CONFIG_ARCHIVE_FILE} in ${AGENT_CONFIG_MOUNT}"
     fi
 
-    echo "Retrying to find device matching label ${AGENT_CONFIG_IMAGE_LABEL}"
+    echo "Retrying to copy contents from ${AGENT_CONFIG_MOUNT}/${AGENT_CONFIG_ARCHIVE_FILE}"
     sleep 5
 done
 

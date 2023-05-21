@@ -29,7 +29,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	}{
 		{
 			name:                                  "default-configs-and-no-nmstateconfigs",
-			expectedFiles:                         generatedFilesUnconfiguredIgnition(),
+			expectedFiles:                         generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh"),
 			preNetworkManagerConfigServiceEnabled: false,
 		},
 		{
@@ -55,7 +55,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 				},
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
-				registryCABundlePath),
+				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh"),
 			preNetworkManagerConfigServiceEnabled: false,
 		},
 		{
