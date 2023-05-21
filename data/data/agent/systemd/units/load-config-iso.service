@@ -1,0 +1,12 @@
+[Unit]
+Description=If a config ISO is mounted, copy its files to the system
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=True
+ExecStart=/usr/local/bin/load-config-iso.sh
+
+[Install]
+WantedBy=multi-user.target
