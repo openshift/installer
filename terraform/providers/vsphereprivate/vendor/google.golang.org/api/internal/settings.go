@@ -19,33 +19,61 @@ import (
 // DialSettings holds information needed to establish a connection with a
 // Google API service.
 type DialSettings struct {
-	Endpoint            string
-	DefaultEndpoint     string
-	DefaultMTLSEndpoint string
-	Scopes              []string
-	TokenSource         oauth2.TokenSource
-	Credentials         *google.Credentials
-	CredentialsFile     string // if set, Token Source is ignored.
-	CredentialsJSON     []byte
-	UserAgent           string
-	APIKey              string
-	Audiences           []string
-	HTTPClient          *http.Client
-	GRPCDialOpts        []grpc.DialOption
-	GRPCConn            *grpc.ClientConn
-	GRPCConnPool        ConnPool
-	GRPCConnPoolSize    int
-	NoAuth              bool
-	TelemetryDisabled   bool
-	ClientCertSource    func(*tls.CertificateRequestInfo) (*tls.Certificate, error)
-	CustomClaims        map[string]interface{}
-	SkipValidation      bool
-	ImpersonationConfig *impersonate.Config
+	Endpoint                      string
+	DefaultEndpoint               string
+	DefaultMTLSEndpoint           string
+	Scopes                        []string
+	DefaultScopes                 []string
+	EnableJwtWithScope            bool
+	TokenSource                   oauth2.TokenSource
+	Credentials                   *google.Credentials
+	CredentialsFile               string // if set, Token Source is ignored.
+	CredentialsJSON               []byte
+	InternalCredentials           *google.Credentials
+	UserAgent                     string
+	APIKey                        string
+	Audiences                     []string
+	DefaultAudience               string
+	HTTPClient                    *http.Client
+	GRPCDialOpts                  []grpc.DialOption
+	GRPCConn                      *grpc.ClientConn
+	GRPCConnPool                  ConnPool
+	GRPCConnPoolSize              int
+	NoAuth                        bool
+	TelemetryDisabled             bool
+	ClientCertSource              func(*tls.CertificateRequestInfo) (*tls.Certificate, error)
+	CustomClaims                  map[string]interface{}
+	SkipValidation                bool
+	ImpersonationConfig           *impersonate.Config
+	EnableDirectPath              bool
+	AllowNonDefaultServiceAccount bool
 
 	// Google API system parameters. For more information please read:
 	// https://cloud.google.com/apis/docs/system-parameters
 	QuotaProject  string
 	RequestReason string
+}
+
+// GetScopes returns the user-provided scopes, if set, or else falls back to the
+// default scopes.
+func (ds *DialSettings) GetScopes() []string {
+	if len(ds.Scopes) > 0 {
+		return ds.Scopes
+	}
+	return ds.DefaultScopes
+}
+
+// GetAudience returns the user-provided audience, if set, or else falls back to the default audience.
+func (ds *DialSettings) GetAudience() string {
+	if ds.HasCustomAudience() {
+		return ds.Audiences[0]
+	}
+	return ds.DefaultAudience
+}
+
+// HasCustomAudience returns true if a custom audience is provided by users.
+func (ds *DialSettings) HasCustomAudience() bool {
+	return len(ds.Audiences) > 0
 }
 
 // Validate reports an error if ds is invalid.

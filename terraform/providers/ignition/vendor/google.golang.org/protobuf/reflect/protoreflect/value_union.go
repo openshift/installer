@@ -7,7 +7,6 @@ package protoreflect
 import (
 	"fmt"
 	"math"
-	"reflect"
 )
 
 // Value is a union where only one Go type may be set at a time.
@@ -42,6 +41,32 @@ import (
 // Converting to/from a Value and a concrete Go value panics on type mismatch.
 // For example, ValueOf("hello").Int() panics because this attempts to
 // retrieve an int64 from a string.
+//
+// List, Map, and Message Values are called "composite" values.
+//
+// A composite Value may alias (reference) memory at some location,
+// such that changes to the Value updates the that location.
+// A composite value acquired with a Mutable method, such as Message.Mutable,
+// always references the source object.
+//
+// For example:
+//
+//	// Append a 0 to a "repeated int32" field.
+//	// Since the Value returned by Mutable is guaranteed to alias
+//	// the source message, modifying the Value modifies the message.
+//	message.Mutable(fieldDesc).(List).Append(protoreflect.ValueOfInt32(0))
+//
+//	// Assign [0] to a "repeated int32" field by creating a new Value,
+//	// modifying it, and assigning it.
+//	list := message.NewField(fieldDesc).(List)
+//	list.Append(protoreflect.ValueOfInt32(0))
+//	message.Set(fieldDesc, list)
+//	// ERROR: Since it is not defined whether Set aliases the source,
+//	// appending to the List here may or may not modify the message.
+//	list.Append(protoreflect.ValueOfInt32(0))
+//
+// Some operations, such as Message.Get, may return an "empty, read-only"
+// composite Value. Modifying an empty, read-only value panics.
 type Value value
 
 // The protoreflect API uses a custom Value union type instead of interface{}
@@ -86,8 +111,10 @@ func ValueOf(v interface{}) Value {
 		return ValueOfEnum(v)
 	case Message, List, Map:
 		return valueOfIface(v)
+	case ProtoMessage:
+		panic(fmt.Sprintf("invalid proto.Message(%T) type, expected a protoreflect.Message type", v))
 	default:
-		panic(fmt.Sprintf("invalid type: %v", reflect.TypeOf(v)))
+		panic(fmt.Sprintf("invalid type: %T", v))
 	}
 }
 
@@ -197,13 +224,55 @@ func (v Value) Interface() interface{} {
 	}
 }
 
+func (v Value) typeName() string {
+	switch v.typ {
+	case nilType:
+		return "nil"
+	case boolType:
+		return "bool"
+	case int32Type:
+		return "int32"
+	case int64Type:
+		return "int64"
+	case uint32Type:
+		return "uint32"
+	case uint64Type:
+		return "uint64"
+	case float32Type:
+		return "float32"
+	case float64Type:
+		return "float64"
+	case stringType:
+		return "string"
+	case bytesType:
+		return "bytes"
+	case enumType:
+		return "enum"
+	default:
+		switch v := v.getIface().(type) {
+		case Message:
+			return "message"
+		case List:
+			return "list"
+		case Map:
+			return "map"
+		default:
+			return fmt.Sprintf("<unknown: %T>", v)
+		}
+	}
+}
+
+func (v Value) panicMessage(what string) string {
+	return fmt.Sprintf("type mismatch: cannot convert %v to %s", v.typeName(), what)
+}
+
 // Bool returns v as a bool and panics if the type is not a bool.
 func (v Value) Bool() bool {
 	switch v.typ {
 	case boolType:
 		return v.num > 0
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("bool"))
 	}
 }
 
@@ -213,7 +282,7 @@ func (v Value) Int() int64 {
 	case int32Type, int64Type:
 		return int64(v.num)
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("int"))
 	}
 }
 
@@ -223,7 +292,7 @@ func (v Value) Uint() uint64 {
 	case uint32Type, uint64Type:
 		return uint64(v.num)
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("uint"))
 	}
 }
 
@@ -233,7 +302,7 @@ func (v Value) Float() float64 {
 	case float32Type, float64Type:
 		return math.Float64frombits(uint64(v.num))
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("float"))
 	}
 }
 
@@ -254,7 +323,7 @@ func (v Value) Bytes() []byte {
 	case bytesType:
 		return v.getBytes()
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("bytes"))
 	}
 }
 
@@ -264,37 +333,37 @@ func (v Value) Enum() EnumNumber {
 	case enumType:
 		return EnumNumber(v.num)
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("enum"))
 	}
 }
 
 // Message returns v as a Message and panics if the type is not a Message.
 func (v Value) Message() Message {
-	switch v := v.getIface().(type) {
+	switch vi := v.getIface().(type) {
 	case Message:
-		return v
+		return vi
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("message"))
 	}
 }
 
 // List returns v as a List and panics if the type is not a List.
 func (v Value) List() List {
-	switch v := v.getIface().(type) {
+	switch vi := v.getIface().(type) {
 	case List:
-		return v
+		return vi
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("list"))
 	}
 }
 
 // Map returns v as a Map and panics if the type is not a Map.
 func (v Value) Map() Map {
-	switch v := v.getIface().(type) {
+	switch vi := v.getIface().(type) {
 	case Map:
-		return v
+		return vi
 	default:
-		panic("proto: value type mismatch")
+		panic(v.panicMessage("map"))
 	}
 }
 
@@ -303,8 +372,9 @@ func (v Value) MapKey() MapKey {
 	switch v.typ {
 	case boolType, int32Type, int64Type, uint32Type, uint64Type, stringType:
 		return MapKey(v)
+	default:
+		panic(v.panicMessage("map key"))
 	}
-	panic("proto: invalid map key type")
 }
 
 // MapKey is used to index maps, where the Go type of the MapKey must match
@@ -323,6 +393,7 @@ func (v Value) MapKey() MapKey {
 //	╚═════════╧═════════════════════════════════════╝
 //
 // A MapKey is constructed and accessed through a Value:
+//
 //	k := ValueOf("hash").MapKey() // convert string to MapKey
 //	s := k.String()               // convert MapKey to string
 //
