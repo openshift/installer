@@ -1,0 +1,32 @@
+# Missing infraenv.yaml should be detected.
+
+! exec openshift-install agent create unconfigured-ignition --dir $WORK
+
+stderr 'failed to generate asset "InfraEnv Config": missing configuration or manifest file'
+
+! exists $WORK/unconfigured-agent.ign
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+
+-- cluster-manifests/cluster-image-set.yaml --
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: registry.ci.openshift.org/origin/release:4.13
+
+-- cluster-manifests/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }

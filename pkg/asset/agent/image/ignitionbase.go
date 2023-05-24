@@ -180,6 +180,9 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 
 // PersistToFile writes the unconfigured ignition in the assets folder.
 func (a *IgnitionBase) PersistToFile(directory string) error {
+	if a.File == nil {
+		return errors.New("attempting to persist a IgnitionBase that has not been generated")
+	}
 	unconfiguredIgnFile := filepath.Join(directory, a.File.Filename)
 
 	err := os.WriteFile(unconfiguredIgnFile, a.File.Data, 0o644) //nolint:gosec // no sensitive info

@@ -1,0 +1,90 @@
+# The unconfigured ignition can be generated using
+# infraenv.yaml, pull-secret.yaml, cluster-image-set.yaml
+# and not using
+# install-config.yaml and agent-config.yaml.
+
+exec openshift-install agent create unconfigured-ignition --dir $WORK
+
+exists $WORK/unconfigured-agent.ign
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/agent-cluster-install.yaml
+! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/cluster-deployment.yaml
+igncmp unconfigured-agent.ign /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
+igncmp unconfigured-agent.ign /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+igncmp unconfigured-agent.ign /etc/assisted/manifests/pull-secret.yaml expected/pull-secret.yaml
+
+-- cluster-manifests/infraenv.yaml --
+metadata:
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  ipxeScriptType: ""
+  nmStateConfigLabelSelector:
+    matchLabels:
+      infraenvs.agent-install.openshift.io: ostest
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+
+-- cluster-manifests/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }
+
+-- cluster-manifests/cluster-image-set.yaml --
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: registry.ci.openshift.org/origin/release:4.13
+
+-- expected/cluster-image-set.yaml --
+metadata:
+  name: cluster0-image-set
+  namespace: cluster0
+spec:
+  releaseImage: registry.ci.openshift.org/origin/release:4.13
+
+-- expected/infraenv.yaml --
+metadata:
+  name: ostest
+  namespace: cluster0
+spec:
+  cpuArchitecture: x86_64
+  ipxeScriptType: ""
+  nmStateConfigLabelSelector:
+    matchLabels:
+      infraenvs.agent-install.openshift.io: ostest
+  pullSecretRef:
+    name: ostest-pull-secret
+  sshAuthorizedKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+
+-- expected/pull-secret.yaml --
+apiVersion: v1
+kind: Secret
+metadata:
+  creationTimestamp: null
+  name: ostest-pull-secret
+  namespace: cluster0
+stringData:
+  .dockerconfigjson: |-
+    {
+      "auths": {
+        "quay.io": {
+          "auth": "c3VwZXItc2VjcmV0Cg=="
+        }
+      }
+    }

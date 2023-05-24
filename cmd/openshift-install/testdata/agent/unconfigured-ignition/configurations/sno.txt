@@ -9,6 +9,9 @@ exists $WORK/unconfigured-agent.ign
 ! exists $WORK/auth/kubeadmin-password
 ! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/agent-cluster-install.yaml
 ! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/cluster-deployment.yaml
+ignitionContains unconfigured-agent.ign /etc/assisted/manifests/infraenv.yaml
+ignitionContains unconfigured-agent.ign /etc/assisted/manifests/pull-secret.yaml
+ignitionContains unconfigured-agent.ign /etc/assisted/manifests/cluster-image-set.yaml
 
 -- install-config.yaml --
 apiVersion: v1
