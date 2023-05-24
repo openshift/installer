@@ -215,7 +215,7 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 }
 
 // [!] ignCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
-// `ignFile` - extracted from theignition configuration file referenced
+// `ignFile` - extracted from the ignition configuration file referenced
 // by `ignPath` - matches the content of the local file `expectedFile`.
 func ignCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 3 {
