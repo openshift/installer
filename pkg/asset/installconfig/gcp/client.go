@@ -124,6 +124,17 @@ func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, m
 		zones.Insert(machine.Zone)
 	}
 
+	// Restrict to zones available in the project
+	pz, err := GetZones(ctx, svc, project, fmt.Sprintf("region eq .*%s", region))
+	if err != nil {
+		return nil, nil, err
+	}
+	projZones := sets.New[string]()
+	for _, zone := range pz {
+		projZones.Insert(zone.Name)
+	}
+	zones = zones.Intersection(projZones)
+
 	return machines[0], zones, nil
 }
 

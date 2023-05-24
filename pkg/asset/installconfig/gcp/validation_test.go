@@ -614,7 +614,7 @@ func TestValidateInstanceType(t *testing.T) {
 		},
 		{
 			name:           "Valid instance type with min requirements and invalid zones specified",
-			zones:          []string{"a", "b", "x", "y"},
+			zones:          []string{"a", "b", "d", "x", "y"},
 			instanceType:   "n1-standard-4",
 			expectedError:  true,
 			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
@@ -669,10 +669,17 @@ func TestValidateInstanceType(t *testing.T) {
 
 	// Should return the machine type as specified.
 	for key, value := range machineTypeAPIResult {
-		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New("a", "b", "c"), nil).AnyTimes()
+		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New("a", "b", "c", "d"), nil).AnyTimes()
 	}
 	// When passed incorrect machine type, the API returns nil.
 	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
+
+	zones := []*compute.Zone{
+		{Name: "a"},
+		{Name: "b"},
+		{Name: "c"},
+	}
+	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return(zones, nil).AnyTimes()
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
