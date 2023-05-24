@@ -55,27 +55,30 @@ func (a *ClusterImageSet) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	clusterImageSet := &hivev1.ClusterImageSet{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: fmt.Sprintf("openshift-%s", currentVersion),
+		},
+		Spec: hivev1.ClusterImageSetSpec{
+			ReleaseImage: releaseImage.PullSpec,
+		},
+	}
+
 	if installConfig.Config != nil {
-		clusterImageSet := &hivev1.ClusterImageSet{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      fmt.Sprintf("openshift-%s", currentVersion),
-				Namespace: getObjectMetaNamespace(installConfig),
-			},
-			Spec: hivev1.ClusterImageSetSpec{
-				ReleaseImage: releaseImage.PullSpec,
-			},
-		}
-		a.Config = clusterImageSet
+		clusterImageSet.ObjectMeta.Namespace = getObjectMetaNamespace(installConfig)
 
-		configData, err := yaml.Marshal(clusterImageSet)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal agent cluster image set")
-		}
+	}
 
-		a.File = &asset.File{
-			Filename: clusterImageSetFilename,
-			Data:     configData,
-		}
+	a.Config = clusterImageSet
+
+	configData, err := yaml.Marshal(clusterImageSet)
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal agent cluster image set")
+	}
+
+	a.File = &asset.File{
+		Filename: clusterImageSetFilename,
+		Data:     configData,
 	}
 
 	return a.finish()
