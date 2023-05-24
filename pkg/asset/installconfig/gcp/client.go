@@ -325,13 +325,8 @@ func (c *Client) GetRegions(ctx context.Context, project string) ([]string, erro
 	return computeRegions, nil
 }
 
-// GetZones uses the GCP Compute Service API to get a list of zones from a project.
-func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
-	svc, err := c.getComputeService(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+// GetZones retrieves the available zones for the project.
+func GetZones(ctx context.Context, svc *compute.Service, project, filter string) ([]*compute.Zone, error) {
 	req := svc.Zones.List(project)
 	if filter != "" {
 		req = req.Filter(filter)
@@ -341,15 +336,23 @@ func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compu
 	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
 	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
-		for _, zone := range page.Items {
-			zones = append(zones, zone)
-		}
+		zones = append(zones, page.Items...)
 		return nil
 	}); err != nil {
 		return nil, errors.Wrapf(err, "failed to get zones from project %s", project)
 	}
 
 	return zones, nil
+}
+
+// GetZones uses the GCP Compute Service API to get a list of zones from a project.
+func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return GetZones(ctx, svc, project, filter)
 }
 
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {

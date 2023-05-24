@@ -31,23 +31,22 @@ func AvailabilityZones(project, region string) ([]string, error) {
 
 	regionURL := fmt.Sprintf("https://www.googleapis.com/compute/v1/projects/%s/regions/%s",
 		project, region)
-	req := svc.Zones.List(project).Filter(fmt.Sprintf("(region eq %s) (status eq UP)", regionURL))
-
-	var zones []string
-	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
-		for _, z := range page.Items {
-			zones = append(zones, z.Name)
-		}
-		return nil
-	}); err != nil {
+	filter := fmt.Sprintf("(region eq %s) (status eq UP)", regionURL)
+	zones, err := gcpconfig.GetZones(ctx, svc, project, filter)
+	if err != nil {
 		return nil, errors.Wrap(err, "failed to list zones")
 	}
 	if len(zones) == 0 {
 		return nil, errors.New("no zone was found")
 	}
 
-	sort.Strings(zones)
-	return zones, nil
+	zoneNames := make([]string, 0, len(zones))
+	for _, z := range zones {
+		zoneNames = append(zoneNames, z.Name)
+	}
+
+	sort.Strings(zoneNames)
+	return zoneNames, nil
 }
 
 // ZonesForInstanceType retrieves a filtered list of availability zones where
