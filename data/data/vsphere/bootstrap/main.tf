@@ -33,12 +33,12 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
     eagerly_scrub    = var.scrub_disk
     thin_provisioned = var.thin_disk
   }
+
   lifecycle {
     ignore_changes = [
-      disk[0].eagerly_scrub,
+      disk[0],
     ]
   }
-
 
   clone {
     template_uuid = var.template
