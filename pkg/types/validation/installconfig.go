@@ -483,7 +483,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.BareMetal.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(baremetal.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(baremetal.Name))...)
 	case platform.Nutanix != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.APIVIPs, fldPath.Child(nutanix.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Nutanix.IngressVIPs, fldPath.Child(nutanix.Name, newVIPsFields.IngressVIPs))...)
@@ -493,7 +493,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.Nutanix.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(nutanix.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, network, fldPath.Child(nutanix.Name))...)
 	case platform.OpenStack != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.APIVIPs, fldPath.Child(openstack.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.OpenStack.IngressVIPs, fldPath.Child(openstack.Name, newVIPsFields.IngressVIPs))...)
@@ -503,7 +503,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.OpenStack.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(openstack.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs, fldPath.Child(vsphere.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs, fldPath.Child(vsphere.Name, newVIPsFields.IngressVIPs))...)
@@ -513,7 +513,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.VSphere.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, network, fldPath.Child(vsphere.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, false, false, network, fldPath.Child(vsphere.Name))...)
 	case platform.Ovirt != nil:
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.APIVIPs, fldPath.Child(ovirt.Name, newVIPsFields.APIVIPs))...)
 		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.Ovirt.IngressVIPs, fldPath.Child(ovirt.Name, newVIPsFields.IngressVIPs))...)
@@ -527,7 +527,7 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 			Ingress: platform.Ovirt.IngressVIPs,
 		}
 
-		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, network, fldPath.Child(ovirt.Name))...)
+		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(ovirt.Name))...)
 	default:
 		//no vips to validate on this platform
 	}
@@ -558,7 +558,9 @@ func ensureIPv4IsFirstInDualStackSlice(vips *[]string, fldPath *field.Path) fiel
 }
 
 // validateAPIAndIngressVIPs validates the API and Ingress VIPs
-func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bool, n *types.Networking, fldPath *field.Path) field.ErrorList {
+//
+//nolint:gocyclo
+func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired, reqVIPinMachineCIDR bool, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if len(vips.API) == 0 {
@@ -580,7 +582,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 				}
 			}
 
-			if err := ValidateIPinMachineCIDR(vip, n); err != nil {
+			if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.APIVIPs), vip, err.Error()))
 			}
 
@@ -623,7 +625,7 @@ func validateAPIAndIngressVIPs(vips vips, fieldNames vipFields, vipIsRequired bo
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
-			if err := ValidateIPinMachineCIDR(vip, n); err != nil {
+			if err := ValidateIPinMachineCIDR(vip, n); reqVIPinMachineCIDR && err != nil {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child(fieldNames.IngressVIPs), vip, err.Error()))
 			}
 
