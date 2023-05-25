@@ -4,12 +4,14 @@ package aws
 import (
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/pkg/errors"
 
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/types"
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
@@ -23,6 +25,8 @@ type config struct {
 	MasterInstanceType              string            `json:"aws_master_instance_type,omitempty"`
 	MasterAvailabilityZones         []string          `json:"aws_master_availability_zones"`
 	WorkerAvailabilityZones         []string          `json:"aws_worker_availability_zones"`
+	EdgeLocalZones                  []string          `json:"aws_edge_local_zones,omitempty"`
+	EdgeZonesGatewayIndex           map[string]int    `json:"aws_edge_parent_zones_index,omitempty"`
 	IOPS                            int64             `json:"aws_master_root_volume_iops"`
 	Size                            int64             `json:"aws_master_root_volume_size,omitempty"`
 	Type                            string            `json:"aws_master_root_volume_type,omitempty"`
@@ -49,6 +53,7 @@ type TFVarsSources struct {
 	PrivateSubnets, PublicSubnets  []string
 	InternalZone, InternalZoneRole string
 	Services                       []typesaws.ServiceEndpoint
+	AvailabilityZones              icaws.Zones
 
 	Publish types.PublishingStrategy
 
@@ -84,19 +89,67 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		tags[tag.Name] = tag.Value
 	}
 
+	exists := struct{}{}
+	allAvailabilityZonesMap := map[string]struct{}{}
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = c.Placement.AvailabilityZone
+		allAvailabilityZonesMap[c.Placement.AvailabilityZone] = exists
 	}
 
-	exists := struct{}{}
 	availabilityZoneMap := map[string]struct{}{}
+	edgeLocalZoneMap := map[string]struct{}{}
 	for _, c := range sources.WorkerConfigs {
-		availabilityZoneMap[c.Placement.AvailabilityZone] = exists
+		zoneName := c.Placement.AvailabilityZone
+		if _, ok := sources.AvailabilityZones[zoneName]; !ok {
+			return nil, errors.New(fmt.Sprintf("unable to find the zone when generating terraform vars: %s", zoneName))
+		}
+		if sources.AvailabilityZones[zoneName].Type == typesaws.LocalZoneType {
+			edgeLocalZoneMap[zoneName] = exists
+			continue
+		}
+		availabilityZoneMap[zoneName] = exists
+		allAvailabilityZonesMap[zoneName] = exists
 	}
+
 	workerAvailabilityZones := make([]string, 0, len(availabilityZoneMap))
 	for zone := range availabilityZoneMap {
 		workerAvailabilityZones = append(workerAvailabilityZones, zone)
+	}
+
+	allAvailabilityZones := make([]string, 0, len(allAvailabilityZonesMap))
+	for zone := range allAvailabilityZonesMap {
+		allAvailabilityZones = append(allAvailabilityZones, zone)
+	}
+
+	// Create map for edge zone and parent's zone index.
+	// AWS Local Zones does not support private Nat Gateways, to egress internet
+	// traffic from the zone, so the parent's zone route table will be
+	// used to associate private subnets created in the edge zones.
+	// The allAvailabilityZones holds all Availability Zone type (in the Region)
+	// for the cluster, where the terraform creates network resources
+	// (NAT Gateway). The index of that list will be used to determine the
+	// parent's zone route table ID, when exists, otherwise the default
+	// private route table will be used.
+	// TODO(when Local Zone supports Nat Gateway): create private route table
+	// by Local Zone location.
+	sort.Strings(allAvailabilityZones)
+	edgeLocalZones := make([]string, 0, len(edgeLocalZoneMap))
+	edgeZonesGatewayIndexMap := make(map[string]int, len(edgeLocalZoneMap))
+	// new VPC
+	if len(sources.PrivateSubnets) == 0 {
+		for zone := range edgeLocalZoneMap {
+			parent := sources.AvailabilityZones[zone].ParentZoneName
+			gwIndex := 0
+			for idx, az := range allAvailabilityZones {
+				if az == parent {
+					gwIndex = idx
+					break
+				}
+			}
+			edgeLocalZones = append(edgeLocalZones, zone)
+			edgeZonesGatewayIndexMap[zone] = gwIndex
+		}
 	}
 
 	if len(masterConfig.BlockDevices) == 0 {
@@ -126,6 +179,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ExtraTags:               tags,
 		MasterAvailabilityZones: masterAvailabilityZones,
 		WorkerAvailabilityZones: workerAvailabilityZones,
+		EdgeLocalZones:          edgeLocalZones,
+		EdgeZonesGatewayIndex:   edgeZonesGatewayIndexMap,
 		BootstrapInstanceType:   masterConfig.InstanceType,
 		MasterInstanceType:      masterConfig.InstanceType,
 		Size:                    *rootVolume.EBS.VolumeSize,

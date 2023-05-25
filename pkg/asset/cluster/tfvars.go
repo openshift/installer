@@ -287,10 +287,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masterIAMRoleName = awsMP.IAMRole
 		}
 
+		// AWS Zones is used to determine which route table the edge zone will be associated.
+		allZones, err := installConfig.AWS.AllZones(ctx)
+		if err != nil {
+			return err
+		}
+
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
 			VPC:                   vpc,
 			PrivateSubnets:        privateSubnets,
 			PublicSubnets:         publicSubnets,
+			AvailabilityZones:     allZones,
 			InternalZone:          installConfig.Config.AWS.HostedZone,
 			InternalZoneRole:      installConfig.Config.AWS.HostedZoneRole,
 			Services:              installConfig.Config.AWS.ServiceEndpoints,
@@ -1015,7 +1022,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 		natGatewayZones, err := client.ListEnhanhcedNatGatewayAvailableZones()
 		if err != nil {
-			return errors.Wrapf(err, "failed to list avaliable zones for NAT gateway")
+			return errors.Wrapf(err, "failed to list available zones for NAT gateway")
 		}
 		natGatewayZoneID := natGatewayZones.Zones[0].ZoneId
 
