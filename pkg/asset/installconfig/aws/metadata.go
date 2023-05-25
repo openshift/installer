@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 
@@ -16,9 +17,10 @@ import (
 type Metadata struct {
 	session           *session.Session
 	availabilityZones []string
-	privateSubnets    map[string]Subnet
-	publicSubnets     map[string]Subnet
-	edgeSubnets       map[string]Subnet
+	edgeZones         []string
+	privateSubnets    Subnets
+	publicSubnets     Subnets
+	edgeSubnets       Subnets
 	vpc               string
 	instanceTypes     map[string]InstanceType
 
@@ -74,10 +76,30 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	return m.availabilityZones, nil
 }
 
+// EdgeZones retrieves a list of Local zones for the configured region.
+func (m *Metadata) EdgeZones(ctx context.Context) ([]string, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if len(m.edgeZones) == 0 {
+		session, err := m.unlockedSession(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		m.edgeZones, err = localZones(ctx, session, m.Region)
+		if err != nil {
+			return nil, errors.Wrap(err, "getting Local Zones")
+		}
+	}
+
+	return m.edgeZones, nil
+}
+
 // EdgeSubnets retrieves subnet metadata indexed by subnet ID, for
 // subnets that the cloud-provider logic considers to be edge
 // (i.e. Local Zone).
-func (m *Metadata) EdgeSubnets(ctx context.Context) (map[string]Subnet, error) {
+func (m *Metadata) EdgeSubnets(ctx context.Context) (Subnets, error) {
 	err := m.populateSubnets(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving Edge Subnets")
@@ -85,10 +107,64 @@ func (m *Metadata) EdgeSubnets(ctx context.Context) (map[string]Subnet, error) {
 	return m.edgeSubnets, nil
 }
 
+// SetZoneAttributes retrieves AWS Zone attributes and update required fields in zones.
+func (m *Metadata) SetZoneAttributes(ctx context.Context, zoneNames []string, zones Zones) error {
+	sess, err := m.Session(ctx)
+	if err != nil {
+		return errors.Wrap(err, "unable to get aws session to populate zone details")
+	}
+	azs, err := describeFilteredZones(ctx, sess, m.Region, zoneNames)
+	if err != nil {
+		return errors.Wrap(err, "unable to filter zones")
+	}
+
+	for _, az := range azs {
+		zoneName := awssdk.StringValue(az.ZoneName)
+		if _, ok := zones[zoneName]; !ok {
+			zones[zoneName] = &Zone{Name: zoneName}
+		}
+		if zones[zoneName].GroupName == "" {
+			zones[zoneName].GroupName = awssdk.StringValue(az.GroupName)
+		}
+		if zones[zoneName].Type == "" {
+			zones[zoneName].Type = awssdk.StringValue(az.ZoneType)
+		}
+		if az.ParentZoneName != nil {
+			zones[zoneName].ParentZoneName = awssdk.StringValue(az.ParentZoneName)
+		}
+	}
+	return nil
+}
+
+// AllZones return all the zones and it's attributes available on the region.
+func (m *Metadata) AllZones(ctx context.Context) (Zones, error) {
+	sess, err := m.Session(ctx)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get aws session to populate zone details")
+	}
+	azs, err := describeAvailabilityZones(ctx, sess, m.Region, []string{})
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to gather availability zones")
+	}
+	zoneDesc := make(Zones, len(azs))
+	for _, az := range azs {
+		zoneName := awssdk.StringValue(az.ZoneName)
+		zoneDesc[zoneName] = &Zone{
+			Name:      zoneName,
+			GroupName: awssdk.StringValue(az.GroupName),
+			Type:      awssdk.StringValue(az.ZoneType),
+		}
+		if az.ParentZoneName != nil {
+			zoneDesc[zoneName].ParentZoneName = awssdk.StringValue(az.ParentZoneName)
+		}
+	}
+	return zoneDesc, nil
+}
+
 // PrivateSubnets retrieves subnet metadata indexed by subnet ID, for
 // subnets that the cloud-provider logic considers to be private
 // (i.e. not public).
-func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error) {
+func (m *Metadata) PrivateSubnets(ctx context.Context) (Subnets, error) {
 	err := m.populateSubnets(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving Private Subnets")
@@ -99,7 +175,7 @@ func (m *Metadata) PrivateSubnets(ctx context.Context) (map[string]Subnet, error
 // PublicSubnets retrieves subnet metadata indexed by subnet ID, for
 // subnets that the cloud-provider logic considers to be public
 // (e.g. with suitable routing for hosting public load balancers).
-func (m *Metadata) PublicSubnets(ctx context.Context) (map[string]Subnet, error) {
+func (m *Metadata) PublicSubnets(ctx context.Context) (Subnets, error) {
 	err := m.populateSubnets(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "error retrieving Public Subnets")
