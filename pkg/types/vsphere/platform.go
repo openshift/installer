@@ -32,11 +32,11 @@ const (
 )
 
 const (
-	// ControlPlaneRole represents control-plane nodes
+	// ControlPlaneRole represents control-plane nodes.
 	ControlPlaneRole = "control-plane"
-	// ComputeRole represents worker nodes
+	// ComputeRole represents worker nodes.
 	ComputeRole = "compute"
-	// BootstrapRole represents bootstrap nodes
+	// BootstrapRole represents bootstrap nodes.
 	BootstrapRole = "bootstrap"
 )
 
