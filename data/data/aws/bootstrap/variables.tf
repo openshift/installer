@@ -18,6 +18,14 @@ variable "private_subnet_ids" {
   type = list(string)
 }
 
+variable "edge_public_subnet_ids" {
+  type = list(string)
+}
+
+variable "edge_private_subnet_ids" {
+  type = list(string)
+}
+
 variable "master_sg_id" {
   type = string
 }

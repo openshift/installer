@@ -22,6 +22,14 @@ output "private_subnet_ids" {
   value = values(module.vpc.az_to_private_subnet_id)
 }
 
+output "edge_public_subnet_ids" {
+  value = values(module.vpc.az_to_edge_public_subnet_id)
+}
+
+output "edge_private_subnet_ids" {
+  value = values(module.vpc.az_to_edge_private_subnet_id)
+}
+
 output "master_sg_id" {
   value = module.vpc.master_sg_id
 }

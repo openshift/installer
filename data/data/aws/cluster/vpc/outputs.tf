@@ -10,12 +10,28 @@ output "az_to_public_subnet_id" {
   value = zipmap(data.aws_subnet.public.*.availability_zone, data.aws_subnet.public.*.id)
 }
 
+output "az_to_edge_private_subnet_id" {
+  value = zipmap(data.aws_subnet.edge_private.*.availability_zone, data.aws_subnet.edge_private.*.id)
+}
+
+output "az_to_edge_public_subnet_id" {
+  value = zipmap(data.aws_subnet.edge_public.*.availability_zone, data.aws_subnet.edge_public.*.id)
+}
+
 output "public_subnet_ids" {
   value = data.aws_subnet.public.*.id
 }
 
 output "private_subnet_ids" {
   value = data.aws_subnet.private.*.id
+}
+
+output "edge_public_subnet_ids" {
+  value = data.aws_subnet.edge_public.*.id
+}
+
+output "edge_private_subnet_ids" {
+  value = data.aws_subnet.edge_private.*.id
 }
 
 output "master_sg_id" {
