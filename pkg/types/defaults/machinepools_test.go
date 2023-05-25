@@ -128,3 +128,40 @@ func TestSetMahcinePoolDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestHasEdgePoolConfig(t *testing.T) {
+	cases := []struct {
+		name     string
+		pool     []types.MachinePool
+		expected bool
+	}{
+		{
+			name:     "empty",
+			pool:     []types.MachinePool{*defaultMachinePool("non-edge")},
+			expected: false,
+		}, {
+			name:     "worker",
+			pool:     []types.MachinePool{*defaultMachinePool("worker")},
+			expected: false,
+		}, {
+			name:     "edge",
+			pool:     []types.MachinePool{*defaultEdgeMachinePool("edge")},
+			expected: true,
+		}, {
+			name:     "edge",
+			pool:     []types.MachinePool{*defaultEdgeMachinePool("edge"), *defaultMachinePool("non-edge")},
+			expected: true,
+		}, {
+			name:     "edge",
+			pool:     []types.MachinePool{*defaultEdgeMachinePool("edge"), *defaultMachinePool("worker")},
+			expected: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			res := hasEdgePoolConfig(tc.pool)
+			assert.Equal(t, tc.expected, res, "unexpected machine pool")
+		})
+	}
+}
