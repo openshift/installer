@@ -2,16 +2,12 @@ package image
 
 import (
 	"encoding/base64"
-	"fmt"
-	"os"
 	"os/exec"
-	"path"
 	"strings"
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -337,52 +333,22 @@ func TestAddHostConfig_Roles(t *testing.T) {
 }
 
 func generatedFiles(otherFiles ...string) []string {
-	defaultFiles := []string{
-		"/etc/issue",
-		"/etc/multipath.conf",
-		"/etc/containers/containers.conf",
-		"/root/.docker/config.json",
-		"/root/assisted.te",
-		"/usr/local/bin/agent-gather",
-		"/usr/local/bin/extract-agent.sh",
-		"/usr/local/bin/get-container-images.sh",
-		"/usr/local/bin/set-hostname.sh",
-		"/usr/local/bin/start-agent.sh",
-		"/usr/local/bin/start-cluster-installation.sh",
-		"/usr/local/bin/wait-for-assisted-service.sh",
-		"/usr/local/bin/set-node-zero.sh",
-		"/usr/local/share/assisted-service/assisted-db.env",
-		"/usr/local/share/assisted-service/assisted-service.env",
-		"/usr/local/share/assisted-service/images.env",
-		"/usr/local/bin/bootstrap-service-record.sh",
-		"/usr/local/bin/release-image.sh",
-		"/usr/local/bin/release-image-download.sh",
+	files := append(generatedFilesIgnitionBase(),
 		"/etc/assisted/rendezvous-host.env",
 		"/etc/assisted/manifests/agent-config.yaml",
+		// TODO: cluster-deployment.yaml and agent-cluster-install.yaml should also
+		// be present. Bug?
+		// "/etc/assisted/manifests/cluster-deployment.yaml",
+		// "/etc/assisted/manifests/agent-cluster-install.yaml",
 		"/etc/assisted/network/host0/eth0.nmconnection",
 		"/etc/assisted/network/host0/mac_interface.ini",
 		"/usr/local/bin/pre-network-manager-config.sh",
-		"/opt/agent/tls/kubeadmin-password.hash",
-		"/etc/assisted/agent-installer.env",
-		"/etc/motd.d/10-agent-installer",
-		"/etc/systemd/system.conf.d/10-default-env.conf",
-		"/usr/local/bin/install-status.sh",
-		"/usr/local/bin/issue_status.sh",
-	}
-	return append(defaultFiles, otherFiles...)
+		"/opt/agent/tls/kubeadmin-password.hash")
+	return append(files, otherFiles...)
 }
 
 func TestIgnition_Generate(t *testing.T) {
-	// Generate calls addStaticNetworkConfig which calls nmstatectl
-	_, execErr := exec.LookPath("nmstatectl")
-	if execErr != nil {
-		t.Skip("No nmstatectl binary available")
-	}
-
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, _ := os.Getwd()
-	os.Chdir(path.Join(workingDirectory, "../../../../data"))
+	setupIgnitionGenerateTest(t)
 	secretDataBytes, _ := base64.StdEncoding.DecodeString("super-secret")
 
 	cases := []struct {
@@ -503,26 +469,7 @@ metadata:
 				assert.Len(t, ignitionAsset.Config.Storage.Directories, 1)
 				assert.Equal(t, "/etc/assisted/extra-manifests", ignitionAsset.Config.Storage.Directories[0].Node.Path)
 
-				if len(tc.expectedFiles) > 0 {
-					assert.Equal(t, len(tc.expectedFiles), len(ignitionAsset.Config.Storage.Files))
-
-					for _, f := range tc.expectedFiles {
-						found := false
-						for _, i := range ignitionAsset.Config.Storage.Files {
-							if i.Node.Path == f {
-								if expectedData, ok := tc.expectedFileContent[i.Node.Path]; ok {
-									actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
-									assert.NoError(t, err)
-									assert.Regexp(t, expectedData, string(actualData.Data))
-								}
-
-								found = true
-								break
-							}
-						}
-						assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
-					}
-				}
+				assertExpectedFiles(t, ignitionAsset.Config, tc.expectedFiles, tc.expectedFileContent)
 
 				for _, unit := range ignitionAsset.Config.Systemd.Units {
 					if unit.Name == "pre-network-manager-config.service" {

@@ -60,21 +60,6 @@ type agentTemplateData struct {
 	Proxy                     *v1beta1.Proxy
 }
 
-var agentEnabledServices = []string{
-	"agent-interactive-console.service",
-	"agent.service",
-	"assisted-service-db.service",
-	"assisted-service-pod.service",
-	"assisted-service.service",
-	"create-cluster-and-infraenv.service",
-	"node-zero.service",
-	"multipathd.service",
-	"selinux.service",
-	"set-hostname.service",
-	"start-cluster-installation.service",
-	"install-status.service",
-}
-
 // Name returns the human-friendly name of the asset.
 func (a *Ignition) Name() string {
 	return "Agent Installer Ignition"
@@ -218,6 +203,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
 	}
 
+	agentEnabledServices = append(agentEnabledServices, "set-hostname.service", "start-cluster-installation.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
 	if err != nil {
 		return err

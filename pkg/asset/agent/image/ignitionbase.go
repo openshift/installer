@@ -38,6 +38,22 @@ type IgnitionBase struct {
 	osImage    models.OsImage
 }
 
+var agentEnabledServices = []string{
+	"agent-interactive-console.service",
+	"agent.service",
+	"assisted-service-db.service",
+	"assisted-service-pod.service",
+	"assisted-service.service",
+	"create-cluster-and-infraenv.service",
+	"node-zero.service",
+	"multipathd.service",
+	"selinux.service",
+	"install-status.service",
+	// Services disabled in IgnitionBase
+	// "set-hostname.service",
+	// "start-cluster-installation.service",
+}
+
 // Name returns the human-friendly name of the asset.
 func (a *IgnitionBase) Name() string {
 	return "Agent Installer Ignition Base"
@@ -162,9 +178,7 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
-	disabledServices := []string{"set-hostname.service", "start-cluster-installation.service"}
-	enabledServices := StringArrayRemove(agentEnabledServices, disabledServices)
-	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
+	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
 	if err != nil {
 		return err
 	}
