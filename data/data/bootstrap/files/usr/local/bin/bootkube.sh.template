@@ -67,8 +67,6 @@ COREDNS_IMAGE=$(image_for coredns)
 HAPROXY_IMAGE=$(image_for haproxy-router)
 BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
 
-VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${RELEASE_IMAGE_DIGEST}")"
-
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
@@ -80,6 +78,18 @@ then
     record_service_stage_success
 fi
 
+ICSP_MANIFEST_FILE="$PWD/manifests/image-content-source-policy.yaml"
+IDMS_MANIFEST_FILE="$PWD/manifests/image-digest-mirror-set.yaml"
+
+MIRROR_FLAG=""
+if [ -f $ICSP_MANIFEST_FILE ]; then
+    MIRROR_FLAG="--icsp-file=$ICSP_MANIFEST_FILE"
+elif [ -f $IDMS_MANIFEST_FILE ]; then
+    # Requires https://issues.redhat.com/browse/OCPNODE-1656
+    MIRROR_FLAG="--idms-file=$IDMS_MANIFEST_FILE"
+fi
+
+VERSION="$(oc adm release info -o 'jsonpath={.metadata.version}' "${MIRROR_FLAG}" "${RELEASE_IMAGE_DIGEST}")"
 
 if [ ! -f config-bootstrap.done ]
 then
