@@ -1,6 +1,7 @@
 package vsphere
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -13,6 +14,8 @@ import (
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
+
+const testClusterID = "test"
 
 var installConfigSample = `
 apiVersion: v1
@@ -107,6 +110,62 @@ platform:
         networks:
         - network1
         datastore: /dc4/datastore/datastore4
+    hosts:
+    - role: bootstrap
+      networkDevice:
+        ipaddrs:
+        - 192.168.101.240/24
+        gateway: 192.168.101.1        
+        nameservers:
+        - 192.168.101.2
+    - role: control-plane
+      failureDomain: deployzone-us-east-1a
+      networkDevice:
+        ipAddrs:
+        - 192.168.101.241/24
+        gateway: 192.168.101.1        
+        nameservers:
+        - 192.168.101.2
+    - role: control-plane
+      failureDomain: deployzone-us-east-2a
+      networkDevice:
+        ipAddrs:
+        - 192.168.101.242/24
+        gateway: 192.168.101.1
+        nameservers:
+        - 192.168.101.2
+    - role: control-plane
+      failureDomain: deployzone-us-east-3a
+      networkDevice:
+        ipAddrs:
+        - 192.168.101.243/24
+        gateway: 192.168.101.1        
+        nameservers:
+        - 192.168.101.2
+    - role: compute
+      failureDomain: deployzone-us-east-1a
+      networkDevice:
+        ipAddrs:
+        - 192.168.101.244/24
+        gateway: 192.168.101.1        
+        nameservers:
+        - 192.168.101.2
+    - role: compute
+      failureDomain: deployzone-us-east-2a
+      networkDevice:
+        ipAddrs:
+        - 192.168.101.245/24
+        gateway: 192.168.101.1        
+        nameservers:
+        - 192.168.101.2
+    - role: compute
+      failureDomain: deployzone-us-east-3a
+      networkDevice:
+        ipAddrs:
+        - 192.168.101.246/24
+        gateway: 192.168.101.1        
+        nameservers:
+        - 192.168.101.2
 pullSecret:
 sshKey:`
 
@@ -205,7 +264,7 @@ func assertOnUnexpectedErrorState(t *testing.T, expectedError string, err error)
 }
 
 func TestConfigMasters(t *testing.T) {
-	clusterID := "test"
+	clusterID := testClusterID
 	installConfig, err := parseInstallConfig()
 	if err != nil {
 		assert.Errorf(t, err, "unable to parse sample install config")
@@ -344,6 +403,94 @@ func TestConfigMasters(t *testing.T) {
 					if count < tc.minAllowedWorkspaceMatches {
 						t.Errorf("machine workspace was enountered too few times[min: %d]", tc.minAllowedWorkspaceMatches)
 					}
+				}
+			}
+		})
+	}
+}
+
+func TestHostsToMachines(t *testing.T) {
+	clusterID := testClusterID
+	installConfig, err := parseInstallConfig()
+	if err != nil {
+		assert.Errorf(t, err, "unable to parse sample install config")
+		return
+	}
+	defaultClusterResourcePool, err := parseInstallConfig()
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defaultClusterResourcePool.VSphere.FailureDomains[0].Topology.ResourcePool = ""
+
+	testCases := []struct {
+		testCase      string
+		expectedError string
+		machinePool   *types.MachinePool
+		installConfig *types.InstallConfig
+		role          string
+		machineCount  int
+	}{
+		{
+			testCase:      "Static IP - ControlPlane",
+			machinePool:   &machinePoolValidZones,
+			installConfig: installConfig,
+			role:          "master",
+			machineCount:  3,
+		},
+		{
+			testCase:      "Static IP - Compute",
+			machinePool:   &machinePoolValidZones,
+			installConfig: installConfig,
+			role:          "worker",
+			machineCount:  3,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.testCase, func(t *testing.T) {
+			machines, err := Machines(clusterID, tc.installConfig, tc.machinePool, "", tc.role, "")
+			assertOnUnexpectedErrorState(t, tc.expectedError, err)
+
+			// Check machine counts
+			if len(machines) != tc.machineCount {
+				t.Errorf("machine count (%v) did not match expected (%v).", len(machines), tc.machineCount)
+			}
+
+			// Verify static IP was set on all machines
+			for _, machine := range machines {
+				provider, success := machine.Spec.ProviderSpec.Value.Object.(*machineapi.VSphereMachineProviderSpec)
+				if !success {
+					t.Errorf("Unable to convert vshere machine provider spec.")
+				}
+
+				if len(provider.Network.Devices) == 1 {
+					// Check IP
+					if provider.Network.Devices[0].IPAddrs == nil || provider.Network.Devices[0].IPAddrs[0] == "" {
+						t.Errorf("Static ip is not set: %v", machine)
+					}
+
+					// Check nameserver
+					if provider.Network.Devices[0].Nameservers == nil || provider.Network.Devices[0].Nameservers[0] == "" {
+						t.Errorf("Nameserver is not set: %v", machine)
+					}
+
+					gateway := provider.Network.Devices[0].Gateway
+					ip, err := netip.ParseAddr(gateway)
+					if err != nil {
+						t.Error(err)
+					}
+					targetGateway := "192.168.101.1"
+					if ip.Is6() {
+						targetGateway = "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+					}
+
+					// Check gateway
+					if gateway != targetGateway {
+						t.Errorf("Gateway is incorrect: %v", gateway)
+					}
+				} else {
+					t.Errorf("Devices not set for machine: %v", machine)
 				}
 			}
 		})

@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -69,6 +70,9 @@ const (
 	// workerMachineSetFileName is the format string for constructing the worker MachineSet filenames.
 	workerMachineSetFileName = "99_openshift-cluster-api_worker-machineset-%s.yaml"
 
+	// workerMachineFileName is the format string for constructing the worker Machine filenames.
+	workerMachineFileName = "99_openshift-cluster-api_worker-machines-%s.yaml"
+
 	// workerUserDataFileName is the filename used for the worker user-data secret.
 	workerUserDataFileName = "99_openshift-cluster-api_worker-user-data-secret.yaml"
 
@@ -85,6 +89,7 @@ const (
 
 var (
 	workerMachineSetFileNamePattern = fmt.Sprintf(workerMachineSetFileName, "*")
+	workerMachineFileNamePattern    = fmt.Sprintf(workerMachineFileName, "*")
 
 	_ asset.WritableAsset = (*Worker)(nil)
 )
@@ -218,6 +223,7 @@ type Worker struct {
 	UserDataFile       *asset.File
 	MachineConfigFiles []*asset.File
 	MachineSetFiles    []*asset.File
+	MachineFiles       []*asset.File
 }
 
 // Name returns a human friendly name for the Worker Asset.
@@ -253,6 +259,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 	workerUserDataSecretName := "worker-user-data"
 
+	machines := []machinev1beta1.Machine{}
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
 	var err error
@@ -579,6 +586,22 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+
+			// If static IPs are configured, we must generate worker machines and scale the machinesets to 0.
+			if ic.Platform.VSphere.Hosts != nil {
+				logrus.Debug("Generating worker machines with static IPs.")
+				templateName := clusterID.InfraID + "-rhcos"
+
+				machines, err = vsphere.Machines(clusterID.InfraID, ic, &pool, templateName, "worker", workerUserDataSecretName)
+				if err != nil {
+					return errors.Wrap(err, "failed to create worker machine objects")
+				}
+				logrus.Debugf("Generated %v worker machines.", len(machines))
+
+				for _, ms := range sets {
+					ms.Spec.Replicas = pointer.Int32(0)
+				}
+			}
 		case ovirttypes.Name:
 			mpool := defaultOvirtMachinePoolPlatform()
 			mpool.Set(ic.Platform.Ovirt.DefaultMachinePlatform)
@@ -657,6 +680,20 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		}
 	}
+
+	w.MachineFiles = make([]*asset.File, len(machines))
+	for i, machineDef := range machines {
+		data, err := yaml.Marshal(machineDef)
+		if err != nil {
+			return errors.Wrapf(err, "marshal master %d", i)
+		}
+
+		padded := fmt.Sprintf(padFormat, i)
+		w.MachineFiles[i] = &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(workerMachineFileName, padded)),
+			Data:     data,
+		}
+	}
 	return nil
 }
 
@@ -668,6 +705,7 @@ func (w *Worker) Files() []*asset.File {
 	}
 	files = append(files, w.MachineConfigFiles...)
 	files = append(files, w.MachineSetFiles...)
+	files = append(files, w.MachineFiles...)
 	return files
 }
 
@@ -693,6 +731,13 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	w.MachineSetFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, workerMachineFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	w.MachineFiles = fileList
+
 	return true, nil
 }
 

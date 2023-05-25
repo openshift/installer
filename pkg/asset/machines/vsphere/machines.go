@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,8 +41,27 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		replicas = *pool.Replicas
 	}
 
+	// Create hosts to populate from.  Copying so we can remove without changing original
+	// and only put in the ones that match the role.
+	var hosts []*vsphere.Host
+	if config.Platform.VSphere.Hosts != nil {
+		for _, host := range config.Platform.VSphere.Hosts {
+			if (host.IsCompute() && role == "worker") || (host.IsControlPlane() && role == "master") {
+				logrus.Debugf("Adding host for static ip assignment: %v - %v", host.FailureDomain, host.NetworkDevice.IPAddrs[0])
+				hosts = append(hosts, host)
+			}
+		}
+	}
+
 	for idx := int64(0); idx < replicas; idx++ {
+		logrus.Debugf("Creating %v machine %v", role, idx)
+		var host *vsphere.Host
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
+		if int(idx) < len(hosts) {
+			host = hosts[idx]
+			desiredZone = host.FailureDomain
+		}
+		logrus.Debugf("Desired zone: %v", desiredZone)
 
 		if _, exists := zones[desiredZone]; !exists {
 			return nil, errors.Errorf("zone [%s] specified by machinepool is not defined", desiredZone)
@@ -69,6 +89,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 
+		// Apply static IP if configured
+		applyNetworkConfig(host, provider)
+
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -89,6 +112,20 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 	return machines, nil
+}
+
+// applyNetworkConfig this function will apply the static ip configuration to the networkDevice
+// field in the provider spec.  The function will use the desired zone to determine which config
+// to apply and then remove that host config from the hosts array.
+func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineProviderSpec) {
+	if host != nil {
+		networkDevice := host.NetworkDevice
+		if networkDevice != nil {
+			provider.Network.Devices[0].IPAddrs = networkDevice.IPAddrs
+			provider.Network.Devices[0].Nameservers = networkDevice.Nameservers
+			provider.Network.Devices[0].Gateway = networkDevice.Gateway
+		}
+	}
 }
 
 func provider(clusterID string, vcenter *vsphere.VCenter, failureDomain vsphere.FailureDomain, mpool *vsphere.MachinePool, osImage string, userDataSecret string) (*machineapi.VSphereMachineProviderSpec, error) {
