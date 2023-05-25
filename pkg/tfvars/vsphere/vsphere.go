@@ -1,10 +1,15 @@
 package vsphere
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/netip"
+	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -23,6 +28,8 @@ type config struct {
 	VCenters                 map[string]vtypes.VCenter                `json:"vsphere_vcenters"`
 	NetworksInFailureDomains map[string]string                        `json:"vsphere_networks"`
 	ControlPlanes            []*machineapi.VSphereMachineProviderSpec `json:"vsphere_control_planes"`
+	ControlPlaneNetworkKargs []string                                 `json:"vsphere_control_plane_network_kargs"`
+	BootStrapNetworkKargs    string                                   `json:"vsphere_bootstrap_network_kargs"`
 	DatacentersFolders       map[string]*folder                       `json:"vsphere_folders"`
 
 	ImportOvaFailureDomainMap map[string]vtypes.FailureDomain `json:"vsphere_import_ova_failure_domain_map"`
@@ -61,15 +68,23 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		OvaFilePath:              cachedImage,
-		DiskType:                 sources.DiskType,
-		VCenters:                 vcenterZones,
-		NetworksInFailureDomains: sources.NetworksInFailureDomain,
-		ControlPlanes:            sources.ControlPlaneConfigs,
-		DatacentersFolders:       datacentersFolders,
-
+		OvaFilePath:               cachedImage,
+		DiskType:                  sources.DiskType,
+		VCenters:                  vcenterZones,
+		NetworksInFailureDomains:  sources.NetworksInFailureDomain,
+		ControlPlanes:             sources.ControlPlaneConfigs,
+		DatacentersFolders:        datacentersFolders,
 		ImportOvaFailureDomainMap: importOvaFailureDomainMap,
 		FailureDomainMap:          failureDomainMap,
+		ControlPlaneNetworkKargs:  []string{},
+	}
+
+	if len(sources.InstallConfig.Config.VSphere.Hosts) > 0 {
+		logrus.Debugf("Applying static IP configs")
+		err = processGuestNetworkConfiguration(cfg, sources)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
@@ -129,4 +144,108 @@ func convertVCentersToMap(values []vtypes.VCenter) map[string]vtypes.VCenter {
 		vcenterMap[v.Server] = v
 	}
 	return vcenterMap
+}
+
+func getSubnetMask(prefix netip.Prefix) (string, error) {
+	prefixLength := net.IPv4len * 8
+	if prefix.Addr().Is6() {
+		prefixLength = net.IPv6len * 8
+	}
+	ipMask := net.CIDRMask(prefix.Masked().Bits(), prefixLength)
+	maskBytes, err := hex.DecodeString(ipMask.String())
+	if err != nil {
+		return "", err
+	}
+	ip := net.IP(maskBytes)
+	maskStr := ip.To16().String()
+	return maskStr, nil
+}
+
+func constructKargsFromNetworkConfig(ipAddrs []string, nameservers []string, gateway string) (string, error) {
+	outKargs := ""
+
+	var gatewayIP netip.Addr
+	if len(gateway) > 0 {
+		ip, err := netip.ParseAddr(gateway)
+		if err != nil {
+			return "", err
+		}
+		if ip.Is6() {
+			gateway = fmt.Sprintf("[%s]", gateway)
+		}
+		gatewayIP = ip
+	}
+
+	for _, address := range ipAddrs {
+		prefix, err := netip.ParsePrefix(address)
+		if err != nil {
+			return "", err
+		}
+		var ipStr, gatewayStr, maskStr string
+		addr := prefix.Addr()
+		switch {
+		case addr.Is6():
+			maskStr = fmt.Sprintf("%d", prefix.Bits())
+			ipStr = fmt.Sprintf("[%s]", addr.String())
+			if len(gateway) > 0 && gatewayIP.Is6() {
+				gatewayStr = gateway
+			}
+		case addr.Is4():
+			maskStr, err = getSubnetMask(prefix)
+			if err != nil {
+				return "", err
+			}
+			if len(gateway) > 0 && gatewayIP.Is4() {
+				gatewayStr = gateway
+			}
+			ipStr = addr.String()
+		default:
+			return "", errors.New("IP address must adhere to IPv4 or IPv6 format")
+		}
+		outKargs += fmt.Sprintf("ip=%s::%s:%s:::none ", ipStr, gatewayStr, maskStr)
+	}
+
+	for _, nameserver := range nameservers {
+		ip := net.ParseIP(nameserver)
+		if ip.To4() == nil {
+			nameserver = fmt.Sprintf("[%s]", nameserver)
+		}
+		outKargs += fmt.Sprintf("nameserver=%s ", nameserver)
+	}
+
+	outKargs = strings.Trim(outKargs, " ")
+	logrus.Debugf("Generated karg: [%v].", outKargs)
+	return outKargs, nil
+}
+
+// processGuestNetworkConfiguration takes the config and sources data and generates the kernel arguments (kargs)
+// needed to boot RHCOS with static IP configurations.
+func processGuestNetworkConfiguration(cfg *config, sources TFVarsSources) error {
+	platform := sources.InstallConfig.Config.Platform.VSphere
+
+	// Generate bootstrap karg using vsphere platform info from install-config
+	for _, host := range platform.Hosts {
+		if host.Role == vtypes.BootstrapRole {
+			logrus.Debugf("Generating kargs for bootstrap")
+			network := host.NetworkDevice
+			kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway)
+			if err != nil {
+				return err
+			}
+			cfg.BootStrapNetworkKargs = kargs
+			break
+		}
+	}
+
+	// Generate control plane kargs using info from machine network config
+	for _, machine := range sources.ControlPlaneConfigs {
+		logrus.Debugf("Generating kargs for control plane %v", machine.GenerateName)
+		network := machine.Network.Devices[0]
+		kargs, err := constructKargsFromNetworkConfig(network.IPAddrs, network.Nameservers, network.Gateway)
+		if err != nil {
+			return err
+		}
+		cfg.ControlPlaneNetworkKargs = append(cfg.ControlPlaneNetworkKargs, kargs)
+	}
+	return nil
 }

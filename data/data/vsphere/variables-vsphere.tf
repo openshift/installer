@@ -34,3 +34,12 @@ variable "vsphere_failure_domain_map" {
   type    = map(any)
   default = {}
 }
+
+variable "vsphere_control_plane_network_kargs" {
+  type    = list(string)
+  default = []
+}
+
+variable "vsphere_bootstrap_network_kargs" {
+  type = string
+}

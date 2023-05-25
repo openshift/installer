@@ -67,12 +67,18 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
     template_uuid = data.vsphere_virtual_machine.template[count.index].uuid
   }
 
-  extra_config = {
-    "guestinfo.ignition.config.data"          = base64encode(var.ignition_bootstrap)
-    "guestinfo.ignition.config.data.encoding" = "base64"
-    "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
-    "stealclock.enable"                       = "TRUE"
-  }
+  extra_config = merge(
+    {
+      "guestinfo.ignition.config.data"          = base64encode(var.ignition_bootstrap)
+      "guestinfo.ignition.config.data.encoding" = "base64"
+      "guestinfo.hostname"                      = "${var.cluster_id}-bootstrap"
+      "stealclock.enable"                       = "TRUE"
+    },
+    length(var.vsphere_bootstrap_network_kargs) > 0 ?
+    {
+      "guestinfo.afterburn.initrd.network-kargs" = "${var.vsphere_bootstrap_network_kargs}"
+    } : {}
+  )
 
   // Potential issues on destroy if disk type changes
   // underneath terraform.
