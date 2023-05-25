@@ -3707,7 +3707,7 @@ spec:
                     type: string
                   hosts:
                     description: Hosts defines network configurations to be applied
-                      by the installer.
+                      by the installer. Hosts is available in TechPreview.
                     items:
                       description: Host defines host VMs to generate as part of the
                         installation.

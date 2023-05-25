@@ -134,7 +134,7 @@ type Platform struct {
 	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.VSpherePlatformLoadBalancer `json:"loadBalancer,omitempty"`
-	// Hosts defines network configurations to be applied by the installer.
+	// Hosts defines network configurations to be applied by the installer. Hosts is available in TechPreview.
 	Hosts []*Host `json:"hosts,omitempty"`
 }
 
