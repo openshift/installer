@@ -2,12 +2,12 @@ package validation
 
 import (
 	"fmt"
-	"k8s.io/utils/pointer"
 	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/pointer"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
