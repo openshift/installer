@@ -42,11 +42,6 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 				{CIDR: *libvirtdefaults.DefaultMachineCIDR},
 			}
 		}
-		if c.Platform.PowerVS != nil {
-			c.Networking.MachineNetwork = []types.MachineNetworkEntry{
-				{CIDR: *powervsdefaults.DefaultMachineCIDR},
-			}
-		}
 	}
 	if c.Networking.NetworkType == "" {
 		c.Networking.NetworkType = defaultNetworkType
@@ -122,6 +117,9 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	case c.Platform.PowerVS != nil:
 		powervsdefaults.SetPlatformDefaults(c.Platform.PowerVS)
+		c.Networking.MachineNetwork = []types.MachineNetworkEntry{
+			{CIDR: *powervsdefaults.DefaultMachineCIDR},
+		}
 	case c.Platform.None != nil:
 		nonedefaults.SetPlatformDefaults(c.Platform.None)
 	case c.Platform.Nutanix != nil:
