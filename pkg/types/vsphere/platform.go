@@ -31,6 +31,15 @@ const (
 	TagCategoryZone = "openshift-zone"
 )
 
+const (
+	// ControlPlaneRole represents control-plane nodes.
+	ControlPlaneRole = "control-plane"
+	// ComputeRole represents worker nodes.
+	ComputeRole = "compute"
+	// BootstrapRole represents bootstrap nodes.
+	BootstrapRole = "bootstrap"
+)
+
 // Platform stores any global configuration used for vsphere platforms.
 type Platform struct {
 	// VCenter is the domain name or IP address of the vCenter.
@@ -125,6 +134,8 @@ type Platform struct {
 	// LoadBalancer is available in TechPreview.
 	// +optional
 	LoadBalancer *configv1.VSpherePlatformLoadBalancer `json:"loadBalancer,omitempty"`
+	// Hosts defines network configurations to be applied by the installer.
+	Hosts []*Host `json:"hosts,omitempty"`
 }
 
 // FailureDomain holds the region and zone failure domain and
@@ -228,4 +239,60 @@ type VCenter struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	Datacenters []string `json:"datacenters"`
+}
+
+// Host defines host VMs to generate as part of the installation.
+type Host struct {
+	// FailureDomain refers to the name of a FailureDomain as described in https://github.com/openshift/enhancements/blob/master/enhancements/installer/vsphere-ipi-zonal.md
+	// +optional
+	FailureDomain string `json:"failureDomain"`
+	// NetworkDeviceSpec to be applied to the host
+	// +kubebuilder:validation:Required
+	NetworkDevice *NetworkDeviceSpec `json:"networkDevice"`
+	// Role defines the role of the node
+	// +kubebuilder:validation:Enum="";bootstrap;control-plane;compute
+	// +kubebuilder:validation:Required
+	Role string `json:"role"`
+}
+
+// NetworkDeviceSpec defines network config for static IP assignment.
+type NetworkDeviceSpec struct {
+	// gateway is an IPv4 or IPv6 address which represents the subnet gateway,
+	// for example, 192.168.1.1.
+	// +kubebuilder:validation:Format=ipv4
+	// +kubebuilder:validation:Format=ipv6
+	Gateway string `json:"gateway,omitempty"`
+
+	// ipAddrs is a list of one or more IPv4 and/or IPv6 addresses and CIDR to assign to
+	// this device, for example, 192.168.1.100/24. IP addresses provided via ipAddrs are
+	// intended to allow explicit assignment of a machine's IP address.
+	// +kubebuilder:validation:Format=ipv4
+	// +kubebuilder:validation:Format=ipv6
+	// +kubebuilder:example=192.168.1.100/24
+	// +kubebuilder:example=2001:DB8:0000:0000:244:17FF:FEB6:D37D/64
+	// +kubebuilder:validation:Required
+	IPAddrs []string `json:"ipAddrs"`
+
+	// nameservers is a list of IPv4 and/or IPv6 addresses used as DNS nameservers, for example,
+	// 8.8.8.8. a nameserver is not provided by a fulfilled IPAddressClaim. If DHCP is not the
+	// source of IP addresses for this network device, nameservers should include a valid nameserver.
+	// +kubebuilder:validation:Format=ipv4
+	// +kubebuilder:validation:Format=ipv6
+	// +kubebuilder:example=8.8.8.8
+	Nameservers []string `json:"nameservers,omitempty"`
+}
+
+// IsControlPlane checks if the current host is a master.
+func (h *Host) IsControlPlane() bool {
+	return h.Role == ControlPlaneRole
+}
+
+// IsCompute checks if the current host is a worker.
+func (h *Host) IsCompute() bool {
+	return h.Role == ComputeRole
+}
+
+// IsBootstrap checks if the current host is a bootstrap.
+func (h *Host) IsBootstrap() bool {
+	return h.Role == BootstrapRole
 }

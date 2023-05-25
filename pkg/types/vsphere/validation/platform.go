@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"net"
 	"regexp"
 	"strings"
 
@@ -43,6 +44,11 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 			return append(allErrs, field.Required(fldPath.Child("failureDomains"), "must be defined"))
 		}
 		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+
+		// Validate hosts if configured for static IP
+		if p.Hosts != nil {
+			allErrs = append(allErrs, validateHosts(p, c, fldPath.Child("hosts"))...)
+		}
 	}
 
 	// Platform fields only allowed in TechPreviewNoUpgrade
@@ -199,7 +205,7 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 	return allErrs
 }
 
-// validateDiskType checks that the specified diskType is valid
+// validateDiskType checks that the specified diskType is valid.
 func validateDiskType(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
@@ -220,4 +226,168 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 	default:
 		return false
 	}
+}
+
+// validateHosts.
+func validateHosts(p *vsphere.Platform, installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Validate hosts counts match desired replicas
+	allErrs = append(allErrs, validateHostsCount(p.Hosts, installConfig, fldPath)...)
+
+	// Iterate through hosts
+	for _, host := range p.Hosts {
+		// Check Role (bootstrap, control-plane, compute)
+		allErrs = append(allErrs, validateHostRole(host, fldPath)...)
+
+		// Check failure domain (must exist in failure domains)
+		if host.FailureDomain != "" {
+			allErrs = append(allErrs, validateHostFailureDomain(host, p.FailureDomains, fldPath)...)
+		}
+
+		// Check networking
+		if host.NetworkDevice == nil {
+			allErrs = append(allErrs, field.Required(fldPath.Child("networkDevice"), "must specify networkDevice configuration"))
+		} else {
+			allErrs = append(allErrs, validateHostNetworking(host.NetworkDevice, fldPath)...)
+		}
+	}
+
+	return allErrs
+}
+
+// validateHostRole returns error if the host role is invalid.
+func validateHostRole(host *vsphere.Host, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	validHostRoles := sets.NewString(vsphere.BootstrapRole, vsphere.ControlPlaneRole, vsphere.ComputeRole)
+	if !validHostRoles.Has(host.Role) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("role"), host.Role, validHostRoles.List()))
+	}
+	return allErrs
+}
+
+// validateHostsCount ensure that the number of hosts is enough to cover the
+// ControlPlane and Compute replicas. Hosts without role will be considered
+// eligible for the ControlPlane or Compute requirements.
+func validateHostsCount(hosts []*vsphere.Host, installConfig *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	numRequiredControlPlane := int64(0)
+	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Replicas != nil {
+		numRequiredControlPlane += *installConfig.ControlPlane.Replicas
+	}
+
+	numRequiredWorkers := int64(0)
+	for _, worker := range installConfig.Compute {
+		if worker.Replicas != nil {
+			numRequiredWorkers += *worker.Replicas
+		}
+	}
+
+	numControlPlane := int64(0)
+	numWorkers := int64(0)
+	numBootstrap := int64(0)
+	for _, h := range hosts {
+		switch {
+		case h.IsControlPlane():
+			numControlPlane++
+		case h.IsCompute():
+			numWorkers++
+		case h.IsBootstrap():
+			numBootstrap++
+		}
+	}
+
+	if numBootstrap != 1 {
+		allErrs = append(allErrs, field.Invalid(fldPath, "bootstrap", "a single host with the bootstrap role must be defined"))
+	}
+
+	if numControlPlane < numRequiredControlPlane {
+		errMsg := fmt.Sprintf("not enough hosts found (%v) to support all the configured control plane replicas (%v)", numControlPlane, numRequiredControlPlane)
+		allErrs = append(allErrs, field.Invalid(fldPath, "control-plane", errMsg))
+	} else if numControlPlane > numRequiredControlPlane {
+		errMsg := fmt.Sprintf("too many hosts found (%v) for the configured control plane replicas (%v)", numControlPlane, numRequiredControlPlane)
+		allErrs = append(allErrs, field.Invalid(fldPath, "control-plane", errMsg))
+	}
+
+	if numWorkers < numRequiredWorkers {
+		errMsg := fmt.Sprintf("not enough hosts found (%v) to support all the configured compute replicas (%v)", numWorkers, numRequiredWorkers)
+		allErrs = append(allErrs, field.Invalid(fldPath, "compute", errMsg))
+	} else if numWorkers > numRequiredWorkers {
+		errMsg := fmt.Sprintf("too many hosts found (%v) for the configured compute replicas (%v)", numWorkers, numRequiredWorkers)
+		allErrs = append(allErrs, field.Invalid(fldPath, "compute", errMsg))
+	}
+
+	return allErrs
+}
+
+// validateHostFailureDomain returns error if the FailureDomain is not found.
+func validateHostFailureDomain(host *vsphere.Host, fds []vsphere.FailureDomain, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	fdFound := false
+	for _, domain := range fds {
+		if domain.Name == host.FailureDomain {
+			fdFound = true
+			break
+		}
+	}
+	if !fdFound {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("failureDomain"), host.FailureDomain, "failure domain not found"))
+	}
+	return allErrs
+}
+
+// validateHostNetworking checks all fields related to networking for a host.  If any errors are found, they will
+// be returned (invalid IP, IP required).
+func validateHostNetworking(network *vsphere.NetworkDeviceSpec, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Check ip addresses
+	if len(network.IPAddrs) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("ipAddrs"), "must specify a IP"))
+	}
+	for _, ip := range network.IPAddrs {
+		allErrs = append(allErrs, validateIPWithCidr(ip, true, fldPath.Child("ipAddrs"))...)
+	}
+
+	// Check nameservers
+	if len(network.Nameservers) > 3 {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child("nameservers"), len(network.Nameservers), 3))
+	}
+	for _, nameserver := range network.Nameservers {
+		allErrs = append(allErrs, validateIP(nameserver, false, fldPath.Child("nameservers"))...)
+	}
+
+	// Check gateway
+	allErrs = append(allErrs, validateIP(network.Gateway, false, fldPath.Child("gateway"))...)
+
+	return allErrs
+}
+
+// validateIPWithCidr checks IP/CIDR value to see if it is valid.  If IP is required, an error will be returned if
+// the IP is not specified.
+func validateIPWithCidr(ip string, req bool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ip == "" && req {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a IP address with CIDR"))
+	} else if ip != "" {
+		if _, _, valErr := net.ParseCIDR(ip); valErr != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath, ip, valErr.Error()))
+		}
+	}
+	return allErrs
+}
+
+// validateIP checks IP value to see if it is valid.  If IP is required, an error will be returned if
+// the IP is not specified.
+func validateIP(ip string, req bool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ip == "" && req {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a IP"))
+	} else if ip != "" {
+		if valErr := validate.IP(ip); valErr != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath, ip, valErr.Error()))
+		}
+	}
+	return allErrs
 }
