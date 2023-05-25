@@ -55,7 +55,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.27.4
-	github.com/openshift/api v0.0.0-20230531161518-2346bf94f19e
+	github.com/openshift/api v0.0.0-20230621174358-ea40115b9fa6
 	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
@@ -250,10 +250,6 @@ replace k8s.io/client-go => k8s.io/client-go v0.27.2
 
 // Needed so that the InstallConfig CRD can be created. Later versions of controller-gen balk at using IPNet as a field.
 replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-
-// Override the OpenShift API version in hive
-
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20230607130528-611114dca681
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 
