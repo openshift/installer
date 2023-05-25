@@ -52,10 +52,12 @@ func NewV2InstallHostParamsWithHTTPClient(client *http.Client) *V2InstallHostPar
 	}
 }
 
-/* V2InstallHostParams contains all the parameters to send to the API endpoint
-   for the v2 install host operation.
+/*
+V2InstallHostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 install host operation.
+
+	Typically these are written to a http.Request.
 */
 type V2InstallHostParams struct {
 

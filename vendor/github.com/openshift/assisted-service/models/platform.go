@@ -19,6 +19,10 @@ import (
 // swagger:model platform
 type Platform struct {
 
+	// Indicates if the underlying platform type is external.
+	// Read Only: true
+	IsExternal *bool `json:"is_external,omitempty"`
+
 	// type
 	// Required: true
 	Type *PlatformType `json:"type"`
@@ -66,6 +70,10 @@ func (m *Platform) validateType(formats strfmt.Registry) error {
 func (m *Platform) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateIsExternal(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateType(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -73,6 +81,15 @@ func (m *Platform) ContextValidate(ctx context.Context, formats strfmt.Registry)
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Platform) contextValidateIsExternal(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := validate.ReadOnly(ctx, "is_external", "body", m.IsExternal); err != nil {
+		return err
+	}
+
 	return nil
 }
 

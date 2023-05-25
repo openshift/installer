@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -21,9 +22,11 @@ type OsImage struct {
 
 	// The CPU architecture of the image (x86_64/arm64/etc).
 	// Required: true
+	// Enum: [x86_64 aarch64 arm64 ppc64le s390x]
 	CPUArchitecture *string `json:"cpu_architecture" gorm:"default:'x86_64'"`
 
-	// Version of the OpenShift cluster.
+	// Version of the operating system image
+	// Example: 4.12
 	// Required: true
 	OpenshiftVersion *string `json:"openshift_version"`
 
@@ -62,9 +65,52 @@ func (m *OsImage) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+var osImageTypeCPUArchitecturePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["x86_64","aarch64","arm64","ppc64le","s390x"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		osImageTypeCPUArchitecturePropEnum = append(osImageTypeCPUArchitecturePropEnum, v)
+	}
+}
+
+const (
+
+	// OsImageCPUArchitectureX8664 captures enum value "x86_64"
+	OsImageCPUArchitectureX8664 string = "x86_64"
+
+	// OsImageCPUArchitectureAarch64 captures enum value "aarch64"
+	OsImageCPUArchitectureAarch64 string = "aarch64"
+
+	// OsImageCPUArchitectureArm64 captures enum value "arm64"
+	OsImageCPUArchitectureArm64 string = "arm64"
+
+	// OsImageCPUArchitecturePpc64le captures enum value "ppc64le"
+	OsImageCPUArchitecturePpc64le string = "ppc64le"
+
+	// OsImageCPUArchitectureS390x captures enum value "s390x"
+	OsImageCPUArchitectureS390x string = "s390x"
+)
+
+// prop value enum
+func (m *OsImage) validateCPUArchitectureEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, osImageTypeCPUArchitecturePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *OsImage) validateCPUArchitecture(formats strfmt.Registry) error {
 
 	if err := validate.Required("cpu_architecture", "body", m.CPUArchitecture); err != nil {
+		return err
+	}
+
+	// value enum
+	if err := m.validateCPUArchitectureEnum("cpu_architecture", "body", *m.CPUArchitecture); err != nil {
 		return err
 	}
 

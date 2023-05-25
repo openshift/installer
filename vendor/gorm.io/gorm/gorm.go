@@ -37,6 +37,8 @@ type Config struct {
 	DisableAutomaticPing bool
 	// DisableForeignKeyConstraintWhenMigrating
 	DisableForeignKeyConstraintWhenMigrating bool
+	// IgnoreRelationshipsWhenMigrating
+	IgnoreRelationshipsWhenMigrating bool
 	// DisableNestedTransaction disable nested transaction
 	DisableNestedTransaction bool
 	// AllowGlobalUpdate allow global update
@@ -179,7 +181,7 @@ func Open(dialector Dialector, opts ...Option) (db *DB, err error) {
 
 	preparedStmt := &PreparedStmtDB{
 		ConnPool:    db.ConnPool,
-		Stmts:       map[string]Stmt{},
+		Stmts:       make(map[string]*Stmt),
 		Mux:         &sync.RWMutex{},
 		PreparedSQL: make([]string, 0, 100),
 	}
@@ -248,10 +250,18 @@ func (db *DB) Session(config *Session) *DB {
 	if config.PrepareStmt {
 		if v, ok := db.cacheStore.Load(preparedStmtDBKey); ok {
 			preparedStmt := v.(*PreparedStmtDB)
-			tx.Statement.ConnPool = &PreparedStmtDB{
-				ConnPool: db.Config.ConnPool,
-				Mux:      preparedStmt.Mux,
-				Stmts:    preparedStmt.Stmts,
+			switch t := tx.Statement.ConnPool.(type) {
+			case Tx:
+				tx.Statement.ConnPool = &PreparedStmtTX{
+					Tx:             t,
+					PreparedStmtDB: preparedStmt,
+				}
+			default:
+				tx.Statement.ConnPool = &PreparedStmtDB{
+					ConnPool: db.Config.ConnPool,
+					Mux:      preparedStmt.Mux,
+					Stmts:    preparedStmt.Stmts,
+				}
 			}
 			txConfig.ConnPool = tx.Statement.ConnPool
 			txConfig.PrepareStmt = true
@@ -300,7 +310,8 @@ func (db *DB) WithContext(ctx context.Context) *DB {
 
 // Debug start debug mode
 func (db *DB) Debug() (tx *DB) {
-	return db.Session(&Session{
+	tx = db.getInstance()
+	return tx.Session(&Session{
 		Logger: db.Logger.LogMode(logger.Info),
 	})
 }
@@ -412,7 +423,7 @@ func (db *DB) SetupJoinTable(model interface{}, field string, joinTable interfac
 	relation, ok := modelSchema.Relationships.Relations[field]
 	isRelation := ok && relation.JoinTable != nil
 	if !isRelation {
-		return fmt.Errorf("failed to found relation: %s", field)
+		return fmt.Errorf("failed to find relation: %s", field)
 	}
 
 	for _, ref := range relation.References {
@@ -455,12 +466,12 @@ func (db *DB) Use(plugin Plugin) error {
 
 // ToSQL for generate SQL string.
 //
-// db.ToSQL(func(tx *gorm.DB) *gorm.DB {
-// 		return tx.Model(&User{}).Where(&User{Name: "foo", Age: 20})
-// 			.Limit(10).Offset(5)
-//			.Order("name ASC")
-//			.First(&User{})
-// })
+//	db.ToSQL(func(tx *gorm.DB) *gorm.DB {
+//			return tx.Model(&User{}).Where(&User{Name: "foo", Age: 20})
+//				.Limit(10).Offset(5)
+//				.Order("name ASC")
+//				.First(&User{})
+//	})
 func (db *DB) ToSQL(queryFn func(tx *DB) *DB) string {
 	tx := queryFn(db.Session(&Session{DryRun: true, SkipDefaultTransaction: true}))
 	stmt := tx.Statement

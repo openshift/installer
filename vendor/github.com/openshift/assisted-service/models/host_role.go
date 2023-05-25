@@ -20,8 +20,12 @@ import (
 type HostRole string
 
 func NewHostRole(value HostRole) *HostRole {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated HostRole.
+func (m HostRole) Pointer() *HostRole {
+	return &m
 }
 
 const (

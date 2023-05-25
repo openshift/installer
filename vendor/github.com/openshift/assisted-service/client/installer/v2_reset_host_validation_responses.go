@@ -75,7 +75,8 @@ func NewV2ResetHostValidationOK() *V2ResetHostValidationOK {
 	return &V2ResetHostValidationOK{}
 }
 
-/* V2ResetHostValidationOK describes a response with status code 200, with default header values.
+/*
+V2ResetHostValidationOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -83,9 +84,39 @@ type V2ResetHostValidationOK struct {
 	Payload *models.Host
 }
 
+// IsSuccess returns true when this v2 reset host validation o k response has a 2xx status code
+func (o *V2ResetHostValidationOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 reset host validation o k response has a 3xx status code
+func (o *V2ResetHostValidationOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation o k response has a 4xx status code
+func (o *V2ResetHostValidationOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 reset host validation o k response has a 5xx status code
+func (o *V2ResetHostValidationOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host validation o k response a status code equal to that given
+func (o *V2ResetHostValidationOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ResetHostValidationOK) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ResetHostValidationOK) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ResetHostValidationOK) GetPayload() *models.Host {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewV2ResetHostValidationBadRequest() *V2ResetHostValidationBadRequest {
 	return &V2ResetHostValidationBadRequest{}
 }
 
-/* V2ResetHostValidationBadRequest describes a response with status code 400, with default header values.
+/*
+V2ResetHostValidationBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -115,9 +147,39 @@ type V2ResetHostValidationBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host validation bad request response has a 2xx status code
+func (o *V2ResetHostValidationBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host validation bad request response has a 3xx status code
+func (o *V2ResetHostValidationBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation bad request response has a 4xx status code
+func (o *V2ResetHostValidationBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host validation bad request response has a 5xx status code
+func (o *V2ResetHostValidationBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host validation bad request response a status code equal to that given
+func (o *V2ResetHostValidationBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2ResetHostValidationBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2ResetHostValidationBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2ResetHostValidationBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewV2ResetHostValidationUnauthorized() *V2ResetHostValidationUnauthorized {
 	return &V2ResetHostValidationUnauthorized{}
 }
 
-/* V2ResetHostValidationUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ResetHostValidationUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -147,9 +210,39 @@ type V2ResetHostValidationUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 reset host validation unauthorized response has a 2xx status code
+func (o *V2ResetHostValidationUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host validation unauthorized response has a 3xx status code
+func (o *V2ResetHostValidationUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation unauthorized response has a 4xx status code
+func (o *V2ResetHostValidationUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host validation unauthorized response has a 5xx status code
+func (o *V2ResetHostValidationUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host validation unauthorized response a status code equal to that given
+func (o *V2ResetHostValidationUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ResetHostValidationUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ResetHostValidationUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ResetHostValidationUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewV2ResetHostValidationForbidden() *V2ResetHostValidationForbidden {
 	return &V2ResetHostValidationForbidden{}
 }
 
-/* V2ResetHostValidationForbidden describes a response with status code 403, with default header values.
+/*
+V2ResetHostValidationForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -179,9 +273,39 @@ type V2ResetHostValidationForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 reset host validation forbidden response has a 2xx status code
+func (o *V2ResetHostValidationForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host validation forbidden response has a 3xx status code
+func (o *V2ResetHostValidationForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation forbidden response has a 4xx status code
+func (o *V2ResetHostValidationForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host validation forbidden response has a 5xx status code
+func (o *V2ResetHostValidationForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host validation forbidden response a status code equal to that given
+func (o *V2ResetHostValidationForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ResetHostValidationForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ResetHostValidationForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ResetHostValidationForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewV2ResetHostValidationNotFound() *V2ResetHostValidationNotFound {
 	return &V2ResetHostValidationNotFound{}
 }
 
-/* V2ResetHostValidationNotFound describes a response with status code 404, with default header values.
+/*
+V2ResetHostValidationNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -211,9 +336,39 @@ type V2ResetHostValidationNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host validation not found response has a 2xx status code
+func (o *V2ResetHostValidationNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host validation not found response has a 3xx status code
+func (o *V2ResetHostValidationNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation not found response has a 4xx status code
+func (o *V2ResetHostValidationNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host validation not found response has a 5xx status code
+func (o *V2ResetHostValidationNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host validation not found response a status code equal to that given
+func (o *V2ResetHostValidationNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2ResetHostValidationNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2ResetHostValidationNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2ResetHostValidationNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewV2ResetHostValidationConflict() *V2ResetHostValidationConflict {
 	return &V2ResetHostValidationConflict{}
 }
 
-/* V2ResetHostValidationConflict describes a response with status code 409, with default header values.
+/*
+V2ResetHostValidationConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -243,9 +399,39 @@ type V2ResetHostValidationConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host validation conflict response has a 2xx status code
+func (o *V2ResetHostValidationConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host validation conflict response has a 3xx status code
+func (o *V2ResetHostValidationConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation conflict response has a 4xx status code
+func (o *V2ResetHostValidationConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset host validation conflict response has a 5xx status code
+func (o *V2ResetHostValidationConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset host validation conflict response a status code equal to that given
+func (o *V2ResetHostValidationConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2ResetHostValidationConflict) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2ResetHostValidationConflict) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2ResetHostValidationConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewV2ResetHostValidationInternalServerError() *V2ResetHostValidationInterna
 	return &V2ResetHostValidationInternalServerError{}
 }
 
-/* V2ResetHostValidationInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ResetHostValidationInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -275,9 +462,39 @@ type V2ResetHostValidationInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset host validation internal server error response has a 2xx status code
+func (o *V2ResetHostValidationInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset host validation internal server error response has a 3xx status code
+func (o *V2ResetHostValidationInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset host validation internal server error response has a 4xx status code
+func (o *V2ResetHostValidationInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 reset host validation internal server error response has a 5xx status code
+func (o *V2ResetHostValidationInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 reset host validation internal server error response a status code equal to that given
+func (o *V2ResetHostValidationInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ResetHostValidationInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ResetHostValidationInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/reset-validation/{validation_id}][%d] v2ResetHostValidationInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ResetHostValidationInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

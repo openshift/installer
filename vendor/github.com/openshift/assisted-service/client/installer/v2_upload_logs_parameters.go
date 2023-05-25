@@ -52,10 +52,12 @@ func NewV2UploadLogsParamsWithHTTPClient(client *http.Client) *V2UploadLogsParam
 	}
 }
 
-/* V2UploadLogsParams contains all the parameters to send to the API endpoint
-   for the v2 upload logs operation.
+/*
+V2UploadLogsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 upload logs operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UploadLogsParams struct {
 

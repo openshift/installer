@@ -20,8 +20,12 @@ import (
 type MemoryMethod string
 
 func NewMemoryMethod(value MemoryMethod) *MemoryMethod {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated MemoryMethod.
+func (m MemoryMethod) Pointer() *MemoryMethod {
+	return &m
 }
 
 const (

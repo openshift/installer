@@ -52,10 +52,12 @@ func NewV2ListSupportedOperatorsParamsWithHTTPClient(client *http.Client) *V2Lis
 	}
 }
 
-/* V2ListSupportedOperatorsParams contains all the parameters to send to the API endpoint
-   for the v2 list supported operators operation.
+/*
+V2ListSupportedOperatorsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 list supported operators operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ListSupportedOperatorsParams struct {
 	timeout    time.Duration

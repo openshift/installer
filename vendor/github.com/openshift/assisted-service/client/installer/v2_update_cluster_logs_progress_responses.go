@@ -81,14 +81,44 @@ func NewV2UpdateClusterLogsProgressNoContent() *V2UpdateClusterLogsProgressNoCon
 	return &V2UpdateClusterLogsProgressNoContent{}
 }
 
-/* V2UpdateClusterLogsProgressNoContent describes a response with status code 204, with default header values.
+/*
+V2UpdateClusterLogsProgressNoContent describes a response with status code 204, with default header values.
 
 Update cluster install progress.
 */
 type V2UpdateClusterLogsProgressNoContent struct {
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress no content response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress no content response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress no content response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster logs progress no content response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster logs progress no content response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *V2UpdateClusterLogsProgressNoContent) Error() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressNoContent ", 204)
+}
+
+func (o *V2UpdateClusterLogsProgressNoContent) String() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressNoContent ", 204)
 }
 
@@ -102,7 +132,8 @@ func NewV2UpdateClusterLogsProgressUnauthorized() *V2UpdateClusterLogsProgressUn
 	return &V2UpdateClusterLogsProgressUnauthorized{}
 }
 
-/* V2UpdateClusterLogsProgressUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateClusterLogsProgressUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -110,9 +141,39 @@ type V2UpdateClusterLogsProgressUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress unauthorized response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress unauthorized response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress unauthorized response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster logs progress unauthorized response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster logs progress unauthorized response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateClusterLogsProgressUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -134,7 +195,8 @@ func NewV2UpdateClusterLogsProgressForbidden() *V2UpdateClusterLogsProgressForbi
 	return &V2UpdateClusterLogsProgressForbidden{}
 }
 
-/* V2UpdateClusterLogsProgressForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateClusterLogsProgressForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -142,9 +204,39 @@ type V2UpdateClusterLogsProgressForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress forbidden response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress forbidden response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress forbidden response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster logs progress forbidden response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster logs progress forbidden response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateClusterLogsProgressForbidden) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressForbidden) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -166,7 +258,8 @@ func NewV2UpdateClusterLogsProgressNotFound() *V2UpdateClusterLogsProgressNotFou
 	return &V2UpdateClusterLogsProgressNotFound{}
 }
 
-/* V2UpdateClusterLogsProgressNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateClusterLogsProgressNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -174,9 +267,39 @@ type V2UpdateClusterLogsProgressNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress not found response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress not found response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress not found response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster logs progress not found response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster logs progress not found response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateClusterLogsProgressNotFound) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressNotFound) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -198,7 +321,8 @@ func NewV2UpdateClusterLogsProgressMethodNotAllowed() *V2UpdateClusterLogsProgre
 	return &V2UpdateClusterLogsProgressMethodNotAllowed{}
 }
 
-/* V2UpdateClusterLogsProgressMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateClusterLogsProgressMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -206,9 +330,39 @@ type V2UpdateClusterLogsProgressMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress method not allowed response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress method not allowed response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress method not allowed response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster logs progress method not allowed response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster logs progress method not allowed response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateClusterLogsProgressMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -230,7 +384,8 @@ func NewV2UpdateClusterLogsProgressConflict() *V2UpdateClusterLogsProgressConfli
 	return &V2UpdateClusterLogsProgressConflict{}
 }
 
-/* V2UpdateClusterLogsProgressConflict describes a response with status code 409, with default header values.
+/*
+V2UpdateClusterLogsProgressConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -238,9 +393,39 @@ type V2UpdateClusterLogsProgressConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress conflict response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress conflict response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress conflict response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster logs progress conflict response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster logs progress conflict response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2UpdateClusterLogsProgressConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressConflict) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -262,7 +447,8 @@ func NewV2UpdateClusterLogsProgressInternalServerError() *V2UpdateClusterLogsPro
 	return &V2UpdateClusterLogsProgressInternalServerError{}
 }
 
-/* V2UpdateClusterLogsProgressInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateClusterLogsProgressInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -270,9 +456,39 @@ type V2UpdateClusterLogsProgressInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress internal server error response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress internal server error response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress internal server error response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster logs progress internal server error response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update cluster logs progress internal server error response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateClusterLogsProgressInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -294,7 +510,8 @@ func NewV2UpdateClusterLogsProgressServiceUnavailable() *V2UpdateClusterLogsProg
 	return &V2UpdateClusterLogsProgressServiceUnavailable{}
 }
 
-/* V2UpdateClusterLogsProgressServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2UpdateClusterLogsProgressServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -302,9 +519,39 @@ type V2UpdateClusterLogsProgressServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster logs progress service unavailable response has a 2xx status code
+func (o *V2UpdateClusterLogsProgressServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster logs progress service unavailable response has a 3xx status code
+func (o *V2UpdateClusterLogsProgressServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster logs progress service unavailable response has a 4xx status code
+func (o *V2UpdateClusterLogsProgressServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster logs progress service unavailable response has a 5xx status code
+func (o *V2UpdateClusterLogsProgressServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update cluster logs progress service unavailable response a status code equal to that given
+func (o *V2UpdateClusterLogsProgressServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2UpdateClusterLogsProgressServiceUnavailable) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2UpdateClusterLogsProgressServiceUnavailable) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/logs-progress][%d] v2UpdateClusterLogsProgressServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2UpdateClusterLogsProgressServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

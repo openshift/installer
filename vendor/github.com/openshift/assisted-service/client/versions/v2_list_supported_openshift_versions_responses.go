@@ -57,7 +57,8 @@ func NewV2ListSupportedOpenshiftVersionsOK() *V2ListSupportedOpenshiftVersionsOK
 	return &V2ListSupportedOpenshiftVersionsOK{}
 }
 
-/* V2ListSupportedOpenshiftVersionsOK describes a response with status code 200, with default header values.
+/*
+V2ListSupportedOpenshiftVersionsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -65,9 +66,39 @@ type V2ListSupportedOpenshiftVersionsOK struct {
 	Payload models.OpenshiftVersions
 }
 
+// IsSuccess returns true when this v2 list supported openshift versions o k response has a 2xx status code
+func (o *V2ListSupportedOpenshiftVersionsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list supported openshift versions o k response has a 3xx status code
+func (o *V2ListSupportedOpenshiftVersionsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported openshift versions o k response has a 4xx status code
+func (o *V2ListSupportedOpenshiftVersionsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list supported openshift versions o k response has a 5xx status code
+func (o *V2ListSupportedOpenshiftVersionsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list supported openshift versions o k response a status code equal to that given
+func (o *V2ListSupportedOpenshiftVersionsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListSupportedOpenshiftVersionsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListSupportedOpenshiftVersionsOK) String() string {
+	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListSupportedOpenshiftVersionsOK) GetPayload() models.OpenshiftVersions {
 	return o.Payload
 }
@@ -87,7 +118,8 @@ func NewV2ListSupportedOpenshiftVersionsBadRequest() *V2ListSupportedOpenshiftVe
 	return &V2ListSupportedOpenshiftVersionsBadRequest{}
 }
 
-/* V2ListSupportedOpenshiftVersionsBadRequest describes a response with status code 400, with default header values.
+/*
+V2ListSupportedOpenshiftVersionsBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -95,9 +127,39 @@ type V2ListSupportedOpenshiftVersionsBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list supported openshift versions bad request response has a 2xx status code
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list supported openshift versions bad request response has a 3xx status code
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported openshift versions bad request response has a 4xx status code
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list supported openshift versions bad request response has a 5xx status code
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list supported openshift versions bad request response a status code equal to that given
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2ListSupportedOpenshiftVersionsBadRequest) Error() string {
 	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2ListSupportedOpenshiftVersionsBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2ListSupportedOpenshiftVersionsBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -119,7 +181,8 @@ func NewV2ListSupportedOpenshiftVersionsInternalServerError() *V2ListSupportedOp
 	return &V2ListSupportedOpenshiftVersionsInternalServerError{}
 }
 
-/* V2ListSupportedOpenshiftVersionsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ListSupportedOpenshiftVersionsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -127,9 +190,39 @@ type V2ListSupportedOpenshiftVersionsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list supported openshift versions internal server error response has a 2xx status code
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list supported openshift versions internal server error response has a 3xx status code
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported openshift versions internal server error response has a 4xx status code
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list supported openshift versions internal server error response has a 5xx status code
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list supported openshift versions internal server error response a status code equal to that given
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ListSupportedOpenshiftVersionsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ListSupportedOpenshiftVersionsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ListSupportedOpenshiftVersionsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -151,7 +244,8 @@ func NewV2ListSupportedOpenshiftVersionsServiceUnavailable() *V2ListSupportedOpe
 	return &V2ListSupportedOpenshiftVersionsServiceUnavailable{}
 }
 
-/* V2ListSupportedOpenshiftVersionsServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2ListSupportedOpenshiftVersionsServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -159,9 +253,39 @@ type V2ListSupportedOpenshiftVersionsServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list supported openshift versions service unavailable response has a 2xx status code
+func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list supported openshift versions service unavailable response has a 3xx status code
+func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list supported openshift versions service unavailable response has a 4xx status code
+func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list supported openshift versions service unavailable response has a 5xx status code
+func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list supported openshift versions service unavailable response a status code equal to that given
+func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/openshift-versions][%d] v2ListSupportedOpenshiftVersionsServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2ListSupportedOpenshiftVersionsServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

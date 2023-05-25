@@ -16,7 +16,7 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// FeatureSupportLevel feature support level
+// FeatureSupportLevel (DEPRECATED) List of features attached to openshift version
 //
 // swagger:model feature-support-level
 type FeatureSupportLevel struct {
@@ -125,13 +125,14 @@ func (m *FeatureSupportLevel) UnmarshalBinary(b []byte) error {
 // swagger:model FeatureSupportLevelFeaturesItems0
 type FeatureSupportLevelFeaturesItems0 struct {
 
-	// The ID of the feature
-	// Enum: [ADDITIONAL_NTP_SOURCE REQUESTED_HOSTNAME PROXY SNO DAY2_HOSTS VIP_AUTO_ALLOC DISK_SELECTION OVN_NETWORK_TYPE SDN_NETWORK_TYPE PLATFORM_SELECTION SCHEDULABLE_MASTERS AUTO_ASSIGN_ROLE CUSTOM_MANIFEST DISK_ENCRYPTION CLUSTER_MANAGED_NETWORKING_WITH_VMS ARM64_ARCHITECTURE ARM64_ARCHITECTURE_WITH_CLUSTER_MANAGED_NETWORKING SINGLE_NODE_EXPANSION LVM DUAL_STACK_NETWORKING MULTIARCH_RELEASE_IMAGE]
-	FeatureID string `json:"feature_id,omitempty"`
+	// (DEPRECATED) The ID of the feature
+	// Required: true
+	// Enum: [ADDITIONAL_NTP_SOURCE REQUESTED_HOSTNAME PROXY SNO DAY2_HOSTS VIP_AUTO_ALLOC DISK_SELECTION OVN_NETWORK_TYPE SDN_NETWORK_TYPE PLATFORM_SELECTION SCHEDULABLE_MASTERS AUTO_ASSIGN_ROLE CUSTOM_MANIFEST DISK_ENCRYPTION CLUSTER_MANAGED_NETWORKING_WITH_VMS ARM64_ARCHITECTURE ARM64_ARCHITECTURE_WITH_CLUSTER_MANAGED_NETWORKING PPC64LE_ARCHITECTURE S390X_ARCHITECTURE SINGLE_NODE_EXPANSION LVM DUAL_STACK_NETWORKING MULTIARCH_RELEASE_IMAGE NUTANIX_INTEGRATION DUAL_STACK_VIPS USER_MANAGED_NETWORKING_WITH_MULTI_NODE]
+	FeatureID *string `json:"feature_id"`
 
 	// support level
-	// Enum: [supported unsupported tech-preview dev-preview]
-	SupportLevel string `json:"support_level,omitempty"`
+	// Required: true
+	SupportLevel *SupportLevel `json:"support_level"`
 }
 
 // Validate validates this feature support level features items0
@@ -156,7 +157,7 @@ var featureSupportLevelFeaturesItems0TypeFeatureIDPropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["ADDITIONAL_NTP_SOURCE","REQUESTED_HOSTNAME","PROXY","SNO","DAY2_HOSTS","VIP_AUTO_ALLOC","DISK_SELECTION","OVN_NETWORK_TYPE","SDN_NETWORK_TYPE","PLATFORM_SELECTION","SCHEDULABLE_MASTERS","AUTO_ASSIGN_ROLE","CUSTOM_MANIFEST","DISK_ENCRYPTION","CLUSTER_MANAGED_NETWORKING_WITH_VMS","ARM64_ARCHITECTURE","ARM64_ARCHITECTURE_WITH_CLUSTER_MANAGED_NETWORKING","SINGLE_NODE_EXPANSION","LVM","DUAL_STACK_NETWORKING","MULTIARCH_RELEASE_IMAGE"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["ADDITIONAL_NTP_SOURCE","REQUESTED_HOSTNAME","PROXY","SNO","DAY2_HOSTS","VIP_AUTO_ALLOC","DISK_SELECTION","OVN_NETWORK_TYPE","SDN_NETWORK_TYPE","PLATFORM_SELECTION","SCHEDULABLE_MASTERS","AUTO_ASSIGN_ROLE","CUSTOM_MANIFEST","DISK_ENCRYPTION","CLUSTER_MANAGED_NETWORKING_WITH_VMS","ARM64_ARCHITECTURE","ARM64_ARCHITECTURE_WITH_CLUSTER_MANAGED_NETWORKING","PPC64LE_ARCHITECTURE","S390X_ARCHITECTURE","SINGLE_NODE_EXPANSION","LVM","DUAL_STACK_NETWORKING","MULTIARCH_RELEASE_IMAGE","NUTANIX_INTEGRATION","DUAL_STACK_VIPS","USER_MANAGED_NETWORKING_WITH_MULTI_NODE"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -217,6 +218,12 @@ const (
 	// FeatureSupportLevelFeaturesItems0FeatureIDARM64ARCHITECTUREWITHCLUSTERMANAGEDNETWORKING captures enum value "ARM64_ARCHITECTURE_WITH_CLUSTER_MANAGED_NETWORKING"
 	FeatureSupportLevelFeaturesItems0FeatureIDARM64ARCHITECTUREWITHCLUSTERMANAGEDNETWORKING string = "ARM64_ARCHITECTURE_WITH_CLUSTER_MANAGED_NETWORKING"
 
+	// FeatureSupportLevelFeaturesItems0FeatureIDPPC64LEARCHITECTURE captures enum value "PPC64LE_ARCHITECTURE"
+	FeatureSupportLevelFeaturesItems0FeatureIDPPC64LEARCHITECTURE string = "PPC64LE_ARCHITECTURE"
+
+	// FeatureSupportLevelFeaturesItems0FeatureIDS390XARCHITECTURE captures enum value "S390X_ARCHITECTURE"
+	FeatureSupportLevelFeaturesItems0FeatureIDS390XARCHITECTURE string = "S390X_ARCHITECTURE"
+
 	// FeatureSupportLevelFeaturesItems0FeatureIDSINGLENODEEXPANSION captures enum value "SINGLE_NODE_EXPANSION"
 	FeatureSupportLevelFeaturesItems0FeatureIDSINGLENODEEXPANSION string = "SINGLE_NODE_EXPANSION"
 
@@ -228,6 +235,15 @@ const (
 
 	// FeatureSupportLevelFeaturesItems0FeatureIDMULTIARCHRELEASEIMAGE captures enum value "MULTIARCH_RELEASE_IMAGE"
 	FeatureSupportLevelFeaturesItems0FeatureIDMULTIARCHRELEASEIMAGE string = "MULTIARCH_RELEASE_IMAGE"
+
+	// FeatureSupportLevelFeaturesItems0FeatureIDNUTANIXINTEGRATION captures enum value "NUTANIX_INTEGRATION"
+	FeatureSupportLevelFeaturesItems0FeatureIDNUTANIXINTEGRATION string = "NUTANIX_INTEGRATION"
+
+	// FeatureSupportLevelFeaturesItems0FeatureIDDUALSTACKVIPS captures enum value "DUAL_STACK_VIPS"
+	FeatureSupportLevelFeaturesItems0FeatureIDDUALSTACKVIPS string = "DUAL_STACK_VIPS"
+
+	// FeatureSupportLevelFeaturesItems0FeatureIDUSERMANAGEDNETWORKINGWITHMULTINODE captures enum value "USER_MANAGED_NETWORKING_WITH_MULTI_NODE"
+	FeatureSupportLevelFeaturesItems0FeatureIDUSERMANAGEDNETWORKINGWITHMULTINODE string = "USER_MANAGED_NETWORKING_WITH_MULTI_NODE"
 )
 
 // prop value enum
@@ -239,68 +255,70 @@ func (m *FeatureSupportLevelFeaturesItems0) validateFeatureIDEnum(path, location
 }
 
 func (m *FeatureSupportLevelFeaturesItems0) validateFeatureID(formats strfmt.Registry) error {
-	if swag.IsZero(m.FeatureID) { // not required
-		return nil
+
+	if err := validate.Required("feature_id", "body", m.FeatureID); err != nil {
+		return err
 	}
 
 	// value enum
-	if err := m.validateFeatureIDEnum("feature_id", "body", m.FeatureID); err != nil {
+	if err := m.validateFeatureIDEnum("feature_id", "body", *m.FeatureID); err != nil {
 		return err
 	}
 
-	return nil
-}
-
-var featureSupportLevelFeaturesItems0TypeSupportLevelPropEnum []interface{}
-
-func init() {
-	var res []string
-	if err := json.Unmarshal([]byte(`["supported","unsupported","tech-preview","dev-preview"]`), &res); err != nil {
-		panic(err)
-	}
-	for _, v := range res {
-		featureSupportLevelFeaturesItems0TypeSupportLevelPropEnum = append(featureSupportLevelFeaturesItems0TypeSupportLevelPropEnum, v)
-	}
-}
-
-const (
-
-	// FeatureSupportLevelFeaturesItems0SupportLevelSupported captures enum value "supported"
-	FeatureSupportLevelFeaturesItems0SupportLevelSupported string = "supported"
-
-	// FeatureSupportLevelFeaturesItems0SupportLevelUnsupported captures enum value "unsupported"
-	FeatureSupportLevelFeaturesItems0SupportLevelUnsupported string = "unsupported"
-
-	// FeatureSupportLevelFeaturesItems0SupportLevelTechPreview captures enum value "tech-preview"
-	FeatureSupportLevelFeaturesItems0SupportLevelTechPreview string = "tech-preview"
-
-	// FeatureSupportLevelFeaturesItems0SupportLevelDevPreview captures enum value "dev-preview"
-	FeatureSupportLevelFeaturesItems0SupportLevelDevPreview string = "dev-preview"
-)
-
-// prop value enum
-func (m *FeatureSupportLevelFeaturesItems0) validateSupportLevelEnum(path, location string, value string) error {
-	if err := validate.EnumCase(path, location, value, featureSupportLevelFeaturesItems0TypeSupportLevelPropEnum, true); err != nil {
-		return err
-	}
 	return nil
 }
 
 func (m *FeatureSupportLevelFeaturesItems0) validateSupportLevel(formats strfmt.Registry) error {
-	if swag.IsZero(m.SupportLevel) { // not required
-		return nil
+
+	if err := validate.Required("support_level", "body", m.SupportLevel); err != nil {
+		return err
 	}
 
-	// value enum
-	if err := m.validateSupportLevelEnum("support_level", "body", m.SupportLevel); err != nil {
+	if err := validate.Required("support_level", "body", m.SupportLevel); err != nil {
 		return err
+	}
+
+	if m.SupportLevel != nil {
+		if err := m.SupportLevel.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("support_level")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("support_level")
+			}
+			return err
+		}
 	}
 
 	return nil
 }
 
-// ContextValidate validates this feature support level features items0 based on context it is used
+// ContextValidate validate this feature support level features items0 based on the context it is used
 func (m *FeatureSupportLevelFeaturesItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSupportLevel(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *FeatureSupportLevelFeaturesItems0) contextValidateSupportLevel(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.SupportLevel != nil {
+		if err := m.SupportLevel.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("support_level")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("support_level")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

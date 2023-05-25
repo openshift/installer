@@ -53,10 +53,12 @@ func NewV2GetNextStepsParamsWithHTTPClient(client *http.Client) *V2GetNextStepsP
 	}
 }
 
-/* V2GetNextStepsParams contains all the parameters to send to the API endpoint
-   for the v2 get next steps operation.
+/*
+V2GetNextStepsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 get next steps operation.
+
+	Typically these are written to a http.Request.
 */
 type V2GetNextStepsParams struct {
 
