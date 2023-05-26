@@ -8,6 +8,6 @@ import (
 
 // PlatformStages are the stages to run to provision the infrastructure in Nutanix.
 var PlatformStages = []terraform.Stage{
-	stages.NewStage("nutanix", "cluster", []providers.Provider{providers.Nutanix}),
+	stages.NewStage("nutanix", "cluster", []providers.Provider{providers.Nutanix, providers.Ignition}),
 	stages.NewStage("nutanix", "bootstrap", []providers.Provider{providers.Nutanix}, stages.WithNormalBootstrapDestroy()),
 }
