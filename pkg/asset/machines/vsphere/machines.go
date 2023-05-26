@@ -57,9 +57,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		logrus.Debugf("Creating %v machine %v", role, idx)
 		var host *vsphere.Host
 		desiredZone := mpool.Zones[int(idx)%numOfZones]
-		if int(idx) < len(hosts) {
+		if hosts != nil && int(idx) < len(hosts) {
 			host = hosts[idx]
-			desiredZone = host.FailureDomain
+			if host.FailureDomain != "" {
+				desiredZone = host.FailureDomain
+			}
 		}
 		logrus.Debugf("Desired zone: %v", desiredZone)
 
