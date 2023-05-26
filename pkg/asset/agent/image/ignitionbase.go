@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"gopkg.in/yaml.v2"
 
 	"github.com/openshift/assisted-service/models"
 	"github.com/openshift/installer/pkg/asset"
@@ -30,12 +31,15 @@ const (
 // IgnitionBase is an asset that generates the agent installer base ignition filea
 // which excludes any cluster configuration files.
 type IgnitionBase struct {
-	Config     igntypes.Config
-	CPUArch    string
-	File       *asset.File
-	infraEnvID string
-	archName   string
-	osImage    models.OsImage
+	Config                    *igntypes.Config
+	CPUArch                   string
+	File                      *asset.File
+	infraEnvID                string
+	archName                  string
+	osImage                   models.OsImage
+	hasMirrorConfig           bool
+	releaseImageMirror        string
+	publicContainerRegistries string
 }
 
 var agentEnabledServices = []string{
@@ -65,6 +69,9 @@ func (a *IgnitionBase) Dependencies() []asset.Asset {
 		&manifests.InfraEnv{},
 		&manifests.AgentPullSecret{},
 		&manifests.ClusterImageSet{},
+		&manifests.NMStateConfig{},
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
 	}
 }
 
@@ -73,7 +80,8 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 	infraEnvAsset := &manifests.InfraEnv{}
 	clusterImageSetAsset := &manifests.ClusterImageSet{}
 	pullSecretAsset := &manifests.AgentPullSecret{}
-	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset)
+	nmStateConfigs := &manifests.NMStateConfig{}
+	dependencies.Get(infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs)
 
 	infraEnv := infraEnvAsset.Config
 	clusterImageSet := clusterImageSetAsset.Config
@@ -95,7 +103,6 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	// a.RendezvousIP = nodeZeroIP
 	// Default to x86_64
 	archName := arch.RpmArch(types.ArchitectureAMD64)
 	if infraEnv.Spec.CpuArchitecture != "" {
@@ -109,13 +116,12 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 	}
 
 	registriesConfig := &mirror.RegistriesConf{}
-	// registryCABundle := &mirror.CaBundle{}
-	// dependencies.Get(registriesConfig, registryCABundle)
+	registryCABundle := &mirror.CaBundle{}
+	dependencies.Get(registriesConfig, registryCABundle)
 
-	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
-
-	logrus.Infof("The release image is %s", clusterImageSet.Spec.ReleaseImage)
-	releaseImageMirror := mirror.GetMirrorFromRelease(clusterImageSet.Spec.ReleaseImage, registriesConfig)
+	a.hasMirrorConfig = len(registriesConfig.MirrorConfig) > 0
+	a.publicContainerRegistries = getPublicContainerRegistries(registriesConfig)
+	a.releaseImageMirror = mirror.GetMirrorFromRelease(clusterImageSet.Spec.ReleaseImage, registriesConfig)
 
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
@@ -132,9 +138,9 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
-		ReleaseImageMirror:        releaseImageMirror,
-		HaveMirrorConfig:          len(registriesConfig.MirrorConfig) > 0,
-		PublicContainerRegistries: publicContainerRegistries,
+		ReleaseImageMirror:        a.releaseImageMirror,
+		HaveMirrorConfig:          a.hasMirrorConfig,
+		PublicContainerRegistries: a.publicContainerRegistries,
 		InfraEnvID:                a.infraEnvID,
 		OSImage:                   a.osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
@@ -166,6 +172,16 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 		}
 	}
 
+	err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
+	if err != nil {
+		return err
+	}
+
+	// Enable pre-network-manager-config.service only when there are network configs defined
+	if len(nmStateConfigs.StaticNetworkConfig) != 0 {
+		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
+	}
+
 	filesToInclude := [...]asset.File{
 		*infraEnvAsset.File,
 		*clusterImageSetAsset.File,
@@ -183,13 +199,31 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	a.Config = config
+	addMirrorData(&config, registriesConfig, registryCABundle)
+
+	a.Config = &config
 
 	if err := a.generateFile(unconfiguredIgnitionFilename); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+// CopyIgnitionConfig returns a copy of the Ignition config
+// The copy is made by marshaling and unmarshaling the ignition yaml.
+func (a *IgnitionBase) CopyIgnitionConfig() (copy igntypes.Config, error error) {
+	copyData := &igntypes.Config{}
+	data, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return copy, errors.Wrap(err, "copy failed, failed to Marshal IgnitionBase config")
+	}
+
+	if err := yaml.UnmarshalStrict(data, copyData); err != nil {
+		return copy, errors.Wrap(err, "copy failed, failed to Unmarshal IgnitionBase config")
+	}
+
+	return *copyData, nil
 }
 
 // PersistToFile writes the unconfigured ignition in the assets folder.
@@ -230,23 +264,6 @@ func (a *IgnitionBase) Load(f asset.FileFetcher) (bool, error) {
 func (a *IgnitionBase) Files() []*asset.File {
 	// Return empty array because File will never be loaded.
 	return []*asset.File{}
-}
-
-// StringArrayRemove returns a string array that contains the
-// orig minus elements from toRemove.
-func StringArrayRemove(orig, toRemove []string) (diff []string) {
-	m := make(map[string]bool)
-
-	for _, item := range toRemove {
-		m[item] = true
-	}
-
-	for _, item := range orig {
-		if _, ok := m[item]; !ok {
-			diff = append(diff, item)
-		}
-	}
-	return
 }
 
 func getOSImagesInfo(cpuArch string) (*models.OsImage, error) {

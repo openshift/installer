@@ -33,6 +33,8 @@ const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
 const extraManifestPath = "/etc/assisted/extra-manifests"
+const registriesConfPath = "/etc/containers/registries.conf"
+const registryCABundlePath = "/etc/pki/ca-trust/source/anchors/domain.crt"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -123,7 +125,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	infraEnv := agentManifests.InfraEnv
 
-	config := ignitionBaseAsset.Config
+	config, err := ignitionBaseAsset.CopyIgnitionConfig()
+	if err != nil {
+		return err
+	}
 	config.Passwd.Users[0].PasswordHash = &pwdHash
 
 	nodeZeroIP, err := RetrieveRendezvousIP(agentConfigAsset.Config, agentManifests.NMStateConfigs)
@@ -140,14 +145,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	registriesConfig := &mirror.RegistriesConf{}
-	registryCABundle := &mirror.CaBundle{}
-	dependencies.Get(registriesConfig, registryCABundle)
-
-	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
-
-	releaseImageMirror := mirror.GetMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
-
 	a.CPUArch = *ignitionBaseAsset.osImage.CPUArchitecture
 
 	clusterName := fmt.Sprintf("%s.%s",
@@ -159,9 +156,9 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		agentManifests.GetPullSecretData(),
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
-		releaseImageMirror,
-		len(registriesConfig.MirrorConfig) > 0,
-		publicContainerRegistries,
+		ignitionBaseAsset.releaseImageMirror,
+		ignitionBaseAsset.hasMirrorConfig,
+		ignitionBaseAsset.publicContainerRegistries,
 		agentManifests.AgentClusterInstall,
 		ignitionBaseAsset.infraEnvID,
 		ignitionBaseAsset.osImage,
@@ -193,16 +190,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addMacAddressToHostnameMappings(&config, agentConfigAsset)
 
-	err = addStaticNetworkConfig(&config, agentManifests.StaticNetworkConfigs)
-	if err != nil {
-		return err
-	}
-
-	// Enable pre-network-manager-config.service only when there are network configs defined
-	if len(agentManifests.StaticNetworkConfigs) != 0 {
-		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
-	}
-
 	agentEnabledServices = append(agentEnabledServices, "set-hostname.service", "start-cluster-installation.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
 	if err != nil {
@@ -210,8 +197,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	}
 
 	addTLSData(&config, dependencies)
-
-	addMirrorData(&config, registriesConfig, registryCABundle)
 
 	addHostConfig(&config, agentConfigAsset)
 
@@ -318,14 +303,14 @@ func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesC
 
 	// This is required for assisted-service to build the ICSP for openshift-install
 	if registriesConfig.File != nil {
-		registriesFile := ignition.FileFromBytes("/etc/containers/registries.conf",
+		registriesFile := ignition.FileFromBytes(registriesConfPath,
 			"root", 0600, registriesConfig.File.Data)
 		config.Storage.Files = bootstrap.ReplaceOrAppend(config.Storage.Files, registriesFile)
 	}
 
 	// This is required for the agent to run the podman commands to the mirror
 	if registryCABundle.File != nil && len(registryCABundle.File.Data) > 0 {
-		caFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
+		caFile := ignition.FileFromBytes(registryCABundlePath,
 			"root", 0600, registryCABundle.File.Data)
 		config.Storage.Files = bootstrap.ReplaceOrAppend(config.Storage.Files, caFile)
 	}

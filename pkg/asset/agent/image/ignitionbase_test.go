@@ -2,40 +2,101 @@ package image
 
 import (
 	"encoding/base64"
-	"fmt"
-	"os"
-	"os/exec"
-	"path"
 	"testing"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
+	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
+	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
 
 func TestIgnitionBase_Generate(t *testing.T) {
 	setupIgnitionGenerateTest(t)
 
 	cases := []struct {
-		name          string
-		expectedError string
-		expectedFiles []string
+		name                                  string
+		overrideDeps                          []asset.Asset
+		expectedError                         string
+		expectedFiles                         []string
+		preNetworkManagerConfigServiceEnabled bool
 	}{
 		{
-			name:          "default",
-			expectedFiles: generatedFilesIgnitionBase(),
+			name:                                  "default-configs-and-no-nmstateconfigs",
+			expectedFiles:                         generatedFilesIgnitionBase(),
+			preNetworkManagerConfigServiceEnabled: false,
+		},
+		{
+			name: "with-mirror-configs",
+			overrideDeps: []asset.Asset{
+				&mirror.RegistriesConf{
+					File: &asset.File{
+						Filename: mirror.RegistriesConfFilename,
+						Data:     []byte(""),
+					},
+					MirrorConfig: []mirror.RegistriesConfig{
+						{
+							Location: "some.registry.org/release",
+							Mirror:   "some.mirror.org",
+						},
+					},
+				},
+				&mirror.CaBundle{
+					File: &asset.File{
+						Filename: "my.crt",
+						Data:     []byte("my-certificate"),
+					},
+				},
+			},
+			expectedFiles: generatedFilesIgnitionBase(registriesConfPath,
+				registryCABundlePath),
+			preNetworkManagerConfigServiceEnabled: false,
+		},
+		{
+			name: "with-nmstateconfigs",
+			overrideDeps: []asset.Asset{
+				&manifests.NMStateConfig{
+					Config: []*aiv1beta1.NMStateConfig{
+						{
+							Spec: aiv1beta1.NMStateConfigSpec{
+								Interfaces: []*aiv1beta1.Interface{
+									{
+										Name:       "eth0",
+										MacAddress: "00:01:02:03:04:05",
+									},
+								},
+							},
+						},
+					},
+					StaticNetworkConfig: []*models.HostStaticNetworkConfig{
+						{
+							MacInterfaceMap: models.MacInterfaceMap{
+								{LogicalNicName: "eth0", MacAddress: "00:01:02:03:04:05"},
+							},
+							NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: 192.168.122.21\n      prefix-length: 24\n    enabled: true\n  mac-address: 00:01:02:03:04:05\n  name: eth0\n  state: up\n  type: ethernet\n",
+						},
+					},
+					File: &asset.File{
+						Filename: "nmstateconfig.yaml",
+						Data:     []byte("nmstateconfig"),
+					},
+				},
+			},
+			expectedFiles: generatedFilesIgnitionBase("/etc/assisted/network/host0/eth0.nmconnection",
+				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
+			preNetworkManagerConfigServiceEnabled: true,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 
 			deps := buildIgnitionBaseAssetDefaultDependencies()
+
+			overrideDeps(deps, tc.overrideDeps)
 
 			parents := asset.Parents{}
 			parents.Add(deps...)
@@ -48,7 +109,9 @@ func TestIgnitionBase_Generate(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 
-				assertExpectedFiles(t, &ignitionBaseAsset.Config, tc.expectedFiles, nil)
+				assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedFiles, nil)
+
+				assertPreNetworkConfigServiceEnabled(t, ignitionBaseAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
 			}
 		})
 	}
@@ -81,7 +144,7 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 			errBase := ignitionBaseAsset.Generate(parentsBase)
 
 			assert.NoError(t, errBase)
-			assertExpectedFiles(t, &ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
+			assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
 
 			deps := buildIgnitionAssetDefaultDependencies()
 			parents := asset.Parents{}
@@ -94,48 +157,12 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 			assertExpectedFiles(t, ignitionAsset.Config, tc.expectedIgnitionFiles, nil)
 
 			// The contents of IgnitionBase should not be changed by Ignition.Generate
-			assertExpectedFiles(t, &ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
+			assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
 			assert.NotEqual(t, len(ignitionBaseAsset.Config.Storage.Files), len(ignitionAsset.Config.Storage.Files))
 			assert.NotEqual(t,
 				&ignitionBaseAsset.Config.Passwd.Users[0].PasswordHash,
 				ignitionAsset.Config.Passwd.Users[0].PasswordHash)
 		})
-	}
-}
-
-func setupIgnitionGenerateTest(t *testing.T) {
-	// Generate calls addStaticNetworkConfig which calls nmstatectl
-	_, execErr := exec.LookPath("nmstatectl")
-	if execErr != nil {
-		t.Skip("No nmstatectl binary available")
-	}
-
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, _ := os.Getwd()
-	os.Chdir(path.Join(workingDirectory, "../../../../data"))
-}
-
-func assertExpectedFiles(t *testing.T, config *igntypes.Config, expectedFiles []string, expectedFileContent map[string]string) {
-	if len(expectedFiles) > 0 {
-		assert.Equal(t, len(expectedFiles), len(config.Storage.Files))
-
-		for _, f := range expectedFiles {
-			found := false
-			for _, i := range config.Storage.Files {
-				if i.Node.Path == f {
-					if expectedData, ok := expectedFileContent[i.Node.Path]; ok {
-						actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
-						assert.NoError(t, err)
-						assert.Regexp(t, expectedData, string(actualData.Data))
-					}
-
-					found = true
-					break
-				}
-			}
-			assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
-		}
 	}
 }
 
@@ -178,6 +205,9 @@ func buildIgnitionBaseAssetDefaultDependencies() []asset.Asset {
 				Data:     []byte("cluster-image-set"),
 			},
 		},
+		&manifests.NMStateConfig{},
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
 	}
 }
 

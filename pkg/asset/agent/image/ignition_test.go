@@ -2,12 +2,16 @@ package image
 
 import (
 	"encoding/base64"
+	"fmt"
+	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"testing"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -446,14 +450,7 @@ metadata:
 
 			deps := buildIgnitionAssetDefaultDependencies()
 
-			for _, od := range tc.overrideDeps {
-				for i, d := range deps {
-					if d.Name() == od.Name() {
-						deps[i] = od
-						break
-					}
-				}
-			}
+			overrideDeps(deps, tc.overrideDeps)
 
 			parents := asset.Parents{}
 			parents.Add(deps...)
@@ -471,17 +468,68 @@ metadata:
 
 				assertExpectedFiles(t, ignitionAsset.Config, tc.expectedFiles, tc.expectedFileContent)
 
-				for _, unit := range ignitionAsset.Config.Systemd.Units {
-					if unit.Name == "pre-network-manager-config.service" {
-						if unit.Enabled == nil {
-							assert.Equal(t, tc.preNetworkManagerConfigServiceEnabled, false)
-						} else {
-							assert.Equal(t, tc.preNetworkManagerConfigServiceEnabled, *unit.Enabled)
-						}
-					}
-				}
+				assertPreNetworkConfigServiceEnabled(t, ignitionAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
 			}
 		})
+	}
+}
+
+func setupIgnitionGenerateTest(t *testing.T) {
+	// Generate calls addStaticNetworkConfig which calls nmstatectl
+	_, execErr := exec.LookPath("nmstatectl")
+	if execErr != nil {
+		t.Skip("No nmstatectl binary available")
+	}
+
+	// This patch currently allows testing the Ignition asset using the embedded resources.
+	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
+	workingDirectory, _ := os.Getwd()
+	os.Chdir(path.Join(workingDirectory, "../../../../data"))
+}
+
+func overrideDeps(deps []asset.Asset, overrides []asset.Asset) {
+	for _, od := range overrides {
+		for i, d := range deps {
+			if d.Name() == od.Name() {
+				deps[i] = od
+				break
+			}
+		}
+	}
+}
+
+func assertPreNetworkConfigServiceEnabled(t *testing.T, config *igntypes.Config, enabled bool) {
+	for _, unit := range config.Systemd.Units {
+		if unit.Name == "pre-network-manager-config.service" {
+			if unit.Enabled == nil {
+				assert.Equal(t, enabled, false)
+			} else {
+				assert.Equal(t, enabled, *unit.Enabled)
+			}
+		}
+	}
+}
+
+func assertExpectedFiles(t *testing.T, config *igntypes.Config, expectedFiles []string, expectedFileContent map[string]string) {
+	if len(expectedFiles) > 0 {
+		assert.Equal(t, len(expectedFiles), len(config.Storage.Files))
+
+		for _, f := range expectedFiles {
+			found := false
+			for _, i := range config.Storage.Files {
+				if i.Node.Path == f {
+					if expectedData, ok := expectedFileContent[i.Node.Path]; ok {
+						actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
+						assert.NoError(t, err)
+						assert.Regexp(t, expectedData, string(actualData.Data))
+					}
+
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
+		}
 	}
 }
 
