@@ -179,7 +179,7 @@ func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone,
 	preexistingRecords := sets.New[string](records...).Intersection(setOfReturnedRecords)
 
 	if preexistingRecords.Len() > 0 {
-		errMsg := fmt.Sprintf("record(s) %q already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", preexistingRecords.UnsortedList(), ic.GCP.ProjectID, zone.Name)
+		errMsg := fmt.Sprintf("record(s) %q already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", sets.List(preexistingRecords), ic.GCP.ProjectID, zone.Name)
 		return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
 	}
 	return nil
