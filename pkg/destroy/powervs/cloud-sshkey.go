@@ -186,7 +186,7 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 			Factor:   1.1,
 			Cap:      leftInContext(ctx),
 			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 			err2 := o.deleteCloudSSHKey(item)
 			if err2 == nil {
 				return true, err2
@@ -211,7 +211,7 @@ func (o *ClusterUninstaller) destroyCloudSSHKeys() error {
 		Factor:   1.1,
 		Cap:      leftInContext(ctx),
 		Steps:    math.MaxInt32}
-	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 		secondPassList, err2 := o.listCloudSSHKeys()
 		if err2 != nil {
 			return false, err2
