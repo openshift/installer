@@ -4,6 +4,7 @@ Restart=always
 RestartSec=3
 StartLimitInterval=0
 TimeoutStartSec=3000
+EnvironmentFile=/etc/assisted/rendezvous-host.env
 ExecStartPre=/usr/local/bin/extract-agent.sh
 ExecStart=/usr/local/bin/start-agent.sh
 

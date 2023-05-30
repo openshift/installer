@@ -10,6 +10,8 @@ Type=oneshot
 RemainAfterExit=true
 TTYPath=/dev/tty15
 EnvironmentFile=/etc/assisted/agent-installer.env
+Environment=LD_LIBRARY_PATH=/usr/local/bin/
+Environment=AGENT_TUI_LOG_PATH=/var/log/agent/agent-tui.log
 ExecStartPre=/usr/bin/kill -s SIGRTMIN+21 1
 ExecStartPre=/usr/bin/chvt 15
 ExecStartPre=mkdir -p /var/log/agent

@@ -34,6 +34,7 @@ import (
 	"github.com/openshift/installer/pkg/version"
 )
 
+const rendezvousHostEnvPath = "/etc/assisted/rendezvous-host.env"
 const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
@@ -50,10 +51,7 @@ type Ignition struct {
 // files.
 type agentTemplateData struct {
 	ServiceProtocol           string
-	ServiceBaseURL            string
 	PullSecret                string
-	NodeZeroIP                string
-	AssistedServiceHost       string
 	APIVIP                    string
 	ControlPlaneAgents        int
 	WorkerAgents              int
@@ -162,7 +160,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	agentTemplateData := getTemplateData(
 		clusterName,
 		agentManifests.GetPullSecretData(),
-		nodeZeroIP,
 		releaseImageList,
 		agentManifests.ClusterImageSet.Spec.ReleaseImage,
 		releaseImageMirror,
@@ -177,6 +174,11 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
+
+	rendezvousHostFile := ignition.FileFromString(rendezvousHostEnvPath,
+		"root", 0644,
+		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP))
+	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
 	// Set up bootstrap service recording
 	if err := bootstrap.AddStorageFiles(&config,
@@ -260,24 +262,15 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	return nil
 }
 
-func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImage,
+func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	releaseImageMirror string, haveMirrorConfig bool, publicContainerRegistries string,
 	agentClusterInstall *hiveext.AgentClusterInstall,
 	infraEnvID string,
 	osImage *models.OsImage,
 	proxy *v1beta1.Proxy) *agentTemplateData {
-	serviceBaseURL := url.URL{
-		Scheme: "http",
-		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
-		Path:   "/",
-	}
-
 	return &agentTemplateData{
-		ServiceProtocol:           serviceBaseURL.Scheme,
-		ServiceBaseURL:            serviceBaseURL.String(),
+		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
-		NodeZeroIP:                serviceBaseURL.Hostname(),
-		AssistedServiceHost:       serviceBaseURL.Host,
 		APIVIP:                    agentClusterInstall.Spec.APIVIP,
 		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
@@ -291,6 +284,24 @@ func getTemplateData(name, pullSecret, nodeZeroIP, releaseImageList, releaseImag
 		OSImage:                   osImage,
 		Proxy:                     proxy,
 	}
+}
+
+func getRendezvousHostEnv(serviceProtocol, nodeZeroIP string) string {
+	serviceBaseURL := url.URL{
+		Scheme: serviceProtocol,
+		Host:   net.JoinHostPort(nodeZeroIP, "8090"),
+		Path:   "/",
+	}
+	imageServiceBaseURL := url.URL{
+		Scheme: serviceProtocol,
+		Host:   net.JoinHostPort(nodeZeroIP, "8888"),
+		Path:   "/",
+	}
+
+	return fmt.Sprintf(`NODE_ZERO_IP=%s
+SERVICE_BASE_URL=%s
+IMAGE_SERVICE_BASE_URL=%s
+`, nodeZeroIP, serviceBaseURL.String(), imageServiceBaseURL.String())
 }
 
 func addStaticNetworkConfig(config *igntypes.Config, staticNetworkConfig []*models.HostStaticNetworkConfig) (err error) {

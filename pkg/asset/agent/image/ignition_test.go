@@ -45,7 +45,6 @@ func TestIgnition_getTemplateData(t *testing.T) {
 		},
 	}
 	pullSecret := "pull-secret"
-	nodeZeroIP := "192.168.111.80"
 	agentClusterInstall := &hiveext.AgentClusterInstall{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "test-agent-cluster-install",
@@ -87,13 +86,10 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	}
 	clusterName := "test-agent-cluster-install.test"
 
-	templateData := getTemplateData(clusterName, pullSecret, nodeZeroIP, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy)
+	templateData := getTemplateData(clusterName, pullSecret, releaseImageList, releaseImage, releaseImageMirror, haveMirrorConfig, publicContainerRegistries, agentClusterInstall, infraEnvID, osImage, proxy)
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
-	assert.Equal(t, "http://"+nodeZeroIP+":8090/", templateData.ServiceBaseURL)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
-	assert.Equal(t, nodeZeroIP, templateData.NodeZeroIP)
-	assert.Equal(t, nodeZeroIP+":8090", templateData.AssistedServiceHost)
 	assert.Equal(t, agentClusterInstall.Spec.APIVIP, templateData.APIVIP)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
@@ -105,6 +101,14 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, infraEnvID, templateData.InfraEnvID)
 	assert.Equal(t, osImage, templateData.OSImage)
 	assert.Equal(t, proxy, templateData.Proxy)
+}
+
+func TestIgnition_getRendezvousHostEnv(t *testing.T) {
+	nodeZeroIP := "2001:db8::dead:beef"
+	rendezvousHostEnv := getRendezvousHostEnv("http", nodeZeroIP)
+	assert.Equal(t,
+		"NODE_ZERO_IP="+nodeZeroIP+"\nSERVICE_BASE_URL=http://["+nodeZeroIP+"]:8090/\nIMAGE_SERVICE_BASE_URL=http://["+nodeZeroIP+"]:8888/\n",
+		rendezvousHostEnv)
 }
 
 func TestIgnition_addStaticNetworkConfig(t *testing.T) {
@@ -313,7 +317,6 @@ func generatedFiles(otherFiles ...string) []string {
 		"/etc/containers/containers.conf",
 		"/root/.docker/config.json",
 		"/root/assisted.te",
-		"/usr/local/bin/common.sh",
 		"/usr/local/bin/agent-gather",
 		"/usr/local/bin/extract-agent.sh",
 		"/usr/local/bin/get-container-images.sh",
@@ -328,6 +331,7 @@ func generatedFiles(otherFiles ...string) []string {
 		"/usr/local/bin/bootstrap-service-record.sh",
 		"/usr/local/bin/release-image.sh",
 		"/usr/local/bin/release-image-download.sh",
+		"/etc/assisted/rendezvous-host.env",
 		"/etc/assisted/manifests/agent-config.yaml",
 		"/etc/assisted/network/host0/eth0.nmconnection",
 		"/etc/assisted/network/host0/mac_interface.ini",
