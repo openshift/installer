@@ -5,7 +5,6 @@ import (
 	"net"
 	"testing"
 
-	"github.com/pborman/uuid"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -26,7 +25,6 @@ import (
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
-	"github.com/openshift/installer/pkg/types/ovirt"
 	"github.com/openshift/installer/pkg/types/powervs"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -285,15 +283,6 @@ func validDualStackNetworkingConfig() *types.Networking {
 				HostPrefix: 64,
 			},
 		},
-	}
-}
-
-func validOvirtPlatform() *ovirt.Platform {
-	return &ovirt.Platform{
-		ClusterID:       uuid.NewRandom().String(),
-		StorageDomainID: uuid.NewRandom().String(),
-		APIVIPs:         []string{"10.0.1.1"},
-		IngressVIPs:     []string{"10.0.1.3"},
 	}
 }
 
@@ -590,7 +579,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, ovirt, powervs, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, powervs, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -621,7 +610,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, ovirt, powervs, vsphere\)$`,
+			expectedError: `^platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, powervs, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -633,7 +622,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, ovirt, powervs, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: "libvirt": must specify one of the platforms \(alibabacloud, aws, azure, baremetal, gcp, ibmcloud, none, nutanix, openstack, powervs, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid none platform",
@@ -1388,17 +1377,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `Invalid value: "ffd1::/48": subnet size for IPv6 service network should be /112`,
 		},
-
-		{
-			name: "valid ovirt platform",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					Ovirt: validOvirtPlatform(),
-				}
-				return c
-			}(),
-		},
 		{
 			name: "architecture is not supported",
 			installConfig: func() *types.InstallConfig {
@@ -2079,33 +2057,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "platform.nutanix.apiVIPs: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
-		},
-		{
-			name: "should return error on missing vips on Ovirt if not set (vips are required on Ovirt)",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					Ovirt: validOvirtPlatform(),
-				}
-				c.Platform.Ovirt.DeprecatedAPIVIP = ""
-				c.Platform.Ovirt.APIVIPs = []string{}
-
-				return c
-			}(),
-			expectedError: "platform.ovirt.api_vips: Required value: must specify at least one VIP for the API",
-		},
-		{
-			name: "should validate vips on Ovirt (vips are required on Ovirt)",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					Ovirt: validOvirtPlatform(),
-				}
-				c.Platform.Ovirt.APIVIPs = []string{"foobar"}
-
-				return c
-			}(),
-			expectedError: "platform.ovirt.api_vips: Invalid value: \"foobar\": \"foobar\" is not a valid IP",
 		},
 		{
 			name: "should return error if only API VIP is set",
