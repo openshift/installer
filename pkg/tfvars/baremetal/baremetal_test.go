@@ -31,6 +31,7 @@ func TestMastersSelectionByRole(t *testing.T) {
 		ironicUsername          string
 		ironicPassword          string
 		ignition                string
+		virtHostIP              string
 
 		expectedError string
 		expectedHosts []string
@@ -181,7 +182,8 @@ func TestMastersSelectionByRole(t *testing.T) {
 				tc.image,
 				tc.ironicUsername,
 				tc.ironicPassword,
-				tc.ignition)
+				tc.ignition,
+				tc.virtHostIP)
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
@@ -221,6 +223,7 @@ func TestRAIDBIOSConfig(t *testing.T) {
 		ironicUsername          string
 		ironicPassword          string
 		ignition                string
+		virtHostIP              string
 
 		expectedError        string
 		expectedRAIDConfig   []string
@@ -310,7 +313,8 @@ func TestRAIDBIOSConfig(t *testing.T) {
 				tc.image,
 				tc.ironicUsername,
 				tc.ironicPassword,
-				tc.ignition)
+				tc.ignition,
+				tc.virtHostIP)
 
 			if tc.expectedError == "" {
 				assert.NoError(t, err)

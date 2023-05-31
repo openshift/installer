@@ -4,7 +4,9 @@ package baremetal
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net"
+	"net/http"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	hardware "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1/profile"
@@ -13,6 +15,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/tfvars/internal/cache"
 	"github.com/openshift/installer/pkg/types/baremetal"
 )
@@ -35,6 +38,8 @@ type config struct {
 	Properties    []map[string]interface{} `json:"properties"`
 	DriverInfos   []map[string]interface{} `json:"driver_infos"`
 	InstanceInfos []map[string]interface{} `json:"instance_infos"`
+
+	BootstrapIgnitionStub string `json:"bootstrap_ignition_stub"`
 }
 
 type imageDownloadFunc func(baseURL string) (string, error)
@@ -47,8 +52,21 @@ func init() {
 	imageDownloader = cache.DownloadImageFile
 }
 
+type ignitionHandler struct {
+	ignition []byte
+}
+
+func (handler *ignitionHandler) ServeHTTP(writer http.ResponseWriter, _request *http.Request) {
+	writer.Header().Add("Content-Type", "application/json")
+	writer.Header().Add("Content-Length", fmt.Sprint(len(handler.ignition)))
+	_, err := writer.Write(handler.ignition)
+	if err != nil {
+		log.Fatalf("failed to serve ignition: %s", err)
+	}
+}
+
 // TFVars generates bare metal specific Terraform variables.
-func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, hostFiles []*asset.File, image, ironicUsername, ironicPassword, ignition string) ([]byte, error) {
+func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, bootstrapOSImage, externalBridge, externalMAC, provisioningBridge, provisioningMAC string, platformHosts []*baremetal.Host, hostFiles []*asset.File, image, ironicUsername, ironicPassword, bootstrapIgnition, virtHostIP string) ([]byte, error) {
 	bootstrapOSImage, err := imageDownloader(bootstrapOSImage)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to use cached bootstrap libvirt image")
@@ -214,20 +232,43 @@ func TFVars(numControlPlaneReplicas int64, libvirtURI, apiVIP, imageCacheIP, boo
 			})
 	}
 
+	ignitionListener, err := net.Listen("tcp", net.JoinHostPort(virtHostIP, "0"))
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot start ignition server")
+	}
+
+	// FIXME(dtantsur): needs TLS!
+	realIgnitionURL := fmt.Sprintf("http://%s/", ignitionListener.Addr().String())
+	stubIgnition, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(realIgnitionURL, "", nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "cannot generate stub ignition")
+	}
+
+	handler := &ignitionHandler{
+		ignition: []byte(bootstrapIgnition),
+	}
+
+	go func() {
+		// FIXME(dtantsur): needs TLS!
+		err := http.Serve(ignitionListener, handler)
+		log.Fatalf("failed to start the ignition server: %s", err)
+	}()
+
 	cfg := &config{
-		LibvirtURI:       libvirtURI,
-		IronicURI:        fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "6385")),
-		InspectorURI:     fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "5050")),
-		BootstrapOSImage: bootstrapOSImage,
-		IronicUsername:   ironicUsername,
-		IronicPassword:   ironicPassword,
-		Masters:          masters,
-		Bridges:          bridges,
-		Properties:       properties,
-		DriverInfos:      driverInfos,
-		RootDevices:      rootDevices,
-		InstanceInfos:    instanceInfos,
-		DeploySteps:      deploySteps,
+		LibvirtURI:            libvirtURI,
+		IronicURI:             fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "6385")),
+		InspectorURI:          fmt.Sprintf("http://%s/v1", net.JoinHostPort(apiVIP, "5050")),
+		BootstrapOSImage:      bootstrapOSImage,
+		IronicUsername:        ironicUsername,
+		IronicPassword:        ironicPassword,
+		Masters:               masters,
+		Bridges:               bridges,
+		Properties:            properties,
+		DriverInfos:           driverInfos,
+		RootDevices:           rootDevices,
+		InstanceInfos:         instanceInfos,
+		DeploySteps:           deploySteps,
+		BootstrapIgnitionStub: string(stubIgnition),
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

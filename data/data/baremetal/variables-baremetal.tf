@@ -62,3 +62,8 @@ variable "deploy_steps" {
   type        = list(string)
   description = "The contents of custom deploy steps for the node in JSON format"
 }
+
+variable "bootstrap_ignition_stub" {
+  type        = string
+  description = "Stub ignition pointing at real ignition served via HTTP"
+}

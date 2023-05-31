@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
 	"path"
 	"strconv"
@@ -687,6 +688,29 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			imageCacheIP = installConfig.Config.Platform.BareMetal.BootstrapProvisioningIP
 		}
 
+		machineCIDR := &installConfig.Config.Networking.MachineNetwork[0].CIDR
+		allAddrs, err := net.InterfaceAddrs()
+		if err != nil {
+			return errors.Wrap(err, "failed to list local IP addresses")
+		}
+
+		var machineIP *net.IP
+		for _, addr := range allAddrs {
+			ip, _, err := net.ParseCIDR(addr.String())
+			if err != nil {
+				logrus.Warnf("cannot parse address %s: %s", addr, err)
+				continue
+			}
+
+			if machineCIDR.Contains(ip) {
+				machineIP = &ip
+				break
+			}
+		}
+		if machineIP == nil {
+			return errors.Errorf("cannot find a local address in machine subnet %s", machineCIDR)
+		}
+
 		data, err = baremetaltfvars.TFVars(
 			*installConfig.Config.ControlPlane.Replicas,
 			installConfig.Config.Platform.BareMetal.LibvirtURI,
@@ -702,7 +726,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			string(*rhcosImage),
 			ironicCreds.Username,
 			ironicCreds.Password,
-			masterIgn,
+			bootstrapIgn,
+			machineIP.String(),
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
