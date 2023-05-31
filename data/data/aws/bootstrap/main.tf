@@ -166,6 +166,11 @@ resource "aws_instance" "bootstrap" {
     local.tags,
   )
 
+  metadata_options {
+    http_endpoint = "enabled"
+    http_tokens   = var.aws_bootstrap_instance_metadata_authentication
+  }
+
   root_block_device {
     volume_type = local.volume_type
     volume_size = local.volume_size
