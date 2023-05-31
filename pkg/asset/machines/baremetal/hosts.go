@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
-	"github.com/metal3-io/baremetal-operator/pkg/hardware"
+	hardware "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1/profile"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
