@@ -24,7 +24,10 @@ import (
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 type DNS struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is the specification of the desired behavior of the DNS.
@@ -287,6 +290,25 @@ type ForwardPlugin struct {
 	//
 	// +optional
 	TransportConfig DNSTransportConfig `json:"transportConfig,omitempty"`
+
+
+	// protocolStrategy specifies the protocol to use for upstream DNS
+	// requests.
+	// Valid values for protocolStrategy are "TCP" and omitted.
+	// When omitted, this means no opinion and the platform is left to choose
+	// a reasonable default, which is subject to change over time.
+	// The current default is to use the protocol of the original client request.
+	// "TCP" specifies that the platform should use TCP for all upstream DNS requests,
+	// even if the client request uses UDP.
+	// "TCP" is useful for UDP-specific issues such as those created by
+	// non-compliant upstream resolvers, but may consume more bandwidth or
+	// increase DNS response time. Note that protocolStrategy only affects
+	// the protocol of DNS requests that CoreDNS makes to upstream resolvers.
+	// It does not affect the protocol of DNS requests between clients and
+	// CoreDNS.
+	//
+	// +optional
+	ProtocolStrategy ProtocolStrategy `json:"protocolStrategy"`
 }
 
 // UpstreamResolvers defines a schema for configuring the CoreDNS forward plugin in the
@@ -329,6 +351,24 @@ type UpstreamResolvers struct {
 	//
 	// +optional
 	TransportConfig DNSTransportConfig `json:"transportConfig,omitempty"`
+
+	// protocolStrategy specifies the protocol to use for upstream DNS
+	// requests.
+	// Valid values for protocolStrategy are "TCP" and omitted.
+	// When omitted, this means no opinion and the platform is left to choose
+	// a reasonable default, which is subject to change over time.
+	// The current default is to use the protocol of the original client request.
+	// "TCP" specifies that the platform should use TCP for all upstream DNS requests,
+	// even if the client request uses UDP.
+	// "TCP" is useful for UDP-specific issues such as those created by
+	// non-compliant upstream resolvers, but may consume more bandwidth or
+	// increase DNS response time. Note that protocolStrategy only affects
+	// the protocol of DNS requests that CoreDNS makes to upstream resolvers.
+	// It does not affect the protocol of DNS requests between clients and
+	// CoreDNS.
+	//
+	// +optional
+	ProtocolStrategy ProtocolStrategy `json:"protocolStrategy"`
 }
 
 // Upstream can either be of type SystemResolvConf, or of type Network.
@@ -374,6 +414,23 @@ type UpstreamType string
 const (
 	SystemResolveConfType UpstreamType = "SystemResolvConf"
 	NetworkResolverType   UpstreamType = "Network"
+)
+
+// ProtocolStrategy is a preference for the protocol to use for DNS queries.
+// + ---
+// + When consumers observe an unknown value, they should use the default strategy.
+// +kubebuilder:validation:Enum:=TCP;""
+type ProtocolStrategy string
+
+var (
+	// ProtocolStrategyDefault specifies no opinion for DNS protocol.
+	// If empty, the default behavior of CoreDNS is used. Currently, this means that CoreDNS uses the protocol of the
+	// originating client request as the upstream protocol.
+	// Note that the default behavior of CoreDNS is subject to change.
+	ProtocolStrategyDefault ProtocolStrategy = ""
+
+	// ProtocolStrategyTCP instructs CoreDNS to always use TCP, regardless of the originating client's request protocol.
+	ProtocolStrategyTCP ProtocolStrategy = "TCP"
 )
 
 // DNSNodePlacement describes the node scheduling configuration for DNS pods.
@@ -463,6 +520,9 @@ type DNSStatus struct {
 // +openshift:compatibility-gen:level=1
 type DNSList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata,omitempty"`
 
 	Items []DNS `json:"items"`
