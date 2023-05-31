@@ -119,6 +119,15 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			}}
 		} else {
 			config.Spec.PrivateZone = &configv1.DNSZone{ID: hostedZone}
+
+			if r := installConfig.Config.AWS.HostedZoneRole; r != "" {
+				config.Spec.Platform = configv1.DNSPlatformSpec{
+					Type: configv1.AWSPlatformType,
+					AWS: &configv1.AWSDNSSpec{
+						PrivateZoneIAMRole: r,
+					},
+				}
+			}
 		}
 	case azuretypes.Name:
 		dnsConfig, err := installConfig.Azure.DNSConfig()
