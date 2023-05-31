@@ -27,6 +27,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -99,7 +100,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 		metadata.ClusterPlatformMetadata.AlibabaCloud = alibabacloud.Metadata(installConfig.Config)
 	case powervstypes.Name:
 		metadata.ClusterPlatformMetadata.PowerVS = powervs.Metadata(installConfig.Config, installConfig.PowerVS)
-	case nonetypes.Name:
+	case externaltypes.Name, nonetypes.Name:
 	case nutanixtypes.Name:
 		metadata.ClusterPlatformMetadata.Nutanix = nutanix.Metadata(installConfig.Config)
 	default:

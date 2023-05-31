@@ -118,6 +118,9 @@ func Test_PrintFields(t *testing.T) {
     baremetal <object>
       BareMetal is the configuration used when installing on bare metal.
 
+    external <object>
+      External is the configuration used when installing on an external cloud provider.
+
     gcp <object>
       GCP is the configuration used when installing on Google Cloud Platform.
 

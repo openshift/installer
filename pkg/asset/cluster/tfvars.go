@@ -60,6 +60,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -138,7 +139,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
-	case none.Name:
+	case external.Name, none.Name:
 		return errors.Errorf("cannot create the cluster because %q is a UPI platform", platform)
 	}
 

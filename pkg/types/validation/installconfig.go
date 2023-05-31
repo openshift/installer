@@ -258,6 +258,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Ovirt != nil:
 		case p.Nutanix != nil:
 		case p.None != nil:
+		case p.External != nil:
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
 		}
@@ -289,6 +290,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Ovirt != nil:
 		case p.Nutanix != nil:
 		case p.None != nil:
+		case p.External != nil:
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
 		default:

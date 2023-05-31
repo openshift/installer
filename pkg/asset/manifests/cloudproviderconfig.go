@@ -26,6 +26,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -93,7 +94,7 @@ func (cpc *CloudProviderConfig) Generate(dependencies asset.Parents) error {
 	}
 
 	switch installConfig.Config.Platform.Name() {
-	case libvirttypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
+	case libvirttypes.Name, externaltypes.Name, nonetypes.Name, baremetaltypes.Name, ovirttypes.Name:
 		return nil
 	case awstypes.Name:
 		// Store the additional trust bundle in the ca-bundle.pem key if the cluster is being installed on a C2S region.
