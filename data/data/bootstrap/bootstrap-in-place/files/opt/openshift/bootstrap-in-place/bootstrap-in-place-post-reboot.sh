@@ -37,7 +37,7 @@ function release_cvo_lease {
       echo "Deleting openshift-cluster-version version cm"
       oc delete cm -n openshift-cluster-version version || sleep 5
     done
-    touch /opt/openshift/expedite_bootstrapping.done
+    touch /opt/openshift/release_cvo_lease.done
   fi
 }
 
