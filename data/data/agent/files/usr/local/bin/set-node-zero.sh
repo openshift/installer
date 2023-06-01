@@ -3,8 +3,18 @@
 set -e
 
 # shellcheck disable=SC1091
-source common.sh
+source /etc/assisted/rendezvous-host.env
 echo "NODE_ZERO_IP: $NODE_ZERO_IP"
+
+is_node_zero() {
+    local is_rendezvous_host
+    is_rendezvous_host=$(ip -j address | jq "[.[].addr_info] | flatten | map(.local==\"$NODE_ZERO_IP\") | any")
+    if [[ "${is_rendezvous_host}" == "true" ]]; then
+        echo 1
+    else
+        echo 0
+    fi
+}
 
 timeout=$((SECONDS + 30))
 
@@ -29,7 +39,7 @@ if [ "${IS_NODE_ZERO}" = "true" ]; then
     cat >"${NODE0_PATH}" <<EOF
 # This file exists if the agent-based installer has determined the host is node 0.
 # The host is determined to be node 0 when one of its network interfaces has an 
-# IP address matching NODE_ZERO_IP in /etc/assisted/agent-installer.env. 
+# IP address matching NODE_ZERO_IP in /etc/assisted/rendezvous-host.env. 
 # The MAC address of the network interface matching NODE_ZERO_IP is noted below 
 # as BOOTSTRAP_HOST_MAC.
 #

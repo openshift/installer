@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/agent"
 	"github.com/openshift/installer/pkg/types/agent/conversion"
+	"github.com/openshift/installer/pkg/types/baremetal/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
 
@@ -247,15 +248,16 @@ func (a *AgentConfig) validateHostInterfaces(hostPath *field.Path, host agent.Ho
 }
 
 func (a *AgentConfig) validateHostRootDeviceHints(hostPath *field.Path, host agent.Host) field.ErrorList {
-	var allErrs field.ErrorList
+	rdhPath := hostPath.Child("rootDeviceHints")
+	allErrs := validation.ValidateHostRootDeviceHints(&host.RootDeviceHints, rdhPath)
 
 	if host.RootDeviceHints.WWNWithExtension != "" {
 		allErrs = append(allErrs, field.Forbidden(
-			hostPath.Child("RootDeviceHints", "WWNWithExtension"), "WWN extensions are not supported in root device hints"))
+			rdhPath.Child("wwnWithExtension"), "WWN extensions are not supported in root device hints"))
 	}
 
 	if host.RootDeviceHints.WWNVendorExtension != "" {
-		allErrs = append(allErrs, field.Forbidden(hostPath.Child("RootDeviceHints", "WWNVendorExtension"), "WWN vendor extensions are not supported in root device hints"))
+		allErrs = append(allErrs, field.Forbidden(rdhPath.Child("wwnVendorExtension"), "WWN vendor extensions are not supported in root device hints"))
 	}
 
 	return allErrs

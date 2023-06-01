@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -314,7 +317,8 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 	ctx, cancel := context.WithTimeout(context.TODO(), defaultAPITimeout)
 	defer cancel()
 	client := meta.(*VSphereClient).vimClient.Client
-	archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: d.Get("filename").(string)}}
+	filename := d.Get("filename").(string)
+	archive := &importx.ArchiveFlag{Archive: &importx.TapeArchive{Path: filename}}
 
 	importOvaParams, err := findImportOvaParams(client,
 		d.Get("datacenter").(string),
@@ -329,7 +333,22 @@ func resourceVSpherePrivateImportOvaCreate(d *schema.ResourceData, meta interfac
 
 	ovfDescriptor, err := archive.ReadOvf("*.ovf")
 	if err != nil {
-		return errors.Errorf("failed to read ovf: %s", err)
+		// Open the corrupt OVA file
+		f, ferr := os.Open(filename)
+		if ferr != nil {
+			err = fmt.Errorf("%s, %w", err.Error(), ferr)
+		}
+		defer f.Close()
+
+		// Get a sha256 on the corrupt OVA file
+		// and the size of the file
+		h := sha256.New()
+		written, cerr := io.Copy(h, f)
+		if cerr != nil {
+			err = fmt.Errorf("%s, %w", err.Error(), cerr)
+		}
+
+		return errors.Errorf("ova %s has a sha256 of %x and a size of %d bytes, failed to read the ovf descriptor %s", filename, h.Sum(nil), written, err)
 	}
 
 	ovfEnvelope, err := archive.ReadEnvelope(ovfDescriptor)

@@ -359,6 +359,62 @@ interfaces:
 	}
 }
 
+func TestValidateHostRootDeviceHints(t *testing.T) {
+	cases := []struct {
+		name            string
+		rootDeviceHints *baremetal.RootDeviceHints
+		expectedSuccess bool
+	}{
+		{
+			name:            "nil hints",
+			expectedSuccess: true,
+		},
+		{
+			name:            "no hints",
+			rootDeviceHints: &baremetal.RootDeviceHints{},
+			expectedSuccess: true,
+		},
+		{
+			name: "non /dev path",
+			rootDeviceHints: &baremetal.RootDeviceHints{
+				DeviceName: "sda",
+			},
+		},
+		{
+			name: "/dev path",
+			rootDeviceHints: &baremetal.RootDeviceHints{
+				DeviceName: "/dev/sda",
+			},
+			expectedSuccess: true,
+		},
+		{
+			name: "by-path path",
+			rootDeviceHints: &baremetal.RootDeviceHints{
+				DeviceName: "/dev/disk/by-path/pci-0000:01:00.0-scsi-0:2:0:0",
+			},
+			expectedSuccess: true,
+		},
+		{
+			name: "by-id path",
+			rootDeviceHints: &baremetal.RootDeviceHints{
+				DeviceName: "/dev/disk/by-id/wwn-0x600508e000000000ce506dc50ab0ad05",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			errs := ValidateHostRootDeviceHints(tc.rootDeviceHints, field.NewPath("rootDeviceHints"))
+
+			if tc.expectedSuccess {
+				assert.Empty(t, errs)
+			} else {
+				assert.NotEmpty(t, errs)
+			}
+		})
+	}
+}
+
 func TestValidateProvisioning(t *testing.T) {
 	//Used for url validations
 	imagesServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

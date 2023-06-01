@@ -7,6 +7,9 @@ After=network-online.target apply-host-config.service
 ConditionPathExists=/etc/assisted/node0
 
 [Service]
+EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
+EnvironmentFile=/etc/assisted/rendezvous-host.env
+ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
 ExecStart=/usr/local/bin/start-cluster-installation.sh
 
 KillMode=none
