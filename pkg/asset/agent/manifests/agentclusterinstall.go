@@ -77,6 +77,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	Capabilities *types.Capabilities `json:"capabilities,omitempty"`
 	// AdditionalTrustBundle must be set here when mirroring not configured
 	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
+	// Allow override of network type
+	Networking *types.Networking `json:"networking,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -190,7 +192,11 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.VSphere.IngressVIPs[0]
 		}
 
-		setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
+		networkOverridden := setNetworkType(agentClusterInstall, installConfig.Config, "NetworkType is not specified in InstallConfig.")
+		if networkOverridden {
+			icOverridden = true
+			icOverrides.Networking = installConfig.Config.Networking
+		}
 
 		if installConfig.Config.Capabilities != nil {
 			icOverrides.Capabilities = installConfig.Config.Capabilities
@@ -296,23 +302,29 @@ func (a *AgentClusterInstall) finish() error {
 }
 
 // Sets the default network type to OVNKubernetes if it is unspecified in the
-// AgentClusterInstall or InstallConfig
+// AgentClusterInstall or InstallConfig.
 func setNetworkType(aci *hiveext.AgentClusterInstall, installConfig *types.InstallConfig,
-	warningMessage string) {
-
+	warningMessage string) bool {
 	if aci.Spec.Networking.NetworkType != "" {
-		return
+		return false
 	}
 
 	if installConfig != nil && installConfig.Networking != nil &&
 		installConfig.Networking.NetworkType != "" {
-		aci.Spec.Networking.NetworkType = installConfig.NetworkType
-		return
+		if installConfig.Networking.NetworkType == string(operv1.NetworkTypeOVNKubernetes) || installConfig.Networking.NetworkType == string(operv1.NetworkTypeOpenShiftSDN) {
+			aci.Spec.Networking.NetworkType = installConfig.NetworkType
+			return false
+		}
+
+		// Set OVNKubernetes in AgentClusterInstall and return true to indicate InstallConfigOverride should be used
+		aci.Spec.Networking.NetworkType = string(operv1.NetworkTypeOVNKubernetes)
+		return true
 	}
 
 	defaults.SetInstallConfigDefaults(installConfig)
 	logrus.Infof("%s Defaulting NetworkType to %s.", warningMessage, installConfig.NetworkType)
 	aci.Spec.Networking.NetworkType = installConfig.NetworkType
+	return false
 }
 
 func isIPv6(ipAddress net.IP) bool {
