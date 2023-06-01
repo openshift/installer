@@ -75,6 +75,7 @@ spec:
                   - Storage
                   - CSISnapshot
                   - NodeTuning
+                  - MachineAPI
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -86,6 +87,7 @@ spec:
                 - v4.11
                 - v4.12
                 - v4.13
+                - v4.14
                 - vCurrent
                 type: string
             type: object
