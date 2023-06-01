@@ -18,12 +18,19 @@ tests:
           profile: Default
         encryption:
           type: aescbc
-  - name: Should not be able to create encrypt with aesgcm.  Yet.
+  - name: Should be able to create encrypt with aesgcm
     initial: |
       apiVersion: config.openshift.io/v1
       kind: APIServer
       spec:
         encryption:
           type: aesgcm
-    expectedError: "spec.encryption.type: Unsupported value: \"aesgcm\": supported values: \"\", \"identity\", \"aescbc\""
+    expected: |
+      apiVersion: config.openshift.io/v1
+      kind: APIServer
+      spec:
+        audit:
+          profile: Default
+        encryption:
+          type: aesgcm
 

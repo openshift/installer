@@ -42,6 +42,8 @@ option go_package = "github.com/openshift/api/route/v1";
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 message Route {
+  // metadata is the standard object's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
   optional k8s.io.apimachinery.pkg.apis.meta.v1.ObjectMeta metadata = 1;
 
   // spec is the desired state of the route
@@ -98,6 +100,8 @@ message RouteIngressCondition {
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 message RouteList {
+  // metadata is the standard list's metadata.
+  // More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
   optional k8s.io.apimachinery.pkg.apis.meta.v1.ListMeta metadata = 1;
 
   // items is a list of routes
@@ -238,6 +242,8 @@ message RouterShard {
 }
 
 // TLSConfig defines config used to secure a route and provide termination
+//
+// +kubebuilder:validation:XValidation:rule="has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true", message="cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow"
 message TLSConfig {
   // termination indicates termination type.
   //
@@ -268,9 +274,11 @@ message TLSConfig {
   // insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
   // each router may make its own decisions on which ports to expose, this is normally port 80.
   //
-  // * Allow - traffic is sent to the server on the insecure port (default)
-  // * Disable - no traffic is allowed on the insecure port.
+  // * Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only) (default).
+  // * None - no traffic is allowed on the insecure port.
   // * Redirect - clients are redirected to the secure port.
+  //
+  // +kubebuilder:validation:Enum=Allow;None;Redirect;""
   optional string insecureEdgeTerminationPolicy = 6;
 }
 

@@ -109,10 +109,8 @@ func (o *ClusterUninstaller) destroyCloudInstances() error {
 	}
 
 	items := o.insertPendingItems(cloudInstanceTypeName, firstPassList.list())
-
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
-
 	for _, item := range items {
 		select {
 		case <-ctx.Done():
@@ -126,7 +124,7 @@ func (o *ClusterUninstaller) destroyCloudInstances() error {
 			Factor:   1.1,
 			Cap:      leftInContext(ctx),
 			Steps:    math.MaxInt32}
-		err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+		err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 			err2 := o.destroyCloudInstance(item)
 			if err2 == nil {
 				return true, err2
@@ -151,7 +149,7 @@ func (o *ClusterUninstaller) destroyCloudInstances() error {
 		Factor:   1.1,
 		Cap:      leftInContext(ctx),
 		Steps:    math.MaxInt32}
-	err = wait.ExponentialBackoffWithContext(ctx, backoff, func() (bool, error) {
+	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
 		secondPassList, err2 := o.listCloudInstances()
 		if err2 != nil {
 			return false, err2
