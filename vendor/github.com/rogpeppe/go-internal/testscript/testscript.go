@@ -10,9 +10,11 @@ package testscript
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"go/build"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -21,6 +23,7 @@ import (
 	"runtime"
 	"strings"
 	"sync/atomic"
+	"syscall"
 	"testing"
 	"time"
 
@@ -39,6 +42,16 @@ var execCache par.Cache
 // and does not remove it when done, so that a programmer can
 // poke at the test file tree afterward.
 var testWork = flag.Bool("testwork", false, "")
+
+// timeSince is defined as a variable so that it can be overridden
+// for the local testscript tests so that we can test against predictable
+// output.
+var timeSince = time.Since
+
+// showVerboseEnv specifies whether the environment should be displayed
+// automatically when in verbose mode. This is set to false for the local testscript tests so we
+// can test against predictable output.
+var showVerboseEnv = true
 
 // Env holds the environment to use at the start of a test script invocation.
 type Env struct {
@@ -139,11 +152,7 @@ type Params struct {
 	// $GOTMPDIR/go-test-script*, where $GOTMPDIR defaults to os.TempDir().
 	WorkdirRoot string
 
-	// IgnoreMissedCoverage specifies that if coverage information
-	// is being generated (with the -test.coverprofile flag) and a subcommand
-	// function passed to RunMain fails to generate coverage information
-	// (for example because the function invoked os.Exit), then the
-	// error will be ignored.
+	// Deprecated: this option is no longer used.
 	IgnoreMissedCoverage bool
 
 	// UpdateScripts specifies that if a `cmp` command fails and its second
@@ -161,11 +170,28 @@ type Params struct {
 	// consistency across test scripts as well as keep separate process
 	// executions explicit.
 	RequireExplicitExec bool
+
+	// RequireUniqueNames requires that names in the txtar archive are unique.
+	// By default, later entries silently overwrite earlier ones.
+	RequireUniqueNames bool
+
+	// ContinueOnError causes a testscript to try to continue in
+	// the face of errors. Once an error has occurred, the script
+	// will continue as if in verbose mode.
+	ContinueOnError bool
+
+	// Deadline, if not zero, specifies the time at which the test run will have
+	// exceeded the timeout. It is equivalent to testing.T's Deadline method,
+	// and Run will set it to the method's return value if this field is zero.
+	Deadline time.Time
 }
 
 // RunDir runs the tests in the given directory. All files in dir with a ".txt"
 // or ".txtar" extension are considered to be test files.
 func Run(t *testing.T, p Params) {
+	if deadline, ok := t.Deadline(); ok && p.Deadline.IsZero() {
+		p.Deadline = deadline
+	}
 	RunT(tshim{t}, p)
 }
 
@@ -240,6 +266,37 @@ func RunT(t T, p Params) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	var (
+		ctx         = context.Background()
+		gracePeriod = 100 * time.Millisecond
+		cancel      context.CancelFunc
+	)
+	if !p.Deadline.IsZero() {
+		timeout := time.Until(p.Deadline)
+
+		// If time allows, increase the termination grace period to 5% of the
+		// remaining time.
+		if gp := timeout / 20; gp > gracePeriod {
+			gracePeriod = gp
+		}
+
+		// When we run commands that execute subprocesses, we want to reserve two
+		// grace periods to clean up. We will send the first termination signal when
+		// the context expires, then wait one grace period for the process to
+		// produce whatever useful output it can (such as a stack trace). After the
+		// first grace period expires, we'll escalate to os.Kill, leaving the second
+		// grace period for the test function to record its output before the test
+		// process itself terminates.
+		timeout -= 2 * gracePeriod
+
+		ctx, cancel = context.WithTimeout(ctx, timeout)
+		// We don't defer cancel() because RunT returns before the sub-tests,
+		// and we don't have access to Cleanup due to the T interface. Instead,
+		// we call it after the refCount goes to zero below.
+		_ = cancel
+	}
+
 	refCount := int32(len(files))
 	for _, file := range files {
 		file := file
@@ -253,7 +310,8 @@ func RunT(t T, p Params) {
 				name:          name,
 				file:          file,
 				params:        p,
-				ctxt:          context.Background(),
+				ctxt:          ctx,
+				gracePeriod:   gracePeriod,
 				deferred:      func() {},
 				scriptFiles:   make(map[string]string),
 				scriptUpdates: make(map[string]string),
@@ -265,8 +323,11 @@ func RunT(t T, p Params) {
 				removeAll(ts.workdir)
 				if atomic.AddInt32(&refCount, -1) == 0 {
 					// This is the last subtest to finish. Remove the
-					// parent directory too.
+					// parent directory too, and cancel the context.
 					os.Remove(testTempDir)
+					if cancel != nil {
+						cancel()
+					}
 				}
 			}()
 			ts.run()
@@ -301,7 +362,8 @@ type TestScript struct {
 	scriptFiles   map[string]string           // files stored in the txtar archive (absolute paths -> path in script)
 	scriptUpdates map[string]string           // updates to testscript files via UpdateScripts.
 
-	ctxt context.Context // per TestScript context
+	ctxt        context.Context // per TestScript context
+	gracePeriod time.Duration   // time between SIGQUIT and SIGKILL
 }
 
 type backgroundCmd struct {
@@ -311,9 +373,30 @@ type backgroundCmd struct {
 	neg  bool // if true, cmd should fail
 }
 
+func writeFile(name string, data []byte, perm fs.FileMode, excl bool) error {
+	oflags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
+	if excl {
+		oflags |= os.O_EXCL
+	}
+	f, err := os.OpenFile(name, oflags, perm)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	if _, err := f.Write(data); err != nil {
+		return fmt.Errorf("cannot write file contents: %v", err)
+	}
+	return nil
+}
+
 // setup sets up the test execution temporary directory and environment.
 // It returns the comment section of the txtar archive.
 func (ts *TestScript) setup() string {
+	defer catchFailNow(func() {
+		// There's been a failure in setup; fail immediately regardless
+		// of the ContinueOnError flag.
+		ts.t.FailNow()
+	})
 	ts.workdir = filepath.Join(ts.testTempDir, "script-"+ts.name)
 
 	// Establish a temporary directory in workdir, but use a prefix that ensures
@@ -330,6 +413,7 @@ func (ts *TestScript) setup() string {
 		Vars: []string{
 			"WORK=" + ts.workdir, // must be first for ts.abbrev
 			"PATH=" + os.Getenv("PATH"),
+			"GOTRACEBACK=system",
 			homeEnvName() + "=/no-home",
 			tempEnvName() + "=" + tmpDir,
 			"devnull=" + os.DevNull,
@@ -339,7 +423,7 @@ func (ts *TestScript) setup() string {
 
 			// If we are collecting coverage profiles for merging into the main one,
 			// ensure the environment variable is forwarded to sub-processes.
-			"TESTSCRIPT_COVER_DIR=" + os.Getenv("TESTSCRIPT_COVER_DIR"),
+			"GOCOVERDIR=" + os.Getenv("GOCOVERDIR"),
 		},
 		WorkDir: ts.workdir,
 		Values:  make(map[interface{}]interface{}),
@@ -366,7 +450,12 @@ func (ts *TestScript) setup() string {
 		name := ts.MkAbs(ts.expand(f.Name))
 		ts.scriptFiles[name] = f.Name
 		ts.Check(os.MkdirAll(filepath.Dir(name), 0o777))
-		ts.Check(ioutil.WriteFile(name, f.Data, 0o666))
+		switch err := writeFile(name, f.Data, 0o666, ts.params.RequireUniqueNames); {
+		case ts.params.RequireUniqueNames && errors.Is(err, fs.ErrExist):
+			ts.Check(fmt.Errorf("%s would overwrite %s (because RequireUniqueNames is enabled)", f.Name, name))
+		default:
+			ts.Check(err)
+		}
 	}
 	// Run any user-defined setup.
 	if ts.params.Setup != nil {
@@ -389,8 +478,9 @@ func (ts *TestScript) setup() string {
 func (ts *TestScript) run() {
 	// Truncate log at end of last phase marker,
 	// discarding details of successful phase.
+	verbose := ts.t.Verbose()
 	rewind := func() {
-		if !ts.t.Verbose() {
+		if !verbose {
 			ts.log.Truncate(ts.mark)
 		}
 	}
@@ -400,12 +490,13 @@ func (ts *TestScript) run() {
 		if ts.mark > 0 && !ts.start.IsZero() {
 			afterMark := append([]byte{}, ts.log.Bytes()[ts.mark:]...)
 			ts.log.Truncate(ts.mark - 1) // cut \n and afterMark
-			fmt.Fprintf(&ts.log, " (%.3fs)\n", time.Since(ts.start).Seconds())
+			fmt.Fprintf(&ts.log, " (%.3fs)\n", timeSince(ts.start).Seconds())
 			ts.log.Write(afterMark)
 		}
 		ts.start = time.Time{}
 	}
 
+	failed := false
 	defer func() {
 		// On a normal exit from the test loop, background processes are cleaned up
 		// before we print PASS. If we return early (e.g., due to a test failure),
@@ -413,7 +504,7 @@ func (ts *TestScript) run() {
 		for _, bg := range ts.background {
 			interruptProcess(bg.cmd.Process)
 		}
-		if ts.t.Verbose() || hasFailed(ts.t) {
+		if ts.t.Verbose() || failed {
 			// In verbose mode or on test failure, we want to see what happened in the background
 			// processes too.
 			ts.waitBackground(false)
@@ -434,7 +525,7 @@ func (ts *TestScript) run() {
 	script := ts.setup()
 
 	// With -v or -testwork, start log with full environment.
-	if *testWork || ts.t.Verbose() {
+	if *testWork || (showVerboseEnv && ts.t.Verbose()) {
 		// Display environment.
 		ts.cmdEnv(false, nil)
 		fmt.Fprintf(&ts.log, "\n")
@@ -444,7 +535,6 @@ func (ts *TestScript) run() {
 
 	// Run script.
 	// See testdata/script/README for documentation of script form.
-Script:
 	for script != "" {
 		// Extract next line.
 		ts.lineno++
@@ -458,7 +548,9 @@ Script:
 		// # is a comment indicating the start of new phase.
 		if strings.HasPrefix(line, "#") {
 			// If there was a previous phase, it succeeded,
-			// so rewind the log to delete its details (unless -v is in use).
+			// so rewind the log to delete its details (unless -v is in use or
+			// ContinueOnError was enabled and there was a previous error,
+			// causing verbose to be set to true).
 			// If nothing has happened at all since the mark,
 			// rewinding is a no-op and adding elapsed time
 			// for doing nothing is meaningless, so don't.
@@ -473,59 +565,15 @@ Script:
 			continue
 		}
 
-		// Parse input line. Ignore blanks entirely.
-		args := ts.parse(line)
-		if len(args) == 0 {
-			continue
-		}
-
-		// Echo command to log.
-		fmt.Fprintf(&ts.log, "> %s\n", line)
-
-		// Command prefix [cond] means only run this command if cond is satisfied.
-		for strings.HasPrefix(args[0], "[") && strings.HasSuffix(args[0], "]") {
-			cond := args[0]
-			cond = cond[1 : len(cond)-1]
-			cond = strings.TrimSpace(cond)
-			args = args[1:]
-			if len(args) == 0 {
-				ts.Fatalf("missing command after condition")
-			}
-			want := true
-			if strings.HasPrefix(cond, "!") {
-				want = false
-				cond = strings.TrimSpace(cond[1:])
-			}
-			ok, err := ts.condition(cond)
-			if err != nil {
-				ts.Fatalf("bad condition %q: %v", cond, err)
-			}
-			if ok != want {
-				// Don't run rest of line.
-				continue Script
+		ok := ts.runLine(line)
+		if !ok {
+			failed = true
+			if ts.params.ContinueOnError {
+				verbose = true
+			} else {
+				ts.t.FailNow()
 			}
 		}
-
-		// Command prefix ! means negate the expectations about this command:
-		// go command should fail, match should not be found, etc.
-		neg := false
-		if args[0] == "!" {
-			neg = true
-			args = args[1:]
-			if len(args) == 0 {
-				ts.Fatalf("! on line by itself")
-			}
-		}
-
-		// Run command.
-		cmd := scriptCmds[args[0]]
-		if cmd == nil {
-			cmd = ts.params.Cmds[args[0]]
-		}
-		if cmd == nil {
-			ts.Fatalf("unknown command %q", args[0])
-		}
-		cmd(ts, neg, args[1:])
 
 		// Command can ask script to stop early.
 		if ts.stopped {
@@ -540,6 +588,12 @@ Script:
 	}
 	ts.cmdWait(false, nil)
 
+	// If we reached here but we've failed (probably because ContinueOnError
+	// was set), don't wipe the log and print "PASS".
+	if failed {
+		ts.t.FailNow()
+	}
+
 	// Final phase ended.
 	rewind()
 	markTime()
@@ -548,11 +602,65 @@ Script:
 	}
 }
 
-func hasFailed(t T) bool {
-	if t, ok := t.(TFailed); ok {
-		return t.Failed()
+func (ts *TestScript) runLine(line string) (runOK bool) {
+	defer catchFailNow(func() {
+		runOK = false
+	})
+
+	// Parse input line. Ignore blanks entirely.
+	args := ts.parse(line)
+	if len(args) == 0 {
+		return true
 	}
-	return false
+
+	// Echo command to log.
+	fmt.Fprintf(&ts.log, "> %s\n", line)
+
+	// Command prefix [cond] means only run this command if cond is satisfied.
+	for strings.HasPrefix(args[0], "[") && strings.HasSuffix(args[0], "]") {
+		cond := args[0]
+		cond = cond[1 : len(cond)-1]
+		cond = strings.TrimSpace(cond)
+		args = args[1:]
+		if len(args) == 0 {
+			ts.Fatalf("missing command after condition")
+		}
+		want := true
+		if strings.HasPrefix(cond, "!") {
+			want = false
+			cond = strings.TrimSpace(cond[1:])
+		}
+		ok, err := ts.condition(cond)
+		if err != nil {
+			ts.Fatalf("bad condition %q: %v", cond, err)
+		}
+		if ok != want {
+			// Don't run rest of line.
+			return true
+		}
+	}
+
+	// Command prefix ! means negate the expectations about this command:
+	// go command should fail, match should not be found, etc.
+	neg := false
+	if args[0] == "!" {
+		neg = true
+		args = args[1:]
+		if len(args) == 0 {
+			ts.Fatalf("! on line by itself")
+		}
+	}
+
+	// Run command.
+	cmd := scriptCmds[args[0]]
+	if cmd == nil {
+		cmd = ts.params.Cmds[args[0]]
+	}
+	if cmd == nil {
+		ts.Fatalf("unknown command %q", args[0])
+	}
+	cmd(ts, neg, args[1:])
+	return true
 }
 
 func (ts *TestScript) applyScriptUpdates() {
@@ -570,7 +678,7 @@ func (ts *TestScript) applyScriptUpdates() {
 			if txtar.NeedsQuote(data) {
 				data1, err := txtar.Quote(data)
 				if err != nil {
-					ts.t.Fatal(fmt.Sprintf("cannot update script file %q: %v", f.Name, err))
+					ts.Fatalf("cannot update script file %q: %v", f.Name, err)
 					continue
 				}
 				data = data1
@@ -587,6 +695,21 @@ func (ts *TestScript) applyScriptUpdates() {
 		ts.t.Fatal("cannot update script: ", err)
 	}
 	ts.Logf("%s updated", ts.file)
+}
+
+var failNow = errors.New("fail now!")
+
+// catchFailNow catches any panic from Fatalf and calls
+// f if it did so. It must be called in a defer.
+func catchFailNow(f func()) {
+	e := recover()
+	if e == nil {
+		return
+	}
+	if e != failNow {
+		panic(e)
+	}
+	f()
 }
 
 // condition reports whether the given condition is satisfied.
@@ -686,7 +809,7 @@ func (ts *TestScript) exec(command string, args ...string) (stdout, stderr strin
 	cmd.Stdout = &stdoutBuf
 	cmd.Stderr = &stderrBuf
 	if err = cmd.Start(); err == nil {
-		err = ctxWait(ts.ctxt, cmd)
+		err = waitOrStop(ts.ctxt, cmd, ts.gracePeriod)
 	}
 	ts.stdin = ""
 	return stdoutBuf.String(), stderrBuf.String(), err
@@ -731,21 +854,68 @@ func (ts *TestScript) BackgroundCmds() []*exec.Cmd {
 	return cmds
 }
 
-// ctxWait is like cmd.Wait, but terminates cmd with os.Interrupt if ctx becomes done.
+// waitOrStop waits for the already-started command cmd by calling its Wait method.
 //
-// This differs from exec.CommandContext in that it prefers os.Interrupt over os.Kill.
-// (See https://golang.org/issue/21135.)
-func ctxWait(ctx context.Context, cmd *exec.Cmd) error {
-	errc := make(chan error, 1)
-	go func() { errc <- cmd.Wait() }()
-
-	select {
-	case err := <-errc:
-		return err
-	case <-ctx.Done():
-		interruptProcess(cmd.Process)
-		return <-errc
+// If cmd does not return before ctx is done, waitOrStop sends it an interrupt
+// signal. If killDelay is positive, waitOrStop waits that additional period for
+// Wait to return before sending os.Kill.
+func waitOrStop(ctx context.Context, cmd *exec.Cmd, killDelay time.Duration) error {
+	if cmd.Process == nil {
+		panic("waitOrStop called with a nil cmd.Process — missing Start call?")
 	}
+
+	errc := make(chan error)
+	go func() {
+		select {
+		case errc <- nil:
+			return
+		case <-ctx.Done():
+		}
+
+		var interrupt os.Signal = syscall.SIGQUIT
+		if runtime.GOOS == "windows" {
+			// Per https://golang.org/pkg/os/#Signal, “Interrupt is not implemented on
+			// Windows; using it with os.Process.Signal will return an error.”
+			// Fall back directly to Kill instead.
+			interrupt = os.Kill
+		}
+
+		err := cmd.Process.Signal(interrupt)
+		if err == nil {
+			err = ctx.Err() // Report ctx.Err() as the reason we interrupted.
+		} else if err == os.ErrProcessDone {
+			errc <- nil
+			return
+		}
+
+		if killDelay > 0 {
+			timer := time.NewTimer(killDelay)
+			select {
+			// Report ctx.Err() as the reason we interrupted the process...
+			case errc <- ctx.Err():
+				timer.Stop()
+				return
+			// ...but after killDelay has elapsed, fall back to a stronger signal.
+			case <-timer.C:
+			}
+
+			// Wait still hasn't returned.
+			// Kill the process harder to make sure that it exits.
+			//
+			// Ignore any error: if cmd.Process has already terminated, we still
+			// want to send ctx.Err() (or the error from the Interrupt call)
+			// to properly attribute the signal that may have terminated it.
+			_ = cmd.Process.Kill()
+		}
+
+		errc <- err
+	}()
+
+	waitErr := cmd.Wait()
+	if interruptErr := <-errc; interruptErr != nil {
+		return interruptErr
+	}
+	return waitErr
 }
 
 // interruptProcess sends os.Interrupt to p if supported, or os.Kill otherwise.
@@ -785,7 +955,10 @@ func (ts *TestScript) expand(s string) string {
 // fatalf aborts the test with the given failure message.
 func (ts *TestScript) Fatalf(format string, args ...interface{}) {
 	fmt.Fprintf(&ts.log, "FAIL: %s:%d: %s\n", ts.file, ts.lineno, fmt.Sprintf(format, args...))
-	ts.t.FailNow()
+	// This should be caught by the defer inside the TestScript.runLine method.
+	// We do this rather than calling ts.t.FailNow directly because we want to
+	// be able to continue on error when Params.ContinueOnError is set.
+	panic(failNow)
 }
 
 // MkAbs interprets file relative to the test script's current directory

@@ -14,7 +14,10 @@ import (
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 type ClusterVersion struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// spec is the desired state of the cluster version - the operator will work
@@ -244,7 +247,7 @@ const (
 )
 
 // ClusterVersionCapability enumerates optional, core cluster components.
-// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot;NodeTuning
+// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot;NodeTuning;MachineAPI
 type ClusterVersionCapability string
 
 const (
@@ -293,6 +296,23 @@ const (
 	// objects and manages the containerized TuneD daemon which controls
 	// system level tuning of Nodes
 	ClusterVersionCapabilityNodeTuning ClusterVersionCapability = "NodeTuning"
+
+	// ClusterVersionCapabilityMachineAPI manages
+	// machine-api-operator
+	// cluster-autoscaler-operator
+	// cluster-control-plane-machine-set-operator
+	// which is responsible for machines configuration and heavily
+	// targeted for SNO clusters.
+	//
+	// The following CRDs are disabled as well
+	// machines
+	// machineset
+	// controlplanemachineset
+	//
+	// WARNING: Do not disable that capability without reading
+	// documentation. This is important part of openshift system
+	// and may cause cluster damage
+	ClusterVersionCapabilityMachineAPI ClusterVersionCapability = "MachineAPI"
 )
 
 // KnownClusterVersionCapabilities includes all known optional, core cluster components.
@@ -305,10 +325,11 @@ var KnownClusterVersionCapabilities = []ClusterVersionCapability{
 	ClusterVersionCapabilityOpenShiftSamples,
 	ClusterVersionCapabilityCSISnapshot,
 	ClusterVersionCapabilityNodeTuning,
+	ClusterVersionCapabilityMachineAPI,
 }
 
 // ClusterVersionCapabilitySet defines sets of cluster version capabilities.
-// +kubebuilder:validation:Enum=None;v4.11;v4.12;v4.13;vCurrent
+// +kubebuilder:validation:Enum=None;v4.11;v4.12;v4.13;v4.14;vCurrent
 type ClusterVersionCapabilitySet string
 
 const (
@@ -333,6 +354,12 @@ const (
 	// OpenShift.  This list will remain the same no matter which
 	// version of OpenShift is installed.
 	ClusterVersionCapabilitySet4_13 ClusterVersionCapabilitySet = "v4.13"
+
+	// ClusterVersionCapabilitySet4_14 is the recommended set of
+	// optional capabilities to enable for the 4.14 version of
+	// OpenShift.  This list will remain the same no matter which
+	// version of OpenShift is installed.
+	ClusterVersionCapabilitySet4_14 ClusterVersionCapabilitySet = "v4.14"
 
 	// ClusterVersionCapabilitySetCurrent is the recommended set
 	// of optional capabilities to enable for the cluster's
@@ -367,6 +394,17 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 		ClusterVersionCapabilityCSISnapshot,
 		ClusterVersionCapabilityNodeTuning,
 	},
+	ClusterVersionCapabilitySet4_14: {
+		ClusterVersionCapabilityBaremetal,
+		ClusterVersionCapabilityConsole,
+		ClusterVersionCapabilityInsights,
+		ClusterVersionCapabilityMarketplace,
+		ClusterVersionCapabilityStorage,
+		ClusterVersionCapabilityOpenShiftSamples,
+		ClusterVersionCapabilityCSISnapshot,
+		ClusterVersionCapabilityNodeTuning,
+		ClusterVersionCapabilityMachineAPI,
+	},
 	ClusterVersionCapabilitySetCurrent: {
 		ClusterVersionCapabilityBaremetal,
 		ClusterVersionCapabilityConsole,
@@ -376,6 +414,7 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 		ClusterVersionCapabilityOpenShiftSamples,
 		ClusterVersionCapabilityCSISnapshot,
 		ClusterVersionCapabilityNodeTuning,
+		ClusterVersionCapabilityMachineAPI,
 	},
 }
 
@@ -638,6 +677,9 @@ type PromQLClusterCondition struct {
 // +openshift:compatibility-gen:level=1
 type ClusterVersionList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata"`
 
 	Items []ClusterVersion `json:"items"`

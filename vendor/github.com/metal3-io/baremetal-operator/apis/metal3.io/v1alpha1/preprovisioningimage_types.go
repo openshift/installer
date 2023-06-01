@@ -65,6 +65,16 @@ type PreprovisioningImageStatus struct {
 	// imageUrl is the URL from which the built image can be downloaded.
 	ImageUrl string `json:"imageUrl,omitempty"`
 
+	// kernelUrl is the URL from which the kernel of the image can be downloaded.
+	// Only makes sense for initrd images.
+	// +optional
+	KernelUrl string `json:"kernelUrl,omitempty"`
+
+	// extraKernelParams is a string with extra parameters to pass to the
+	// kernel when booting the image over network. Only makes sense for initrd images.
+	// +optional
+	ExtraKernelParams string `json:"extraKernelParams,omitempty"`
+
 	// format is the type of image that is available at the download url:
 	// either iso or initrd.
 	// +optional

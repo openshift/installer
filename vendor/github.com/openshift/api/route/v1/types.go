@@ -40,7 +40,10 @@ import (
 // Compatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).
 // +openshift:compatibility-gen:level=1
 type Route struct {
-	metav1.TypeMeta   `json:",inline"`
+	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard object's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// spec is the desired state of the route
@@ -58,6 +61,9 @@ type Route struct {
 // +openshift:compatibility-gen:level=1
 type RouteList struct {
 	metav1.TypeMeta `json:",inline"`
+
+	// metadata is the standard list's metadata.
+	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	metav1.ListMeta `json:"metadata,omitempty" protobuf:"bytes,1,opt,name=metadata"`
 
 	// items is a list of routes
@@ -240,6 +246,8 @@ type RouterShard struct {
 }
 
 // TLSConfig defines config used to secure a route and provide termination
+//
+// +kubebuilder:validation:XValidation:rule="has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true", message="cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow"
 type TLSConfig struct {
 	// termination indicates termination type.
 	//
@@ -270,9 +278,11 @@ type TLSConfig struct {
 	// insecureEdgeTerminationPolicy indicates the desired behavior for insecure connections to a route. While
 	// each router may make its own decisions on which ports to expose, this is normally port 80.
 	//
-	// * Allow - traffic is sent to the server on the insecure port (default)
-	// * Disable - no traffic is allowed on the insecure port.
+	// * Allow - traffic is sent to the server on the insecure port (edge/reencrypt terminations only) (default).
+	// * None - no traffic is allowed on the insecure port.
 	// * Redirect - clients are redirected to the secure port.
+	//
+	// +kubebuilder:validation:Enum=Allow;None;Redirect;""
 	InsecureEdgeTerminationPolicy InsecureEdgeTerminationPolicyType `json:"insecureEdgeTerminationPolicy,omitempty" protobuf:"bytes,6,opt,name=insecureEdgeTerminationPolicy,casttype=InsecureEdgeTerminationPolicyType"`
 }
 
