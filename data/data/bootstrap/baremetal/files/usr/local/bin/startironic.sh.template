@@ -105,10 +105,14 @@ PROVISIONING_IP_OPTIONS="ip=dhcp"
   {{ end }}
 {{ end }}
 
+# Allow some extra time for the provisioning interface to come up
+# https://issues.redhat.com/browse/OCPBUGS-5151
+PROVISIONING_IP_OPTIONS="rd.net.timeout.carrier=30 ${PROVISIONING_IP_OPTIONS}"
+
 
 podman run -d --name coreos-downloader \
      --restart on-failure \
-     --env IP_OPTIONS=${PROVISIONING_IP_OPTIONS} \
+     --env "IP_OPTIONS=${PROVISIONING_IP_OPTIONS}" \
      -v $IRONIC_SHARED_VOLUME:/shared:z \
      ${MACHINE_OS_IMAGES_IMAGE} /bin/copy-metal --all /shared/html/images/
 
@@ -208,7 +212,7 @@ podman run -d --net host --privileged --name ironic \
      --env OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120 \
      --env IRONIC_HTPASSWD=${IRONIC_HTPASSWD} \
      --env INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD} \
-     --env IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS} \
+     --env "IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS}" \
      --entrypoint /bin/runironic \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
@@ -218,7 +222,7 @@ podman run -d --net host --privileged --name ironic-inspector \
      --env PROVISIONING_INTERFACE=$PROVISIONING_NIC \
      --env IRONIC_HTPASSWD=${IRONIC_HTPASSWD} \
      --env INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD} \
-     --env IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS} \
+     --env "IRONIC_KERNEL_PARAMS=${PROVISIONING_IP_OPTIONS}" \
      --entrypoint /bin/runironic-inspector \
      -v $AUTH_DIR:/auth:ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
