@@ -4,12 +4,12 @@ import (
 	"context"
 	"fmt"
 	"net"
-	"net/http"
 	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	compute "google.golang.org/api/compute/v1"
+	"google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -32,6 +32,15 @@ var computeReq = resourceRequirements{
 	minimumVCpus:  2,
 	minimumMemory: 7680,
 }
+
+var (
+	apiRecordType = func(ic *types.InstallConfig) string {
+		return fmt.Sprintf("api.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
+	}
+	apiIntRecordName = func(ic *types.InstallConfig) string {
+		return fmt.Sprintf("api-int.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
+	}
+)
 
 // Validate executes platform-specific validation.
 func Validate(client API, ic *types.InstallConfig) error {
@@ -118,37 +127,82 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 // DNS zone for cluster's Kubernetes API. If a PublicDNSZone is provided, the provided
 // zone is verified against the BaseDomain. If no zone is provided, the base domain is
 // checked for any public zone that can be used.
-func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) error {
+func ValidatePreExistingPublicDNS(client API, ic *types.InstallConfig) *field.Error {
 	// If this is an internal cluster, this check is not necessary
 	if ic.Publish == types.InternalPublishingStrategy {
 		return nil
 	}
 
-	record := fmt.Sprintf("api.%s.", strings.TrimSuffix(ic.ClusterDomain(), "."))
-
-	zone, err := client.GetPublicDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain)
+	zone, err := client.GetDNSZone(context.TODO(), ic.Platform.GCP.ProjectID, ic.BaseDomain, true)
 	if err != nil {
-		var gErr *googleapi.Error
-		if errors.As(err, &gErr) {
-			if gErr.Code == http.StatusNotFound {
-				return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain))
-			}
+		if IsNotFound(err) {
+			return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("Public DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain))
+		}
+		return field.InternalError(field.NewPath("baseDomain"), err)
+	}
+	return checkRecordSets(client, ic, zone, []string{apiRecordType(ic)})
+}
+
+// ValidatePrivateDNSZone ensure no pre-existing DNS record exists in the private dns zone
+// matching the name that will be used for this installation.
+func ValidatePrivateDNSZone(client API, ic *types.InstallConfig) *field.Error {
+	if ic.GCP.Network == "" || ic.GCP.NetworkProjectID == "" {
+		return nil
+	}
+
+	zone, err := client.GetDNSZone(context.TODO(), ic.GCP.ProjectID, ic.ClusterDomain(), false)
+	if err != nil {
+		logrus.Debug("No private DNS Zone found")
+		if IsNotFound(err) {
+			return field.NotFound(field.NewPath("baseDomain"), fmt.Sprintf("Private DNS Zone (%s/%s)", ic.Platform.GCP.ProjectID, ic.BaseDomain))
 		}
 		return field.InternalError(field.NewPath("baseDomain"), err)
 	}
 
+	// Private Zone can be nil, check to see if it was found or not
+	if zone != nil {
+		return checkRecordSets(client, ic, zone, []string{apiRecordType(ic), apiIntRecordName(ic)})
+	}
+	return nil
+}
+
+func checkRecordSets(client API, ic *types.InstallConfig, zone *dns.ManagedZone, records []string) *field.Error {
 	rrSets, err := client.GetRecordSets(context.TODO(), ic.GCP.ProjectID, zone.Name)
 	if err != nil {
 		return field.InternalError(field.NewPath("baseDomain"), err)
 	}
 
+	setOfReturnedRecords := sets.New[string]()
 	for _, r := range rrSets {
-		if strings.EqualFold(r.Name, record) {
-			errMsg := fmt.Sprintf("record %s already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", record, ic.GCP.ProjectID, zone.Name)
-			return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
-		}
+		setOfReturnedRecords.Insert(r.Name)
+	}
+	preexistingRecords := sets.New[string](records...).Intersection(setOfReturnedRecords)
+
+	if preexistingRecords.Len() > 0 {
+		errMsg := fmt.Sprintf("record(s) %q already exists in DNS Zone (%s/%s) and might be in use by another cluster, please remove it to continue", sets.List(preexistingRecords), ic.GCP.ProjectID, zone.Name)
+		return field.Invalid(field.NewPath("metadata", "name"), ic.ObjectMeta.Name, errMsg)
 	}
 	return nil
+}
+
+// ValidateForProvisioning validates that the install config is valid for provisioning the cluster.
+func ValidateForProvisioning(ic *types.InstallConfig) error {
+	allErrs := field.ErrorList{}
+
+	client, err := NewClient(context.TODO())
+	if err != nil {
+		return err
+	}
+
+	if err := ValidatePreExistingPublicDNS(client, ic); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := ValidatePrivateDNSZone(client, ic); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	return allErrs.ToAggregate()
 }
 
 func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path) field.ErrorList {

@@ -2,6 +2,8 @@
 package gcp
 
 import (
+	"fmt"
+
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/gcp"
 )
@@ -9,8 +11,9 @@ import (
 // Metadata converts an install configuration to GCP metadata.
 func Metadata(config *types.InstallConfig) *gcp.Metadata {
 	return &gcp.Metadata{
-		Region:           config.Platform.GCP.Region,
-		ProjectID:        config.Platform.GCP.ProjectID,
-		NetworkProjectID: config.Platform.GCP.NetworkProjectID,
+		Region:            config.Platform.GCP.Region,
+		ProjectID:         config.Platform.GCP.ProjectID,
+		NetworkProjectID:  config.Platform.GCP.NetworkProjectID,
+		PrivateZoneDomain: fmt.Sprintf("%s.", config.ClusterDomain()),
 	}
 }

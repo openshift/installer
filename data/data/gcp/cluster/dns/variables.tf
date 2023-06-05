@@ -3,6 +3,11 @@ variable "public_zone_name" {
   type        = string
 }
 
+variable "private_zone_name" {
+  description = "The name of the private managed DNS zone, if exists"
+  type        = string
+}
+
 variable "network" {
   description = "URL of the VPC network resource for the cluster"
   type        = string
