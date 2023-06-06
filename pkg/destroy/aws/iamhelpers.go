@@ -2,6 +2,7 @@ package aws
 
 import (
 	"context"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -11,11 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
-)
-
-const (
-	// ErrCodeAccessDeniedException represents error code for the AccessDeniedException
-	ErrCodeAccessDeniedException = "AccessDeniedException"
 )
 
 type iamRoleSearch struct {
@@ -46,10 +42,14 @@ func (search *iamRoleSearch) find(ctx context.Context) (arns []string, names []s
 				if err != nil {
 					var awsErr awserr.Error
 					if errors.As(err, &awsErr) {
-						switch awsErr.Code() {
-						case ErrCodeAccessDeniedException, iam.ErrCodeNoSuchEntityException:
-							// Installer does not have access to this IAM role or the
-							// the role does not exist.
+						switch {
+						case awsErr.Code() == iam.ErrCodeNoSuchEntityException:
+							// The IAM role does not exist.
+							// Ignore this IAM Role and donot report this error via
+							// lastError
+							search.unmatched[*role.Arn] = exists
+						case strings.Contains(err.Error(), "AccessDenied"):
+							// Installer does not have access to this IAM role
 							// Ignore this IAM Role and donot report this error via
 							// lastError
 							search.unmatched[*role.Arn] = exists
