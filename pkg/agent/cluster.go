@@ -224,7 +224,7 @@ func (czero *Cluster) IsBootstrapComplete() (bool, bool, error) {
 			(*clusterMetadata.Status == models.ClusterStatusInstallingPendingUserAction) {
 			for _, host := range clusterMetadata.Hosts {
 				if *host.Status == models.ClusterStatusInstallingPendingUserAction {
-					logrus.Debugf("Host %s %s", host.RequestedHostname, *host.StatusInfo)
+					logrus.Warningf("Host %s %s", host.RequestedHostname, *host.StatusInfo)
 				}
 			}
 		}

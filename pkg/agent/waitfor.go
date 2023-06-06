@@ -32,7 +32,6 @@ func WaitForBootstrapComplete(cluster *Cluster) error {
 				lastErrOnExit = err
 				cancel()
 			} else {
-				logrus.Info(err)
 				if err.Error() != lastErrStr {
 					logrus.Info(err)
 					lastErrStr = err.Error()
