@@ -390,6 +390,11 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 		fieldPath := field.NewPath("BootstrapInPlace", "InstallationDisk")
 		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.BootstrapInPlace.InstallationDisk))
 	}
+
+	if installConfig.CPUPartitioning != "None" {
+		fieldPath := field.NewPath("CPUPartitioning")
+		logrus.Warnf(fmt.Sprintf("%s: %s is ignored", fieldPath, installConfig.CPUPartitioning))
+	}
 }
 
 // GetReplicaCount gets the configured master and worker replicas.
