@@ -93,8 +93,7 @@ func TestIgnitionBase_Generate(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
-			deps := buildIgnitionBaseAssetDefaultDependencies()
+			deps := buildIgnitionBaseAssetDefaultDependencies(t)
 
 			overrideDeps(deps, tc.overrideDeps)
 
@@ -134,8 +133,7 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
-			depsBase := buildIgnitionBaseAssetDefaultDependencies()
+			depsBase := buildIgnitionBaseAssetDefaultDependencies(t)
 
 			parentsBase := asset.Parents{}
 			parentsBase.Add(depsBase...)
@@ -146,7 +144,7 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 			assert.NoError(t, errBase)
 			assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
 
-			deps := buildIgnitionAssetDefaultDependencies()
+			deps := buildIgnitionAssetDefaultDependencies(t)
 			parents := asset.Parents{}
 			parents.Add(append(deps, ignitionBaseAsset)...)
 
@@ -167,9 +165,11 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 }
 
 // This test util create the minimum valid set of dependencies for the
-// IgnitionBase asset
-func buildIgnitionBaseAssetDefaultDependencies() []asset.Asset {
-	secretDataBytes, _ := base64.StdEncoding.DecodeString("super-secret")
+// IgnitionBase asset.
+func buildIgnitionBaseAssetDefaultDependencies(t *testing.T) []asset.Asset {
+	t.Helper()
+	secretDataBytes, err := base64.StdEncoding.DecodeString("super-secret")
+	assert.NoError(t, err)
 
 	return []asset.Asset{
 		&manifests.InfraEnv{

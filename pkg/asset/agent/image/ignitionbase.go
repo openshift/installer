@@ -212,15 +212,15 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 
 // CopyIgnitionConfig returns a copy of the Ignition config
 // The copy is made by marshaling and unmarshaling the ignition yaml.
-func (a *IgnitionBase) CopyIgnitionConfig() (copy igntypes.Config, error error) {
+func (a *IgnitionBase) CopyIgnitionConfig() (igntypes.Config, error) {
 	copyData := &igntypes.Config{}
 	data, err := yaml.Marshal(a.Config)
 	if err != nil {
-		return copy, errors.Wrap(err, "copy failed, failed to Marshal IgnitionBase config")
+		return *copyData, errors.Wrap(err, "copy failed, failed to Marshal IgnitionBase config")
 	}
 
 	if err := yaml.UnmarshalStrict(data, copyData); err != nil {
-		return copy, errors.Wrap(err, "copy failed, failed to Unmarshal IgnitionBase config")
+		return *copyData, errors.Wrap(err, "copy failed, failed to Unmarshal IgnitionBase config")
 	}
 
 	return *copyData, nil

@@ -173,7 +173,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		"root", 0644,
 		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
-	
+
 	// add ZTP manifests to manifestPath
 	for _, file := range agentManifests.FileList {
 		manifestFile := ignition.FileFromBytes(filepath.Join(manifestPath, filepath.Base(file.Filename)),
@@ -198,7 +198,10 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addTLSData(&config, dependencies)
 
-	addHostConfig(&config, agentConfigAsset)
+	err = addHostConfig(&config, agentConfigAsset)
+	if err != nil {
+		return err
+	}
 
 	err = addExtraManifests(&config, extraManifests)
 	if err != nil {
@@ -296,7 +299,6 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 	dependencies.Get(pwd)
 	config.Storage.Files = bootstrap.ReplaceOrAppend(config.Storage.Files,
 		ignition.FileFromBytes("/opt/agent/tls/kubeadmin-password.hash", "root", 0600, pwd.PasswordHash))
-
 }
 
 func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) {
