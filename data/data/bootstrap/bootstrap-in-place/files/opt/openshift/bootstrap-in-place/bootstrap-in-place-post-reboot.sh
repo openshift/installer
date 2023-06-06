@@ -24,20 +24,35 @@ function signal_bootstrap_complete {
   done
 }
 
+function release_lease {
+  local ns="$1"
+  local lease="$2"
+
+  until [ "$(oc get leases -n "${ns}" "${lease}" | grep -c "${lease}")" -eq 0 ];
+  do
+    echo "Deleting ${ns} ${lease} lease"
+    oc delete leases -n "${ns}" "${lease}" || sleep 5
+  done
+  until [ "$(oc get cm -n "${ns}" "${lease}" | grep -c "${lease}")" -eq 0 ];
+  do
+    echo "Deleting ${ns} ${lease} cm"
+    oc delete cm -n "${ns}" "${lease}" || sleep 5
+  done
+}
+
 function release_cvo_lease {
   if [ ! -f /opt/openshift/release_cvo_lease.done ]
   then
-    until [ "$(oc get leases -n openshift-cluster-version version | grep -c "version")" -eq 0 ];
-    do
-      echo "Deleting openshift-cluster-version version lease"
-      oc delete leases -n openshift-cluster-version version || sleep 5
-    done
-    until [ "$(oc get cm -n openshift-cluster-version version | grep -c "version")" -eq 0 ];
-    do
-      echo "Deleting openshift-cluster-version version cm"
-      oc delete cm -n openshift-cluster-version version || sleep 5
-    done
-    touch /opt/openshift/expedite_bootstrapping.done
+    release_lease openshift-cluster-version version
+    touch /opt/openshift/release_cvo_lease.done
+  fi
+}
+
+function release_cpc_lease {
+  if [ ! -f /opt/openshift/release_cpc_lease.done ]
+  then
+    release_lease kube-system cluster-policy-controller-lock
+    touch /opt/openshift/release_cpc_lease.done
   fi
 }
 
@@ -116,6 +131,7 @@ function clean {
 wait_for_api
 signal_bootstrap_complete
 release_cvo_lease
+release_cpc_lease
 restore_cvo_overrides
 approve_csr
 restart_kubelet
