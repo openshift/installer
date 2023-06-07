@@ -16,7 +16,9 @@ import (
 )
 
 func TestIgnitionBase_Generate(t *testing.T) {
-	setupIgnitionGenerateTest(t)
+	skipTestIfnmstatectlIsMissing(t)
+
+	nmStateConfig := getTestNMStateConfig()
 
 	cases := []struct {
 		name                                  string
@@ -59,32 +61,7 @@ func TestIgnitionBase_Generate(t *testing.T) {
 		{
 			name: "with-nmstateconfigs",
 			overrideDeps: []asset.Asset{
-				&manifests.NMStateConfig{
-					Config: []*aiv1beta1.NMStateConfig{
-						{
-							Spec: aiv1beta1.NMStateConfigSpec{
-								Interfaces: []*aiv1beta1.Interface{
-									{
-										Name:       "eth0",
-										MacAddress: "00:01:02:03:04:05",
-									},
-								},
-							},
-						},
-					},
-					StaticNetworkConfig: []*models.HostStaticNetworkConfig{
-						{
-							MacInterfaceMap: models.MacInterfaceMap{
-								{LogicalNicName: "eth0", MacAddress: "00:01:02:03:04:05"},
-							},
-							NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: 192.168.122.21\n      prefix-length: 24\n    enabled: true\n  mac-address: 00:01:02:03:04:05\n  name: eth0\n  state: up\n  type: ethernet\n",
-						},
-					},
-					File: &asset.File{
-						Filename: "nmstateconfig.yaml",
-						Data:     []byte("nmstateconfig"),
-					},
-				},
+				&nmStateConfig,
 			},
 			expectedFiles: generatedFilesIgnitionBase("/etc/assisted/network/host0/eth0.nmconnection",
 				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
@@ -117,7 +94,7 @@ func TestIgnitionBase_Generate(t *testing.T) {
 }
 
 func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
-	setupIgnitionGenerateTest(t)
+	skipTestIfnmstatectlIsMissing(t)
 
 	cases := []struct {
 		name                      string
@@ -126,14 +103,19 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 		expectedFileContent       map[string]string
 	}{
 		{
-			name:                      "Ignition.Generate should not change IgnitionBase content",
-			expectedIgnitionBaseFiles: generatedFilesIgnitionBase(),
-			expectedIgnitionFiles:     generatedFiles(),
+			name: "Ignition.Generate should not change IgnitionBase content",
+			expectedIgnitionBaseFiles: generatedFilesIgnitionBase("/etc/assisted/network/host0/eth0.nmconnection",
+				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
+			expectedIgnitionFiles: generatedFiles(),
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			depsBase := buildIgnitionBaseAssetDefaultDependencies(t)
+			assert.NotEqual(t, tc.expectedIgnitionBaseFiles, tc.expectedIgnitionFiles)
+
+			// The default Ignition contains NMStateConfigs so here we build
+			// the IgnitionBaseAsset to also include NMStateConfigs
+			depsBase := buildIgnitionBaseAssetDependenciesWithNMStateConfig(t)
 
 			parentsBase := asset.Parents{}
 			parentsBase.Add(depsBase...)
@@ -168,46 +150,110 @@ func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
 // IgnitionBase asset.
 func buildIgnitionBaseAssetDefaultDependencies(t *testing.T) []asset.Asset {
 	t.Helper()
-	secretDataBytes, err := base64.StdEncoding.DecodeString("super-secret")
-	assert.NoError(t, err)
+
+	infraEnv := getTestInfraEnv()
+	agentPullSecret := getTestAgentPullSecret(t)
+	clusterImageSet := getTestClusterImageSet()
 
 	return []asset.Asset{
-		&manifests.InfraEnv{
-			Config: &aiv1beta1.InfraEnv{
-				Spec: aiv1beta1.InfraEnvSpec{
-					SSHAuthorizedKey: "my-ssh-key",
-				},
-			},
-			File: &asset.File{
-				Filename: "infraenv.yaml",
-				Data:     []byte("infraenv"),
-			},
-		},
-		&manifests.AgentPullSecret{
-			Config: &v1.Secret{
-				Data: map[string][]byte{
-					".dockerconfigjson": secretDataBytes,
-				},
-			},
-			File: &asset.File{
-				Filename: "pull-secret.yaml",
-				Data:     []byte("pull-secret"),
-			},
-		},
-		&manifests.ClusterImageSet{
-			Config: &hivev1.ClusterImageSet{
-				Spec: hivev1.ClusterImageSetSpec{
-					ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
-				},
-			},
-			File: &asset.File{
-				Filename: "cluster-image-set.yaml",
-				Data:     []byte("cluster-image-set"),
-			},
-		},
+		&infraEnv,
+		&agentPullSecret,
+		&clusterImageSet,
 		&manifests.NMStateConfig{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
+	}
+}
+
+func buildIgnitionBaseAssetDependenciesWithNMStateConfig(t *testing.T) []asset.Asset {
+	t.Helper()
+
+	infraEnv := getTestInfraEnv()
+	agentPullSecret := getTestAgentPullSecret(t)
+	clusterImageSet := getTestClusterImageSet()
+	nmStateConfig := getTestNMStateConfig()
+
+	return []asset.Asset{
+		&infraEnv,
+		&agentPullSecret,
+		&clusterImageSet,
+		&nmStateConfig,
+		&mirror.RegistriesConf{},
+		&mirror.CaBundle{},
+	}
+}
+
+func getTestInfraEnv() manifests.InfraEnv {
+	return manifests.InfraEnv{
+		Config: &aiv1beta1.InfraEnv{
+			Spec: aiv1beta1.InfraEnvSpec{
+				SSHAuthorizedKey: "my-ssh-key",
+			},
+		},
+		File: &asset.File{
+			Filename: "infraenv.yaml",
+			Data:     []byte("infraenv"),
+		},
+	}
+}
+
+func getTestAgentPullSecret(t *testing.T) manifests.AgentPullSecret {
+	t.Helper()
+	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
+	assert.NoError(t, err)
+	return manifests.AgentPullSecret{
+		Config: &v1.Secret{
+			Data: map[string][]byte{
+				".dockerconfigjson": secretDataBytes,
+			},
+		},
+		File: &asset.File{
+			Filename: "pull-secret.yaml",
+			Data:     []byte("pull-secret"),
+		},
+	}
+}
+
+func getTestClusterImageSet() manifests.ClusterImageSet {
+	return manifests.ClusterImageSet{
+		Config: &hivev1.ClusterImageSet{
+			Spec: hivev1.ClusterImageSetSpec{
+				ReleaseImage: "registry.ci.openshift.org/origin/release:4.11",
+			},
+		},
+		File: &asset.File{
+			Filename: "cluster-image-set.yaml",
+			Data:     []byte("cluster-image-set"),
+		},
+	}
+}
+
+func getTestNMStateConfig() manifests.NMStateConfig {
+	return manifests.NMStateConfig{
+		Config: []*aiv1beta1.NMStateConfig{
+			{
+				Spec: aiv1beta1.NMStateConfigSpec{
+					Interfaces: []*aiv1beta1.Interface{
+						{
+							Name:       "eth0",
+							MacAddress: "00:01:02:03:04:05",
+						},
+					},
+				},
+			},
+		},
+		StaticNetworkConfig: []*models.HostStaticNetworkConfig{
+			{
+				MacInterfaceMap: models.MacInterfaceMap{
+					{LogicalNicName: "eth0", MacAddress: "00:01:02:03:04:05"},
+				},
+				NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: 192.168.122.21\n      prefix-length: 24\n    enabled: true\n  mac-address: 00:01:02:03:04:05\n  name: eth0\n  state: up\n  type: ethernet\n",
+			},
+		},
+		File: &asset.File{
+			Filename: "nmstateconfig.yaml",
+			Data:     []byte("nmstateconfig"),
+		},
 	}
 }
 
@@ -218,7 +264,6 @@ func generatedFilesIgnitionBase(otherFiles ...string) []string {
 		"/etc/containers/containers.conf",
 		"/root/.docker/config.json",
 		"/root/assisted.te",
-		"/usr/local/bin/common.sh",
 		"/usr/local/bin/agent-gather",
 		"/usr/local/bin/extract-agent.sh",
 		"/usr/local/bin/get-container-images.sh",

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
@@ -156,7 +157,7 @@ func TestIgnition_addStaticNetworkConfig(t *testing.T) {
 					NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: bad-ip\n      prefix-length: 24\n    enabled: true\n  mac-address: 52:54:01:aa:aa:a1\n  name: eth0\n  state: up\n  type: ethernet\n",
 				},
 			},
-			expectedError:    "invalid IP address syntax",
+			expectedError:    "failed to create StaticNetwork config data: failed to create static config for host 0: failed to execute 'nmstatectl gc', error: invalid IP address syntax",
 			expectedFileList: nil,
 		},
 	}
@@ -350,9 +351,20 @@ func generatedFiles(otherFiles ...string) []string {
 }
 
 func TestIgnition_Generate(t *testing.T) {
-	setupIgnitionGenerateTest(t)
-	secretDataBytes, err := base64.StdEncoding.DecodeString("super-secret")
+	skipTestIfnmstatectlIsMissing(t)
+
+	// This patch currently allows testing the Ignition asset using the embedded resources.
+	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
+	workingDirectory, err := os.Getwd()
 	assert.NoError(t, err)
+	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
+	assert.NoError(t, err)
+
+	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
+	assert.NoError(t, err)
+
+	passwordHash := "test-hash"
+	cpuArch := "x86_64"
 
 	cases := []struct {
 		name                                  string
@@ -365,8 +377,7 @@ func TestIgnition_Generate(t *testing.T) {
 		{
 			name:                                  "no-extra-manifests",
 			preNetworkManagerConfigServiceEnabled: true,
-
-			expectedFiles: generatedFiles(),
+			expectedFiles:                         generatedFiles(),
 		},
 		{
 			name: "default",
@@ -440,13 +451,26 @@ metadata:
 						},
 					},
 				},
+				&IgnitionBase{
+					Config: &igntypes.Config{
+						Passwd: igntypes.Passwd{
+							Users: []igntypes.PasswdUser{
+								{
+									PasswordHash: &passwordHash,
+								},
+							},
+						},
+					},
+					osImage: models.OsImage{
+						CPUArchitecture: &cpuArch,
+					},
+				},
 			},
 			preNetworkManagerConfigServiceEnabled: false,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-
 			deps := buildIgnitionAssetDefaultDependencies(t)
 
 			overrideDeps(deps, tc.overrideDeps)
@@ -473,20 +497,13 @@ metadata:
 	}
 }
 
-func setupIgnitionGenerateTest(t *testing.T) {
+func skipTestIfnmstatectlIsMissing(t *testing.T) {
 	t.Helper()
 	// Generate calls addStaticNetworkConfig which calls nmstatectl
 	_, execErr := exec.LookPath("nmstatectl")
 	if execErr != nil {
 		t.Skip("No nmstatectl binary available")
 	}
-
-	// This patch currently allows testing the Ignition asset using the embedded resources.
-	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, err := os.Getwd()
-	assert.NoError(t, err)
-	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	assert.NoError(t, err)
 }
 
 func overrideDeps(deps []asset.Asset, overrides []asset.Asset) {
@@ -541,10 +558,13 @@ func assertExpectedFiles(t *testing.T, config *igntypes.Config, expectedFiles []
 // Ignition asset
 func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 	t.Helper()
-	secretDataBytes, err := base64.StdEncoding.DecodeString("super-secret")
+	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
 	assert.NoError(t, err)
 
-	return []asset.Asset{
+	passwordHash := "test-hash"
+	cpuArch := "x86_64"
+
+	deps := []asset.Asset{
 		&manifests.AgentManifests{
 			InfraEnv: &aiv1beta1.InfraEnv{
 				Spec: aiv1beta1.InfraEnvSpec{
@@ -614,7 +634,43 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
+		&IgnitionBase{
+			Config: &igntypes.Config{
+				Passwd: igntypes.Passwd{
+					Users: []igntypes.PasswdUser{
+						{
+							PasswordHash: &passwordHash,
+						},
+					},
+				},
+				Storage: igntypes.Storage{
+					Files: []igntypes.File{
+						{Node: igntypes.Node{Path: "/usr/local/bin/bootstrap-service-record.sh"}},
+						{Node: igntypes.Node{Path: "/usr/local/bin/release-image.sh"}},
+						{Node: igntypes.Node{Path: "/usr/local/bin/release-image-download.sh"}},
+						{Node: igntypes.Node{Path: "/etc/assisted/manifests/pull-secret.yaml"}},
+						{Node: igntypes.Node{Path: "/etc/assisted/manifests/cluster-image-set.yaml"}},
+						{Node: igntypes.Node{Path: "/etc/assisted/manifests/infraenv.yaml"}},
+						{Node: igntypes.Node{Path: "/etc/assisted/network/host0/eth0.nmconnection"}},
+						{Node: igntypes.Node{Path: "/etc/assisted/network/host0/mac_interface.ini"}},
+						{Node: igntypes.Node{Path: "/usr/local/bin/pre-network-manager-config.sh"}},
+					},
+				},
+				Systemd: igntypes.Systemd{
+					Units: []igntypes.Unit{
+						{
+							Name:    "pre-network-manager-config.service",
+							Enabled: ignutil.BoolToPtr(true),
+						},
+					},
+				},
+			},
+			osImage: models.OsImage{
+				CPUArchitecture: &cpuArch,
+			},
+		},
 	}
+	return deps
 }
 
 func TestIgnition_getMirrorFromRelease(t *testing.T) {

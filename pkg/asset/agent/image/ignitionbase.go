@@ -97,7 +97,6 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 					SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{
 						igntypes.SSHAuthorizedKey(infraEnv.Spec.SSHAuthorizedKey),
 					},
-					// PasswordHash: &pwdHash,
 				},
 			},
 		},
@@ -172,23 +171,22 @@ func (a *IgnitionBase) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
-	if err != nil {
-		return err
-	}
+	if len(nmStateConfigs.StaticNetworkConfig) > 0 {
+		err = addStaticNetworkConfig(&config, nmStateConfigs.StaticNetworkConfig)
+		if err != nil {
+			return err
+		}
 
-	// Enable pre-network-manager-config.service only when there are network configs defined
-	if len(nmStateConfigs.StaticNetworkConfig) != 0 {
 		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
 	}
 
-	filesToInclude := [...]asset.File{
+	ztpManifestsToInclude := [...]asset.File{
 		*infraEnvAsset.File,
 		*clusterImageSetAsset.File,
 		*pullSecretAsset.File,
 	}
 
-	for _, file := range filesToInclude {
+	for _, file := range ztpManifestsToInclude {
 		manifestFile := ignition.FileFromBytes(filepath.Join(manifestPath, filepath.Base(file.Filename)),
 			"root", 0600, file.Data)
 		config.Storage.Files = append(config.Storage.Files, manifestFile)

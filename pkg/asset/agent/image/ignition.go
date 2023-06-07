@@ -124,7 +124,6 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 	pwdHash := string(pwd.PasswordHash)
 
 	infraEnv := agentManifests.InfraEnv
-
 	config, err := ignitionBaseAsset.CopyIgnitionConfig()
 	if err != nil {
 		return err
@@ -190,8 +189,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	addMacAddressToHostnameMappings(&config, agentConfigAsset)
 
-	agentEnabledServices = append(agentEnabledServices, "set-hostname.service", "start-cluster-installation.service")
-	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
+	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, getEnabledServices(config))
 	if err != nil {
 		return err
 	}
@@ -210,6 +208,21 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 
 	a.Config = &config
 	return nil
+}
+
+func getEnabledServices(config igntypes.Config) []string {
+	var enabledServices []string
+	// find services already enabled from IgnitionBase
+	// primarily pre-network-manager-config.service
+	for _, unit := range config.Systemd.Units {
+		if unit.Enabled != nil && *unit.Enabled {
+			enabledServices = append(enabledServices, unit.Name)
+		}
+	}
+	// add back services disabled in IgnitionBase
+	enabledServices = append(enabledServices, "set-hostname.service", "start-cluster-installation.service")
+	enabledServices = append(enabledServices, agentEnabledServices...)
+	return enabledServices
 }
 
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
