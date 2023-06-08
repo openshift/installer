@@ -8,11 +8,11 @@ exec openshift-install agent create unconfigured-ignition --dir $WORK
 exists $WORK/unconfigured-agent.ign
 ! exists $WORK/auth/kubeconfig
 ! exists $WORK/auth/kubeadmin-password
-! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/agent-cluster-install.yaml
-! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/cluster-deployment.yaml
-igncmp unconfigured-agent.ign /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
-igncmp unconfigured-agent.ign /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
-igncmp unconfigured-agent.ign /etc/assisted/manifests/pull-secret.yaml expected/pull-secret.yaml
+! unconfiguredIgnContains /etc/assisted/manifests/agent-cluster-install.yaml
+! unconfiguredIgnContains /etc/assisted/manifests/cluster-deployment.yaml
+unconfiguredIgnCmp /etc/assisted/manifests/cluster-image-set.yaml expected/cluster-image-set.yaml
+unconfiguredIgnCmp /etc/assisted/manifests/infraenv.yaml expected/infraenv.yaml
+unconfiguredIgnCmp /etc/assisted/manifests/pull-secret.yaml expected/pull-secret.yaml
 
 -- cluster-manifests/infraenv.yaml --
 metadata:

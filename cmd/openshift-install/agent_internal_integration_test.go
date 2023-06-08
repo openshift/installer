@@ -105,12 +105,12 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 		},
 
 		Cmds: map[string]func(*testscript.TestScript, bool, []string){
-			"isocmp":              isoCmp,
-			"ignitionImgContains": ignitionImgContains,
-			"configImgContains":   configImgContains,
-			"initrdImgContains":   initrdImgContains,
-			"igncmp":              ignCmp,
-			"ignitionContains":    ignitionContains,
+			"isocmp":                  isoCmp,
+			"ignitionImgContains":     ignitionImgContains,
+			"configImgContains":       configImgContains,
+			"initrdImgContains":       initrdImgContains,
+			"unconfiguredIgnContains": unconfiguredIgnContains,
+			"unconfiguredIgnCmp":      unconfiguredIgnCmp,
 		},
 	})
 }
@@ -158,10 +158,20 @@ func archiveFileNames(isoPath string) (string, string, error) {
 }
 
 // [!] ignitionContains `isoPath` `file` check if the specified file `file`
+// [!] unconfiguredIgnContains `file` check if the specified file `file`
+// is stored within the unconfigured ignition Storage Files.
+func unconfiguredIgnContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 1 {
+		ts.Fatalf("usage: unconfiguredIgnContains file")
+	}
+	ignitionStorageContains(ts, neg, []string{"unconfigured-agent.ign", args[0]})
+}
+
+// [!] ignitionStorageContains `ignPath` `file` check if the specified file `file`
 // is stored within the ignition Storage Files.
-func ignitionContains(ts *testscript.TestScript, neg bool, args []string) {
+func ignitionStorageContains(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 2 {
-		ts.Fatalf("usage: ignitionContains ignPath file")
+		ts.Fatalf("usage: ignitionStorageContains ignPath file")
 	}
 
 	workDir := ts.Getenv("WORK")
@@ -214,12 +224,23 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
 }
 
-// [!] ignCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
+// [!] unconfiguredIgnCmp `fileInIgn` `expectedFile` check that the content
+// of the file `fileInIgn` extracted from the unconfigured ignition
+// configuration file matches the content of the local file `expectedFile`.
+func unconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: iunconfiguredIgnCmp file1 file2")
+	}
+	argsNext := []string{"unconfigured-agent.ign", args[0], args[1]}
+	ignitionStorageCmp(ts, neg, argsNext)
+}
+
+// [!] ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
 // `ignFile` - extracted from the ignition configuration file referenced
 // by `ignPath` - matches the content of the local file `expectedFile`.
-func ignCmp(ts *testscript.TestScript, neg bool, args []string) {
+func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
 	if len(args) != 3 {
-		ts.Fatalf("usage: igncmp ignPath file1 file2")
+		ts.Fatalf("usage: ignitionStorageCmp ignPath file1 file2")
 	}
 
 	workDir := ts.Getenv("WORK")

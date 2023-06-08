@@ -7,8 +7,8 @@ exec openshift-install agent create unconfigured-ignition --dir $WORK
 exists $WORK/unconfigured-agent.ign
 ! exists $WORK/auth/kubeconfig
 ! exists $WORK/auth/kubeadmin-password
-! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/agent-cluster-install.yaml
-! ignitionContains unconfigured-agent.ign /etc/assisted/manifests/cluster-deployment.yaml
+! unconfiguredIgnContains /etc/assisted/manifests/agent-cluster-install.yaml
+! unconfiguredIgnContains /etc/assisted/manifests/cluster-deployment.yaml
 
 -- install-config.yaml --
 apiVersion: v1
