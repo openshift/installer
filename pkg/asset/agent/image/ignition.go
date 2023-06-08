@@ -220,7 +220,6 @@ func getEnabledServices(config igntypes.Config) []string {
 		}
 	}
 	// add back services disabled in IgnitionBase
-	enabledServices = append(enabledServices, "set-hostname.service", "start-cluster-installation.service")
 	enabledServices = append(enabledServices, agentEnabledServices...)
 	return enabledServices
 }
