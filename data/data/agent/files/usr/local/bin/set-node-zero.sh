@@ -2,8 +2,23 @@
 
 set -e
 
-# shellcheck disable=SC1091
-source /etc/assisted/rendezvous-host.env
+status_name=60-rendezvous-host
+set_rendezvous_message() {
+    mkdir -p /etc/motd.d/
+    tee "/etc/issue.d/${status_name}.issue" | sed -e 's/\\e[{][^}]*[}]//g' | tee "/etc/motd.d/${status_name}" 1>&2
+    agetty --reload
+}
+
+rendezvous_host_env="/etc/assisted/rendezvous-host.env"
+while [ ! -f "${rendezvous_host_env}" ]; do
+    printf '\\e{lightred}Not configured - no Rendezvous IP set\\e{reset}\n' | set_rendezvous_message
+    sleep 30
+done
+rm -f "/etc/issue.d/${status_name}.issue" "/etc/motd.d/${status_name}"
+agetty --reload
+
+# shellcheck disable=SC1090
+source "${rendezvous_host_env}"
 echo "NODE_ZERO_IP: $NODE_ZERO_IP"
 
 is_node_zero() {
@@ -60,7 +75,7 @@ EOF
 
     echo "Created file ${NODE0_PATH}"
 
-    rendezvousHostMessage="This host ${NODE_ZERO_IP} is the rendezvous host."
+    printf 'This host (%s) is the rendezvous host.\n' "${NODE_ZERO_IP}" | set_rendezvous_message
 
     cat <<EOF >/etc/motd
 The primary service is assisted-service.service. To watch its status, run:
@@ -69,9 +84,5 @@ The primary service is assisted-service.service. To watch its status, run:
 EOF
 else
 
-    rendezvousHostMessage="This host is not the rendezvous host. The rendezvous host is at ${NODE_ZERO_IP}."
+    printf 'This host is not the rendezvous host. The rendezvous host is at %s.\n' "${NODE_ZERO_IP}" | set_rendezvous_message
 fi
-mkdir -p /etc/motd.d/
-echo "$rendezvousHostMessage" > /etc/motd.d/60-rendezvous-host
-echo "$rendezvousHostMessage" > /etc/issue.d/60-rendezvous-host.issue
-agetty --reload
