@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	ignutil "github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"
@@ -73,7 +72,7 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	ov := "4.12"
 	isoURL := "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.12/412.86.202208101039-0/x86_64/rhcos-412.86.202208101039-0-live.x86_64.iso"
 	ver := "412.86.202208101039-0"
-	osImage := models.OsImage{
+	osImage := &models.OsImage{
 		CPUArchitecture:  &arch,
 		OpenshiftVersion: &ov,
 		URL:              &isoURL,
@@ -336,18 +335,50 @@ func TestAddHostConfig_Roles(t *testing.T) {
 }
 
 func generatedFiles(otherFiles ...string) []string {
-	files := append(generatedFilesIgnitionBase(),
+	files := []string{
 		"/etc/assisted/rendezvous-host.env",
 		"/etc/assisted/manifests/agent-config.yaml",
-		// TODO: cluster-deployment.yaml and agent-cluster-install.yaml should also
-		// be present. Bug?
+		// TODO: ZTP manifest files should also be present. Bug?
 		// "/etc/assisted/manifests/cluster-deployment.yaml",
 		// "/etc/assisted/manifests/agent-cluster-install.yaml",
+		// "/etc/assisted/manifests/pull-secret.yaml",
+		// "/etc/assisted/manifests/cluster-image-set.yaml",
+		// "/etc/assisted/manifests/infraenv.yaml",
 		"/etc/assisted/network/host0/eth0.nmconnection",
 		"/etc/assisted/network/host0/mac_interface.ini",
 		"/usr/local/bin/pre-network-manager-config.sh",
-		"/opt/agent/tls/kubeadmin-password.hash")
-	return append(files, otherFiles...)
+		"/opt/agent/tls/kubeadmin-password.hash"}
+	files = append(files, otherFiles...)
+	return append(files, commonFiles()...)
+}
+
+func commonFiles() []string {
+	return []string{
+		"/etc/issue",
+		"/etc/multipath.conf",
+		"/etc/containers/containers.conf",
+		"/root/.docker/config.json",
+		"/root/assisted.te",
+		"/usr/local/bin/agent-gather",
+		"/usr/local/bin/extract-agent.sh",
+		"/usr/local/bin/get-container-images.sh",
+		"/usr/local/bin/set-hostname.sh",
+		"/usr/local/bin/start-agent.sh",
+		"/usr/local/bin/start-cluster-installation.sh",
+		"/usr/local/bin/wait-for-assisted-service.sh",
+		"/usr/local/bin/set-node-zero.sh",
+		"/usr/local/share/assisted-service/assisted-db.env",
+		"/usr/local/share/assisted-service/assisted-service.env",
+		"/usr/local/share/assisted-service/images.env",
+		"/usr/local/bin/bootstrap-service-record.sh",
+		"/usr/local/bin/release-image.sh",
+		"/usr/local/bin/release-image-download.sh",
+		"/etc/assisted/agent-installer.env",
+		"/etc/motd.d/10-agent-installer",
+		"/etc/systemd/system.conf.d/10-default-env.conf",
+		"/usr/local/bin/install-status.sh",
+		"/usr/local/bin/issue_status.sh",
+	}
 }
 
 func TestIgnition_Generate(t *testing.T) {
@@ -363,9 +394,6 @@ func TestIgnition_Generate(t *testing.T) {
 	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
 	assert.NoError(t, err)
 
-	passwordHash := "test-hash"
-	cpuArch := "x86_64"
-
 	cases := []struct {
 		name                                  string
 		overrideDeps                          []asset.Asset
@@ -377,7 +405,8 @@ func TestIgnition_Generate(t *testing.T) {
 		{
 			name:                                  "no-extra-manifests",
 			preNetworkManagerConfigServiceEnabled: true,
-			expectedFiles:                         generatedFiles(),
+
+			expectedFiles: generatedFiles(),
 		},
 		{
 			name: "default",
@@ -449,20 +478,6 @@ metadata:
 								WorkerAgents:       5,
 							},
 						},
-					},
-				},
-				&IgnitionBase{
-					Config: &igntypes.Config{
-						Passwd: igntypes.Passwd{
-							Users: []igntypes.PasswdUser{
-								{
-									PasswordHash: &passwordHash,
-								},
-							},
-						},
-					},
-					osImage: models.OsImage{
-						CPUArchitecture: &cpuArch,
 					},
 				},
 			},
@@ -561,10 +576,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
 	assert.NoError(t, err)
 
-	passwordHash := "test-hash"
-	cpuArch := "x86_64"
-
-	deps := []asset.Asset{
+	return []asset.Asset{
 		&manifests.AgentManifests{
 			InfraEnv: &aiv1beta1.InfraEnv{
 				Spec: aiv1beta1.InfraEnvSpec{
@@ -634,43 +646,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
 		&tls.AdminKubeConfigSignerCertKey{},
 		&tls.AdminKubeConfigClientCertKey{},
-		&IgnitionBase{
-			Config: &igntypes.Config{
-				Passwd: igntypes.Passwd{
-					Users: []igntypes.PasswdUser{
-						{
-							PasswordHash: &passwordHash,
-						},
-					},
-				},
-				Storage: igntypes.Storage{
-					Files: []igntypes.File{
-						{Node: igntypes.Node{Path: "/usr/local/bin/bootstrap-service-record.sh"}},
-						{Node: igntypes.Node{Path: "/usr/local/bin/release-image.sh"}},
-						{Node: igntypes.Node{Path: "/usr/local/bin/release-image-download.sh"}},
-						{Node: igntypes.Node{Path: "/etc/assisted/manifests/pull-secret.yaml"}},
-						{Node: igntypes.Node{Path: "/etc/assisted/manifests/cluster-image-set.yaml"}},
-						{Node: igntypes.Node{Path: "/etc/assisted/manifests/infraenv.yaml"}},
-						{Node: igntypes.Node{Path: "/etc/assisted/network/host0/eth0.nmconnection"}},
-						{Node: igntypes.Node{Path: "/etc/assisted/network/host0/mac_interface.ini"}},
-						{Node: igntypes.Node{Path: "/usr/local/bin/pre-network-manager-config.sh"}},
-					},
-				},
-				Systemd: igntypes.Systemd{
-					Units: []igntypes.Unit{
-						{
-							Name:    "pre-network-manager-config.service",
-							Enabled: ignutil.BoolToPtr(true),
-						},
-					},
-				},
-			},
-			osImage: models.OsImage{
-				CPUArchitecture: &cpuArch,
-			},
-		},
 	}
-	return deps
 }
 
 func TestIgnition_getMirrorFromRelease(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
 )
 
-func TestIgnitionBase_Generate(t *testing.T) {
+func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	skipTestIfnmstatectlIsMissing(t)
 
 	nmStateConfig := getTestNMStateConfig()
@@ -29,7 +29,7 @@ func TestIgnitionBase_Generate(t *testing.T) {
 	}{
 		{
 			name:                                  "default-configs-and-no-nmstateconfigs",
-			expectedFiles:                         generatedFilesIgnitionBase(),
+			expectedFiles:                         generatedFilesUnconfiguredIgnition(),
 			preNetworkManagerConfigServiceEnabled: false,
 		},
 		{
@@ -54,7 +54,7 @@ func TestIgnitionBase_Generate(t *testing.T) {
 					},
 				},
 			},
-			expectedFiles: generatedFilesIgnitionBase(registriesConfPath,
+			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
 				registryCABundlePath),
 			preNetworkManagerConfigServiceEnabled: false,
 		},
@@ -63,92 +63,39 @@ func TestIgnitionBase_Generate(t *testing.T) {
 			overrideDeps: []asset.Asset{
 				&nmStateConfig,
 			},
-			expectedFiles: generatedFilesIgnitionBase("/etc/assisted/network/host0/eth0.nmconnection",
+			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
 				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
 			preNetworkManagerConfigServiceEnabled: true,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			deps := buildIgnitionBaseAssetDefaultDependencies(t)
+			deps := buildUnconfiguredIgnitionAssetDefaultDependencies(t)
 
 			overrideDeps(deps, tc.overrideDeps)
 
 			parents := asset.Parents{}
 			parents.Add(deps...)
 
-			ignitionBaseAsset := &IgnitionBase{}
-			err := ignitionBaseAsset.Generate(parents)
+			unconfiguredIgnitionAsset := &UnconfiguredIgnition{}
+			err := unconfiguredIgnitionAsset.Generate(parents)
 
 			if tc.expectedError != "" {
 				assert.Equal(t, tc.expectedError, err.Error())
 			} else {
 				assert.NoError(t, err)
 
-				assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedFiles, nil)
+				assertExpectedFiles(t, unconfiguredIgnitionAsset.Config, tc.expectedFiles, nil)
 
-				assertPreNetworkConfigServiceEnabled(t, ignitionBaseAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
+				assertPreNetworkConfigServiceEnabled(t, unconfiguredIgnitionAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
 			}
 		})
 	}
 }
 
-func TestIgnitionGenerateDoesNotChangeIgnitionBaseAsset(t *testing.T) {
-	skipTestIfnmstatectlIsMissing(t)
-
-	cases := []struct {
-		name                      string
-		expectedIgnitionBaseFiles []string
-		expectedIgnitionFiles     []string
-		expectedFileContent       map[string]string
-	}{
-		{
-			name: "Ignition.Generate should not change IgnitionBase content",
-			expectedIgnitionBaseFiles: generatedFilesIgnitionBase("/etc/assisted/network/host0/eth0.nmconnection",
-				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
-			expectedIgnitionFiles: generatedFiles(),
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.NotEqual(t, tc.expectedIgnitionBaseFiles, tc.expectedIgnitionFiles)
-
-			// The default Ignition contains NMStateConfigs so here we build
-			// the IgnitionBaseAsset to also include NMStateConfigs
-			depsBase := buildIgnitionBaseAssetDependenciesWithNMStateConfig(t)
-
-			parentsBase := asset.Parents{}
-			parentsBase.Add(depsBase...)
-
-			ignitionBaseAsset := &IgnitionBase{}
-			errBase := ignitionBaseAsset.Generate(parentsBase)
-
-			assert.NoError(t, errBase)
-			assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
-
-			deps := buildIgnitionAssetDefaultDependencies(t)
-			parents := asset.Parents{}
-			parents.Add(append(deps, ignitionBaseAsset)...)
-
-			ignitionAsset := &Ignition{}
-			err := ignitionAsset.Generate(parents)
-
-			assert.NoError(t, err)
-			assertExpectedFiles(t, ignitionAsset.Config, tc.expectedIgnitionFiles, nil)
-
-			// The contents of IgnitionBase should not be changed by Ignition.Generate
-			assertExpectedFiles(t, ignitionBaseAsset.Config, tc.expectedIgnitionBaseFiles, nil)
-			assert.NotEqual(t, len(ignitionBaseAsset.Config.Storage.Files), len(ignitionAsset.Config.Storage.Files))
-			assert.NotEqual(t,
-				&ignitionBaseAsset.Config.Passwd.Users[0].PasswordHash,
-				ignitionAsset.Config.Passwd.Users[0].PasswordHash)
-		})
-	}
-}
-
 // This test util create the minimum valid set of dependencies for the
-// IgnitionBase asset.
-func buildIgnitionBaseAssetDefaultDependencies(t *testing.T) []asset.Asset {
+// UnconfiguredIgnition asset.
+func buildUnconfiguredIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 	t.Helper()
 
 	infraEnv := getTestInfraEnv()
@@ -160,24 +107,6 @@ func buildIgnitionBaseAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&agentPullSecret,
 		&clusterImageSet,
 		&manifests.NMStateConfig{},
-		&mirror.RegistriesConf{},
-		&mirror.CaBundle{},
-	}
-}
-
-func buildIgnitionBaseAssetDependenciesWithNMStateConfig(t *testing.T) []asset.Asset {
-	t.Helper()
-
-	infraEnv := getTestInfraEnv()
-	agentPullSecret := getTestAgentPullSecret(t)
-	clusterImageSet := getTestClusterImageSet()
-	nmStateConfig := getTestNMStateConfig()
-
-	return []asset.Asset{
-		&infraEnv,
-		&agentPullSecret,
-		&clusterImageSet,
-		&nmStateConfig,
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
 	}
@@ -257,35 +186,12 @@ func getTestNMStateConfig() manifests.NMStateConfig {
 	}
 }
 
-func generatedFilesIgnitionBase(otherFiles ...string) []string {
-	defaultFiles := []string{
-		"/etc/issue",
-		"/etc/multipath.conf",
-		"/etc/containers/containers.conf",
-		"/root/.docker/config.json",
-		"/root/assisted.te",
-		"/usr/local/bin/agent-gather",
-		"/usr/local/bin/extract-agent.sh",
-		"/usr/local/bin/get-container-images.sh",
-		"/usr/local/bin/set-hostname.sh",
-		"/usr/local/bin/start-agent.sh",
-		"/usr/local/bin/start-cluster-installation.sh",
-		"/usr/local/bin/wait-for-assisted-service.sh",
-		"/usr/local/bin/set-node-zero.sh",
-		"/usr/local/share/assisted-service/assisted-db.env",
-		"/usr/local/share/assisted-service/assisted-service.env",
-		"/usr/local/share/assisted-service/images.env",
-		"/usr/local/bin/bootstrap-service-record.sh",
-		"/usr/local/bin/release-image.sh",
-		"/usr/local/bin/release-image-download.sh",
+func generatedFilesUnconfiguredIgnition(otherFiles ...string) []string {
+	unconfiguredIgnitionFiles := []string{
 		"/etc/assisted/manifests/pull-secret.yaml",
 		"/etc/assisted/manifests/cluster-image-set.yaml",
 		"/etc/assisted/manifests/infraenv.yaml",
-		"/etc/assisted/agent-installer.env",
-		"/etc/motd.d/10-agent-installer",
-		"/etc/systemd/system.conf.d/10-default-env.conf",
-		"/usr/local/bin/install-status.sh",
-		"/usr/local/bin/issue_status.sh",
 	}
-	return append(defaultFiles, otherFiles...)
+	unconfiguredIgnitionFiles = append(unconfiguredIgnitionFiles, otherFiles...)
+	return append(unconfiguredIgnitionFiles, commonFiles()...)
 }

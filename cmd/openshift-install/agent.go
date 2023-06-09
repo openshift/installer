@@ -109,7 +109,7 @@ var (
 			Hidden: true,
 		},
 		assets: []asset.WritableAsset{
-			&image.IgnitionBase{},
+			&image.UnconfiguredIgnition{},
 		},
 	}
 
