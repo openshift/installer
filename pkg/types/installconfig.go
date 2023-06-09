@@ -42,7 +42,6 @@ var (
 		ibmcloud.Name,
 		nutanix.Name,
 		openstack.Name,
-		ovirt.Name,
 		powervs.Name,
 		vsphere.Name,
 	}

@@ -32,11 +32,6 @@ func TestValidatePlatform(t *testing.T) {
 		expectedError string
 	}{
 		{
-			name:     "minimal",
-			platform: validPlatform(),
-			valid:    true,
-		},
-		{
 			name:     "forbidden load balancer field",
 			platform: validPlatform(),
 			config: &types.InstallConfig{
@@ -51,107 +46,7 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			valid:         false,
-			expectedError: `^test-path\.loadBalancer: Forbidden: load balancer is not supported in this feature set`,
-		},
-		{
-			name:     "allowed load balancer field with OpenShift managed default",
-			platform: validPlatform(),
-			config: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				Platform: types.Platform{
-					Ovirt: func() *ovirt.Platform {
-						p := validPlatform()
-						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
-							Type: configv1.LoadBalancerTypeOpenShiftManagedDefault,
-						}
-						return p
-					}(),
-				},
-			},
-			valid: true,
-		},
-		{
-			name:     "allowed load balancer field with user-managed",
-			platform: validPlatform(),
-			config: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				Platform: types.Platform{
-					Ovirt: func() *ovirt.Platform {
-						p := validPlatform()
-						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
-							Type: configv1.LoadBalancerTypeUserManaged,
-						}
-						return p
-					}(),
-				},
-			},
-			valid: true,
-		},
-		{
-			name:     "allowed load balancer field invalid type",
-			platform: validPlatform(),
-			config: &types.InstallConfig{
-				FeatureSet: configv1.TechPreviewNoUpgrade,
-				Platform: types.Platform{
-					Ovirt: func() *ovirt.Platform {
-						p := validPlatform()
-						p.LoadBalancer = &configv1.OvirtPlatformLoadBalancer{
-							Type: "FooBar",
-						}
-						return p
-					}(),
-				},
-			},
-			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
-			valid:         false,
-		},
-		{
-			name: "invalid when empty cluster ID",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.ClusterID = ""
-				return p
-			}(),
-			expectedError: `^test-path.ovirt_cluster_id: Invalid value: "": invalid UUID length: 0`,
-			valid:         false,
-		},
-		{
-			name: "invalid when empty storage ID",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.StorageDomainID = ""
-				return p
-			}(),
-			expectedError: `^test-path.ovirt_storage_domain_id: Invalid value: "": invalid UUID length: 0`,
-			valid:         false,
-		},
-		{
-			name: "malformed vnic profile id",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.VNICProfileID = "abcd-sdf"
-				return p
-			}(),
-			expectedError: `^test-path.vnicProfileID: Invalid value: "abcd-sdf": invalid UUID length: 8`,
-			valid:         false,
-		},
-		{
-			name: "valid empty vnic profile id",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.VNICProfileID = ""
-				return p
-			}(),
-			valid: true,
-		},
-		{
-			name: "valid machine pool",
-			platform: func() *ovirt.Platform {
-				p := validPlatform()
-				p.DefaultMachinePlatform = &ovirt.MachinePool{}
-				return p
-			}(),
-			valid: true,
+			expectedError: `^test-path: Forbidden: Platform oVirt is no longer supported`,
 		},
 	}
 	for _, tc := range cases {
