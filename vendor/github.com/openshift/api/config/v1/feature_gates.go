@@ -232,4 +232,14 @@ var (
 		ResponsiblePerson:   "bhb",
 		OwningProduct:       ocpSpecific,
 	}
+
+	FeatureGateAlibabaPlatform = FeatureGateName("AlibabaPlatform")
+	alibabaPlatform            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateAlibabaPlatform,
+		},
+		OwningJiraComponent: "cloud-provider",
+		ResponsiblePerson:   "jspeed",
+		OwningProduct:       ocpSpecific,
+	}
 )

@@ -14,9 +14,5 @@ func FilledInTechPreviewFields(installConfig *types.InstallConfig) (fields []*fi
 		return nil
 	}
 
-	if installConfig.ControlPlane != nil && installConfig.ControlPlane.Platform.OpenStack != nil && len(installConfig.ControlPlane.Platform.OpenStack.FailureDomains) > 0 {
-		fields = append(fields, field.NewPath("controlPlane", "platform", "openstack", "failureDomains"))
-	}
-
 	return fields
 }
