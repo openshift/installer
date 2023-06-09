@@ -22,8 +22,8 @@ const (
 	unconfiguredIgnitionFilename = "unconfigured-agent.ign"
 )
 
-// UnconfiguredIgnition is an asset that generates the agent installer base ignition filea
-// which excludes any cluster configuration files.
+// UnconfiguredIgnition is an asset that generates the agent installer unconfigured
+// ignition file which excludes any cluster configuration.
 type UnconfiguredIgnition struct {
 	Config  *igntypes.Config
 	CPUArch string
@@ -35,7 +35,7 @@ func (a *UnconfiguredIgnition) Name() string {
 	return "Agent Installer Unconfigured Ignition"
 }
 
-// Dependencies returns the assets on which the Ignition asset depends.
+// Dependencies returns the assets on which the UnconfiguredIgnition asset depends.
 func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&manifests.InfraEnv{},
@@ -47,7 +47,7 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the agent installer base ignition.
+// Generate generates the agent installer unconfigured ignition.
 func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	infraEnvAsset := &manifests.InfraEnv{}
 	clusterImageSetAsset := &manifests.ClusterImageSet{}
@@ -176,7 +176,7 @@ func (a *UnconfiguredIgnition) PersistToFile(directory string) error {
 func (a *UnconfiguredIgnition) generateFile(filename string) error {
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {
-		return errors.Wrap(err, "failed to Marshal Ignition config")
+		return errors.Wrap(err, "failed to Marshal UnconfiguredIgnition config")
 	}
 	a.File = &asset.File{
 		Filename: filename,
