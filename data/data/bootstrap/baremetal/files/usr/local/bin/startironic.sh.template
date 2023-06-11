@@ -11,29 +11,6 @@ for name in ironic ironic-inspector ironic-ramdisk-logs dnsmasq httpd coreos-dow
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
 
-# Start the provisioning nic if not already started
-
-{{ if .PlatformData.BareMetal.ProvisioningIP }}
-
-if ! nmcli -t device | grep "$PROVISIONING_INTERFACE:ethernet:connected"; then
-    nmcli c add type ethernet ifname $PROVISIONING_INTERFACE con-name provisioning {{ if .PlatformData.BareMetal.ProvisioningIPv6 }} ip6 {{ else }} ip4 {{ end }} {{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}
-    nmcli c up provisioning
-else
-  connection=$(nmcli -t device show $PROVISIONING_INTERFACE | grep GENERAL.CONNECTION | cut -d: -f2)
-  nmcli con modify "$connection" ifname $PROVISIONING_INTERFACE {{ if .PlatformData.BareMetal.ProvisioningIPv6 }} ip6 {{ else }} ip4 {{ end }} {{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}
-  nmcli con reload "$connection"
-  nmcli con up "$connection"
-fi
-
-# Wait for the interface to come up
-# This is how the ironic container currently detects IRONIC_IP, this could probably be improved by using
-# nmcli show provisioning there instead, but we need to confirm that works with the static-ip-manager
-while [ -z "$(ip -o addr show dev $PROVISIONING_INTERFACE | grep -v link)" ]; do
-    sleep 1
-done
-
-{{ end }}
-
 IRONIC_SHARED_VOLUME="ironic"
 # Ignore errors here so we reuse any existing volume on pod restart
 # this is helpful if an API service causes restart after the images
