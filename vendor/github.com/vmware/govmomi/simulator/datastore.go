@@ -34,6 +34,13 @@ type Datastore struct {
 	mo.Datastore
 }
 
+func (ds *Datastore) eventArgument() *types.DatastoreEventArgument {
+	return &types.DatastoreEventArgument{
+		Datastore:           ds.Self,
+		EntityEventArgument: types.EntityEventArgument{Name: ds.Name},
+	}
+}
+
 func (ds *Datastore) model(m *Model) error {
 	info := ds.Info.GetDatastoreInfo()
 	u, _ := url.Parse(info.Url)
@@ -89,13 +96,13 @@ func (ds *Datastore) DestroyTask(ctx *Context, req *types.Destroy_Task) soap.Has
 		}
 
 		for _, mount := range ds.Host {
-			host := Map.Get(mount.Key).(*HostSystem)
-			Map.RemoveReference(ctx, host, &host.Datastore, ds.Self)
+			host := ctx.Map.Get(mount.Key).(*HostSystem)
+			ctx.Map.RemoveReference(ctx, host, &host.Datastore, ds.Self)
 			parent := hostParent(&host.HostSystem)
-			Map.RemoveReference(ctx, parent, &parent.Datastore, ds.Self)
+			ctx.Map.RemoveReference(ctx, parent, &parent.Datastore, ds.Self)
 		}
 
-		p, _ := asFolderMO(Map.Get(*ds.Parent))
+		p, _ := asFolderMO(ctx.Map.Get(*ds.Parent))
 		folderRemoveChild(ctx, p, ds.Self)
 
 		return nil, nil

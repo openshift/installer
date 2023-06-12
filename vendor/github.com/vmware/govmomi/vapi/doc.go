@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2021 VMware, Inc. All Rights Reserved.
+Copyright (c) 2018 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,11 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package hgfs
-
-import (
-	"os"
-)
-
-func (a *AttrV2) sysStat(info os.FileInfo) {
-}
+/*
+Package vapi provides access to vSphere Automation APIs that are not available in the SOAP API,
+such as tagging and the content library.
+*/
+package vapi

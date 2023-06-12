@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017-2018 VMware, Inc. All Rights Reserved.
+Copyright (c) 2017-2021 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51,6 +51,10 @@ var refValueMap = map[string]string{
 }
 
 // Map is the default Registry instance.
+//
+// TODO/WIP: To support the eventual removal of this unsyncronized global
+// variable, the Map should be accessed through any Context.Map that is passed
+// in to functions that may need it.
 var Map = NewRegistry()
 
 // RegisterObject interface supports callbacks when objects are created, updated and deleted from the Registry
@@ -355,7 +359,7 @@ func (r *Registry) getEntityDatacenter(item mo.Entity) *Datacenter {
 }
 
 func (r *Registry) getEntityFolder(item mo.Entity, kind string) *mo.Folder {
-	dc := Map.getEntityDatacenter(item)
+	dc := r.getEntityDatacenter(item)
 
 	var ref types.ManagedObjectReference
 
@@ -369,7 +373,7 @@ func (r *Registry) getEntityFolder(item mo.Entity, kind string) *mo.Folder {
 	// If Model was created with Folder option, use that Folder; else use top-level folder
 	for _, child := range folder.ChildEntity {
 		if child.Type == "Folder" {
-			folder, _ = asFolderMO(Map.Get(child))
+			folder, _ = asFolderMO(r.Get(child))
 			break
 		}
 	}
@@ -561,6 +565,11 @@ func (r *Registry) OptionManager() *OptionManager {
 // CustomFieldsManager returns CustomFieldsManager singleton
 func (r *Registry) CustomFieldsManager() *CustomFieldsManager {
 	return r.Get(r.content().CustomFieldsManager.Reference()).(*CustomFieldsManager)
+}
+
+// TenantManager returns TenantManager singleton
+func (r *Registry) TenantManager() *TenantManager {
+	return r.Get(r.content().TenantManager.Reference()).(*TenantManager)
 }
 
 func (r *Registry) MarshalJSON() ([]byte, error) {

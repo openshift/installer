@@ -27,6 +27,8 @@ type HostNetworkSystem struct {
 	mo.HostNetworkSystem
 
 	Host *mo.HostSystem
+
+	types.QueryNetworkHintResponse
 }
 
 func NewHostNetworkSystem(host *mo.HostSystem) *HostNetworkSystem {
@@ -126,7 +128,7 @@ func (s *HostNetworkSystem) AddPortGroup(ctx *Context, c *types.AddPortGroup) so
 
 	folder := s.folder()
 
-	if obj := Map.FindByName(c.Portgrp.Name, folder.ChildEntity); obj != nil {
+	if obj := ctx.Map.FindByName(c.Portgrp.Name, folder.ChildEntity); obj != nil {
 		r.Fault_ = Fault("", &types.DuplicateName{
 			Name:   c.Portgrp.Name,
 			Object: obj.Reference(),
@@ -170,7 +172,7 @@ func (s *HostNetworkSystem) RemovePortGroup(ctx *Context, c *types.RemovePortGro
 	}
 
 	folder := s.folder()
-	e := Map.FindByName(c.PgName, folder.ChildEntity)
+	e := ctx.Map.FindByName(c.PgName, folder.ChildEntity)
 	folderRemoveChild(ctx, &folder.Folder, e.Reference())
 
 	for i, pg := range s.NetworkInfo.Portgroup {
@@ -196,17 +198,9 @@ func (s *HostNetworkSystem) UpdateNetworkConfig(req *types.UpdateNetworkConfig) 
 }
 
 func (s *HostNetworkSystem) QueryNetworkHint(req *types.QueryNetworkHint) soap.HasFault {
-	var info []types.PhysicalNicHintInfo
-
-	for _, nic := range s.Host.Config.Network.Pnic {
-		info = append(info, types.PhysicalNicHintInfo{
-			Device: nic.Device,
-		})
-	}
-
 	return &methods.QueryNetworkHintBody{
 		Res: &types.QueryNetworkHintResponse{
-			Returnval: info,
+			Returnval: s.QueryNetworkHintResponse.Returnval,
 		},
 	}
 }

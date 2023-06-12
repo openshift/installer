@@ -4122,6 +4122,13 @@ spec:
                               minLength: 1
                               pattern: ^/.*?/host/.*?/Resources.*
                               type: string
+                            template:
+                              description: template is the inventory path of the virtual
+                                machine or template that will be used for cloning.
+                              maxLength: 2048
+                              minLength: 1
+                              pattern: ^/.*?/vm/.*?
+                              type: string
                           required:
                           - computeCluster
                           - datacenter

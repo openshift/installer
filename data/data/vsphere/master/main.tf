@@ -1,7 +1,6 @@
 locals {
-  description  = "Created By OpenShift Installer"
-  vcenter_key  = keys(var.vsphere_vcenters)[0]
-  template_map = { for t in var.template : t.name => t }
+  description = "Created By OpenShift Installer"
+  vcenter_key = keys(var.vsphere_vcenters)[0]
 }
 
 provider "vsphere" {
@@ -27,6 +26,12 @@ data "vsphere_datastore" "datastore" {
   datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
 }
 
+data "vsphere_virtual_machine" "template" {
+  count         = var.master_count
+  name          = var.vsphere_control_planes[count.index].template
+  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
+}
+
 resource "vsphere_virtual_machine" "vm_master" {
   count = var.master_count
 
@@ -38,7 +43,7 @@ resource "vsphere_virtual_machine" "vm_master" {
   memory               = var.vsphere_control_planes[0].memoryMiB
   folder               = trimprefix(var.vsphere_control_planes[count.index].workspace.folder, "/${var.vsphere_control_planes[count.index].workspace.datacenter}/vm")
 
-  guest_id = local.template_map[var.vsphere_control_planes[count.index].template].guest_id
+  guest_id = data.vsphere_virtual_machine.template[count.index].guest_id
 
   enable_disk_uuid            = "true"
   annotation                  = local.description
@@ -48,18 +53,18 @@ resource "vsphere_virtual_machine" "vm_master" {
   firmware                    = "efi"
 
   network_interface {
-    network_id = local.template_map[var.vsphere_control_planes[count.index].template].network_interfaces.0.network_id
+    network_id = var.vsphere_control_planes[count.index].network.devices[0].networkName
   }
 
   disk {
     label            = "disk0"
     size             = var.vsphere_control_planes[0].diskGiB
-    eagerly_scrub    = local.template_map[var.vsphere_control_planes[count.index].template].disks.0.eagerly_scrub
-    thin_provisioned = local.template_map[var.vsphere_control_planes[count.index].template].disks.0.thin_provisioned
+    eagerly_scrub    = data.vsphere_virtual_machine.template[count.index].disks.0.eagerly_scrub
+    thin_provisioned = data.vsphere_virtual_machine.template[count.index].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid = local.template_map[var.vsphere_control_planes[count.index].template].uuid
+    template_uuid = data.vsphere_virtual_machine.template[count.index].uuid
   }
 
   extra_config = {
