@@ -180,31 +180,3 @@ if [ -z "$icc_id" ]; then
     echo The image-customization service crashed after start, check its logs
     exit $EXIT_CODE_NO_RESTART
 fi
-
-set +x
-ironic_url="$(printf 'http://%s:%s@localhost:6385/v1' "$(cat "${AUTH_DIR}/ironic/username")" "$(cat "${AUTH_DIR}/ironic/password")")"
-inspector_url="$(printf 'http://%s:%s@localhost:5050/v1' "$(cat "${AUTH_DIR}/ironic-inspector/username")" "$(cat "${AUTH_DIR}/ironic-inspector/password")")"
-
-while [ "$(curl -s "${ironic_url}/nodes" | jq '.nodes[] | .uuid' | wc -l)" -lt 1 ]; do
-  echo "Waiting for a control plane host to show up in Ironic..."
-  sleep 20
-done
-
-while true; do
-    # Check if all nodes have been deployed
-    if ! curl -s "${ironic_url}/nodes" | jq '.nodes[] | .provision_state' | grep -v active;
-    then
-      echo "All hosts have been deployed."
-      sleep 30
-      while ! test -f /opt/openshift/.master-bmh-update.done; do
-        echo "Waiting for introspection data to be synced..."
-        sleep 10
-      done
-
-      echo "Stopping provisioning services..."
-      podman stop ironic ironic-inspector ironic-ramdisk-logs $dnsmasq_container_name httpd image-customization
-      exit 0
-    fi
-
-    sleep 10
-done

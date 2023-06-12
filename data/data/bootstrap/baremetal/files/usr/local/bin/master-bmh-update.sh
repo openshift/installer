@@ -14,6 +14,7 @@ until oc get baremetalhosts -n openshift-machine-api; do
 done
 
 AUTH_DIR=/opt/metal3/auth
+set +x
 ironic_url="$(printf 'http://%s:%s@localhost:6385/v1' "$(cat "${AUTH_DIR}/ironic/username")" "$(cat "${AUTH_DIR}/ironic/password")")"
 inspector_url="$(printf 'http://%s:%s@localhost:5050/v1' "$(cat "${AUTH_DIR}/ironic-inspector/username")" "$(cat "${AUTH_DIR}/ironic-inspector/password")")"
 
@@ -48,4 +49,12 @@ for node in $(curl -s "${ironic_url}/nodes" | jq -r '.nodes[] | .uuid'); do
      oc annotate --overwrite -n openshift-machine-api baremetalhosts "$name" 'baremetalhost.metal3.io/status'="$HARDWARE_DETAILS" 'baremetalhost.metal3.io/paused-'
 done
 
-touch /opt/openshift/.master-bmh-update.done
+# This delay is needed to ensure that Terraform sees that the hosts are
+# deployed before we stop ironic. Terraform is polling every 10s.
+sleep 30
+# Shut down ironic containers so that the API VIP can fail over to the control
+# plane.
+echo "Stopping provisioning services..."
+for container in ironic ironic-inspector ironic-ramdisk-logs dnsmasq httpd image-customization; do
+    podman stop "${container}" || true
+done
