@@ -33,30 +33,6 @@ podman run -d --net host --privileged --name $dnsmasq_container_name \
 dnsmasq_container_name=""
 {{ end }}
 
-{{ if .UseDualForNodeIP }}
-EXTERNAL_IP_OPTIONS="ip=dhcp,dhcp6"
-{{ else if .UseIPv6ForNodeIP }}
-EXTERNAL_IP_OPTIONS="ip=dhcp6"
-{{ else }}
-EXTERNAL_IP_OPTIONS="ip=dhcp"
-{{ end }}
-
-
-{{ if eq .PlatformData.BareMetal.ProvisioningNetwork "Disabled" }}
-PROVISIONING_IP_OPTIONS=$EXTERNAL_IP_OPTIONS
-{{ else }}
-  {{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
-PROVISIONING_IP_OPTIONS="ip=dhcp6"
-  {{ else }}
-PROVISIONING_IP_OPTIONS="ip=dhcp"
-  {{ end }}
-{{ end }}
-
-# Allow some extra time for the provisioning interface to come up
-# https://issues.redhat.com/browse/OCPBUGS-5151
-IRONIC_KERNEL_PARAMS="rd.net.timeout.carrier=30 ${PROVISIONING_IP_OPTIONS}"
-
-
 podman run -d --name coreos-downloader \
      --restart on-failure \
      --env "IP_OPTIONS=${PROVISIONING_IP_OPTIONS}" \

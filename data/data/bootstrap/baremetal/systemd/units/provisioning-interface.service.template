@@ -6,7 +6,7 @@ After=network-online.target crio.service build-ironic-env.service
 
 [Service]
 EnvironmentFile=/etc/ironic.env
-Environment="PROV_IP_FAMILY={{ if .PlatformData.BareMetal.ProvisioningIPv6 }}ip6{{ else }}ip4{{ end }}"
+EnvironmentFile=/etc/ironic-network.env
 Environment="PROVISIONING_SUBNET={{.PlatformData.BareMetal.ProvisioningIP}}/{{.PlatformData.BareMetal.ProvisioningCIDR}}"
 ExecStart=/usr/local/bin/start-provisioning-nic.sh
 Type=oneshot
