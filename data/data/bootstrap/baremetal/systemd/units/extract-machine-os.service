@@ -6,7 +6,7 @@ Wants=crio.service
 After=crio.service build-ironic-env.service ironic-volume.service
 # The rootfs file must be created before the httpd container is started
 # otherwise the kernel params in inspector.ipxe will not be set correctly
-Before=ironic.service
+Before=ironic-httpd.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
