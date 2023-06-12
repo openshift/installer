@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -euo pipefail
+
+export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
+
+mkdir -p "${NMSTATE_DIR}"
+
+get_nmstate() {
+    local host="$1"
+    until oc get -n openshift-machine-api baremetalhost "${host}" >/dev/null; do
+        echo "Waiting for Host ${host} to appear..." >&2
+        sleep 10
+    done
+
+    local secret_name
+    secret_name="$(oc get -n openshift-machine-api baremetalhost "${host}" -o jsonpath="{.spec.preprovisioningNetworkDataName}")"
+    if [ -n "${secret_name}" ]; then
+        until oc get -n openshift-machine-api secret "${secret_name}" >/dev/null; do
+            echo "Waiting for Secret ${secret_name} to appear..." >&2
+            sleep 10
+        done
+        oc get -n openshift-machine-api secret "${secret_name}" -o jsonpath="{.data.nmstate}" | base64 -d >"${NMSTATE_DIR}/${host}.yaml"
+    else
+        touch "${NMSTATE_DIR}/${host}.yaml"
+    fi
+}
+
+{{range .PlatformData.BareMetal.Hosts}}
+get_nmstate "{{.Name}}"
+{{end}}
+
+# Create a podman secret for the image-customization-server
+base64 -w 0 /root/.docker/config.json | podman secret create pull-secret -

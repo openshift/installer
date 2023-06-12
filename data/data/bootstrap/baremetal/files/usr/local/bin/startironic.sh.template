@@ -1,12 +1,9 @@
 #!/bin/bash
 set -ex
 
-# Must match ironic.service
-EXIT_CODE_NO_RESTART=42
-
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
-for name in ironic ironic-inspector ironic-ramdisk-logs httpd image-customization; do
+for name in ironic ironic-inspector ironic-ramdisk-logs httpd; do
     podman ps | grep -w "$name$" && podman kill $name
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
@@ -36,47 +33,6 @@ for port in 5050 $HTTP_PORT 6385 ; do
     fi
 done
 
-export KUBECONFIG=/opt/openshift/auth/kubeconfig-loopback
-
-mkdir -p /tmp/nmstate
-
-{{range .PlatformData.BareMetal.Hosts}}
-    until oc get -n openshift-machine-api baremetalhost {{.Name}}; do
-        echo Waiting for Host {{.Name}} to appear...
-        sleep 10
-    done
-    secret_name=$(oc get -n openshift-machine-api baremetalhost {{.Name}} -o jsonpath="{.spec.preprovisioningNetworkDataName}")
-    if [ -n "${secret_name}" ]; then
-        until oc get -n openshift-machine-api secret "${secret_name}"; do
-            echo Waiting for Secret "${secret_name}" to appear...
-            sleep 10
-        done
-        oc get -n openshift-machine-api secret ${secret_name} -o jsonpath="{.data.nmstate}" | base64 -d > /tmp/nmstate/{{.Name}}.yaml
-    else
-        touch /tmp/nmstate/{{.Name}}.yaml
-    fi
-{{end}}
-
-# Create a podman secret for the image-customization-server 
-podman secret rm pull-secret || true
-base64 -w 0 /root/.docker/config.json | podman secret create pull-secret -
-
-# Embed agent ignition into the rhcos live iso
-podman run -d --net host --name image-customization \
-    --env DEPLOY_ISO="/shared/html/images/ironic-python-agent.iso" \
-    --env DEPLOY_INITRD="/shared/html/images/ironic-python-agent.initramfs" \
-    --env IRONIC_BASE_URL \
-    --env IRONIC_RAMDISK_SSH_KEY \
-    --env IRONIC_AGENT_IMAGE \
-    --env IP_OPTIONS=$EXTERNAL_IP_OPTIONS \
-    --env REGISTRIES_CONF_PATH=/tmp/containers/registries.conf \
-    --entrypoint '["/image-customization-server", "--nmstate-dir=/tmp/nmstate/", "--images-publish-addr=http://0.0.0.0:8084"]' \
-    -v /tmp/nmstate/:/tmp/nmstate/:z,ro \
-    -v $IRONIC_SHARED_VOLUME:/shared:z \
-    -v /etc/containers:/tmp/containers:z \
-    --secret pull-secret,mode=400 \
-    ${CUSTOMIZATION_IMAGE}
-
 podman run -d --net host --name ironic \
      --restart on-failure \
      --env IRONIC_RAMDISK_SSH_KEY \
@@ -105,11 +61,3 @@ podman run -d --name ironic-ramdisk-logs \
      --restart on-failure \
      --entrypoint /bin/runlogwatch.sh \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
-
-# Failure to start image-customization results in a very confusing error
-sleep 10
-icc_id=$(podman ps --filter name=image-customization --filter status=running --format '{{`{{.ID}}`}}')
-if [ -z "$icc_id" ]; then
-    echo The image-customization service crashed after start, check its logs
-    exit $EXIT_CODE_NO_RESTART
-fi

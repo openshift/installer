@@ -1,0 +1,36 @@
+[Unit]
+Description=Customized Machine OS Image Server
+BindsTo=ironic-volume.service
+Requires=build-ironic-env.service extract-machine-os.service
+PartOf=ironic.service
+Wants=network-online.target
+After=network-online.target ironic-volume.service build-ironic-env.service extract-machine-os.service
+
+[Container]
+ContainerName=image-customization
+Image=$CUSTOMIZATION_IMAGE
+Exec=/image-customization-server --nmstate-dir=${NMSTATE_DIR} --images-publish-addr=http://0.0.0.0:8084
+Network=host
+PodmanArgs=--secret pull-secret,mode=400
+Volume=${NMSTATE_DIR}/:${NMSTATE_DIR}/:z,ro
+Volume=ironic.volume:/shared:z
+Volume=/etc/containers:/tmp/containers:z
+Environment="DEPLOY_ISO=/shared/html/images/ironic-python-agent.iso"
+Environment="DEPLOY_INITRD=/shared/html/images/ironic-python-agent.initramfs"
+Environment="IRONIC_BASE_URL=${IRONIC_BASE_URL}"
+Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
+Environment="IRONIC_AGENT_IMAGE=${IRONIC_AGENT_IMAGE}"
+Environment="IP_OPTIONS=${EXTERNAL_IP_OPTIONS}"
+Environment="REGISTRIES_CONF_PATH=/tmp/containers/registries.conf"
+
+[Service]
+EnvironmentFile=/etc/ironic.env
+Environment="NMSTATE_DIR=/tmp/nmstate"
+ExecStartPre=/usr/local/bin/setup-image-data.sh
+TimeoutStartSec=600
+ExecStopPost=podman secret rm pull-secret
+ExecStopPost=-rm -rf ${NMSTATE_DIR}
+Restart=on-abnormal
+
+[Install]
+WantedBy=multi-user.target
