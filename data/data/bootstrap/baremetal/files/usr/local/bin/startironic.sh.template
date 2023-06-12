@@ -6,7 +6,7 @@ EXIT_CODE_NO_RESTART=42
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
-for name in ironic ironic-inspector ironic-ramdisk-logs dnsmasq httpd coreos-downloader image-customization; do
+for name in ironic ironic-inspector ironic-ramdisk-logs httpd coreos-downloader image-customization; do
     podman ps | grep -w "$name$" && podman kill $name
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
@@ -21,17 +21,6 @@ done
 # Start dnsmasq, http, and ironic containers using same image
 # Currently we do this outside of a pod because we need to ensure the images
 # are downloaded before starting the API pods
-{{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
-dnsmasq_container_name="dnsmasq"
-podman run -d --net host --cap-add=NET_ADMIN --name $dnsmasq_container_name \
-     --restart on-failure \
-     --env PROVISIONING_INTERFACE \
-     --env DHCP_RANGE=$DHCP_RANGE \
-     --env HTTP_PORT=$HTTP_PORT \
-     -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
-{{ else }}
-dnsmasq_container_name=""
-{{ end }}
 
 podman run -d --name coreos-downloader \
      --restart on-failure \
