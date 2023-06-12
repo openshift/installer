@@ -84,11 +84,40 @@ resource "openstack_networking_port_v2" "masters" {
     }
   }
 
-  depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port]
+  depends_on = [openstack_networking_port_v2.api_port, openstack_networking_port_v2.ingress_port,
+  data.openstack_networking_port_ids_v2.api_ports, data.openstack_networking_port_ids_v2.ingress_ports]
+}
+
+# Port needs to be created by the user when using dual-stack since SLAAC or Stateless
+# does not allow specification of fixed-ips during Port creation.
+data "openstack_networking_port_ids_v2" "api_ports" {
+  fixed_ip   = var.openstack_api_int_ips[0]
+  network_id = local.nodes_default_port.network_id
+}
+
+# Port needs to be created by the user when using dual-stack since SLAAC or Stateless
+# does not allow specification of fixed-ips during Port creation.
+data "openstack_networking_port_ids_v2" "ingress_ports" {
+  fixed_ip   = var.openstack_ingress_ips[0]
+  network_id = local.nodes_default_port.network_id
+}
+
+resource "openstack_networking_port_secgroup_associate_v2" "api_port_sg" {
+  count              = var.use_ipv6 ? 1 : 0
+  port_id            = data.openstack_networking_port_ids_v2.api_ports.ids[0]
+  security_group_ids = [openstack_networking_secgroup_v2.master.id]
+  depends_on         = [data.openstack_networking_port_ids_v2.api_ports]
+}
+
+resource "openstack_networking_port_secgroup_associate_v2" "ingress_port_sg" {
+  count              = var.use_ipv6 ? 1 : 0
+  port_id            = data.openstack_networking_port_ids_v2.ingress_ports.ids[0]
+  security_group_ids = [openstack_networking_secgroup_v2.worker.id]
+  depends_on         = [data.openstack_networking_port_ids_v2.ingress_ports]
 }
 
 resource "openstack_networking_port_v2" "api_port" {
-  count       = var.openstack_user_managed_load_balancer ? 0 : 1
+  count       = var.openstack_user_managed_load_balancer || var.use_ipv6 ? 0 : 1
   name        = "${var.cluster_id}-api-port"
   description = local.description
 
@@ -108,7 +137,7 @@ resource "openstack_networking_port_v2" "api_port" {
 }
 
 resource "openstack_networking_port_v2" "ingress_port" {
-  count       = var.openstack_user_managed_load_balancer ? 0 : 1
+  count       = var.openstack_user_managed_load_balancer || var.use_ipv6 ? 0 : 1
   name        = "${var.cluster_id}-ingress-port"
   description = local.description
 
@@ -159,14 +188,14 @@ resource "openstack_networking_trunk_v2" "masters" {
 
 resource "openstack_networking_floatingip_associate_v2" "api_fip" {
   count       = (var.openstack_user_managed_load_balancer || length(var.openstack_api_floating_ip) == 0) ? 0 : 1
-  port_id     = openstack_networking_port_v2.api_port[0].id
+  port_id     = var.use_ipv6 ? data.openstack_networking_port_ids_v2.api_ports.ids[0] : openstack_networking_port_v2.api_port[0].id
   floating_ip = var.openstack_api_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
 
 resource "openstack_networking_floatingip_associate_v2" "ingress_fip" {
   count       = (var.openstack_user_managed_load_balancer || length(var.openstack_ingress_floating_ip) == 0) ? 0 : 1
-  port_id     = openstack_networking_port_v2.ingress_port[0].id
+  port_id     = var.use_ipv6 ? data.openstack_networking_port_ids_v2.ingress_ports.ids[0] : openstack_networking_port_v2.ingress_port[0].id
   floating_ip = var.openstack_ingress_floating_ip
   depends_on  = [openstack_networking_router_interface_v2.nodes_router_interface]
 }
