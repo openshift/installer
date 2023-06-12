@@ -8,7 +8,7 @@ Requires=provisioning-interface.service
 {{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
 Wants=ironic-dnsmasq.service
 {{ end }}
-Wants=network-online.target crio.service
+Wants=network-online.target crio.service ironic-ramdisk-logs.service
 After=network-online.target crio.service build-ironic-env.service provisioning-interface.service ironic-volume.service ironic-dnsmasq.service image-customization.service
 
 [Service]

@@ -3,7 +3,7 @@ set -ex
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
-for name in ironic ironic-inspector ironic-ramdisk-logs httpd; do
+for name in ironic ironic-inspector httpd; do
     podman ps | grep -w "$name$" && podman kill $name
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
@@ -56,8 +56,3 @@ podman run -d --net host --name ironic-inspector \
      --entrypoint /bin/runironic-inspector \
      -v $AUTH_DIR:/auth:z,ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
-
-podman run -d --name ironic-ramdisk-logs \
-     --restart on-failure \
-     --entrypoint /bin/runlogwatch.sh \
-     -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
