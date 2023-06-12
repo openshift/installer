@@ -23,7 +23,7 @@ done
 # are downloaded before starting the API pods
 {{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
 dnsmasq_container_name="dnsmasq"
-podman run -d --net host --privileged --name $dnsmasq_container_name \
+podman run -d --net host --cap-add=NET_ADMIN --name $dnsmasq_container_name \
      --restart on-failure \
      --env PROVISIONING_INTERFACE \
      --env DHCP_RANGE=$DHCP_RANGE \
