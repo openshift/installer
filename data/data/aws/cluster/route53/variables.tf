@@ -28,6 +28,12 @@ variable "internal_zone" {
   description = "An existing hosted zone (zone ID) to use for the internal API."
 }
 
+variable "internal_zone_role" {
+  type        = string
+  default     = null
+  description = "(optional) A role to assume when using an existing hosted zone from another account."
+}
+
 variable "api_external_lb_dns_name" {
   description = "External API's LB DNS name"
   type        = string
@@ -62,4 +68,17 @@ EOF
 variable "region" {
   type = string
   description = "The target AWS region for the cluster."
+}
+
+variable "custom_endpoints" {
+  type = map(string)
+
+  description = <<EOF
+(optional) Custom AWS endpoints to override existing services.
+Check - https://www.terraform.io/docs/providers/aws/guides/custom-service-endpoints.html
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
 }
