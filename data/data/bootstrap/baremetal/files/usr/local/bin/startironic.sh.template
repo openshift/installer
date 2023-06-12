@@ -11,11 +11,7 @@ for name in ironic ironic-inspector ironic-ramdisk-logs dnsmasq httpd coreos-dow
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
 
-IRONIC_SHARED_VOLUME="ironic"
-# Ignore errors here so we reuse any existing volume on pod restart
-# this is helpful if an API service causes restart after the images
-# have been downloaded
-podman volume create $IRONIC_SHARED_VOLUME || true
+IRONIC_SHARED_VOLUME="systemd-ironic"
 
 # Apparently network-online doesn't necessarily mean iptables is ready, so wait until it is..
 while ! iptables -L; do

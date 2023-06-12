@@ -1,11 +1,12 @@
 [Unit]
 Description=Baremetal Deployment Ironic Services
+BindsTo=ironic-volume.service
 Requires=build-ironic-env.service
 {{ if .PlatformData.BareMetal.ProvisioningIP }}
 Requires=provisioning-interface.service
 {{ end }}
 Wants=network-online.target crio.service
-After=network-online.target crio.service build-ironic-env.service provisioning-interface.service
+After=network-online.target crio.service build-ironic-env.service provisioning-interface.service ironic-volume.service
 
 [Service]
 EnvironmentFile=/etc/ironic.env
