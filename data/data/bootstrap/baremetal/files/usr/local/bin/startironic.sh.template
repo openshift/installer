@@ -1,23 +1,8 @@
 #!/bin/bash
 set -ex
 
-. /usr/local/bin/release-image.sh
-
 # Must match ironic.service
 EXIT_CODE_NO_RESTART=42
-
-IRONIC_IMAGE=$(image_for ironic)
-IRONIC_AGENT_IMAGE=$(image_for ironic-agent)
-CUSTOMIZATION_IMAGE=$(image_for machine-image-customization-controller)
-MACHINE_OS_IMAGES_IMAGE=$(image_for machine-os-images)
-HTTP_PORT=6180
-
-# This DHCP range is used by dnsmasq to serve DHCP to the cluster. If empty
-# dnsmasq will only serve TFTP, and DHCP will be disabled.
-DHCP_RANGE="{{.PlatformData.BareMetal.ProvisioningDHCPRange}}"
-
-# Used by ironic to allow ssh to running IPA instances
-IRONIC_RAMDISK_SSH_KEY="{{.SSHKey}}"
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
@@ -28,9 +13,6 @@ done
 
 # Start the provisioning nic if not already started
 
-#Retrieve the provisioning interface name based on mac address (case insensitive).
-PROVISIONING_INTERFACE=$(ip -j -o link | jq -r '.[] | select(.address != null)| select(.address | match ("{{.PlatformData.BareMetal.ProvisioningInterfaceMAC}}";"i")).ifname')
-echo "Provisioining interface: "$PROVISIONING_INTERFACE
 {{ if .PlatformData.BareMetal.ProvisioningIP }}
 
 if ! nmcli -t device | grep "$PROVISIONING_INTERFACE:ethernet:connected"; then
@@ -51,12 +33,6 @@ while [ -z "$(ip -o addr show dev $PROVISIONING_INTERFACE | grep -v link)" ]; do
 done
 
 {{ end }}
-
-# set password for ironic basic auth
-# The ironic container contains httpd (and thus httpd-tools), so rely on it to
-# supply the htpasswd command
-AUTH_DIR=/opt/metal3/auth
-IRONIC_HTPASSWD="$(cat ${AUTH_DIR}/ironic/password | podman run -i --rm --entrypoint htpasswd ${IRONIC_IMAGE} -niB {{.PlatformData.BareMetal.IronicUsername}})"
 
 IRONIC_SHARED_VOLUME="ironic"
 # Ignore errors here so we reuse any existing volume on pod restart
@@ -82,12 +58,6 @@ podman run -d --net host --privileged --name $dnsmasq_container_name \
      -v $IRONIC_SHARED_VOLUME:/shared:z --entrypoint /bin/rundnsmasq ${IRONIC_IMAGE}
 {{ else }}
 dnsmasq_container_name=""
-{{ end }}
-
-{{ if .PlatformData.BareMetal.ProvisioningIPv6 }}
-IPTABLES=ip6tables
-{{ else }}
-IPTABLES=iptables
 {{ end }}
 
 {{ if .UseDualForNodeIP }}
@@ -181,15 +151,6 @@ mkdir -p /tmp/nmstate
     fi
 {{end}}
 
-IRONIC_IP="{{.PlatformData.BareMetal.APIVIP}}"
-# If the IP contains a colon, then it's an IPv6 address, and the HTTP
-# host needs surrounding with brackets
-if [[ "$IRONIC_IP" =~ .*:.* ]]; then
-    IRONIC_BASE_URL="http://[${IRONIC_IP}]"
-else
-    IRONIC_BASE_URL="http://${IRONIC_IP}"
-fi
-
 # Create a podman secret for the image-customization-server 
 podman secret rm pull-secret || true
 base64 -w 0 /root/.docker/config.json | podman secret create pull-secret -
@@ -248,7 +209,6 @@ if [ -z "$icc_id" ]; then
 fi
 
 set +x
-AUTH_DIR=/opt/metal3/auth
 ironic_url="$(printf 'http://%s:%s@localhost:6385/v1' "$(cat "${AUTH_DIR}/ironic/username")" "$(cat "${AUTH_DIR}/ironic/password")")"
 inspector_url="$(printf 'http://%s:%s@localhost:5050/v1' "$(cat "${AUTH_DIR}/ironic-inspector/username")" "$(cat "${AUTH_DIR}/ironic-inspector/password")")"
 

@@ -1,10 +1,11 @@
 [Unit]
 Description=Baremetal Deployment Ironic Services
-Requires=release-image.service
+Requires=build-ironic-env.service
 Wants=network-online.target crio.service
-After=network-online.target crio.service release-image.service
+After=network-online.target crio.service build-ironic-env.service
 
 [Service]
+EnvironmentFile=/etc/ironic.env
 ExecStart=/usr/local/bin/startironic.sh
 ExecStop=/usr/local/bin/stopironic.sh
 RemainAfterExit=yes
