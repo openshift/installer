@@ -252,6 +252,8 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			// We now support ipv6-primary dual stack on baremetal
 			allowV6Primary = true
 		case p.VSphere != nil:
+			// as well as on vSphere
+			allowV6Primary = true
 		case p.OpenStack != nil:
 		case p.Ovirt != nil:
 		case p.Nutanix != nil:
@@ -531,9 +533,6 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
-		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs, fldPath.Child(vsphere.Name, newVIPsFields.APIVIPs))...)
-		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs, fldPath.Child(vsphere.Name, newVIPsFields.IngressVIPs))...)
-
 		virtualIPs = vips{
 			API:     platform.VSphere.APIVIPs,
 			Ingress: platform.VSphere.IngressVIPs,
