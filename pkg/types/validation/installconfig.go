@@ -21,6 +21,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
+	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -49,6 +50,9 @@ import (
 	vspherevalidation "github.com/openshift/installer/pkg/types/vsphere/validation"
 	"github.com/openshift/installer/pkg/validate"
 )
+
+// hostCryptBypassedAnnotation is set if the host crypt check was bypassed via environment variable.
+const hostCryptBypassedAnnotation = "install.openshift.io/hostcrypt-check-bypassed"
 
 // list of known plugins that require hostPrefix to be set
 var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOpenShiftSDN), string(operv1.NetworkTypeOVNKubernetes))
@@ -998,6 +1002,18 @@ func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
 			if !re.MatchString(sshKeyType) {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
 			}
+		}
+	}
+
+	if err := hostcrypt.VerifyHostTargetState(c.FIPS); err != nil {
+		if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_SKIP_HOSTCRYPT_VALIDATION"); ok {
+			logrus.Warnf("%v", err)
+			if c.Annotations == nil {
+				c.Annotations = make(map[string]string)
+			}
+			c.Annotations[hostCryptBypassedAnnotation] = "true"
+		} else {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("fips"), err.Error()))
 		}
 	}
 	return allErrs
