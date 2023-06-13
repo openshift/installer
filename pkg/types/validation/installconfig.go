@@ -21,6 +21,7 @@ import (
 
 	configv1 "github.com/openshift/api/config/v1"
 	operv1 "github.com/openshift/api/operator/v1"
+	"github.com/openshift/installer/pkg/hostcrypt"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/alibabacloud"
@@ -999,6 +1000,10 @@ func validateFIPSconfig(c *types.InstallConfig) field.ErrorList {
 				allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, fmt.Sprintf("SSH key type %s unavailable when FIPS is enabled. Please use rsa or ecdsa.", sshKeyType)))
 			}
 		}
+	}
+
+	if err := hostcrypt.VerifyHostTargetState(c.FIPS); err != nil {
+		logrus.Warnf("%v", err)
 	}
 	return allErrs
 }
