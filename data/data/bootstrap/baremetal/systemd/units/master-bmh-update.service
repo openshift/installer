@@ -1,7 +1,7 @@
 [Unit]
 Description=Update master BareMetalHosts with introspection data
 Wants=bootkube.service
-After=release-image.service
+After=release-image.service ironic.service
 Before=progress.service
 
 [Service]

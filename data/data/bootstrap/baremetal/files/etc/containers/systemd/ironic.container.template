@@ -1,0 +1,37 @@
+[Unit]
+Description=Ironic baremetal deployment service
+BindsTo=ironic-volume.service
+Requires=build-ironic-env.service wait-iptables-init.service image-customization.service
+{{ if .PlatformData.BareMetal.ProvisioningIP }}
+Requires=provisioning-interface.service
+{{ end }}
+{{ if .PlatformData.BareMetal.ProvisioningDNSMasq }}
+Wants=ironic-dnsmasq.service
+{{ end }}
+Wants=network-online.target ironic-httpd.service ironic-inspector.service ironic-ramdisk-logs.service
+After=network-online.target ironic-volume.service build-ironic-env.service wait-iptables-init.service provisioning-interface.service ironic-dnsmasq.service image-customization.service
+
+[Container]
+ContainerName=ironic
+Image=$IRONIC_IMAGE
+Exec=/bin/runironic
+Network=host
+Volume=${AUTH_DIR}:/auth:z,ro
+Volume=ironic.volume:/shared:z
+Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
+Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
+Environment="OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120"
+Environment="IRONIC_HTPASSWD=${IRONIC_HTPASSWD}"
+Environment="INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD}"
+Environment="IRONIC_KERNEL_PARAMS=${IRONIC_KERNEL_PARAMS}"
+Environment="HTTP_PORT=${HTTP_PORT}"
+
+[Service]
+EnvironmentFile=/etc/ironic.env
+# Add firewall rules to ensure the IPA ramdisk can reach ironic
+ExecStartPre=/usr/local/bin/prov-iptables.sh --enable-port 6385
+ExecStopPost=/usr/local/bin/prov-iptables.sh --disable-port 6385
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

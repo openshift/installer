@@ -55,6 +55,4 @@ sleep 30
 # Shut down ironic containers so that the API VIP can fail over to the control
 # plane.
 echo "Stopping provisioning services..."
-for container in ironic ironic-inspector ironic-ramdisk-logs dnsmasq httpd image-customization; do
-    podman stop "${container}" || true
-done
+systemctl stop ironic.service
