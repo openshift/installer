@@ -322,6 +322,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 	}, {
 		{name: "DNS Records", execute: o.destroyDNSRecords},
 		{name: "DNS Resource Records", execute: o.destroyResourceRecords},
+	}, {
+		{name: "Service Instances", execute: o.destroyServiceInstances},
 	}}
 
 	for _, stage := range stagedFuncs {
