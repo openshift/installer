@@ -1042,6 +1042,13 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
 	}
 
+	if len(c.FeatureGates) > 0 {
+		if c.FeatureSet != configv1.CustomNoUpgrade {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("featureGates"), "featureGates can only be used with the CustomNoUpgrade feature set"))
+		}
+		allErrs = append(allErrs, validateCustomFeatureGates(c)...)
+	}
+
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
 
@@ -1059,6 +1066,26 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
 				allErrs = append(allErrs, field.Forbidden(f, errMsg))
 			}
+		}
+	}
+
+	return allErrs
+}
+
+// validateCustomFeatureGates checks that all provided custom features match the expected format.
+// The expected format is <FeatureName>=<Enabled>.
+func validateCustomFeatureGates(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for i, rawFeature := range c.FeatureGates {
+		featureParts := strings.Split(rawFeature, "=")
+		if len(featureParts) != 2 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("featureGates").Index(i), rawFeature, "must match the format <feature-name>=<bool>"))
+			continue
+		}
+
+		if _, err := strconv.ParseBool(featureParts[1]); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("featureGates").Index(i), rawFeature, "must match the format <feature-name>=<bool>, could not parse boolean value"))
 		}
 	}
 

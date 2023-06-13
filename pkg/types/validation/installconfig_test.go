@@ -2098,6 +2098,57 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `platform.aws.hostedZoneRole: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field`,
 		},
+		{
+			name: "valid custom features",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{
+					"CustomFeature1=True",
+					"CustomFeature2=False",
+				}
+				return c
+			}(),
+		},
+		{
+			name: "invalid custom features",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{
+					"CustomFeature1=True",
+					"CustomFeature2",
+				}
+				return c
+			}(),
+			expectedError: `featureGates\[1\]: Invalid value: "CustomFeature2": must match the format <feature-name>=<bool>`,
+		},
+		{
+			name: "invalid custom features bool",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.CustomNoUpgrade
+				c.FeatureGates = []string{
+					"CustomFeature1=foo",
+					"CustomFeature2=False",
+				}
+				return c
+			}(),
+			expectedError: `featureGates\[0\]: Invalid value: "CustomFeature1=foo": must match the format <feature-name>=<bool>, could not parse boolean value`,
+		},
+		{
+			name: "custom features supplied with non-custom featureset",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.FeatureGates = []string{
+					"CustomFeature1=True",
+					"CustomFeature2=False",
+				}
+				return c
+			}(),
+			expectedError: "featureGates: Forbidden: featureGates can only be used with the CustomNoUpgrade feature set",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
