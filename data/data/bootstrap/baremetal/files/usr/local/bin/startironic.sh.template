@@ -3,7 +3,7 @@ set -ex
 
 # First we stop any previously started containers, because ExecStop only runs when the ExecStart process
 # e.g this script is still running, but we exit if *any* of the containers exits unexpectedly
-for name in ironic ironic-inspector; do
+for name in ironic; do
     podman ps | grep -w "$name$" && podman kill $name
     podman ps --all | grep -w "$name$" && podman rm $name -f
 done
@@ -19,8 +19,8 @@ done
 # Currently we do this outside of a pod because we need to ensure the images
 # are downloaded before starting the API pods
 
-# Add firewall rules to ensure the IPA ramdisk can reach Ironic and the Inspector API on the host
-for port in 5050 6385 ; do
+# Add firewall rules to ensure the IPA ramdisk can reach Ironic on the host
+for port in 6385 ; do
     if ! $IPTABLES -C INPUT -i $PROVISIONING_INTERFACE -p tcp -m tcp --dport $port -j ACCEPT > /dev/null 2>&1; then
         $IPTABLES -I INPUT -i $PROVISIONING_INTERFACE -p tcp -m tcp --dport $port -j ACCEPT
     fi
@@ -38,14 +38,3 @@ podman run -d --net host --name ironic \
      --entrypoint /bin/runironic \
      -v $AUTH_DIR:/auth:z,ro \
      -v $IRONIC_SHARED_VOLUME:/shared:z ${IRONIC_IMAGE}
-
-podman run -d --net host --name ironic-inspector \
-     --restart on-failure \
-     --env PROVISIONING_INTERFACE \
-     --env IRONIC_HTPASSWD \
-     --env INSPECTOR_HTPASSWD=${IRONIC_HTPASSWD} \
-     --env IRONIC_KERNEL_PARAMS \
-     --env HTTP_PORT \
-     --entrypoint /bin/runironic-inspector \
-     -v $AUTH_DIR:/auth:z,ro \
-     -v $IRONIC_SHARED_VOLUME:/shared:z "${IRONIC_IMAGE}"
