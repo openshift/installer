@@ -73,7 +73,7 @@ module "master" {
   ignition            = var.ignition_master
   sys_type            = var.powervs_sys_type
   proc_type           = var.powervs_proc_type
-  ssh_key_id          = ibm_pi_key.cluster_key.key_id
+  ssh_key_name        = ibm_pi_key.cluster_key.name
   image_id            = ibm_pi_image.boot_image.image_id
   dhcp_network_id     = module.pi_network.dhcp_network_id
   dhcp_id             = module.pi_network.dhcp_id

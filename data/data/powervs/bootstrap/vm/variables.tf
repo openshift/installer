@@ -42,9 +42,9 @@ variable "cluster_id" {
   description = "The ID created by the installer to uniquely identify the created cluster."
 }
 
-variable "ssh_key_id" {
+variable "ssh_key_name" {
   type        = string
-  description = "The SSH Key ID."
+  description = "The SSH Key name."
 }
 
 variable "cos_instance_location" {
