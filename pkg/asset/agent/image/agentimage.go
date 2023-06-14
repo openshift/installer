@@ -78,7 +78,7 @@ func (a *AgentImage) fetchAgentTuiFiles(releaseImage string, pullSecret string, 
 	files := []string{}
 
 	for _, srcFile := range agentTuiFilenames {
-		extracted, err := release.ExtractFile("agent-installer-node-agent", srcFile)
+		extracted, err := release.ExtractFile("agent-installer-utils", srcFile)
 		if err != nil {
 			return nil, err
 		}
