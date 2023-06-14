@@ -25,6 +25,7 @@ type Config struct {
 	AdditionalNTPSources []string `json:"additionalNTPSources,omitempty"`
 	// ip address of node0
 	RendezvousIP string `json:"rendezvousIP,omitempty"`
+	IPxeBaseURL  string `json:"ipxeBaseURL,omitempty"`
 	Hosts        []Host `json:"hosts,omitempty"`
 }
 
