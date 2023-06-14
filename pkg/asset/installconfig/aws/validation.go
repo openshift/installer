@@ -255,6 +255,36 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
 	}
+
+	if len(pool.AdditionalSecurityGroupIDs) > 0 {
+		allErrs = append(allErrs, validateSecurityGroupIDs(ctx, meta, fldPath.Child("additionalSecurityGroupIDs"), platform, pool)...)
+	}
+
+	return allErrs
+}
+
+func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	vpc, err := meta.VPC(ctx)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not determine cluster VPC: %s", err.Error())
+		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
+	}
+
+	securityGroups, err := DescribeSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
+	}
+
+	for _, sg := range securityGroups {
+		sgVpcID := *sg.VpcId
+		if sgVpcID != vpc {
+			errMsg := fmt.Sprintf("sg %s is associated with vpc %s not the provided vpc %s", *sg.GroupId, sgVpcID, vpc)
+			allErrs = append(allErrs, field.Invalid(fldPath, sgVpcID, errMsg))
+		}
+	}
+
 	return allErrs
 }
 

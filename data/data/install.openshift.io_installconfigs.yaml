@@ -161,6 +161,13 @@ spec:
                       description: AWS is the configuration used when installing on
                         AWS.
                       properties:
+                        additionalSecurityGroupIDs:
+                          description: AdditionalSecurityGroupIDs contains IDs of
+                            additional security groups for machines, where each ID
+                            is presented in the format sg-xxxx.
+                          items:
+                            type: string
+                          type: array
                         amiID:
                           description: AMIID is the AMI that should be used to boot
                             the ec2 instance. If set, the AMI should belong to the
@@ -1068,6 +1075,13 @@ spec:
                     description: AWS is the configuration used when installing on
                       AWS.
                     properties:
+                      additionalSecurityGroupIDs:
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in the format sg-xxxx.
+                        items:
+                          type: string
+                        type: array
                       amiID:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
@@ -2184,6 +2198,13 @@ spec:
                       used when installing on AWS for machine pools which do not define
                       their own platform configuration.
                     properties:
+                      additionalSecurityGroupIDs:
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in the format sg-xxxx.
+                        items:
+                          type: string
+                        type: array
                       amiID:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
