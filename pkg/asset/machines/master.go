@@ -528,6 +528,14 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		machineConfigs = append(machineConfigs, ignFIPS)
 	}
+	if ic.Platform.Name() == powervstypes.Name {
+		// always enable multipath for powervs.
+		ignMultipath, err := machineconfig.ForMultipathEnabled("master")
+		if err != nil {
+			return errors.Wrap(err, "failed to create ignition for Multipath enabled for master machines")
+		}
+		machineConfigs = append(machineConfigs, ignMultipath)
+	}
 
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
 	if err != nil {
