@@ -1946,9 +1946,18 @@ spec:
             - Passthrough
             - Manual
             type: string
+          featureGates:
+            description: 'FeatureGates enables a set of custom feature gates. May
+              only be used in conjunction with FeatureSet "CustomNoUpgrade". Features
+              may be enabled or disabled by providing a true or false value for the
+              feature gate. E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].'
+            items:
+              type: string
+            type: array
           featureSet:
             description: FeatureSet enables features that are not part of the default
-              feature set.
+              feature set. Valid values are "Default", "TechPreviewNoUpgrade" and
+              "CustomNoUpgrade". When omitted, the "Default" feature set is used.
             type: string
           fips:
             default: false

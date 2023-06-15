@@ -57,8 +57,11 @@ func Test_PrintFields(t *testing.T) {
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
  For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
 
+    featureGates <[]string>
+      FeatureGates enables a set of custom feature gates. May only be used in conjunction with FeatureSet "CustomNoUpgrade". Features may be enabled or disabled by providing a true or false value for the feature gate. E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].
+
     featureSet <string>
-      FeatureSet enables features that are not part of the default feature set.
+      FeatureSet enables features that are not part of the default feature set. Valid values are "Default", "TechPreviewNoUpgrade" and "CustomNoUpgrade". When omitted, the "Default" feature set is used.
 
     fips <boolean>
       Default: false

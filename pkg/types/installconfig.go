@@ -201,8 +201,17 @@ type InstallConfig struct {
 	Capabilities *Capabilities `json:"capabilities,omitempty"`
 
 	// FeatureSet enables features that are not part of the default feature set.
+	// Valid values are "Default", "TechPreviewNoUpgrade" and "CustomNoUpgrade".
+	// When omitted, the "Default" feature set is used.
 	// +optional
 	FeatureSet configv1.FeatureSet `json:"featureSet,omitempty"`
+
+	// FeatureGates enables a set of custom feature gates.
+	// May only be used in conjunction with FeatureSet "CustomNoUpgrade".
+	// Features may be enabled or disabled by providing a true or false value for the feature gate.
+	// E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].
+	// +optional
+	FeatureGates []string `json:"featureGates,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
