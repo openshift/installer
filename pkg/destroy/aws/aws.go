@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -138,13 +137,10 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	}
 
 	if o.HostedZoneRole != "" {
-		creds := stscreds.NewCredentials(awsSession, o.HostedZoneRole)
+		cfg := awssession.GetR53ClientCfg(awsSession, o.HostedZoneRole)
 		// This client is specifically for finding route53 zones,
-		// so it needs to use the "global" us-east-1 region.
-		cfg := &aws.Config{
-			Credentials: creds,
-			Region:      aws.String(endpoints.UsEast1RegionID),
-		}
+		// so it needs to use the global us-east-1 region.
+		cfg.Region = aws.String(endpoints.UsEast1RegionID)
 		tagClients = append(tagClients, resourcegroupstaggingapi.New(awsSession, cfg))
 	}
 
