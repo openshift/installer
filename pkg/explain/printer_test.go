@@ -153,7 +153,7 @@ func Test_PrintFields(t *testing.T) {
       HostedZone is the ID of an existing hosted zone into which to add DNS records for the cluster's internal API. An existing hosted zone can only be used when also using existing subnets. The hosted zone must be associated with the VPC containing the subnets. Leave the hosted zone unset to have the installer create the hosted zone on your behalf.
 
     hostedZoneRole <string>
-      HostedZoneRole is the ARN of a role to be assumed when performing operations on the provided HostedZone. HostedZoneRole can be used in a shared VPC scenario when the private hosted zone belongs to a different account than the rest of the cluster resources. If HostedZoneRole is set, HostedZone must also be set.
+      HostedZoneRole is the ARN of an IAM role to be assumed when performing operations on the provided HostedZone. HostedZoneRole can be used in a shared VPC scenario when the private hosted zone belongs to a different account than the rest of the cluster resources. If HostedZoneRole is set, HostedZone must also be set.
 
     lbType <string>
       LBType is an optional field to specify a load balancer type. 
