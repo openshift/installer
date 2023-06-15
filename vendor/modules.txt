@@ -425,6 +425,14 @@ github.com/daixiang0/gci/pkg/utils
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
+# github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed
+## explicit; go 1.15
+github.com/digitalocean/go-libvirt
+github.com/digitalocean/go-libvirt/internal/constants
+github.com/digitalocean/go-libvirt/internal/event
+github.com/digitalocean/go-libvirt/internal/go-xdr/xdr2
+github.com/digitalocean/go-libvirt/socket
+github.com/digitalocean/go-libvirt/socket/dialers
 # github.com/dimchansky/utfbom v1.1.1
 ## explicit
 github.com/dimchansky/utfbom
@@ -9211,6 +9219,7 @@ golang.org/x/crypto/sha3
 golang.org/x/crypto/ssh
 golang.org/x/crypto/ssh/agent
 golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
+golang.org/x/crypto/ssh/knownhosts
 # golang.org/x/exp v0.0.0-20240119083558-1b970713d09a
 ## explicit; go 1.20
 golang.org/x/exp/constraints
