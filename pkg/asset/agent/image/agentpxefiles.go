@@ -1,7 +1,6 @@
 package image
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -17,9 +16,6 @@ import (
 )
 
 const (
-	initrdimg = "initrd"
-	rootfsimg = "rootfs"
-	vmlinuz   = "vmlinuz"
 	// pxeAssetsPath is the path where pxe files are created.
 	pxeAssetsPath = "pxe"
 )
@@ -28,7 +24,7 @@ const (
 type AgentPXEFiles struct {
 	imageReader isoeditor.ImageReader
 	cpuArch     string
-	isoPath     string
+	tmpPath     string
 	ipxeBaseURL string
 }
 
@@ -37,24 +33,20 @@ var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
 // Dependencies returns the assets on which the AgentPXEFiles asset depends.
 func (a *AgentPXEFiles) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&Ignition{},
+		&AgentArtifacts{},
 		&config.AgentConfig{},
-		&BaseIso{},
 	}
 }
 
 // Generate generates the image files for PXE asset.
 func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
-	ignition := &Ignition{}
-	dependencies.Get(ignition)
+	agentArtifacts := &AgentArtifacts{}
+	dependencies.Get(agentArtifacts)
 
 	agentconfig := &config.AgentConfig{}
 	dependencies.Get(agentconfig)
 
-	baseImage := &BaseIso{}
-	dependencies.Get(baseImage)
-
-	a.isoPath = baseImage.File.Filename
+	a.tmpPath = agentArtifacts.TmpPath
 
 	tmpdir, err := os.MkdirTemp("", pxeAssetsPath)
 	if err != nil {
@@ -62,27 +54,15 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	}
 	defer os.RemoveAll(tmpdir)
 
-	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", initrdimg)
-	dstfilename := filepath.Join(tmpdir, fmt.Sprintf("%s.img", initrdimg))
-	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, dstfilename)
-	if err != nil {
-		return err
-	}
-
-	ignitionByte, err := json.Marshal(ignition.Config)
-	if err != nil {
-		return err
-	}
-
-	ignitionContent := &isoeditor.IgnitionContent{Config: ignitionByte}
-
-	custom, err := isoeditor.NewInitRamFSStreamReader(dstfilename, ignitionContent)
+	ignitionContent := &isoeditor.IgnitionContent{Config: agentArtifacts.IgnitionByte}
+	initrdImgPath := filepath.Join(a.tmpPath, "images", "pxeboot", "initrd.img")
+	custom, err := isoeditor.NewInitRamFSStreamReader(initrdImgPath, ignitionContent)
 	if err != nil {
 		return err
 	}
 
 	a.imageReader = custom
-	a.cpuArch = ignition.CPUArch
+	a.cpuArch = agentArtifacts.CPUArch
 	a.ipxeBaseURL = strings.Trim(agentconfig.Config.IPxeBaseURL, "/")
 
 	return nil
@@ -106,22 +86,28 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 
-	agentInitrdFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s.img", initrdimg, a.cpuArch))
+	agentInitrdFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent.%s-initrd.img", a.cpuArch))
 	err = a.copy(agentInitrdFile, a.imageReader)
 	if err != nil {
 		return err
 	}
 
-	srcfilename := fmt.Sprintf("images/pxeboot/%s.img", rootfsimg)
-	agentRootfsimgFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s.img", rootfsimg, a.cpuArch))
-	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, agentRootfsimgFile)
+	agentRootfsimgFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
+	fileReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "rootfs.img"))
+	if err != nil {
+		return err
+	}
+	err = a.copy(agentRootfsimgFile, fileReader)
 	if err != nil {
 		return err
 	}
 
-	srcfilename = fmt.Sprintf("images/pxeboot/%s", vmlinuz)
-	agentVmlinuzFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent-%s.%s", vmlinuz, a.cpuArch))
-	err = a.extractPXEFileFromISO(a.isoPath, srcfilename, agentVmlinuzFile)
+	agentVmlinuzFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch))
+	fileReader, err = os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
+	if err != nil {
+		return err
+	}
+	err = a.copy(agentVmlinuzFile, fileReader)
 	if err != nil {
 		return err
 	}
@@ -156,20 +142,6 @@ func (a *AgentPXEFiles) Files() []*asset.File {
 	return []*asset.File{}
 }
 
-func (a *AgentPXEFiles) extractPXEFileFromISO(isoPath, srcfilename, dstfilename string) error {
-	fileReader, err := isoeditor.GetFileFromISO(isoPath, srcfilename)
-	if err != nil {
-		return err
-	}
-	defer fileReader.Close()
-
-	err = a.copy(dstfilename, fileReader)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func (a *AgentPXEFiles) copy(filepath string, src io.Reader) error {
 	output, err := os.Create(filepath)
 	if err != nil {
@@ -193,9 +165,9 @@ boot
 `
 
 	iPXEScript := fmt.Sprintf(iPXEScriptTemplate, ipxeBaseURL,
-		fmt.Sprintf("agent-%s.%s.img", initrdimg, cpuArch), ipxeBaseURL,
-		fmt.Sprintf("agent-%s", vmlinuz), ipxeBaseURL,
-		fmt.Sprintf("agent-%s.%s", rootfsimg, cpuArch))
+		fmt.Sprintf("agent.%s-initrd.img", a.cpuArch), ipxeBaseURL,
+		fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch), ipxeBaseURL,
+		fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
 
 	iPXEFile := fmt.Sprintf("agent.%s.ipxe", a.cpuArch)
 
