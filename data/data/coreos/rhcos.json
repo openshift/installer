@@ -1,8 +1,8 @@
 {
   "stream": "rhcos-4.14",
   "metadata": {
-    "last-modified": "2023-06-14T17:23:18Z",
-    "generator": "plume cosa2stream 14982ae"
+    "last-modified": "2023-06-16T14:55:03Z",
+    "generator": "plume cosa2stream 1981a4f"
   },
   "architectures": {
     "aarch64": {
@@ -874,8 +874,8 @@
         },
         "kubevirt": {
           "release": "414.92.202306141028-0",
-          "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev",
-          "digest-ref": ""
+          "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev:4.14-9.2-kubevirt",
+          "digest-ref": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:feb95bc358d521534f7490ff69bb9c422374bc26e78311d6bf4228bd2a6d5293"
         }
       },
       "rhel-coreos-extensions": {
