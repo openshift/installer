@@ -145,6 +145,7 @@ then
 	cp cvo-bootstrap/manifests/* manifests/
 	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
 	cp auth/kubeconfig-loopback /etc/kubernetes/kubeconfig
+        chmod 600 /etc/kubernetes/kubeconfig
 
 	touch cvo-bootstrap.done
     record_service_stage_success
