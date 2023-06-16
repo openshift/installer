@@ -10,14 +10,39 @@ provider "vsphere" {
   allow_unverified_ssl = false
 }
 
+
+data "vsphere_datacenter" "datacenter" {
+  count = 1
+  name  = var.vsphere_control_planes[count.index].workspace.datacenter
+}
+
+data "vsphere_resource_pool" "resource_pool" {
+  count = 1
+  name  = var.vsphere_control_planes[count.index].workspace.resourcePool
+}
+
+data "vsphere_datastore" "datastore" {
+  count         = 1
+  name          = var.vsphere_control_planes[count.index].workspace.datastore
+  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
+}
+
+data "vsphere_virtual_machine" "template" {
+  count         = 1
+  name          = var.vsphere_control_planes[count.index].template
+  datacenter_id = data.vsphere_datacenter.datacenter[count.index].id
+}
+
 resource "vsphere_virtual_machine" "vm_bootstrap" {
+  count = 1
+
   name                        = "${var.cluster_id}-bootstrap"
-  resource_pool_id            = var.resource_pool[0].id
-  datastore_id                = var.datastore[0].id
+  resource_pool_id            = data.vsphere_resource_pool.resource_pool[count.index].id
+  datastore_id                = data.vsphere_datastore.datastore[count.index].id
   num_cpus                    = var.vsphere_control_planes[0].numCPUs
   num_cores_per_socket        = var.vsphere_control_planes[0].numCoresPerSocket
   memory                      = var.vsphere_control_planes[0].memoryMiB
-  guest_id                    = var.template[0].guest_id
+  guest_id                    = data.vsphere_virtual_machine.template[count.index].guest_id
   folder                      = trimprefix(var.vsphere_control_planes[0].workspace.folder, "/${var.vsphere_control_planes[0].workspace.datacenter}/vm")
   enable_disk_uuid            = "true"
   annotation                  = local.description
@@ -27,19 +52,19 @@ resource "vsphere_virtual_machine" "vm_bootstrap" {
   firmware                    = "efi"
 
   network_interface {
-    network_id = var.template[0].network_interfaces.0.network_id
+    network_id = var.vsphere_control_planes[0].network.devices[0].networkName
   }
 
   disk {
     label = "disk0"
     size  = var.vsphere_control_planes[0].diskGiB
 
-    eagerly_scrub    = var.template[0].disks.0.eagerly_scrub
-    thin_provisioned = var.template[0].disks.0.thin_provisioned
+    eagerly_scrub    = data.vsphere_virtual_machine.template[count.index].disks.0.eagerly_scrub
+    thin_provisioned = data.vsphere_virtual_machine.template[count.index].disks.0.thin_provisioned
   }
 
   clone {
-    template_uuid = var.template[0].uuid
+    template_uuid = data.vsphere_virtual_machine.template[count.index].uuid
   }
 
   extra_config = {

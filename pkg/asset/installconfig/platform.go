@@ -18,7 +18,6 @@ import (
 	libvirtconfig "github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	nutanixconfig "github.com/openshift/installer/pkg/asset/installconfig/nutanix"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
-	ovirtconfig "github.com/openshift/installer/pkg/asset/installconfig/ovirt"
 	powervsconfig "github.com/openshift/installer/pkg/asset/installconfig/powervs"
 	vsphereconfig "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
@@ -101,10 +100,7 @@ func (a *platform) Generate(asset.Parents) error {
 			return err
 		}
 	case ovirt.Name:
-		a.Ovirt, err = ovirtconfig.Platform()
-		if err != nil {
-			return err
-		}
+		return fmt.Errorf("platform oVirt is no longer supported")
 	case vsphere.Name:
 		a.VSphere, err = vsphereconfig.Platform()
 		if err != nil {

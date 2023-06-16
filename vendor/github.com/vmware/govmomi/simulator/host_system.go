@@ -58,11 +58,15 @@ func NewHostSystem(host mo.HostSystem) *HostSystem {
 	hs.Summary.Runtime = &hs.Runtime
 	hs.Summary.Runtime.BootTime = &now
 
+	// shallow copy Summary.Hardware, as each host will be assigned its own .Uuid
 	hardware := *host.Summary.Hardware
 	hs.Summary.Hardware = &hardware
 
-	info := *esx.HostHardwareInfo
-	hs.Hardware = &info
+	if hs.Hardware == nil {
+		// shallow copy Hardware, as each host will be assigned its own .Uuid
+		info := *esx.HostHardwareInfo
+		hs.Hardware = &info
+	}
 
 	cfg := new(types.HostConfigInfo)
 	deepCopy(hs.Config, cfg)
@@ -172,14 +176,14 @@ func CreateDefaultESX(ctx *Context, f *Folder) {
 	cr.Name = host.Name
 	cr.Host = append(cr.Host, host.Reference())
 	host.Network = cr.Network
-	Map.PutEntity(cr, host)
+	ctx.Map.PutEntity(cr, host)
 
 	pool := NewResourcePool()
 	cr.ResourcePool = &pool.Self
-	Map.PutEntity(cr, pool)
+	ctx.Map.PutEntity(cr, pool)
 	pool.Owner = cr.Self
 
-	folderPutChild(ctx, &Map.Get(dc.HostFolder).(*Folder).Folder, cr)
+	folderPutChild(ctx, &ctx.Map.Get(dc.HostFolder).(*Folder).Folder, cr)
 }
 
 // CreateStandaloneHost uses esx.HostSystem as a template, applying the given spec
@@ -189,8 +193,20 @@ func CreateStandaloneHost(ctx *Context, f *Folder, spec types.HostConnectSpec) (
 		return nil, &types.NoHost{}
 	}
 
+	template := esx.HostSystem
+	network := ctx.Map.getEntityDatacenter(f).defaultNetwork()
+
+	if p := ctx.Map.FindByName(spec.UserName, f.ChildEntity); p != nil {
+		cr := p.(*mo.ComputeResource)
+		h := ctx.Map.Get(cr.Host[0])
+		// "clone" an existing host from the inventory
+		template = h.(*HostSystem).HostSystem
+		template.Vm = nil
+		network = cr.Network
+	}
+
 	pool := NewResourcePool()
-	host := NewHostSystem(esx.HostSystem)
+	host := NewHostSystem(template)
 	host.configure(spec, false)
 
 	summary := new(types.ComputeResourceSummary)
@@ -204,13 +220,13 @@ func CreateStandaloneHost(ctx *Context, f *Folder, spec types.HostConnectSpec) (
 		EnvironmentBrowser: newEnvironmentBrowser(),
 	}
 
-	Map.PutEntity(cr, Map.NewEntity(host))
+	ctx.Map.PutEntity(cr, ctx.Map.NewEntity(host))
 	host.Summary.Host = &host.Self
 
-	Map.PutEntity(cr, Map.NewEntity(pool))
+	ctx.Map.PutEntity(cr, ctx.Map.NewEntity(pool))
 
 	cr.Name = host.Name
-	cr.Network = Map.getEntityDatacenter(f).defaultNetwork()
+	cr.Network = network
 	cr.Host = append(cr.Host, host.Reference())
 	cr.ResourcePool = &pool.Self
 
@@ -229,7 +245,7 @@ func (h *HostSystem) DestroyTask(ctx *Context, req *types.Destroy_Task) soap.Has
 
 		ctx.postEvent(&types.HostRemovedEvent{HostEvent: h.event()})
 
-		f := Map.getEntityParent(h, "Folder").(*Folder)
+		f := ctx.Map.getEntityParent(h, "Folder").(*Folder)
 		folderRemoveChild(ctx, &f.Folder, h.Reference())
 
 		return nil, nil
@@ -263,6 +279,32 @@ func (h *HostSystem) ExitMaintenanceModeTask(ctx *Context, spec *types.ExitMaint
 
 	return &methods.ExitMaintenanceMode_TaskBody{
 		Res: &types.ExitMaintenanceMode_TaskResponse{
+			Returnval: task.Run(ctx),
+		},
+	}
+}
+
+func (h *HostSystem) DisconnectHostTask(ctx *Context, spec *types.DisconnectHost_Task) soap.HasFault {
+	task := CreateTask(h, "disconnectHost", func(t *Task) (types.AnyType, types.BaseMethodFault) {
+		h.Runtime.ConnectionState = types.HostSystemConnectionStateDisconnected
+		return nil, nil
+	})
+
+	return &methods.DisconnectHost_TaskBody{
+		Res: &types.DisconnectHost_TaskResponse{
+			Returnval: task.Run(ctx),
+		},
+	}
+}
+
+func (h *HostSystem) ReconnectHostTask(ctx *Context, spec *types.ReconnectHost_Task) soap.HasFault {
+	task := CreateTask(h, "reconnectHost", func(t *Task) (types.AnyType, types.BaseMethodFault) {
+		h.Runtime.ConnectionState = types.HostSystemConnectionStateConnected
+		return nil, nil
+	})
+
+	return &methods.ReconnectHost_TaskBody{
+		Res: &types.ReconnectHost_TaskResponse{
 			Returnval: task.Run(ctx),
 		},
 	}

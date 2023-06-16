@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
 	awss "github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
@@ -17,10 +18,10 @@ import (
 
 // API represents the calls made to the API.
 type API interface {
-	GetHostedZone(hostedZone string) (*route53.GetHostedZoneOutput, error)
-	ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig) field.ErrorList
+	GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.GetHostedZoneOutput, error)
+	ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig, cfg *aws.Config) field.ErrorList
 	GetBaseDomain(baseDomainName string) (*route53.HostedZone, error)
-	GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig) ([]string, error)
+	GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig, cfg *aws.Config) ([]string, error)
 }
 
 // Client makes calls to the AWS Route53 API.
@@ -37,9 +38,9 @@ func NewClient(ssn *awss.Session) *Client {
 }
 
 // GetHostedZone attempts to get the hosted zone from the AWS Route53 instance
-func (c *Client) GetHostedZone(hostedZone string) (*route53.GetHostedZoneOutput, error) {
+func (c *Client) GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.GetHostedZoneOutput, error) {
 	// build a new Route53 instance from the same session that made it here
-	r53 := route53.New(c.ssn)
+	r53 := route53.New(c.ssn, cfg)
 
 	// validate that the hosted zone exists
 	hostedZoneOutput, err := r53.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(hostedZone)})
@@ -50,10 +51,10 @@ func (c *Client) GetHostedZone(hostedZone string) (*route53.GetHostedZoneOutput,
 }
 
 // ValidateZoneRecords Attempts to validate each of the candidate HostedZones against the Config
-func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig) field.ErrorList {
+func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig, cfg *aws.Config) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	problematicRecords, err := c.GetSubDomainDNSRecords(zone, ic)
+	problematicRecords, err := c.GetSubDomainDNSRecords(zone, ic, cfg)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(zonePath,
 			errors.Wrapf(err, "could not list record sets for domain %q", zoneName)))
@@ -72,7 +73,7 @@ func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, 
 
 // GetSubDomainDNSRecords Validates the hostedZone against the cluster domain, and ensures that the
 // cluster domain does not have a current record set for the hostedZone
-func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig) ([]string, error) {
+func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig, cfg *aws.Config) ([]string, error) {
 	dottedClusterDomain := ic.ClusterDomain() + "."
 
 	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
@@ -80,7 +81,7 @@ func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *type
 		return nil, errors.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
 	}
 
-	r53 := route53.New(c.ssn)
+	r53 := route53.New(c.ssn, cfg)
 
 	var problematicRecords []string
 	// validate that the hosted zone does not already have any record sets for the cluster domain
@@ -133,4 +134,15 @@ func (c *Client) GetBaseDomain(baseDomainName string) (*route53.HostedZone, erro
 		return nil, errors.Wrapf(err, "could not find public zone: %s", baseDomainName)
 	}
 	return baseDomainZone, nil
+}
+
+// GetR53ClientCfg creates a config for the route53 client by determining
+// whether it is needed to obtain STS assume role credentials.
+func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
+	if roleARN == "" {
+		return nil
+	}
+
+	creds := stscreds.NewCredentials(sess, roleARN)
+	return &aws.Config{Credentials: creds}
 }

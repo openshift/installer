@@ -255,6 +255,36 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
 	}
+
+	if len(pool.AdditionalSecurityGroupIDs) > 0 {
+		allErrs = append(allErrs, validateSecurityGroupIDs(ctx, meta, fldPath.Child("additionalSecurityGroupIDs"), platform, pool)...)
+	}
+
+	return allErrs
+}
+
+func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	vpc, err := meta.VPC(ctx)
+	if err != nil {
+		errMsg := fmt.Sprintf("could not determine cluster VPC: %s", err.Error())
+		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
+	}
+
+	securityGroups, err := DescribeSecurityGroups(ctx, meta.session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	if err != nil {
+		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
+	}
+
+	for _, sg := range securityGroups {
+		sgVpcID := *sg.VpcId
+		if sgVpcID != vpc {
+			errMsg := fmt.Sprintf("sg %s is associated with vpc %s not the provided vpc %s", *sg.GroupId, sgVpcID, vpc)
+			allErrs = append(allErrs, field.Invalid(fldPath, sgVpcID, errMsg))
+		}
+	}
+
 	return allErrs
 }
 
@@ -385,21 +415,22 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 	var zonePath *field.Path
 	var zone *route53.HostedZone
 
-	errors := field.ErrorList{}
 	allErrs := field.ErrorList{}
+	r53cfg := GetR53ClientCfg(metadata.session, ic.AWS.HostedZoneRole)
 
 	if ic.AWS.HostedZone != "" {
 		zoneName = ic.AWS.HostedZone
 		zonePath = field.NewPath("aws", "hostedZone")
-		zoneOutput, err := client.GetHostedZone(zoneName)
+		zoneOutput, err := client.GetHostedZone(zoneName, r53cfg)
 		if err != nil {
+			errMsg := errors.Wrapf(err, "unable to retrieve hosted zone").Error()
 			return field.ErrorList{
-				field.Invalid(zonePath, zoneName, "cannot find hosted zone"),
+				field.Invalid(zonePath, zoneName, errMsg),
 			}.ToAggregate()
 		}
 
-		if errors = validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errors) > 0 {
-			allErrs = append(allErrs, errors...)
+		if errs := validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errs) > 0 {
+			allErrs = append(allErrs, errs...)
 		}
 
 		zone = zoneOutput.HostedZone
@@ -416,8 +447,8 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 		zone = baseDomainOutput
 	}
 
-	if errors = client.ValidateZoneRecords(zone, zoneName, zonePath, ic); len(errors) > 0 {
-		allErrs = append(allErrs, errors...)
+	if errs := client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errs) > 0 {
+		allErrs = append(allErrs, errs...)
 	}
 
 	return allErrs.ToAggregate()

@@ -280,6 +280,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 			machineConfigs = append(machineConfigs, ignFIPS)
 		}
+		if ic.Platform.Name() == powervstypes.Name {
+			// always enable multipath for powervs.
+			ignMultipath, err := machineconfig.ForMultipathEnabled("worker")
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition for multipath enabled for worker machines")
+			}
+			machineConfigs = append(machineConfigs, ignMultipath)
+		}
+
 		switch ic.Platform.Name() {
 		case alibabacloudtypes.Name:
 			client, err := installConfig.AlibabaCloud.Client()

@@ -13,6 +13,8 @@ import (
 const (
 	// DefaultCloudName is the default name of the cloud in clouds.yaml file.
 	DefaultCloudName = "openstack"
+	// DualStackVIPsPortTag is the identifier of VIPs Port with dual-stack addresses.
+	DualStackVIPsPortTag = "-dual-stack-vips-port"
 )
 
 // SetPlatformDefaults sets the defaults for the platform.

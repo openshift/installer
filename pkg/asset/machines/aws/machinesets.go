@@ -63,18 +63,19 @@ func MachineSets(clusterID string, region string, subnets icaws.Subnets, pool *t
 		}
 
 		provider, err := provider(&machineProviderInput{
-			clusterID:      clusterID,
-			region:         region,
-			subnet:         subnet.ID,
-			instanceType:   instanceType,
-			osImage:        mpool.AMIID,
-			zone:           az,
-			role:           "worker",
-			userDataSecret: userDataSecret,
-			root:           &mpool.EC2RootVolume,
-			imds:           mpool.EC2Metadata,
-			userTags:       userTags,
-			publicSubnet:   publicSubnet,
+			clusterID:        clusterID,
+			region:           region,
+			subnet:           subnet.ID,
+			instanceType:     instanceType,
+			osImage:          mpool.AMIID,
+			zone:             az,
+			role:             "worker",
+			userDataSecret:   userDataSecret,
+			root:             &mpool.EC2RootVolume,
+			imds:             mpool.EC2Metadata,
+			userTags:         userTags,
+			publicSubnet:     publicSubnet,
+			securityGroupIDs: pool.Platform.AWS.AdditionalSecurityGroupIDs,
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")

@@ -75,6 +75,7 @@ spec:
                   - Storage
                   - CSISnapshot
                   - NodeTuning
+                  - MachineAPI
                   type: string
                 type: array
               baselineCapabilitySet:
@@ -86,6 +87,7 @@ spec:
                 - v4.11
                 - v4.12
                 - v4.13
+                - v4.14
                 - vCurrent
                 type: string
             type: object
@@ -159,6 +161,13 @@ spec:
                       description: AWS is the configuration used when installing on
                         AWS.
                       properties:
+                        additionalSecurityGroupIDs:
+                          description: AdditionalSecurityGroupIDs contains IDs of
+                            additional security groups for machines, where each ID
+                            is presented in the format sg-xxxx.
+                          items:
+                            type: string
+                          type: array
                         amiID:
                           description: AMIID is the AMI that should be used to boot
                             the ec2 instance. If set, the AMI should belong to the
@@ -1066,6 +1075,13 @@ spec:
                     description: AWS is the configuration used when installing on
                       AWS.
                     properties:
+                      additionalSecurityGroupIDs:
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in the format sg-xxxx.
+                        items:
+                          type: string
+                        type: array
                       amiID:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
@@ -1930,9 +1946,18 @@ spec:
             - Passthrough
             - Manual
             type: string
+          featureGates:
+            description: 'FeatureGates enables a set of custom feature gates. May
+              only be used in conjunction with FeatureSet "CustomNoUpgrade". Features
+              may be enabled or disabled by providing a true or false value for the
+              feature gate. E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].'
+            items:
+              type: string
+            type: array
           featureSet:
             description: FeatureSet enables features that are not part of the default
-              feature set.
+              feature set. Valid values are "Default", "TechPreviewNoUpgrade" and
+              "CustomNoUpgrade". When omitted, the "Default" feature set is used.
             type: string
           fips:
             default: false
@@ -2182,6 +2207,13 @@ spec:
                       used when installing on AWS for machine pools which do not define
                       their own platform configuration.
                     properties:
+                      additionalSecurityGroupIDs:
+                        description: AdditionalSecurityGroupIDs contains IDs of additional
+                          security groups for machines, where each ID is presented
+                          in the format sg-xxxx.
+                        items:
+                          type: string
+                        type: array
                       amiID:
                         description: AMIID is the AMI that should be used to boot
                           the ec2 instance. If set, the AMI should belong to the same
@@ -2264,6 +2296,14 @@ spec:
                       subnets. The hosted zone must be associated with the VPC containing
                       the subnets. Leave the hosted zone unset to have the installer
                       create the hosted zone on your behalf.
+                    type: string
+                  hostedZoneRole:
+                    description: HostedZoneRole is the ARN of a role to be assumed
+                      when performing operations on the provided HostedZone. HostedZoneRole
+                      can be used in a shared VPC scenario when the private hosted
+                      zone belongs to a different account than the rest of the cluster
+                      resources. If HostedZoneRole is set, HostedZone must also be
+                      set.
                     type: string
                   lbType:
                     description: "LBType is an optional field to specify a load balancer
@@ -2498,9 +2538,7 @@ spec:
                     description: UserTags has additional keys and values that the
                       installer will add as tags to all resources that it creates
                       on AzurePublicCloud alone. Resources created by the cluster
-                      itself may not include these tags. This is a TechPreview feature
-                      and requires setting featureSet to TechPreviewNoUpgrade to configure
-                      the tags.
+                      itself may not include these tags.
                     type: object
                   virtualNetwork:
                     description: VirtualNetwork specifies the name of an existing
@@ -4119,6 +4157,13 @@ spec:
                               maxLength: 2048
                               minLength: 1
                               pattern: ^/.*?/host/.*?/Resources.*
+                              type: string
+                            template:
+                              description: template is the inventory path of the virtual
+                                machine or template that will be used for cloning.
+                              maxLength: 2048
+                              minLength: 1
+                              pattern: ^/.*?/vm/.*?
                               type: string
                           required:
                           - computeCluster

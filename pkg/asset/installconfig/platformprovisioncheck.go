@@ -86,11 +86,7 @@ func (a *PlatformProvisionCheck) Generate(dependencies asset.Parents) error {
 			return err
 		}
 	case gcp.Name:
-		client, err := gcpconfig.NewClient(context.TODO())
-		if err != nil {
-			return err
-		}
-		err = gcpconfig.ValidatePreExistingPublicDNS(client, ic.Config)
+		err := gcpconfig.ValidateForProvisioning(ic.Config)
 		if err != nil {
 			return err
 		}

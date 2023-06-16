@@ -252,6 +252,8 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			// We now support ipv6-primary dual stack on baremetal
 			allowV6Primary = true
 		case p.VSphere != nil:
+			// as well as on vSphere
+			allowV6Primary = true
 		case p.OpenStack != nil:
 		case p.Ovirt != nil:
 		case p.Nutanix != nil:
@@ -531,9 +533,6 @@ func validateVIPsForPlatform(network *types.Networking, platform *types.Platform
 
 		allErrs = append(allErrs, validateAPIAndIngressVIPs(virtualIPs, newVIPsFields, true, true, network, fldPath.Child(openstack.Name))...)
 	case platform.VSphere != nil:
-		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.APIVIPs, fldPath.Child(vsphere.Name, newVIPsFields.APIVIPs))...)
-		allErrs = append(allErrs, ensureIPv4IsFirstInDualStackSlice(&platform.VSphere.IngressVIPs, fldPath.Child(vsphere.Name, newVIPsFields.IngressVIPs))...)
-
 		virtualIPs = vips{
 			API:     platform.VSphere.APIVIPs,
 			Ingress: platform.VSphere.IngressVIPs,
@@ -1043,17 +1042,46 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
 	}
 
+	if len(c.FeatureGates) > 0 {
+		if c.FeatureSet != configv1.CustomNoUpgrade {
+			allErrs = append(allErrs, field.Forbidden(field.NewPath("featureGates"), "featureGates can only be used with the CustomNoUpgrade feature set"))
+		}
+		allErrs = append(allErrs, validateCustomFeatureGates(c)...)
+	}
+
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
 
-		if c.Azure != nil && len(c.Azure.UserTags) > 0 {
-			allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "azure", "userTags"), errMsg))
+		if c.AWS != nil {
+			if len(c.AWS.HostedZoneRole) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "aws", "hostedZoneRole"), errMsg))
+			}
 		}
 
 		if c.OpenStack != nil {
 			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
 				allErrs = append(allErrs, field.Forbidden(f, errMsg))
 			}
+		}
+	}
+
+	return allErrs
+}
+
+// validateCustomFeatureGates checks that all provided custom features match the expected format.
+// The expected format is <FeatureName>=<Enabled>.
+func validateCustomFeatureGates(c *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	for i, rawFeature := range c.FeatureGates {
+		featureParts := strings.Split(rawFeature, "=")
+		if len(featureParts) != 2 {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("featureGates").Index(i), rawFeature, "must match the format <feature-name>=<bool>"))
+			continue
+		}
+
+		if _, err := strconv.ParseBool(featureParts[1]); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("featureGates").Index(i), rawFeature, "must match the format <feature-name>=<bool>, could not parse boolean value"))
 		}
 	}
 

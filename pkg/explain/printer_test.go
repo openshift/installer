@@ -57,8 +57,11 @@ func Test_PrintFields(t *testing.T) {
  There are three possible values for this field, but the valid values are dependent upon the platform being used. "Mint": create new credentials with a subset of the overall permissions for each CredentialsRequest "Passthrough": copy the credentials with all of the overall permissions for each CredentialsRequest "Manual": CredentialsRequests must be handled manually by the user 
  For each of the following platforms, the field can set to the specified values. For all other platforms, the field must not be set. AWS: "Mint", "Passthrough", "Manual" Azure: "Passthrough", "Manual" AzureStack: "Manual" GCP: "Mint", "Passthrough", "Manual" IBMCloud: "Manual" AlibabaCloud: "Manual" PowerVS: "Manual" Nutanix: "Manual"
 
+    featureGates <[]string>
+      FeatureGates enables a set of custom feature gates. May only be used in conjunction with FeatureSet "CustomNoUpgrade". Features may be enabled or disabled by providing a true or false value for the feature gate. E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].
+
     featureSet <string>
-      FeatureSet enables features that are not part of the default feature set.
+      FeatureSet enables features that are not part of the default feature set. Valid values are "Default", "TechPreviewNoUpgrade" and "CustomNoUpgrade". When omitted, the "Default" feature set is used.
 
     fips <boolean>
       Default: false
@@ -156,6 +159,9 @@ func Test_PrintFields(t *testing.T) {
     hostedZone <string>
       HostedZone is the ID of an existing hosted zone into which to add DNS records for the cluster's internal API. An existing hosted zone can only be used when also using existing subnets. The hosted zone must be associated with the VPC containing the subnets. Leave the hosted zone unset to have the installer create the hosted zone on your behalf.
 
+    hostedZoneRole <string>
+      HostedZoneRole is the ARN of a role to be assumed when performing operations on the provided HostedZone. HostedZoneRole can be used in a shared VPC scenario when the private hosted zone belongs to a different account than the rest of the cluster resources. If HostedZoneRole is set, HostedZone must also be set.
+
     lbType <string>
       LBType is an optional field to specify a load balancer type. 
  When this field is specified, the default ingresscontroller will be created using the specified load-balancer type. 
@@ -219,7 +225,7 @@ func Test_PrintFields(t *testing.T) {
       ResourceGroupName is the name of an already existing resource group where the cluster should be installed. This resource group should only be used for this specific cluster and the cluster components will assume ownership of all resources in the resource group. Destroying the cluster using installer will delete this resource group. This resource group must be empty with no other resources when trying to use it for creating a cluster. If empty, a new resource group will created for the cluster.
 
     userTags <object>
-      UserTags has additional keys and values that the installer will add as tags to all resources that it creates on AzurePublicCloud alone. Resources created by the cluster itself may not include these tags. This is a TechPreview feature and requires setting featureSet to TechPreviewNoUpgrade to configure the tags.
+      UserTags has additional keys and values that the installer will add as tags to all resources that it creates on AzurePublicCloud alone. Resources created by the cluster itself may not include these tags.
 
     virtualNetwork <string>
       VirtualNetwork specifies the name of an existing VNet for the installer to use`,
