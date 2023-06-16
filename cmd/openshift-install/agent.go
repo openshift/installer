@@ -6,6 +6,7 @@ import (
 	"github.com/openshift/installer/cmd/openshift-install/agent"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/configimage"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/mirror"
@@ -70,6 +71,21 @@ var (
 		},
 	}
 
+	agentConfigImageTarget = target{
+		name: "Agent Config Image",
+		command: &cobra.Command{
+			Use:   "config-image",
+			Short: "Generates an ISO containing configuration files only",
+			Args:  cobra.ExactArgs(0),
+		},
+		assets: []asset.WritableAsset{
+			&configimage.ConfigImage{},
+			&kubeconfig.AgentAdminClient{},
+			&password.KubeadminPassword{},
+		},
+	}
+
+	//nolint:varcheck,deadcode
 	agentPXEFilesTarget = target{
 		name: "Agent PXE Files",
 		command: &cobra.Command{
@@ -84,7 +100,7 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget}
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget}
 )
 
 func newAgentCreateCmd() *cobra.Command {
