@@ -123,6 +123,7 @@ aliases:
     - marmijo
     - RishabhSaini
     - Adam0Brien
+    - lukewarmtemp
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -141,6 +142,7 @@ aliases:
     - marmijo
     - RishabhSaini
     - Adam0Brien
+    - lukewarmtemp
   agent-reviewers:
     - andfasano
     - bfournie
