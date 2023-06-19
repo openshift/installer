@@ -69,6 +69,21 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 
 ## OpenStack Requirements
 
+The OpenShift installation on OpenStack platform relies on a number of core
+services being available:
+
+- Keystone
+- Neutron
+- Nova
+  - with Metadata service enabled
+- Glance
+- Storage solution for the image registry, one of:
+  - Swift
+  - Cinder
+
+When deploying with the [Kuryr SDN](kuryr.md), the Octavia Load Balancing
+service becomes a hard requirement.
+
 In order to run the latest version of the installer in OpenStack, at a bare minimum you need the following quota to run a *default* cluster. While it is possible to run the cluster with fewer resources than this, it is not recommended. Certain cases, such as deploying [without FIPs](#without-floating-ips), or deploying with an [external load balancer](#using-an-external-load-balancer) are documented below, and are not included in the scope of this recommendation. If you are planning on using Kuryr, or want to learn more about it, please read through the [Kuryr documentation](kuryr.md).
 
 For a successful installation it is required:
