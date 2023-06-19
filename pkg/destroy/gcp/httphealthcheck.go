@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -8,17 +10,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listHTTPHealthChecks() ([]cloudResource, error) {
-	return o.listHTTPHealthChecksWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listHTTPHealthChecks(ctx context.Context) ([]cloudResource, error) {
+	return o.listHTTPHealthChecksWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listHTTPHealthChecksWithFilter lists HTTP Health Checks in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listHTTPHealthChecksWithFilter(fields string, filter string, filterFunc func(*compute.HttpHealthCheck) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listHTTPHealthChecksWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.HttpHealthCheck) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing HTTP health checks")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.HttpHealthChecks.List(o.ProjectID).Fields(googleapi.Field(fields))
@@ -51,9 +53,9 @@ func (o *ClusterUninstaller) listHTTPHealthChecksWithFilter(fields string, filte
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteHTTPHealthCheck(item cloudResource) error {
+func (o *ClusterUninstaller) deleteHTTPHealthCheck(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting HTTP health check %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.HttpHealthChecks.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -74,14 +76,14 @@ func (o *ClusterUninstaller) deleteHTTPHealthCheck(item cloudResource) error {
 
 // destroyHTTPHealthChecks removes all HTTP health check resources that have a name prefixed
 // with the cluster's infra ID
-func (o *ClusterUninstaller) destroyHTTPHealthChecks() error {
-	found, err := o.listHTTPHealthChecks()
+func (o *ClusterUninstaller) destroyHTTPHealthChecks(ctx context.Context) error {
+	found, err := o.listHTTPHealthChecks(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("httphealthcheck", found)
 	for _, item := range items {
-		err := o.deleteHTTPHealthCheck(item)
+		err := o.deleteHTTPHealthCheck(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

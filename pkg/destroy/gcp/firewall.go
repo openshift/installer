@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -8,20 +10,20 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listFirewalls() ([]cloudResource, error) {
-	return o.listFirewallsWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listFirewalls(ctx context.Context) ([]cloudResource, error) {
+	return o.listFirewallsWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listFirewallsWithFilter lists firewall rules in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listFirewallsWithFilter(fields string, filter string, filterFunc func(*compute.Firewall) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.Firewall) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing firewall rules")
 	results := []cloudResource{}
 
 	findFirewallRules := func(projectID string) ([]cloudResource, error) {
-		ctx, cancel := o.contextWithTimeout()
+		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 		defer cancel()
 		result := []cloudResource{}
 		req := o.computeSvc.Firewalls.List(projectID).Fields(googleapi.Field(fields))
@@ -74,9 +76,9 @@ func (o *ClusterUninstaller) listFirewallsWithFilter(fields string, filter strin
 	return results, nil
 }
 
-func (o *ClusterUninstaller) deleteFirewall(item cloudResource) error {
+func (o *ClusterUninstaller) deleteFirewall(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting firewall rule %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Firewalls.Delete(item.project, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -97,14 +99,14 @@ func (o *ClusterUninstaller) deleteFirewall(item cloudResource) error {
 
 // destroyFirewalls removes all firewall resources that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyFirewalls() error {
-	found, err := o.listFirewalls()
+func (o *ClusterUninstaller) destroyFirewalls(ctx context.Context) error {
+	found, err := o.listFirewalls(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("firewall", found)
 	for _, item := range items {
-		err := o.deleteFirewall(item)
+		err := o.deleteFirewall(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

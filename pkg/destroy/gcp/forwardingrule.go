@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -8,17 +10,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listForwardingRules() ([]cloudResource, error) {
-	return o.listForwardingRulesWithFilter("items(name,region,loadBalancingScheme),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listForwardingRules(ctx context.Context) ([]cloudResource, error) {
+	return o.listForwardingRulesWithFilter(ctx, "items(name,region,loadBalancingScheme),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listForwardingRulesWithFilter lists forwarding rules in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listForwardingRulesWithFilter(fields string, filter string, filterFunc func(*compute.ForwardingRule) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listForwardingRulesWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.ForwardingRule) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing forwarding rules")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.ForwardingRules.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
@@ -59,9 +61,9 @@ func (o *ClusterUninstaller) listForwardingRulesWithFilter(fields string, filter
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteForwardingRule(item cloudResource) error {
+func (o *ClusterUninstaller) deleteForwardingRule(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting forwarding rule %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.ForwardingRules.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -82,14 +84,14 @@ func (o *ClusterUninstaller) deleteForwardingRule(item cloudResource) error {
 
 // destroyForwardingRules removes all forwarding rules with a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyForwardingRules() error {
-	found, err := o.listForwardingRules()
+func (o *ClusterUninstaller) destroyForwardingRules(ctx context.Context) error {
+	found, err := o.listForwardingRules(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("forwardingrule", found)
 	for _, item := range items {
-		err := o.deleteForwardingRule(item)
+		err := o.deleteForwardingRule(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -12,11 +13,11 @@ import (
 
 // listServiceAccounts retrieves all service accounts with a display name prefixed with the cluster's
 // infra ID. Filtering is done client side because the API doesn't offer filtering for service accounts.
-func (o *ClusterUninstaller) listServiceAccounts() ([]cloudResource, error) {
+func (o *ClusterUninstaller) listServiceAccounts(ctx context.Context) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing service accounts")
 
 	result := []cloudResource{}
-	sas, err := o.listClusterServiceAccount()
+	sas, err := o.listClusterServiceAccount(ctx)
 	if err != nil {
 		errors.Wrapf(err, "failed to fetch service accounts for the cluster")
 	}
@@ -39,8 +40,8 @@ func (o *ClusterUninstaller) listServiceAccounts() ([]cloudResource, error) {
 	return result, nil
 }
 
-func (o *ClusterUninstaller) listClusterServiceAccount() ([]*iam.ServiceAccount, error) {
-	ctx, cancel := o.contextWithTimeout()
+func (o *ClusterUninstaller) listClusterServiceAccount(ctx context.Context) ([]*iam.ServiceAccount, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []*iam.ServiceAccount{}
 	req := o.iamSvc.Projects.ServiceAccounts.List(fmt.Sprintf("projects/%s", o.ProjectID)).Fields("accounts(name,displayName,email),nextPageToken")
@@ -58,9 +59,9 @@ func (o *ClusterUninstaller) listClusterServiceAccount() ([]*iam.ServiceAccount,
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteServiceAccount(item cloudResource) error {
+func (o *ClusterUninstaller) deleteServiceAccount(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting service account %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	_, err := o.iamSvc.Projects.ServiceAccounts.Delete(item.name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -73,8 +74,8 @@ func (o *ClusterUninstaller) deleteServiceAccount(item cloudResource) error {
 
 // destroyServiceAccounts removes service accounts with a display name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyServiceAccounts() error {
-	found, err := o.listServiceAccounts()
+func (o *ClusterUninstaller) destroyServiceAccounts(ctx context.Context) error {
+	found, err := o.listServiceAccounts(ctx)
 	if err != nil {
 		return err
 	}
@@ -84,7 +85,7 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 	}
 
 	// Remove service accounts from project policy
-	policy, err := o.getProjectIAMPolicy()
+	policy, err := o.getProjectIAMPolicy(ctx)
 	if err != nil {
 		return err
 	}
@@ -93,7 +94,7 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 		emails.Insert(item.url)
 	}
 	if o.clearIAMPolicyBindings(policy, emails, o.Logger) {
-		err = o.setProjectIAMPolicy(policy)
+		err = o.setProjectIAMPolicy(ctx, policy)
 		if err != nil {
 			o.errorTracker.suppressWarning("iampolicy", err, o.Logger)
 			return errors.Errorf("%d items pending", len(items))
@@ -102,7 +103,7 @@ func (o *ClusterUninstaller) destroyServiceAccounts() error {
 	}
 
 	for _, item := range items {
-		err := o.deleteServiceAccount(item)
+		err := o.deleteServiceAccount(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

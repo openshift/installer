@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -9,9 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func (o *ClusterUninstaller) getProjectIAMPolicy() (*resourcemanager.Policy, error) {
+func (o *ClusterUninstaller) getProjectIAMPolicy(ctx context.Context) (*resourcemanager.Policy, error) {
 	o.Logger.Debug("Fetching project IAM policy")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	req := &resourcemanager.GetIamPolicyRequest{}
 	policy, err := o.rmSvc.Projects.GetIamPolicy(o.ProjectID, req).Context(ctx).Do()
@@ -21,9 +22,9 @@ func (o *ClusterUninstaller) getProjectIAMPolicy() (*resourcemanager.Policy, err
 	return policy, nil
 }
 
-func (o *ClusterUninstaller) setProjectIAMPolicy(policy *resourcemanager.Policy) error {
+func (o *ClusterUninstaller) setProjectIAMPolicy(ctx context.Context, policy *resourcemanager.Policy) error {
 	o.Logger.Debug("Setting project IAM policy")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	req := &resourcemanager.SetIamPolicyRequest{Policy: policy}
 	_, err := o.rmSvc.Projects.SetIamPolicy(o.ProjectID, req).Context(ctx).Do()

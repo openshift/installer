@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -8,17 +10,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listTargetPools() ([]cloudResource, error) {
-	return o.listTargetPoolsWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listTargetPools(ctx context.Context) ([]cloudResource, error) {
+	return o.listTargetPoolsWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listTargetPoolsWithFilter lists target pools in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listTargetPoolsWithFilter(fields string, filter string, filterFunc func(*compute.TargetPool) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listTargetPoolsWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.TargetPool) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing target pools")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.TargetPools.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
@@ -51,9 +53,9 @@ func (o *ClusterUninstaller) listTargetPoolsWithFilter(fields string, filter str
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteTargetPool(item cloudResource) error {
+func (o *ClusterUninstaller) deleteTargetPool(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting target pool %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.TargetPools.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -74,14 +76,14 @@ func (o *ClusterUninstaller) deleteTargetPool(item cloudResource) error {
 
 // destroyTargetPools removes target pools resources that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyTargetPools() error {
-	found, err := o.listTargetPools()
+func (o *ClusterUninstaller) destroyTargetPools(ctx context.Context) error {
+	found, err := o.listTargetPools(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("targetpool", found)
 	for _, item := range items {
-		err := o.deleteTargetPool(item)
+		err := o.deleteTargetPool(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}
