@@ -62,11 +62,6 @@ OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
 
 CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
 
-KEEPALIVED_IMAGE=$(image_for keepalived-ipfailover || echo "no-keepalived-image")
-COREDNS_IMAGE=$(image_for coredns)
-HAPROXY_IMAGE=$(image_for haproxy-router)
-BAREMETAL_RUNTIMECFG_IMAGE=$(image_for baremetal-runtimecfg)
-
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -f openshift-manifests.done ]
@@ -342,6 +337,7 @@ then
 	# Dump out image reference file so MCO can consume multiple/additional image references
 	podman run --quiet --rm --net=none --entrypoint="cat" "${RELEASE_IMAGE_DIGEST}" "/release-manifests/image-references" > image-references
 
+	# NOTICE: If you change this, you probably also want to change https://github.com/openshift/hypershift/blob/f7e79bf1dc7e90000984bf9ffeafa740defbee0a/ignition-server/controllers/local_ignitionprovider.go
 	bootkube_podman_run \
 		--name mco-render \
 		--user 0 \
@@ -353,13 +349,6 @@ then
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/openshift-config-secret-pull-secret.yaml \
-			--machine-config-operator-image="${MACHINE_CONFIG_OPERATOR_IMAGE}" \
-			--machine-config-oscontent-image="${MACHINE_CONFIG_OSCONTENT}" \
-			--infra-image="${MACHINE_CONFIG_INFRA_IMAGE}" \
-			--keepalived-image="${KEEPALIVED_IMAGE}" \
-			--coredns-image="${COREDNS_IMAGE}" \
-			--haproxy-image="${HAPROXY_IMAGE}" \
-			--baremetal-runtimecfg-image="${BAREMETAL_RUNTIMECFG_IMAGE}" \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
 			--image-references=assets/image-references \
 			--payload-version="${VERSION}" \
