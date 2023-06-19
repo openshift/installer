@@ -52,7 +52,6 @@ type Ignition struct {
 type agentTemplateData struct {
 	ServiceProtocol           string
 	PullSecret                string
-	APIVIP                    string
 	ControlPlaneAgents        int
 	WorkerAgents              int
 	ReleaseImages             string
@@ -298,7 +297,6 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage,
 	return &agentTemplateData{
 		ServiceProtocol:           "http",
 		PullSecret:                pullSecret,
-		APIVIP:                    agentClusterInstall.Spec.APIVIP,
 		ControlPlaneAgents:        agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents,
 		WorkerAgents:              agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents,
 		ReleaseImages:             releaseImageList,
