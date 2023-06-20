@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -13,6 +14,8 @@ import (
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *alibabacloud.Platform, n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	logrus.Warn("Alibaba Cloud is deprecated and will be removed in a future OpenShift version. Please reach out to your Red Hat Support or Technical Account Manager for more information.")
 
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region must be specified"))

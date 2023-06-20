@@ -63,6 +63,11 @@ func Platform() (*alibabacloud.Platform, error) {
 		return nil, err
 	}
 
+	err = bypassDeprecation()
+	if err != nil {
+		return nil, err
+	}
+
 	region, err := selectRegion(client)
 	if err != nil {
 		return nil, err
@@ -135,4 +140,24 @@ func selectRegion(client *Client) (string, error) {
 		return "", err
 	}
 	return selectedRegion, nil
+}
+
+func bypassDeprecation() error {
+	confirmationMsg := "DEPRECATED. Alibaba Cloud is deprecated and will be " +
+		"removed in a future OpenShift version. Would you still like to continue?"
+
+	shouldContinue := false
+	prompt := &survey.Confirm{
+		Message: confirmationMsg,
+	}
+	err := survey.AskOne(prompt, &shouldContinue)
+	if err != nil {
+		return err
+	}
+
+	if !shouldContinue {
+		return errors.Errorf("deprecated platform")
+	}
+
+	return nil
 }
