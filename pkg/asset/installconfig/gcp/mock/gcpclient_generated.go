@@ -10,6 +10,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	google "golang.org/x/oauth2/google"
+	cloudresourcemanager "google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	sets "k8s.io/apimachinery/pkg/util/sets"
@@ -125,6 +126,21 @@ func (m *MockAPI) GetNetwork(ctx context.Context, network, project string) (*com
 func (mr *MockAPIMockRecorder) GetNetwork(ctx, network, project interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetwork", reflect.TypeOf((*MockAPI)(nil).GetNetwork), ctx, network, project)
+}
+
+// GetProjectByID mocks base method.
+func (m *MockAPI) GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetProjectByID", ctx, project)
+	ret0, _ := ret[0].(*cloudresourcemanager.Project)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetProjectByID indicates an expected call of GetProjectByID.
+func (mr *MockAPIMockRecorder) GetProjectByID(ctx, project interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetProjectByID", reflect.TypeOf((*MockAPI)(nil).GetProjectByID), ctx, project)
 }
 
 // GetProjectPermissions mocks base method.
