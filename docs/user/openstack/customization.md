@@ -33,7 +33,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `clusterOSImageProperties` (optional list of strings): a list of properties to be added to the installer-uploaded ClusterOSImage in Glance. The default is to not set any properties. `clusterOSImageProperties` is ignored when `clusterOSImage` points to an existing image in Glance.
 * `apiVIP` (optional string): An IP address on the machineNetwork that will be assigned to the API VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
 * `ingressVIP` (optional string): An IP address on the machineNetwork that will be assigned to the ingress VIP. Be aware that the `10` and `11` of the machineNetwork will be taken by neutron dhcp by default, and wont be available.
-* `machinesSubnet` (optional string): the UUID of an OpenStack subnet to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
+* `controlPlanePort` (optional object): the UUID and/or Name of an OpenStack Network and its Subnets where to install the nodes of the cluster onto. For more information on how to install with a custom subnet, see the [custom subnets](#custom-subnets) section of the docs.
 * `defaultMachinePlatform` (optional object): Default [OpenStack-specific machine pool properties](#machine-pools) which apply to [machine pools](../customization.md#machine-pools) that do not define their own OpenStack-specific properties.
 
 ## Machine pools
@@ -161,18 +161,19 @@ platform:
 
 ## Custom Subnets
 
-In the `install-config.yaml` file, the value of the `machinesSubnet` property is the subnet where the Kubernetes endpoints of the nodes in your cluster are published. The Ingress and API ports are created on this subnet, too. By default, the installer creates a network and subnet for these endpoints and ports. Alternatively, you can use a subnet of your own by setting the value of the `machinesSubnet` property to the UUID of an existing OpenStack subnet. To use this feature, you need to meet these requirements:
+In the `install-config.yaml` file, the value of the `controlPlanePort` property contains the Name and/or UUID of the network and subnet(s) where the Kubernetes endpoints of the nodes in your cluster are published. The Ingress and API ports are created on the subnets, too. By default, the installer creates a network and subnet for these endpoints and ports. Alternatively, you can use a OpenStack network containing one subnet or two, in case of dual-stack, of your own by specifying their and/or in the `controlPlanePort` property. To use this feature, you need to meet these requirements:
 
-* The subnet that is used by `machinesSubnet` has DHCP enabled.
-* The CIDR of `machinesSubnet` matches the CIDR of `networks.machineNetwork`.
-* The installer user must have permission to create ports on this network, including ports with fixed IP addresses.
+* Any subnet used by `controlPlanePort` have DHCP enabled.
+* The CIDR of any subnet listed in `controlPlanePort.fixedIPs` matches the CIDRs listed on `networks.machineNetwork`.
+* When using dual-stack Network the api and ingress Ports needs to be pre-created by the user. Also, the installer user must have permission to add tags and security groups to those pre-created Ports. The value of the fixed IPs of the Ports needs to be specified at the `apiVIPs` and `ingressVIPs` options in the `install-config.yaml`.
+* If not using dual-stack, the installer user must have permission to create ports on this network, including ports with fixed IP addresses.
 
 You should also be aware of the following limitations:
 
-* If you plan to install a cluster that uses floating IPs, the `machinesSubnet` must be attached to a router that is connected to the `externalNetwork`.
-* The installer will not create a private network or subnet for your OpenShift machines if the `machinesSubnet` is set in the `install-config.yaml`.
-* By default, the API and Ingress VIPs use the .5 and .7 of your network CIDR. To prevent other services from taking the ports that are assigned to the API and Ingress VIPs, set the `apiVIP` and `ingressVIP` options in the `install-config.yaml` to addresses that are outside of the DHCP allocation pool.
-* You cannot use the `externalDNS` property at the same time as a custom `machinesSubnet`. If you want to add a DNS to your cluster while using a custom subnet, [add it to the subnet in OpenStack](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
+* If you plan to install a cluster that uses floating IPs, the `controlPlanePort` must be attached to a router that is connected to the `externalNetwork`.
+* The installer will not create a private network or subnet for your OpenShift machines if the `controlPlanePort` is set in the `install-config.yaml`.
+* By default when not using dual-stack, the API and Ingress VIPs use the .5 and .7 of your network CIDR. To prevent other services from taking the ports that are assigned to the API and Ingress VIPs, set the `apiVIP` and `ingressVIP` options in the `install-config.yaml` to addresses that are outside of the DHCP allocation pool.
+* You cannot use the `externalDNS` property at the same time as a custom `controlPlanePort`. If you want to add a DNS to your cluster while using a custom subnet, [add it to the subnet in OpenStack](https://docs.openstack.org/neutron/rocky/admin/config-dns-res.html).
 
 ## Additional Networks
 

@@ -94,7 +94,7 @@ a preexisting network.
 
     - Set `controlPlane.platform.openstack.type` to the VM flavor which will be used by the control plane nodes.
 
-    - Set `platform.openstack.machinesSubnet` to the UUID of the pre-provisioned subnet.
+    - Set `platform.openstack.controlPlanePort.fixedIPs.subnet.id` to the UUID of the pre-provisioned subnet and/or `platform.openstack.controlPlanePort.fixedIPs.subnet.name` to the name of pre-provisioned subnet. 
 
         For example:
 
@@ -118,7 +118,10 @@ a preexisting network.
 
                  platform:
                    openstack:
-                     machinesSubnet: <uuidOfPreprovisionedSubnet>
+                      controlPlanePort:
+                        fixedIPs:
+                          - subnet:
+                              id: <uuidOfPreprovisionedSubnet>
 
 - Run the openshift installer:
 
@@ -143,7 +146,7 @@ Plane and Compute nodes. The cluster is deployed to a preexisting network.
 
     - Set `controlPlane.platform.openstack.type` to a bare-metal server flavor.
 
-    - Set `platform.openstack.machinesSubnet` to the UUID of the pre-provisioned subnet.
+    - Set `platform.openstack.controlPlanePort.fixedIPs.subnet.id` to the UUID of the pre-provisioned subnet and/or `platform.openstack.controlPlanePort.fixedIPs.subnet.name` to the name of pre-provisioned subnet.
 
         For example:
 
@@ -167,7 +170,10 @@ Plane and Compute nodes. The cluster is deployed to a preexisting network.
 
                  platform:
                    openstack:
-                     machinesSubnet: <uuidOfPreprovisionedSubnet>
+                      controlPlanePort:
+                        fixedIPs:
+                          - subnet:
+                              id: <uuidOfPreprovisionedSubnet>
 
 - Run the openshift installer:
 

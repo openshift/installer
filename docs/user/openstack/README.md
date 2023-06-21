@@ -556,7 +556,7 @@ spec:
 
 #### Defining a MachineSet That Uses Multiple Networks
 
-To define a MachineSet with multiple networks, the `primarySubnet` value in the `providerSpec` must be set to the OpenStack subnet that you want the Kubernetes endpoints of the nodes to be published on. For most use cases, this is the same subnet as the [machinesSubnet](./customization.md#cluster-scoped-properties) in the `install-config.yaml`.
+To define a MachineSet with multiple networks, the `primarySubnet` value in the `providerSpec` must be set to the OpenStack subnet that you want the Kubernetes endpoints of the nodes to be published on. For most use cases, this is the same subnet(s) as the subnets listed in [controlPlanePort](./customization.md#cluster-scoped-properties) in the `install-config.yaml`.
 
  After you set the subnet, add all of the networks that you want to attach to your machines to the `Networks` list in `providerSpec`. You must also add the network that the primary subnet is part of to this list.
 
