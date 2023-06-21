@@ -170,6 +170,8 @@ func (a *UnconfiguredIgnition) PersistToFile(directory string) error {
 		return err
 	}
 
+	logrus.Infof("Unconfigured-Ignition created in: %s", unconfiguredIgnFile)
+
 	return nil
 }
 
