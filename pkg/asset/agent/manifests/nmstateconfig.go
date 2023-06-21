@@ -83,7 +83,9 @@ func (n *NMStateConfig) Generate(dependencies asset.Parents) error {
 		if len(agentConfig.Config.Hosts) == 0 {
 			return nil
 		}
-		checkHostCount(installConfig.Config, agentConfig)
+		if err := validateHostCount(installConfig.Config, agentConfig); err != nil {
+			return err
+		}
 
 		for i, host := range agentConfig.Config.Hosts {
 			if host.NetworkConfig.Raw != nil {
@@ -340,32 +342,45 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 	return macInterfaceMap
 }
 
-func checkHostCount(installConfig *types.InstallConfig, agentConfig *agentconfig.AgentConfig) {
+func validateHostCount(installConfig *types.InstallConfig, agentConfig *agentconfig.AgentConfig) error {
 	numRequiredMasters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
 
-	// Check that the number of replicas matches the configured hosts
 	numMasters := int64(0)
 	numWorkers := int64(0)
+	// Check for hosts explicitly defined
 	for _, host := range agentConfig.Config.Hosts {
 		switch host.Role {
 		case "master":
 			numMasters++
 		case "worker":
 			numWorkers++
-		case "":
-			// If not defined, the roles will be matched to replicas
+		}
+	}
+
+	// If role is not defined it will first be assigned as a master
+	for _, host := range agentConfig.Config.Hosts {
+		if host.Role == "" {
 			if numMasters < numRequiredMasters {
 				numMasters++
-			} else if numWorkers < numRequiredWorkers {
+			} else {
 				numWorkers++
 			}
 		}
 	}
 
-	if numMasters != numRequiredMasters {
-		logrus.Warnf("The number of hosts configured as masters (%d) does not match the master replicas (%d)", numMasters, numRequiredMasters)
+	if numMasters != 0 && numMasters < numRequiredMasters {
+		logrus.Warnf("not enough master hosts defined (%v) to support all the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
 	}
-	if numWorkers != numRequiredWorkers {
-		logrus.Warnf("The number of hosts configured as workers (%d) does not match the worker replicas (%d)", numWorkers, numRequiredWorkers)
+	if numMasters > numRequiredMasters {
+		return fmt.Errorf("the number of master hosts defined (%v) exceeds the configured ControlPlane replicas (%v)", numMasters, numRequiredMasters)
 	}
+
+	if numWorkers != 0 && numWorkers < numRequiredWorkers {
+		logrus.Warnf("not enough worker hosts defined (%v) to support all the configured Compute replicas (%v)", numWorkers, numRequiredWorkers)
+	}
+	if numWorkers > numRequiredWorkers {
+		return fmt.Errorf("the number of worker hosts defined (%v) exceeds the configured Compute replicas (%v)", numWorkers, numRequiredWorkers)
+	}
+
+	return nil
 }
