@@ -11,6 +11,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	googleoauth "golang.org/x/oauth2/google"
+	"google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
 	"google.golang.org/api/googleapi"
@@ -279,8 +280,15 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	gcpClient := mock.NewMockAPI(mockCtrl)
+
+	errNotFound := &googleapi.Error{Code: http.StatusNotFound}
+
 	// Should get the list of projects.
 	gcpClient.EXPECT().GetProjects(gomock.Any()).Return(map[string]string{"valid-project": "valid-project"}, nil).AnyTimes()
+	gcpClient.EXPECT().GetProjectByID(gomock.Any(), "valid-project").Return(&cloudresourcemanager.Project{}, nil).AnyTimes()
+	gcpClient.EXPECT().GetProjectByID(gomock.Any(), "invalid-project").Return(nil, errNotFound).AnyTimes()
+	gcpClient.EXPECT().GetProjectByID(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("error")).AnyTimes()
+
 	// Should get the list of zones.
 	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return([]*compute.Zone{{Name: validZone}}, nil).AnyTimes()
 
