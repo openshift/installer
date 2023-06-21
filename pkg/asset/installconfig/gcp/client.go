@@ -39,6 +39,7 @@ type API interface {
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
 	GetCredentials() *googleoauth.Credentials
 	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error)
+	GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error)
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
 }
 
@@ -260,6 +261,19 @@ func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 		return nil, err
 	}
 	return projects, nil
+}
+
+// GetProjectByID retrieves the project specified by its ID.
+func (c *Client) GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error) {
+	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	defer cancel()
+
+	svc, err := c.getCloudResourceService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc.Projects.Get(project).Context(ctx).Do()
 }
 
 // GetRegions gets the regions that are valid for the project. An error is returned when unsuccessful

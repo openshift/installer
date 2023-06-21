@@ -209,12 +209,12 @@ func validateProject(client API, ic *types.InstallConfig, fieldPath *field.Path)
 	allErrs := field.ErrorList{}
 
 	if ic.GCP.ProjectID != "" {
-		projects, err := client.GetProjects(context.TODO())
+		_, err := client.GetProjectByID(context.TODO(), ic.GCP.ProjectID)
 		if err != nil {
+			if IsNotFound(err) {
+				return append(allErrs, field.Invalid(fieldPath.Child("project"), ic.GCP.ProjectID, "invalid project ID"))
+			}
 			return append(allErrs, field.InternalError(fieldPath.Child("project"), err))
-		}
-		if _, found := projects[ic.GCP.ProjectID]; !found {
-			return append(allErrs, field.Invalid(fieldPath.Child("project"), ic.GCP.ProjectID, "invalid project ID"))
 		}
 	}
 
@@ -225,12 +225,12 @@ func validateNetworkProject(client API, ic *types.InstallConfig, fieldPath *fiel
 	allErrs := field.ErrorList{}
 
 	if ic.GCP.NetworkProjectID != "" {
-		projects, err := client.GetProjects(context.TODO())
+		_, err := client.GetProjectByID(context.TODO(), ic.GCP.NetworkProjectID)
 		if err != nil {
+			if IsNotFound(err) {
+				return append(allErrs, field.Invalid(fieldPath.Child("networkProjectID"), ic.GCP.NetworkProjectID, "invalid project ID"))
+			}
 			return append(allErrs, field.InternalError(fieldPath.Child("networkProjectID"), err))
-		}
-		if _, found := projects[ic.GCP.NetworkProjectID]; !found {
-			return append(allErrs, field.Invalid(fieldPath.Child("networkProjectID"), ic.GCP.NetworkProjectID, "invalid project ID"))
 		}
 	}
 
