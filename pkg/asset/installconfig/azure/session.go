@@ -29,6 +29,16 @@ var (
 	onceLoggers         = map[string]*sync.Once{}
 )
 
+// AuthenticationType identifies the authentication method used.
+type AuthenticationType int
+
+// The authentication types supported by the installer.
+const (
+	ClientSecretAuth AuthenticationType = iota
+	ClientCertificateAuth
+	ManagedIdentityAuth
+)
+
 // Session is an object representing session for subscription
 type Session struct {
 	Authorizer   autorest.Authorizer
@@ -37,6 +47,7 @@ type Session struct {
 	AuthProvider *azurekiota.AzureIdentityAuthenticationProvider
 	TokenCreds   azcore.TokenCredential
 	CloudConfig  cloud.Configuration
+	AuthType     AuthenticationType
 }
 
 // Credentials is the data type for credentials as understood by the azure sdk
@@ -98,11 +109,18 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		}
 	}
 	var cred azcore.TokenCredential
-	if credentials.ClientCertificatePath != "" {
+	var authType AuthenticationType
+	switch {
+	case credentials.ClientCertificatePath != "":
 		logrus.Warnf("Using client certs to authenticate. Please be warned cluster does not support certs and only the installer does.")
 		cred, err = newTokenCredentialFromCertificates(credentials, cloudConfig)
-	} else {
+		authType = ClientCertificateAuth
+	case credentials.ClientSecret != "":
 		cred, err = newTokenCredentialFromCredentials(credentials, cloudConfig)
+		authType = ClientSecretAuth
+	default:
+		cred, err = newTokenCredentialFromMSI(credentials, cloudConfig)
+		authType = ManagedIdentityAuth
 	}
 	if err != nil {
 		return nil, err
@@ -112,6 +130,7 @@ func GetSessionWithCredentials(cloudName azure.CloudEnvironment, armEndpoint str
 		return nil, err
 	}
 	session.CloudConfig = cloudConfig
+	session.AuthType = authType
 	return session, nil
 }
 
@@ -169,15 +188,13 @@ func checkCredentials(creds Credentials) error {
 	if creds.SubscriptionID == "" {
 		return errors.New("could not retrieve subscriptionId from auth file")
 	}
-	if creds.ClientID == "" {
-		return errors.New("could not retrieve clientId from auth file")
-	}
 	if creds.TenantID == "" {
 		return errors.New("could not retrieve tenantId from auth file")
 	}
-	if creds.ClientSecret == "" && creds.ClientCertificatePath == "" {
-		return errors.New("could not retrieve either client secret or client certs from auth file")
+	if (creds.ClientSecret != "" || creds.ClientCertificatePath != "") && creds.ClientID == "" {
+		return errors.New("could not retrieve clientId from auth file")
 	}
+	// If neither client secret nor client certificate are present, we default to Managed Identity
 	return nil
 }
 
@@ -293,6 +310,24 @@ func newTokenCredentialFromCertificates(credentials *Credentials, cloudConfig cl
 	cred, err := azidentity.NewClientCertificateCredential(credentials.TenantID, credentials.ClientID, certs, key, &options)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get client credentials from certificate")
+	}
+	return cred, nil
+}
+
+func newTokenCredentialFromMSI(credentials *Credentials, cloudConfig cloud.Configuration) (azcore.TokenCredential, error) {
+	options := azidentity.ManagedIdentityCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: cloudConfig,
+		},
+	}
+	// User-assigned identity
+	if credentials.ClientID != "" {
+		options.ID = azidentity.ClientID(credentials.ClientID)
+	}
+
+	cred, err := azidentity.NewManagedIdentityCredential(&options)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get client credentials from MSI")
 	}
 	return cred, nil
 }

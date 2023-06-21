@@ -99,6 +99,7 @@ variable "azure_subscription_id" {
 variable "azure_client_id" {
   type = string
   description = "The app ID that should be used to interact with Azure API"
+  default = ""
 }
 
 variable "azure_client_secret" {
@@ -122,6 +123,12 @@ variable "azure_certificate_password" {
 variable "azure_tenant_id" {
   type = string
   description = "The tenant ID that should be used to interact with Azure API"
+}
+
+variable "azure_use_msi" {
+  type = bool
+  default = false
+  description = "Specifies if we are to use a managed identity for authentication"
 }
 
 variable "azure_master_availability_zones" {
