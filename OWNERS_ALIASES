@@ -108,11 +108,9 @@ aliases:
   coreos-approvers:
     - c4rt0
     - cgwalters
-    - bgilbert
     - dustymabe
     - mike-nguyen
     - jlebon
-    - ashcrow
     - travier
     - HuijingHei
     - jmarrero
@@ -127,11 +125,9 @@ aliases:
   coreos-reviewers:
     - c4rt0
     - cgwalters
-    - bgilbert
     - dustymabe
     - mike-nguyen
     - jlebon
-    - ashcrow
     - travier
     - HuijingHei
     - jmarrero
