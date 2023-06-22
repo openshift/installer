@@ -11,9 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Enables a trust anchor. When enabled, certificates in the trust anchor chain are
-// authorized for trust validation. Required permissions:
-// rolesanywhere:EnableTrustAnchor.
+// Enables a trust anchor. When enabled, certificates in the trust anchor chain
+// are authorized for trust validation. Required permissions:
+// rolesanywhere:EnableTrustAnchor .
 func (c *Client) EnableTrustAnchor(ctx context.Context, params *EnableTrustAnchorInput, optFns ...func(*Options)) (*EnableTrustAnchorOutput, error) {
 	if params == nil {
 		params = &EnableTrustAnchorInput{}
@@ -101,6 +101,9 @@ func (c *Client) addOperationEnableTrustAnchorMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opEnableTrustAnchor(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

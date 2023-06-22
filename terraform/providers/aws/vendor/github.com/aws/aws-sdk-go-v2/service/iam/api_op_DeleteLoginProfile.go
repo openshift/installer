@@ -10,17 +10,16 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes the password for the specified IAM user, which terminates the user's
-// ability to access Amazon Web Services services through the Amazon Web Services
-// Management Console. You can use the CLI, the Amazon Web Services API, or the
-// Users page in the IAM console to delete a password for any IAM user. You can use
-// ChangePassword to update, but not delete, your own password in the My Security
-// Credentials page in the Amazon Web Services Management Console. Deleting a
-// user's password does not prevent a user from accessing Amazon Web Services
-// through the command line interface or the API. To prevent all user access, you
-// must also either make any access keys inactive or delete them. For more
-// information about making keys inactive or deleting them, see UpdateAccessKey and
-// DeleteAccessKey.
+// Deletes the password for the specified IAM user, For more information, see
+// Managing passwords for IAM users (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_passwords_admin-change-user.html)
+// . You can use the CLI, the Amazon Web Services API, or the Users page in the IAM
+// console to delete a password for any IAM user. You can use ChangePassword to
+// update, but not delete, your own password in the My Security Credentials page in
+// the Amazon Web Services Management Console. Deleting a user's password does not
+// prevent a user from accessing Amazon Web Services through the command line
+// interface or the API. To prevent all user access, you must also either make any
+// access keys inactive or delete them. For more information about making keys
+// inactive or deleting them, see UpdateAccessKey and DeleteAccessKey .
 func (c *Client) DeleteLoginProfile(ctx context.Context, params *DeleteLoginProfileInput, optFns ...func(*Options)) (*DeleteLoginProfileOutput, error) {
 	if params == nil {
 		params = &DeleteLoginProfileInput{}
@@ -39,7 +38,7 @@ func (c *Client) DeleteLoginProfile(ctx context.Context, params *DeleteLoginProf
 type DeleteLoginProfileInput struct {
 
 	// The name of the user whose password you want to delete. This parameter allows
-	// (through its regex pattern (http://wikipedia.org/wiki/regex)) a string of
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
 	// characters consisting of upper and lowercase alphanumeric characters with no
 	// spaces. You can also include any of the following characters: _+=,.@-
 	//
@@ -105,6 +104,9 @@ func (c *Client) addOperationDeleteLoginProfileMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteLoginProfile(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

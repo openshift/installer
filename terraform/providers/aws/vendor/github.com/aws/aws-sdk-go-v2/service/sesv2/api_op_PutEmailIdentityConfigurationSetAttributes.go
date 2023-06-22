@@ -40,8 +40,8 @@ type PutEmailIdentityConfigurationSetAttributesInput struct {
 	noSmithyDocumentSerde
 }
 
-// If the action is successful, the service sends back an HTTP 200 response with an
-// empty HTTP body.
+// If the action is successful, the service sends back an HTTP 200 response with
+// an empty HTTP body.
 type PutEmailIdentityConfigurationSetAttributesOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -98,6 +98,9 @@ func (c *Client) addOperationPutEmailIdentityConfigurationSetAttributesMiddlewar
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opPutEmailIdentityConfigurationSetAttributes(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

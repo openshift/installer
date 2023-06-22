@@ -1,3 +1,11 @@
+## v0.20.0 (December 19, 2022)
+
+Support [`arrayType`](https://github.com/aws-cloudformation/cloudformation-resource-schema#arraytype).
+
+## v0.19.0 (November 21, 2022)
+
+The `Sanitize` function formats the JSON document using [`json.Indent`](https://pkg.go.dev/encoding/json#Indent) before sanitizing.
+
 ## v0.18.0 (July 28, 2022)
 
 `Property.Maximum` and `Property.Minimum` changed to type (pointer to) `json.Number`.

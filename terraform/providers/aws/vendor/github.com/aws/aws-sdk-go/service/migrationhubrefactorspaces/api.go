@@ -62,6 +62,13 @@ func (c *MigrationHubRefactorSpaces) CreateApplicationRequest(input *CreateAppli
 // Refactor Spaces provisions an Amazon API Gateway, API Gateway VPC link, and
 // Network Load Balancer for the application proxy inside your account.
 //
+// In environments created with a CreateEnvironment:NetworkFabricType (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/APIReference/API_CreateEnvironment.html#migrationhubrefactorspaces-CreateEnvironment-request-NetworkFabricType)
+// of NONE you need to configure VPC to VPC connectivity (https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/amazon-vpc-to-amazon-vpc-connectivity-options.html)
+// between your service VPC and the application proxy VPC to route traffic through
+// the application proxy to a service with a private URL endpoint. For more
+// information, see Create an application (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/userguide/getting-started-create-application.html)
+// in the Refactor Spaces User Guide.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -162,8 +169,15 @@ func (c *MigrationHubRefactorSpaces) CreateEnvironmentRequest(input *CreateEnvir
 // services, and routes created within the environment. They are referred to
 // as the environment owner. The environment owner has cross-account visibility
 // and control of Refactor Spaces resources that are added to the environment
-// by other accounts that the environment is shared with. When creating an environment,
-// Refactor Spaces provisions a transit gateway in your account.
+// by other accounts that the environment is shared with.
+//
+// When creating an environment with a CreateEnvironment:NetworkFabricType (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/APIReference/API_CreateEnvironment.html#migrationhubrefactorspaces-CreateEnvironment-request-NetworkFabricType)
+// of TRANSIT_GATEWAY, Refactor Spaces provisions a transit gateway to enable
+// services in VPCs to communicate directly across accounts. If CreateEnvironment:NetworkFabricType
+// (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/APIReference/API_CreateEnvironment.html#migrationhubrefactorspaces-CreateEnvironment-request-NetworkFabricType)
+// is NONE, Refactor Spaces does not create a transit gateway and you must use
+// your network infrastructure to route traffic to services with private URL
+// endpoints.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -275,45 +289,56 @@ func (c *MigrationHubRefactorSpaces) CreateRouteRequest(input *CreateRouteInput)
 // When you create a route, Refactor Spaces configures the Amazon API Gateway
 // to send traffic to the target service as follows:
 //
-//   - If the service has a URL endpoint, and the endpoint resolves to a private
-//     IP address, Refactor Spaces routes traffic using the API Gateway VPC link.
+//   - URL Endpoints If the service has a URL endpoint, and the endpoint resolves
+//     to a private IP address, Refactor Spaces routes traffic using the API
+//     Gateway VPC link. If a service endpoint resolves to a public IP address,
+//     Refactor Spaces routes traffic over the public internet. Services can
+//     have HTTP or HTTPS URL endpoints. For HTTPS URLs, publicly-signed certificates
+//     are supported. Private Certificate Authorities (CAs) are permitted only
+//     if the CA's domain is also publicly resolvable. Refactor Spaces automatically
+//     resolves the public Domain Name System (DNS) names that are set in CreateService:UrlEndpoint
+//     when you create a service. The DNS names resolve when the DNS time-to-live
+//     (TTL) expires, or every 60 seconds for TTLs less than 60 seconds. This
+//     periodic DNS resolution ensures that the route configuration remains up-to-date.
+//     One-time health check A one-time health check is performed on the service
+//     when either the route is updated from inactive to active, or when it is
+//     created with an active state. If the health check fails, the route transitions
+//     the route state to FAILED, an error code of SERVICE_ENDPOINT_HEALTH_CHECK_FAILURE
+//     is provided, and no traffic is sent to the service. For private URLs,
+//     a target group is created on the Network Load Balancer and the load balancer
+//     target group runs default target health checks. By default, the health
+//     check is run against the service endpoint URL. Optionally, the health
+//     check can be performed against a different protocol, port, and/or path
+//     using the CreateService:UrlEndpoint (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/APIReference/API_CreateService.html#migrationhubrefactorspaces-CreateService-request-UrlEndpoint)
+//     parameter. All other health check settings for the load balancer use the
+//     default values described in the Health checks for your target groups (https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html)
+//     in the Elastic Load Balancing guide. The health check is considered successful
+//     if at least one target within the target group transitions to a healthy
+//     state.
 //
-//   - If the service has a URL endpoint, and the endpoint resolves to a public
-//     IP address, Refactor Spaces routes traffic over the public internet.
+//   - Lambda function endpoints If the service has an Lambda function endpoint,
+//     then Refactor Spaces configures the Lambda function's resource policy
+//     to allow the application's API Gateway to invoke the function. The Lambda
+//     function state is checked. If the function is not active, the function
+//     configuration is updated so that Lambda resources are provisioned. If
+//     the Lambda state is Failed, then the route creation fails. For more information,
+//     see the GetFunctionConfiguration's State response parameter (https://docs.aws.amazon.com/lambda/latest/dg/API_GetFunctionConfiguration.html#SSS-GetFunctionConfiguration-response-State)
+//     in the Lambda Developer Guide. A check is performed to determine that
+//     a Lambda function with the specified ARN exists. If it does not exist,
+//     the health check fails. For public URLs, a connection is opened to the
+//     public endpoint. If the URL is not reachable, the health check fails.
 //
-//   - If the service has an Lambda function endpoint, then Refactor Spaces
-//     configures the Lambda function's resource policy to allow the application's
-//     API Gateway to invoke the function.
+// # Environments without a network bridge
 //
-// A one-time health check is performed on the service when either the route
-// is updated from inactive to active, or when it is created with an active
-// state. If the health check fails, the route transitions the route state to
-// FAILED, an error code of SERVICE_ENDPOINT_HEALTH_CHECK_FAILURE is provided,
-// and no traffic is sent to the service.
-//
-// For Lambda functions, the Lambda function state is checked. If the function
-// is not active, the function configuration is updated so that Lambda resources
-// are provisioned. If the Lambda state is Failed, then the route creation fails.
-// For more information, see the GetFunctionConfiguration's State response parameter
-// (https://docs.aws.amazon.com/lambda/latest/dg/API_GetFunctionConfiguration.html#SSS-GetFunctionConfiguration-response-State)
-// in the Lambda Developer Guide.
-//
-// For Lambda endpoints, a check is performed to determine that a Lambda function
-// with the specified ARN exists. If it does not exist, the health check fails.
-// For public URLs, a connection is opened to the public endpoint. If the URL
-// is not reachable, the health check fails.
-//
-// For private URLS, a target group is created on the Elastic Load Balancing
-// and the target group health check is run. The HealthCheckProtocol, HealthCheckPort,
-// and HealthCheckPath are the same protocol, port, and path specified in the
-// URL or health URL, if used. All other settings use the default values, as
-// described in Health checks for your target groups (https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html).
-// The health check is considered successful if at least one target within the
-// target group transitions to a healthy state.
-//
-// Services can have HTTP or HTTPS URL endpoints. For HTTPS URLs, publicly-signed
-// certificates are supported. Private Certificate Authorities (CAs) are permitted
-// only if the CA's domain is also publicly resolvable.
+// When you create environments without a network bridge (CreateEnvironment:NetworkFabricType
+// (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/APIReference/API_CreateEnvironment.html#migrationhubrefactorspaces-CreateEnvironment-request-NetworkFabricType)
+// is NONE) and you use your own networking infrastructure, you need to configure
+// VPC to VPC connectivity (https://docs.aws.amazon.com/whitepapers/latest/aws-vpc-connectivity-options/amazon-vpc-to-amazon-vpc-connectivity-options.html)
+// between your network and the application proxy VPC. Route creation from the
+// application proxy to service endpoints will fail if your network is not configured
+// to connect to the application proxy VPC. For more information, see Create
+// a route (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/userguide/getting-started-create-role.html)
+// in the Refactor Spaces User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2780,8 +2805,12 @@ type ApiGatewayProxyInput_ struct {
 	//
 	// If the value is set to PRIVATE in the request, this creates a private API
 	// endpoint that is isolated from the public internet. The private endpoint
-	// can only be accessed by using Amazon Virtual Private Cloud (Amazon VPC) endpoints
-	// for Amazon API Gateway that have been granted access.
+	// can only be accessed by using Amazon Virtual Private Cloud (Amazon VPC) interface
+	// endpoints for the Amazon API Gateway that has been granted access. For more
+	// information about creating a private connection with Refactor Spaces and
+	// interface endpoint (Amazon Web Services PrivateLink) availability, see Access
+	// Refactor Spaces using an interface endpoint (Amazon Web Services PrivateLink)
+	// (https://docs.aws.amazon.com/migrationhub-refactor-spaces/latest/userguide/vpc-interface-endpoints.html).
 	EndpointType *string `type:"string" enum:"ApiGatewayEndpointType"`
 
 	// The name of the API Gateway stage. The name defaults to prod.
@@ -3986,7 +4015,10 @@ type CreateServiceInput struct {
 	// String and GoString methods.
 	Tags map[string]*string `type:"map" sensitive:"true"`
 
-	// The configuration for the URL endpoint type.
+	// The configuration for the URL endpoint type. When creating a route to a service,
+	// Refactor Spaces automatically resolves the address in the UrlEndpointInput
+	// object URL when the Domain Name System (DNS) time-to-live (TTL) expires,
+	// or every 60 seconds for TTLs less than 60 seconds.
 	UrlEndpoint *UrlEndpointInput_ `type:"structure"`
 
 	// The ID of the VPC.
@@ -5026,7 +5058,7 @@ type EnvironmentSummary struct {
 	// String and GoString methods.
 	Tags map[string]*string `type:"map" sensitive:"true"`
 
-	// The ID of the transit gateway set up by the environment.
+	// The ID of the Transit Gateway set up by the environment.
 	TransitGatewayId *string `min:"21" type:"string"`
 }
 
@@ -5594,7 +5626,7 @@ type GetEnvironmentOutput struct {
 	// String and GoString methods.
 	Tags map[string]*string `type:"map" sensitive:"true"`
 
-	// The ID of the transit gateway set up by the environment.
+	// The ID of the Transit Gateway set up by the environment, if applicable.
 	TransitGatewayId *string `min:"21" type:"string"`
 }
 
@@ -5854,6 +5886,9 @@ func (s *GetRouteInput) SetRouteIdentifier(v string) *GetRouteInput {
 type GetRouteOutput struct {
 	_ struct{} `type:"structure"`
 
+	// If set to true, this option appends the source path to the service URL endpoint.
+	AppendSourcePath *bool `type:"boolean"`
+
 	// The ID of the application that the route belongs to.
 	ApplicationId *string `min:"14" type:"string"`
 
@@ -5906,8 +5941,10 @@ type GetRouteOutput struct {
 	// The unique identifier of the service.
 	ServiceId *string `min:"14" type:"string"`
 
-	// The path to use to match traffic. Paths must start with / and are relative
-	// to the base of the application.
+	// This is the path that Refactor Spaces uses to match traffic. Paths must start
+	// with / and are relative to the base of the application. To use path parameters
+	// in the source path, add a variable in curly braces. For example, the resource
+	// path {user} represents a path parameter called 'user'.
 	SourcePath *string `min:"1" type:"string"`
 
 	// The current state of the route.
@@ -5938,6 +5975,12 @@ func (s GetRouteOutput) String() string {
 // value will be replaced with "sensitive".
 func (s GetRouteOutput) GoString() string {
 	return s.String()
+}
+
+// SetAppendSourcePath sets the AppendSourcePath field's value.
+func (s *GetRouteOutput) SetAppendSourcePath(v bool) *GetRouteOutput {
+	s.AppendSourcePath = &v
+	return s
 }
 
 // SetApplicationId sets the ApplicationId field's value.
@@ -6476,7 +6519,7 @@ func (s *LambdaEndpointConfig) SetArn(v string) *LambdaEndpointConfig {
 type LambdaEndpointInput_ struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the Lambda endpoint.
+	// The Amazon Resource Name (ARN) of the Lambda function or alias.
 	//
 	// Arn is a required field
 	Arn *string `min:"1" type:"string" required:"true"`
@@ -7392,6 +7435,9 @@ func (s *ResourceNotFoundException) RequestID() string {
 type RouteSummary struct {
 	_ struct{} `type:"structure"`
 
+	// If set to true, this option appends the source path to the service URL endpoint.
+	AppendSourcePath *bool `type:"boolean"`
+
 	// The unique identifier of the application.
 	ApplicationId *string `min:"14" type:"string"`
 
@@ -7438,8 +7484,10 @@ type RouteSummary struct {
 	// The unique identifier of the service.
 	ServiceId *string `min:"14" type:"string"`
 
-	// The path to use to match traffic. Paths must start with / and are relative
-	// to the base of the application.
+	// This is the path that Refactor Spaces uses to match traffic. Paths must start
+	// with / and are relative to the base of the application. To use path parameters
+	// in the source path, add a variable in curly braces. For example, the resource
+	// path {user} represents a path parameter called 'user'.
 	SourcePath *string `min:"1" type:"string"`
 
 	// The current state of the route.
@@ -7469,6 +7517,12 @@ func (s RouteSummary) String() string {
 // value will be replaced with "sensitive".
 func (s RouteSummary) GoString() string {
 	return s.String()
+}
+
+// SetAppendSourcePath sets the AppendSourcePath field's value.
+func (s *RouteSummary) SetAppendSourcePath(v bool) *RouteSummary {
+	s.AppendSourcePath = &v
+	return s
 }
 
 // SetApplicationId sets the ApplicationId field's value.
@@ -8277,6 +8331,9 @@ type UriPathRouteInput_ struct {
 	// ActivationState is a required field
 	ActivationState *string `type:"string" required:"true" enum:"RouteActivationState"`
 
+	// If set to true, this option appends the source path to the service URL endpoint.
+	AppendSourcePath *bool `type:"boolean"`
+
 	// Indicates whether to match all subpaths of the given source path. If this
 	// value is false, requests must match the source path exactly before they are
 	// forwarded to this route's service.
@@ -8287,8 +8344,10 @@ type UriPathRouteInput_ struct {
 	// service.
 	Methods []*string `type:"list" enum:"HttpMethod"`
 
-	// The path to use to match traffic. Paths must start with / and are relative
-	// to the base of the application.
+	// This is the path that Refactor Spaces uses to match traffic. Paths must start
+	// with / and are relative to the base of the application. To use path parameters
+	// in the source path, add a variable in curly braces. For example, the resource
+	// path {user} represents a path parameter called 'user'.
 	//
 	// SourcePath is a required field
 	SourcePath *string `min:"1" type:"string" required:"true"`
@@ -8334,6 +8393,12 @@ func (s *UriPathRouteInput_) Validate() error {
 // SetActivationState sets the ActivationState field's value.
 func (s *UriPathRouteInput_) SetActivationState(v string) *UriPathRouteInput_ {
 	s.ActivationState = &v
+	return s
+}
+
+// SetAppendSourcePath sets the AppendSourcePath field's value.
+func (s *UriPathRouteInput_) SetAppendSourcePath(v bool) *UriPathRouteInput_ {
+	s.AppendSourcePath = &v
 	return s
 }
 
@@ -8822,12 +8887,16 @@ func HttpMethod_Values() []string {
 const (
 	// NetworkFabricTypeTransitGateway is a NetworkFabricType enum value
 	NetworkFabricTypeTransitGateway = "TRANSIT_GATEWAY"
+
+	// NetworkFabricTypeNone is a NetworkFabricType enum value
+	NetworkFabricTypeNone = "NONE"
 )
 
 // NetworkFabricType_Values returns all elements of the NetworkFabricType enum
 func NetworkFabricType_Values() []string {
 	return []string{
 		NetworkFabricTypeTransitGateway,
+		NetworkFabricTypeNone,
 	}
 }
 

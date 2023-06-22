@@ -11,23 +11,19 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Searches an active index. Use this API to search your documents using query. The
-// Query API enables to do faceted search and to filter results based on document
-// attributes. It also enables you to provide user context that Amazon Kendra uses
-// to enforce document access control in the search results. Amazon Kendra searches
-// your index for text content and question and answer (FAQ) content. By default
-// the response contains three types of results.
+// Searches an active index. Use this API to search your documents using query.
+// The Query API enables to do faceted search and to filter results based on
+// document attributes. It also enables you to provide user context that Amazon
+// Kendra uses to enforce document access control in the search results. Amazon
+// Kendra searches your index for text content and question and answer (FAQ)
+// content. By default the response contains three types of results.
+//   - Relevant passages
+//   - Matching FAQs
+//   - Relevant documents
 //
-// * Relevant passages
-//
-// * Matching
-// FAQs
-//
-// * Relevant documents
-//
-// You can specify that the query return only one type
-// of result using the QueryResultTypeConfig parameter. Each query returns the 100
-// most relevant results.
+// You can specify that the query return only one type of result using the
+// QueryResultTypeFilter parameter. Each query returns the 100 most relevant
+// results.
 func (c *Client) Query(ctx context.Context, params *QueryInput, optFns ...func(*Options)) (*QueryOutput, error) {
 	if params == nil {
 		params = &QueryInput{}
@@ -45,14 +41,14 @@ func (c *Client) Query(ctx context.Context, params *QueryInput, optFns ...func(*
 
 type QueryInput struct {
 
-	// The unique identifier of the index to search. The identifier is returned in the
+	// The identifier of the index to search. The identifier is returned in the
 	// response from the CreateIndex API.
 	//
 	// This member is required.
 	IndexId *string
 
-	// Enables filtered searches based on document attributes. You can only provide one
-	// attribute filter; however, the AndAllFilters, NotFilter, and OrAllFilters
+	// Enables filtered searches based on document attributes. You can only provide
+	// one attribute filter; however, the AndAllFilters , NotFilter , and OrAllFilters
 	// parameters contain a list of other filters. The AttributeFilter parameter
 	// enables you to create a set of filtering rules that a document must satisfy to
 	// be included in the query results.
@@ -87,7 +83,9 @@ type QueryInput struct {
 	// Sets the type of query. Only results for the specified query type are returned.
 	QueryResultTypeFilter types.QueryResultType
 
-	// The text to search for.
+	// The input query text for the search. Amazon Kendra truncates queries at 30
+	// token words, which excludes punctuation and stop words. Truncation still applies
+	// if you use Boolean or more advanced, complex queries.
 	QueryText *string
 
 	// An array of document attributes to include in the response. You can limit the
@@ -111,7 +109,7 @@ type QueryInput struct {
 
 	// Provides an identifier for a specific user. The VisitorId should be a unique
 	// identifier, such as a GUID. Don't use personally identifiable information, such
-	// as the user's email address, as the VisitorId.
+	// as the user's email address, as the VisitorId .
 	VisitorId *string
 
 	noSmithyDocumentSerde
@@ -119,12 +117,18 @@ type QueryInput struct {
 
 type QueryOutput struct {
 
-	// Contains the facet results. A FacetResult contains the counts for each attribute
-	// key that was specified in the Facets input parameter.
+	// Contains the facet results. A FacetResult contains the counts for each
+	// attribute key that was specified in the Facets input parameter.
 	FacetResults []types.FacetResult
 
-	// The unique identifier for the search. You use QueryId to identify the search
-	// when using the feedback API.
+	// The list of featured result items. Featured results are displayed at the top of
+	// the search results page, placed above all other results for certain queries. If
+	// there's an exact match of a query, then certain documents are featured in the
+	// search results.
+	FeaturedResultsItems []types.FeaturedResultsItem
+
+	// The identifier for the search. You use QueryId to identify the search when
+	// using the feedback API.
 	QueryId *string
 
 	// The results of the search.
@@ -133,16 +137,16 @@ type QueryOutput struct {
 	// A list of information related to suggested spell corrections for a query.
 	SpellCorrectedQueries []types.SpellCorrectedQuery
 
-	// The total number of items found by the search; however, you can only retrieve up
-	// to 100 items. For example, if the search found 192 items, you can only retrieve
-	// the first 100 of the items.
+	// The total number of items found by the search; however, you can only retrieve
+	// up to 100 items. For example, if the search found 192 items, you can only
+	// retrieve the first 100 of the items.
 	TotalNumberOfResults *int32
 
 	// A list of warning codes and their messages on problems with your query. Amazon
 	// Kendra currently only supports one type of warning, which is a warning on
 	// invalid syntax used in the query. For examples of invalid query syntax, see
-	// Searching with advanced query syntax
-	// (https://docs.aws.amazon.com/kendra/latest/dg/searching-example.html#searching-index-query-syntax).
+	// Searching with advanced query syntax (https://docs.aws.amazon.com/kendra/latest/dg/searching-example.html#searching-index-query-syntax)
+	// .
 	Warnings []types.Warning
 
 	// Metadata pertaining to the operation's result.
@@ -200,6 +204,9 @@ func (c *Client) addOperationQueryMiddlewares(stack *middleware.Stack, options O
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opQuery(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

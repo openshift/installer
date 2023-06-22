@@ -36,7 +36,7 @@ type UpdateContactInput struct {
 	// This member is required.
 	ContactListName *string
 
-	// The contact's email addres.
+	// The contact's email address.
 	//
 	// This member is required.
 	EmailAddress *string
@@ -110,6 +110,9 @@ func (c *Client) addOperationUpdateContactMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateContact(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

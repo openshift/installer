@@ -1,3 +1,97 @@
+# v1.31.6 (2023-06-15)
+
+* No change notes available for this release.
+
+# v1.31.5 (2023-06-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.31.4 (2023-05-04)
+
+* No change notes available for this release.
+
+# v1.31.3 (2023-04-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.31.2 (2023-04-10)
+
+* No change notes available for this release.
+
+# v1.31.1 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.31.0 (2023-03-27)
+
+* **Feature**: AWS Elemental MediaLive now supports ID3 tag insertion for audio only HLS output groups. AWS Elemental Link devices now support tagging.
+
+# v1.30.2 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.30.1 (2023-03-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.30.0 (2023-03-03)
+
+* **Feature**: AWS Elemental MediaLive adds support for Nielsen watermark timezones.
+
+# v1.29.4 (2023-02-22)
+
+* **Bug Fix**: Prevent nil pointer dereference when retrieving error codes.
+
+# v1.29.3 (2023-02-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.29.2 (2023-02-15)
+
+* **Announcement**: When receiving an error response in restJson-based services, an incorrect error type may have been returned based on the content of the response. This has been fixed via PR #2012 tracked in issue #1910.
+* **Bug Fix**: Correct error type parsing for restJson services.
+
+# v1.29.1 (2023-02-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.29.0 (2023-01-19)
+
+* **Feature**: AWS Elemental MediaLive adds support for SCTE 35 preRollMilliSeconds.
+
+# v1.28.0 (2023-01-05)
+
+* **Feature**: Add `ErrorCodeOverride` field to all error structs (aws/smithy-go#401).
+
+# v1.27.0 (2022-12-20)
+
+* **Feature**: This release adds support for two new features to AWS Elemental MediaLive. First, you can now burn-in timecodes to your MediaLive outputs. Second, we now now support the ability to decode Dolby E audio when it comes in on an input.
+
+# v1.26.1 (2022-12-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.0 (2022-12-09)
+
+* **Feature**: Link devices now support buffer size (latency) configuration. A higher latency value means a longer delay in transmitting from the device to MediaLive, but improved resiliency. A lower latency value means a shorter delay, but less resiliency.
+
+# v1.25.0 (2022-12-02)
+
+* **Feature**: Updates to Event Signaling and Management (ESAM) API and documentation.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.24.2 (2022-10-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.24.1 (2022-10-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.24.0 (2022-10-13)
+
+* **Feature**: AWS Elemental MediaLive now supports forwarding SCTE-35 messages through the Event Signaling and Management (ESAM) API, and can read those SCTE-35 messages from an inactive source.
+
 # v1.23.1 (2022-09-20)
 
 * **Dependency Update**: Updated to the latest SDK module versions

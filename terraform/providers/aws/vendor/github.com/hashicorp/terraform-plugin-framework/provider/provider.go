@@ -1,29 +1,33 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package provider
 
 import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
 // Provider is the core interface that all Terraform providers must implement.
 //
 // Providers can optionally implement these additional concepts:
 //
-//   - Resources: ProviderWithResources or (deprecated)
-//     ProviderWithGetResources.
-//   - Data Sources: ProviderWithDataSources or (deprecated)
-//     ProviderWithGetDataSources.
-//   - Validation: Schema-based via tfsdk.Attribute or entire configuration
+//   - Validation: Schema-based or entire configuration
 //     via ProviderWithConfigValidators or ProviderWithValidateConfig.
 //   - Meta Schema: ProviderWithMetaSchema
 type Provider interface {
-	// GetSchema returns the schema for this provider's configuration. If
-	// this provider has no configuration, return an empty schema.Schema.
-	GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics)
+	// Metadata should return the metadata for the provider, such as
+	// a type name and version data.
+	//
+	// Implementing the MetadataResponse.TypeName will populate the
+	// datasource.MetadataRequest.ProviderTypeName and
+	// resource.MetadataRequest.ProviderTypeName fields automatically.
+	Metadata(context.Context, MetadataRequest, *MetadataResponse)
+
+	// Schema should return the schema for this provider.
+	Schema(context.Context, SchemaRequest, *SchemaResponse)
 
 	// Configure is called at the beginning of the provider lifecycle, when
 	// Terraform sends to the provider the values the user specified in the
@@ -64,30 +68,25 @@ type ProviderWithConfigValidators interface {
 	ConfigValidators(context.Context) []ConfigValidator
 }
 
-// ProviderWithMetadata is an interface type that extends Provider to
-// return its type name, such as examplecloud, and other
-// metadata, such as version.
+// ProviderWithMetaSchema is a provider with a provider meta schema, which
+// is configured by practitioners via the provider_meta configuration block
+// and the configuration data is included with certain data source and resource
+// operations. The intended use case is to enable Terraform module authors
+// within the same organization of the provider to track module usage in
+// requests. Other use cases are explicitly not supported. All provider
+// instances (aliases) receive the same data.
 //
-// Implementing this method will populate the
-// [datasource.MetadataRequest.ProviderTypeName] and
-// [resource.MetadataRequest.ProviderTypeName] fields automatically.
-type ProviderWithMetadata interface {
-	Provider
-
-	// Metadata should return the metadata for the provider, such as
-	// a type name and version data.
-	Metadata(context.Context, MetadataRequest, *MetadataResponse)
-}
-
-// ProviderWithMetaSchema is a provider with a provider meta schema.
 // This functionality is currently experimental and subject to change or break
-// without warning; it should only be used by providers that are collaborating
-// on its use with the Terraform team.
+// without warning. It is not protected by version compatibility guarantees.
 type ProviderWithMetaSchema interface {
 	Provider
 
-	// GetMetaSchema returns the provider meta schema.
-	GetMetaSchema(context.Context) (tfsdk.Schema, diag.Diagnostics)
+	// MetaSchema should return the meta schema for this provider.
+	//
+	// This functionality is currently experimental and subject to change or
+	// break without warning. It is not protected by version compatibility
+	// guarantees.
+	MetaSchema(context.Context, MetaSchemaRequest, *MetaSchemaResponse)
 }
 
 // ProviderWithValidateConfig is an interface type that extends Provider to include imperative validation.

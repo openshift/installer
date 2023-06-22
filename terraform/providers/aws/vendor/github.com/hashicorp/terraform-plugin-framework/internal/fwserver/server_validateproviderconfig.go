@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -36,9 +39,9 @@ func (s *Server) ValidateProviderConfig(ctx context.Context, req *ValidateProvid
 		logging.FrameworkTrace(ctx, "Provider implements ProviderWithConfigValidators")
 
 		for _, configValidator := range providerWithConfigValidators.ConfigValidators(ctx) {
-			vpcRes := &provider.ValidateConfigResponse{
-				Diagnostics: resp.Diagnostics,
-			}
+			// Instantiate a new response for each request to prevent validators
+			// from modifying or removing diagnostics.
+			vpcRes := &provider.ValidateConfigResponse{}
 
 			logging.FrameworkDebug(
 				ctx,
@@ -56,34 +59,34 @@ func (s *Server) ValidateProviderConfig(ctx context.Context, req *ValidateProvid
 				},
 			)
 
-			resp.Diagnostics = vpcRes.Diagnostics
+			resp.Diagnostics.Append(vpcRes.Diagnostics...)
 		}
 	}
 
 	if providerWithValidateConfig, ok := s.Provider.(provider.ProviderWithValidateConfig); ok {
 		logging.FrameworkTrace(ctx, "Provider implements ProviderWithValidateConfig")
 
-		vpcRes := &provider.ValidateConfigResponse{
-			Diagnostics: resp.Diagnostics,
-		}
+		// Instantiate a new response for each request to prevent validators
+		// from modifying or removing diagnostics.
+		vpcRes := &provider.ValidateConfigResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined Provider ValidateConfig")
 		providerWithValidateConfig.ValidateConfig(ctx, vpcReq, vpcRes)
 		logging.FrameworkDebug(ctx, "Called provider defined Provider ValidateConfig")
 
-		resp.Diagnostics = vpcRes.Diagnostics
+		resp.Diagnostics.Append(vpcRes.Diagnostics...)
 	}
 
 	validateSchemaReq := ValidateSchemaRequest{
 		Config: *req.Config,
 	}
-	validateSchemaResp := ValidateSchemaResponse{
-		Diagnostics: resp.Diagnostics,
-	}
+	// Instantiate a new response for each request to prevent validators
+	// from modifying or removing diagnostics.
+	validateSchemaResp := ValidateSchemaResponse{}
 
 	SchemaValidate(ctx, req.Config.Schema, validateSchemaReq, &validateSchemaResp)
 
-	resp.Diagnostics = validateSchemaResp.Diagnostics
+	resp.Diagnostics.Append(validateSchemaResp.Diagnostics...)
 
 	// This RPC allows a modified configuration to be returned. This was
 	// previously used to allow a "required" provider attribute (as defined

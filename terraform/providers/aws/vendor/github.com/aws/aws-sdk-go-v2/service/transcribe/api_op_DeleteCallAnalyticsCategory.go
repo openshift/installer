@@ -11,7 +11,7 @@ import (
 )
 
 // Deletes a Call Analytics category. To use this operation, specify the name of
-// the category you want to delete using CategoryName. Category names are case
+// the category you want to delete using CategoryName . Category names are case
 // sensitive.
 func (c *Client) DeleteCallAnalyticsCategory(ctx context.Context, params *DeleteCallAnalyticsCategoryInput, optFns ...func(*Options)) (*DeleteCallAnalyticsCategoryOutput, error) {
 	if params == nil {
@@ -95,6 +95,9 @@ func (c *Client) addOperationDeleteCallAnalyticsCategoryMiddlewares(stack *middl
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteCallAnalyticsCategory(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

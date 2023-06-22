@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fromproto6
 
 import (
@@ -38,7 +41,7 @@ func ImportResourceStateRequest(ctx context.Context, proto6 *tfprotov6.ImportRes
 	fw := &fwserver.ImportResourceStateRequest{
 		EmptyState: tfsdk.State{
 			Raw:    tftypes.NewValue(resourceSchema.Type().TerraformType(ctx), nil),
-			Schema: tfsdkSchema(resourceSchema),
+			Schema: resourceSchema,
 		},
 		ID:       proto6.ID,
 		Resource: resource,

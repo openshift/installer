@@ -31,7 +31,7 @@ func (c *Client) GetDomainDeliverabilityCampaign(ctx context.Context, params *Ge
 
 // Retrieve all the deliverability data for a specific campaign. This data is
 // available for a campaign only if the campaign sent email by using a domain that
-// the Deliverability dashboard is enabled for (PutDeliverabilityDashboardOption
+// the Deliverability dashboard is enabled for ( PutDeliverabilityDashboardOption
 // operation).
 type GetDomainDeliverabilityCampaignInput struct {
 
@@ -109,6 +109,9 @@ func (c *Client) addOperationGetDomainDeliverabilityCampaignMiddlewares(stack *m
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetDomainDeliverabilityCampaign(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

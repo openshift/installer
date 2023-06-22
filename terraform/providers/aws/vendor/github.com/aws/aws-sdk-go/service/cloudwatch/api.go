@@ -62,7 +62,10 @@ func (c *CloudWatch) DeleteAlarmsRequest(input *DeleteAlarmsInput) (req *request
 // you could delete 99 metric alarms and one composite alarms with one operation,
 // but you can't delete two composite alarms with one operation.
 //
-// In the event of an error, no alarms are deleted.
+// If you specify an incorrect alarm name or make any other error in the operation,
+// no alarms are deleted. To confirm that alarms were deleted successfully,
+// you can use the DescribeAlarms (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_DescribeAlarms.html)
+// operation after using DeleteAlarms.
 //
 // It is possible to create a loop or cycle of composite alarms, where composite
 // alarm A depends on composite alarm B, and composite alarm B also depends
@@ -73,7 +76,7 @@ func (c *CloudWatch) DeleteAlarmsRequest(input *DeleteAlarmsInput) (req *request
 // To get out of such a situation, you must break the cycle by changing the
 // rule of one of the composite alarms in the cycle to remove a dependency that
 // creates the cycle. The simplest change to make to break a cycle is to change
-// the AlarmRule of one of the alarms to False.
+// the AlarmRule of one of the alarms to false.
 //
 // Additionally, the evaluation of composite alarms stops if CloudWatch detects
 // a cycle in the evaluation path.
@@ -2639,14 +2642,19 @@ func (c *CloudWatch) ListMetricsRequest(input *ListMetricsInput) (req *request.R
 // List the specified metrics. You can use the returned metrics with GetMetricData
 // (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
 // or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html)
-// to obtain statistical data.
+// to get statistical data.
 //
 // Up to 500 results are returned for any one call. To retrieve additional results,
 // use the returned token with subsequent calls.
 //
-// After you create a metric, allow up to 15 minutes before the metric appears.
-// You can see statistics about the metric sooner by using GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
+// After you create a metric, allow up to 15 minutes for the metric to appear.
+// To see metric statistics sooner, use GetMetricData (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricData.html)
 // or GetMetricStatistics (https://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_GetMetricStatistics.html).
+//
+// If you are using CloudWatch cross-account observability, you can use this
+// operation in a monitoring account and view metrics from the linked source
+// accounts. For more information, see CloudWatch cross-account observability
+// (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
 //
 // ListMetrics doesn't return information about metrics if those metrics haven't
 // reported data in the past two weeks. To retrieve those metrics, use GetMetricData
@@ -2994,7 +3002,7 @@ func (c *CloudWatch) PutCompositeAlarmRequest(input *PutCompositeAlarmInput) (re
 // To get out of such a situation, you must break the cycle by changing the
 // rule of one of the composite alarms in the cycle to remove a dependency that
 // creates the cycle. The simplest change to make to break a cycle is to change
-// the AlarmRule of one of the alarms to False.
+// the AlarmRule of one of the alarms to false.
 //
 // Additionally, the evaluation of composite alarms stops if CloudWatch detects
 // a cycle in the evaluation path.
@@ -3373,7 +3381,9 @@ func (c *CloudWatch) PutMetricAlarmRequest(input *PutMetricAlarmInput) (req *req
 // PutMetricAlarm API operation for Amazon CloudWatch.
 //
 // Creates or updates an alarm and associates it with the specified metric,
-// metric math expression, or anomaly detection model.
+// metric math expression, anomaly detection model, or Metrics Insights query.
+// For more information about using a Metrics Insights query for an alarm, see
+// Create alarms on Metrics Insights queries (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Metrics_Insights_Alarm.html).
 //
 // Alarms based on anomaly detection models cannot have Auto Scaling actions.
 //
@@ -3387,16 +3397,18 @@ func (c *CloudWatch) PutMetricAlarmRequest(input *PutMetricAlarmInput) (req *req
 // If you are an IAM user, you must have Amazon EC2 permissions for some alarm
 // operations:
 //
-//   - The iam:CreateServiceLinkedRole for all alarms with EC2 actions
+//   - The iam:CreateServiceLinkedRole permission for all alarms with EC2 actions
 //
-//   - The iam:CreateServiceLinkedRole to create an alarm with Systems Manager
-//     OpsItem actions.
+//   - The iam:CreateServiceLinkedRole permissions to create an alarm with
+//     Systems Manager OpsItem or response plan actions.
 //
 // The first time you create an alarm in the Amazon Web Services Management
 // Console, the CLI, or by using the PutMetricAlarm API, CloudWatch creates
 // the necessary service-linked role for you. The service-linked roles are called
 // AWSServiceRoleForCloudWatchEvents and AWSServiceRoleForCloudWatchAlarms_ActionSSM.
 // For more information, see Amazon Web Services service-linked role (https://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-service-linked-role).
+//
+// Each PutMetricAlarm action has a maximum uncompressed payload of 120 KB.
 //
 // # Cross-account alarms
 //
@@ -3631,12 +3643,12 @@ func (c *CloudWatch) PutMetricStreamRequest(input *PutMetricStreamInput) (req *r
 // PutMetricStream API operation for Amazon CloudWatch.
 //
 // Creates or updates a metric stream. Metric streams can automatically stream
-// CloudWatch metrics to Amazon Web Services destinations including Amazon S3
-// and to many third-party solutions.
+// CloudWatch metrics to Amazon Web Services destinations, including Amazon
+// S3, and to many third-party solutions.
 //
 // For more information, see Using Metric Streams (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Metric-Streams.html).
 //
-// To create a metric stream, you must be logged on to an account that has the
+// To create a metric stream, you must be signed in to an account that has the
 // iam:PassRole permission and either the CloudWatchFullAccess policy or the
 // cloudwatch:PutMetricStream permission.
 //
@@ -3651,13 +3663,18 @@ func (c *CloudWatch) PutMetricStreamRequest(input *PutMetricStreamInput) (req *r
 //
 // By default, a metric stream always sends the MAX, MIN, SUM, and SAMPLECOUNT
 // statistics for each metric that is streamed. You can use the StatisticsConfigurations
-// parameter to have the metric stream also send additional statistics in the
-// stream. Streaming additional statistics incurs additional costs. For more
-// information, see Amazon CloudWatch Pricing (https://aws.amazon.com/cloudwatch/pricing/).
+// parameter to have the metric stream send additional statistics in the stream.
+// Streaming additional statistics incurs additional costs. For more information,
+// see Amazon CloudWatch Pricing (https://aws.amazon.com/cloudwatch/pricing/).
 //
 // When you use PutMetricStream to create a new metric stream, the stream is
 // created in the running state. If you use it to update an existing stream,
 // the state of the stream is not changed.
+//
+// If you are using CloudWatch cross-account observability and you create a
+// metric stream in a monitoring account, you can choose whether to include
+// metrics from source accounts in the stream. For more information, see CloudWatch
+// cross-account observability (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch-Unified-Cross-Account.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4848,7 +4865,7 @@ func (s *Datapoint) SetUnit(v string) *Datapoint {
 type DeleteAlarmsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The alarms to be deleted.
+	// The alarms to be deleted. Do not enclose the alarm names in quote marks.
 	//
 	// AlarmNames is a required field
 	AlarmNames []*string `type:"list" required:"true"`
@@ -6098,13 +6115,15 @@ type Dimension struct {
 
 	// The name of the dimension. Dimension names must contain only ASCII characters,
 	// must include at least one non-whitespace character, and cannot start with
-	// a colon (:).
+	// a colon (:). ASCII control characters are not supported as part of dimension
+	// names.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
 	// The value of the dimension. Dimension values must contain only ASCII characters
-	// and must include at least one non-whitespace character.
+	// and must include at least one non-whitespace character. ASCII control characters
+	// are not supported as part of dimension values.
 	//
 	// Value is a required field
 	Value *string `min:"1" type:"string" required:"true"`
@@ -7408,13 +7427,18 @@ type GetMetricStreamOutput struct {
 	// metric stream.
 	ExcludeFilters []*MetricStreamFilter `type:"list"`
 
-	// The ARN of the Amazon Kinesis Firehose delivery stream that is used by this
-	// metric stream.
+	// The ARN of the Amazon Kinesis Data Firehose delivery stream that is used
+	// by this metric stream.
 	FirehoseArn *string `min:"1" type:"string"`
 
 	// If this array of metric namespaces is present, then these namespaces are
 	// the only metric namespaces that are streamed by this metric stream.
 	IncludeFilters []*MetricStreamFilter `type:"list"`
+
+	// If this is true and this metric stream is in a monitoring account, then the
+	// stream includes metrics from source accounts that the monitoring account
+	// is linked to.
+	IncludeLinkedAccountsMetrics *bool `type:"boolean"`
 
 	// The date of the most recent update to the metric stream's configuration.
 	LastUpdateDate *time.Time `type:"timestamp"`
@@ -7484,6 +7508,12 @@ func (s *GetMetricStreamOutput) SetFirehoseArn(v string) *GetMetricStreamOutput 
 // SetIncludeFilters sets the IncludeFilters field's value.
 func (s *GetMetricStreamOutput) SetIncludeFilters(v []*MetricStreamFilter) *GetMetricStreamOutput {
 	s.IncludeFilters = v
+	return s
+}
+
+// SetIncludeLinkedAccountsMetrics sets the IncludeLinkedAccountsMetrics field's value.
+func (s *GetMetricStreamOutput) SetIncludeLinkedAccountsMetrics(v bool) *GetMetricStreamOutput {
+	s.IncludeLinkedAccountsMetrics = &v
 	return s
 }
 
@@ -8313,6 +8343,12 @@ type ListMetricsInput struct {
 	// will be returned.
 	Dimensions []*DimensionFilter `type:"list"`
 
+	// If you are using this operation in a monitoring account, specify true to
+	// include metrics from source accounts in the returned data.
+	//
+	// The default is false.
+	IncludeLinkedAccounts *bool `type:"boolean"`
+
 	// The name of the metric to filter against. Only the metrics with names that
 	// match exactly will be returned.
 	MetricName *string `min:"1" type:"string"`
@@ -8324,6 +8360,11 @@ type ListMetricsInput struct {
 	// The token returned by a previous call to indicate that there is more data
 	// available.
 	NextToken *string `type:"string"`
+
+	// When you use this operation in a monitoring account, use this field to return
+	// metrics only from one source account. To do so, specify that source account
+	// ID in this field, and also specify true for IncludeLinkedAccounts.
+	OwningAccount *string `min:"1" type:"string"`
 
 	// To filter the results to show only metrics that have had data points published
 	// in the past three hours, specify this parameter with a value of PT3H. This
@@ -8362,6 +8403,9 @@ func (s *ListMetricsInput) Validate() error {
 	if s.Namespace != nil && len(*s.Namespace) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Namespace", 1))
 	}
+	if s.OwningAccount != nil && len(*s.OwningAccount) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("OwningAccount", 1))
+	}
 	if s.Dimensions != nil {
 		for i, v := range s.Dimensions {
 			if v == nil {
@@ -8385,6 +8429,12 @@ func (s *ListMetricsInput) SetDimensions(v []*DimensionFilter) *ListMetricsInput
 	return s
 }
 
+// SetIncludeLinkedAccounts sets the IncludeLinkedAccounts field's value.
+func (s *ListMetricsInput) SetIncludeLinkedAccounts(v bool) *ListMetricsInput {
+	s.IncludeLinkedAccounts = &v
+	return s
+}
+
 // SetMetricName sets the MetricName field's value.
 func (s *ListMetricsInput) SetMetricName(v string) *ListMetricsInput {
 	s.MetricName = &v
@@ -8403,6 +8453,12 @@ func (s *ListMetricsInput) SetNextToken(v string) *ListMetricsInput {
 	return s
 }
 
+// SetOwningAccount sets the OwningAccount field's value.
+func (s *ListMetricsInput) SetOwningAccount(v string) *ListMetricsInput {
+	s.OwningAccount = &v
+	return s
+}
+
 // SetRecentlyActive sets the RecentlyActive field's value.
 func (s *ListMetricsInput) SetRecentlyActive(v string) *ListMetricsInput {
 	s.RecentlyActive = &v
@@ -8417,6 +8473,14 @@ type ListMetricsOutput struct {
 
 	// The token that marks the start of the next batch of returned results.
 	NextToken *string `type:"string"`
+
+	// If you are using this operation in a monitoring account, this array contains
+	// the account IDs of the source accounts where the metrics in the returned
+	// data are from.
+	//
+	// This field is a 1:1 mapping between each metric that is returned and the
+	// ID of the owning account.
+	OwningAccounts []*string `type:"list"`
 }
 
 // String returns the string representation.
@@ -8446,6 +8510,12 @@ func (s *ListMetricsOutput) SetMetrics(v []*Metric) *ListMetricsOutput {
 // SetNextToken sets the NextToken field's value.
 func (s *ListMetricsOutput) SetNextToken(v string) *ListMetricsOutput {
 	s.NextToken = &v
+	return s
+}
+
+// SetOwningAccounts sets the OwningAccounts field's value.
+func (s *ListMetricsOutput) SetOwningAccounts(v []*string) *ListMetricsOutput {
+	s.OwningAccounts = v
 	return s
 }
 
@@ -8901,6 +8971,12 @@ type MetricAlarm struct {
 	// The number of periods over which data is compared to the specified threshold.
 	EvaluationPeriods *int64 `min:"1" type:"integer"`
 
+	// If the value of this field is PARTIAL_DATA, the alarm is being evaluated
+	// based on only partial data. This happens if the query used for the alarm
+	// returns more than 10,000 metrics. For more information, see Create alarms
+	// on Metrics Insights queries (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Create_Metrics_Insights_Alarm.html).
+	EvaluationState *string `type:"string" enum:"EvaluationState"`
+
 	// The percentile statistic for the metric associated with the alarm. Specify
 	// a value between p0.0 and p100.
 	ExtendedStatistic *string `type:"string"`
@@ -8937,7 +9013,11 @@ type MetricAlarm struct {
 	// An explanation for the alarm state, in JSON format.
 	StateReasonData *string `type:"string"`
 
-	// The time stamp of the last update to the alarm state.
+	// The date and time that the alarm's StateValue most recently changed.
+	StateTransitionedTimestamp *time.Time `type:"timestamp"`
+
+	// The time stamp of the last update to the value of either the StateValue or
+	// EvaluationState parameters.
 	StateUpdatedTimestamp *time.Time `type:"timestamp"`
 
 	// The state value for the alarm.
@@ -9049,6 +9129,12 @@ func (s *MetricAlarm) SetEvaluationPeriods(v int64) *MetricAlarm {
 	return s
 }
 
+// SetEvaluationState sets the EvaluationState field's value.
+func (s *MetricAlarm) SetEvaluationState(v string) *MetricAlarm {
+	s.EvaluationState = &v
+	return s
+}
+
 // SetExtendedStatistic sets the ExtendedStatistic field's value.
 func (s *MetricAlarm) SetExtendedStatistic(v string) *MetricAlarm {
 	s.ExtendedStatistic = &v
@@ -9100,6 +9186,12 @@ func (s *MetricAlarm) SetStateReason(v string) *MetricAlarm {
 // SetStateReasonData sets the StateReasonData field's value.
 func (s *MetricAlarm) SetStateReasonData(v string) *MetricAlarm {
 	s.StateReasonData = &v
+	return s
+}
+
+// SetStateTransitionedTimestamp sets the StateTransitionedTimestamp field's value.
+func (s *MetricAlarm) SetStateTransitionedTimestamp(v time.Time) *MetricAlarm {
+	s.StateTransitionedTimestamp = &v
 	return s
 }
 
@@ -9160,7 +9252,7 @@ func (s *MetricAlarm) SetUnit(v string) *MetricAlarm {
 // in the array. The 20 structures can include as many as 10 structures that
 // contain a MetricStat parameter to retrieve a metric, and as many as 10 structures
 // that contain the Expression parameter to perform a math expression. Of those
-// Expression structures, one must have True as the value for ReturnData. The
+// Expression structures, one must have true as the value for ReturnData. The
 // result of this expression is the value the alarm watches.
 //
 // Any expression used in a PutMetricAlarm operation must return a single time
@@ -9173,11 +9265,13 @@ func (s *MetricAlarm) SetUnit(v string) *MetricAlarm {
 type MetricDataQuery struct {
 	_ struct{} `type:"structure"`
 
-	// The ID of the account where the metrics are located, if this is a cross-account
-	// alarm.
+	// The ID of the account where the metrics are located.
 	//
-	// Use this field only for PutMetricAlarm operations. It is not used in GetMetricData
-	// operations.
+	// If you are performing a GetMetricData operation in a monitoring account,
+	// use this to specify which account to retrieve this metric from.
+	//
+	// If you are performing a PutMetricAlarm operation, use this to specify which
+	// account contains the metric that the alarm is watching.
 	AccountId *string `min:"1" type:"string"`
 
 	// This field can contain either a Metrics Insights query, or a metric math
@@ -9234,9 +9328,9 @@ type MetricDataQuery struct {
 	// When used in GetMetricData, this option indicates whether to return the timestamps
 	// and raw data values of this metric. If you are performing this call just
 	// to do math expressions and do not also need the raw data returned, you can
-	// specify False. If you omit this, the default of True is used.
+	// specify false. If you omit this, the default of true is used.
 	//
-	// When used in PutMetricAlarm, specify True for the one expression result to
+	// When used in PutMetricAlarm, specify true for the one expression result to
 	// use as the alarm. For all other metrics and expressions in the same PutMetricAlarm
 	// operation, specify ReturnData as False.
 	ReturnData *bool `type:"boolean"`
@@ -9603,9 +9697,9 @@ type MetricMathAnomalyDetector struct {
 	// detector based on the result of a metric math expression. Each item in MetricDataQueries
 	// gets a metric or performs a math expression. One item in MetricDataQueries
 	// is the expression that provides the time series that the anomaly detector
-	// uses as input. Designate the expression by setting ReturnData to True for
+	// uses as input. Designate the expression by setting ReturnData to true for
 	// this object in the array. For all other expressions and metrics, set ReturnData
-	// to False. The designated expression must return a single time series.
+	// to false. The designated expression must return a single time series.
 	MetricDataQueries []*MetricDataQuery `type:"list"`
 }
 
@@ -9860,12 +9954,31 @@ func (s *MetricStreamEntry) SetState(v string) *MetricStreamEntry {
 	return s
 }
 
-// This structure contains the name of one of the metric namespaces that is
-// listed in a filter of a metric stream.
+// This structure contains a metric namespace and optionally, a list of metric
+// names, to either include in a metric stream or exclude from a metric stream.
+//
+// A metric stream's filters can include up to 1000 total names. This limit
+// applies to the sum of namespace names and metric names in the filters. For
+// example, this could include 10 metric namespace filters with 99 metrics each,
+// or 20 namespace filters with 49 metrics specified in each filter.
 type MetricStreamFilter struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the metric namespace in the filter.
+	// The names of the metrics to either include or exclude from the metric stream.
+	//
+	// If you omit this parameter, all metrics in the namespace are included or
+	// excluded, depending on whether this filter is specified as an exclude filter
+	// or an include filter.
+	//
+	// Each metric name can contain only ASCII printable characters (ASCII range
+	// 32 through 126). Each metric name must contain at least one non-whitespace
+	// character.
+	MetricNames []*string `type:"list"`
+
+	// The name of the metric namespace for this filter.
+	//
+	// The namespace can contain only ASCII printable characters (ASCII range 32
+	// through 126). It must contain at least one non-whitespace character.
 	Namespace *string `min:"1" type:"string"`
 }
 
@@ -9898,6 +10011,12 @@ func (s *MetricStreamFilter) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetMetricNames sets the MetricNames field's value.
+func (s *MetricStreamFilter) SetMetricNames(v []*string) *MetricStreamFilter {
+	s.MetricNames = v
+	return s
 }
 
 // SetNamespace sets the Namespace field's value.
@@ -10910,22 +11029,48 @@ type PutMetricAlarmInput struct {
 
 	// The actions to execute when this alarm transitions to the ALARM state from
 	// any other state. Each action is specified as an Amazon Resource Name (ARN).
+	// Valid values:
 	//
-	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
-	// | arn:aws:automate:region:ec2:recover | arn:aws:automate:region:ec2:reboot
-	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
-	// | arn:aws:ssm:region:account-id:opsitem:severity | arn:aws:ssm-incidents::account-id:response-plan:response-plan-name
+	// EC2 actions:
 	//
-	// Valid Values (for use with IAM roles): arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Reboot/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Recover/1.0
+	//    * arn:aws:automate:region:ec2:stop
+	//
+	//    * arn:aws:automate:region:ec2:terminate
+	//
+	//    * arn:aws:automate:region:ec2:reboot
+	//
+	//    * arn:aws:automate:region:ec2:recover
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Recover/1.0
+	//
+	// Autoscaling action:
+	//
+	//    * arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	//
+	// SNS notification action:
+	//
+	//    * arn:aws:sns:region:account-id:sns-topic-name:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	//
+	// SSM integration actions:
+	//
+	//    * arn:aws:ssm:region:account-id:opsitem:severity#CATEGORY=category-name
+	//
+	//    * arn:aws:ssm-incidents::account-id:responseplan/response-plan-name
 	AlarmActions []*string `type:"list"`
 
 	// The description for the alarm.
 	AlarmDescription *string `type:"string"`
 
 	// The name for the alarm. This name must be unique within the Region.
+	//
+	// The name must contain only UTF-8 characters, and can't contain ASCII control
+	// characters
 	//
 	// AlarmName is a required field
 	AlarmName *string `min:"1" type:"string" required:"true"`
@@ -10978,15 +11123,39 @@ type PutMetricAlarmInput struct {
 
 	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
 	// state from any other state. Each action is specified as an Amazon Resource
-	// Name (ARN).
+	// Name (ARN). Valid values:
 	//
-	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
-	// | arn:aws:automate:region:ec2:recover | arn:aws:automate:region:ec2:reboot
-	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	// EC2 actions:
 	//
-	// Valid Values (for use with IAM roles): >arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	//    * arn:aws:automate:region:ec2:stop
+	//
+	//    * arn:aws:automate:region:ec2:terminate
+	//
+	//    * arn:aws:automate:region:ec2:reboot
+	//
+	//    * arn:aws:automate:region:ec2:recover
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Recover/1.0
+	//
+	// Autoscaling action:
+	//
+	//    * arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	//
+	// SNS notification action:
+	//
+	//    * arn:aws:sns:region:account-id:sns-topic-name:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	//
+	// SSM integration actions:
+	//
+	//    * arn:aws:ssm:region:account-id:opsitem:severity#CATEGORY=category-name
+	//
+	//    * arn:aws:ssm-incidents::account-id:responseplan/response-plan-name
 	InsufficientDataActions []*string `type:"list"`
 
 	// The name for the metric associated with the alarm. For each PutMetricAlarm
@@ -11019,16 +11188,40 @@ type PutMetricAlarmInput struct {
 	Namespace *string `min:"1" type:"string"`
 
 	// The actions to execute when this alarm transitions to an OK state from any
-	// other state. Each action is specified as an Amazon Resource Name (ARN).
+	// other state. Each action is specified as an Amazon Resource Name (ARN). Valid
+	// values:
 	//
-	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
-	// | arn:aws:automate:region:ec2:recover | arn:aws:automate:region:ec2:reboot
-	// | arn:aws:sns:region:account-id:sns-topic-name | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	// EC2 actions:
 	//
-	// Valid Values (for use with IAM roles): arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Reboot/1.0
-	// | arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Recover/1.0
+	//    * arn:aws:automate:region:ec2:stop
+	//
+	//    * arn:aws:automate:region:ec2:terminate
+	//
+	//    * arn:aws:automate:region:ec2:reboot
+	//
+	//    * arn:aws:automate:region:ec2:recover
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Stop/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Terminate/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	//
+	//    * arn:aws:swf:region:account-id:action/actions/AWS_EC2.InstanceId.Recover/1.0
+	//
+	// Autoscaling action:
+	//
+	//    * arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	//
+	// SNS notification action:
+	//
+	//    * arn:aws:sns:region:account-id:sns-topic-name:autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
+	//
+	// SSM integration actions:
+	//
+	//    * arn:aws:ssm:region:account-id:opsitem:severity#CATEGORY=category-name
+	//
+	//    * arn:aws:ssm-incidents::account-id:responseplan/response-plan-name
 	OKActions []*string `type:"list"`
 
 	// The length, in seconds, used each time the metric specified in MetricName
@@ -11376,7 +11569,8 @@ type PutMetricDataInput struct {
 	// MetricData is a required field
 	MetricData []*MetricDatum `type:"list" required:"true"`
 
-	// The namespace for the metric data.
+	// The namespace for the metric data. You can use ASCII characters for the namespace,
+	// except for control characters which are not supported.
 	//
 	// To avoid conflicts with Amazon Web Services service namespaces, you should
 	// not specify a namespace that begins with AWS/
@@ -11475,9 +11669,9 @@ type PutMetricStreamInput struct {
 	// You cannot include ExcludeFilters and IncludeFilters in the same operation.
 	ExcludeFilters []*MetricStreamFilter `type:"list"`
 
-	// The ARN of the Amazon Kinesis Firehose delivery stream to use for this metric
-	// stream. This Amazon Kinesis Firehose delivery stream must already exist and
-	// must be in the same account as the metric stream.
+	// The ARN of the Amazon Kinesis Data Firehose delivery stream to use for this
+	// metric stream. This Amazon Kinesis Data Firehose delivery stream must already
+	// exist and must be in the same account as the metric stream.
 	//
 	// FirehoseArn is a required field
 	FirehoseArn *string `min:"1" type:"string" required:"true"`
@@ -11487,6 +11681,10 @@ type PutMetricStreamInput struct {
 	//
 	// You cannot include IncludeFilters and ExcludeFilters in the same operation.
 	IncludeFilters []*MetricStreamFilter `type:"list"`
+
+	// If you are creating a metric stream in a monitoring account, specify true
+	// to include metrics from source accounts in the metric stream.
+	IncludeLinkedAccountsMetrics *bool `type:"boolean"`
 
 	// If you are creating a new metric stream, this is the name for the new stream.
 	// The name must be different than the names of other metric streams in this
@@ -11507,8 +11705,8 @@ type PutMetricStreamInput struct {
 	OutputFormat *string `min:"1" type:"string" required:"true" enum:"MetricStreamOutputFormat"`
 
 	// The ARN of an IAM role that this metric stream will use to access Amazon
-	// Kinesis Firehose resources. This IAM role must already exist and must be
-	// in the same account as the metric stream. This IAM role must include the
+	// Kinesis Data Firehose resources. This IAM role must already exist and must
+	// be in the same account as the metric stream. This IAM role must include the
 	// following permissions:
 	//
 	//    * firehose:PutRecord
@@ -11529,7 +11727,7 @@ type PutMetricStreamInput struct {
 	// is json, you can stream any additional statistic that is supported by CloudWatch,
 	// listed in CloudWatch statistics definitions (https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Statistics-definitions.html.html).
 	// If the OutputFormat is opentelemetry0.7, you can stream percentile statistics
-	// such as p95, p99.9 and so on.
+	// such as p95, p99.9, and so on.
 	StatisticsConfigurations []*MetricStreamStatisticsConfiguration `type:"list"`
 
 	// A list of key-value pairs to associate with the metric stream. You can associate
@@ -11654,6 +11852,12 @@ func (s *PutMetricStreamInput) SetFirehoseArn(v string) *PutMetricStreamInput {
 // SetIncludeFilters sets the IncludeFilters field's value.
 func (s *PutMetricStreamInput) SetIncludeFilters(v []*MetricStreamFilter) *PutMetricStreamInput {
 	s.IncludeFilters = v
+	return s
+}
+
+// SetIncludeLinkedAccountsMetrics sets the IncludeLinkedAccountsMetrics field's value.
+func (s *PutMetricStreamInput) SetIncludeLinkedAccountsMetrics(v bool) *PutMetricStreamInput {
+	s.IncludeLinkedAccountsMetrics = &v
 	return s
 }
 
@@ -12583,6 +12787,18 @@ func ComparisonOperator_Values() []string {
 }
 
 const (
+	// EvaluationStatePartialData is a EvaluationState enum value
+	EvaluationStatePartialData = "PARTIAL_DATA"
+)
+
+// EvaluationState_Values returns all elements of the EvaluationState enum
+func EvaluationState_Values() []string {
+	return []string{
+		EvaluationStatePartialData,
+	}
+}
+
+const (
 	// HistoryItemTypeConfigurationUpdate is a HistoryItemType enum value
 	HistoryItemTypeConfigurationUpdate = "ConfigurationUpdate"
 
@@ -12819,6 +13035,9 @@ const (
 
 	// StatusCodePartialData is a StatusCode enum value
 	StatusCodePartialData = "PartialData"
+
+	// StatusCodeForbidden is a StatusCode enum value
+	StatusCodeForbidden = "Forbidden"
 )
 
 // StatusCode_Values returns all elements of the StatusCode enum
@@ -12827,5 +13046,6 @@ func StatusCode_Values() []string {
 		StatusCodeComplete,
 		StatusCodeInternalError,
 		StatusCodePartialData,
+		StatusCodeForbidden,
 	}
 }

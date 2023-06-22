@@ -44,8 +44,6 @@ type ListTagsForDomainInput struct {
 type ListTagsForDomainOutput struct {
 
 	// A list of the tags that are associated with the specified domain.
-	//
-	// This member is required.
 	TagList []types.Tag
 
 	// Metadata pertaining to the operation's result.
@@ -103,6 +101,9 @@ func (c *Client) addOperationListTagsForDomainMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListTagsForDomain(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

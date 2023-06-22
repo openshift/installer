@@ -44,8 +44,8 @@ type ListTagsForResourceInput struct {
 
 type ListTagsForResourceOutput struct {
 
-	// An array that lists all the tags that are associated with the resource. Each tag
-	// consists of a required tag key (Key) and an associated tag value (Value)
+	// An array that lists all the tags that are associated with the resource. Each
+	// tag consists of a required tag key ( Key ) and an associated tag value ( Value )
 	//
 	// This member is required.
 	Tags []types.Tag
@@ -105,6 +105,9 @@ func (c *Client) addOperationListTagsForResourceMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListTagsForResource(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

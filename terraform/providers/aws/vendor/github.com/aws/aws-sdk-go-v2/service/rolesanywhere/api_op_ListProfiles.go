@@ -13,7 +13,7 @@ import (
 )
 
 // Lists all profiles in the authenticated account and Amazon Web Services Region.
-// Required permissions: rolesanywhere:ListProfiles.
+// Required permissions: rolesanywhere:ListProfiles .
 func (c *Client) ListProfiles(ctx context.Context, params *ListProfilesInput, optFns ...func(*Options)) (*ListProfilesOutput, error) {
 	if params == nil {
 		params = &ListProfilesInput{}
@@ -32,7 +32,7 @@ func (c *Client) ListProfiles(ctx context.Context, params *ListProfilesInput, op
 type ListProfilesInput struct {
 
 	// A token that indicates where the output should continue from, if a previous
-	// operation did not show all results. To get the next results, call the operation
+	// request did not show all results. To get the next results, make the request
 	// again with this value.
 	NextToken *string
 
@@ -45,7 +45,7 @@ type ListProfilesInput struct {
 type ListProfilesOutput struct {
 
 	// A token that indicates where the output should continue from, if a previous
-	// operation did not show all results. To get the next results, call the operation
+	// request did not show all results. To get the next results, make the request
 	// again with this value.
 	NextToken *string
 
@@ -104,6 +104,9 @@ func (c *Client) addOperationListProfilesMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListProfiles(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -13,7 +13,8 @@ import (
 )
 
 // Starts an asynchronous targeted sentiment detection job for a collection of
-// documents. Use the operation to track the status of a job.
+// documents. Use the DescribeTargetedSentimentDetectionJob operation to track the
+// status of a job.
 func (c *Client) StartTargetedSentimentDetectionJob(ctx context.Context, params *StartTargetedSentimentDetectionJobInput, optFns ...func(*Options)) (*StartTargetedSentimentDetectionJobOutput, error) {
 	if params == nil {
 		params = &StartTargetedSentimentDetectionJobInput{}
@@ -31,15 +32,15 @@ func (c *Client) StartTargetedSentimentDetectionJob(ctx context.Context, params 
 
 type StartTargetedSentimentDetectionJobInput struct {
 
-	// The Amazon Resource Name (ARN) of the AWS Identity and Access Management (IAM)
-	// role that grants Amazon Comprehend read access to your input data. For more
-	// information, see Role-based permissions
-	// (https://docs.aws.amazon.com/comprehend/latest/dg/access-control-managing-permissions.html#auth-role-permissions).
+	// The Amazon Resource Name (ARN) of the IAM role that grants Amazon Comprehend
+	// read access to your input data. For more information, see Role-based permissions (https://docs.aws.amazon.com/comprehend/latest/dg/access-control-managing-permissions.html#auth-role-permissions)
+	// .
 	//
 	// This member is required.
 	DataAccessRoleArn *string
 
-	// The input properties for an inference job.
+	// The input properties for an inference job. The document reader config field
+	// applies only to non-text inputs for custom analysis.
 	//
 	// This member is required.
 	InputDataConfig *types.InputDataConfig
@@ -62,7 +63,7 @@ type StartTargetedSentimentDetectionJobInput struct {
 	// The identifier of the job.
 	JobName *string
 
-	// Tags to be associated with the targeted sentiment detection job. A tag is a
+	// Tags to associate with the targeted sentiment detection job. A tag is a
 	// key-value pair that adds metadata to a resource used by Amazon Comprehend. For
 	// example, a tag with "Sales" as the key might be added to a resource to indicate
 	// its use by the sales department.
@@ -71,19 +72,15 @@ type StartTargetedSentimentDetectionJobInput struct {
 	// ID for the KMS key that Amazon Comprehend uses to encrypt data on the storage
 	// volume attached to the ML compute instance(s) that process the analysis job. The
 	// VolumeKmsKeyId can be either of the following formats:
-	//
-	// * KMS Key ID:
-	// "1234abcd-12ab-34cd-56ef-1234567890ab"
-	//
-	// * Amazon Resource Name (ARN) of a KMS
-	// Key:
-	// "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+	//   - KMS Key ID: "1234abcd-12ab-34cd-56ef-1234567890ab"
+	//   - Amazon Resource Name (ARN) of a KMS Key:
+	//   "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 	VolumeKmsKeyId *string
 
 	// Configuration parameters for an optional private Virtual Private Cloud (VPC)
 	// containing the resources you are using for the job. For more information, see
-	// Amazon VPC
-	// (https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html).
+	// Amazon VPC (https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html)
+	// .
 	VpcConfig *types.VpcConfig
 
 	noSmithyDocumentSerde
@@ -92,29 +89,23 @@ type StartTargetedSentimentDetectionJobInput struct {
 type StartTargetedSentimentDetectionJobOutput struct {
 
 	// The Amazon Resource Name (ARN) of the targeted sentiment detection job. It is a
-	// unique, fully qualified identifier for the job. It includes the AWS account,
-	// Region, and the job ID. The format of the ARN is as follows:
-	// arn::comprehend:::targeted-sentiment-detection-job/ The following is an example
-	// job ARN:
+	// unique, fully qualified identifier for the job. It includes the Amazon Web
+	// Services account, Amazon Web Services Region, and the job ID. The format of the
+	// ARN is as follows: arn::comprehend:::targeted-sentiment-detection-job/ The
+	// following is an example job ARN:
 	// arn:aws:comprehend:us-west-2:111122223333:targeted-sentiment-detection-job/1234abcd12ab34cd56ef1234567890ab
 	JobArn *string
 
 	// The identifier generated for the job. To get the status of a job, use this
-	// identifier with the operation.
+	// identifier with the DescribeTargetedSentimentDetectionJob operation.
 	JobId *string
 
 	// The status of the job.
-	//
-	// * SUBMITTED - The job has been received and is queued
-	// for processing.
-	//
-	// * IN_PROGRESS - Amazon Comprehend is processing the job.
-	//
-	// *
-	// COMPLETED - The job was successfully completed and the output is available.
-	//
-	// *
-	// FAILED - The job did not complete. To get details, use the operation.
+	//   - SUBMITTED - The job has been received and is queued for processing.
+	//   - IN_PROGRESS - Amazon Comprehend is processing the job.
+	//   - COMPLETED - The job was successfully completed and the output is available.
+	//   - FAILED - The job did not complete. To get details, use the
+	//   DescribeTargetedSentimentDetectionJob operation.
 	JobStatus types.JobStatus
 
 	// Metadata pertaining to the operation's result.
@@ -175,6 +166,9 @@ func (c *Client) addOperationStartTargetedSentimentDetectionJobMiddlewares(stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opStartTargetedSentimentDetectionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

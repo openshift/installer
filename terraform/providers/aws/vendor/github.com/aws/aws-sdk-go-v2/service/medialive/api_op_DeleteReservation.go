@@ -66,8 +66,8 @@ type DeleteReservationOutput struct {
 	// User specified reservation name
 	Name *string
 
-	// Offering description, e.g. 'HD AVC output at 10-20 Mbps, 30 fps, and standard VQ
-	// in US West (Oregon)'
+	// Offering description, e.g. 'HD AVC output at 10-20 Mbps, 30 fps, and standard
+	// VQ in US West (Oregon)'
 	OfferingDescription *string
 
 	// Unique offering ID, e.g. '87654321'
@@ -156,6 +156,9 @@ func (c *Client) addOperationDeleteReservationMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteReservation(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

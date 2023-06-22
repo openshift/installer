@@ -13,8 +13,8 @@ import (
 
 // Gets the properties associated with a specific endpoint. Use this operation to
 // get the status of an endpoint. For information about endpoints, see Managing
-// endpoints
-// (https://docs.aws.amazon.com/comprehend/latest/dg/manage-endpoints.html).
+// endpoints (https://docs.aws.amazon.com/comprehend/latest/dg/manage-endpoints.html)
+// .
 func (c *Client) DescribeEndpoint(ctx context.Context, params *DescribeEndpointInput, optFns ...func(*Options)) (*DescribeEndpointOutput, error) {
 	if params == nil {
 		params = &DescribeEndpointInput{}
@@ -100,6 +100,9 @@ func (c *Client) addOperationDescribeEndpointMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeEndpoint(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -33,7 +33,7 @@ func (c *Client) ResetServiceSpecificCredential(ctx context.Context, params *Res
 type ResetServiceSpecificCredentialInput struct {
 
 	// The unique identifier of the service-specific credential. This parameter allows
-	// (through its regex pattern (http://wikipedia.org/wiki/regex)) a string of
+	// (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string of
 	// characters that can consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
@@ -42,7 +42,7 @@ type ResetServiceSpecificCredentialInput struct {
 	// The name of the IAM user associated with the service-specific credential. If
 	// this value is not specified, then the operation assumes the user whose
 	// credentials are used to call the operation. This parameter allows (through its
-	// regex pattern (http://wikipedia.org/wiki/regex)) a string of characters
+	// regex pattern (http://wikipedia.org/wiki/regex) ) a string of characters
 	// consisting of upper and lowercase alphanumeric characters with no spaces. You
 	// can also include any of the following characters: _+=,.@-
 	UserName *string
@@ -112,6 +112,9 @@ func (c *Client) addOperationResetServiceSpecificCredentialMiddlewares(stack *mi
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opResetServiceSpecificCredential(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -44,7 +44,7 @@ type ListEntityRecognizerSummariesOutput struct {
 	// The list entity recognizer summaries.
 	EntityRecognizerSummariesList []types.EntityRecognizerSummary
 
-	// The list entity recognizer summaries.
+	// Identifies the next page of results to return.
 	NextToken *string
 
 	// Metadata pertaining to the operation's result.
@@ -99,6 +99,9 @@ func (c *Client) addOperationListEntityRecognizerSummariesMiddlewares(stack *mid
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListEntityRecognizerSummaries(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

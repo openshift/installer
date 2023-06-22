@@ -20,13 +20,13 @@ import (
 // the certificate thumbprint is updated. Amazon Web Services secures communication
 // with some OIDC identity providers (IdPs) through our library of trusted
 // certificate authorities (CAs) instead of using a certificate thumbprint to
-// verify your IdP server certificate. These OIDC IdPs include Google, and those
-// that use an Amazon S3 bucket to host a JSON Web Key Set (JWKS) endpoint. In
-// these cases, your legacy thumbprint remains in your configuration, but is no
+// verify your IdP server certificate. These OIDC IdPs include Google, Auth0, and
+// those that use an Amazon S3 bucket to host a JSON Web Key Set (JWKS) endpoint.
+// In these cases, your legacy thumbprint remains in your configuration, but is no
 // longer used for validation. Trust for the OIDC provider is derived from the
 // provider certificate and is validated by the thumbprint. Therefore, it is best
-// to limit access to the UpdateOpenIDConnectProviderThumbprint operation to highly
-// privileged users.
+// to limit access to the UpdateOpenIDConnectProviderThumbprint operation to
+// highly privileged users.
 func (c *Client) UpdateOpenIDConnectProviderThumbprint(ctx context.Context, params *UpdateOpenIDConnectProviderThumbprintInput, optFns ...func(*Options)) (*UpdateOpenIDConnectProviderThumbprintOutput, error) {
 	if params == nil {
 		params = &UpdateOpenIDConnectProviderThumbprintInput{}
@@ -47,15 +47,14 @@ type UpdateOpenIDConnectProviderThumbprintInput struct {
 	// The Amazon Resource Name (ARN) of the IAM OIDC provider resource object for
 	// which you want to update the thumbprint. You can get a list of OIDC provider
 	// ARNs by using the ListOpenIDConnectProviders operation. For more information
-	// about ARNs, see Amazon Resource Names (ARNs)
-	// (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html) in
-	// the Amazon Web Services General Reference.
+	// about ARNs, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// in the Amazon Web Services General Reference.
 	//
 	// This member is required.
 	OpenIDConnectProviderArn *string
 
 	// A list of certificate thumbprints that are associated with the specified IAM
-	// OpenID Connect provider. For more information, see CreateOpenIDConnectProvider.
+	// OpenID Connect provider. For more information, see CreateOpenIDConnectProvider .
 	//
 	// This member is required.
 	ThumbprintList []string
@@ -119,6 +118,9 @@ func (c *Client) addOperationUpdateOpenIDConnectProviderThumbprintMiddlewares(st
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateOpenIDConnectProviderThumbprint(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

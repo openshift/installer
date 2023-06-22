@@ -11,13 +11,13 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Updates the trust anchor.You establish trust between IAM Roles Anywhere and your
-// certificate authority (CA) by configuring a trust anchor. A Trust Anchor is
-// defined either as a reference to a AWS Certificate Manager Private Certificate
-// Authority (ACM PCA), or by uploading a Certificate Authority (CA) certificate.
-// Your AWS workloads can authenticate with the trust anchor using certificates
-// issued by the trusted Certificate Authority (CA) in exchange for temporary AWS
-// credentials. Required permissions: rolesanywhere:UpdateTrustAnchor.
+// Updates a trust anchor. You establish trust between IAM Roles Anywhere and your
+// certificate authority (CA) by configuring a trust anchor. You can define a trust
+// anchor as a reference to an Private Certificate Authority (Private CA) or by
+// uploading a CA certificate. Your Amazon Web Services workloads can authenticate
+// with the trust anchor using certificates issued by the CA in exchange for
+// temporary Amazon Web Services credentials. Required permissions:
+// rolesanywhere:UpdateTrustAnchor .
 func (c *Client) UpdateTrustAnchor(ctx context.Context, params *UpdateTrustAnchorInput, optFns ...func(*Options)) (*UpdateTrustAnchorOutput, error) {
 	if params == nil {
 		params = &UpdateTrustAnchorInput{}
@@ -111,6 +111,9 @@ func (c *Client) addOperationUpdateTrustAnchorMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateTrustAnchor(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -1,13 +1,16 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package awsv1shim
 
 import (
 	"bytes"
 	"context"
 	"io"
-	"io/ioutil"
-	"log"
+	"os"
 
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/hashicorp/aws-sdk-go-base/v2/logging"
 )
 
 func resolveCustomCABundle(ctx context.Context, configSources []interface{}) (value io.Reader, found bool, err error) {
@@ -20,7 +23,10 @@ func resolveCustomCABundle(ctx context.Context, configSources []interface{}) (va
 		case configv2.SharedConfig:
 			value, found, err = sharedConfigGetCustomCABundle(ctx, cfg)
 		default:
-			log.Printf("[WARN] Unrecognized config source: %T", source)
+			logger := logging.RetrieveLogger(ctx)
+			logger.Warn(ctx, "Unrecognized config source", map[string]any{
+				"source": source,
+			})
 			continue
 		}
 		if err != nil || found {
@@ -46,7 +52,7 @@ func envConfigGetCustomCABundle(_ context.Context, c configv2.EnvConfig) (io.Rea
 		return nil, false, nil
 	}
 
-	b, err := ioutil.ReadFile(c.CustomCABundle)
+	b, err := os.ReadFile(c.CustomCABundle)
 	if err != nil {
 		return nil, false, err
 	}
@@ -59,7 +65,7 @@ func sharedConfigGetCustomCABundle(_ context.Context, c configv2.SharedConfig) (
 		return nil, false, nil
 	}
 
-	b, err := ioutil.ReadFile(c.CustomCABundle)
+	b, err := os.ReadFile(c.CustomCABundle)
 	if err != nil {
 		return nil, false, err
 	}

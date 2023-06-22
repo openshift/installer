@@ -14,8 +14,7 @@ import (
 
 // Lists the existing custom verification email templates for your account in the
 // current Amazon Web Services Region. For more information about custom
-// verification email templates, see Using Custom Verification Email Templates
-// (https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-verify-address-custom.html)
+// verification email templates, see Using custom verification email templates (https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html#send-email-verify-address-custom)
 // in the Amazon SES Developer Guide. You can execute this operation no more than
 // once per second.
 func (c *Client) ListCustomVerificationEmailTemplates(ctx context.Context, params *ListCustomVerificationEmailTemplatesInput, optFns ...func(*Options)) (*ListCustomVerificationEmailTemplatesOutput, error) {
@@ -37,12 +36,12 @@ func (c *Client) ListCustomVerificationEmailTemplates(ctx context.Context, param
 // for your account.
 type ListCustomVerificationEmailTemplatesInput struct {
 
-	// A token returned from a previous call to ListCustomVerificationEmailTemplates to
-	// indicate the position in the list of custom verification email templates.
+	// A token returned from a previous call to ListCustomVerificationEmailTemplates
+	// to indicate the position in the list of custom verification email templates.
 	NextToken *string
 
 	// The number of results to show in a single call to
-	// ListCustomVerificationEmailTemplates. If the number of results is larger than
+	// ListCustomVerificationEmailTemplates . If the number of results is larger than
 	// the number you specified in this parameter, then the response includes a
 	// NextToken element, which you can use to obtain additional results. The value you
 	// specify has to be at least 1, and can be no more than 50.
@@ -57,8 +56,8 @@ type ListCustomVerificationEmailTemplatesOutput struct {
 	// A list of the custom verification email templates that exist in your account.
 	CustomVerificationEmailTemplates []types.CustomVerificationEmailTemplateMetadata
 
-	// A token indicating that there are additional custom verification email templates
-	// available to be listed. Pass this token to a subsequent call to
+	// A token indicating that there are additional custom verification email
+	// templates available to be listed. Pass this token to a subsequent call to
 	// ListCustomVerificationEmailTemplates to retrieve the next 50 custom verification
 	// email templates.
 	NextToken *string
@@ -117,6 +116,9 @@ func (c *Client) addOperationListCustomVerificationEmailTemplatesMiddlewares(sta
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListCustomVerificationEmailTemplates(options.Region), middleware.Before); err != nil {
 		return err
 	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+		return err
+	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
 		return err
 	}
@@ -141,7 +143,7 @@ var _ ListCustomVerificationEmailTemplatesAPIClient = (*Client)(nil)
 // for ListCustomVerificationEmailTemplates
 type ListCustomVerificationEmailTemplatesPaginatorOptions struct {
 	// The number of results to show in a single call to
-	// ListCustomVerificationEmailTemplates. If the number of results is larger than
+	// ListCustomVerificationEmailTemplates . If the number of results is larger than
 	// the number you specified in this parameter, then the response includes a
 	// NextToken element, which you can use to obtain additional results. The value you
 	// specify has to be at least 1, and can be no more than 50.

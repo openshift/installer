@@ -48,7 +48,7 @@ type DescribeQuerySuggestionsBlockListInput struct {
 
 type DescribeQuerySuggestionsBlockListOutput struct {
 
-	// The date-time a block list for query suggestions was created.
+	// The Unix timestamp when a block list for query suggestions was created.
 	CreatedAt *time.Time
 
 	// The description for the block list.
@@ -83,14 +83,14 @@ type DescribeQuerySuggestionsBlockListOutput struct {
 	// Shows the current S3 path to your block list text file in your S3 bucket. Each
 	// block word or phrase should be on a separate line in a text file. For
 	// information on the current quota limits for block lists, see Quotas for Amazon
-	// Kendra (https://docs.aws.amazon.com/kendra/latest/dg/quotas.html).
+	// Kendra (https://docs.aws.amazon.com/kendra/latest/dg/quotas.html) .
 	SourceS3Path *types.S3Path
 
-	// The current status of the block list. When the value is ACTIVE, the block list
+	// The current status of the block list. When the value is ACTIVE , the block list
 	// is ready for use.
 	Status types.QuerySuggestionsBlockListStatus
 
-	// The date-time a block list for query suggestions was last updated.
+	// The Unix timestamp when a block list for query suggestions was last updated.
 	UpdatedAt *time.Time
 
 	// Metadata pertaining to the operation's result.
@@ -148,6 +148,9 @@ func (c *Client) addOperationDescribeQuerySuggestionsBlockListMiddlewares(stack 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeQuerySuggestionsBlockList(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

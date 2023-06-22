@@ -11,10 +11,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Updates the certificate revocation list (CRL). CRl is a list of certificates
-// that have been revoked by the issuing certificate Authority (CA). IAM Roles
-// Anywhere validates against the crl list before issuing credentials. Required
-// permissions: rolesanywhere:UpdateCrl.
+// Updates the certificate revocation list (CRL). A CRL is a list of certificates
+// that have been revoked by the issuing certificate authority (CA). IAM Roles
+// Anywhere validates against the CRL before issuing credentials. Required
+// permissions: rolesanywhere:UpdateCrl .
 func (c *Client) UpdateCrl(ctx context.Context, params *UpdateCrlInput, optFns ...func(*Options)) (*UpdateCrlOutput, error) {
 	if params == nil {
 		params = &UpdateCrlInput{}
@@ -37,7 +37,7 @@ type UpdateCrlInput struct {
 	// This member is required.
 	CrlId *string
 
-	// The x509 v3 specified certificate revocation list
+	// The x509 v3 specified certificate revocation list (CRL).
 	CrlData []byte
 
 	// The name of the Crl.
@@ -109,6 +109,9 @@ func (c *Client) addOperationUpdateCrlMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateCrl(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

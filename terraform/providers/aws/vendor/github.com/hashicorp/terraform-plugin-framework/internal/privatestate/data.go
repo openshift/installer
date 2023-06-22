@@ -1,9 +1,13 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package privatestate
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode/utf8"
 
@@ -239,6 +243,25 @@ func EmptyProviderData(ctx context.Context) *ProviderData {
 // ProviderData contains private state data for provider usage.
 type ProviderData struct {
 	data map[string][]byte
+}
+
+// Equal returns true if the given ProviderData is exactly equivalent. The
+// internal data is compared byte-for-byte, not accounting for semantic
+// equivalency such as JSON whitespace or property reordering.
+func (d *ProviderData) Equal(o *ProviderData) bool {
+	if d == nil && o == nil {
+		return true
+	}
+
+	if d == nil || o == nil {
+		return false
+	}
+
+	if !reflect.DeepEqual(d.data, o.data) {
+		return false
+	}
+
+	return true
 }
 
 // GetKey returns the private state data associated with the given key.

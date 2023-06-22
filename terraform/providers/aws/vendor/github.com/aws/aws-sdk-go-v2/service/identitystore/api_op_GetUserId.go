@@ -29,10 +29,10 @@ func (c *Client) GetUserId(ctx context.Context, params *GetUserIdInput, optFns .
 
 type GetUserIdInput struct {
 
-	// A unique identifier for a user or group that is not the primary identifier. This
-	// value can be an identifier from an external identity provider (IdP) that is
-	// associated with the user, the group, or a unique attribute. For example, a
-	// unique UserDisplayName.
+	// A unique identifier for a user or group that is not the primary identifier.
+	// This value can be an identifier from an external identity provider (IdP) that is
+	// associated with the user, the group, or a unique attribute. For the unique
+	// attribute, the only valid paths are userName and emails.value .
 	//
 	// This member is required.
 	AlternateIdentifier types.AlternateIdentifier
@@ -112,6 +112,9 @@ func (c *Client) addOperationGetUserIdMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetUserId(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

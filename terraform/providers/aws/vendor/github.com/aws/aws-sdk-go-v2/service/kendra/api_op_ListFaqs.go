@@ -35,8 +35,8 @@ type ListFaqsInput struct {
 	// This member is required.
 	IndexId *string
 
-	// The maximum number of FAQs to return in the response. If there are fewer results
-	// in the list, this response contains only the actual results.
+	// The maximum number of FAQs to return in the response. If there are fewer
+	// results in the list, this response contains only the actual results.
 	MaxResults *int32
 
 	// If the previous response was incomplete (because there is more data to
@@ -113,6 +113,9 @@ func (c *Client) addOperationListFaqsMiddlewares(stack *middleware.Stack, option
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListFaqs(options.Region), middleware.Before); err != nil {
 		return err
 	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+		return err
+	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
 		return err
 	}
@@ -134,8 +137,8 @@ var _ ListFaqsAPIClient = (*Client)(nil)
 
 // ListFaqsPaginatorOptions is the paginator options for ListFaqs
 type ListFaqsPaginatorOptions struct {
-	// The maximum number of FAQs to return in the response. If there are fewer results
-	// in the list, this response contains only the actual results.
+	// The maximum number of FAQs to return in the response. If there are fewer
+	// results in the list, this response contains only the actual results.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token

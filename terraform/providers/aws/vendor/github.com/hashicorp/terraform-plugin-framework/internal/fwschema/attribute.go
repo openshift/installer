@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwschema
 
 import (
@@ -5,10 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-// Attribute is the core interface required for implementing Terraform schema
-// functionality that can accept a value. This is intended to be the first
-// abstraction of tfsdk.Attribute functionality into data source, provider,
-// and resource specific functionality.
+// Attribute is the core interface required for implementing Terraform
+// schema functionality that can accept a value. Refer to NestedAttribute for
+// the additional interface that defines nested attributes.
 //
 // Refer to the internal/fwschema/fwxschema package for optional interfaces
 // that define framework-specific functionality, such a plan modification and
@@ -20,18 +22,6 @@ type Attribute interface {
 
 	// Equal should return true if the other attribute is exactly equivalent.
 	Equal(o Attribute) bool
-
-	// FrameworkType should return the framework type, whether a direct type
-	// or nested attributes type, for the attribute.
-	//
-	// When tfsdk.Attribute is removed, this should be deprecated and renamed
-	// to Type() to match other interfaces.
-	FrameworkType() attr.Type
-
-	// GetAttributes should return the nested attributes of an attribute, if
-	// applicable. This is named differently than Attribute to prevent a
-	// conflict with the tfsdk.Attribute field name.
-	GetAttributes() NestedAttributes
 
 	// GetDeprecationMessage should return a non-empty string if an attribute
 	// is deprecated. This is named differently than DeprecationMessage to
@@ -73,4 +63,43 @@ type Attribute interface {
 	// sensitive. This is named differently than Sensitive to prevent a
 	// conflict with the tfsdk.Attribute field name.
 	IsSensitive() bool
+}
+
+// AttributesEqual is a helper function to perform equality testing on two
+// Attribute. Attribute Equal implementations should still compare the concrete
+// types in addition to using this helper.
+func AttributesEqual(a, b Attribute) bool {
+	if !a.GetType().Equal(b.GetType()) {
+		return false
+	}
+
+	if a.GetDeprecationMessage() != b.GetDeprecationMessage() {
+		return false
+	}
+
+	if a.GetDescription() != b.GetDescription() {
+		return false
+	}
+
+	if a.GetMarkdownDescription() != b.GetMarkdownDescription() {
+		return false
+	}
+
+	if a.IsRequired() != b.IsRequired() {
+		return false
+	}
+
+	if a.IsOptional() != b.IsOptional() {
+		return false
+	}
+
+	if a.IsComputed() != b.IsComputed() {
+		return false
+	}
+
+	if a.IsSensitive() != b.IsSensitive() {
+		return false
+	}
+
+	return true
 }

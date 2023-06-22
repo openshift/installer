@@ -12,10 +12,10 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Provides a list of medical transcription jobs that match the specified criteria.
-// If no criteria are specified, all medical transcription jobs are returned. To
-// get detailed information about a specific medical transcription job, use the
-// operation.
+// Provides a list of medical transcription jobs that match the specified
+// criteria. If no criteria are specified, all medical transcription jobs are
+// returned. To get detailed information about a specific medical transcription
+// job, use the operation.
 func (c *Client) ListMedicalTranscriptionJobs(ctx context.Context, params *ListMedicalTranscriptionJobsInput, optFns ...func(*Options)) (*ListMedicalTranscriptionJobsOutput, error) {
 	if params == nil {
 		params = &ListMedicalTranscriptionJobsInput{}
@@ -38,8 +38,9 @@ type ListMedicalTranscriptionJobsInput struct {
 	JobNameContains *string
 
 	// The maximum number of medical transcription jobs to return in each page of
-	// results. If there are fewer results than the value you specify, only the actual
-	// results are returned. If you don't specify a value, a default of 5 is used.
+	// results. If there are fewer results than the value that you specify, only the
+	// actual results are returned. If you don't specify a value, a default of 5 is
+	// used.
 	MaxResults *int32
 
 	// If your ListMedicalTranscriptionJobs request returns more results than can be
@@ -50,8 +51,8 @@ type ListMedicalTranscriptionJobsInput struct {
 	NextToken *string
 
 	// Returns only medical transcription jobs with the specified status. Jobs are
-	// ordered by creation date, with the newest job first. If you don't include
-	// Status, all medical transcription jobs are returned.
+	// ordered by creation date, with the newest job first. If you don't include Status
+	// , all medical transcription jobs are returned.
 	Status types.TranscriptionJobStatus
 
 	noSmithyDocumentSerde
@@ -127,6 +128,9 @@ func (c *Client) addOperationListMedicalTranscriptionJobsMiddlewares(stack *midd
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListMedicalTranscriptionJobs(options.Region), middleware.Before); err != nil {
 		return err
 	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+		return err
+	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
 		return err
 	}
@@ -151,8 +155,9 @@ var _ ListMedicalTranscriptionJobsAPIClient = (*Client)(nil)
 // ListMedicalTranscriptionJobs
 type ListMedicalTranscriptionJobsPaginatorOptions struct {
 	// The maximum number of medical transcription jobs to return in each page of
-	// results. If there are fewer results than the value you specify, only the actual
-	// results are returned. If you don't specify a value, a default of 5 is used.
+	// results. If there are fewer results than the value that you specify, only the
+	// actual results are returned. If you don't specify a value, a default of 5 is
+	// used.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token

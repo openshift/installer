@@ -30,7 +30,7 @@ func (c *Client) DescribeDocumentClassifier(ctx context.Context, params *Describ
 type DescribeDocumentClassifierInput struct {
 
 	// The Amazon Resource Name (ARN) that identifies the document classifier. The
-	// operation returns this identifier in its response.
+	// CreateDocumentClassifier operation returns this identifier in its response.
 	//
 	// This member is required.
 	DocumentClassifierArn *string
@@ -98,6 +98,9 @@ func (c *Client) addOperationDescribeDocumentClassifierMiddlewares(stack *middle
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeDocumentClassifier(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -1,3 +1,6 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 issues:
   max-per-linter: 0
   max-same-issues: 0
@@ -5,7 +8,6 @@ issues:
 linters:
   disable-all: true
   enable:
-    - deadcode
     - dogsled
     - errcheck
     - errname
@@ -17,12 +19,10 @@ linters:
     - ineffassign
     - misspell
     - staticcheck
-    - structcheck
     - unconvert
     - unparam
     - unused
     - typecheck
-    - varcheck
     - vet
 
 linters-settings:
@@ -31,3 +31,4 @@ linters-settings:
       mnd:
         ignored-functions:
           - strings.SplitN
+          - strings.SplitAfterN

@@ -13,12 +13,12 @@ import (
 
 // Provides information about the specified transcription job. To view the status
 // of the specified transcription job, check the TranscriptionJobStatus field. If
-// the status is COMPLETED, the job is finished and you can find the results at the
-// location specified in TranscriptFileUri. If the status is FAILED, FailureReason
-// provides details on why your transcription job failed. If you enabled content
-// redaction, the redacted transcript can be found at the location specified in
-// RedactedTranscriptFileUri. To get a list of your transcription jobs, use the
-// operation.
+// the status is COMPLETED , the job is finished. You can find the results at the
+// location specified in TranscriptFileUri . If the status is FAILED ,
+// FailureReason provides details on why your transcription job failed. If you
+// enabled content redaction, the redacted transcript can be found at the location
+// specified in RedactedTranscriptFileUri . To get a list of your transcription
+// jobs, use the operation.
 func (c *Client) GetTranscriptionJob(ctx context.Context, params *GetTranscriptionJobInput, optFns ...func(*Options)) (*GetTranscriptionJobOutput, error) {
 	if params == nil {
 		params = &GetTranscriptionJobInput{}
@@ -36,8 +36,8 @@ func (c *Client) GetTranscriptionJob(ctx context.Context, params *GetTranscripti
 
 type GetTranscriptionJobInput struct {
 
-	// The name of the transcription job you want information about. Job names are case
-	// sensitive.
+	// The name of the transcription job you want information about. Job names are
+	// case sensitive.
 	//
 	// This member is required.
 	TranscriptionJobName *string
@@ -106,6 +106,9 @@ func (c *Client) addOperationGetTranscriptionJobMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetTranscriptionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

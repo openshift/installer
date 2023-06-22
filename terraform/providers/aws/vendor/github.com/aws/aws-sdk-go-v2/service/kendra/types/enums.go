@@ -39,6 +39,24 @@ func (AlfrescoEntity) Values() []AlfrescoEntity {
 	}
 }
 
+type AttributeSuggestionsMode string
+
+// Enum values for AttributeSuggestionsMode
+const (
+	AttributeSuggestionsModeActive   AttributeSuggestionsMode = "ACTIVE"
+	AttributeSuggestionsModeInactive AttributeSuggestionsMode = "INACTIVE"
+)
+
+// Values returns all known values for AttributeSuggestionsMode. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (AttributeSuggestionsMode) Values() []AttributeSuggestionsMode {
+	return []AttributeSuggestionsMode{
+		"ACTIVE",
+		"INACTIVE",
+	}
+}
+
 type ConditionOperator string
 
 // Enum values for ConditionOperator
@@ -120,9 +138,10 @@ const (
 	ConfluenceAuthenticationTypePat       ConfluenceAuthenticationType = "PAT"
 )
 
-// Values returns all known values for ConfluenceAuthenticationType. Note that this
-// can be expanded in the future, and so it is only as up to date as the client.
-// The ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for ConfluenceAuthenticationType. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (ConfluenceAuthenticationType) Values() []ConfluenceAuthenticationType {
 	return []ConfluenceAuthenticationType{
 		"HTTP_BASIC",
@@ -210,9 +229,9 @@ const (
 	ConfluenceSpaceFieldNameUrl        ConfluenceSpaceFieldName = "URL"
 )
 
-// Values returns all known values for ConfluenceSpaceFieldName. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for ConfluenceSpaceFieldName. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (ConfluenceSpaceFieldName) Values() []ConfluenceSpaceFieldName {
 	return []ConfluenceSpaceFieldName{
 		"DISPLAY_URL",
@@ -249,6 +268,13 @@ const (
 	ContentTypeMsWord    ContentType = "MS_WORD"
 	ContentTypePlainText ContentType = "PLAIN_TEXT"
 	ContentTypePpt       ContentType = "PPT"
+	ContentTypeRtf       ContentType = "RTF"
+	ContentTypeXml       ContentType = "XML"
+	ContentTypeXslt      ContentType = "XSLT"
+	ContentTypeMsExcel   ContentType = "MS_EXCEL"
+	ContentTypeCsv       ContentType = "CSV"
+	ContentTypeJson      ContentType = "JSON"
+	ContentTypeMd        ContentType = "MD"
 )
 
 // Values returns all known values for ContentType. Note that this can be expanded
@@ -261,6 +287,13 @@ func (ContentType) Values() []ContentType {
 		"MS_WORD",
 		"PLAIN_TEXT",
 		"PPT",
+		"RTF",
+		"XML",
+		"XSLT",
+		"MS_EXCEL",
+		"CSV",
+		"JSON",
+		"MD",
 	}
 }
 
@@ -445,9 +478,9 @@ const (
 	EndpointTypeHome EndpointType = "HOME"
 )
 
-// Values returns all known values for EndpointType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for EndpointType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (EndpointType) Values() []EndpointType {
 	return []EndpointType{
 		"HOME",
@@ -480,9 +513,9 @@ const (
 	ErrorCodeInvalidRequest ErrorCode = "InvalidRequest"
 )
 
-// Values returns all known values for ErrorCode. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for ErrorCode. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (ErrorCode) Values() []ErrorCode {
 	return []ErrorCode{
 		"InternalError",
@@ -543,9 +576,9 @@ const (
 	FaqStatusFailed   FaqStatus = "FAILED"
 )
 
-// Values returns all known values for FaqStatus. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for FaqStatus. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (FaqStatus) Values() []FaqStatus {
 	return []FaqStatus{
 		"CREATING",
@@ -553,6 +586,24 @@ func (FaqStatus) Values() []FaqStatus {
 		"ACTIVE",
 		"DELETING",
 		"FAILED",
+	}
+}
+
+type FeaturedResultsSetStatus string
+
+// Enum values for FeaturedResultsSetStatus
+const (
+	FeaturedResultsSetStatusActive   FeaturedResultsSetStatus = "ACTIVE"
+	FeaturedResultsSetStatusInactive FeaturedResultsSetStatus = "INACTIVE"
+)
+
+// Values returns all known values for FeaturedResultsSetStatus. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (FeaturedResultsSetStatus) Values() []FeaturedResultsSetStatus {
+	return []FeaturedResultsSetStatus{
+		"ACTIVE",
+		"INACTIVE",
 	}
 }
 
@@ -598,9 +649,9 @@ const (
 	IndexEditionEnterpriseEdition IndexEdition = "ENTERPRISE_EDITION"
 )
 
-// Values returns all known values for IndexEdition. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for IndexEdition. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (IndexEdition) Values() []IndexEdition {
 	return []IndexEdition{
 		"DEVELOPER_EDITION",
@@ -750,8 +801,8 @@ const (
 	OrderDescending Order = "DESCENDING"
 )
 
-// Values returns all known values for Order. Note that this can be expanded in the
-// future, and so it is only as up to date as the client. The ordering of this
+// Values returns all known values for Order. Note that this can be expanded in
+// the future, and so it is only as up to date as the client. The ordering of this
 // slice is not guaranteed to be stable across updates.
 func (Order) Values() []Order {
 	return []Order{
@@ -836,6 +887,24 @@ func (QueryIdentifiersEnclosingOption) Values() []QueryIdentifiersEnclosingOptio
 	return []QueryIdentifiersEnclosingOption{
 		"DOUBLE_QUOTES",
 		"NONE",
+	}
+}
+
+type QueryResultFormat string
+
+// Enum values for QueryResultFormat
+const (
+	QueryResultFormatTable QueryResultFormat = "TABLE"
+	QueryResultFormatText  QueryResultFormat = "TEXT"
+)
+
+// Values returns all known values for QueryResultFormat. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (QueryResultFormat) Values() []QueryResultFormat {
+	return []QueryResultFormat{
+		"TABLE",
+		"TEXT",
 	}
 }
 
@@ -948,9 +1017,9 @@ const (
 	SalesforceChatterFeedIncludeFilterTypeStandardUser SalesforceChatterFeedIncludeFilterType = "STANDARD_USER"
 )
 
-// Values returns all known values for SalesforceChatterFeedIncludeFilterType. Note
-// that this can be expanded in the future, and so it is only as up to date as the
-// client. The ordering of this slice is not guaranteed to be stable across
+// Values returns all known values for SalesforceChatterFeedIncludeFilterType.
+// Note that this can be expanded in the future, and so it is only as up to date as
+// the client. The ordering of this slice is not guaranteed to be stable across
 // updates.
 func (SalesforceChatterFeedIncludeFilterType) Values() []SalesforceChatterFeedIncludeFilterType {
 	return []SalesforceChatterFeedIncludeFilterType{
@@ -1003,9 +1072,10 @@ const (
 	SalesforceStandardObjectNameUser        SalesforceStandardObjectName = "USER"
 )
 
-// Values returns all known values for SalesforceStandardObjectName. Note that this
-// can be expanded in the future, and so it is only as up to date as the client.
-// The ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for SalesforceStandardObjectName. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (SalesforceStandardObjectName) Values() []SalesforceStandardObjectName {
 	return []SalesforceStandardObjectName{
 		"ACCOUNT",
@@ -1060,9 +1130,10 @@ const (
 	ServiceNowAuthenticationTypeOauth2    ServiceNowAuthenticationType = "OAUTH2"
 )
 
-// Values returns all known values for ServiceNowAuthenticationType. Note that this
-// can be expanded in the future, and so it is only as up to date as the client.
-// The ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for ServiceNowAuthenticationType. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (ServiceNowAuthenticationType) Values() []ServiceNowAuthenticationType {
 	return []ServiceNowAuthenticationType{
 		"HTTP_BASIC",
@@ -1159,13 +1230,31 @@ const (
 	SortOrderAsc  SortOrder = "ASC"
 )
 
-// Values returns all known values for SortOrder. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for SortOrder. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (SortOrder) Values() []SortOrder {
 	return []SortOrder{
 		"DESC",
 		"ASC",
+	}
+}
+
+type SuggestionType string
+
+// Enum values for SuggestionType
+const (
+	SuggestionTypeQuery              SuggestionType = "QUERY"
+	SuggestionTypeDocumentAttributes SuggestionType = "DOCUMENT_ATTRIBUTES"
+)
+
+// Values returns all known values for SuggestionType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (SuggestionType) Values() []SuggestionType {
+	return []SuggestionType{
+		"QUERY",
+		"DOCUMENT_ATTRIBUTES",
 	}
 }
 

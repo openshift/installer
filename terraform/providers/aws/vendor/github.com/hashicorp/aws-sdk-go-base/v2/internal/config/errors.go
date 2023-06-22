@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package config
 
 import (
@@ -22,7 +25,7 @@ There are a number of possible causes of this - the most common are:
   * The credentials do not have appropriate permission to assume the role
   * The role ARN is not valid
 
-Error: %s
+AWS Error: %s
 `, e.Config.AssumeRole.RoleARN, e.Err)
 }
 
@@ -52,7 +55,7 @@ There are a number of possible causes of this - the most common are:
   * The web identity token does not have appropriate permission to assume the role
   * The role ARN is not valid
 
-Error: %s
+AWS Error: %s
 `, e.Config.AssumeRoleWithWebIdentity.RoleARN, e.Err)
 }
 
@@ -80,7 +83,7 @@ func (e NoValidCredentialSourcesError) Error() string {
 Please see %[2]s
 for more information about providing credentials.
 
-Error: %[3]s
+AWS Error: %[3]s
 `, e.Config.CallerName, e.Config.CallerDocumentationURL, e.Err)
 }
 

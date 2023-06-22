@@ -46,7 +46,7 @@ type UpdateThesaurusInput struct {
 	Name *string
 
 	// An IAM role that gives Amazon Kendra permissions to access thesaurus file
-	// specified in SourceS3Path.
+	// specified in SourceS3Path .
 	RoleArn *string
 
 	// Information required to find a specific file in an Amazon S3 bucket.
@@ -111,6 +111,9 @@ func (c *Client) addOperationUpdateThesaurusMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateThesaurus(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

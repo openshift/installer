@@ -670,9 +670,10 @@ func (c *LocationService) BatchUpdateDevicePositionRequest(input *BatchUpdateDev
 
 // BatchUpdateDevicePosition API operation for Amazon Location Service.
 //
-// Uploads position update data for one or more devices to a tracker resource.
-// Amazon Location uses the data when it reports the last known device position
-// and position history. Amazon Location retains location data for 30 days.
+// Uploads position update data for one or more devices to a tracker resource
+// (up to 10 devices per batch). Amazon Location uses the data when it reports
+// the last known device position and position history. Amazon Location retains
+// location data for 30 days.
 //
 // Position updates are handled based on the PositionFiltering property of the
 // tracker. When PositionFiltering is set to TimeBased, updates are evaluated
@@ -1051,6 +1052,11 @@ func (c *LocationService) CreateGeofenceCollectionRequest(input *CreateGeofenceC
 //   - ValidationException
 //     The input failed to meet the constraints specified by the AWS service.
 //
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
+//
 //   - ThrottlingException
 //     The request was denied because of request throttling.
 //
@@ -1071,6 +1077,112 @@ func (c *LocationService) CreateGeofenceCollection(input *CreateGeofenceCollecti
 // for more information on using Contexts.
 func (c *LocationService) CreateGeofenceCollectionWithContext(ctx aws.Context, input *CreateGeofenceCollectionInput, opts ...request.Option) (*CreateGeofenceCollectionOutput, error) {
 	req, out := c.CreateGeofenceCollectionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCreateKey = "CreateKey"
+
+// CreateKeyRequest generates a "aws/request.Request" representing the
+// client's request for the CreateKey operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateKey for more information on using the CreateKey
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateKeyRequest method.
+//	req, resp := client.CreateKeyRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateKey
+func (c *LocationService) CreateKeyRequest(input *CreateKeyInput) (req *request.Request, output *CreateKeyOutput) {
+	op := &request.Operation{
+		Name:       opCreateKey,
+		HTTPMethod: "POST",
+		HTTPPath:   "/metadata/v0/keys",
+	}
+
+	if input == nil {
+		input = &CreateKeyInput{}
+	}
+
+	output = &CreateKeyOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Build.PushBackNamed(protocol.NewHostPrefixHandler("metadata.", nil))
+	req.Handlers.Build.PushBackNamed(protocol.ValidateEndpointHostHandler)
+	return
+}
+
+// CreateKey API operation for Amazon Location Service.
+//
+// Creates an API key resource in your Amazon Web Services account, which lets
+// you grant geo:GetMap* actions for Amazon Location Map resources to the API
+// key bearer.
+//
+// The API keys feature is in preview. We may add, change, or remove features
+// before announcing general availability. For more information, see Using API
+// keys (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Location Service's
+// API operation CreateKey for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
+//
+//   - ConflictException
+//     The request was unsuccessful because of a conflict.
+//
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
+//
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/CreateKey
+func (c *LocationService) CreateKey(input *CreateKeyInput) (*CreateKeyOutput, error) {
+	req, out := c.CreateKeyRequest(input)
+	return out, req.Send()
+}
+
+// CreateKeyWithContext is the same as CreateKey with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateKey for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) CreateKeyWithContext(ctx aws.Context, input *CreateKeyInput, opts ...request.Option) (*CreateKeyOutput, error) {
+	req, out := c.CreateKeyRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1121,12 +1233,12 @@ func (c *LocationService) CreateMapRequest(input *CreateMapInput) (req *request.
 
 // CreateMap API operation for Amazon Location Service.
 //
-// Creates a map resource in your AWS account, which provides map tiles of different
-// styles sourced from global location data providers.
+// Creates a map resource in your Amazon Web Services account, which provides
+// map tiles of different styles sourced from global location data providers.
 //
 // If your application is tracking or routing assets you use in your business,
-// such as delivery vehicles or employees, you may only use HERE as your geolocation
-// provider. See section 82 of the AWS service terms (http://aws.amazon.com/service-terms)
+// such as delivery vehicles or employees, you must not use Esri as your geolocation
+// provider. See section 82 of the Amazon Web Services service terms (http://aws.amazon.com/service-terms)
 // for more details.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1151,6 +1263,11 @@ func (c *LocationService) CreateMapRequest(input *CreateMapInput) (req *request.
 //
 //   - ValidationException
 //     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
 //
 //   - ThrottlingException
 //     The request was denied because of request throttling.
@@ -1222,15 +1339,15 @@ func (c *LocationService) CreatePlaceIndexRequest(input *CreatePlaceIndexInput) 
 
 // CreatePlaceIndex API operation for Amazon Location Service.
 //
-// Creates a place index resource in your AWS account. Use a place index resource
-// to geocode addresses and other text queries by using the SearchPlaceIndexForText
-// operation, and reverse geocode coordinates by using the SearchPlaceIndexForPosition
-// operation, and enable autosuggestions by using the SearchPlaceIndexForSuggestions
-// operation.
+// Creates a place index resource in your Amazon Web Services account. Use a
+// place index resource to geocode addresses and other text queries by using
+// the SearchPlaceIndexForText operation, and reverse geocode coordinates by
+// using the SearchPlaceIndexForPosition operation, and enable autosuggestions
+// by using the SearchPlaceIndexForSuggestions operation.
 //
 // If your application is tracking or routing assets you use in your business,
-// such as delivery vehicles or employees, you may only use HERE as your geolocation
-// provider. See section 82 of the AWS service terms (http://aws.amazon.com/service-terms)
+// such as delivery vehicles or employees, you must not use Esri as your geolocation
+// provider. See section 82 of the Amazon Web Services service terms (http://aws.amazon.com/service-terms)
 // for more details.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1255,6 +1372,11 @@ func (c *LocationService) CreatePlaceIndexRequest(input *CreatePlaceIndexInput) 
 //
 //   - ValidationException
 //     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
 //
 //   - ThrottlingException
 //     The request was denied because of request throttling.
@@ -1326,15 +1448,15 @@ func (c *LocationService) CreateRouteCalculatorRequest(input *CreateRouteCalcula
 
 // CreateRouteCalculator API operation for Amazon Location Service.
 //
-// Creates a route calculator resource in your AWS account.
+// Creates a route calculator resource in your Amazon Web Services account.
 //
 // You can send requests to a route calculator resource to estimate travel time,
 // distance, and get directions. A route calculator sources traffic and road
 // network data from your chosen data provider.
 //
 // If your application is tracking or routing assets you use in your business,
-// such as delivery vehicles or employees, you may only use HERE as your geolocation
-// provider. See section 82 of the AWS service terms (http://aws.amazon.com/service-terms)
+// such as delivery vehicles or employees, you must not use Esri as your geolocation
+// provider. See section 82 of the Amazon Web Services service terms (http://aws.amazon.com/service-terms)
 // for more details.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1359,6 +1481,11 @@ func (c *LocationService) CreateRouteCalculatorRequest(input *CreateRouteCalcula
 //
 //   - ValidationException
 //     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
 //
 //   - ThrottlingException
 //     The request was denied because of request throttling.
@@ -1430,8 +1557,8 @@ func (c *LocationService) CreateTrackerRequest(input *CreateTrackerInput) (req *
 
 // CreateTracker API operation for Amazon Location Service.
 //
-// Creates a tracker resource in your AWS account, which lets you retrieve current
-// and historical location of devices.
+// Creates a tracker resource in your Amazon Web Services account, which lets
+// you retrieve current and historical location of devices.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1455,6 +1582,11 @@ func (c *LocationService) CreateTrackerRequest(input *CreateTrackerInput) (req *
 //
 //   - ValidationException
 //     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ServiceQuotaExceededException
+//     The operation was denied because the request would exceed the maximum quota
+//     (https://docs.aws.amazon.com/location/latest/developerguide/location-quotas.html)
+//     set for Amazon Location Service.
 //
 //   - ThrottlingException
 //     The request was denied because of request throttling.
@@ -1527,7 +1659,7 @@ func (c *LocationService) DeleteGeofenceCollectionRequest(input *DeleteGeofenceC
 
 // DeleteGeofenceCollection API operation for Amazon Location Service.
 //
-// Deletes a geofence collection from your AWS account.
+// Deletes a geofence collection from your Amazon Web Services account.
 //
 // This operation deletes the resource permanently. If the geofence collection
 // is the target of a tracker resource, the devices will no longer be monitored.
@@ -1580,6 +1712,103 @@ func (c *LocationService) DeleteGeofenceCollectionWithContext(ctx aws.Context, i
 	return out, req.Send()
 }
 
+const opDeleteKey = "DeleteKey"
+
+// DeleteKeyRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteKey operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteKey for more information on using the DeleteKey
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteKeyRequest method.
+//	req, resp := client.DeleteKeyRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteKey
+func (c *LocationService) DeleteKeyRequest(input *DeleteKeyInput) (req *request.Request, output *DeleteKeyOutput) {
+	op := &request.Operation{
+		Name:       opDeleteKey,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/metadata/v0/keys/{KeyName}",
+	}
+
+	if input == nil {
+		input = &DeleteKeyInput{}
+	}
+
+	output = &DeleteKeyOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	req.Handlers.Build.PushBackNamed(protocol.NewHostPrefixHandler("metadata.", nil))
+	req.Handlers.Build.PushBackNamed(protocol.ValidateEndpointHostHandler)
+	return
+}
+
+// DeleteKey API operation for Amazon Location Service.
+//
+// Deletes the specified API key. The API key must have been deactivated more
+// than 90 days previously.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Location Service's
+// API operation DeleteKey for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
+//
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
+//
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
+//
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DeleteKey
+func (c *LocationService) DeleteKey(input *DeleteKeyInput) (*DeleteKeyOutput, error) {
+	req, out := c.DeleteKeyRequest(input)
+	return out, req.Send()
+}
+
+// DeleteKeyWithContext is the same as DeleteKey with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteKey for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) DeleteKeyWithContext(ctx aws.Context, input *DeleteKeyInput, opts ...request.Option) (*DeleteKeyOutput, error) {
+	req, out := c.DeleteKeyRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteMap = "DeleteMap"
 
 // DeleteMapRequest generates a "aws/request.Request" representing the
@@ -1626,7 +1855,7 @@ func (c *LocationService) DeleteMapRequest(input *DeleteMapInput) (req *request.
 
 // DeleteMap API operation for Amazon Location Service.
 //
-// Deletes a map resource from your AWS account.
+// Deletes a map resource from your Amazon Web Services account.
 //
 // This operation deletes the resource permanently. If the map is being used
 // in an application, the map may not render.
@@ -1725,7 +1954,7 @@ func (c *LocationService) DeletePlaceIndexRequest(input *DeletePlaceIndexInput) 
 
 // DeletePlaceIndex API operation for Amazon Location Service.
 //
-// Deletes a place index resource from your AWS account.
+// Deletes a place index resource from your Amazon Web Services account.
 //
 // This operation deletes the resource permanently.
 //
@@ -1823,7 +2052,7 @@ func (c *LocationService) DeleteRouteCalculatorRequest(input *DeleteRouteCalcula
 
 // DeleteRouteCalculator API operation for Amazon Location Service.
 //
-// Deletes a route calculator resource from your AWS account.
+// Deletes a route calculator resource from your Amazon Web Services account.
 //
 // This operation deletes the resource permanently.
 //
@@ -1921,7 +2150,7 @@ func (c *LocationService) DeleteTrackerRequest(input *DeleteTrackerInput) (req *
 
 // DeleteTracker API operation for Amazon Location Service.
 //
-// Deletes a tracker resource from your AWS account.
+// Deletes a tracker resource from your Amazon Web Services account.
 //
 // This operation deletes the resource permanently. If the tracker resource
 // is in use, you may encounter an error. Make sure that the target resource
@@ -2065,6 +2294,105 @@ func (c *LocationService) DescribeGeofenceCollection(input *DescribeGeofenceColl
 // for more information on using Contexts.
 func (c *LocationService) DescribeGeofenceCollectionWithContext(ctx aws.Context, input *DescribeGeofenceCollectionInput, opts ...request.Option) (*DescribeGeofenceCollectionOutput, error) {
 	req, out := c.DescribeGeofenceCollectionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeKey = "DescribeKey"
+
+// DescribeKeyRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeKey operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeKey for more information on using the DescribeKey
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeKeyRequest method.
+//	req, resp := client.DescribeKeyRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeKey
+func (c *LocationService) DescribeKeyRequest(input *DescribeKeyInput) (req *request.Request, output *DescribeKeyOutput) {
+	op := &request.Operation{
+		Name:       opDescribeKey,
+		HTTPMethod: "GET",
+		HTTPPath:   "/metadata/v0/keys/{KeyName}",
+	}
+
+	if input == nil {
+		input = &DescribeKeyInput{}
+	}
+
+	output = &DescribeKeyOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Build.PushBackNamed(protocol.NewHostPrefixHandler("metadata.", nil))
+	req.Handlers.Build.PushBackNamed(protocol.ValidateEndpointHostHandler)
+	return
+}
+
+// DescribeKey API operation for Amazon Location Service.
+//
+// Retrieves the API key resource details.
+//
+// The API keys feature is in preview. We may add, change, or remove features
+// before announcing general availability. For more information, see Using API
+// keys (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Location Service's
+// API operation DescribeKey for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
+//
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
+//
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
+//
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/DescribeKey
+func (c *LocationService) DescribeKey(input *DescribeKeyInput) (*DescribeKeyOutput, error) {
+	req, out := c.DescribeKeyRequest(input)
+	return out, req.Send()
+}
+
+// DescribeKeyWithContext is the same as DescribeKey with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeKey for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) DescribeKeyWithContext(ctx aws.Context, input *DescribeKeyInput, opts ...request.Option) (*DescribeKeyOutput, error) {
+	req, out := c.DescribeKeyRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -3339,9 +3667,9 @@ func (c *LocationService) GetPlaceRequest(input *GetPlaceInput) (req *request.Re
 // A PlaceId is valid only if all of the following are the same in the original
 // search request and the call to GetPlace.
 //
-//   - Customer AWS account
+//   - Customer Amazon Web Services account
 //
-//   - AWS Region
+//   - Amazon Web Services Region
 //
 //   - Data provider specified in the place index resource
 //
@@ -3593,7 +3921,7 @@ func (c *LocationService) ListGeofenceCollectionsRequest(input *ListGeofenceColl
 
 // ListGeofenceCollections API operation for Amazon Location Service.
 //
-// Lists geofence collections in your AWS account.
+// Lists geofence collections in your Amazon Web Services account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3843,6 +4171,159 @@ func (c *LocationService) ListGeofencesPagesWithContext(ctx aws.Context, input *
 	return p.Err()
 }
 
+const opListKeys = "ListKeys"
+
+// ListKeysRequest generates a "aws/request.Request" representing the
+// client's request for the ListKeys operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListKeys for more information on using the ListKeys
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListKeysRequest method.
+//	req, resp := client.ListKeysRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListKeys
+func (c *LocationService) ListKeysRequest(input *ListKeysInput) (req *request.Request, output *ListKeysOutput) {
+	op := &request.Operation{
+		Name:       opListKeys,
+		HTTPMethod: "POST",
+		HTTPPath:   "/metadata/v0/list-keys",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListKeysInput{}
+	}
+
+	output = &ListKeysOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Build.PushBackNamed(protocol.NewHostPrefixHandler("metadata.", nil))
+	req.Handlers.Build.PushBackNamed(protocol.ValidateEndpointHostHandler)
+	return
+}
+
+// ListKeys API operation for Amazon Location Service.
+//
+// Lists API key resources in your Amazon Web Services account.
+//
+// The API keys feature is in preview. We may add, change, or remove features
+// before announcing general availability. For more information, see Using API
+// keys (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Location Service's
+// API operation ListKeys for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
+//
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
+//
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/ListKeys
+func (c *LocationService) ListKeys(input *ListKeysInput) (*ListKeysOutput, error) {
+	req, out := c.ListKeysRequest(input)
+	return out, req.Send()
+}
+
+// ListKeysWithContext is the same as ListKeys with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListKeys for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) ListKeysWithContext(ctx aws.Context, input *ListKeysInput, opts ...request.Option) (*ListKeysOutput, error) {
+	req, out := c.ListKeysRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListKeysPages iterates over the pages of a ListKeys operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListKeys method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListKeys operation.
+//	pageNum := 0
+//	err := client.ListKeysPages(params,
+//	    func(page *locationservice.ListKeysOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *LocationService) ListKeysPages(input *ListKeysInput, fn func(*ListKeysOutput, bool) bool) error {
+	return c.ListKeysPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListKeysPagesWithContext same as ListKeysPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) ListKeysPagesWithContext(ctx aws.Context, input *ListKeysInput, fn func(*ListKeysOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListKeysInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListKeysRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListKeysOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListMaps = "ListMaps"
 
 // ListMapsRequest generates a "aws/request.Request" representing the
@@ -3894,7 +4375,7 @@ func (c *LocationService) ListMapsRequest(input *ListMapsInput) (req *request.Re
 
 // ListMaps API operation for Amazon Location Service.
 //
-// Lists map resources in your AWS account.
+// Lists map resources in your Amazon Web Services account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4043,7 +4524,7 @@ func (c *LocationService) ListPlaceIndexesRequest(input *ListPlaceIndexesInput) 
 
 // ListPlaceIndexes API operation for Amazon Location Service.
 //
-// Lists place index resources in your AWS account.
+// Lists place index resources in your Amazon Web Services account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4192,7 +4673,7 @@ func (c *LocationService) ListRouteCalculatorsRequest(input *ListRouteCalculator
 
 // ListRouteCalculators API operation for Amazon Location Service.
 //
-// Lists route calculator resources in your AWS account.
+// Lists route calculator resources in your Amazon Web Services account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4589,7 +5070,7 @@ func (c *LocationService) ListTrackersRequest(input *ListTrackersInput) (req *re
 
 // ListTrackers API operation for Amazon Location Service.
 //
-// Lists tracker resources in your AWS account.
+// Lists tracker resources in your Amazon Web Services account.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5141,15 +5622,17 @@ func (c *LocationService) TagResourceRequest(input *TagResourceInput) (req *requ
 // Assigns one or more tags (key-value pairs) to the specified Amazon Location
 // Service resource.
 //
-//	<p>Tags can help you organize and categorize your resources. You can also
-//	use them to scope user permissions, by granting a user permission to access
-//	or change only resources with certain tag values.</p> <p>You can use the
-//	<code>TagResource</code> operation with an Amazon Location Service resource
-//	that already has tags. If you specify a new tag key for the resource,
-//	this tag is appended to the tags already associated with the resource.
-//	If you specify a tag key that's already associated with the resource,
-//	the new tag value that you specify replaces the previous value for that
-//	tag. </p> <p>You can associate up to 50 tags with a resource.</p>
+// Tags can help you organize and categorize your resources. You can also use
+// them to scope user permissions, by granting a user permission to access or
+// change only resources with certain tag values.
+//
+// You can use the TagResource operation with an Amazon Location Service resource
+// that already has tags. If you specify a new tag key for the resource, this
+// tag is appended to the tags already associated with the resource. If you
+// specify a tag key that's already associated with the resource, the new tag
+// value that you specify replaces the previous value for that tag.
+//
+// You can associate up to 50 tags with a resource.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5385,6 +5868,105 @@ func (c *LocationService) UpdateGeofenceCollection(input *UpdateGeofenceCollecti
 // for more information on using Contexts.
 func (c *LocationService) UpdateGeofenceCollectionWithContext(ctx aws.Context, input *UpdateGeofenceCollectionInput, opts ...request.Option) (*UpdateGeofenceCollectionOutput, error) {
 	req, out := c.UpdateGeofenceCollectionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateKey = "UpdateKey"
+
+// UpdateKeyRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateKey operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateKey for more information on using the UpdateKey
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateKeyRequest method.
+//	req, resp := client.UpdateKeyRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateKey
+func (c *LocationService) UpdateKeyRequest(input *UpdateKeyInput) (req *request.Request, output *UpdateKeyOutput) {
+	op := &request.Operation{
+		Name:       opUpdateKey,
+		HTTPMethod: "PATCH",
+		HTTPPath:   "/metadata/v0/keys/{KeyName}",
+	}
+
+	if input == nil {
+		input = &UpdateKeyInput{}
+	}
+
+	output = &UpdateKeyOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Build.PushBackNamed(protocol.NewHostPrefixHandler("metadata.", nil))
+	req.Handlers.Build.PushBackNamed(protocol.ValidateEndpointHostHandler)
+	return
+}
+
+// UpdateKey API operation for Amazon Location Service.
+//
+// Updates the specified properties of a given API key resource.
+//
+// The API keys feature is in preview. We may add, change, or remove features
+// before announcing general availability. For more information, see Using API
+// keys (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Location Service's
+// API operation UpdateKey for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InternalServerException
+//     The request has failed to process because of an unknown server error, exception,
+//     or failure.
+//
+//   - ResourceNotFoundException
+//     The resource that you've entered was not found in your AWS account.
+//
+//   - AccessDeniedException
+//     The request was denied because of insufficient access or permissions. Check
+//     with an administrator to verify your permissions.
+//
+//   - ValidationException
+//     The input failed to meet the constraints specified by the AWS service.
+//
+//   - ThrottlingException
+//     The request was denied because of request throttling.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/location-2020-11-19/UpdateKey
+func (c *LocationService) UpdateKey(input *UpdateKeyInput) (*UpdateKeyOutput, error) {
+	req, out := c.UpdateKeyRequest(input)
+	return out, req.Send()
+}
+
+// UpdateKeyWithContext is the same as UpdateKey with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateKey for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LocationService) UpdateKeyWithContext(ctx aws.Context, input *UpdateKeyInput, opts ...request.Option) (*UpdateKeyOutput, error) {
+	req, out := c.UpdateKeyRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -5835,12 +6417,171 @@ func (s *AccessDeniedException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Options for filtering API keys.
+type ApiKeyFilter struct {
+	_ struct{} `type:"structure"`
+
+	// Filter on Active or Expired API keys.
+	KeyStatus *string `type:"string" enum:"Status"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ApiKeyFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ApiKeyFilter) GoString() string {
+	return s.String()
+}
+
+// SetKeyStatus sets the KeyStatus field's value.
+func (s *ApiKeyFilter) SetKeyStatus(v string) *ApiKeyFilter {
+	s.KeyStatus = &v
+	return s
+}
+
+// API Restrictions on the allowed actions, resources, and referers for an API
+// key resource.
+type ApiKeyRestrictions struct {
+	_ struct{} `type:"structure"`
+
+	// A list of allowed actions that an API key resource grants permissions to
+	// perform
+	//
+	// Currently, the only valid action is geo:GetMap* as an input to the list.
+	// For example, ["geo:GetMap*"] is valid but ["geo:GetMapTile"] is not.
+	//
+	// AllowActions is a required field
+	AllowActions []*string `min:"1" type:"list" required:"true"`
+
+	// An optional list of allowed HTTP referers for which requests must originate
+	// from. Requests using this API key from other domains will not be allowed.
+	//
+	// Requirements:
+	//
+	//    * Contain only alphanumeric characters (A–Z, a–z, 0–9) or any symbols
+	//    in this list $\-._+!*`(),;/?:@=&
+	//
+	//    * May contain a percent (%) if followed by 2 hexadecimal digits (A-F,
+	//    a-f, 0-9); this is used for URL encoding purposes.
+	//
+	//    * May contain wildcard characters question mark (?) and asterisk (*).
+	//    Question mark (?) will replace any single character (including hexadecimal
+	//    digits). Asterisk (*) will replace any multiple characters (including
+	//    multiple hexadecimal digits).
+	//
+	//    * No spaces allowed. For example, https://example.com.
+	AllowReferers []*string `min:"1" type:"list"`
+
+	// A list of allowed resource ARNs that a API key bearer can perform actions
+	// on
+	//
+	// For more information about ARN format, see Amazon Resource Names (ARNs) (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html).
+	//
+	// In this preview, you can allow only map resources.
+	//
+	// Requirements:
+	//
+	//    * Must be prefixed with arn.
+	//
+	//    * partition and service must not be empty and should begin with only alphanumeric
+	//    characters (A–Z, a–z, 0–9) and contain only alphanumeric numbers,
+	//    hyphens (-) and periods (.).
+	//
+	//    * region and account-id can be empty or should begin with only alphanumeric
+	//    characters (A–Z, a–z, 0–9) and contain only alphanumeric numbers,
+	//    hyphens (-) and periods (.).
+	//
+	//    * resource-id can begin with any character except for forward slash (/)
+	//    and contain any characters after, including forward slashes to form a
+	//    path. resource-id can also include wildcard characters, denoted by an
+	//    asterisk (*).
+	//
+	//    * arn, partition, service, region, account-id and resource-id must be
+	//    delimited by a colon (:).
+	//
+	//    * No spaces allowed. For example, arn:aws:geo:region:account-id:map/ExampleMap*.
+	//
+	// AllowResources is a required field
+	AllowResources []*string `min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ApiKeyRestrictions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ApiKeyRestrictions) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ApiKeyRestrictions) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ApiKeyRestrictions"}
+	if s.AllowActions == nil {
+		invalidParams.Add(request.NewErrParamRequired("AllowActions"))
+	}
+	if s.AllowActions != nil && len(s.AllowActions) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AllowActions", 1))
+	}
+	if s.AllowReferers != nil && len(s.AllowReferers) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AllowReferers", 1))
+	}
+	if s.AllowResources == nil {
+		invalidParams.Add(request.NewErrParamRequired("AllowResources"))
+	}
+	if s.AllowResources != nil && len(s.AllowResources) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AllowResources", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAllowActions sets the AllowActions field's value.
+func (s *ApiKeyRestrictions) SetAllowActions(v []*string) *ApiKeyRestrictions {
+	s.AllowActions = v
+	return s
+}
+
+// SetAllowReferers sets the AllowReferers field's value.
+func (s *ApiKeyRestrictions) SetAllowReferers(v []*string) *ApiKeyRestrictions {
+	s.AllowReferers = v
+	return s
+}
+
+// SetAllowResources sets the AllowResources field's value.
+func (s *ApiKeyRestrictions) SetAllowResources(v []*string) *ApiKeyRestrictions {
+	s.AllowResources = v
+	return s
+}
+
 type AssociateTrackerConsumerInput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) for the geofence collection to be associated
 	// to tracker resource. Used when you need to specify a resource across all
-	// AWS.
+	// Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:geofence-collection/ExampleGeofenceCollectionConsumer
 	//
@@ -6761,6 +7502,14 @@ type BatchPutGeofenceRequestEntry struct {
 	// GeofenceId is a required field
 	GeofenceId *string `min:"1" type:"string" required:"true"`
 
+	// Specifies additional user-defined properties to store with the Geofence.
+	// An array of key-value pairs.
+	//
+	// GeofenceProperties is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by BatchPutGeofenceRequestEntry's
+	// String and GoString methods.
+	GeofenceProperties map[string]*string `type:"map" sensitive:"true"`
+
 	// Contains the details of the position of the geofence. Can be either a polygon
 	// or a circle. Including both will return a validation error.
 	//
@@ -6816,6 +7565,12 @@ func (s *BatchPutGeofenceRequestEntry) Validate() error {
 // SetGeofenceId sets the GeofenceId field's value.
 func (s *BatchPutGeofenceRequestEntry) SetGeofenceId(v string) *BatchPutGeofenceRequestEntry {
 	s.GeofenceId = &v
+	return s
+}
+
+// SetGeofenceProperties sets the GeofenceProperties field's value.
+func (s *BatchPutGeofenceRequestEntry) SetGeofenceProperties(v map[string]*string) *BatchPutGeofenceRequestEntry {
+	s.GeofenceProperties = v
 	return s
 }
 
@@ -6951,7 +7706,7 @@ type BatchUpdateDevicePositionInput struct {
 	// TrackerName is a required field
 	TrackerName *string `location:"uri" locationName:"TrackerName" min:"1" type:"string" required:"true"`
 
-	// Contains the position update details for each device.
+	// Contains the position update details for each device, up to 10 devices.
 	//
 	// Updates is a required field
 	Updates []*DevicePositionUpdate `min:"1" type:"list" required:"true"`
@@ -7188,8 +7943,17 @@ type CalculateRouteInput struct {
 	IncludeLegGeometry *bool `type:"boolean"`
 
 	// Specifies the mode of transport when calculating a route. Used in estimating
-	// the speed of travel and road compatibility. You can choose Car, Truck, or
-	// Walking as options for the TravelMode.
+	// the speed of travel and road compatibility. You can choose Car, Truck, Walking,
+	// Bicycle or Motorcycle as options for the TravelMode.
+	//
+	// Bicycle and Motorcycle are only valid when using Grab as a data provider,
+	// and only within Southeast Asia.
+	//
+	// Truck is not available for Grab.
+	//
+	// For more details on the using Grab for routing, including areas of coverage,
+	// see GrabMaps (https://docs.aws.amazon.com/location/latest/developerguide/grab.html)
+	// in the Amazon Location Service Developer Guide.
 	//
 	// The TravelMode you specify also determines how you specify route preferences:
 	//
@@ -7426,6 +8190,14 @@ type CalculateRouteMatrixInput struct {
 	//
 	//    * If traveling by Truck use the TruckModeOptions parameter.
 	//
+	// Bicycle or Motorcycle are only valid when using Grab as a data provider,
+	// and only within Southeast Asia.
+	//
+	// Truck is not available for Grab.
+	//
+	// For more information about using Grab as a data provider, see GrabMaps (https://docs.aws.amazon.com/location/latest/developerguide/grab.html)
+	// in the Amazon Location Service Developer Guide.
+	//
 	// Default Value: Car
 	TravelMode *string `type:"string" enum:"TravelMode"`
 
@@ -7617,6 +8389,8 @@ type CalculateRouteMatrixSummary struct {
 	//
 	//    * Esri
 	//
+	//    * Grab
+	//
 	//    * Here
 	//
 	// For more information about data providers, see Amazon Location Service data
@@ -7759,6 +8533,8 @@ type CalculateRouteSummary struct {
 	// route. Indicates one of the available providers:
 	//
 	//    * Esri
+	//
+	//    * Grab
 	//
 	//    * Here
 	//
@@ -8090,7 +8866,7 @@ type CreateGeofenceCollectionInput struct {
 	// An optional description for the geofence collection.
 	Description *string `type:"string"`
 
-	// A key identifier for an AWS KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html).
+	// A key identifier for an Amazon Web Services KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html).
 	// Enter a key ID, key ARN, alias name, or alias ARN.
 	KmsKeyId *string `min:"1" type:"string"`
 
@@ -8204,7 +8980,7 @@ type CreateGeofenceCollectionOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) for the geofence collection resource. Used
-	// when you need to specify a resource across all AWS.
+	// when you need to specify a resource across all Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:geofence-collection/ExampleGeofenceCollection
 	//
@@ -8259,10 +9035,221 @@ func (s *CreateGeofenceCollectionOutput) SetCreateTime(v time.Time) *CreateGeofe
 	return s
 }
 
+type CreateKeyInput struct {
+	_ struct{} `type:"structure"`
+
+	// An optional description for the API key resource.
+	Description *string `type:"string"`
+
+	// The optional timestamp for when the API key resource will expire in ISO 8601
+	// (https://www.iso.org/iso-8601-date-and-time-format.html) format: YYYY-MM-DDThh:mm:ss.sssZ.
+	// One of NoExpiry or ExpireTime must be set.
+	ExpireTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
+	// A custom name for the API key resource.
+	//
+	// Requirements:
+	//
+	//    * Contain only alphanumeric characters (A–Z, a–z, 0–9), hyphens
+	//    (-), periods (.), and underscores (_).
+	//
+	//    * Must be a unique API key name.
+	//
+	//    * No spaces allowed. For example, ExampleAPIKey.
+	//
+	// KeyName is a required field
+	KeyName *string `min:"1" type:"string" required:"true"`
+
+	// Optionally set to true to set no expiration time for the API key. One of
+	// NoExpiry or ExpireTime must be set.
+	NoExpiry *bool `type:"boolean"`
+
+	// The API key restrictions for the API key resource.
+	//
+	// Restrictions is a required field
+	Restrictions *ApiKeyRestrictions `type:"structure" required:"true"`
+
+	// Applies one or more tags to the map resource. A tag is a key-value pair that
+	// helps manage, identify, search, and filter your resources by labelling them.
+	//
+	// Format: "key" : "value"
+	//
+	// Restrictions:
+	//
+	//    * Maximum 50 tags per resource
+	//
+	//    * Each resource tag must be unique with a maximum of one value.
+	//
+	//    * Maximum key length: 128 Unicode characters in UTF-8
+	//
+	//    * Maximum value length: 256 Unicode characters in UTF-8
+	//
+	//    * Can use alphanumeric characters (A–Z, a–z, 0–9), and the following
+	//    characters: + - = . _ : / @.
+	//
+	//    * Cannot use "aws:" as a prefix for a key.
+	Tags map[string]*string `type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateKeyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateKeyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateKeyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateKeyInput"}
+	if s.KeyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyName"))
+	}
+	if s.KeyName != nil && len(*s.KeyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyName", 1))
+	}
+	if s.Restrictions == nil {
+		invalidParams.Add(request.NewErrParamRequired("Restrictions"))
+	}
+	if s.Restrictions != nil {
+		if err := s.Restrictions.Validate(); err != nil {
+			invalidParams.AddNested("Restrictions", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateKeyInput) SetDescription(v string) *CreateKeyInput {
+	s.Description = &v
+	return s
+}
+
+// SetExpireTime sets the ExpireTime field's value.
+func (s *CreateKeyInput) SetExpireTime(v time.Time) *CreateKeyInput {
+	s.ExpireTime = &v
+	return s
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *CreateKeyInput) SetKeyName(v string) *CreateKeyInput {
+	s.KeyName = &v
+	return s
+}
+
+// SetNoExpiry sets the NoExpiry field's value.
+func (s *CreateKeyInput) SetNoExpiry(v bool) *CreateKeyInput {
+	s.NoExpiry = &v
+	return s
+}
+
+// SetRestrictions sets the Restrictions field's value.
+func (s *CreateKeyInput) SetRestrictions(v *ApiKeyRestrictions) *CreateKeyInput {
+	s.Restrictions = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateKeyInput) SetTags(v map[string]*string) *CreateKeyInput {
+	s.Tags = v
+	return s
+}
+
+type CreateKeyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The timestamp for when the API key resource was created in ISO 8601 (https://www.iso.org/iso-8601-date-and-time-format.html)
+	// format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// CreateTime is a required field
+	CreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The key value/string of an API key. This value is used when making API calls
+	// to authorize the call. For example, see GetMapGlyphs (https://docs.aws.amazon.com/location/latest/APIReference/API_GetMapGlyphs.html).
+	//
+	// Key is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by CreateKeyOutput's
+	// String and GoString methods.
+	//
+	// Key is a required field
+	Key *string `type:"string" required:"true" sensitive:"true"`
+
+	// The Amazon Resource Name (ARN) for the API key resource. Used when you need
+	// to specify a resource across all Amazon Web Services.
+	//
+	//    * Format example: arn:aws:geo:region:account-id:key/ExampleKey
+	//
+	// KeyArn is a required field
+	KeyArn *string `type:"string" required:"true"`
+
+	// The name of the API key resource.
+	//
+	// KeyName is a required field
+	KeyName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateKeyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateKeyOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *CreateKeyOutput) SetCreateTime(v time.Time) *CreateKeyOutput {
+	s.CreateTime = &v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *CreateKeyOutput) SetKey(v string) *CreateKeyOutput {
+	s.Key = &v
+	return s
+}
+
+// SetKeyArn sets the KeyArn field's value.
+func (s *CreateKeyOutput) SetKeyArn(v string) *CreateKeyOutput {
+	s.KeyArn = &v
+	return s
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *CreateKeyOutput) SetKeyName(v string) *CreateKeyOutput {
+	s.KeyName = &v
+	return s
+}
+
 type CreateMapInput struct {
 	_ struct{} `type:"structure"`
 
-	// Specifies the map style selected from an available data provider.
+	// Specifies the MapConfiguration, including the map style, for the map resource
+	// that you create. The map style defines the look of maps and the data provider
+	// for your map resource.
 	//
 	// Configuration is a required field
 	Configuration *MapConfiguration `type:"structure" required:"true"`
@@ -8393,9 +9380,9 @@ type CreateMapOutput struct {
 	CreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
 
 	// The Amazon Resource Name (ARN) for the map resource. Used to specify a resource
-	// across all AWS.
+	// across all Amazon Web Services.
 	//
-	//    * Format example: arn:aws:geo:region:account-id:maps/ExampleMap
+	//    * Format example: arn:aws:geo:region:account-id:map/ExampleMap
 	//
 	// MapArn is a required field
 	MapArn *string `type:"string" required:"true"`
@@ -8456,13 +9443,18 @@ type CreatePlaceIndexInput struct {
 	//    coverage in your region of interest, see Esri details on geocoding coverage
 	//    (https://developers.arcgis.com/rest/geocode/api-reference/geocode-coverage.htm).
 	//
+	//    * Grab – Grab provides place index functionality for Southeast Asia.
+	//    For additional information about GrabMaps (https://docs.aws.amazon.com/location/latest/developerguide/grab.html)'
+	//    coverage, see GrabMaps countries and areas covered (https://docs.aws.amazon.com/location/latest/developerguide/grab.html#grab-coverage-area).
+	//
 	//    * Here – For additional information about HERE Technologies (https://docs.aws.amazon.com/location/latest/developerguide/HERE.html)'
 	//    coverage in your region of interest, see HERE details on goecoding coverage
 	//    (https://developer.here.com/documentation/geocoder/dev_guide/topics/coverage-geocoder.html).
 	//    If you specify HERE Technologies (Here) as the data provider, you may
 	//    not store results (https://docs.aws.amazon.com/location-places/latest/APIReference/API_DataSourceConfiguration.html)
-	//    for locations in Japan. For more information, see the AWS Service Terms
-	//    (https://aws.amazon.com/service-terms/) for Amazon Location Service.
+	//    for locations in Japan. For more information, see the Amazon Web Services
+	//    Service Terms (http://aws.amazon.com/service-terms/) for Amazon Location
+	//    Service.
 	//
 	// For additional information , see Data providers (https://docs.aws.amazon.com/location/latest/developerguide/what-is-data-provider.html)
 	// on the Amazon Location Service Developer Guide.
@@ -8600,7 +9592,7 @@ type CreatePlaceIndexOutput struct {
 	CreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
 
 	// The Amazon Resource Name (ARN) for the place index resource. Used to specify
-	// a resource across AWS.
+	// a resource across Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:place-index/ExamplePlaceIndex
 	//
@@ -8669,14 +9661,19 @@ type CreateRouteCalculatorInput struct {
 	// Specifies the data provider of traffic and road network data.
 	//
 	// This field is case-sensitive. Enter the valid values as shown. For example,
-	// entering HERE returns an error. Route calculators that use Esri as a data
-	// source only calculate routes that are shorter than 400 km.
+	// entering HERE returns an error.
 	//
 	// Valid values include:
 	//
 	//    * Esri – For additional information about Esri (https://docs.aws.amazon.com/location/latest/developerguide/esri.html)'s
 	//    coverage in your region of interest, see Esri details on street networks
 	//    and traffic coverage (https://doc.arcgis.com/en/arcgis-online/reference/network-coverage.htm).
+	//    Route calculators that use Esri as a data source only calculate routes
+	//    that are shorter than 400 km.
+	//
+	//    * Grab – Grab provides routing functionality for Southeast Asia. For
+	//    additional information about GrabMaps (https://docs.aws.amazon.com/location/latest/developerguide/grab.html)'
+	//    coverage, see GrabMaps countries and areas covered (https://docs.aws.amazon.com/location/latest/developerguide/grab.html#grab-coverage-area).
 	//
 	//    * Here – For additional information about HERE Technologies (https://docs.aws.amazon.com/location/latest/developerguide/HERE.html)'
 	//    coverage in your region of interest, see HERE car routing coverage (https://developer.here.com/documentation/routing-api/dev_guide/topics/coverage/car-routing.html)
@@ -8792,7 +9789,7 @@ type CreateRouteCalculatorOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) for the route calculator resource. Use the
-	// ARN when you specify a resource across all AWS.
+	// ARN when you specify a resource across all Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:route-calculator/ExampleCalculator
 	//
@@ -8857,7 +9854,7 @@ type CreateTrackerInput struct {
 	// An optional description for the tracker resource.
 	Description *string `type:"string"`
 
-	// A key identifier for an AWS KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html).
+	// A key identifier for an Amazon Web Services KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html).
 	// Enter a key ID, key ARN, alias name, or alias ARN.
 	KmsKeyId *string `min:"1" type:"string"`
 
@@ -9024,7 +10021,7 @@ type CreateTrackerOutput struct {
 	CreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
 
 	// The Amazon Resource Name (ARN) for the tracker resource. Used when you need
-	// to specify a resource across all AWS.
+	// to specify a resource across all Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:tracker/ExampleTracker
 	//
@@ -9193,6 +10190,77 @@ func (s DeleteGeofenceCollectionOutput) String() string {
 // be included in the string output. The member name will be present, but the
 // value will be replaced with "sensitive".
 func (s DeleteGeofenceCollectionOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteKeyInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The name of the API key to delete.
+	//
+	// KeyName is a required field
+	KeyName *string `location:"uri" locationName:"KeyName" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteKeyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteKeyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteKeyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteKeyInput"}
+	if s.KeyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyName"))
+	}
+	if s.KeyName != nil && len(*s.KeyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *DeleteKeyInput) SetKeyName(v string) *DeleteKeyInput {
+	s.KeyName = &v
+	return s
+}
+
+type DeleteKeyOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteKeyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteKeyOutput) GoString() string {
 	return s.String()
 }
 
@@ -9533,7 +10601,7 @@ type DescribeGeofenceCollectionOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) for the geofence collection resource. Used
-	// when you need to specify a resource across all AWS.
+	// when you need to specify a resource across all Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:geofence-collection/ExampleGeofenceCollection
 	//
@@ -9556,7 +10624,7 @@ type DescribeGeofenceCollectionOutput struct {
 	// Description is a required field
 	Description *string `type:"string" required:"true"`
 
-	// A key identifier for an AWS KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html)
+	// A key identifier for an Amazon Web Services KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html)
 	// assigned to the Amazon Location resource
 	KmsKeyId *string `min:"1" type:"string"`
 
@@ -9652,6 +10720,183 @@ func (s *DescribeGeofenceCollectionOutput) SetUpdateTime(v time.Time) *DescribeG
 	return s
 }
 
+type DescribeKeyInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The name of the API key resource.
+	//
+	// KeyName is a required field
+	KeyName *string `location:"uri" locationName:"KeyName" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeKeyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeKeyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeKeyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeKeyInput"}
+	if s.KeyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyName"))
+	}
+	if s.KeyName != nil && len(*s.KeyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *DescribeKeyInput) SetKeyName(v string) *DescribeKeyInput {
+	s.KeyName = &v
+	return s
+}
+
+type DescribeKeyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The timestamp for when the API key resource was created in ISO 8601 (https://www.iso.org/iso-8601-date-and-time-format.html)
+	// format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// CreateTime is a required field
+	CreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The optional description for the API key resource.
+	Description *string `type:"string"`
+
+	// The timestamp for when the API key resource will expire in ISO 8601 (https://www.iso.org/iso-8601-date-and-time-format.html)
+	// format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// ExpireTime is a required field
+	ExpireTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The key value/string of an API key.
+	//
+	// Key is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by DescribeKeyOutput's
+	// String and GoString methods.
+	//
+	// Key is a required field
+	Key *string `type:"string" required:"true" sensitive:"true"`
+
+	// The Amazon Resource Name (ARN) for the API key resource. Used when you need
+	// to specify a resource across all Amazon Web Services.
+	//
+	//    * Format example: arn:aws:geo:region:account-id:key/ExampleKey
+	//
+	// KeyArn is a required field
+	KeyArn *string `type:"string" required:"true"`
+
+	// The name of the API key resource.
+	//
+	// KeyName is a required field
+	KeyName *string `min:"1" type:"string" required:"true"`
+
+	// API Restrictions on the allowed actions, resources, and referers for an API
+	// key resource.
+	//
+	// Restrictions is a required field
+	Restrictions *ApiKeyRestrictions `type:"structure" required:"true"`
+
+	// Tags associated with the API key resource.
+	Tags map[string]*string `type:"map"`
+
+	// The timestamp for when the API key resource was last updated in ISO 8601
+	// (https://www.iso.org/iso-8601-date-and-time-format.html) format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// UpdateTime is a required field
+	UpdateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeKeyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeKeyOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *DescribeKeyOutput) SetCreateTime(v time.Time) *DescribeKeyOutput {
+	s.CreateTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *DescribeKeyOutput) SetDescription(v string) *DescribeKeyOutput {
+	s.Description = &v
+	return s
+}
+
+// SetExpireTime sets the ExpireTime field's value.
+func (s *DescribeKeyOutput) SetExpireTime(v time.Time) *DescribeKeyOutput {
+	s.ExpireTime = &v
+	return s
+}
+
+// SetKey sets the Key field's value.
+func (s *DescribeKeyOutput) SetKey(v string) *DescribeKeyOutput {
+	s.Key = &v
+	return s
+}
+
+// SetKeyArn sets the KeyArn field's value.
+func (s *DescribeKeyOutput) SetKeyArn(v string) *DescribeKeyOutput {
+	s.KeyArn = &v
+	return s
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *DescribeKeyOutput) SetKeyName(v string) *DescribeKeyOutput {
+	s.KeyName = &v
+	return s
+}
+
+// SetRestrictions sets the Restrictions field's value.
+func (s *DescribeKeyOutput) SetRestrictions(v *ApiKeyRestrictions) *DescribeKeyOutput {
+	s.Restrictions = v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *DescribeKeyOutput) SetTags(v map[string]*string) *DescribeKeyOutput {
+	s.Tags = v
+	return s
+}
+
+// SetUpdateTime sets the UpdateTime field's value.
+func (s *DescribeKeyOutput) SetUpdateTime(v time.Time) *DescribeKeyOutput {
+	s.UpdateTime = &v
+	return s
+}
+
 type DescribeMapInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -9726,9 +10971,9 @@ type DescribeMapOutput struct {
 	Description *string `type:"string" required:"true"`
 
 	// The Amazon Resource Name (ARN) for the map resource. Used to specify a resource
-	// across all AWS.
+	// across all Amazon Web Services.
 	//
-	//    * Format example: arn:aws:geo:region:account-id:maps/ExampleMap
+	//    * Format example: arn:aws:geo:region:account-id:map/ExampleMap
 	//
 	// MapArn is a required field
 	MapArn *string `type:"string" required:"true"`
@@ -9887,6 +11132,8 @@ type DescribePlaceIndexOutput struct {
 	//
 	//    * Esri
 	//
+	//    * Grab
+	//
 	//    * Here
 	//
 	// For more information about data providers, see Amazon Location Service data
@@ -9906,7 +11153,7 @@ type DescribePlaceIndexOutput struct {
 	Description *string `type:"string" required:"true"`
 
 	// The Amazon Resource Name (ARN) for the place index resource. Used to specify
-	// a resource across AWS.
+	// a resource across Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:place-index/ExamplePlaceIndex
 	//
@@ -10058,7 +11305,7 @@ type DescribeRouteCalculatorOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) for the Route calculator resource. Use the
-	// ARN when you specify a resource across AWS.
+	// ARN when you specify a resource across Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:route-calculator/ExampleCalculator
 	//
@@ -10082,6 +11329,8 @@ type DescribeRouteCalculatorOutput struct {
 	// available providers:
 	//
 	//    * Esri
+	//
+	//    * Grab
 	//
 	//    * Here
 	//
@@ -10242,7 +11491,7 @@ type DescribeTrackerOutput struct {
 	// Description is a required field
 	Description *string `type:"string" required:"true"`
 
-	// A key identifier for an AWS KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html)
+	// A key identifier for an Amazon Web Services KMS customer managed key (https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html)
 	// assigned to the Amazon Location resource.
 	KmsKeyId *string `min:"1" type:"string"`
 
@@ -10263,7 +11512,7 @@ type DescribeTrackerOutput struct {
 	Tags map[string]*string `type:"map"`
 
 	// The Amazon Resource Name (ARN) for the tracker resource. Used when you need
-	// to specify a resource across all AWS.
+	// to specify a resource across all Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:tracker/ExampleTracker
 	//
@@ -10577,7 +11826,7 @@ type DisassociateTrackerConsumerInput struct {
 
 	// The Amazon Resource Name (ARN) for the geofence collection to be disassociated
 	// from the tracker resource. Used when you need to specify a resource across
-	// all AWS.
+	// all Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:geofence-collection/ExampleGeofenceCollectionConsumer
 	//
@@ -10681,18 +11930,22 @@ type GeofenceGeometry struct {
 	// String and GoString methods.
 	Circle *Circle `type:"structure" sensitive:"true"`
 
-	// An array of 1 or more linear rings. A linear ring is an array of 4 or more
-	// vertices, where the first and last vertex are the same to form a closed boundary.
+	// A polygon is a list of linear rings which are each made up of a list of vertices.
+	//
 	// Each vertex is a 2-dimensional point of the form: [longitude, latitude].
+	// This is represented as an array of doubles of length 2 (so [double, double]).
 	//
-	// The first linear ring is an outer ring, describing the polygon's boundary.
-	// Subsequent linear rings may be inner or outer rings to describe holes and
-	// islands. Outer rings must list their vertices in counter-clockwise order
-	// around the ring's center, where the left side is the polygon's exterior.
-	// Inner rings must list their vertices in clockwise order, where the left side
-	// is the polygon's interior.
+	// An array of 4 or more vertices, where the first and last vertex are the same
+	// (to form a closed boundary), is called a linear ring. The linear ring vertices
+	// must be listed in counter-clockwise order around the ring’s interior. The
+	// linear ring is represented as an array of vertices, or an array of arrays
+	// of doubles ([[double, double], ...]).
 	//
-	// A geofence polygon can consist of between 4 and 1,000 vertices.
+	// A geofence consists of a single linear ring. To allow for future expansion,
+	// the Polygon parameter takes an array of linear rings, which is represented
+	// as an array of arrays of arrays of doubles ([[[double, double], ...], ...]).
+	//
+	// A linear ring for use in geofences can consist of between 4 and 1,000 vertices.
 	Polygon [][][]*float64 `min:"1" type:"list"`
 }
 
@@ -11152,6 +12405,14 @@ type GetGeofenceOutput struct {
 	// GeofenceId is a required field
 	GeofenceId *string `min:"1" type:"string" required:"true"`
 
+	// Contains additional user-defined properties stored with the geofence. An
+	// array of key-value pairs.
+	//
+	// GeofenceProperties is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by GetGeofenceOutput's
+	// String and GoString methods.
+	GeofenceProperties map[string]*string `type:"map" sensitive:"true"`
+
 	// Contains the geofence geometry details describing a polygon or a circle.
 	//
 	// Geometry is a required field
@@ -11210,6 +12471,12 @@ func (s *GetGeofenceOutput) SetGeofenceId(v string) *GetGeofenceOutput {
 	return s
 }
 
+// SetGeofenceProperties sets the GeofenceProperties field's value.
+func (s *GetGeofenceOutput) SetGeofenceProperties(v map[string]*string) *GetGeofenceOutput {
+	s.GeofenceProperties = v
+	return s
+}
+
 // SetGeometry sets the Geometry field's value.
 func (s *GetGeofenceOutput) SetGeometry(v *GeofenceGeometry) *GetGeofenceOutput {
 	s.Geometry = v
@@ -11255,9 +12522,33 @@ type GetMapGlyphsInput struct {
 	//
 	//    * VectorHereContrast – Fira GO Regular | Fira GO Bold
 	//
-	//    * VectorHereExplore, VectorHereExploreTruck – Firo GO Italic | Fira
-	//    GO Map | Fira GO Map Bold | Noto Sans CJK JP Bold | Noto Sans CJK JP Light
-	//    | Noto Sans CJK JP Regular
+	//    * VectorHereExplore, VectorHereExploreTruck, HybridHereExploreSatellite
+	//    – Fira GO Italic | Fira GO Map | Fira GO Map Bold | Noto Sans CJK JP
+	//    Bold | Noto Sans CJK JP Light | Noto Sans CJK JP Regular
+	//
+	// Valid font stacks for GrabMaps (https://docs.aws.amazon.com/location/latest/developerguide/grab.html)
+	// styles:
+	//
+	//    * VectorGrabStandardLight, VectorGrabStandardDark – Noto Sans Regular
+	//    | Noto Sans Medium | Noto Sans Bold
+	//
+	// Valid font stacks for Open Data (https://docs.aws.amazon.com/location/latest/developerguide/open-data.html)
+	// styles:
+	//
+	//    * VectorOpenDataStandardLight, VectorOpenDataStandardDark, VectorOpenDataVisualizationLight,
+	//    VectorOpenDataVisualizationDark – Amazon Ember Regular,Noto Sans Regular
+	//    | Amazon Ember Bold,Noto Sans Bold | Amazon Ember Medium,Noto Sans Medium
+	//    | Amazon Ember Regular Italic,Noto Sans Italic | Amazon Ember Condensed
+	//    RC Regular,Noto Sans Regular | Amazon Ember Condensed RC Bold,Noto Sans
+	//    Bold | Amazon Ember Regular,Noto Sans Regular,Noto Sans Arabic Regular
+	//    | Amazon Ember Condensed RC Bold,Noto Sans Bold,Noto Sans Arabic Condensed
+	//    Bold | Amazon Ember Bold,Noto Sans Bold,Noto Sans Arabic Bold | Amazon
+	//    Ember Regular Italic,Noto Sans Italic,Noto Sans Arabic Regular | Amazon
+	//    Ember Condensed RC Regular,Noto Sans Regular,Noto Sans Arabic Condensed
+	//    Regular | Amazon Ember Medium,Noto Sans Medium,Noto Sans Arabic Medium
+	//
+	// The fonts used by the Open Data map styles are combined fonts that use Amazon
+	// Ember for most glyphs but Noto Sans for glyphs unsupported by Amazon Ember.
 	//
 	// FontStack is a required field
 	FontStack *string `location:"uri" locationName:"FontStack" type:"string" required:"true"`
@@ -11268,6 +12559,14 @@ type GetMapGlyphsInput struct {
 	//
 	// FontUnicodeRange is a required field
 	FontUnicodeRange *string `location:"uri" locationName:"FontUnicodeRange" type:"string" required:"true"`
+
+	// The optional API key (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html)
+	// to authorize the request.
+	//
+	// Key is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by GetMapGlyphsInput's
+	// String and GoString methods.
+	Key *string `location:"querystring" locationName:"key" type:"string" sensitive:"true"`
 
 	// The map resource associated with the glyph ﬁle.
 	//
@@ -11333,6 +12632,12 @@ func (s *GetMapGlyphsInput) SetFontUnicodeRange(v string) *GetMapGlyphsInput {
 	return s
 }
 
+// SetKey sets the Key field's value.
+func (s *GetMapGlyphsInput) SetKey(v string) *GetMapGlyphsInput {
+	s.Key = &v
+	return s
+}
+
 // SetMapName sets the MapName field's value.
 func (s *GetMapGlyphsInput) SetMapName(v string) *GetMapGlyphsInput {
 	s.MapName = &v
@@ -11342,8 +12647,11 @@ func (s *GetMapGlyphsInput) SetMapName(v string) *GetMapGlyphsInput {
 type GetMapGlyphsOutput struct {
 	_ struct{} `type:"structure" payload:"Blob"`
 
-	// The blob's content type.
+	// The glyph, as binary blob.
 	Blob []byte `type:"blob"`
+
+	// The HTTP Cache-Control directive for the value.
+	CacheControl *string `location:"header" locationName:"Cache-Control" type:"string"`
 
 	// The map glyph content type. For example, application/octet-stream.
 	ContentType *string `location:"header" locationName:"Content-Type" type:"string"`
@@ -11373,6 +12681,12 @@ func (s *GetMapGlyphsOutput) SetBlob(v []byte) *GetMapGlyphsOutput {
 	return s
 }
 
+// SetCacheControl sets the CacheControl field's value.
+func (s *GetMapGlyphsOutput) SetCacheControl(v string) *GetMapGlyphsOutput {
+	s.CacheControl = &v
+	return s
+}
+
 // SetContentType sets the ContentType field's value.
 func (s *GetMapGlyphsOutput) SetContentType(v string) *GetMapGlyphsOutput {
 	s.ContentType = &v
@@ -11397,6 +12711,14 @@ type GetMapSpritesInput struct {
 	//
 	// FileName is a required field
 	FileName *string `location:"uri" locationName:"FileName" type:"string" required:"true"`
+
+	// The optional API key (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html)
+	// to authorize the request.
+	//
+	// Key is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by GetMapSpritesInput's
+	// String and GoString methods.
+	Key *string `location:"querystring" locationName:"key" type:"string" sensitive:"true"`
 
 	// The map resource associated with the sprite ﬁle.
 	//
@@ -11450,6 +12772,12 @@ func (s *GetMapSpritesInput) SetFileName(v string) *GetMapSpritesInput {
 	return s
 }
 
+// SetKey sets the Key field's value.
+func (s *GetMapSpritesInput) SetKey(v string) *GetMapSpritesInput {
+	s.Key = &v
+	return s
+}
+
 // SetMapName sets the MapName field's value.
 func (s *GetMapSpritesInput) SetMapName(v string) *GetMapSpritesInput {
 	s.MapName = &v
@@ -11461,6 +12789,9 @@ type GetMapSpritesOutput struct {
 
 	// Contains the body of the sprite sheet or JSON offset ﬁle.
 	Blob []byte `type:"blob"`
+
+	// The HTTP Cache-Control directive for the value.
+	CacheControl *string `location:"header" locationName:"Cache-Control" type:"string"`
 
 	// The content type of the sprite sheet and offsets. For example, the sprite
 	// sheet content type is image/png, and the sprite offset JSON document is application/json.
@@ -11491,6 +12822,12 @@ func (s *GetMapSpritesOutput) SetBlob(v []byte) *GetMapSpritesOutput {
 	return s
 }
 
+// SetCacheControl sets the CacheControl field's value.
+func (s *GetMapSpritesOutput) SetCacheControl(v string) *GetMapSpritesOutput {
+	s.CacheControl = &v
+	return s
+}
+
 // SetContentType sets the ContentType field's value.
 func (s *GetMapSpritesOutput) SetContentType(v string) *GetMapSpritesOutput {
 	s.ContentType = &v
@@ -11499,6 +12836,14 @@ func (s *GetMapSpritesOutput) SetContentType(v string) *GetMapSpritesOutput {
 
 type GetMapStyleDescriptorInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The optional API key (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html)
+	// to authorize the request.
+	//
+	// Key is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by GetMapStyleDescriptorInput's
+	// String and GoString methods.
+	Key *string `location:"querystring" locationName:"key" type:"string" sensitive:"true"`
 
 	// The map resource to retrieve the style descriptor from.
 	//
@@ -11540,6 +12885,12 @@ func (s *GetMapStyleDescriptorInput) Validate() error {
 	return nil
 }
 
+// SetKey sets the Key field's value.
+func (s *GetMapStyleDescriptorInput) SetKey(v string) *GetMapStyleDescriptorInput {
+	s.Key = &v
+	return s
+}
+
 // SetMapName sets the MapName field's value.
 func (s *GetMapStyleDescriptorInput) SetMapName(v string) *GetMapStyleDescriptorInput {
 	s.MapName = &v
@@ -11551,6 +12902,9 @@ type GetMapStyleDescriptorOutput struct {
 
 	// Contains the body of the style descriptor.
 	Blob []byte `type:"blob"`
+
+	// The HTTP Cache-Control directive for the value.
+	CacheControl *string `location:"header" locationName:"Cache-Control" type:"string"`
 
 	// The style descriptor's content type. For example, application/json.
 	ContentType *string `location:"header" locationName:"Content-Type" type:"string"`
@@ -11580,6 +12934,12 @@ func (s *GetMapStyleDescriptorOutput) SetBlob(v []byte) *GetMapStyleDescriptorOu
 	return s
 }
 
+// SetCacheControl sets the CacheControl field's value.
+func (s *GetMapStyleDescriptorOutput) SetCacheControl(v string) *GetMapStyleDescriptorOutput {
+	s.CacheControl = &v
+	return s
+}
+
 // SetContentType sets the ContentType field's value.
 func (s *GetMapStyleDescriptorOutput) SetContentType(v string) *GetMapStyleDescriptorOutput {
 	s.ContentType = &v
@@ -11588,6 +12948,14 @@ func (s *GetMapStyleDescriptorOutput) SetContentType(v string) *GetMapStyleDescr
 
 type GetMapTileInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The optional API key (https://docs.aws.amazon.com/location/latest/developerguide/using-apikeys.html)
+	// to authorize the request.
+	//
+	// Key is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by GetMapTileInput's
+	// String and GoString methods.
+	Key *string `location:"querystring" locationName:"key" type:"string" sensitive:"true"`
 
 	// The map resource to retrieve the map tiles from.
 	//
@@ -11662,6 +13030,12 @@ func (s *GetMapTileInput) Validate() error {
 	return nil
 }
 
+// SetKey sets the Key field's value.
+func (s *GetMapTileInput) SetKey(v string) *GetMapTileInput {
+	s.Key = &v
+	return s
+}
+
 // SetMapName sets the MapName field's value.
 func (s *GetMapTileInput) SetMapName(v string) *GetMapTileInput {
 	s.MapName = &v
@@ -11692,6 +13066,9 @@ type GetMapTileOutput struct {
 	// Contains Mapbox Vector Tile (MVT) data.
 	Blob []byte `type:"blob"`
 
+	// The HTTP Cache-Control directive for the value.
+	CacheControl *string `location:"header" locationName:"Cache-Control" type:"string"`
+
 	// The map tile's content type. For example, application/vnd.mapbox-vector-tile.
 	ContentType *string `location:"header" locationName:"Content-Type" type:"string"`
 }
@@ -11717,6 +13094,12 @@ func (s GetMapTileOutput) GoString() string {
 // SetBlob sets the Blob field's value.
 func (s *GetMapTileOutput) SetBlob(v []byte) *GetMapTileOutput {
 	s.Blob = v
+	return s
+}
+
+// SetCacheControl sets the CacheControl field's value.
+func (s *GetMapTileOutput) SetCacheControl(v string) *GetMapTileOutput {
+	s.CacheControl = &v
 	return s
 }
 
@@ -12354,7 +13737,7 @@ func (s *ListGeofenceCollectionsInput) SetNextToken(v string) *ListGeofenceColle
 type ListGeofenceCollectionsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Lists the geofence collections that exist in your AWS account.
+	// Lists the geofence collections that exist in your Amazon Web Services account.
 	//
 	// Entries is a required field
 	Entries []*ListGeofenceCollectionsResponseEntry `type:"list" required:"true"`
@@ -12501,6 +13884,14 @@ type ListGeofenceResponseEntry struct {
 	// GeofenceId is a required field
 	GeofenceId *string `min:"1" type:"string" required:"true"`
 
+	// Contains additional user-defined properties stored with the geofence. An
+	// array of key-value pairs.
+	//
+	// GeofenceProperties is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by ListGeofenceResponseEntry's
+	// String and GoString methods.
+	GeofenceProperties map[string]*string `type:"map" sensitive:"true"`
+
 	// Contains the geofence geometry details describing a polygon or a circle.
 	//
 	// Geometry is a required field
@@ -12556,6 +13947,12 @@ func (s *ListGeofenceResponseEntry) SetCreateTime(v time.Time) *ListGeofenceResp
 // SetGeofenceId sets the GeofenceId field's value.
 func (s *ListGeofenceResponseEntry) SetGeofenceId(v string) *ListGeofenceResponseEntry {
 	s.GeofenceId = &v
+	return s
+}
+
+// SetGeofenceProperties sets the GeofenceProperties field's value.
+func (s *ListGeofenceResponseEntry) SetGeofenceProperties(v map[string]*string) *ListGeofenceResponseEntry {
+	s.GeofenceProperties = v
 	return s
 }
 
@@ -12698,6 +14095,211 @@ func (s *ListGeofencesOutput) SetNextToken(v string) *ListGeofencesOutput {
 	return s
 }
 
+type ListKeysInput struct {
+	_ struct{} `type:"structure"`
+
+	// Optionally filter the list to only Active or Expired API keys.
+	Filter *ApiKeyFilter `type:"structure"`
+
+	// An optional limit for the number of resources returned in a single call.
+	//
+	// Default value: 100
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token specifying which page of results to return in the response.
+	// If no token is provided, the default page is the first page.
+	//
+	// Default value: null
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListKeysInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListKeysInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListKeysInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListKeysInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *ListKeysInput) SetFilter(v *ApiKeyFilter) *ListKeysInput {
+	s.Filter = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListKeysInput) SetMaxResults(v int64) *ListKeysInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListKeysInput) SetNextToken(v string) *ListKeysInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListKeysOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Contains API key resources in your Amazon Web Services account. Details include
+	// API key name, allowed referers and timestamp for when the API key will expire.
+	//
+	// Entries is a required field
+	Entries []*ListKeysResponseEntry `type:"list" required:"true"`
+
+	// A pagination token indicating there are additional pages available. You can
+	// use the token in a following request to fetch the next set of results.
+	NextToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListKeysOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListKeysOutput) GoString() string {
+	return s.String()
+}
+
+// SetEntries sets the Entries field's value.
+func (s *ListKeysOutput) SetEntries(v []*ListKeysResponseEntry) *ListKeysOutput {
+	s.Entries = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListKeysOutput) SetNextToken(v string) *ListKeysOutput {
+	s.NextToken = &v
+	return s
+}
+
+// An API key resource listed in your Amazon Web Services account.
+type ListKeysResponseEntry struct {
+	_ struct{} `type:"structure"`
+
+	// The timestamp of when the API key was created, in ISO 8601 (https://www.iso.org/iso-8601-date-and-time-format.html)
+	// format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// CreateTime is a required field
+	CreateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The optional description for the API key resource.
+	Description *string `type:"string"`
+
+	// The timestamp for when the API key resource will expire, in ISO 8601 (https://www.iso.org/iso-8601-date-and-time-format.html)
+	// format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// ExpireTime is a required field
+	ExpireTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+
+	// The name of the API key resource.
+	//
+	// KeyName is a required field
+	KeyName *string `min:"1" type:"string" required:"true"`
+
+	// API Restrictions on the allowed actions, resources, and referers for an API
+	// key resource.
+	//
+	// Restrictions is a required field
+	Restrictions *ApiKeyRestrictions `type:"structure" required:"true"`
+
+	// The timestamp of when the API key was last updated, in ISO 8601 (https://www.iso.org/iso-8601-date-and-time-format.html)
+	// format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// UpdateTime is a required field
+	UpdateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListKeysResponseEntry) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListKeysResponseEntry) GoString() string {
+	return s.String()
+}
+
+// SetCreateTime sets the CreateTime field's value.
+func (s *ListKeysResponseEntry) SetCreateTime(v time.Time) *ListKeysResponseEntry {
+	s.CreateTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *ListKeysResponseEntry) SetDescription(v string) *ListKeysResponseEntry {
+	s.Description = &v
+	return s
+}
+
+// SetExpireTime sets the ExpireTime field's value.
+func (s *ListKeysResponseEntry) SetExpireTime(v time.Time) *ListKeysResponseEntry {
+	s.ExpireTime = &v
+	return s
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *ListKeysResponseEntry) SetKeyName(v string) *ListKeysResponseEntry {
+	s.KeyName = &v
+	return s
+}
+
+// SetRestrictions sets the Restrictions field's value.
+func (s *ListKeysResponseEntry) SetRestrictions(v *ApiKeyRestrictions) *ListKeysResponseEntry {
+	s.Restrictions = v
+	return s
+}
+
+// SetUpdateTime sets the UpdateTime field's value.
+func (s *ListKeysResponseEntry) SetUpdateTime(v time.Time) *ListKeysResponseEntry {
+	s.UpdateTime = &v
+	return s
+}
+
 type ListMapsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12762,7 +14364,7 @@ func (s *ListMapsInput) SetNextToken(v string) *ListMapsInput {
 type ListMapsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Contains a list of maps in your AWS account
+	// Contains a list of maps in your Amazon Web Services account
 	//
 	// Entries is a required field
 	Entries []*ListMapsResponseEntry `type:"list" required:"true"`
@@ -12802,7 +14404,8 @@ func (s *ListMapsOutput) SetNextToken(v string) *ListMapsOutput {
 	return s
 }
 
-// Contains details of an existing map resource in your AWS account.
+// Contains details of an existing map resource in your Amazon Web Services
+// account.
 type ListMapsResponseEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -12958,7 +14561,7 @@ func (s *ListPlaceIndexesInput) SetNextToken(v string) *ListPlaceIndexesInput {
 type ListPlaceIndexesOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Lists the place index resources that exist in your AWS account
+	// Lists the place index resources that exist in your Amazon Web Services account
 	//
 	// Entries is a required field
 	Entries []*ListPlaceIndexesResponseEntry `type:"list" required:"true"`
@@ -12998,7 +14601,7 @@ func (s *ListPlaceIndexesOutput) SetNextToken(v string) *ListPlaceIndexesOutput 
 	return s
 }
 
-// A place index resource listed in your AWS account.
+// A place index resource listed in your Amazon Web Services account.
 type ListPlaceIndexesResponseEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -13011,6 +14614,8 @@ type ListPlaceIndexesResponseEntry struct {
 	// The data provider of geospatial data. Values can be one of the following:
 	//
 	//    * Esri
+	//
+	//    * Grab
 	//
 	//    * Here
 	//
@@ -13160,7 +14765,8 @@ func (s *ListRouteCalculatorsInput) SetNextToken(v string) *ListRouteCalculators
 type ListRouteCalculatorsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Lists the route calculator resources that exist in your AWS account
+	// Lists the route calculator resources that exist in your Amazon Web Services
+	// account
 	//
 	// Entries is a required field
 	Entries []*ListRouteCalculatorsResponseEntry `type:"list" required:"true"`
@@ -13200,7 +14806,7 @@ func (s *ListRouteCalculatorsOutput) SetNextToken(v string) *ListRouteCalculator
 	return s
 }
 
-// A route calculator resource listed in your AWS account.
+// A route calculator resource listed in your Amazon Web Services account.
 type ListRouteCalculatorsResponseEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -13221,6 +14827,8 @@ type ListRouteCalculatorsResponseEntry struct {
 	// available providers:
 	//
 	//    * Esri
+	//
+	//    * Grab
 	//
 	//    * Here
 	//
@@ -13573,8 +15181,9 @@ func (s *ListTrackersInput) SetNextToken(v string) *ListTrackersInput {
 type ListTrackersOutput struct {
 	_ struct{} `type:"structure"`
 
-	// Contains tracker resources in your AWS account. Details include tracker name,
-	// description and timestamps for when the tracker was created and last updated.
+	// Contains tracker resources in your Amazon Web Services account. Details include
+	// tracker name, description and timestamps for when the tracker was created
+	// and last updated.
 	//
 	// Entries is a required field
 	Entries []*ListTrackersResponseEntry `type:"list" required:"true"`
@@ -13709,6 +15318,17 @@ func (s *ListTrackersResponseEntry) SetUpdateTime(v time.Time) *ListTrackersResp
 type MapConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// Specifies the political view for the style. Leave unset to not use a political
+	// view, or, for styles that support specific political views, you can choose
+	// a view, such as IND for the Indian view.
+	//
+	// Default is unset.
+	//
+	// Not all map resources or styles support political view styles. See Political
+	// views (https://docs.aws.amazon.com/location/latest/developerguide/map-concepts.html#political-views)
+	// for more information.
+	PoliticalView *string `min:"3" type:"string"`
+
 	// Specifies the map style selected from an available data provider.
 	//
 	// Valid Esri map styles (https://docs.aws.amazon.com/location/latest/developerguide/esri.html):
@@ -13730,19 +15350,22 @@ type MapConfiguration struct {
 	//    * VectorEsriTopographic – The Esri Light map style, which provides a
 	//    detailed vector basemap with a classic Esri map style.
 	//
-	//    * VectorEsriStreets – The Esri World Streets map style, which provides
-	//    a detailed vector basemap for the world symbolized with a classic Esri
-	//    street map style. The vector tile layer is similar in content and style
-	//    to the World Street Map raster map.
+	//    * VectorEsriStreets – The Esri Street Map style, which provides a detailed
+	//    vector basemap for the world symbolized with a classic Esri street map
+	//    style. The vector tile layer is similar in content and style to the World
+	//    Street Map raster map.
 	//
-	//    * VectorEsriNavigation – The Esri World Navigation map style, which
-	//    provides a detailed basemap for the world symbolized with a custom navigation
-	//    map style that's designed for use during the day in mobile devices.
+	//    * VectorEsriNavigation – The Esri Navigation map style, which provides
+	//    a detailed basemap for the world symbolized with a custom navigation map
+	//    style that's designed for use during the day in mobile devices.
 	//
 	// Valid HERE Technologies map styles (https://docs.aws.amazon.com/location/latest/developerguide/HERE.html):
 	//
 	//    * VectorHereContrast – The HERE Contrast (Berlin) map style is a high
 	//    contrast detailed base map of the world that blends 3D and 2D rendering.
+	//    The VectorHereContrast style has been renamed from VectorHereBerlin. VectorHereBerlin
+	//    has been deprecated, but will continue to work in applications that use
+	//    it.
 	//
 	//    * VectorHereExplore – A default HERE map style containing a neutral,
 	//    global map and its features including roads, buildings, landmarks, and
@@ -13753,8 +15376,51 @@ type MapConfiguration struct {
 	//    segments and icons on top of HERE Explore to support use cases within
 	//    transport and logistics.
 	//
-	// The VectorHereContrast style has been renamed from VectorHereBerlin. VectorHereBerlin
-	// has been deprecated, but will continue to work in applications that use it.
+	//    * RasterHereExploreSatellite – A global map containing high resolution
+	//    satellite imagery.
+	//
+	//    * HybridHereExploreSatellite – A global map displaying the road network,
+	//    street names, and city labels over satellite imagery. This style will
+	//    automatically retrieve both raster and vector tiles, and your charges
+	//    will be based on total tiles retrieved. Hybrid styles use both vector
+	//    and raster tiles when rendering the map that you see. This means that
+	//    more tiles are retrieved than when using either vector or raster tiles
+	//    alone. Your charges will include all tiles retrieved.
+	//
+	// Valid GrabMaps map styles (https://docs.aws.amazon.com/location/latest/developerguide/grab.html):
+	//
+	//    * VectorGrabStandardLight – The Grab Standard Light map style provides
+	//    a basemap with detailed land use coloring, area names, roads, landmarks,
+	//    and points of interest covering Southeast Asia.
+	//
+	//    * VectorGrabStandardDark – The Grab Standard Dark map style provides
+	//    a dark variation of the standard basemap covering Southeast Asia.
+	//
+	// Grab provides maps only for countries in Southeast Asia, and is only available
+	// in the Asia Pacific (Singapore) Region (ap-southeast-1). For more information,
+	// see GrabMaps countries and area covered (https://docs.aws.amazon.com/location/latest/developerguide/grab.html#grab-coverage-area).
+	//
+	// Valid Open Data map styles (https://docs.aws.amazon.com/location/latest/developerguide/open-data.html):
+	//
+	//    * VectorOpenDataStandardLight – The Open Data Standard Light map style
+	//    provides a detailed basemap for the world suitable for website and mobile
+	//    application use. The map includes highways major roads, minor roads, railways,
+	//    water features, cities, parks, landmarks, building footprints, and administrative
+	//    boundaries.
+	//
+	//    * VectorOpenDataStandardDark – Open Data Standard Dark is a dark-themed
+	//    map style that provides a detailed basemap for the world suitable for
+	//    website and mobile application use. The map includes highways major roads,
+	//    minor roads, railways, water features, cities, parks, landmarks, building
+	//    footprints, and administrative boundaries.
+	//
+	//    * VectorOpenDataVisualizationLight – The Open Data Visualization Light
+	//    map style is a light-themed style with muted colors and fewer features
+	//    that aids in understanding overlaid data.
+	//
+	//    * VectorOpenDataVisualizationDark – The Open Data Visualization Dark
+	//    map style is a dark-themed style with muted colors and fewer features
+	//    that aids in understanding overlaid data.
 	//
 	// Style is a required field
 	Style *string `min:"1" type:"string" required:"true"`
@@ -13781,6 +15447,9 @@ func (s MapConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *MapConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "MapConfiguration"}
+	if s.PoliticalView != nil && len(*s.PoliticalView) < 3 {
+		invalidParams.Add(request.NewErrParamMinLen("PoliticalView", 3))
+	}
 	if s.Style == nil {
 		invalidParams.Add(request.NewErrParamRequired("Style"))
 	}
@@ -13794,9 +15463,53 @@ func (s *MapConfiguration) Validate() error {
 	return nil
 }
 
+// SetPoliticalView sets the PoliticalView field's value.
+func (s *MapConfiguration) SetPoliticalView(v string) *MapConfiguration {
+	s.PoliticalView = &v
+	return s
+}
+
 // SetStyle sets the Style field's value.
 func (s *MapConfiguration) SetStyle(v string) *MapConfiguration {
 	s.Style = &v
+	return s
+}
+
+// Specifies the political view for the style.
+type MapConfigurationUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the political view for the style. Set to an empty string to not
+	// use a political view, or, for styles that support specific political views,
+	// you can choose a view, such as IND for the Indian view.
+	//
+	// Not all map resources or styles support political view styles. See Political
+	// views (https://docs.aws.amazon.com/location/latest/developerguide/map-concepts.html#political-views)
+	// for more information.
+	PoliticalView *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MapConfigurationUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MapConfigurationUpdate) GoString() string {
+	return s.String()
+}
+
+// SetPoliticalView sets the PoliticalView field's value.
+func (s *MapConfigurationUpdate) SetPoliticalView(v string) *MapConfigurationUpdate {
+	s.PoliticalView = &v
 	return s
 }
 
@@ -13810,6 +15523,13 @@ type Place struct {
 
 	// The numerical portion of an address, such as a building number.
 	AddressNumber *string `type:"string"`
+
+	// The Amazon Location categories that describe this Place.
+	//
+	// For more information about using categories, including a list of Amazon Location
+	// categories, see Categories and filtering (https://docs.aws.amazon.com/location/latest/developerguide/category-filtering.html),
+	// in the Amazon Location Service Developer Guide.
+	Categories []*string `min:"1" type:"list"`
 
 	// A country/region specified using ISO 3166 (https://www.iso.org/iso-3166-country-codes.html)
 	// 3-digit country/region code. For example, CAN.
@@ -13853,22 +15573,27 @@ type Place struct {
 	// Street.
 	Street *string `type:"string"`
 
-	// A country, or an area that's part of a larger region. For example, Metro
-	// Vancouver.
+	// A county, or an area that's part of a larger region. For example, Metro Vancouver.
 	SubRegion *string `type:"string"`
 
-	// The time zone in which the Place is located. Returned only when using Here
-	// as the selected partner.
+	// Categories from the data provider that describe the Place that are not mapped
+	// to any Amazon Location categories.
+	SupplementalCategories []*string `min:"1" type:"list"`
+
+	// The time zone in which the Place is located. Returned only when using HERE
+	// or Grab as the selected partner.
 	TimeZone *TimeZone `type:"structure"`
 
 	// For addresses with multiple units, the unit identifier. Can include numbers
 	// and letters, for example 3B or Unit 123.
 	//
-	// Returned only for a place index that uses Esri as a data provider. Is not
-	// returned for SearchPlaceIndexForPosition.
+	// Returned only for a place index that uses Esri or Grab as a data provider.
+	// Is not returned for SearchPlaceIndexForPosition.
 	UnitNumber *string `type:"string"`
 
 	// For addresses with a UnitNumber, the type of unit. For example, Apartment.
+	//
+	// Returned only for a place index that uses Esri as a data provider.
 	UnitType *string `type:"string"`
 }
 
@@ -13893,6 +15618,12 @@ func (s Place) GoString() string {
 // SetAddressNumber sets the AddressNumber field's value.
 func (s *Place) SetAddressNumber(v string) *Place {
 	s.AddressNumber = &v
+	return s
+}
+
+// SetCategories sets the Categories field's value.
+func (s *Place) SetCategories(v []*string) *Place {
+	s.Categories = v
 	return s
 }
 
@@ -13953,6 +15684,12 @@ func (s *Place) SetStreet(v string) *Place {
 // SetSubRegion sets the SubRegion field's value.
 func (s *Place) SetSubRegion(v string) *Place {
 	s.SubRegion = &v
+	return s
+}
+
+// SetSupplementalCategories sets the SupplementalCategories field's value.
+func (s *Place) SetSupplementalCategories(v []*string) *Place {
+	s.SupplementalCategories = v
 	return s
 }
 
@@ -14076,6 +15813,14 @@ type PutGeofenceInput struct {
 	// GeofenceId is a required field
 	GeofenceId *string `location:"uri" locationName:"GeofenceId" min:"1" type:"string" required:"true"`
 
+	// Specifies additional user-defined properties to store with the Geofence.
+	// An array of key-value pairs.
+	//
+	// GeofenceProperties is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by PutGeofenceInput's
+	// String and GoString methods.
+	GeofenceProperties map[string]*string `type:"map" sensitive:"true"`
+
 	// Contains the details to specify the position of the geofence. Can be either
 	// a polygon or a circle. Including both will return a validation error.
 	//
@@ -14143,6 +15888,12 @@ func (s *PutGeofenceInput) SetCollectionName(v string) *PutGeofenceInput {
 // SetGeofenceId sets the GeofenceId field's value.
 func (s *PutGeofenceInput) SetGeofenceId(v string) *PutGeofenceInput {
 	s.GeofenceId = &v
+	return s
+}
+
+// SetGeofenceProperties sets the GeofenceProperties field's value.
+func (s *PutGeofenceInput) SetGeofenceProperties(v map[string]*string) *PutGeofenceInput {
+	s.GeofenceProperties = v
 	return s
 }
 
@@ -14411,7 +16162,7 @@ type SearchForPositionResult struct {
 	// to find the place again later.
 	//
 	// For SearchPlaceIndexForPosition operations, the PlaceId is returned only
-	// by place indexes that use HERE as a data provider.
+	// by place indexes that use HERE or Grab as a data provider.
 	PlaceId *string `type:"string"`
 }
 
@@ -14456,12 +16207,26 @@ func (s *SearchForPositionResult) SetPlaceId(v string) *SearchForPositionResult 
 type SearchForSuggestionsResult struct {
 	_ struct{} `type:"structure"`
 
-	// The unique identifier of the place. You can use this with the GetPlace operation
-	// to find the place again later.
+	// The Amazon Location categories that describe the Place.
+	//
+	// For more information about using categories, including a list of Amazon Location
+	// categories, see Categories and filtering (https://docs.aws.amazon.com/location/latest/developerguide/category-filtering.html),
+	// in the Amazon Location Service Developer Guide.
+	Categories []*string `min:"1" type:"list"`
+
+	// The unique identifier of the Place. You can use this with the GetPlace operation
+	// to find the place again later, or to get full information for the Place.
+	//
+	// The GetPlace request must use the same PlaceIndex resource as the SearchPlaceIndexForSuggestions
+	// that generated the Place ID.
 	//
 	// For SearchPlaceIndexForSuggestions operations, the PlaceId is returned by
-	// place indexes that use HERE or Esri as data providers.
+	// place indexes that use Esri, Grab, or HERE as data providers.
 	PlaceId *string `type:"string"`
+
+	// Categories from the data provider that describe the Place that are not mapped
+	// to any Amazon Location categories.
+	SupplementalCategories []*string `min:"1" type:"list"`
 
 	// The text of the place suggestion, typically formatted as an address string.
 	//
@@ -14487,9 +16252,21 @@ func (s SearchForSuggestionsResult) GoString() string {
 	return s.String()
 }
 
+// SetCategories sets the Categories field's value.
+func (s *SearchForSuggestionsResult) SetCategories(v []*string) *SearchForSuggestionsResult {
+	s.Categories = v
+	return s
+}
+
 // SetPlaceId sets the PlaceId field's value.
 func (s *SearchForSuggestionsResult) SetPlaceId(v string) *SearchForSuggestionsResult {
 	s.PlaceId = &v
+	return s
+}
+
+// SetSupplementalCategories sets the SupplementalCategories field's value.
+func (s *SearchForSuggestionsResult) SetSupplementalCategories(v []*string) *SearchForSuggestionsResult {
+	s.SupplementalCategories = v
 	return s
 }
 
@@ -14521,7 +16298,7 @@ type SearchForTextResult struct {
 	// to find the place again later.
 	//
 	// For SearchPlaceIndexForText operations, the PlaceId is returned only by place
-	// indexes that use HERE as a data provider.
+	// indexes that use HERE or Grab as a data provider.
 	PlaceId *string `type:"string"`
 
 	// The relative confidence in the match for a result among the results returned.
@@ -14529,7 +16306,7 @@ type SearchForTextResult struct {
 	// street, city, country/region, and postal code), the relevance score is closer
 	// to 1.
 	//
-	// Returned only when the partner selected is Esri.
+	// Returned only when the partner selected is Esri or Grab.
 	Relevance *float64 `type:"double"`
 }
 
@@ -14749,6 +16526,8 @@ type SearchPlaceIndexForPositionSummary struct {
 	//
 	//    * Esri
 	//
+	//    * Grab
+	//
 	//    * Here
 	//
 	// For more information about data providers, see Amazon Location Service data
@@ -14861,6 +16640,15 @@ type SearchPlaceIndexForSuggestionsInput struct {
 	// String and GoString methods.
 	FilterBBox []*float64 `min:"4" type:"list" sensitive:"true"`
 
+	// A list of one or more Amazon Location categories to filter the returned places.
+	// If you include more than one category, the results will include results that
+	// match any of the categories listed.
+	//
+	// For more information about using categories, including a list of Amazon Location
+	// categories, see Categories and filtering (https://docs.aws.amazon.com/location/latest/developerguide/category-filtering.html),
+	// in the Amazon Location Service Developer Guide.
+	FilterCategories []*string `min:"1" type:"list"`
+
 	// An optional parameter that limits the search results by returning only suggestions
 	// within the provided list of countries.
 	//
@@ -14936,6 +16724,9 @@ func (s *SearchPlaceIndexForSuggestionsInput) Validate() error {
 	if s.FilterBBox != nil && len(s.FilterBBox) < 4 {
 		invalidParams.Add(request.NewErrParamMinLen("FilterBBox", 4))
 	}
+	if s.FilterCategories != nil && len(s.FilterCategories) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FilterCategories", 1))
+	}
 	if s.FilterCountries != nil && len(s.FilterCountries) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("FilterCountries", 1))
 	}
@@ -14973,6 +16764,12 @@ func (s *SearchPlaceIndexForSuggestionsInput) SetBiasPosition(v []*float64) *Sea
 // SetFilterBBox sets the FilterBBox field's value.
 func (s *SearchPlaceIndexForSuggestionsInput) SetFilterBBox(v []*float64) *SearchPlaceIndexForSuggestionsInput {
 	s.FilterBBox = v
+	return s
+}
+
+// SetFilterCategories sets the FilterCategories field's value.
+func (s *SearchPlaceIndexForSuggestionsInput) SetFilterCategories(v []*string) *SearchPlaceIndexForSuggestionsInput {
+	s.FilterCategories = v
 	return s
 }
 
@@ -15076,6 +16873,8 @@ type SearchPlaceIndexForSuggestionsSummary struct {
 	//
 	//    * Esri
 	//
+	//    * Grab
+	//
 	//    * Here
 	//
 	// For more information about data providers, see Amazon Location Service data
@@ -15090,6 +16889,9 @@ type SearchPlaceIndexForSuggestionsSummary struct {
 	// replaced with "sensitive" in string returned by SearchPlaceIndexForSuggestionsSummary's
 	// String and GoString methods.
 	FilterBBox []*float64 `min:"4" type:"list" sensitive:"true"`
+
+	// The optional category filter specified in the request.
+	FilterCategories []*string `min:"1" type:"list"`
 
 	// Contains the optional country filter specified in the request.
 	FilterCountries []*string `min:"1" type:"list"`
@@ -15145,6 +16947,12 @@ func (s *SearchPlaceIndexForSuggestionsSummary) SetDataSource(v string) *SearchP
 // SetFilterBBox sets the FilterBBox field's value.
 func (s *SearchPlaceIndexForSuggestionsSummary) SetFilterBBox(v []*float64) *SearchPlaceIndexForSuggestionsSummary {
 	s.FilterBBox = v
+	return s
+}
+
+// SetFilterCategories sets the FilterCategories field's value.
+func (s *SearchPlaceIndexForSuggestionsSummary) SetFilterCategories(v []*string) *SearchPlaceIndexForSuggestionsSummary {
+	s.FilterCategories = v
 	return s
 }
 
@@ -15213,6 +17021,15 @@ type SearchPlaceIndexForTextInput struct {
 	// replaced with "sensitive" in string returned by SearchPlaceIndexForTextInput's
 	// String and GoString methods.
 	FilterBBox []*float64 `min:"4" type:"list" sensitive:"true"`
+
+	// A list of one or more Amazon Location categories to filter the returned places.
+	// If you include more than one category, the results will include results that
+	// match any of the categories listed.
+	//
+	// For more information about using categories, including a list of Amazon Location
+	// categories, see Categories and filtering (https://docs.aws.amazon.com/location/latest/developerguide/category-filtering.html),
+	// in the Amazon Location Service Developer Guide.
+	FilterCategories []*string `min:"1" type:"list"`
 
 	// An optional parameter that limits the search results by returning only places
 	// that are in a specified list of countries.
@@ -15289,6 +17106,9 @@ func (s *SearchPlaceIndexForTextInput) Validate() error {
 	if s.FilterBBox != nil && len(s.FilterBBox) < 4 {
 		invalidParams.Add(request.NewErrParamMinLen("FilterBBox", 4))
 	}
+	if s.FilterCategories != nil && len(s.FilterCategories) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FilterCategories", 1))
+	}
 	if s.FilterCountries != nil && len(s.FilterCountries) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("FilterCountries", 1))
 	}
@@ -15326,6 +17146,12 @@ func (s *SearchPlaceIndexForTextInput) SetBiasPosition(v []*float64) *SearchPlac
 // SetFilterBBox sets the FilterBBox field's value.
 func (s *SearchPlaceIndexForTextInput) SetFilterBBox(v []*float64) *SearchPlaceIndexForTextInput {
 	s.FilterBBox = v
+	return s
+}
+
+// SetFilterCategories sets the FilterCategories field's value.
+func (s *SearchPlaceIndexForTextInput) SetFilterCategories(v []*string) *SearchPlaceIndexForTextInput {
+	s.FilterCategories = v
 	return s
 }
 
@@ -15434,6 +17260,8 @@ type SearchPlaceIndexForTextSummary struct {
 	//
 	//    * Esri
 	//
+	//    * Grab
+	//
 	//    * Here
 	//
 	// For more information about data providers, see Amazon Location Service data
@@ -15448,6 +17276,9 @@ type SearchPlaceIndexForTextSummary struct {
 	// replaced with "sensitive" in string returned by SearchPlaceIndexForTextSummary's
 	// String and GoString methods.
 	FilterBBox []*float64 `min:"4" type:"list" sensitive:"true"`
+
+	// The optional category filter specified in the request.
+	FilterCategories []*string `min:"1" type:"list"`
 
 	// Contains the optional country filter specified in the request.
 	FilterCountries []*string `min:"1" type:"list"`
@@ -15513,6 +17344,12 @@ func (s *SearchPlaceIndexForTextSummary) SetDataSource(v string) *SearchPlaceInd
 // SetFilterBBox sets the FilterBBox field's value.
 func (s *SearchPlaceIndexForTextSummary) SetFilterBBox(v []*float64) *SearchPlaceIndexForTextSummary {
 	s.FilterBBox = v
+	return s
+}
+
+// SetFilterCategories sets the FilterCategories field's value.
+func (s *SearchPlaceIndexForTextSummary) SetFilterCategories(v []*string) *SearchPlaceIndexForTextSummary {
+	s.FilterCategories = v
 	return s
 }
 
@@ -16220,7 +18057,7 @@ type UpdateGeofenceCollectionOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the updated geofence collection. Used to
-	// specify a resource across AWS.
+	// specify a resource across Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:geofence-collection/ExampleGeofenceCollection
 	//
@@ -16275,8 +18112,179 @@ func (s *UpdateGeofenceCollectionOutput) SetUpdateTime(v time.Time) *UpdateGeofe
 	return s
 }
 
+type UpdateKeyInput struct {
+	_ struct{} `type:"structure"`
+
+	// Updates the description for the API key resource.
+	Description *string `type:"string"`
+
+	// Updates the timestamp for when the API key resource will expire in ISO 8601
+	// (https://www.iso.org/iso-8601-date-and-time-format.html) format: YYYY-MM-DDThh:mm:ss.sssZ.
+	ExpireTime *time.Time `type:"timestamp" timestampFormat:"iso8601"`
+
+	// The boolean flag to be included for updating ExpireTime or Restrictions details.
+	//
+	// Must be set to true to update an API key resource that has been used in the
+	// past 7 days.
+	//
+	// False if force update is not preferred
+	//
+	// Default value: False
+	ForceUpdate *bool `type:"boolean"`
+
+	// The name of the API key resource to update.
+	//
+	// KeyName is a required field
+	KeyName *string `location:"uri" locationName:"KeyName" min:"1" type:"string" required:"true"`
+
+	// Whether the API key should expire. Set to true to set the API key to have
+	// no expiration time.
+	NoExpiry *bool `type:"boolean"`
+
+	// Updates the API key restrictions for the API key resource.
+	Restrictions *ApiKeyRestrictions `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateKeyInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateKeyInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateKeyInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateKeyInput"}
+	if s.KeyName == nil {
+		invalidParams.Add(request.NewErrParamRequired("KeyName"))
+	}
+	if s.KeyName != nil && len(*s.KeyName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KeyName", 1))
+	}
+	if s.Restrictions != nil {
+		if err := s.Restrictions.Validate(); err != nil {
+			invalidParams.AddNested("Restrictions", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateKeyInput) SetDescription(v string) *UpdateKeyInput {
+	s.Description = &v
+	return s
+}
+
+// SetExpireTime sets the ExpireTime field's value.
+func (s *UpdateKeyInput) SetExpireTime(v time.Time) *UpdateKeyInput {
+	s.ExpireTime = &v
+	return s
+}
+
+// SetForceUpdate sets the ForceUpdate field's value.
+func (s *UpdateKeyInput) SetForceUpdate(v bool) *UpdateKeyInput {
+	s.ForceUpdate = &v
+	return s
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *UpdateKeyInput) SetKeyName(v string) *UpdateKeyInput {
+	s.KeyName = &v
+	return s
+}
+
+// SetNoExpiry sets the NoExpiry field's value.
+func (s *UpdateKeyInput) SetNoExpiry(v bool) *UpdateKeyInput {
+	s.NoExpiry = &v
+	return s
+}
+
+// SetRestrictions sets the Restrictions field's value.
+func (s *UpdateKeyInput) SetRestrictions(v *ApiKeyRestrictions) *UpdateKeyInput {
+	s.Restrictions = v
+	return s
+}
+
+type UpdateKeyOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) for the API key resource. Used when you need
+	// to specify a resource across all Amazon Web Services.
+	//
+	//    * Format example: arn:aws:geo:region:account-id:key/ExampleKey
+	//
+	// KeyArn is a required field
+	KeyArn *string `type:"string" required:"true"`
+
+	// The name of the API key resource.
+	//
+	// KeyName is a required field
+	KeyName *string `min:"1" type:"string" required:"true"`
+
+	// The timestamp for when the API key resource was last updated in ISO 8601
+	// (https://www.iso.org/iso-8601-date-and-time-format.html) format: YYYY-MM-DDThh:mm:ss.sssZ.
+	//
+	// UpdateTime is a required field
+	UpdateTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateKeyOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateKeyOutput) GoString() string {
+	return s.String()
+}
+
+// SetKeyArn sets the KeyArn field's value.
+func (s *UpdateKeyOutput) SetKeyArn(v string) *UpdateKeyOutput {
+	s.KeyArn = &v
+	return s
+}
+
+// SetKeyName sets the KeyName field's value.
+func (s *UpdateKeyOutput) SetKeyName(v string) *UpdateKeyOutput {
+	s.KeyName = &v
+	return s
+}
+
+// SetUpdateTime sets the UpdateTime field's value.
+func (s *UpdateKeyOutput) SetUpdateTime(v time.Time) *UpdateKeyOutput {
+	s.UpdateTime = &v
+	return s
+}
+
 type UpdateMapInput struct {
 	_ struct{} `type:"structure"`
+
+	// Updates the parts of the map configuration that can be updated, including
+	// the political view.
+	ConfigurationUpdate *MapConfigurationUpdate `type:"structure"`
 
 	// Updates the description for the map resource.
 	Description *string `type:"string"`
@@ -16326,6 +18334,12 @@ func (s *UpdateMapInput) Validate() error {
 	return nil
 }
 
+// SetConfigurationUpdate sets the ConfigurationUpdate field's value.
+func (s *UpdateMapInput) SetConfigurationUpdate(v *MapConfigurationUpdate) *UpdateMapInput {
+	s.ConfigurationUpdate = v
+	return s
+}
+
 // SetDescription sets the Description field's value.
 func (s *UpdateMapInput) SetDescription(v string) *UpdateMapInput {
 	s.Description = &v
@@ -16350,7 +18364,7 @@ type UpdateMapOutput struct {
 	// The Amazon Resource Name (ARN) of the updated map resource. Used to specify
 	// a resource across AWS.
 	//
-	//    * Format example: arn:aws:geo:region:account-id:maps/ExampleMap
+	//    * Format example: arn:aws:geo:region:account-id:map/ExampleMap
 	//
 	// MapArn is a required field
 	MapArn *string `type:"string" required:"true"`
@@ -16485,7 +18499,7 @@ type UpdatePlaceIndexOutput struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon Resource Name (ARN) of the upated place index resource. Used to
-	// specify a resource across AWS.
+	// specify a resource across Amazon Web Services.
 	//
 	//    * Format example: arn:aws:geo:region:account-id:place- index/ExamplePlaceIndex
 	//
@@ -17113,6 +19127,22 @@ func RouteMatrixErrorCode_Values() []string {
 }
 
 const (
+	// StatusActive is a Status enum value
+	StatusActive = "Active"
+
+	// StatusExpired is a Status enum value
+	StatusExpired = "Expired"
+)
+
+// Status_Values returns all elements of the Status enum
+func Status_Values() []string {
+	return []string{
+		StatusActive,
+		StatusExpired,
+	}
+}
+
+const (
 	// TravelModeCar is a TravelMode enum value
 	TravelModeCar = "Car"
 
@@ -17121,6 +19151,12 @@ const (
 
 	// TravelModeWalking is a TravelMode enum value
 	TravelModeWalking = "Walking"
+
+	// TravelModeBicycle is a TravelMode enum value
+	TravelModeBicycle = "Bicycle"
+
+	// TravelModeMotorcycle is a TravelMode enum value
+	TravelModeMotorcycle = "Motorcycle"
 )
 
 // TravelMode_Values returns all elements of the TravelMode enum
@@ -17129,6 +19165,8 @@ func TravelMode_Values() []string {
 		TravelModeCar,
 		TravelModeTruck,
 		TravelModeWalking,
+		TravelModeBicycle,
+		TravelModeMotorcycle,
 	}
 }
 

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -30,18 +33,14 @@ func (s *Server) GetProviderSchema(ctx context.Context, req *GetProviderSchemaRe
 		PlanDestroy: true,
 	}
 
-	if providerWithMetadata, ok := s.Provider.(provider.ProviderWithMetadata); ok {
-		logging.FrameworkTrace(ctx, "Provider implements ProviderWithMetadata")
+	metadataReq := provider.MetadataRequest{}
+	metadataResp := provider.MetadataResponse{}
 
-		metadataReq := provider.MetadataRequest{}
-		metadataResp := provider.MetadataResponse{}
+	logging.FrameworkDebug(ctx, "Calling provider defined Provider Metadata")
+	s.Provider.Metadata(ctx, metadataReq, &metadataResp)
+	logging.FrameworkDebug(ctx, "Called provider defined Provider Metadata")
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Provider Metadata")
-		providerWithMetadata.Metadata(ctx, metadataReq, &metadataResp)
-		logging.FrameworkDebug(ctx, "Called provider defined Provider Metadata")
-
-		s.providerTypeName = metadataResp.TypeName
-	}
+	s.providerTypeName = metadataResp.TypeName
 
 	providerSchema, diags := s.ProviderSchema(ctx)
 

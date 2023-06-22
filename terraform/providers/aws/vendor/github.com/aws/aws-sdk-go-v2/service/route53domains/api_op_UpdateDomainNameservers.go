@@ -62,10 +62,8 @@ type UpdateDomainNameserversInput struct {
 type UpdateDomainNameserversOutput struct {
 
 	// Identifier for tracking the progress of the request. To query the operation
-	// status, use GetOperationDetail
-	// (https://docs.aws.amazon.com/Route53/latest/APIReference/API_domains_GetOperationDetail.html).
-	//
-	// This member is required.
+	// status, use GetOperationDetail (https://docs.aws.amazon.com/Route53/latest/APIReference/API_domains_GetOperationDetail.html)
+	// .
 	OperationId *string
 
 	// Metadata pertaining to the operation's result.
@@ -123,6 +121,9 @@ func (c *Client) addOperationUpdateDomainNameserversMiddlewares(stack *middlewar
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateDomainNameservers(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

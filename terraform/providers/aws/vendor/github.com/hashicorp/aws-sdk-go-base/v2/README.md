@@ -13,7 +13,7 @@ In order to assist with migrating large code bases using the AWS SDK for Go v1, 
 
 ## Requirements
 
-* [Go](https://golang.org/doc/install) 1.16
+* [Go](https://golang.org/doc/install) 1.18
 
 ## Development
 

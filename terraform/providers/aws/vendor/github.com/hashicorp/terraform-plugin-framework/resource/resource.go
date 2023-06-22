@@ -1,10 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
 	"context"
-
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
 // Resource represents an instance of a managed resource type. This is the core
@@ -14,9 +14,9 @@ import (
 //
 //   - Configure: Include provider-level data or clients.
 //   - Import: ResourceWithImportState
-//   - Validation: Schema-based via tfsdk.Attribute or entire configuration
+//   - Validation: Schema-based or entire configuration
 //     via ResourceWithConfigValidators or ResourceWithValidateConfig.
-//   - Plan Modification: Schema-based via tfsdk.Attribute or entire plan
+//   - Plan Modification: Schema-based or entire plan
 //     via ResourceWithModifyPlan.
 //   - State Upgrades: ResourceWithUpgradeState
 //
@@ -27,8 +27,8 @@ type Resource interface {
 	// examplecloud_thing.
 	Metadata(context.Context, MetadataRequest, *MetadataResponse)
 
-	// GetSchema returns the schema for this resource.
-	GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics)
+	// Schema should return the schema for this resource.
+	Schema(context.Context, SchemaRequest, *SchemaResponse)
 
 	// Create is called when the provider must create a new resource. Config
 	// and planned state values should be read from the

@@ -21,6 +21,80 @@ func (AugmentedManifestsDocumentTypeFormat) Values() []AugmentedManifestsDocumen
 	}
 }
 
+type BlockType string
+
+// Enum values for BlockType
+const (
+	BlockTypeLine BlockType = "LINE"
+	BlockTypeWord BlockType = "WORD"
+)
+
+// Values returns all known values for BlockType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (BlockType) Values() []BlockType {
+	return []BlockType{
+		"LINE",
+		"WORD",
+	}
+}
+
+type DatasetDataFormat string
+
+// Enum values for DatasetDataFormat
+const (
+	DatasetDataFormatComprehendCsv     DatasetDataFormat = "COMPREHEND_CSV"
+	DatasetDataFormatAugmentedManifest DatasetDataFormat = "AUGMENTED_MANIFEST"
+)
+
+// Values returns all known values for DatasetDataFormat. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (DatasetDataFormat) Values() []DatasetDataFormat {
+	return []DatasetDataFormat{
+		"COMPREHEND_CSV",
+		"AUGMENTED_MANIFEST",
+	}
+}
+
+type DatasetStatus string
+
+// Enum values for DatasetStatus
+const (
+	DatasetStatusCreating  DatasetStatus = "CREATING"
+	DatasetStatusCompleted DatasetStatus = "COMPLETED"
+	DatasetStatusFailed    DatasetStatus = "FAILED"
+)
+
+// Values returns all known values for DatasetStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (DatasetStatus) Values() []DatasetStatus {
+	return []DatasetStatus{
+		"CREATING",
+		"COMPLETED",
+		"FAILED",
+	}
+}
+
+type DatasetType string
+
+// Enum values for DatasetType
+const (
+	DatasetTypeTrain DatasetType = "TRAIN"
+	DatasetTypeTest  DatasetType = "TEST"
+)
+
+// Values returns all known values for DatasetType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (DatasetType) Values() []DatasetType {
+	return []DatasetType{
+		"TRAIN",
+		"TEST",
+	}
+}
+
 type DocumentClassifierDataFormat string
 
 // Enum values for DocumentClassifierDataFormat
@@ -29,13 +103,33 @@ const (
 	DocumentClassifierDataFormatAugmentedManifest DocumentClassifierDataFormat = "AUGMENTED_MANIFEST"
 )
 
-// Values returns all known values for DocumentClassifierDataFormat. Note that this
-// can be expanded in the future, and so it is only as up to date as the client.
-// The ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for DocumentClassifierDataFormat. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (DocumentClassifierDataFormat) Values() []DocumentClassifierDataFormat {
 	return []DocumentClassifierDataFormat{
 		"COMPREHEND_CSV",
 		"AUGMENTED_MANIFEST",
+	}
+}
+
+type DocumentClassifierDocumentTypeFormat string
+
+// Enum values for DocumentClassifierDocumentTypeFormat
+const (
+	DocumentClassifierDocumentTypeFormatPlainTextDocument      DocumentClassifierDocumentTypeFormat = "PLAIN_TEXT_DOCUMENT"
+	DocumentClassifierDocumentTypeFormatSemiStructuredDocument DocumentClassifierDocumentTypeFormat = "SEMI_STRUCTURED_DOCUMENT"
+)
+
+// Values returns all known values for DocumentClassifierDocumentTypeFormat. Note
+// that this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
+func (DocumentClassifierDocumentTypeFormat) Values() []DocumentClassifierDocumentTypeFormat {
+	return []DocumentClassifierDocumentTypeFormat{
+		"PLAIN_TEXT_DOCUMENT",
+		"SEMI_STRUCTURED_DOCUMENT",
 	}
 }
 
@@ -83,9 +177,9 @@ const (
 	DocumentReadFeatureTypesForms  DocumentReadFeatureTypes = "FORMS"
 )
 
-// Values returns all known values for DocumentReadFeatureTypes. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for DocumentReadFeatureTypes. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (DocumentReadFeatureTypes) Values() []DocumentReadFeatureTypes {
 	return []DocumentReadFeatureTypes{
 		"TABLES",
@@ -108,6 +202,34 @@ func (DocumentReadMode) Values() []DocumentReadMode {
 	return []DocumentReadMode{
 		"SERVICE_DEFAULT",
 		"FORCE_DOCUMENT_READ_ACTION",
+	}
+}
+
+type DocumentType string
+
+// Enum values for DocumentType
+const (
+	DocumentTypeNativePdf                      DocumentType = "NATIVE_PDF"
+	DocumentTypeScannedPdf                     DocumentType = "SCANNED_PDF"
+	DocumentTypeMsWord                         DocumentType = "MS_WORD"
+	DocumentTypeImage                          DocumentType = "IMAGE"
+	DocumentTypePlainText                      DocumentType = "PLAIN_TEXT"
+	DocumentTypeTextractDetectDocumentTextJson DocumentType = "TEXTRACT_DETECT_DOCUMENT_TEXT_JSON"
+	DocumentTypeTextractAnalyzeDocumentJson    DocumentType = "TEXTRACT_ANALYZE_DOCUMENT_JSON"
+)
+
+// Values returns all known values for DocumentType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (DocumentType) Values() []DocumentType {
+	return []DocumentType{
+		"NATIVE_PDF",
+		"SCANNED_PDF",
+		"MS_WORD",
+		"IMAGE",
+		"PLAIN_TEXT",
+		"TEXTRACT_DETECT_DOCUMENT_TEXT_JSON",
+		"TEXTRACT_ANALYZE_DOCUMENT_JSON",
 	}
 }
 
@@ -185,6 +307,56 @@ func (EntityType) Values() []EntityType {
 	}
 }
 
+type FlywheelIterationStatus string
+
+// Enum values for FlywheelIterationStatus
+const (
+	FlywheelIterationStatusTraining      FlywheelIterationStatus = "TRAINING"
+	FlywheelIterationStatusEvaluating    FlywheelIterationStatus = "EVALUATING"
+	FlywheelIterationStatusCompleted     FlywheelIterationStatus = "COMPLETED"
+	FlywheelIterationStatusFailed        FlywheelIterationStatus = "FAILED"
+	FlywheelIterationStatusStopRequested FlywheelIterationStatus = "STOP_REQUESTED"
+	FlywheelIterationStatusStopped       FlywheelIterationStatus = "STOPPED"
+)
+
+// Values returns all known values for FlywheelIterationStatus. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (FlywheelIterationStatus) Values() []FlywheelIterationStatus {
+	return []FlywheelIterationStatus{
+		"TRAINING",
+		"EVALUATING",
+		"COMPLETED",
+		"FAILED",
+		"STOP_REQUESTED",
+		"STOPPED",
+	}
+}
+
+type FlywheelStatus string
+
+// Enum values for FlywheelStatus
+const (
+	FlywheelStatusCreating FlywheelStatus = "CREATING"
+	FlywheelStatusActive   FlywheelStatus = "ACTIVE"
+	FlywheelStatusUpdating FlywheelStatus = "UPDATING"
+	FlywheelStatusDeleting FlywheelStatus = "DELETING"
+	FlywheelStatusFailed   FlywheelStatus = "FAILED"
+)
+
+// Values returns all known values for FlywheelStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (FlywheelStatus) Values() []FlywheelStatus {
+	return []FlywheelStatus{
+		"CREATING",
+		"ACTIVE",
+		"UPDATING",
+		"DELETING",
+		"FAILED",
+	}
+}
+
 type InputFormat string
 
 // Enum values for InputFormat
@@ -203,6 +375,44 @@ func (InputFormat) Values() []InputFormat {
 	}
 }
 
+type InvalidRequestDetailReason string
+
+// Enum values for InvalidRequestDetailReason
+const (
+	InvalidRequestDetailReasonDocumentSizeExceeded InvalidRequestDetailReason = "DOCUMENT_SIZE_EXCEEDED"
+	InvalidRequestDetailReasonUnsupportedDocType   InvalidRequestDetailReason = "UNSUPPORTED_DOC_TYPE"
+	InvalidRequestDetailReasonPageLimitExceeded    InvalidRequestDetailReason = "PAGE_LIMIT_EXCEEDED"
+	InvalidRequestDetailReasonTextractAccessDenied InvalidRequestDetailReason = "TEXTRACT_ACCESS_DENIED"
+)
+
+// Values returns all known values for InvalidRequestDetailReason. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
+func (InvalidRequestDetailReason) Values() []InvalidRequestDetailReason {
+	return []InvalidRequestDetailReason{
+		"DOCUMENT_SIZE_EXCEEDED",
+		"UNSUPPORTED_DOC_TYPE",
+		"PAGE_LIMIT_EXCEEDED",
+		"TEXTRACT_ACCESS_DENIED",
+	}
+}
+
+type InvalidRequestReason string
+
+// Enum values for InvalidRequestReason
+const (
+	InvalidRequestReasonInvalidDocument InvalidRequestReason = "INVALID_DOCUMENT"
+)
+
+// Values returns all known values for InvalidRequestReason. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (InvalidRequestReason) Values() []InvalidRequestReason {
+	return []InvalidRequestReason{
+		"INVALID_DOCUMENT",
+	}
+}
+
 type JobStatus string
 
 // Enum values for JobStatus
@@ -215,9 +425,9 @@ const (
 	JobStatusStopped       JobStatus = "STOPPED"
 )
 
-// Values returns all known values for JobStatus. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for JobStatus. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (JobStatus) Values() []JobStatus {
 	return []JobStatus{
 		"SUBMITTED",
@@ -247,9 +457,9 @@ const (
 	LanguageCodeZhTw LanguageCode = "zh-TW"
 )
 
-// Values returns all known values for LanguageCode. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for LanguageCode. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (LanguageCode) Values() []LanguageCode {
 	return []LanguageCode{
 		"en",
@@ -271,13 +481,14 @@ type ModelStatus string
 
 // Enum values for ModelStatus
 const (
-	ModelStatusSubmitted     ModelStatus = "SUBMITTED"
-	ModelStatusTraining      ModelStatus = "TRAINING"
-	ModelStatusDeleting      ModelStatus = "DELETING"
-	ModelStatusStopRequested ModelStatus = "STOP_REQUESTED"
-	ModelStatusStopped       ModelStatus = "STOPPED"
-	ModelStatusInError       ModelStatus = "IN_ERROR"
-	ModelStatusTrained       ModelStatus = "TRAINED"
+	ModelStatusSubmitted          ModelStatus = "SUBMITTED"
+	ModelStatusTraining           ModelStatus = "TRAINING"
+	ModelStatusDeleting           ModelStatus = "DELETING"
+	ModelStatusStopRequested      ModelStatus = "STOP_REQUESTED"
+	ModelStatusStopped            ModelStatus = "STOPPED"
+	ModelStatusInError            ModelStatus = "IN_ERROR"
+	ModelStatusTrained            ModelStatus = "TRAINED"
+	ModelStatusTrainedWithWarning ModelStatus = "TRAINED_WITH_WARNING"
 )
 
 // Values returns all known values for ModelStatus. Note that this can be expanded
@@ -292,6 +503,67 @@ func (ModelStatus) Values() []ModelStatus {
 		"STOPPED",
 		"IN_ERROR",
 		"TRAINED",
+		"TRAINED_WITH_WARNING",
+	}
+}
+
+type ModelType string
+
+// Enum values for ModelType
+const (
+	ModelTypeDocumentClassifier ModelType = "DOCUMENT_CLASSIFIER"
+	ModelTypeEntityRecognizer   ModelType = "ENTITY_RECOGNIZER"
+)
+
+// Values returns all known values for ModelType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (ModelType) Values() []ModelType {
+	return []ModelType{
+		"DOCUMENT_CLASSIFIER",
+		"ENTITY_RECOGNIZER",
+	}
+}
+
+type PageBasedErrorCode string
+
+// Enum values for PageBasedErrorCode
+const (
+	PageBasedErrorCodeTextractBadPage                       PageBasedErrorCode = "TEXTRACT_BAD_PAGE"
+	PageBasedErrorCodeTextractProvisionedThroughputExceeded PageBasedErrorCode = "TEXTRACT_PROVISIONED_THROUGHPUT_EXCEEDED"
+	PageBasedErrorCodePageCharactersExceeded                PageBasedErrorCode = "PAGE_CHARACTERS_EXCEEDED"
+	PageBasedErrorCodePageSizeExceeded                      PageBasedErrorCode = "PAGE_SIZE_EXCEEDED"
+	PageBasedErrorCodeInternalServerError                   PageBasedErrorCode = "INTERNAL_SERVER_ERROR"
+)
+
+// Values returns all known values for PageBasedErrorCode. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (PageBasedErrorCode) Values() []PageBasedErrorCode {
+	return []PageBasedErrorCode{
+		"TEXTRACT_BAD_PAGE",
+		"TEXTRACT_PROVISIONED_THROUGHPUT_EXCEEDED",
+		"PAGE_CHARACTERS_EXCEEDED",
+		"PAGE_SIZE_EXCEEDED",
+		"INTERNAL_SERVER_ERROR",
+	}
+}
+
+type PageBasedWarningCode string
+
+// Enum values for PageBasedWarningCode
+const (
+	PageBasedWarningCodeInferencingPlaintextWithNativeTrainedModel         PageBasedWarningCode = "INFERENCING_PLAINTEXT_WITH_NATIVE_TRAINED_MODEL"
+	PageBasedWarningCodeInferencingNativeDocumentWithPlaintextTrainedModel PageBasedWarningCode = "INFERENCING_NATIVE_DOCUMENT_WITH_PLAINTEXT_TRAINED_MODEL"
+)
+
+// Values returns all known values for PageBasedWarningCode. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (PageBasedWarningCode) Values() []PageBasedWarningCode {
+	return []PageBasedWarningCode{
+		"INFERENCING_PLAINTEXT_WITH_NATIVE_TRAINED_MODEL",
+		"INFERENCING_NATIVE_DOCUMENT_WITH_PLAINTEXT_TRAINED_MODEL",
 	}
 }
 
@@ -353,9 +625,10 @@ const (
 	PiiEntitiesDetectionMaskModeReplaceWithPiiEntityType PiiEntitiesDetectionMaskMode = "REPLACE_WITH_PII_ENTITY_TYPE"
 )
 
-// Values returns all known values for PiiEntitiesDetectionMaskMode. Note that this
-// can be expanded in the future, and so it is only as up to date as the client.
-// The ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for PiiEntitiesDetectionMaskMode. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
 func (PiiEntitiesDetectionMaskMode) Values() []PiiEntitiesDetectionMaskMode {
 	return []PiiEntitiesDetectionMaskMode{
 		"MASK",
@@ -371,9 +644,9 @@ const (
 	PiiEntitiesDetectionModeOnlyOffsets   PiiEntitiesDetectionMode = "ONLY_OFFSETS"
 )
 
-// Values returns all known values for PiiEntitiesDetectionMode. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for PiiEntitiesDetectionMode. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (PiiEntitiesDetectionMode) Values() []PiiEntitiesDetectionMode {
 	return []PiiEntitiesDetectionMode{
 		"ONLY_REDACTION",
@@ -469,6 +742,22 @@ func (PiiEntityType) Values() []PiiEntityType {
 	}
 }
 
+type RelationshipType string
+
+// Enum values for RelationshipType
+const (
+	RelationshipTypeChild RelationshipType = "CHILD"
+)
+
+// Values returns all known values for RelationshipType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (RelationshipType) Values() []RelationshipType {
+	return []RelationshipType{
+		"CHILD",
+	}
+}
+
 type SentimentType string
 
 // Enum values for SentimentType
@@ -499,8 +788,8 @@ const (
 	SplitTest  Split = "TEST"
 )
 
-// Values returns all known values for Split. Note that this can be expanded in the
-// future, and so it is only as up to date as the client. The ordering of this
+// Values returns all known values for Split. Note that this can be expanded in
+// the future, and so it is only as up to date as the client. The ordering of this
 // slice is not guaranteed to be stable across updates.
 func (Split) Values() []Split {
 	return []Split{

@@ -12,7 +12,7 @@ import (
 )
 
 // Describe Amazon Inspector configuration settings for an Amazon Web Services
-// organization
+// organization.
 func (c *Client) DescribeOrganizationConfiguration(ctx context.Context, params *DescribeOrganizationConfigurationInput, optFns ...func(*Options)) (*DescribeOrganizationConfigurationOutput, error) {
 	if params == nil {
 		params = &DescribeOrganizationConfigurationInput{}
@@ -37,8 +37,8 @@ type DescribeOrganizationConfigurationOutput struct {
 	// The scan types are automatically enabled for new members of your organization.
 	AutoEnable *types.AutoEnable
 
-	// Represents whether your organization has reached the maximum Amazon Web Services
-	// account limit for Amazon Inspector.
+	// Represents whether your organization has reached the maximum Amazon Web
+	// Services account limit for Amazon Inspector.
 	MaxAccountLimitReached *bool
 
 	// Metadata pertaining to the operation's result.
@@ -93,6 +93,9 @@ func (c *Client) addOperationDescribeOrganizationConfigurationMiddlewares(stack 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeOrganizationConfiguration(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

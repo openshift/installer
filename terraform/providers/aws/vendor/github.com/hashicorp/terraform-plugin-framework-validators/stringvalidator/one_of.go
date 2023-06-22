@@ -1,28 +1,60 @@
 package stringvalidator
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework-validators/internal/primitivevalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 )
 
-// OneOf checks that the string held in the attribute
-// is one of the given `acceptableStrings`.
-func OneOf(acceptableStrings ...string) tfsdk.AttributeValidator {
-	acceptableStringValues := make([]attr.Value, 0, len(acceptableStrings))
-	for _, s := range acceptableStrings {
-		acceptableStringValues = append(acceptableStringValues, types.String{Value: s})
-	}
+var _ validator.String = oneOfValidator{}
 
-	return primitivevalidator.OneOf(acceptableStringValues...)
+// oneOfValidator validates that the value matches one of expected values.
+type oneOfValidator struct {
+	values []types.String
 }
 
-// OneOfCaseInsensitive checks that the string held in the attribute
-// is one of the given `acceptableStrings`, irrespective of case sensitivity.
-func OneOfCaseInsensitive(acceptableStrings ...string) tfsdk.AttributeValidator {
-	return &acceptableStringsCaseInsensitiveAttributeValidator{
-		acceptableStrings,
-		true,
+func (v oneOfValidator) Description(ctx context.Context) string {
+	return v.MarkdownDescription(ctx)
+}
+
+func (v oneOfValidator) MarkdownDescription(_ context.Context) string {
+	return fmt.Sprintf("value must be one of: %q", v.values)
+}
+
+func (v oneOfValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
+	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := request.ConfigValue
+
+	for _, otherValue := range v.values {
+		if value.Equal(otherValue) {
+			return
+		}
+	}
+
+	response.Diagnostics.Append(validatordiag.InvalidAttributeValueMatchDiagnostic(
+		request.Path,
+		v.Description(ctx),
+		value.String(),
+	))
+}
+
+// OneOf checks that the String held in the attribute
+// is one of the given `values`.
+func OneOf(values ...string) validator.String {
+	frameworkValues := make([]types.String, 0, len(values))
+
+	for _, value := range values {
+		frameworkValues = append(frameworkValues, types.StringValue(value))
+	}
+
+	return oneOfValidator{
+		values: frameworkValues,
 	}
 }

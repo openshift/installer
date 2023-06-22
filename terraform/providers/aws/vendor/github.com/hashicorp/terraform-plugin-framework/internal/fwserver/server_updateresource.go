@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -7,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwschemadata"
 	"github.com/hashicorp/terraform-plugin-framework/internal/logging"
 	"github.com/hashicorp/terraform-plugin-framework/internal/privatestate"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -40,7 +44,7 @@ func (s *Server) UpdateResource(ctx context.Context, req *UpdateResourceRequest,
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -49,7 +53,7 @@ func (s *Server) UpdateResource(ctx context.Context, req *UpdateResourceRequest,
 		configureResp := resource.ConfigureResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
 		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
@@ -63,21 +67,21 @@ func (s *Server) UpdateResource(ctx context.Context, req *UpdateResourceRequest,
 
 	updateReq := resource.UpdateRequest{
 		Config: tfsdk.Config{
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 			Raw:    nullSchemaData,
 		},
 		Plan: tfsdk.Plan{
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 			Raw:    nullSchemaData,
 		},
 		State: tfsdk.State{
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 			Raw:    nullSchemaData,
 		},
 	}
 	updateResp := resource.UpdateResponse{
 		State: tfsdk.State{
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 			Raw:    nullSchemaData,
 		},
 	}
@@ -136,4 +140,40 @@ func (s *Server) UpdateResource(ctx context.Context, req *UpdateResourceRequest,
 
 		resp.Private.Provider = updateResp.Private
 	}
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	semanticEqualityReq := SchemaSemanticEqualityRequest{
+		PriorData: fwschemadata.Data{
+			Description:    fwschemadata.DataDescriptionPlan,
+			Schema:         req.PlannedState.Schema,
+			TerraformValue: req.PlannedState.Raw.Copy(),
+		},
+		ProposedNewData: fwschemadata.Data{
+			Description:    fwschemadata.DataDescriptionState,
+			Schema:         resp.NewState.Schema,
+			TerraformValue: resp.NewState.Raw.Copy(),
+		},
+	}
+	semanticEqualityResp := &SchemaSemanticEqualityResponse{
+		NewData: semanticEqualityReq.ProposedNewData,
+	}
+
+	SchemaSemanticEquality(ctx, semanticEqualityReq, semanticEqualityResp)
+
+	resp.Diagnostics.Append(semanticEqualityResp.Diagnostics...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if semanticEqualityResp.NewData.TerraformValue.Equal(resp.NewState.Raw) {
+		return
+	}
+
+	logging.FrameworkDebug(ctx, "State updated due to semantic equality")
+
+	resp.NewState.Raw = semanticEqualityResp.NewData.TerraformValue
 }

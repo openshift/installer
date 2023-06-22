@@ -39,6 +39,9 @@ type CreateDedicatedIpPoolInput struct {
 	// This member is required.
 	PoolName *string
 
+	// The type of scaling mode.
+	ScalingMode types.ScalingMode
+
 	// An object that defines the tags (keys and values) that you want to associate
 	// with the pool.
 	Tags []types.Tag
@@ -46,8 +49,8 @@ type CreateDedicatedIpPoolInput struct {
 	noSmithyDocumentSerde
 }
 
-// An HTTP 200 response if the request succeeds, or an error message if the request
-// fails.
+// An HTTP 200 response if the request succeeds, or an error message if the
+// request fails.
 type CreateDedicatedIpPoolOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -104,6 +107,9 @@ func (c *Client) addOperationCreateDedicatedIpPoolMiddlewares(stack *middleware.
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateDedicatedIpPool(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

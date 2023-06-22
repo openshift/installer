@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/feature/ec2/imds"
 	"github.com/aws/aws-sdk-go-v2/service/sso"
+	"github.com/aws/aws-sdk-go-v2/service/ssooidc"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
 
@@ -171,7 +172,30 @@ func resolveSSOCredentials(ctx context.Context, cfg *aws.Config, sharedConfig *S
 	}
 
 	cfgCopy := cfg.Copy()
-	cfgCopy.Region = sharedConfig.SSORegion
+
+	if sharedConfig.SSOSession != nil {
+		ssoTokenProviderOptionsFn, found, err := getSSOTokenProviderOptions(ctx, configs)
+		if err != nil {
+			return fmt.Errorf("failed to get SSOTokenProviderOptions from config sources, %w", err)
+		}
+		var optFns []func(*ssocreds.SSOTokenProviderOptions)
+		if found {
+			optFns = append(optFns, ssoTokenProviderOptionsFn)
+		}
+		cfgCopy.Region = sharedConfig.SSOSession.SSORegion
+		cachedPath, err := ssocreds.StandardCachedTokenFilepath(sharedConfig.SSOSession.Name)
+		if err != nil {
+			return err
+		}
+		oidcClient := ssooidc.NewFromConfig(cfgCopy)
+		tokenProvider := ssocreds.NewSSOTokenProvider(oidcClient, cachedPath, optFns...)
+		options = append(options, func(o *ssocreds.Options) {
+			o.SSOTokenProvider = tokenProvider
+			o.CachedTokenFilepath = cachedPath
+		})
+	} else {
+		cfgCopy.Region = sharedConfig.SSORegion
+	}
 
 	cfg.Credentials = ssocreds.New(sso.NewFromConfig(cfgCopy), sharedConfig.SSOAccountID, sharedConfig.SSORoleName, sharedConfig.SSOStartURL, options...)
 
@@ -360,10 +384,6 @@ func assumeWebIdentity(ctx context.Context, cfg *aws.Config, filepath string, ro
 		return fmt.Errorf("token file path is not set")
 	}
 
-	if len(roleARN) == 0 {
-		return fmt.Errorf("role ARN is not set")
-	}
-
 	optFns := []func(*stscreds.WebIdentityRoleOptions){
 		func(options *stscreds.WebIdentityRoleOptions) {
 			options.RoleSessionName = sessionName
@@ -374,11 +394,29 @@ func assumeWebIdentity(ctx context.Context, cfg *aws.Config, filepath string, ro
 	if err != nil {
 		return err
 	}
+
 	if found {
 		optFns = append(optFns, optFn)
 	}
 
-	provider := stscreds.NewWebIdentityRoleProvider(sts.NewFromConfig(*cfg), roleARN, stscreds.IdentityTokenFile(filepath), optFns...)
+	opts := stscreds.WebIdentityRoleOptions{
+		RoleARN: roleARN,
+	}
+
+	for _, fn := range optFns {
+		fn(&opts)
+	}
+
+	if len(opts.RoleARN) == 0 {
+		return fmt.Errorf("role ARN is not set")
+	}
+
+	client := opts.Client
+	if client == nil {
+		client = sts.NewFromConfig(*cfg)
+	}
+
+	provider := stscreds.NewWebIdentityRoleProvider(client, roleARN, stscreds.IdentityTokenFile(filepath), optFns...)
 
 	cfg.Credentials = provider
 

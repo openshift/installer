@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package providerserver implements functionality for serving a provider,
 // such as directly starting a server in a production binary and conversion
 // functions for testing.

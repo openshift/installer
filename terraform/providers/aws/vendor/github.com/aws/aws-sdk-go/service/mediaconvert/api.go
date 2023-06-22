@@ -2825,11 +2825,14 @@ type AacSettings struct {
 	// AAC Profile.
 	CodecProfile *string `locationName:"codecProfile" type:"string" enum:"AacCodecProfile"`
 
-	// Mono (Audio Description), Mono, Stereo, or 5.1 channel layout. Valid values
-	// depend on rate control mode and profile. "1.0 - Audio Description (Receiver
-	// Mix)" setting receives a stereo description plus control track and emits
-	// a mono AAC encode of the description track, with control data emitted in
-	// the PES header as per ETSI TS 101 154 Annex E.
+	// The Coding mode that you specify determines the number of audio channels
+	// and the audio channel layout metadata in your AAC output. Valid coding modes
+	// depend on the Rate control mode and Profile that you select. The following
+	// list shows the number of audio channels and channel layout for each coding
+	// mode. * 1.0 Audio Description (Receiver Mix): One channel, C. Includes audio
+	// description data from your stereo input. For more information see ETSI TS
+	// 101 154 Annex E. * 1.0 Mono: One channel, C. * 2.0 Stereo: Two channels,
+	// L, R. * 5.1 Surround: Six channels, C, L, R, Ls, Rs, LFE.
 	CodingMode *string `locationName:"codingMode" type:"string" enum:"AacCodingMode"`
 
 	// Rate Control Mode.
@@ -2839,7 +2842,14 @@ type AacSettings struct {
 	// you must choose "No container" for the output container.
 	RawFormat *string `locationName:"rawFormat" type:"string" enum:"AacRawFormat"`
 
-	// Sample rate in Hz. Valid values depend on rate control mode and profile.
+	// Specify the Sample rate in Hz. Valid sample rates depend on the Profile and
+	// Coding mode that you select. The following list shows valid sample rates
+	// for each Profile and Coding mode. * LC Profile, Coding mode 1.0, 2.0, and
+	// Receiver Mix: 8000, 12000, 16000, 22050, 24000, 32000, 44100, 48000, 88200,
+	// 96000. * LC Profile, Coding mode 5.1: 32000, 44100, 48000, 96000. * HEV1
+	// Profile, Coding mode 1.0 and Receiver Mix: 22050, 24000, 32000, 44100, 48000.
+	// * HEV1 Profile, Coding mode 2.0 and 5.1: 32000, 44100, 48000, 96000. * HEV2
+	// Profile, Coding mode 2.0: 22050, 24000, 32000, 44100, 48000.
 	SampleRate *int64 `locationName:"sampleRate" min:"8000" type:"integer"`
 
 	// Use MPEG-2 AAC instead of MPEG-4 AAC audio for raw or MPEG-2 Transport Stream
@@ -2943,8 +2953,14 @@ func (s *AacSettings) SetVbrQuality(v string) *AacSettings {
 type Ac3Settings struct {
 	_ struct{} `type:"structure"`
 
-	// Specify the average bitrate in bits per second. Valid bitrates depend on
-	// the coding mode.
+	// Specify the average bitrate in bits per second. The bitrate that you specify
+	// must be a multiple of 8000 within the allowed minimum and maximum values.
+	// Leave blank to use the default bitrate for the coding mode you select according
+	// ETSI TS 102 366. Valid bitrates for coding mode 1/0: Default: 96000. Minimum:
+	// 64000. Maximum: 128000. Valid bitrates for coding mode 1/1: Default: 192000.
+	// Minimum: 128000. Maximum: 384000. Valid bitrates for coding mode 2/0: Default:
+	// 192000. Minimum: 128000. Maximum: 384000. Valid bitrates for coding mode
+	// 3/2 with FLE: Default: 384000. Minimum: 384000. Maximum: 640000.
 	Bitrate *int64 `locationName:"bitrate" min:"64000" type:"integer"`
 
 	// Specify the bitstream mode for the AC-3 stream that the encoder emits. For
@@ -3143,6 +3159,57 @@ func (s *AccelerationSettings) Validate() error {
 // SetMode sets the Mode field's value.
 func (s *AccelerationSettings) SetMode(v string) *AccelerationSettings {
 	s.Mode = &v
+	return s
+}
+
+// Optional settings for Advanced input filter when you set Advanced input filter
+// to Enabled.
+type AdvancedInputFilterSettings struct {
+	_ struct{} `type:"structure"`
+
+	// Add texture and detail to areas of your input video content that were lost
+	// after applying the Advanced input filter. To adaptively add texture and reduce
+	// softness: Choose Enabled. To not add any texture: Keep the default value,
+	// Disabled. We recommend that you choose Disabled for input video content that
+	// doesn't have texture, including screen recordings, computer graphics, or
+	// cartoons.
+	AddTexture *string `locationName:"addTexture" type:"string" enum:"AdvancedInputFilterAddTexture"`
+
+	// Optionally specify the amount of sharpening to apply when you use the Advanced
+	// input filter. Sharpening adds contrast to the edges of your video content
+	// and can reduce softness. To apply no sharpening: Keep the default value,
+	// Off. To apply a minimal amount of sharpening choose Low, or for the maximum
+	// choose High.
+	Sharpening *string `locationName:"sharpening" type:"string" enum:"AdvancedInputFilterSharpen"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AdvancedInputFilterSettings) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AdvancedInputFilterSettings) GoString() string {
+	return s.String()
+}
+
+// SetAddTexture sets the AddTexture field's value.
+func (s *AdvancedInputFilterSettings) SetAddTexture(v string) *AdvancedInputFilterSettings {
+	s.AddTexture = &v
+	return s
+}
+
+// SetSharpening sets the Sharpening field's value.
+func (s *AdvancedInputFilterSettings) SetSharpening(v string) *AdvancedInputFilterSettings {
+	s.Sharpening = &v
 	return s
 }
 
@@ -3913,6 +3980,12 @@ type AudioNormalizationSettings struct {
 	// choose for Algorithm (algorithm). If you choose algorithm 1770-1, the encoder
 	// will choose -24 LKFS; otherwise, the encoder will choose -23 LKFS.
 	TargetLkfs *float64 `locationName:"targetLkfs" type:"double"`
+
+	// Specify the True-peak limiter threshold in decibels relative to full scale
+	// (dBFS). The peak inter-audio sample loudness in your output will be limited
+	// to the value that you specify, without affecting the overall target LKFS.
+	// Enter a value from 0 to -8. Leave blank to use the default value 0.
+	TruePeakLimiterThreshold *float64 `locationName:"truePeakLimiterThreshold" type:"double"`
 }
 
 // String returns the string representation.
@@ -3979,6 +4052,12 @@ func (s *AudioNormalizationSettings) SetPeakCalculation(v string) *AudioNormaliz
 // SetTargetLkfs sets the TargetLkfs field's value.
 func (s *AudioNormalizationSettings) SetTargetLkfs(v float64) *AudioNormalizationSettings {
 	s.TargetLkfs = &v
+	return s
+}
+
+// SetTruePeakLimiterThreshold sets the TruePeakLimiterThreshold field's value.
+func (s *AudioNormalizationSettings) SetTruePeakLimiterThreshold(v float64) *AudioNormalizationSettings {
+	s.TruePeakLimiterThreshold = &v
 	return s
 }
 
@@ -4625,15 +4704,16 @@ type Av1Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Av1FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Av1FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -4903,15 +4983,16 @@ type AvcIntraSettings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"AvcIntraFramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"AvcIntraFramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -5171,6 +5252,63 @@ func (s *BadRequestException) StatusCode() int {
 // RequestID returns the service's response RequestID for request.
 func (s *BadRequestException) RequestID() string {
 	return s.RespMetadata.RequestID
+}
+
+// The Bandwidth reduction filter increases the video quality of your output
+// relative to its bitrate. Use to lower the bitrate of your constant quality
+// QVBR output, with little or no perceptual decrease in quality. Or, use to
+// increase the video quality of outputs with other rate control modes relative
+// to the bitrate that you specify. Bandwidth reduction increases further when
+// your input is low quality or noisy. Outputs that use this feature incur pro-tier
+// pricing. When you include Bandwidth reduction filter, you cannot include
+// the Noise reducer preprocessor.
+type BandwidthReductionFilter struct {
+	_ struct{} `type:"structure"`
+
+	// Optionally specify the level of sharpening to apply when you use the Bandwidth
+	// reduction filter. Sharpening adds contrast to the edges of your video content
+	// and can reduce softness. Keep the default value Off to apply no sharpening.
+	// Set Sharpening strength to Low to apply a minimal amount of sharpening, or
+	// High to apply a maximum amount of sharpening.
+	Sharpening *string `locationName:"sharpening" type:"string" enum:"BandwidthReductionFilterSharpening"`
+
+	// Specify the strength of the Bandwidth reduction filter. For most workflows,
+	// we recommend that you choose Auto to reduce the bandwidth of your output
+	// with little to no perceptual decrease in video quality. For high quality
+	// and high bitrate outputs, choose Low. For the most bandwidth reduction, choose
+	// High. We recommend that you choose High for low bitrate outputs. Note that
+	// High may incur a slight increase in the softness of your output.
+	Strength *string `locationName:"strength" type:"string" enum:"BandwidthReductionFilterStrength"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BandwidthReductionFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BandwidthReductionFilter) GoString() string {
+	return s.String()
+}
+
+// SetSharpening sets the Sharpening field's value.
+func (s *BandwidthReductionFilter) SetSharpening(v string) *BandwidthReductionFilter {
+	s.Sharpening = &v
+	return s
+}
+
+// SetStrength sets the Strength field's value.
+func (s *BandwidthReductionFilter) SetStrength(v string) *BandwidthReductionFilter {
+	s.Strength = &v
+	return s
 }
 
 // Burn-in is a captions delivery method, rather than a captions format. Burn-in
@@ -5959,7 +6097,7 @@ func (s *CaptionDestinationSettings) SetWebvttDestinationSettings(v *WebvttDesti
 }
 
 // Use captions selectors to specify the captions data from your input that
-// you use in your outputs. You can use up to 20 captions selectors per input.
+// you use in your outputs. You can use up to 100 captions selectors per input.
 type CaptionSelector struct {
 	_ struct{} `type:"structure"`
 
@@ -6302,6 +6440,105 @@ func (s *ChannelMapping) SetOutputChannels(v []*OutputChannelMapping) *ChannelMa
 	return s
 }
 
+// Specify YUV limits and RGB tolerances when you set Sample range conversion
+// to Limited range clip.
+type ClipLimits struct {
+	_ struct{} `type:"structure"`
+
+	// Specify the Maximum RGB color sample range tolerance for your output. MediaConvert
+	// corrects any YUV values that, when converted to RGB, would be outside the
+	// upper tolerance that you specify. Enter an integer from 90 to 105 as an offset
+	// percentage to the maximum possible value. Leave blank to use the default
+	// value 100. When you specify a value for Maximum RGB tolerance, you must set
+	// Sample range conversion to Limited range clip.
+	MaximumRGBTolerance *int64 `locationName:"maximumRGBTolerance" min:"90" type:"integer"`
+
+	// Specify the Maximum YUV color sample limit. MediaConvert conforms any pixels
+	// in your input above the value that you specify to typical limited range bounds.
+	// Enter an integer from 920 to 1023. Leave blank to use the default value 940.
+	// The value that you enter applies to 10-bit ranges. For 8-bit ranges, MediaConvert
+	// automatically scales this value down. When you specify a value for Maximum
+	// YUV, you must set Sample range conversion to Limited range clip.
+	MaximumYUV *int64 `locationName:"maximumYUV" min:"920" type:"integer"`
+
+	// Specify the Minimum RGB color sample range tolerance for your output. MediaConvert
+	// corrects any YUV values that, when converted to RGB, would be outside the
+	// lower tolerance that you specify. Enter an integer from -5 to 10 as an offset
+	// percentage to the minimum possible value. Leave blank to use the default
+	// value 0. When you specify a value for Minimum RGB tolerance, you must set
+	// Sample range conversion to Limited range clip.
+	MinimumRGBTolerance *int64 `locationName:"minimumRGBTolerance" type:"integer"`
+
+	// Specify the Minimum YUV color sample limit. MediaConvert conforms any pixels
+	// in your input below the value that you specify to typical limited range bounds.
+	// Enter an integer from 0 to 128. Leave blank to use the default value 64.
+	// The value that you enter applies to 10-bit ranges. For 8-bit ranges, MediaConvert
+	// automatically scales this value down. When you specify a value for Minumum
+	// YUV, you must set Sample range conversion to Limited range clip.
+	MinimumYUV *int64 `locationName:"minimumYUV" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClipLimits) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ClipLimits) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ClipLimits) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ClipLimits"}
+	if s.MaximumRGBTolerance != nil && *s.MaximumRGBTolerance < 90 {
+		invalidParams.Add(request.NewErrParamMinValue("MaximumRGBTolerance", 90))
+	}
+	if s.MaximumYUV != nil && *s.MaximumYUV < 920 {
+		invalidParams.Add(request.NewErrParamMinValue("MaximumYUV", 920))
+	}
+	if s.MinimumRGBTolerance != nil && *s.MinimumRGBTolerance < -5 {
+		invalidParams.Add(request.NewErrParamMinValue("MinimumRGBTolerance", -5))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaximumRGBTolerance sets the MaximumRGBTolerance field's value.
+func (s *ClipLimits) SetMaximumRGBTolerance(v int64) *ClipLimits {
+	s.MaximumRGBTolerance = &v
+	return s
+}
+
+// SetMaximumYUV sets the MaximumYUV field's value.
+func (s *ClipLimits) SetMaximumYUV(v int64) *ClipLimits {
+	s.MaximumYUV = &v
+	return s
+}
+
+// SetMinimumRGBTolerance sets the MinimumRGBTolerance field's value.
+func (s *ClipLimits) SetMinimumRGBTolerance(v int64) *ClipLimits {
+	s.MinimumRGBTolerance = &v
+	return s
+}
+
+// SetMinimumYUV sets the MinimumYUV field's value.
+func (s *ClipLimits) SetMinimumYUV(v int64) *ClipLimits {
+	s.MinimumYUV = &v
+	return s
+}
+
 // Specify the details for each pair of HLS and DASH additional manifests that
 // you want the service to generate for this CMAF output group. Each pair of
 // manifests can reference a different subset of outputs in the group.
@@ -6492,6 +6729,15 @@ type CmafGroupSettings struct {
 	// generation.
 	CodecSpecification *string `locationName:"codecSpecification" type:"string" enum:"CmafCodecSpecification"`
 
+	// Specify how MediaConvert writes SegmentTimeline in your output DASH manifest.
+	// To write a SegmentTimeline in each video Representation: Keep the default
+	// value, Basic. To write a common SegmentTimeline in the video AdaptationSet:
+	// Choose Compact. Note that MediaConvert will still write a SegmentTimeline
+	// in any Representation that does not share a common timeline. To write a video
+	// AdaptationSet for each different output framerate, and a common SegmentTimeline
+	// in each AdaptationSet: Choose Distinct.
+	DashManifestStyle *string `locationName:"dashManifestStyle" type:"string" enum:"DashManifestStyle"`
+
 	// Use Destination (Destination) to specify the S3 output location and the output
 	// filename base. Destination accepts format identifiers. If you do not specify
 	// the base filename in the URI, the service will use the filename of the input
@@ -6552,6 +6798,14 @@ type CmafGroupSettings struct {
 	// to 1, your final segment is 3.5 seconds.
 	MinFinalSegmentLength *float64 `locationName:"minFinalSegmentLength" type:"double"`
 
+	// Specify how the value for bandwidth is determined for each video Representation
+	// in your output MPD manifest. We recommend that you choose a MPD manifest
+	// bandwidth type that is compatible with your downstream player configuration.
+	// Max: Use the same value that you specify for Max bitrate in the video output,
+	// in bits per second. Average: Use the calculated average bitrate of the encoded
+	// video output, in bits per second.
+	MpdManifestBandwidthType *string `locationName:"mpdManifestBandwidthType" type:"string" enum:"CmafMpdManifestBandwidthType"`
+
 	// Specify whether your DASH profile is on-demand or main. When you choose Main
 	// profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
 	// in your .mpd DASH manifest. When you choose On-demand (ON_DEMAND_PROFILE),
@@ -6604,6 +6858,15 @@ type CmafGroupSettings struct {
 	// of the segment. Some older players may experience interrupted playback when
 	// the actual duration of a track in a segment is longer than the target duration.
 	TargetDurationCompatibilityMode *string `locationName:"targetDurationCompatibilityMode" type:"string" enum:"CmafTargetDurationCompatibilityMode"`
+
+	// Specify the video sample composition time offset mode in the output fMP4
+	// TRUN box. For wider player compatibility, set Video composition offsets to
+	// Unsigned or leave blank. The earliest presentation time may be greater than
+	// zero, and sample composition time offsets will increment using unsigned integers.
+	// For strict fMP4 video and audio timing, set Video composition offsets to
+	// Signed. The earliest presentation time will be equal to zero, and sample
+	// composition time offsets will increment using signed integers.
+	VideoCompositionOffsets *string `locationName:"videoCompositionOffsets" type:"string" enum:"CmafVideoCompositionOffsets"`
 
 	// When set to ENABLED, a DASH MPD manifest will be generated for this output.
 	WriteDashManifest *string `locationName:"writeDashManifest" type:"string" enum:"CmafWriteDASHManifest"`
@@ -6698,6 +6961,12 @@ func (s *CmafGroupSettings) SetCodecSpecification(v string) *CmafGroupSettings {
 	return s
 }
 
+// SetDashManifestStyle sets the DashManifestStyle field's value.
+func (s *CmafGroupSettings) SetDashManifestStyle(v string) *CmafGroupSettings {
+	s.DashManifestStyle = &v
+	return s
+}
+
 // SetDestination sets the Destination field's value.
 func (s *CmafGroupSettings) SetDestination(v string) *CmafGroupSettings {
 	s.Destination = &v
@@ -6758,6 +7027,12 @@ func (s *CmafGroupSettings) SetMinFinalSegmentLength(v float64) *CmafGroupSettin
 	return s
 }
 
+// SetMpdManifestBandwidthType sets the MpdManifestBandwidthType field's value.
+func (s *CmafGroupSettings) SetMpdManifestBandwidthType(v string) *CmafGroupSettings {
+	s.MpdManifestBandwidthType = &v
+	return s
+}
+
 // SetMpdProfile sets the MpdProfile field's value.
 func (s *CmafGroupSettings) SetMpdProfile(v string) *CmafGroupSettings {
 	s.MpdProfile = &v
@@ -6797,6 +7072,12 @@ func (s *CmafGroupSettings) SetStreamInfResolution(v string) *CmafGroupSettings 
 // SetTargetDurationCompatibilityMode sets the TargetDurationCompatibilityMode field's value.
 func (s *CmafGroupSettings) SetTargetDurationCompatibilityMode(v string) *CmafGroupSettings {
 	s.TargetDurationCompatibilityMode = &v
+	return s
+}
+
+// SetVideoCompositionOffsets sets the VideoCompositionOffsets field's value.
+func (s *CmafGroupSettings) SetVideoCompositionOffsets(v string) *CmafGroupSettings {
+	s.VideoCompositionOffsets = &v
 	return s
 }
 
@@ -7018,6 +7299,17 @@ type CmfcSettings struct {
 	// to None or leave blank.
 	KlvMetadata *string `locationName:"klvMetadata" type:"string" enum:"CmfcKlvMetadata"`
 
+	// To add an InbandEventStream element in your output MPD manifest for each
+	// type of event message, set Manifest metadata signaling to Enabled. For ID3
+	// event messages, the InbandEventStream element schemeIdUri will be same value
+	// that you specify for ID3 metadata scheme ID URI. For SCTE35 event messages,
+	// the InbandEventStream element schemeIdUri will be "urn:scte:scte35:2013:bin".
+	// To leave these elements out of your output MPD manifest, set Manifest metadata
+	// signaling to Disabled. To enable Manifest metadata signaling, you must also
+	// set SCTE-35 source to Passthrough, ESAM SCTE-35 to insert, or ID3 metadata
+	// (TimedMetadata) to Passthrough.
+	ManifestMetadataSignaling *string `locationName:"manifestMetadataSignaling" type:"string" enum:"CmfcManifestMetadataSignaling"`
+
 	// Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 	// INSERT to put SCTE-35 markers in this output at the insertion points that
 	// you specify in an ESAM XML document. Provide the document in the setting
@@ -7036,6 +7328,25 @@ type CmfcSettings struct {
 	// metadata in a separate Event Message (eMSG) box. To exclude this ID3 metadata:
 	// Set ID3 metadata to None (NONE) or leave blank.
 	TimedMetadata *string `locationName:"timedMetadata" type:"string" enum:"CmfcTimedMetadata"`
+
+	// Specify the event message box (eMSG) version for ID3 timed metadata in your
+	// output.For more information, see ISO/IEC 23009-1:2022 section 5.10.3.3.3
+	// Syntax.Leave blank to use the default value Version 0.When you specify Version
+	// 1, you must also set ID3 metadata (timedMetadata) to Passthrough.
+	TimedMetadataBoxVersion *string `locationName:"timedMetadataBoxVersion" type:"string" enum:"CmfcTimedMetadataBoxVersion"`
+
+	// Specify the event message box (eMSG) scheme ID URI (scheme_id_uri) for ID3
+	// timed metadata in your output. For more information, see ISO/IEC 23009-1:2022
+	// section 5.10.3.3.4 Semantics. Leave blank to use the default value: https://aomedia.org/emsg/ID3
+	// When you specify a value for ID3 metadata scheme ID URI, you must also set
+	// ID3 metadata (timedMetadata) to Passthrough.
+	TimedMetadataSchemeIdUri *string `locationName:"timedMetadataSchemeIdUri" type:"string"`
+
+	// Specify the event message box (eMSG) value for ID3 timed metadata in your
+	// output. For more information, see ISO/IEC 23009-1:2022 section 5.10.3.3.4
+	// Semantics. When you specify a value for ID3 Metadata Value, you must also
+	// set ID3 metadata (timedMetadata) to Passthrough.
+	TimedMetadataValue *string `locationName:"timedMetadataValue" type:"string"`
 }
 
 // String returns the string representation.
@@ -7098,6 +7409,12 @@ func (s *CmfcSettings) SetKlvMetadata(v string) *CmfcSettings {
 	return s
 }
 
+// SetManifestMetadataSignaling sets the ManifestMetadataSignaling field's value.
+func (s *CmfcSettings) SetManifestMetadataSignaling(v string) *CmfcSettings {
+	s.ManifestMetadataSignaling = &v
+	return s
+}
+
 // SetScte35Esam sets the Scte35Esam field's value.
 func (s *CmfcSettings) SetScte35Esam(v string) *CmfcSettings {
 	s.Scte35Esam = &v
@@ -7116,6 +7433,24 @@ func (s *CmfcSettings) SetTimedMetadata(v string) *CmfcSettings {
 	return s
 }
 
+// SetTimedMetadataBoxVersion sets the TimedMetadataBoxVersion field's value.
+func (s *CmfcSettings) SetTimedMetadataBoxVersion(v string) *CmfcSettings {
+	s.TimedMetadataBoxVersion = &v
+	return s
+}
+
+// SetTimedMetadataSchemeIdUri sets the TimedMetadataSchemeIdUri field's value.
+func (s *CmfcSettings) SetTimedMetadataSchemeIdUri(v string) *CmfcSettings {
+	s.TimedMetadataSchemeIdUri = &v
+	return s
+}
+
+// SetTimedMetadataValue sets the TimedMetadataValue field's value.
+func (s *CmfcSettings) SetTimedMetadataValue(v string) *CmfcSettings {
+	s.TimedMetadataValue = &v
+	return s
+}
+
 // Settings for color correction.
 type ColorCorrector struct {
 	_ struct{} `type:"structure"`
@@ -7123,12 +7458,21 @@ type ColorCorrector struct {
 	// Brightness level.
 	Brightness *int64 `locationName:"brightness" min:"1" type:"integer"`
 
+	// Specify YUV limits and RGB tolerances when you set Sample range conversion
+	// to Limited range clip.
+	ClipLimits *ClipLimits `locationName:"clipLimits" type:"structure"`
+
 	// Specify the color space you want for this output. The service supports conversion
 	// between HDR formats, between SDR formats, from SDR to HDR, and from HDR to
 	// SDR. SDR to HDR conversion doesn't upgrade the dynamic range. The converted
 	// video has an HDR format, but visually appears the same as an unconverted
-	// output. HDR to SDR conversion uses Elemental tone mapping technology to approximate
-	// the outcome of manually regrading from HDR to SDR.
+	// output. HDR to SDR conversion uses tone mapping to approximate the outcome
+	// of manually regrading from HDR to SDR. When you specify an output color space,
+	// MediaConvert uses the following color space metadata, which includes color
+	// primaries, transfer characteristics, and matrix coefficients: * HDR 10: BT.2020,
+	// PQ, BT.2020 non-constant * HLG 2020: BT.2020, HLG, BT.2020 non-constant *
+	// P3DCI (Theater): DCIP3, SMPTE 428M, BT.709 * P3D65 (SDR): Display P3, sRGB,
+	// BT.709 * P3D65 (HDR): Display P3, PQ, BT.709
 	ColorSpaceConversion *string `locationName:"colorSpaceConversion" type:"string" enum:"ColorSpaceConversion"`
 
 	// Contrast level.
@@ -7148,23 +7492,52 @@ type ColorCorrector struct {
 	// see https://docs.aws.amazon.com/console/mediaconvert/hdr.
 	Hdr10Metadata *Hdr10Metadata `locationName:"hdr10Metadata" type:"structure"`
 
+	// Specify how MediaConvert maps brightness and colors from your HDR input to
+	// your SDR output. The mode that you select represents a creative choice, with
+	// different tradeoffs in the details and tones of your output. To maintain
+	// details in bright or saturated areas of your output: Choose Preserve details.
+	// For some sources, your SDR output may look less bright and less saturated
+	// when compared to your HDR source. MediaConvert automatically applies this
+	// mode for HLG sources, regardless of your choice. For a bright and saturated
+	// output: Choose Vibrant. We recommend that you choose this mode when any of
+	// your source content is HDR10, and for the best results when it is mastered
+	// for 1000 nits. You may notice loss of details in bright or saturated areas
+	// of your output. HDR to SDR tone mapping has no effect when your input is
+	// SDR.
+	HdrToSdrToneMapper *string `locationName:"hdrToSdrToneMapper" type:"string" enum:"HDRToSDRToneMapper"`
+
 	// Hue in degrees.
 	Hue *int64 `locationName:"hue" type:"integer"`
 
-	// Specify the video color sample range for this output. To create a full range
-	// output, you must start with a full range YUV input and keep the default value,
-	// None (NONE). To create a limited range output from a full range input, choose
-	// Limited range (LIMITED_RANGE_SQUEEZE). With RGB inputs, your output is always
-	// limited range, regardless of your choice here. When you create a limited
-	// range output from a full range input, MediaConvert limits the active pixel
-	// values in a way that depends on the output's bit depth: 8-bit outputs contain
-	// only values from 16 through 235 and 10-bit outputs contain only values from
-	// 64 through 940. With this conversion, MediaConvert also changes the output
-	// metadata to note the limited range.
+	// Specify how MediaConvert limits the color sample range for this output. To
+	// create a limited range output from a full range input: Choose Limited range
+	// squeeze. For full range inputs, MediaConvert performs a linear offset to
+	// color samples equally across all pixels and frames. Color samples in 10-bit
+	// outputs are limited to 64 through 940, and 8-bit outputs are limited to 16
+	// through 235. Note: For limited range inputs, values for color samples are
+	// passed through to your output unchanged. MediaConvert does not limit the
+	// sample range. To correct pixels in your input that are out of range or out
+	// of gamut: Choose Limited range clip. Use for broadcast applications. MediaConvert
+	// conforms any pixels outside of the values that you specify under Minimum
+	// YUV and Maximum YUV to limited range bounds. MediaConvert also corrects any
+	// YUV values that, when converted to RGB, would be outside the bounds you specify
+	// under Minimum RGB tolerance and Maximum RGB tolerance. With either limited
+	// range conversion, MediaConvert writes the sample range metadata in the output.
 	SampleRangeConversion *string `locationName:"sampleRangeConversion" type:"string" enum:"SampleRangeConversion"`
 
 	// Saturation level.
 	Saturation *int64 `locationName:"saturation" min:"1" type:"integer"`
+
+	// Specify the reference white level, in nits, for all of your SDR inputs. Use
+	// to correct brightness levels within HDR10 outputs. The following color metadata
+	// must be present in your SDR input: color primaries, transfer characteristics,
+	// and matrix coefficients. If your SDR input has missing color metadata, or
+	// if you want to correct input color metadata, manually specify a color space
+	// in the input video selector. For 1,000 nit peak brightness displays, we recommend
+	// that you set SDR reference white level to 203 (according to ITU-R BT.2408).
+	// Leave blank to use the default value of 100, or specify an integer from 100
+	// to 1000.
+	SdrReferenceWhiteLevel *int64 `locationName:"sdrReferenceWhiteLevel" min:"100" type:"integer"`
 }
 
 // String returns the string representation.
@@ -7200,6 +7573,14 @@ func (s *ColorCorrector) Validate() error {
 	if s.Saturation != nil && *s.Saturation < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Saturation", 1))
 	}
+	if s.SdrReferenceWhiteLevel != nil && *s.SdrReferenceWhiteLevel < 100 {
+		invalidParams.Add(request.NewErrParamMinValue("SdrReferenceWhiteLevel", 100))
+	}
+	if s.ClipLimits != nil {
+		if err := s.ClipLimits.Validate(); err != nil {
+			invalidParams.AddNested("ClipLimits", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -7210,6 +7591,12 @@ func (s *ColorCorrector) Validate() error {
 // SetBrightness sets the Brightness field's value.
 func (s *ColorCorrector) SetBrightness(v int64) *ColorCorrector {
 	s.Brightness = &v
+	return s
+}
+
+// SetClipLimits sets the ClipLimits field's value.
+func (s *ColorCorrector) SetClipLimits(v *ClipLimits) *ColorCorrector {
+	s.ClipLimits = v
 	return s
 }
 
@@ -7231,6 +7618,12 @@ func (s *ColorCorrector) SetHdr10Metadata(v *Hdr10Metadata) *ColorCorrector {
 	return s
 }
 
+// SetHdrToSdrToneMapper sets the HdrToSdrToneMapper field's value.
+func (s *ColorCorrector) SetHdrToSdrToneMapper(v string) *ColorCorrector {
+	s.HdrToSdrToneMapper = &v
+	return s
+}
+
 // SetHue sets the Hue field's value.
 func (s *ColorCorrector) SetHue(v int64) *ColorCorrector {
 	s.Hue = &v
@@ -7246,6 +7639,12 @@ func (s *ColorCorrector) SetSampleRangeConversion(v string) *ColorCorrector {
 // SetSaturation sets the Saturation field's value.
 func (s *ColorCorrector) SetSaturation(v int64) *ColorCorrector {
 	s.Saturation = &v
+	return s
+}
+
+// SetSdrReferenceWhiteLevel sets the SdrReferenceWhiteLevel field's value.
+func (s *ColorCorrector) SetSdrReferenceWhiteLevel(v int64) *ColorCorrector {
+	s.SdrReferenceWhiteLevel = &v
 	return s
 }
 
@@ -7468,7 +7867,11 @@ type CreateJobInput struct {
 	// for this field, your job outputs will appear on the billing report unsorted.
 	BillingTagsSource *string `locationName:"billingTagsSource" type:"string" enum:"BillingTagsSource"`
 
-	// Optional. Idempotency token for CreateJob operation.
+	// Prevent duplicate jobs from being created and ensure idempotency for your
+	// requests. A client request token can be any string that includes up to 64
+	// ASCII characters. If you reuse a client request token within one minute of
+	// a successful request, the API returns the job details of the original request
+	// instead. For more information see https://docs.aws.amazon.com/mediaconvert/latest/apireference/idempotency.html.
 	ClientRequestToken *string `locationName:"clientRequestToken" type:"string" idempotencyToken:"true"`
 
 	// Optional. Use queue hopping to avoid overly long waits in the backlog of
@@ -8317,6 +8720,15 @@ type DashIsoGroupSettings struct {
 	// URL than the manifest file.
 	BaseUrl *string `locationName:"baseUrl" type:"string"`
 
+	// Specify how MediaConvert writes SegmentTimeline in your output DASH manifest.
+	// To write a SegmentTimeline in each video Representation: Keep the default
+	// value, Basic. To write a common SegmentTimeline in the video AdaptationSet:
+	// Choose Compact. Note that MediaConvert will still write a SegmentTimeline
+	// in any Representation that does not share a common timeline. To write a video
+	// AdaptationSet for each different output framerate, and a common SegmentTimeline
+	// in each AdaptationSet: Choose Distinct.
+	DashManifestStyle *string `locationName:"dashManifestStyle" type:"string" enum:"DashManifestStyle"`
+
 	// Use Destination (Destination) to specify the S3 output location and the output
 	// filename base. Destination accepts format identifiers. If you do not specify
 	// the base filename in the URI, the service will use the filename of the input
@@ -8372,6 +8784,14 @@ type DashIsoGroupSettings struct {
 	// to 1, your final segment is 3.5 seconds.
 	MinFinalSegmentLength *float64 `locationName:"minFinalSegmentLength" type:"double"`
 
+	// Specify how the value for bandwidth is determined for each video Representation
+	// in your output MPD manifest. We recommend that you choose a MPD manifest
+	// bandwidth type that is compatible with your downstream player configuration.
+	// Max: Use the same value that you specify for Max bitrate in the video output,
+	// in bits per second. Average: Use the calculated average bitrate of the encoded
+	// video output, in bits per second.
+	MpdManifestBandwidthType *string `locationName:"mpdManifestBandwidthType" type:"string" enum:"DashIsoMpdManifestBandwidthType"`
+
 	// Specify whether your DASH profile is on-demand or main. When you choose Main
 	// profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
 	// in your .mpd DASH manifest. When you choose On-demand (ON_DEMAND_PROFILE),
@@ -8410,6 +8830,15 @@ type DashIsoGroupSettings struct {
 	// Choose Multiple of GOP (GOP_MULTIPLE) to have the encoder round up the segment
 	// lengths to match the next GOP boundary.
 	SegmentLengthControl *string `locationName:"segmentLengthControl" type:"string" enum:"DashIsoSegmentLengthControl"`
+
+	// Specify the video sample composition time offset mode in the output fMP4
+	// TRUN box. For wider player compatibility, set Video composition offsets to
+	// Unsigned or leave blank. The earliest presentation time may be greater than
+	// zero, and sample composition time offsets will increment using unsigned integers.
+	// For strict fMP4 video and audio timing, set Video composition offsets to
+	// Signed. The earliest presentation time will be equal to zero, and sample
+	// composition time offsets will increment using signed integers.
+	VideoCompositionOffsets *string `locationName:"videoCompositionOffsets" type:"string" enum:"DashIsoVideoCompositionOffsets"`
 
 	// If you get an HTTP error in the 400 range when you play back your DASH output,
 	// enable this setting and run your transcoding job again. When you enable this
@@ -8488,6 +8917,12 @@ func (s *DashIsoGroupSettings) SetBaseUrl(v string) *DashIsoGroupSettings {
 	return s
 }
 
+// SetDashManifestStyle sets the DashManifestStyle field's value.
+func (s *DashIsoGroupSettings) SetDashManifestStyle(v string) *DashIsoGroupSettings {
+	s.DashManifestStyle = &v
+	return s
+}
+
 // SetDestination sets the Destination field's value.
 func (s *DashIsoGroupSettings) SetDestination(v string) *DashIsoGroupSettings {
 	s.Destination = &v
@@ -8542,6 +8977,12 @@ func (s *DashIsoGroupSettings) SetMinFinalSegmentLength(v float64) *DashIsoGroup
 	return s
 }
 
+// SetMpdManifestBandwidthType sets the MpdManifestBandwidthType field's value.
+func (s *DashIsoGroupSettings) SetMpdManifestBandwidthType(v string) *DashIsoGroupSettings {
+	s.MpdManifestBandwidthType = &v
+	return s
+}
+
 // SetMpdProfile sets the MpdProfile field's value.
 func (s *DashIsoGroupSettings) SetMpdProfile(v string) *DashIsoGroupSettings {
 	s.MpdProfile = &v
@@ -8569,6 +9010,12 @@ func (s *DashIsoGroupSettings) SetSegmentLength(v int64) *DashIsoGroupSettings {
 // SetSegmentLengthControl sets the SegmentLengthControl field's value.
 func (s *DashIsoGroupSettings) SetSegmentLengthControl(v string) *DashIsoGroupSettings {
 	s.SegmentLengthControl = &v
+	return s
+}
+
+// SetVideoCompositionOffsets sets the VideoCompositionOffsets field's value.
+func (s *DashIsoGroupSettings) SetVideoCompositionOffsets(v string) *DashIsoGroupSettings {
+	s.VideoCompositionOffsets = &v
 	return s
 }
 
@@ -8694,11 +9141,12 @@ func (s *DashIsoImageBasedTrickPlaySettings) SetTileWidth(v int64) *DashIsoImage
 type Deinterlacer struct {
 	_ struct{} `type:"structure"`
 
-	// Only applies when you set Deinterlacer (DeinterlaceMode) to Deinterlace (DEINTERLACE)
-	// or Adaptive (ADAPTIVE). Motion adaptive interpolate (INTERPOLATE) produces
-	// sharper pictures, while blend (BLEND) produces smoother motion. Use (INTERPOLATE_TICKER)
-	// OR (BLEND_TICKER) if your source file includes a ticker, such as a scrolling
-	// headline at the bottom of the frame.
+	// Only applies when you set Deinterlace mode to Deinterlace or Adaptive. Interpolate
+	// produces sharper pictures, while blend produces smoother motion. If your
+	// source file includes a ticker, such as a scrolling headline at the bottom
+	// of the frame: Choose Interpolate ticker or Blend ticker. To apply field doubling:
+	// Choose Linear interpolation. Note that Linear interpolation may introduce
+	// video artifacts into your output.
 	Algorithm *string `locationName:"algorithm" type:"string" enum:"DeinterlaceAlgorithm"`
 
 	// - When set to NORMAL (default), the deinterlacer does not convert frames
@@ -9548,19 +9996,15 @@ type DvbSubDestinationSettings struct {
 	// must be identical.
 	BackgroundOpacity *int64 `locationName:"backgroundOpacity" type:"integer"`
 
-	// Specify how MediaConvert handles the display definition segment (DDS). Keep
-	// the default, None (NONE), to exclude the DDS from this set of captions. Choose
-	// No display window (NO_DISPLAY_WINDOW) to have MediaConvert include the DDS
-	// but not include display window data. In this case, MediaConvert writes that
-	// information to the page composition segment (PCS) instead. Choose Specify
-	// (SPECIFIED) to have MediaConvert set up the display window based on the values
-	// that you specify in related job settings. For video resolutions that are
-	// 576 pixels or smaller in height, MediaConvert doesn't include the DDS, regardless
-	// of the value you choose for DDS handling (ddsHandling). In this case, it
-	// doesn't write the display window data to the PCS either. Related settings:
-	// Use the settings DDS x-coordinate (ddsXCoordinate) and DDS y-coordinate (ddsYCoordinate)
-	// to specify the offset between the top left corner of the display window and
-	// the top left corner of the video frame. All burn-in and DVB-Sub font settings
+	// Specify how MediaConvert handles the display definition segment (DDS). To
+	// exclude the DDS from this set of captions: Keep the default, None. To include
+	// the DDS: Choose Specified. When you do, also specify the offset coordinates
+	// of the display window with DDS x-coordinate and DDS y-coordinate. To include
+	// the DDS, but not include display window data: Choose No display window. When
+	// you do, you can write position metadata to the page composition segment (PCS)
+	// with DDS x-coordinate and DDS y-coordinate. For video resolutions with a
+	// height of 576 pixels or less, MediaConvert doesn't include the DDS, regardless
+	// of the value you choose for DDS handling. All burn-in and DVB-Sub font settings
 	// must match.
 	DdsHandling *string `locationName:"ddsHandling" type:"string" enum:"DvbddsHandling"`
 
@@ -10300,9 +10744,14 @@ type Eac3Settings struct {
 	// Only used for 3/2 coding mode.
 	AttenuationControl *string `locationName:"attenuationControl" type:"string" enum:"Eac3AttenuationControl"`
 
-	// Specify the average bitrate in bits per second. Valid bitrates depend on
-	// the coding mode.
-	Bitrate *int64 `locationName:"bitrate" min:"64000" type:"integer"`
+	// Specify the average bitrate in bits per second. The bitrate that you specify
+	// must be a multiple of 8000 within the allowed minimum and maximum values.
+	// Leave blank to use the default bitrate for the coding mode you select according
+	// ETSI TS 102 366. Valid bitrates for coding mode 1/0: Default: 96000. Minimum:
+	// 32000. Maximum: 3024000. Valid bitrates for coding mode 2/0: Default: 192000.
+	// Minimum: 96000. Maximum: 3024000. Valid bitrates for coding mode 3/2: Default:
+	// 384000. Minimum: 192000. Maximum: 3024000.
+	Bitrate *int64 `locationName:"bitrate" min:"32000" type:"integer"`
 
 	// Specify the bitstream mode for the E-AC-3 stream that the encoder emits.
 	// For more information about the EAC3 bitstream mode, see ATSC A/52-2012 (Annex
@@ -10436,8 +10885,8 @@ func (s Eac3Settings) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *Eac3Settings) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Eac3Settings"}
-	if s.Bitrate != nil && *s.Bitrate < 64000 {
-		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 64000))
+	if s.Bitrate != nil && *s.Bitrate < 32000 {
+		invalidParams.Add(request.NewErrParamMinValue("Bitrate", 32000))
 	}
 	if s.Dialnorm != nil && *s.Dialnorm < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("Dialnorm", 1))
@@ -11047,6 +11496,12 @@ type FileSourceSettings struct {
 	// 608 data into 708.
 	Convert608To708 *string `locationName:"convert608To708" type:"string" enum:"FileSourceConvert608To708"`
 
+	// Choose the presentation style of your input SCC captions. To use the same
+	// presentation style as your input: Keep the default value, Disabled. To convert
+	// paint-on captions to pop-on: Choose Enabled. We also recommend that you choose
+	// Enabled if you notice additional repeated lines in your output captions.
+	ConvertPaintToPop *string `locationName:"convertPaintToPop" type:"string" enum:"CaptionSourceConvertPaintOnToPopOn"`
+
 	// Ignore this setting unless your input captions format is SCC. To have the
 	// service compensate for differing frame rates between your input captions
 	// and input video, specify the frame rate of the captions file. Specify this
@@ -11124,6 +11579,12 @@ func (s *FileSourceSettings) Validate() error {
 // SetConvert608To708 sets the Convert608To708 field's value.
 func (s *FileSourceSettings) SetConvert608To708(v string) *FileSourceSettings {
 	s.Convert608To708 = &v
+	return s
+}
+
+// SetConvertPaintToPop sets the ConvertPaintToPop field's value.
+func (s *FileSourceSettings) SetConvertPaintToPop(v string) *FileSourceSettings {
+	s.ConvertPaintToPop = &v
 	return s
 }
 
@@ -11869,6 +12330,16 @@ type H264Settings struct {
 	// H264FlickerAdaptiveQuantization, H264SpatialAdaptiveQuantization, and H264TemporalAdaptiveQuantization.
 	AdaptiveQuantization *string `locationName:"adaptiveQuantization" type:"string" enum:"H264AdaptiveQuantization"`
 
+	// The Bandwidth reduction filter increases the video quality of your output
+	// relative to its bitrate. Use to lower the bitrate of your constant quality
+	// QVBR output, with little or no perceptual decrease in quality. Or, use to
+	// increase the video quality of outputs with other rate control modes relative
+	// to the bitrate that you specify. Bandwidth reduction increases further when
+	// your input is low quality or noisy. Outputs that use this feature incur pro-tier
+	// pricing. When you include Bandwidth reduction filter, you cannot include
+	// the Noise reducer preprocessor.
+	BandwidthReductionFilter *BandwidthReductionFilter `locationName:"bandwidthReductionFilter" type:"structure"`
+
 	// Specify the average bitrate in bits per second. Required for VBR and CBR.
 	// For MS Smooth outputs, bitrates must be unique when rounded down to the nearest
 	// multiple of 1000.
@@ -11882,11 +12353,14 @@ type H264Settings struct {
 	// AVC-I License.
 	CodecProfile *string `locationName:"codecProfile" type:"string" enum:"H264CodecProfile"`
 
-	// Choose Adaptive to improve subjective video quality for high-motion content.
-	// This will cause the service to use fewer B-frames (which infer information
-	// based on other frames) for high-motion portions of the video and more B-frames
-	// for low-motion portions. The maximum number of B-frames is limited by the
-	// value you provide for the setting B frames between reference frames (numberBFramesBetweenReferenceFrames).
+	// Specify whether to allow the number of B-frames in your output GOP structure
+	// to vary or not depending on your input video content. To improve the subjective
+	// video quality of your output that has high-motion content: Leave blank or
+	// keep the default value Adaptive. MediaConvert will use fewer B-frames for
+	// high-motion video content than low-motion content. The maximum number of
+	// B- frames is limited by the value that you choose for B-frames between reference
+	// frames. To use the same number B-frames for all types of content: Choose
+	// Static.
 	DynamicSubGop *string `locationName:"dynamicSubGop" type:"string" enum:"H264DynamicSubGop"`
 
 	// Entropy encoding mode. Use CABAC (must be in Main or High profile) or CAVLC.
@@ -11928,15 +12402,16 @@ type H264Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"H264FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"H264FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -11955,8 +12430,11 @@ type H264Settings struct {
 	// number for Framerate. In this example, specify 23.976.
 	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
-	// If enable, use reference B frames for GOP structures that have B frames >
-	// 1.
+	// Specify whether to allow B-frames to be referenced by other frame types.
+	// To use reference B-frames when your GOP structure has 1 or more B-frames:
+	// Leave blank or keep the default value Enabled. We recommend that you choose
+	// Enabled to help improve the video quality of your output relative to its
+	// bitrate. To not use reference B-frames: Choose Disabled.
 	GopBReference *string `locationName:"gopBReference" type:"string" enum:"H264GopBReference"`
 
 	// Specify the relative frequency of open to closed GOPs in this output. For
@@ -11991,6 +12469,12 @@ type H264Settings struct {
 	// (FRAMES) or Specified, seconds (SECONDS) and then provide the GOP length
 	// in the related setting GOP size (GopSize).
 	GopSizeUnits *string `locationName:"gopSizeUnits" type:"string" enum:"H264GopSizeUnits"`
+
+	// If your downstream systems have strict buffer requirements: Specify the minimum
+	// percentage of the HRD buffer that's available at the end of each encoded
+	// video segment. For the best video quality: Set to 0 or leave blank to automatically
+	// determine the final buffer fill percentage.
+	HrdBufferFinalFillPercentage *int64 `locationName:"hrdBufferFinalFillPercentage" type:"integer"`
 
 	// Percentage of the buffer that should initially be filled (HRD buffer model).
 	HrdBufferInitialFillPercentage *int64 `locationName:"hrdBufferInitialFillPercentage" type:"integer"`
@@ -12035,13 +12519,11 @@ type H264Settings struct {
 	// scene change are smaller than the usual cadence GOPs.
 	MinIInterval *int64 `locationName:"minIInterval" type:"integer"`
 
-	// This setting to determines the number of B-frames that MediaConvert puts
-	// between reference frames in this output. We recommend that you use automatic
-	// behavior to allow the transcoder to choose the best value based on characteristics
-	// of your input video. In the console, choose AUTO to select this automatic
-	// behavior. When you manually edit your JSON job specification, leave this
-	// setting out to choose automatic behavior. When you want to specify this number
-	// explicitly, choose a whole number from 0 through 7.
+	// Specify the number of B-frames between reference frames in this output. For
+	// the best video quality: Leave blank. MediaConvert automatically determines
+	// the number of B-frames to use based on the characteristics of your input
+	// video. To manually specify the number of B-frames between reference frames:
+	// Enter an integer from 0 to 7.
 	NumberBFramesBetweenReferenceFrames *int64 `locationName:"numberBFramesBetweenReferenceFrames" type:"integer"`
 
 	// Number of reference frames to use. The encoder may use more than requested
@@ -12073,9 +12555,14 @@ type H264Settings struct {
 	// for parNumerator is 40.
 	ParNumerator *int64 `locationName:"parNumerator" min:"1" type:"integer"`
 
-	// Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
-	// want to trade off encoding speed for output video quality. The default behavior
-	// is faster, lower quality, single-pass encoding.
+	// The Quality tuning level you choose represents a trade-off between the encoding
+	// speed of your job and the output video quality. For the fastest encoding
+	// speed at the cost of video quality: Choose Single pass. For a good balance
+	// between encoding speed and video quality: Leave blank or keep the default
+	// value Single pass HQ. For the best video quality, at the cost of encoding
+	// speed: Choose Multi pass HQ. MediaConvert performs an analysis pass on your
+	// input followed by an encoding pass. Outputs that use this feature incur pro-tier
+	// pricing.
 	QualityTuningLevel *string `locationName:"qualityTuningLevel" type:"string" enum:"H264QualityTuningLevel"`
 
 	// Settings for quality-defined variable bitrate encoding with the H.265 codec.
@@ -12266,6 +12753,12 @@ func (s *H264Settings) SetAdaptiveQuantization(v string) *H264Settings {
 	return s
 }
 
+// SetBandwidthReductionFilter sets the BandwidthReductionFilter field's value.
+func (s *H264Settings) SetBandwidthReductionFilter(v *BandwidthReductionFilter) *H264Settings {
+	s.BandwidthReductionFilter = v
+	return s
+}
+
 // SetBitrate sets the Bitrate field's value.
 func (s *H264Settings) SetBitrate(v int64) *H264Settings {
 	s.Bitrate = &v
@@ -12353,6 +12846,12 @@ func (s *H264Settings) SetGopSize(v float64) *H264Settings {
 // SetGopSizeUnits sets the GopSizeUnits field's value.
 func (s *H264Settings) SetGopSizeUnits(v string) *H264Settings {
 	s.GopSizeUnits = &v
+	return s
+}
+
+// SetHrdBufferFinalFillPercentage sets the HrdBufferFinalFillPercentage field's value.
+func (s *H264Settings) SetHrdBufferFinalFillPercentage(v int64) *H264Settings {
+	s.HrdBufferFinalFillPercentage = &v
 	return s
 }
 
@@ -12608,6 +13107,16 @@ type H265Settings struct {
 	// Log Gamma (HLG) Electro-Optical Transfer Function (EOTF).
 	AlternateTransferFunctionSei *string `locationName:"alternateTransferFunctionSei" type:"string" enum:"H265AlternateTransferFunctionSei"`
 
+	// The Bandwidth reduction filter increases the video quality of your output
+	// relative to its bitrate. Use to lower the bitrate of your constant quality
+	// QVBR output, with little or no perceptual decrease in quality. Or, use to
+	// increase the video quality of outputs with other rate control modes relative
+	// to the bitrate that you specify. Bandwidth reduction increases further when
+	// your input is low quality or noisy. Outputs that use this feature incur pro-tier
+	// pricing. When you include Bandwidth reduction filter, you cannot include
+	// the Noise reducer preprocessor.
+	BandwidthReductionFilter *BandwidthReductionFilter `locationName:"bandwidthReductionFilter" type:"structure"`
+
 	// Specify the average bitrate in bits per second. Required for VBR and CBR.
 	// For MS Smooth outputs, bitrates must be unique when rounded down to the nearest
 	// multiple of 1000.
@@ -12621,11 +13130,14 @@ type H265Settings struct {
 	// with High Tier. 4:2:2 profiles are only available with the HEVC 4:2:2 License.
 	CodecProfile *string `locationName:"codecProfile" type:"string" enum:"H265CodecProfile"`
 
-	// Choose Adaptive to improve subjective video quality for high-motion content.
-	// This will cause the service to use fewer B-frames (which infer information
-	// based on other frames) for high-motion portions of the video and more B-frames
-	// for low-motion portions. The maximum number of B-frames is limited by the
-	// value you provide for the setting B frames between reference frames (numberBFramesBetweenReferenceFrames).
+	// Specify whether to allow the number of B-frames in your output GOP structure
+	// to vary or not depending on your input video content. To improve the subjective
+	// video quality of your output that has high-motion content: Leave blank or
+	// keep the default value Adaptive. MediaConvert will use fewer B-frames for
+	// high-motion video content than low-motion content. The maximum number of
+	// B- frames is limited by the value that you choose for B-frames between reference
+	// frames. To use the same number B-frames for all types of content: Choose
+	// Static.
 	DynamicSubGop *string `locationName:"dynamicSubGop" type:"string" enum:"H265DynamicSubGop"`
 
 	// Enable this setting to have the encoder reduce I-frame pop. I-frame pop appears
@@ -12651,15 +13163,16 @@ type H265Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"H265FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"H265FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -12678,8 +13191,11 @@ type H265Settings struct {
 	// number for Framerate. In this example, specify 23.976.
 	FramerateNumerator *int64 `locationName:"framerateNumerator" min:"1" type:"integer"`
 
-	// If enable, use reference B frames for GOP structures that have B frames >
-	// 1.
+	// Specify whether to allow B-frames to be referenced by other frame types.
+	// To use reference B-frames when your GOP structure has 1 or more B-frames:
+	// Leave blank or keep the default value Enabled. We recommend that you choose
+	// Enabled to help improve the video quality of your output relative to its
+	// bitrate. To not use reference B-frames: Choose Disabled.
 	GopBReference *string `locationName:"gopBReference" type:"string" enum:"H265GopBReference"`
 
 	// Specify the relative frequency of open to closed GOPs in this output. For
@@ -12714,6 +13230,12 @@ type H265Settings struct {
 	// (FRAMES) or Specified, seconds (SECONDS) and then provide the GOP length
 	// in the related setting GOP size (GopSize).
 	GopSizeUnits *string `locationName:"gopSizeUnits" type:"string" enum:"H265GopSizeUnits"`
+
+	// If your downstream systems have strict buffer requirements: Specify the minimum
+	// percentage of the HRD buffer that's available at the end of each encoded
+	// video segment. For the best video quality: Set to 0 or leave blank to automatically
+	// determine the final buffer fill percentage.
+	HrdBufferFinalFillPercentage *int64 `locationName:"hrdBufferFinalFillPercentage" type:"integer"`
 
 	// Percentage of the buffer that should initially be filled (HRD buffer model).
 	HrdBufferInitialFillPercentage *int64 `locationName:"hrdBufferInitialFillPercentage" type:"integer"`
@@ -12758,9 +13280,11 @@ type H265Settings struct {
 	// scene change are smaller than the usual cadence GOPs.
 	MinIInterval *int64 `locationName:"minIInterval" type:"integer"`
 
-	// Specify the number of B-frames that MediaConvert puts between reference frames
-	// in this output. Valid values are whole numbers from 0 through 7. When you
-	// don't specify a value, MediaConvert defaults to 2.
+	// Specify the number of B-frames between reference frames in this output. For
+	// the best video quality: Leave blank. MediaConvert automatically determines
+	// the number of B-frames to use based on the characteristics of your input
+	// video. To manually specify the number of B-frames between reference frames:
+	// Enter an integer from 0 to 7.
 	NumberBFramesBetweenReferenceFrames *int64 `locationName:"numberBFramesBetweenReferenceFrames" type:"integer"`
 
 	// Number of reference frames to use. The encoder may use more than requested
@@ -12987,6 +13511,12 @@ func (s *H265Settings) SetAlternateTransferFunctionSei(v string) *H265Settings {
 	return s
 }
 
+// SetBandwidthReductionFilter sets the BandwidthReductionFilter field's value.
+func (s *H265Settings) SetBandwidthReductionFilter(v *BandwidthReductionFilter) *H265Settings {
+	s.BandwidthReductionFilter = v
+	return s
+}
+
 // SetBitrate sets the Bitrate field's value.
 func (s *H265Settings) SetBitrate(v int64) *H265Settings {
 	s.Bitrate = &v
@@ -13062,6 +13592,12 @@ func (s *H265Settings) SetGopSize(v float64) *H265Settings {
 // SetGopSizeUnits sets the GopSizeUnits field's value.
 func (s *H265Settings) SetGopSizeUnits(v string) *H265Settings {
 	s.GopSizeUnits = &v
+	return s
+}
+
+// SetHrdBufferFinalFillPercentage sets the HrdBufferFinalFillPercentage field's value.
+func (s *H265Settings) SetHrdBufferFinalFillPercentage(v int64) *H265Settings {
+	s.HrdBufferFinalFillPercentage = &v
 	return s
 }
 
@@ -13793,6 +14329,18 @@ type HlsGroupSettings struct {
 	// Period of insertion of EXT-X-PROGRAM-DATE-TIME entry, in seconds.
 	ProgramDateTimePeriod *int64 `locationName:"programDateTimePeriod" type:"integer"`
 
+	// Specify whether MediaConvert generates HLS manifests while your job is running
+	// or when your job is complete. To generate HLS manifests while your job is
+	// running: Choose Enabled. Use if you want to play back your content as soon
+	// as it's available. MediaConvert writes the parent and child manifests after
+	// the first three media segments are written to your destination S3 bucket.
+	// It then writes new updated manifests after each additional segment is written.
+	// The parent manifest includes the latest BANDWIDTH and AVERAGE-BANDWIDTH attributes,
+	// and child manifests include the latest available media segment. When your
+	// job completes, the final child playlists include an EXT-X-ENDLIST tag. To
+	// generate HLS manifests only when your job completes: Choose Disabled.
+	ProgressiveWriteHlsManifest *string `locationName:"progressiveWriteHlsManifest" type:"string" enum:"HlsProgressiveWriteHlsManifest"`
+
 	// When set to SINGLE_FILE, emits program as a single media resource (.ts) file,
 	// uses #EXT-X-BYTERANGE tags to index segment for playback.
 	SegmentControl *string `locationName:"segmentControl" type:"string" enum:"HlsSegmentControl"`
@@ -13812,8 +14360,9 @@ type HlsGroupSettings struct {
 	// lengths to match the next GOP boundary.
 	SegmentLengthControl *string `locationName:"segmentLengthControl" type:"string" enum:"HlsSegmentLengthControl"`
 
-	// Number of segments to write to a subdirectory before starting a new one.
-	// directoryStructure must be SINGLE_DIRECTORY for this setting to have an effect.
+	// Specify the number of segments to write to a subdirectory before starting
+	// a new one. You must also set Directory structure to Subdirectory per stream
+	// for this setting to have an effect.
 	SegmentsPerSubdirectory *int64 `locationName:"segmentsPerSubdirectory" min:"1" type:"integer"`
 
 	// Include or exclude RESOLUTION attribute for video in EXT-X-STREAM-INF tag
@@ -14048,6 +14597,12 @@ func (s *HlsGroupSettings) SetProgramDateTime(v string) *HlsGroupSettings {
 // SetProgramDateTimePeriod sets the ProgramDateTimePeriod field's value.
 func (s *HlsGroupSettings) SetProgramDateTimePeriod(v int64) *HlsGroupSettings {
 	s.ProgramDateTimePeriod = &v
+	return s
+}
+
+// SetProgressiveWriteHlsManifest sets the ProgressiveWriteHlsManifest field's value.
+func (s *HlsGroupSettings) SetProgressiveWriteHlsManifest(v string) *HlsGroupSettings {
+	s.ProgressiveWriteHlsManifest = &v
 	return s
 }
 
@@ -14409,7 +14964,7 @@ type HopDestination struct {
 
 	// Required for setting up a job to use queue hopping. Minimum wait time in
 	// minutes until the job can hop to the destination queue. Valid range is 1
-	// to 1440 minutes, inclusive.
+	// to 4320 minutes, inclusive.
 	WaitMinutes *int64 `locationName:"waitMinutes" type:"integer"`
 }
 
@@ -14516,6 +15071,13 @@ type ImageInserter struct {
 	// Specify the images that you want to overlay on your video. The images must
 	// be PNG or TGA files.
 	InsertableImages []*InsertableImage `locationName:"insertableImages" type:"list"`
+
+	// Specify the reference white level, in nits, for all of your image inserter
+	// images. Use to correct brightness levels within HDR10 outputs. For 1,000
+	// nit peak brightness displays, we recommend that you set SDR reference white
+	// level to 203 (according to ITU-R BT.2408). Leave blank to use the default
+	// value of 100, or specify an integer from 100 to 1000.
+	SdrReferenceWhiteLevel *int64 `locationName:"sdrReferenceWhiteLevel" min:"100" type:"integer"`
 }
 
 // String returns the string representation.
@@ -14539,6 +15101,9 @@ func (s ImageInserter) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ImageInserter) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ImageInserter"}
+	if s.SdrReferenceWhiteLevel != nil && *s.SdrReferenceWhiteLevel < 100 {
+		invalidParams.Add(request.NewErrParamMinValue("SdrReferenceWhiteLevel", 100))
+	}
 	if s.InsertableImages != nil {
 		for i, v := range s.InsertableImages {
 			if v == nil {
@@ -14562,6 +15127,12 @@ func (s *ImageInserter) SetInsertableImages(v []*InsertableImage) *ImageInserter
 	return s
 }
 
+// SetSdrReferenceWhiteLevel sets the SdrReferenceWhiteLevel field's value.
+func (s *ImageInserter) SetSdrReferenceWhiteLevel(v int64) *ImageInserter {
+	s.SdrReferenceWhiteLevel = &v
+	return s
+}
+
 // Settings related to IMSC captions. IMSC is a sidecar format that holds captions
 // in a file that is separate from the video container. Set up sidecar captions
 // in the same output group, but different output from your video. For more
@@ -14571,13 +15142,16 @@ func (s *ImageInserter) SetInsertableImages(v []*InsertableImage) *ImageInserter
 type ImscDestinationSettings struct {
 	_ struct{} `type:"structure"`
 
-	// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
-	// is intended to provide accessibility for people who are deaf or hard of hearing.
-	// When you enable this feature, MediaConvert adds the following attributes
-	// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-	// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
-	// is not intended to provide such accessibility. MediaConvert will not add
-	// the above attributes.
+	// If the IMSC captions track is intended to provide accessibility for people
+	// who are deaf or hard of hearing: Set Accessibility subtitles to Enabled.
+	// When you do, MediaConvert adds accessibility attributes to your output HLS
+	// or DASH manifest. For HLS manifests, MediaConvert adds the following accessibility
+	// attributes under EXT-X-MEDIA for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+	// and AUTOSELECT="YES". For DASH manifests, MediaConvert adds the following
+	// in the adaptation set for this track: . If the captions track is not intended
+	// to provide such accessibility: Keep the default value, Disabled. When you
+	// do, for DASH manifests, MediaConvert instead adds the following in the adaptation
+	// set for this track: .
 	Accessibility *string `locationName:"accessibility" type:"string" enum:"ImscAccessibilitySubs"`
 
 	// Keep this setting enabled to have MediaConvert use the font style and position
@@ -14624,6 +15198,23 @@ func (s *ImscDestinationSettings) SetStylePassthrough(v string) *ImscDestination
 type Input struct {
 	_ struct{} `type:"structure"`
 
+	// Use to remove noise, blocking, blurriness, or ringing from your input as
+	// a pre-filter step before encoding. The Advanced input filter removes more
+	// types of compression artifacts and is an improvement when compared to basic
+	// Deblock and Denoise filters. To remove video compression artifacts from your
+	// input and improve the video quality: Choose Enabled. Additionally, this filter
+	// can help increase the video quality of your output relative to its bitrate,
+	// since noisy inputs are more complex and require more bits to encode. To help
+	// restore loss of detail after applying the filter, you can optionally add
+	// texture or sharpening as an additional step. Jobs that use this feature incur
+	// pro-tier pricing. To not apply advanced input filtering: Choose Disabled.
+	// Note that you can still apply basic filtering with Deblock and Denoise.
+	AdvancedInputFilter *string `locationName:"advancedInputFilter" type:"string" enum:"AdvancedInputFilter"`
+
+	// Optional settings for Advanced input filter when you set Advanced input filter
+	// to Enabled.
+	AdvancedInputFilterSettings *AdvancedInputFilterSettings `locationName:"advancedInputFilterSettings" type:"structure"`
+
 	// Use audio selector groups to combine multiple sidecar audio inputs so that
 	// you can assign them to a single output audio tab (AudioDescription). Note
 	// that, if you're working with embedded audio, it's simpler to assign multiple
@@ -14637,7 +15228,7 @@ type Input struct {
 	AudioSelectors map[string]*AudioSelector `locationName:"audioSelectors" type:"map"`
 
 	// Use captions selectors to specify the captions data from your input that
-	// you use in your outputs. You can use up to 20 captions selectors per input.
+	// you use in your outputs. You can use up to 100 captions selectors per input.
 	CaptionSelectors map[string]*CaptionSelector `locationName:"captionSelectors" type:"map"`
 
 	// Use Cropping selection (crop) to specify the video area that the service
@@ -14681,17 +15272,20 @@ type Input struct {
 	// that contain assets referenced by the CPL.
 	FileInput *string `locationName:"fileInput" type:"string"`
 
-	// Specify how the transcoding service applies the denoise and deblock filters.
-	// You must also enable the filters separately, with Denoise (InputDenoiseFilter)
-	// and Deblock (InputDeblockFilter). * Auto - The transcoding service determines
-	// whether to apply filtering, depending on input type and quality. * Disable
-	// - The input is not filtered. This is true even if you use the API to enable
-	// them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The input
-	// is filtered regardless of input type.
+	// Specify whether to apply input filtering to improve the video quality of
+	// your input. To apply filtering depending on your input type and quality:
+	// Choose Auto. To apply no filtering: Choose Disable. To apply filtering regardless
+	// of your input type and quality: Choose Force. When you do, you must also
+	// specify a value for Filter strength.
 	FilterEnable *string `locationName:"filterEnable" type:"string" enum:"InputFilterEnable"`
 
-	// Use Filter strength (FilterStrength) to adjust the magnitude the input filter
-	// settings (Deblock and Denoise). The range is -5 to 5. Default is 0.
+	// Specify the strength of the input filter. To apply an automatic amount of
+	// filtering based the compression artifacts measured in your input: We recommend
+	// that you leave Filter strength blank and set Filter enable to Auto. To manually
+	// apply filtering: Enter a value from 1 to 5, where 1 is the least amount of
+	// filtering and 5 is the most. The value that you enter applies to the strength
+	// of the Deblock or Denoise filters, or to the strength of the Advanced input
+	// filter.
 	FilterStrength *int64 `locationName:"filterStrength" type:"integer"`
 
 	// Enable the image inserter feature to include a graphic overlay on your video.
@@ -14799,9 +15393,6 @@ func (s *Input) Validate() error {
 	if s.DolbyVisionMetadataXml != nil && len(*s.DolbyVisionMetadataXml) < 14 {
 		invalidParams.Add(request.NewErrParamMinLen("DolbyVisionMetadataXml", 14))
 	}
-	if s.FilterStrength != nil && *s.FilterStrength < -5 {
-		invalidParams.Add(request.NewErrParamMinValue("FilterStrength", -5))
-	}
 	if s.ProgramNumber != nil && *s.ProgramNumber < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("ProgramNumber", 1))
 	}
@@ -14863,6 +15454,18 @@ func (s *Input) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAdvancedInputFilter sets the AdvancedInputFilter field's value.
+func (s *Input) SetAdvancedInputFilter(v string) *Input {
+	s.AdvancedInputFilter = &v
+	return s
+}
+
+// SetAdvancedInputFilterSettings sets the AdvancedInputFilterSettings field's value.
+func (s *Input) SetAdvancedInputFilterSettings(v *AdvancedInputFilterSettings) *Input {
+	s.AdvancedInputFilterSettings = v
+	return s
 }
 
 // SetAudioSelectorGroups sets the AudioSelectorGroups field's value.
@@ -15151,6 +15754,23 @@ func (s *InputDecryptionSettings) SetKmsKeyRegion(v string) *InputDecryptionSett
 type InputTemplate struct {
 	_ struct{} `type:"structure"`
 
+	// Use to remove noise, blocking, blurriness, or ringing from your input as
+	// a pre-filter step before encoding. The Advanced input filter removes more
+	// types of compression artifacts and is an improvement when compared to basic
+	// Deblock and Denoise filters. To remove video compression artifacts from your
+	// input and improve the video quality: Choose Enabled. Additionally, this filter
+	// can help increase the video quality of your output relative to its bitrate,
+	// since noisy inputs are more complex and require more bits to encode. To help
+	// restore loss of detail after applying the filter, you can optionally add
+	// texture or sharpening as an additional step. Jobs that use this feature incur
+	// pro-tier pricing. To not apply advanced input filtering: Choose Disabled.
+	// Note that you can still apply basic filtering with Deblock and Denoise.
+	AdvancedInputFilter *string `locationName:"advancedInputFilter" type:"string" enum:"AdvancedInputFilter"`
+
+	// Optional settings for Advanced input filter when you set Advanced input filter
+	// to Enabled.
+	AdvancedInputFilterSettings *AdvancedInputFilterSettings `locationName:"advancedInputFilterSettings" type:"structure"`
+
 	// Use audio selector groups to combine multiple sidecar audio inputs so that
 	// you can assign them to a single output audio tab (AudioDescription). Note
 	// that, if you're working with embedded audio, it's simpler to assign multiple
@@ -15164,7 +15784,7 @@ type InputTemplate struct {
 	AudioSelectors map[string]*AudioSelector `locationName:"audioSelectors" type:"map"`
 
 	// Use captions selectors to specify the captions data from your input that
-	// you use in your outputs. You can use up to 20 captions selectors per input.
+	// you use in your outputs. You can use up to 100 captions selectors per input.
 	CaptionSelectors map[string]*CaptionSelector `locationName:"captionSelectors" type:"map"`
 
 	// Use Cropping selection (crop) to specify the video area that the service
@@ -15193,17 +15813,20 @@ type InputTemplate struct {
 	// read permissions to this file. For more information, see https://docs.aws.amazon.com/mediaconvert/latest/ug/iam-role.html.
 	DolbyVisionMetadataXml *string `locationName:"dolbyVisionMetadataXml" min:"14" type:"string"`
 
-	// Specify how the transcoding service applies the denoise and deblock filters.
-	// You must also enable the filters separately, with Denoise (InputDenoiseFilter)
-	// and Deblock (InputDeblockFilter). * Auto - The transcoding service determines
-	// whether to apply filtering, depending on input type and quality. * Disable
-	// - The input is not filtered. This is true even if you use the API to enable
-	// them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The input
-	// is filtered regardless of input type.
+	// Specify whether to apply input filtering to improve the video quality of
+	// your input. To apply filtering depending on your input type and quality:
+	// Choose Auto. To apply no filtering: Choose Disable. To apply filtering regardless
+	// of your input type and quality: Choose Force. When you do, you must also
+	// specify a value for Filter strength.
 	FilterEnable *string `locationName:"filterEnable" type:"string" enum:"InputFilterEnable"`
 
-	// Use Filter strength (FilterStrength) to adjust the magnitude the input filter
-	// settings (Deblock and Denoise). The range is -5 to 5. Default is 0.
+	// Specify the strength of the input filter. To apply an automatic amount of
+	// filtering based the compression artifacts measured in your input: We recommend
+	// that you leave Filter strength blank and set Filter enable to Auto. To manually
+	// apply filtering: Enter a value from 1 to 5, where 1 is the least amount of
+	// filtering and 5 is the most. The value that you enter applies to the strength
+	// of the Deblock or Denoise filters, or to the strength of the Advanced input
+	// filter.
 	FilterStrength *int64 `locationName:"filterStrength" type:"integer"`
 
 	// Enable the image inserter feature to include a graphic overlay on your video.
@@ -15296,9 +15919,6 @@ func (s *InputTemplate) Validate() error {
 	if s.DolbyVisionMetadataXml != nil && len(*s.DolbyVisionMetadataXml) < 14 {
 		invalidParams.Add(request.NewErrParamMinLen("DolbyVisionMetadataXml", 14))
 	}
-	if s.FilterStrength != nil && *s.FilterStrength < -5 {
-		invalidParams.Add(request.NewErrParamMinValue("FilterStrength", -5))
-	}
 	if s.ProgramNumber != nil && *s.ProgramNumber < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("ProgramNumber", 1))
 	}
@@ -15350,6 +15970,18 @@ func (s *InputTemplate) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAdvancedInputFilter sets the AdvancedInputFilter field's value.
+func (s *InputTemplate) SetAdvancedInputFilter(v string) *InputTemplate {
+	s.AdvancedInputFilter = &v
+	return s
+}
+
+// SetAdvancedInputFilterSettings sets the AdvancedInputFilterSettings field's value.
+func (s *InputTemplate) SetAdvancedInputFilterSettings(v *AdvancedInputFilterSettings) *InputTemplate {
+	s.AdvancedInputFilterSettings = v
+	return s
 }
 
 // SetAudioSelectorGroups sets the AudioSelectorGroups field's value.
@@ -15761,6 +16393,13 @@ type Job struct {
 	// Elemental MediaConvert costs on any billing report that you set up.
 	BillingTagsSource *string `locationName:"billingTagsSource" type:"string" enum:"BillingTagsSource"`
 
+	// Prevent duplicate jobs from being created and ensure idempotency for your
+	// requests. A client request token can be any string that includes up to 64
+	// ASCII characters. If you reuse a client request token within one minute of
+	// a successful request, the API returns the job details of the original request
+	// instead. For more information see https://docs.aws.amazon.com/mediaconvert/latest/apireference/idempotency.html.
+	ClientRequestToken *string `locationName:"clientRequestToken" type:"string"`
+
 	// The time, in Unix epoch format in seconds, when the job got created.
 	CreatedAt *time.Time `locationName:"createdAt" type:"timestamp" timestampFormat:"unixTimestamp"`
 
@@ -15849,6 +16488,10 @@ type Job struct {
 	// User-defined metadata that you want to associate with an MediaConvert job.
 	// You specify metadata in key/value pairs.
 	UserMetadata map[string]*string `locationName:"userMetadata" type:"map"`
+
+	// Contains any warning messages for the job. Use to help identify potential
+	// issues with your input, output, or job. For more information, see https://docs.aws.amazon.com/mediaconvert/latest/ug/warning_codes.html
+	Warnings []*WarningGroup `locationName:"warnings" type:"list"`
 }
 
 // String returns the string representation.
@@ -15890,6 +16533,12 @@ func (s *Job) SetArn(v string) *Job {
 // SetBillingTagsSource sets the BillingTagsSource field's value.
 func (s *Job) SetBillingTagsSource(v string) *Job {
 	s.BillingTagsSource = &v
+	return s
+}
+
+// SetClientRequestToken sets the ClientRequestToken field's value.
+func (s *Job) SetClientRequestToken(v string) *Job {
+	s.ClientRequestToken = &v
 	return s
 }
 
@@ -16016,6 +16665,12 @@ func (s *Job) SetTiming(v *Timing) *Job {
 // SetUserMetadata sets the UserMetadata field's value.
 func (s *Job) SetUserMetadata(v map[string]*string) *Job {
 	s.UserMetadata = v
+	return s
+}
+
+// SetWarnings sets the Warnings field's value.
+func (s *Job) SetWarnings(v []*WarningGroup) *Job {
+	s.Warnings = v
 	return s
 }
 
@@ -18679,11 +19334,11 @@ type MovSettings struct {
 	// video codec is MPEG2.
 	Mpeg2FourCCControl *string `locationName:"mpeg2FourCCControl" type:"string" enum:"MovMpeg2FourCCControl"`
 
-	// To make this output compatible with Omenon, keep the default value, OMNEON.
-	// Unless you need Omneon compatibility, set this value to NONE. When you keep
-	// the default value, OMNEON, MediaConvert increases the length of the edit
-	// list atom. This might cause file rejections when a recipient of the output
-	// file doesn't expct this extra padding.
+	// Unless you need Omneon compatibility: Keep the default value, None. To make
+	// this output compatible with Omneon: Choose Omneon. When you do, MediaConvert
+	// increases the length of the 'elst' edit list atom. Note that this might cause
+	// file rejections when a recipient of the output file doesn't expect this extra
+	// padding.
 	PaddingControl *string `locationName:"paddingControl" type:"string" enum:"MovPaddingControl"`
 
 	// Always keep the default value (SELF_CONTAINED) for this setting.
@@ -19047,6 +19702,17 @@ type MpdSettings struct {
 	// to None or leave blank.
 	KlvMetadata *string `locationName:"klvMetadata" type:"string" enum:"MpdKlvMetadata"`
 
+	// To add an InbandEventStream element in your output MPD manifest for each
+	// type of event message, set Manifest metadata signaling to Enabled. For ID3
+	// event messages, the InbandEventStream element schemeIdUri will be same value
+	// that you specify for ID3 metadata scheme ID URI. For SCTE35 event messages,
+	// the InbandEventStream element schemeIdUri will be "urn:scte:scte35:2013:bin".
+	// To leave these elements out of your output MPD manifest, set Manifest metadata
+	// signaling to Disabled. To enable Manifest metadata signaling, you must also
+	// set SCTE-35 source to Passthrough, ESAM SCTE-35 to insert, or ID3 metadata
+	// (TimedMetadata) to Passthrough.
+	ManifestMetadataSignaling *string `locationName:"manifestMetadataSignaling" type:"string" enum:"MpdManifestMetadataSignaling"`
+
 	// Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 	// INSERT to put SCTE-35 markers in this output at the insertion points that
 	// you specify in an ESAM XML document. Provide the document in the setting
@@ -19065,6 +19731,25 @@ type MpdSettings struct {
 	// metadata in a separate Event Message (eMSG) box. To exclude this ID3 metadata:
 	// Set ID3 metadata to None (NONE) or leave blank.
 	TimedMetadata *string `locationName:"timedMetadata" type:"string" enum:"MpdTimedMetadata"`
+
+	// Specify the event message box (eMSG) version for ID3 timed metadata in your
+	// output.For more information, see ISO/IEC 23009-1:2022 section 5.10.3.3.3
+	// Syntax.Leave blank to use the default value Version 0.When you specify Version
+	// 1, you must also set ID3 metadata (timedMetadata) to Passthrough.
+	TimedMetadataBoxVersion *string `locationName:"timedMetadataBoxVersion" type:"string" enum:"MpdTimedMetadataBoxVersion"`
+
+	// Specify the event message box (eMSG) scheme ID URI (scheme_id_uri) for ID3
+	// timed metadata in your output. For more information, see ISO/IEC 23009-1:2022
+	// section 5.10.3.3.4 Semantics. Leave blank to use the default value: https://aomedia.org/emsg/ID3
+	// When you specify a value for ID3 metadata scheme ID URI, you must also set
+	// ID3 metadata (timedMetadata) to Passthrough.
+	TimedMetadataSchemeIdUri *string `locationName:"timedMetadataSchemeIdUri" type:"string"`
+
+	// Specify the event message box (eMSG) value for ID3 timed metadata in your
+	// output. For more information, see ISO/IEC 23009-1:2022 section 5.10.3.3.4
+	// Semantics. When you specify a value for ID3 Metadata Value, you must also
+	// set ID3 metadata (timedMetadata) to Passthrough.
+	TimedMetadataValue *string `locationName:"timedMetadataValue" type:"string"`
 }
 
 // String returns the string representation.
@@ -19109,6 +19794,12 @@ func (s *MpdSettings) SetKlvMetadata(v string) *MpdSettings {
 	return s
 }
 
+// SetManifestMetadataSignaling sets the ManifestMetadataSignaling field's value.
+func (s *MpdSettings) SetManifestMetadataSignaling(v string) *MpdSettings {
+	s.ManifestMetadataSignaling = &v
+	return s
+}
+
 // SetScte35Esam sets the Scte35Esam field's value.
 func (s *MpdSettings) SetScte35Esam(v string) *MpdSettings {
 	s.Scte35Esam = &v
@@ -19124,6 +19815,24 @@ func (s *MpdSettings) SetScte35Source(v string) *MpdSettings {
 // SetTimedMetadata sets the TimedMetadata field's value.
 func (s *MpdSettings) SetTimedMetadata(v string) *MpdSettings {
 	s.TimedMetadata = &v
+	return s
+}
+
+// SetTimedMetadataBoxVersion sets the TimedMetadataBoxVersion field's value.
+func (s *MpdSettings) SetTimedMetadataBoxVersion(v string) *MpdSettings {
+	s.TimedMetadataBoxVersion = &v
+	return s
+}
+
+// SetTimedMetadataSchemeIdUri sets the TimedMetadataSchemeIdUri field's value.
+func (s *MpdSettings) SetTimedMetadataSchemeIdUri(v string) *MpdSettings {
+	s.TimedMetadataSchemeIdUri = &v
+	return s
+}
+
+// SetTimedMetadataValue sets the TimedMetadataValue field's value.
+func (s *MpdSettings) SetTimedMetadataValue(v string) *MpdSettings {
+	s.TimedMetadataValue = &v
 	return s
 }
 
@@ -19170,15 +19879,16 @@ type Mpeg2Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Mpeg2FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Mpeg2FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -19214,6 +19924,12 @@ type Mpeg2Settings struct {
 	// Specify the units for GOP size (GopSize). If you don't specify a value here,
 	// by default the encoder measures GOP size in frames.
 	GopSizeUnits *string `locationName:"gopSizeUnits" type:"string" enum:"Mpeg2GopSizeUnits"`
+
+	// If your downstream systems have strict buffer requirements: Specify the minimum
+	// percentage of the HRD buffer that's available at the end of each encoded
+	// video segment. For the best video quality: Set to 0 or leave blank to automatically
+	// determine the final buffer fill percentage.
+	HrdBufferFinalFillPercentage *int64 `locationName:"hrdBufferFinalFillPercentage" type:"integer"`
 
 	// Percentage of the buffer that should initially be filled (HRD buffer model).
 	HrdBufferInitialFillPercentage *int64 `locationName:"hrdBufferInitialFillPercentage" type:"integer"`
@@ -19358,7 +20074,7 @@ type Mpeg2Settings struct {
 
 	// Specify whether this output's video uses the D10 syntax. Keep the default
 	// value to not use the syntax. Related settings: When you choose D10 (D_10)
-	// for your MXF profile (profile), you must also set this value to to D10 (D_10).
+	// for your MXF profile (profile), you must also set this value to D10 (D_10).
 	Syntax *string `locationName:"syntax" type:"string" enum:"Mpeg2Syntax"`
 
 	// When you do frame rate conversion from 23.976 frames per second (fps) to
@@ -19502,6 +20218,12 @@ func (s *Mpeg2Settings) SetGopSize(v float64) *Mpeg2Settings {
 // SetGopSizeUnits sets the GopSizeUnits field's value.
 func (s *Mpeg2Settings) SetGopSizeUnits(v string) *Mpeg2Settings {
 	s.GopSizeUnits = &v
+	return s
+}
+
+// SetHrdBufferFinalFillPercentage sets the HrdBufferFinalFillPercentage field's value.
+func (s *Mpeg2Settings) SetHrdBufferFinalFillPercentage(v int64) *Mpeg2Settings {
+	s.HrdBufferFinalFillPercentage = &v
 	return s
 }
 
@@ -20302,11 +21024,11 @@ func (s *NielsenNonLinearWatermarkSettings) SetUniqueTicPerAudioTrack(v string) 
 	return s
 }
 
-// Enable the Noise reducer (NoiseReducer) feature to remove noise from your
-// video output if necessary. Enable or disable this feature for each output
-// individually. This setting is disabled by default. When you enable Noise
-// reducer (NoiseReducer), you must also select a value for Noise reducer filter
-// (NoiseReducerFilter).
+// Enable the Noise reducer feature to remove noise from your video output if
+// necessary. Enable or disable this feature for each output individually. This
+// setting is disabled by default. When you enable Noise reducer, you must also
+// select a value for Noise reducer filter. For AVC outputs, when you include
+// Noise reducer, you cannot include the Bandwidth reduction filter.
 type NoiseReducer struct {
 	_ struct{} `type:"structure"`
 
@@ -21611,15 +22333,16 @@ type ProresSettings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"ProresFramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"ProresFramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -24053,15 +24776,16 @@ type Vc3Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Vc3FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Vc3FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -24237,7 +24961,11 @@ type VideoCodecSettings struct {
 	AvcIntraSettings *AvcIntraSettings `locationName:"avcIntraSettings" type:"structure"`
 
 	// Specifies the video codec. This must be equal to one of the enum values defined
-	// by the object VideoCodec.
+	// by the object VideoCodec. To passthrough the video stream of your input JPEG2000,
+	// VC-3, AVC-INTRA or Apple ProRes video without any video encoding: Choose
+	// Passthrough. If you have multiple input videos, note that they must have
+	// identical encoding attributes. When you choose Passthrough, your output container
+	// must be MXF or QuickTime MOV.
 	Codec *string `locationName:"codec" type:"string" enum:"VideoCodec"`
 
 	// Required when you set (Codec) under (VideoDescription)>(CodecSettings) to
@@ -24481,9 +25209,11 @@ type VideoDescription struct {
 	// on all frames of this video output.
 	FixedAfd *int64 `locationName:"fixedAfd" type:"integer"`
 
-	// Use the Height (Height) setting to define the video resolution height for
-	// this output. Specify in pixels. If you don't provide a value here, the service
-	// will use the input height.
+	// Use Height to define the video resolution height, in pixels, for this output.
+	// To use the same resolution as your input: Leave both Width and Height blank.
+	// To evenly scale from your input resolution: Leave Height blank and enter
+	// a value for Width. For example, if your input is 1920x1080 and you set Width
+	// to 1280, your output will be 1280x720.
 	Height *int64 `locationName:"height" min:"32" type:"integer"`
 
 	// Use Selection placement (position) to define the video area in your output
@@ -24534,9 +25264,11 @@ type VideoDescription struct {
 	// by default.
 	VideoPreprocessors *VideoPreprocessor `locationName:"videoPreprocessors" type:"structure"`
 
-	// Use Width (Width) to define the video resolution width, in pixels, for this
-	// output. If you don't provide a value here, the service will use the input
-	// width.
+	// Use Width to define the video resolution width, in pixels, for this output.
+	// To use the same resolution as your input: Leave both Width and Height blank.
+	// To evenly scale from your input resolution: Leave Width blank and enter a
+	// value for Height. For example, if your input is 1920x1080 and you set Height
+	// to 720, your output will be 1280x720.
 	Width *int64 `locationName:"width" min:"32" type:"integer"`
 }
 
@@ -24750,9 +25482,11 @@ type VideoPreprocessor struct {
 	// This setting is disabled by default.
 	ImageInserter *ImageInserter `locationName:"imageInserter" type:"structure"`
 
-	// Enable the Noise reducer (NoiseReducer) feature to remove noise from your
-	// video output if necessary. Enable or disable this feature for each output
-	// individually. This setting is disabled by default.
+	// Enable the Noise reducer feature to remove noise from your video output if
+	// necessary. Enable or disable this feature for each output individually. This
+	// setting is disabled by default. When you enable Noise reducer, you must also
+	// select a value for Noise reducer filter. For AVC outputs, when you include
+	// Noise reducer, you cannot include the Bandwidth reduction filter.
 	NoiseReducer *NoiseReducer `locationName:"noiseReducer" type:"structure"`
 
 	// If you work with a third party video watermarking partner, use the group
@@ -24879,14 +25613,20 @@ type VideoSelector struct {
 	AlphaBehavior *string `locationName:"alphaBehavior" type:"string" enum:"AlphaBehavior"`
 
 	// If your input video has accurate color space metadata, or if you don't know
-	// about color space, leave this set to the default value Follow (FOLLOW). The
-	// service will automatically detect your input color space. If your input video
-	// has metadata indicating the wrong color space, specify the accurate color
+	// about color space: Keep the default value, Follow. MediaConvert will automatically
+	// detect your input color space. If your input video has metadata indicating
+	// the wrong color space, or has missing metadata: Specify the accurate color
 	// space here. If your input video is HDR 10 and the SMPTE ST 2086 Mastering
 	// Display Color Volume static metadata isn't present in your video stream,
-	// or if that metadata is present but not accurate, choose Force HDR 10 (FORCE_HDR10)
-	// here and specify correct values in the input HDR 10 metadata (Hdr10Metadata)
-	// settings. For more information about MediaConvert HDR jobs, see https://docs.aws.amazon.com/console/mediaconvert/hdr.
+	// or if that metadata is present but not accurate: Choose Force HDR 10. Specify
+	// correct values in the input HDR 10 metadata settings. For more information
+	// about HDR jobs, see https://docs.aws.amazon.com/console/mediaconvert/hdr.
+	// When you specify an input color space, MediaConvert uses the following color
+	// space metadata, which includes color primaries, transfer characteristics,
+	// and matrix coefficients: * HDR 10: BT.2020, PQ, BT.2020 non-constant * HLG
+	// 2020: BT.2020, HLG, BT.2020 non-constant * P3DCI (Theater): DCIP3, SMPTE
+	// 428M, BT.709 * P3D65 (SDR): Display P3, sRGB, BT.709 * P3D65 (HDR): Display
+	// P3, PQ, BT.709
 	ColorSpace *string `locationName:"colorSpace" type:"string" enum:"ColorSpace"`
 
 	// There are two sources for color metadata, the input file and the job input
@@ -25157,15 +25897,16 @@ type Vp8Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Vp8FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Vp8FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -25379,15 +26120,16 @@ type Vp9Settings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"Vp9FramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"Vp9FramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -25574,6 +26316,52 @@ func (s *Vp9Settings) SetRateControlMode(v string) *Vp9Settings {
 	return s
 }
 
+// Contains any warning codes and their count for the job.
+type WarningGroup struct {
+	_ struct{} `type:"structure"`
+
+	// Warning code that identifies a specific warning in the job. For more information,
+	// see https://docs.aws.amazon.com/mediaconvert/latest/ug/warning_codes.html
+	//
+	// Code is a required field
+	Code *int64 `locationName:"code" type:"integer" required:"true"`
+
+	// The number of times this warning occurred in the job.
+	//
+	// Count is a required field
+	Count *int64 `locationName:"count" type:"integer" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WarningGroup) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s WarningGroup) GoString() string {
+	return s.String()
+}
+
+// SetCode sets the Code field's value.
+func (s *WarningGroup) SetCode(v int64) *WarningGroup {
+	s.Code = &v
+	return s
+}
+
+// SetCount sets the Count field's value.
+func (s *WarningGroup) SetCount(v int64) *WarningGroup {
+	s.Count = &v
+	return s
+}
+
 // Required when you set (Codec) under (AudioDescriptions)>(CodecSettings) to
 // the value WAV.
 type WavSettings struct {
@@ -25666,13 +26454,16 @@ func (s *WavSettings) SetSampleRate(v int64) *WavSettings {
 type WebvttDestinationSettings struct {
 	_ struct{} `type:"structure"`
 
-	// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
-	// is intended to provide accessibility for people who are deaf or hard of hearing.
-	// When you enable this feature, MediaConvert adds the following attributes
-	// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-	// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
-	// is not intended to provide such accessibility. MediaConvert will not add
-	// the above attributes.
+	// If the WebVTT captions track is intended to provide accessibility for people
+	// who are deaf or hard of hearing: Set Accessibility subtitles to Enabled.
+	// When you do, MediaConvert adds accessibility attributes to your output HLS
+	// or DASH manifest. For HLS manifests, MediaConvert adds the following accessibility
+	// attributes under EXT-X-MEDIA for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+	// and AUTOSELECT="YES". For DASH manifests, MediaConvert adds the following
+	// in the adaptation set for this track: . If the captions track is not intended
+	// to provide such accessibility: Keep the default value, Disabled. When you
+	// do, for DASH manifests, MediaConvert instead adds the following in the adaptation
+	// set for this track: .
 	Accessibility *string `locationName:"accessibility" type:"string" enum:"WebvttAccessibilitySubs"`
 
 	// To use the available style, color, and position information from your input
@@ -26211,15 +27002,16 @@ type XavcSettings struct {
 	FramerateControl *string `locationName:"framerateControl" type:"string" enum:"XavcFramerateControl"`
 
 	// Choose the method that you want MediaConvert to use when increasing or decreasing
-	// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-	// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-	// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-	// smooth picture, but might introduce undesirable video artifacts. For complex
+	// the frame rate. For numerically simple conversions, such as 60 fps to 30
+	// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+	// complex conversions, to avoid stutter: Choose Interpolate. This results in
+	// a smooth picture, but might introduce undesirable video artifacts. For complex
 	// frame rate conversions, especially if your source video has already been
-	// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-	// motion-compensated interpolation. FrameFormer chooses the best conversion
-	// method frame by frame. Note that using FrameFormer increases the transcoding
-	// time and incurs a significant add-on cost.
+	// converted from its original cadence: Choose FrameFormer to do motion-compensated
+	// interpolation. FrameFormer uses the best conversion method frame by frame.
+	// Note that using FrameFormer increases the transcoding time and incurs a significant
+	// add-on cost. When you choose FrameFormer, your input video resolution must
+	// be at least 128x96.
 	FramerateConversionAlgorithm *string `locationName:"framerateConversionAlgorithm" type:"string" enum:"XavcFramerateConversionAlgorithm"`
 
 	// When you use the API for transcode jobs that use frame rate conversion, specify
@@ -26514,11 +27306,14 @@ func AacCodecProfile_Values() []string {
 	}
 }
 
-// Mono (Audio Description), Mono, Stereo, or 5.1 channel layout. Valid values
-// depend on rate control mode and profile. "1.0 - Audio Description (Receiver
-// Mix)" setting receives a stereo description plus control track and emits
-// a mono AAC encode of the description track, with control data emitted in
-// the PES header as per ETSI TS 101 154 Annex E.
+// The Coding mode that you specify determines the number of audio channels
+// and the audio channel layout metadata in your AAC output. Valid coding modes
+// depend on the Rate control mode and Profile that you select. The following
+// list shows the number of audio channels and channel layout for each coding
+// mode. * 1.0 Audio Description (Receiver Mix): One channel, C. Includes audio
+// description data from your stereo input. For more information see ETSI TS
+// 101 154 Annex E. * 1.0 Mono: One channel, C. * 2.0 Stereo: Two channels,
+// L, R. * 5.1 Surround: Six channels, C, L, R, Ls, Rs, LFE.
 const (
 	// AacCodingModeAdReceiverMix is a AacCodingMode enum value
 	AacCodingModeAdReceiverMix = "AD_RECEIVER_MIX"
@@ -26891,6 +27686,80 @@ func AccelerationStatus_Values() []string {
 		AccelerationStatusInProgress,
 		AccelerationStatusAccelerated,
 		AccelerationStatusNotAccelerated,
+	}
+}
+
+// Use to remove noise, blocking, blurriness, or ringing from your input as
+// a pre-filter step before encoding. The Advanced input filter removes more
+// types of compression artifacts and is an improvement when compared to basic
+// Deblock and Denoise filters. To remove video compression artifacts from your
+// input and improve the video quality: Choose Enabled. Additionally, this filter
+// can help increase the video quality of your output relative to its bitrate,
+// since noisy inputs are more complex and require more bits to encode. To help
+// restore loss of detail after applying the filter, you can optionally add
+// texture or sharpening as an additional step. Jobs that use this feature incur
+// pro-tier pricing. To not apply advanced input filtering: Choose Disabled.
+// Note that you can still apply basic filtering with Deblock and Denoise.
+const (
+	// AdvancedInputFilterEnabled is a AdvancedInputFilter enum value
+	AdvancedInputFilterEnabled = "ENABLED"
+
+	// AdvancedInputFilterDisabled is a AdvancedInputFilter enum value
+	AdvancedInputFilterDisabled = "DISABLED"
+)
+
+// AdvancedInputFilter_Values returns all elements of the AdvancedInputFilter enum
+func AdvancedInputFilter_Values() []string {
+	return []string{
+		AdvancedInputFilterEnabled,
+		AdvancedInputFilterDisabled,
+	}
+}
+
+// Add texture and detail to areas of your input video content that were lost
+// after applying the Advanced input filter. To adaptively add texture and reduce
+// softness: Choose Enabled. To not add any texture: Keep the default value,
+// Disabled. We recommend that you choose Disabled for input video content that
+// doesn't have texture, including screen recordings, computer graphics, or
+// cartoons.
+const (
+	// AdvancedInputFilterAddTextureEnabled is a AdvancedInputFilterAddTexture enum value
+	AdvancedInputFilterAddTextureEnabled = "ENABLED"
+
+	// AdvancedInputFilterAddTextureDisabled is a AdvancedInputFilterAddTexture enum value
+	AdvancedInputFilterAddTextureDisabled = "DISABLED"
+)
+
+// AdvancedInputFilterAddTexture_Values returns all elements of the AdvancedInputFilterAddTexture enum
+func AdvancedInputFilterAddTexture_Values() []string {
+	return []string{
+		AdvancedInputFilterAddTextureEnabled,
+		AdvancedInputFilterAddTextureDisabled,
+	}
+}
+
+// Optionally specify the amount of sharpening to apply when you use the Advanced
+// input filter. Sharpening adds contrast to the edges of your video content
+// and can reduce softness. To apply no sharpening: Keep the default value,
+// Off. To apply a minimal amount of sharpening choose Low, or for the maximum
+// choose High.
+const (
+	// AdvancedInputFilterSharpenOff is a AdvancedInputFilterSharpen enum value
+	AdvancedInputFilterSharpenOff = "OFF"
+
+	// AdvancedInputFilterSharpenLow is a AdvancedInputFilterSharpen enum value
+	AdvancedInputFilterSharpenLow = "LOW"
+
+	// AdvancedInputFilterSharpenHigh is a AdvancedInputFilterSharpen enum value
+	AdvancedInputFilterSharpenHigh = "HIGH"
+)
+
+// AdvancedInputFilterSharpen_Values returns all elements of the AdvancedInputFilterSharpen enum
+func AdvancedInputFilterSharpen_Values() []string {
+	return []string{
+		AdvancedInputFilterSharpenOff,
+		AdvancedInputFilterSharpenLow,
+		AdvancedInputFilterSharpenHigh,
 	}
 }
 
@@ -27424,15 +28293,16 @@ func Av1FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// Av1FramerateConversionAlgorithmDuplicateDrop is a Av1FramerateConversionAlgorithm enum value
 	Av1FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -27555,15 +28425,16 @@ func AvcIntraFramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// AvcIntraFramerateConversionAlgorithmDuplicateDrop is a AvcIntraFramerateConversionAlgorithm enum value
 	AvcIntraFramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -27718,6 +28589,69 @@ func AvcIntraUhdQualityTuningLevel_Values() []string {
 	return []string{
 		AvcIntraUhdQualityTuningLevelSinglePass,
 		AvcIntraUhdQualityTuningLevelMultiPass,
+	}
+}
+
+// Optionally specify the level of sharpening to apply when you use the Bandwidth
+// reduction filter. Sharpening adds contrast to the edges of your video content
+// and can reduce softness. Keep the default value Off to apply no sharpening.
+// Set Sharpening strength to Low to apply a minimal amount of sharpening, or
+// High to apply a maximum amount of sharpening.
+const (
+	// BandwidthReductionFilterSharpeningLow is a BandwidthReductionFilterSharpening enum value
+	BandwidthReductionFilterSharpeningLow = "LOW"
+
+	// BandwidthReductionFilterSharpeningMedium is a BandwidthReductionFilterSharpening enum value
+	BandwidthReductionFilterSharpeningMedium = "MEDIUM"
+
+	// BandwidthReductionFilterSharpeningHigh is a BandwidthReductionFilterSharpening enum value
+	BandwidthReductionFilterSharpeningHigh = "HIGH"
+
+	// BandwidthReductionFilterSharpeningOff is a BandwidthReductionFilterSharpening enum value
+	BandwidthReductionFilterSharpeningOff = "OFF"
+)
+
+// BandwidthReductionFilterSharpening_Values returns all elements of the BandwidthReductionFilterSharpening enum
+func BandwidthReductionFilterSharpening_Values() []string {
+	return []string{
+		BandwidthReductionFilterSharpeningLow,
+		BandwidthReductionFilterSharpeningMedium,
+		BandwidthReductionFilterSharpeningHigh,
+		BandwidthReductionFilterSharpeningOff,
+	}
+}
+
+// Specify the strength of the Bandwidth reduction filter. For most workflows,
+// we recommend that you choose Auto to reduce the bandwidth of your output
+// with little to no perceptual decrease in video quality. For high quality
+// and high bitrate outputs, choose Low. For the most bandwidth reduction, choose
+// High. We recommend that you choose High for low bitrate outputs. Note that
+// High may incur a slight increase in the softness of your output.
+const (
+	// BandwidthReductionFilterStrengthLow is a BandwidthReductionFilterStrength enum value
+	BandwidthReductionFilterStrengthLow = "LOW"
+
+	// BandwidthReductionFilterStrengthMedium is a BandwidthReductionFilterStrength enum value
+	BandwidthReductionFilterStrengthMedium = "MEDIUM"
+
+	// BandwidthReductionFilterStrengthHigh is a BandwidthReductionFilterStrength enum value
+	BandwidthReductionFilterStrengthHigh = "HIGH"
+
+	// BandwidthReductionFilterStrengthAuto is a BandwidthReductionFilterStrength enum value
+	BandwidthReductionFilterStrengthAuto = "AUTO"
+
+	// BandwidthReductionFilterStrengthOff is a BandwidthReductionFilterStrength enum value
+	BandwidthReductionFilterStrengthOff = "OFF"
+)
+
+// BandwidthReductionFilterStrength_Values returns all elements of the BandwidthReductionFilterStrength enum
+func BandwidthReductionFilterStrength_Values() []string {
+	return []string{
+		BandwidthReductionFilterStrengthLow,
+		BandwidthReductionFilterStrengthMedium,
+		BandwidthReductionFilterStrengthHigh,
+		BandwidthReductionFilterStrengthAuto,
+		BandwidthReductionFilterStrengthOff,
 	}
 }
 
@@ -28085,6 +29019,26 @@ func CaptionDestinationType_Values() []string {
 	}
 }
 
+// Choose the presentation style of your input SCC captions. To use the same
+// presentation style as your input: Keep the default value, Disabled. To convert
+// paint-on captions to pop-on: Choose Enabled. We also recommend that you choose
+// Enabled if you notice additional repeated lines in your output captions.
+const (
+	// CaptionSourceConvertPaintOnToPopOnEnabled is a CaptionSourceConvertPaintOnToPopOn enum value
+	CaptionSourceConvertPaintOnToPopOnEnabled = "ENABLED"
+
+	// CaptionSourceConvertPaintOnToPopOnDisabled is a CaptionSourceConvertPaintOnToPopOn enum value
+	CaptionSourceConvertPaintOnToPopOnDisabled = "DISABLED"
+)
+
+// CaptionSourceConvertPaintOnToPopOn_Values returns all elements of the CaptionSourceConvertPaintOnToPopOn enum
+func CaptionSourceConvertPaintOnToPopOn_Values() []string {
+	return []string{
+		CaptionSourceConvertPaintOnToPopOnEnabled,
+		CaptionSourceConvertPaintOnToPopOnDisabled,
+	}
+}
+
 // Use Source (SourceType) to identify the format of your input captions. The
 // service cannot auto-detect caption format.
 const (
@@ -28333,6 +29287,28 @@ func CmafManifestDurationFormat_Values() []string {
 	}
 }
 
+// Specify how the value for bandwidth is determined for each video Representation
+// in your output MPD manifest. We recommend that you choose a MPD manifest
+// bandwidth type that is compatible with your downstream player configuration.
+// Max: Use the same value that you specify for Max bitrate in the video output,
+// in bits per second. Average: Use the calculated average bitrate of the encoded
+// video output, in bits per second.
+const (
+	// CmafMpdManifestBandwidthTypeAverage is a CmafMpdManifestBandwidthType enum value
+	CmafMpdManifestBandwidthTypeAverage = "AVERAGE"
+
+	// CmafMpdManifestBandwidthTypeMax is a CmafMpdManifestBandwidthType enum value
+	CmafMpdManifestBandwidthTypeMax = "MAX"
+)
+
+// CmafMpdManifestBandwidthType_Values returns all elements of the CmafMpdManifestBandwidthType enum
+func CmafMpdManifestBandwidthType_Values() []string {
+	return []string{
+		CmafMpdManifestBandwidthTypeAverage,
+		CmafMpdManifestBandwidthTypeMax,
+	}
+}
+
 // Specify whether your DASH profile is on-demand or main. When you choose Main
 // profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
 // in your .mpd DASH manifest. When you choose On-demand (ON_DEMAND_PROFILE),
@@ -28459,6 +29435,29 @@ func CmafTargetDurationCompatibilityMode_Values() []string {
 	return []string{
 		CmafTargetDurationCompatibilityModeLegacy,
 		CmafTargetDurationCompatibilityModeSpecCompliant,
+	}
+}
+
+// Specify the video sample composition time offset mode in the output fMP4
+// TRUN box. For wider player compatibility, set Video composition offsets to
+// Unsigned or leave blank. The earliest presentation time may be greater than
+// zero, and sample composition time offsets will increment using unsigned integers.
+// For strict fMP4 video and audio timing, set Video composition offsets to
+// Signed. The earliest presentation time will be equal to zero, and sample
+// composition time offsets will increment using signed integers.
+const (
+	// CmafVideoCompositionOffsetsSigned is a CmafVideoCompositionOffsets enum value
+	CmafVideoCompositionOffsetsSigned = "SIGNED"
+
+	// CmafVideoCompositionOffsetsUnsigned is a CmafVideoCompositionOffsets enum value
+	CmafVideoCompositionOffsetsUnsigned = "UNSIGNED"
+)
+
+// CmafVideoCompositionOffsets_Values returns all elements of the CmafVideoCompositionOffsets enum
+func CmafVideoCompositionOffsets_Values() []string {
+	return []string{
+		CmafVideoCompositionOffsetsSigned,
+		CmafVideoCompositionOffsetsUnsigned,
 	}
 }
 
@@ -28648,6 +29647,31 @@ func CmfcKlvMetadata_Values() []string {
 	}
 }
 
+// To add an InbandEventStream element in your output MPD manifest for each
+// type of event message, set Manifest metadata signaling to Enabled. For ID3
+// event messages, the InbandEventStream element schemeIdUri will be same value
+// that you specify for ID3 metadata scheme ID URI. For SCTE35 event messages,
+// the InbandEventStream element schemeIdUri will be "urn:scte:scte35:2013:bin".
+// To leave these elements out of your output MPD manifest, set Manifest metadata
+// signaling to Disabled. To enable Manifest metadata signaling, you must also
+// set SCTE-35 source to Passthrough, ESAM SCTE-35 to insert, or ID3 metadata
+// (TimedMetadata) to Passthrough.
+const (
+	// CmfcManifestMetadataSignalingEnabled is a CmfcManifestMetadataSignaling enum value
+	CmfcManifestMetadataSignalingEnabled = "ENABLED"
+
+	// CmfcManifestMetadataSignalingDisabled is a CmfcManifestMetadataSignaling enum value
+	CmfcManifestMetadataSignalingDisabled = "DISABLED"
+)
+
+// CmfcManifestMetadataSignaling_Values returns all elements of the CmfcManifestMetadataSignaling enum
+func CmfcManifestMetadataSignaling_Values() []string {
+	return []string{
+		CmfcManifestMetadataSignalingEnabled,
+		CmfcManifestMetadataSignalingDisabled,
+	}
+}
+
 // Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 // INSERT to put SCTE-35 markers in this output at the insertion points that
 // you specify in an ESAM XML document. Provide the document in the setting
@@ -28709,6 +29733,26 @@ func CmfcTimedMetadata_Values() []string {
 	}
 }
 
+// Specify the event message box (eMSG) version for ID3 timed metadata in your
+// output.For more information, see ISO/IEC 23009-1:2022 section 5.10.3.3.3
+// Syntax.Leave blank to use the default value Version 0.When you specify Version
+// 1, you must also set ID3 metadata (timedMetadata) to Passthrough.
+const (
+	// CmfcTimedMetadataBoxVersionVersion0 is a CmfcTimedMetadataBoxVersion enum value
+	CmfcTimedMetadataBoxVersionVersion0 = "VERSION_0"
+
+	// CmfcTimedMetadataBoxVersionVersion1 is a CmfcTimedMetadataBoxVersion enum value
+	CmfcTimedMetadataBoxVersionVersion1 = "VERSION_1"
+)
+
+// CmfcTimedMetadataBoxVersion_Values returns all elements of the CmfcTimedMetadataBoxVersion enum
+func CmfcTimedMetadataBoxVersion_Values() []string {
+	return []string{
+		CmfcTimedMetadataBoxVersionVersion0,
+		CmfcTimedMetadataBoxVersionVersion1,
+	}
+}
+
 // Choose Insert (INSERT) for this setting to include color metadata in this
 // output. Choose Ignore (IGNORE) to exclude color metadata from this output.
 // If you don't specify a value, the service sets this to Insert by default.
@@ -28729,14 +29773,20 @@ func ColorMetadata_Values() []string {
 }
 
 // If your input video has accurate color space metadata, or if you don't know
-// about color space, leave this set to the default value Follow (FOLLOW). The
-// service will automatically detect your input color space. If your input video
-// has metadata indicating the wrong color space, specify the accurate color
+// about color space: Keep the default value, Follow. MediaConvert will automatically
+// detect your input color space. If your input video has metadata indicating
+// the wrong color space, or has missing metadata: Specify the accurate color
 // space here. If your input video is HDR 10 and the SMPTE ST 2086 Mastering
 // Display Color Volume static metadata isn't present in your video stream,
-// or if that metadata is present but not accurate, choose Force HDR 10 (FORCE_HDR10)
-// here and specify correct values in the input HDR 10 metadata (Hdr10Metadata)
-// settings. For more information about MediaConvert HDR jobs, see https://docs.aws.amazon.com/console/mediaconvert/hdr.
+// or if that metadata is present but not accurate: Choose Force HDR 10. Specify
+// correct values in the input HDR 10 metadata settings. For more information
+// about HDR jobs, see https://docs.aws.amazon.com/console/mediaconvert/hdr.
+// When you specify an input color space, MediaConvert uses the following color
+// space metadata, which includes color primaries, transfer characteristics,
+// and matrix coefficients: * HDR 10: BT.2020, PQ, BT.2020 non-constant * HLG
+// 2020: BT.2020, HLG, BT.2020 non-constant * P3DCI (Theater): DCIP3, SMPTE
+// 428M, BT.709 * P3D65 (SDR): Display P3, sRGB, BT.709 * P3D65 (HDR): Display
+// P3, PQ, BT.709
 const (
 	// ColorSpaceFollow is a ColorSpace enum value
 	ColorSpaceFollow = "FOLLOW"
@@ -28752,6 +29802,15 @@ const (
 
 	// ColorSpaceHlg2020 is a ColorSpace enum value
 	ColorSpaceHlg2020 = "HLG_2020"
+
+	// ColorSpaceP3dci is a ColorSpace enum value
+	ColorSpaceP3dci = "P3DCI"
+
+	// ColorSpaceP3d65Sdr is a ColorSpace enum value
+	ColorSpaceP3d65Sdr = "P3D65_SDR"
+
+	// ColorSpaceP3d65Hdr is a ColorSpace enum value
+	ColorSpaceP3d65Hdr = "P3D65_HDR"
 )
 
 // ColorSpace_Values returns all elements of the ColorSpace enum
@@ -28762,6 +29821,9 @@ func ColorSpace_Values() []string {
 		ColorSpaceRec709,
 		ColorSpaceHdr10,
 		ColorSpaceHlg2020,
+		ColorSpaceP3dci,
+		ColorSpaceP3d65Sdr,
+		ColorSpaceP3d65Hdr,
 	}
 }
 
@@ -28769,8 +29831,13 @@ func ColorSpace_Values() []string {
 // between HDR formats, between SDR formats, from SDR to HDR, and from HDR to
 // SDR. SDR to HDR conversion doesn't upgrade the dynamic range. The converted
 // video has an HDR format, but visually appears the same as an unconverted
-// output. HDR to SDR conversion uses Elemental tone mapping technology to approximate
-// the outcome of manually regrading from HDR to SDR.
+// output. HDR to SDR conversion uses tone mapping to approximate the outcome
+// of manually regrading from HDR to SDR. When you specify an output color space,
+// MediaConvert uses the following color space metadata, which includes color
+// primaries, transfer characteristics, and matrix coefficients: * HDR 10: BT.2020,
+// PQ, BT.2020 non-constant * HLG 2020: BT.2020, HLG, BT.2020 non-constant *
+// P3DCI (Theater): DCIP3, SMPTE 428M, BT.709 * P3D65 (SDR): Display P3, sRGB,
+// BT.709 * P3D65 (HDR): Display P3, PQ, BT.709
 const (
 	// ColorSpaceConversionNone is a ColorSpaceConversion enum value
 	ColorSpaceConversionNone = "NONE"
@@ -28786,6 +29853,15 @@ const (
 
 	// ColorSpaceConversionForceHlg2020 is a ColorSpaceConversion enum value
 	ColorSpaceConversionForceHlg2020 = "FORCE_HLG_2020"
+
+	// ColorSpaceConversionForceP3dci is a ColorSpaceConversion enum value
+	ColorSpaceConversionForceP3dci = "FORCE_P3DCI"
+
+	// ColorSpaceConversionForceP3d65Sdr is a ColorSpaceConversion enum value
+	ColorSpaceConversionForceP3d65Sdr = "FORCE_P3D65_SDR"
+
+	// ColorSpaceConversionForceP3d65Hdr is a ColorSpaceConversion enum value
+	ColorSpaceConversionForceP3d65Hdr = "FORCE_P3D65_HDR"
 )
 
 // ColorSpaceConversion_Values returns all elements of the ColorSpaceConversion enum
@@ -28796,6 +29872,9 @@ func ColorSpaceConversion_Values() []string {
 		ColorSpaceConversionForce709,
 		ColorSpaceConversionForceHdr10,
 		ColorSpaceConversionForceHlg2020,
+		ColorSpaceConversionForceP3dci,
+		ColorSpaceConversionForceP3d65Sdr,
+		ColorSpaceConversionForceP3d65Hdr,
 	}
 }
 
@@ -29003,6 +30082,28 @@ func DashIsoIntervalCadence_Values() []string {
 	}
 }
 
+// Specify how the value for bandwidth is determined for each video Representation
+// in your output MPD manifest. We recommend that you choose a MPD manifest
+// bandwidth type that is compatible with your downstream player configuration.
+// Max: Use the same value that you specify for Max bitrate in the video output,
+// in bits per second. Average: Use the calculated average bitrate of the encoded
+// video output, in bits per second.
+const (
+	// DashIsoMpdManifestBandwidthTypeAverage is a DashIsoMpdManifestBandwidthType enum value
+	DashIsoMpdManifestBandwidthTypeAverage = "AVERAGE"
+
+	// DashIsoMpdManifestBandwidthTypeMax is a DashIsoMpdManifestBandwidthType enum value
+	DashIsoMpdManifestBandwidthTypeMax = "MAX"
+)
+
+// DashIsoMpdManifestBandwidthType_Values returns all elements of the DashIsoMpdManifestBandwidthType enum
+func DashIsoMpdManifestBandwidthType_Values() []string {
+	return []string{
+		DashIsoMpdManifestBandwidthTypeAverage,
+		DashIsoMpdManifestBandwidthTypeMax,
+	}
+}
+
 // Specify whether your DASH profile is on-demand or main. When you choose Main
 // profile (MAIN_PROFILE), the service signals urn:mpeg:dash:profile:isoff-main:2011
 // in your .mpd DASH manifest. When you choose On-demand (ON_DEMAND_PROFILE),
@@ -29112,6 +30213,29 @@ func DashIsoSegmentLengthControl_Values() []string {
 	}
 }
 
+// Specify the video sample composition time offset mode in the output fMP4
+// TRUN box. For wider player compatibility, set Video composition offsets to
+// Unsigned or leave blank. The earliest presentation time may be greater than
+// zero, and sample composition time offsets will increment using unsigned integers.
+// For strict fMP4 video and audio timing, set Video composition offsets to
+// Signed. The earliest presentation time will be equal to zero, and sample
+// composition time offsets will increment using signed integers.
+const (
+	// DashIsoVideoCompositionOffsetsSigned is a DashIsoVideoCompositionOffsets enum value
+	DashIsoVideoCompositionOffsetsSigned = "SIGNED"
+
+	// DashIsoVideoCompositionOffsetsUnsigned is a DashIsoVideoCompositionOffsets enum value
+	DashIsoVideoCompositionOffsetsUnsigned = "UNSIGNED"
+)
+
+// DashIsoVideoCompositionOffsets_Values returns all elements of the DashIsoVideoCompositionOffsets enum
+func DashIsoVideoCompositionOffsets_Values() []string {
+	return []string{
+		DashIsoVideoCompositionOffsetsSigned,
+		DashIsoVideoCompositionOffsetsUnsigned,
+	}
+}
+
 // When you enable Precise segment duration in manifests (writeSegmentTimelineInRepresentation),
 // your DASH manifest shows precise segment durations. The segment duration
 // information appears inside the SegmentTimeline element, inside SegmentTemplate
@@ -29131,6 +30255,33 @@ func DashIsoWriteSegmentTimelineInRepresentation_Values() []string {
 	return []string{
 		DashIsoWriteSegmentTimelineInRepresentationEnabled,
 		DashIsoWriteSegmentTimelineInRepresentationDisabled,
+	}
+}
+
+// Specify how MediaConvert writes SegmentTimeline in your output DASH manifest.
+// To write a SegmentTimeline in each video Representation: Keep the default
+// value, Basic. To write a common SegmentTimeline in the video AdaptationSet:
+// Choose Compact. Note that MediaConvert will still write a SegmentTimeline
+// in any Representation that does not share a common timeline. To write a video
+// AdaptationSet for each different output framerate, and a common SegmentTimeline
+// in each AdaptationSet: Choose Distinct.
+const (
+	// DashManifestStyleBasic is a DashManifestStyle enum value
+	DashManifestStyleBasic = "BASIC"
+
+	// DashManifestStyleCompact is a DashManifestStyle enum value
+	DashManifestStyleCompact = "COMPACT"
+
+	// DashManifestStyleDistinct is a DashManifestStyle enum value
+	DashManifestStyleDistinct = "DISTINCT"
+)
+
+// DashManifestStyle_Values returns all elements of the DashManifestStyle enum
+func DashManifestStyle_Values() []string {
+	return []string{
+		DashManifestStyleBasic,
+		DashManifestStyleCompact,
+		DashManifestStyleDistinct,
 	}
 }
 
@@ -29155,11 +30306,12 @@ func DecryptionMode_Values() []string {
 	}
 }
 
-// Only applies when you set Deinterlacer (DeinterlaceMode) to Deinterlace (DEINTERLACE)
-// or Adaptive (ADAPTIVE). Motion adaptive interpolate (INTERPOLATE) produces
-// sharper pictures, while blend (BLEND) produces smoother motion. Use (INTERPOLATE_TICKER)
-// OR (BLEND_TICKER) if your source file includes a ticker, such as a scrolling
-// headline at the bottom of the frame.
+// Only applies when you set Deinterlace mode to Deinterlace or Adaptive. Interpolate
+// produces sharper pictures, while blend produces smoother motion. If your
+// source file includes a ticker, such as a scrolling headline at the bottom
+// of the frame: Choose Interpolate ticker or Blend ticker. To apply field doubling:
+// Choose Linear interpolation. Note that Linear interpolation may introduce
+// video artifacts into your output.
 const (
 	// DeinterlaceAlgorithmInterpolate is a DeinterlaceAlgorithm enum value
 	DeinterlaceAlgorithmInterpolate = "INTERPOLATE"
@@ -29172,6 +30324,9 @@ const (
 
 	// DeinterlaceAlgorithmBlendTicker is a DeinterlaceAlgorithm enum value
 	DeinterlaceAlgorithmBlendTicker = "BLEND_TICKER"
+
+	// DeinterlaceAlgorithmLinearInterpolation is a DeinterlaceAlgorithm enum value
+	DeinterlaceAlgorithmLinearInterpolation = "LINEAR_INTERPOLATION"
 )
 
 // DeinterlaceAlgorithm_Values returns all elements of the DeinterlaceAlgorithm enum
@@ -29181,6 +30336,7 @@ func DeinterlaceAlgorithm_Values() []string {
 		DeinterlaceAlgorithmInterpolateTicker,
 		DeinterlaceAlgorithmBlend,
 		DeinterlaceAlgorithmBlendTicker,
+		DeinterlaceAlgorithmLinearInterpolation,
 	}
 }
 
@@ -29638,19 +30794,15 @@ func DvbSubtitlingType_Values() []string {
 	}
 }
 
-// Specify how MediaConvert handles the display definition segment (DDS). Keep
-// the default, None (NONE), to exclude the DDS from this set of captions. Choose
-// No display window (NO_DISPLAY_WINDOW) to have MediaConvert include the DDS
-// but not include display window data. In this case, MediaConvert writes that
-// information to the page composition segment (PCS) instead. Choose Specify
-// (SPECIFIED) to have MediaConvert set up the display window based on the values
-// that you specify in related job settings. For video resolutions that are
-// 576 pixels or smaller in height, MediaConvert doesn't include the DDS, regardless
-// of the value you choose for DDS handling (ddsHandling). In this case, it
-// doesn't write the display window data to the PCS either. Related settings:
-// Use the settings DDS x-coordinate (ddsXCoordinate) and DDS y-coordinate (ddsYCoordinate)
-// to specify the offset between the top left corner of the display window and
-// the top left corner of the video frame. All burn-in and DVB-Sub font settings
+// Specify how MediaConvert handles the display definition segment (DDS). To
+// exclude the DDS from this set of captions: Keep the default, None. To include
+// the DDS: Choose Specified. When you do, also specify the offset coordinates
+// of the display window with DDS x-coordinate and DDS y-coordinate. To include
+// the DDS, but not include display window data: Choose No display window. When
+// you do, you can write position metadata to the page composition segment (PCS)
+// with DDS x-coordinate and DDS y-coordinate. For video resolutions with a
+// height of 576 pixels or less, MediaConvert doesn't include the DDS, regardless
+// of the value you choose for DDS handling. All burn-in and DVB-Sub font settings
 // must match.
 const (
 	// DvbddsHandlingNone is a DvbddsHandling enum value
@@ -30689,15 +31841,16 @@ func H264FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// H264FramerateConversionAlgorithmDuplicateDrop is a H264FramerateConversionAlgorithm enum value
 	H264FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -30718,8 +31871,11 @@ func H264FramerateConversionAlgorithm_Values() []string {
 	}
 }
 
-// If enable, use reference B frames for GOP structures that have B frames >
-// 1.
+// Specify whether to allow B-frames to be referenced by other frame types.
+// To use reference B-frames when your GOP structure has 1 or more B-frames:
+// Leave blank or keep the default value Enabled. We recommend that you choose
+// Enabled to help improve the video quality of your output relative to its
+// bitrate. To not use reference B-frames: Choose Disabled.
 const (
 	// H264GopBReferenceDisabled is a H264GopBReference enum value
 	H264GopBReferenceDisabled = "DISABLED"
@@ -30829,9 +31985,14 @@ func H264ParControl_Values() []string {
 	}
 }
 
-// Optional. Use Quality tuning level (qualityTuningLevel) to choose how you
-// want to trade off encoding speed for output video quality. The default behavior
-// is faster, lower quality, single-pass encoding.
+// The Quality tuning level you choose represents a trade-off between the encoding
+// speed of your job and the output video quality. For the fastest encoding
+// speed at the cost of video quality: Choose Single pass. For a good balance
+// between encoding speed and video quality: Leave blank or keep the default
+// value Single pass HQ. For the best video quality, at the cost of encoding
+// speed: Choose Multi pass HQ. MediaConvert performs an analysis pass on your
+// input followed by an encoding pass. Outputs that use this feature incur pro-tier
+// pricing.
 const (
 	// H264QualityTuningLevelSinglePass is a H264QualityTuningLevel enum value
 	H264QualityTuningLevelSinglePass = "SINGLE_PASS"
@@ -31351,15 +32512,16 @@ func H265FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// H265FramerateConversionAlgorithmDuplicateDrop is a H265FramerateConversionAlgorithm enum value
 	H265FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -31380,8 +32542,11 @@ func H265FramerateConversionAlgorithm_Values() []string {
 	}
 }
 
-// If enable, use reference B frames for GOP structures that have B frames >
-// 1.
+// Specify whether to allow B-frames to be referenced by other frame types.
+// To use reference B-frames when your GOP structure has 1 or more B-frames:
+// Leave blank or keep the default value Enabled. We recommend that you choose
+// Enabled to help improve the video quality of your output relative to its
+// bitrate. To not use reference B-frames: Choose Disabled.
 const (
 	// H265GopBReferenceDisabled is a H265GopBReference enum value
 	H265GopBReferenceDisabled = "DISABLED"
@@ -31809,6 +32974,35 @@ func H265WriteMp4PackagingType_Values() []string {
 	}
 }
 
+// Specify how MediaConvert maps brightness and colors from your HDR input to
+// your SDR output. The mode that you select represents a creative choice, with
+// different tradeoffs in the details and tones of your output. To maintain
+// details in bright or saturated areas of your output: Choose Preserve details.
+// For some sources, your SDR output may look less bright and less saturated
+// when compared to your HDR source. MediaConvert automatically applies this
+// mode for HLG sources, regardless of your choice. For a bright and saturated
+// output: Choose Vibrant. We recommend that you choose this mode when any of
+// your source content is HDR10, and for the best results when it is mastered
+// for 1000 nits. You may notice loss of details in bright or saturated areas
+// of your output. HDR to SDR tone mapping has no effect when your input is
+// SDR.
+const (
+	// HDRToSDRToneMapperPreserveDetails is a HDRToSDRToneMapper enum value
+	HDRToSDRToneMapperPreserveDetails = "PRESERVE_DETAILS"
+
+	// HDRToSDRToneMapperVibrant is a HDRToSDRToneMapper enum value
+	HDRToSDRToneMapperVibrant = "VIBRANT"
+)
+
+// HDRToSDRToneMapper_Values returns all elements of the HDRToSDRToneMapper enum
+func HDRToSDRToneMapper_Values() []string {
+	return []string{
+		HDRToSDRToneMapperPreserveDetails,
+		HDRToSDRToneMapperVibrant,
+	}
+}
+
+// Ad marker for Apple HLS manifest.
 const (
 	// HlsAdMarkersElemental is a HlsAdMarkers enum value
 	HlsAdMarkersElemental = "ELEMENTAL"
@@ -32252,6 +33446,32 @@ func HlsProgramDateTime_Values() []string {
 	}
 }
 
+// Specify whether MediaConvert generates HLS manifests while your job is running
+// or when your job is complete. To generate HLS manifests while your job is
+// running: Choose Enabled. Use if you want to play back your content as soon
+// as it's available. MediaConvert writes the parent and child manifests after
+// the first three media segments are written to your destination S3 bucket.
+// It then writes new updated manifests after each additional segment is written.
+// The parent manifest includes the latest BANDWIDTH and AVERAGE-BANDWIDTH attributes,
+// and child manifests include the latest available media segment. When your
+// job completes, the final child playlists include an EXT-X-ENDLIST tag. To
+// generate HLS manifests only when your job completes: Choose Disabled.
+const (
+	// HlsProgressiveWriteHlsManifestEnabled is a HlsProgressiveWriteHlsManifest enum value
+	HlsProgressiveWriteHlsManifestEnabled = "ENABLED"
+
+	// HlsProgressiveWriteHlsManifestDisabled is a HlsProgressiveWriteHlsManifest enum value
+	HlsProgressiveWriteHlsManifestDisabled = "DISABLED"
+)
+
+// HlsProgressiveWriteHlsManifest_Values returns all elements of the HlsProgressiveWriteHlsManifest enum
+func HlsProgressiveWriteHlsManifest_Values() []string {
+	return []string{
+		HlsProgressiveWriteHlsManifestEnabled,
+		HlsProgressiveWriteHlsManifestDisabled,
+	}
+}
+
 // When set to SINGLE_FILE, emits program as a single media resource (.ts) file,
 // uses #EXT-X-BYTERANGE tags to index segment for playback.
 const (
@@ -32358,13 +33578,16 @@ func HlsTimedMetadataId3Frame_Values() []string {
 	}
 }
 
-// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
-// is intended to provide accessibility for people who are deaf or hard of hearing.
-// When you enable this feature, MediaConvert adds the following attributes
-// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
-// is not intended to provide such accessibility. MediaConvert will not add
-// the above attributes.
+// If the IMSC captions track is intended to provide accessibility for people
+// who are deaf or hard of hearing: Set Accessibility subtitles to Enabled.
+// When you do, MediaConvert adds accessibility attributes to your output HLS
+// or DASH manifest. For HLS manifests, MediaConvert adds the following accessibility
+// attributes under EXT-X-MEDIA for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+// and AUTOSELECT="YES". For DASH manifests, MediaConvert adds the following
+// in the adaptation set for this track: . If the captions track is not intended
+// to provide such accessibility: Keep the default value, Disabled. When you
+// do, for DASH manifests, MediaConvert instead adds the following in the adaptation
+// set for this track: .
 const (
 	// ImscAccessibilitySubsDisabled is a ImscAccessibilitySubs enum value
 	ImscAccessibilitySubsDisabled = "DISABLED"
@@ -32439,13 +33662,11 @@ func InputDenoiseFilter_Values() []string {
 	}
 }
 
-// Specify how the transcoding service applies the denoise and deblock filters.
-// You must also enable the filters separately, with Denoise (InputDenoiseFilter)
-// and Deblock (InputDeblockFilter). * Auto - The transcoding service determines
-// whether to apply filtering, depending on input type and quality. * Disable
-// - The input is not filtered. This is true even if you use the API to enable
-// them in (InputDeblockFilter) and (InputDeblockFilter). * Force - The input
-// is filtered regardless of input type.
+// Specify whether to apply input filtering to improve the video quality of
+// your input. To apply filtering depending on your input type and quality:
+// Choose Auto. To apply no filtering: Choose Disable. To apply filtering regardless
+// of your input type and quality: Choose Force. When you do, you must also
+// specify a value for Filter strength.
 const (
 	// InputFilterEnableAuto is a InputFilterEnable enum value
 	InputFilterEnableAuto = "AUTO"
@@ -34003,11 +35224,11 @@ func MovMpeg2FourCCControl_Values() []string {
 	}
 }
 
-// To make this output compatible with Omenon, keep the default value, OMNEON.
-// Unless you need Omneon compatibility, set this value to NONE. When you keep
-// the default value, OMNEON, MediaConvert increases the length of the edit
-// list atom. This might cause file rejections when a recipient of the output
-// file doesn't expct this extra padding.
+// Unless you need Omneon compatibility: Keep the default value, None. To make
+// this output compatible with Omneon: Choose Omneon. When you do, MediaConvert
+// increases the length of the 'elst' edit list atom. Note that this might cause
+// file rejections when a recipient of the output file doesn't expect this extra
+// padding.
 const (
 	// MovPaddingControlOmneon is a MovPaddingControl enum value
 	MovPaddingControlOmneon = "OMNEON"
@@ -34209,6 +35430,31 @@ func MpdKlvMetadata_Values() []string {
 	}
 }
 
+// To add an InbandEventStream element in your output MPD manifest for each
+// type of event message, set Manifest metadata signaling to Enabled. For ID3
+// event messages, the InbandEventStream element schemeIdUri will be same value
+// that you specify for ID3 metadata scheme ID URI. For SCTE35 event messages,
+// the InbandEventStream element schemeIdUri will be "urn:scte:scte35:2013:bin".
+// To leave these elements out of your output MPD manifest, set Manifest metadata
+// signaling to Disabled. To enable Manifest metadata signaling, you must also
+// set SCTE-35 source to Passthrough, ESAM SCTE-35 to insert, or ID3 metadata
+// (TimedMetadata) to Passthrough.
+const (
+	// MpdManifestMetadataSignalingEnabled is a MpdManifestMetadataSignaling enum value
+	MpdManifestMetadataSignalingEnabled = "ENABLED"
+
+	// MpdManifestMetadataSignalingDisabled is a MpdManifestMetadataSignaling enum value
+	MpdManifestMetadataSignalingDisabled = "DISABLED"
+)
+
+// MpdManifestMetadataSignaling_Values returns all elements of the MpdManifestMetadataSignaling enum
+func MpdManifestMetadataSignaling_Values() []string {
+	return []string{
+		MpdManifestMetadataSignalingEnabled,
+		MpdManifestMetadataSignalingDisabled,
+	}
+}
+
 // Use this setting only when you specify SCTE-35 markers from ESAM. Choose
 // INSERT to put SCTE-35 markers in this output at the insertion points that
 // you specify in an ESAM XML document. Provide the document in the setting
@@ -34267,6 +35513,26 @@ func MpdTimedMetadata_Values() []string {
 	return []string{
 		MpdTimedMetadataPassthrough,
 		MpdTimedMetadataNone,
+	}
+}
+
+// Specify the event message box (eMSG) version for ID3 timed metadata in your
+// output.For more information, see ISO/IEC 23009-1:2022 section 5.10.3.3.3
+// Syntax.Leave blank to use the default value Version 0.When you specify Version
+// 1, you must also set ID3 metadata (timedMetadata) to Passthrough.
+const (
+	// MpdTimedMetadataBoxVersionVersion0 is a MpdTimedMetadataBoxVersion enum value
+	MpdTimedMetadataBoxVersionVersion0 = "VERSION_0"
+
+	// MpdTimedMetadataBoxVersionVersion1 is a MpdTimedMetadataBoxVersion enum value
+	MpdTimedMetadataBoxVersionVersion1 = "VERSION_1"
+)
+
+// MpdTimedMetadataBoxVersion_Values returns all elements of the MpdTimedMetadataBoxVersion enum
+func MpdTimedMetadataBoxVersion_Values() []string {
+	return []string{
+		MpdTimedMetadataBoxVersionVersion0,
+		MpdTimedMetadataBoxVersionVersion1,
 	}
 }
 
@@ -34393,15 +35659,16 @@ func Mpeg2FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// Mpeg2FramerateConversionAlgorithmDuplicateDrop is a Mpeg2FramerateConversionAlgorithm enum value
 	Mpeg2FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -34676,7 +35943,7 @@ func Mpeg2SpatialAdaptiveQuantization_Values() []string {
 
 // Specify whether this output's video uses the D10 syntax. Keep the default
 // value to not use the syntax. Related settings: When you choose D10 (D_10)
-// for your MXF profile (profile), you must also set this value to to D10 (D_10).
+// for your MXF profile (profile), you must also set this value to D10 (D_10).
 const (
 	// Mpeg2SyntaxDefault is a Mpeg2Syntax enum value
 	Mpeg2SyntaxDefault = "DEFAULT"
@@ -34848,6 +36115,9 @@ const (
 
 	// MxfProfileXavc is a MxfProfile enum value
 	MxfProfileXavc = "XAVC"
+
+	// MxfProfileXdcamRdd9 is a MxfProfile enum value
+	MxfProfileXdcamRdd9 = "XDCAM_RDD9"
 )
 
 // MxfProfile_Values returns all elements of the MxfProfile enum
@@ -34857,6 +36127,7 @@ func MxfProfile_Values() []string {
 		MxfProfileXdcam,
 		MxfProfileOp1a,
 		MxfProfileXavc,
+		MxfProfileXdcamRdd9,
 	}
 }
 
@@ -35285,15 +36556,16 @@ func ProresFramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// ProresFramerateConversionAlgorithmDuplicateDrop is a ProresFramerateConversionAlgorithm enum value
 	ProresFramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -35679,22 +36951,29 @@ func S3ServerSideEncryptionType_Values() []string {
 	}
 }
 
-// Specify the video color sample range for this output. To create a full range
-// output, you must start with a full range YUV input and keep the default value,
-// None (NONE). To create a limited range output from a full range input, choose
-// Limited range (LIMITED_RANGE_SQUEEZE). With RGB inputs, your output is always
-// limited range, regardless of your choice here. When you create a limited
-// range output from a full range input, MediaConvert limits the active pixel
-// values in a way that depends on the output's bit depth: 8-bit outputs contain
-// only values from 16 through 235 and 10-bit outputs contain only values from
-// 64 through 940. With this conversion, MediaConvert also changes the output
-// metadata to note the limited range.
+// Specify how MediaConvert limits the color sample range for this output. To
+// create a limited range output from a full range input: Choose Limited range
+// squeeze. For full range inputs, MediaConvert performs a linear offset to
+// color samples equally across all pixels and frames. Color samples in 10-bit
+// outputs are limited to 64 through 940, and 8-bit outputs are limited to 16
+// through 235. Note: For limited range inputs, values for color samples are
+// passed through to your output unchanged. MediaConvert does not limit the
+// sample range. To correct pixels in your input that are out of range or out
+// of gamut: Choose Limited range clip. Use for broadcast applications. MediaConvert
+// conforms any pixels outside of the values that you specify under Minimum
+// YUV and Maximum YUV to limited range bounds. MediaConvert also corrects any
+// YUV values that, when converted to RGB, would be outside the bounds you specify
+// under Minimum RGB tolerance and Maximum RGB tolerance. With either limited
+// range conversion, MediaConvert writes the sample range metadata in the output.
 const (
 	// SampleRangeConversionLimitedRangeSqueeze is a SampleRangeConversion enum value
 	SampleRangeConversionLimitedRangeSqueeze = "LIMITED_RANGE_SQUEEZE"
 
 	// SampleRangeConversionNone is a SampleRangeConversion enum value
 	SampleRangeConversionNone = "NONE"
+
+	// SampleRangeConversionLimitedRangeClip is a SampleRangeConversion enum value
+	SampleRangeConversionLimitedRangeClip = "LIMITED_RANGE_CLIP"
 )
 
 // SampleRangeConversion_Values returns all elements of the SampleRangeConversion enum
@@ -35702,6 +36981,7 @@ func SampleRangeConversion_Values() []string {
 	return []string{
 		SampleRangeConversionLimitedRangeSqueeze,
 		SampleRangeConversionNone,
+		SampleRangeConversionLimitedRangeClip,
 	}
 }
 
@@ -36092,15 +37372,16 @@ func Vc3FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// Vc3FramerateConversionAlgorithmDuplicateDrop is a Vc3FramerateConversionAlgorithm enum value
 	Vc3FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -36252,6 +37533,9 @@ const (
 	// VideoCodecMpeg2 is a VideoCodec enum value
 	VideoCodecMpeg2 = "MPEG2"
 
+	// VideoCodecPassthrough is a VideoCodec enum value
+	VideoCodecPassthrough = "PASSTHROUGH"
+
 	// VideoCodecProres is a VideoCodec enum value
 	VideoCodecProres = "PRORES"
 
@@ -36277,6 +37561,7 @@ func VideoCodec_Values() []string {
 		VideoCodecH264,
 		VideoCodecH265,
 		VideoCodecMpeg2,
+		VideoCodecPassthrough,
 		VideoCodecProres,
 		VideoCodecVc3,
 		VideoCodecVp8,
@@ -36341,15 +37626,16 @@ func Vp8FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// Vp8FramerateConversionAlgorithmDuplicateDrop is a Vp8FramerateConversionAlgorithm enum value
 	Vp8FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -36454,15 +37740,16 @@ func Vp9FramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// Vp9FramerateConversionAlgorithmDuplicateDrop is a Vp9FramerateConversionAlgorithm enum value
 	Vp9FramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"
@@ -36589,13 +37876,16 @@ func WavFormat_Values() []string {
 	}
 }
 
-// Set Accessibility subtitles to Enabled if the ISMC or WebVTT captions track
-// is intended to provide accessibility for people who are deaf or hard of hearing.
-// When you enable this feature, MediaConvert adds the following attributes
-// under EXT-X-MEDIA in the HLS or CMAF manifest for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
-// and AUTOSELECT="YES". Keep the default value, Disabled, if the captions track
-// is not intended to provide such accessibility. MediaConvert will not add
-// the above attributes.
+// If the WebVTT captions track is intended to provide accessibility for people
+// who are deaf or hard of hearing: Set Accessibility subtitles to Enabled.
+// When you do, MediaConvert adds accessibility attributes to your output HLS
+// or DASH manifest. For HLS manifests, MediaConvert adds the following accessibility
+// attributes under EXT-X-MEDIA for this track: CHARACTERISTICS="public.accessibility.describes-spoken-dialog,public.accessibility.describes-music-and-sound"
+// and AUTOSELECT="YES". For DASH manifests, MediaConvert adds the following
+// in the adaptation set for this track: . If the captions track is not intended
+// to provide such accessibility: Keep the default value, Disabled. When you
+// do, for DASH manifests, MediaConvert instead adds the following in the adaptation
+// set for this track: .
 const (
 	// WebvttAccessibilitySubsDisabled is a WebvttAccessibilitySubs enum value
 	WebvttAccessibilitySubsDisabled = "DISABLED"
@@ -36878,15 +38168,16 @@ func XavcFramerateControl_Values() []string {
 }
 
 // Choose the method that you want MediaConvert to use when increasing or decreasing
-// the frame rate. We recommend using drop duplicate (DUPLICATE_DROP) for numerically
-// simple conversions, such as 60 fps to 30 fps. For numerically complex conversions,
-// you can use interpolate (INTERPOLATE) to avoid stutter. This results in a
-// smooth picture, but might introduce undesirable video artifacts. For complex
+// the frame rate. For numerically simple conversions, such as 60 fps to 30
+// fps: We recommend that you keep the default value, Drop duplicate. For numerically
+// complex conversions, to avoid stutter: Choose Interpolate. This results in
+// a smooth picture, but might introduce undesirable video artifacts. For complex
 // frame rate conversions, especially if your source video has already been
-// converted from its original cadence, use FrameFormer (FRAMEFORMER) to do
-// motion-compensated interpolation. FrameFormer chooses the best conversion
-// method frame by frame. Note that using FrameFormer increases the transcoding
-// time and incurs a significant add-on cost.
+// converted from its original cadence: Choose FrameFormer to do motion-compensated
+// interpolation. FrameFormer uses the best conversion method frame by frame.
+// Note that using FrameFormer increases the transcoding time and incurs a significant
+// add-on cost. When you choose FrameFormer, your input video resolution must
+// be at least 128x96.
 const (
 	// XavcFramerateConversionAlgorithmDuplicateDrop is a XavcFramerateConversionAlgorithm enum value
 	XavcFramerateConversionAlgorithmDuplicateDrop = "DUPLICATE_DROP"

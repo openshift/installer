@@ -11,7 +11,7 @@ import (
 )
 
 // Deletes a transcription job. To use this operation, specify the name of the job
-// you want to delete using TranscriptionJobName. Job names are case sensitive.
+// you want to delete using TranscriptionJobName . Job names are case sensitive.
 func (c *Client) DeleteTranscriptionJob(ctx context.Context, params *DeleteTranscriptionJobInput, optFns ...func(*Options)) (*DeleteTranscriptionJobOutput, error) {
 	if params == nil {
 		params = &DeleteTranscriptionJobInput{}
@@ -94,6 +94,9 @@ func (c *Client) addOperationDeleteTranscriptionJobMiddlewares(stack *middleware
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteTranscriptionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

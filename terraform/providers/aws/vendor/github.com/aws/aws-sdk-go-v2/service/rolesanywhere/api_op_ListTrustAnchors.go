@@ -13,7 +13,7 @@ import (
 )
 
 // Lists the trust anchors in the authenticated account and Amazon Web Services
-// Region. Required permissions: rolesanywhere:ListTrustAnchors.
+// Region. Required permissions: rolesanywhere:ListTrustAnchors .
 func (c *Client) ListTrustAnchors(ctx context.Context, params *ListTrustAnchorsInput, optFns ...func(*Options)) (*ListTrustAnchorsOutput, error) {
 	if params == nil {
 		params = &ListTrustAnchorsInput{}
@@ -32,7 +32,7 @@ func (c *Client) ListTrustAnchors(ctx context.Context, params *ListTrustAnchorsI
 type ListTrustAnchorsInput struct {
 
 	// A token that indicates where the output should continue from, if a previous
-	// operation did not show all results. To get the next results, call the operation
+	// request did not show all results. To get the next results, make the request
 	// again with this value.
 	NextToken *string
 
@@ -45,7 +45,7 @@ type ListTrustAnchorsInput struct {
 type ListTrustAnchorsOutput struct {
 
 	// A token that indicates where the output should continue from, if a previous
-	// operation did not show all results. To get the next results, call the operation
+	// request did not show all results. To get the next results, make the request
 	// again with this value.
 	NextToken *string
 
@@ -104,6 +104,9 @@ func (c *Client) addOperationListTrustAnchorsMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListTrustAnchors(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

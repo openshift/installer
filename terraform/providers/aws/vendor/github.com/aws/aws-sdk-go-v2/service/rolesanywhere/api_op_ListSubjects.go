@@ -13,7 +13,7 @@ import (
 )
 
 // Lists the subjects in the authenticated account and Amazon Web Services Region.
-// Required permissions: rolesanywhere:ListSubjects.
+// Required permissions: rolesanywhere:ListSubjects .
 func (c *Client) ListSubjects(ctx context.Context, params *ListSubjectsInput, optFns ...func(*Options)) (*ListSubjectsOutput, error) {
 	if params == nil {
 		params = &ListSubjectsInput{}
@@ -32,7 +32,7 @@ func (c *Client) ListSubjects(ctx context.Context, params *ListSubjectsInput, op
 type ListSubjectsInput struct {
 
 	// A token that indicates where the output should continue from, if a previous
-	// operation did not show all results. To get the next results, call the operation
+	// request did not show all results. To get the next results, make the request
 	// again with this value.
 	NextToken *string
 
@@ -45,7 +45,7 @@ type ListSubjectsInput struct {
 type ListSubjectsOutput struct {
 
 	// A token that indicates where the output should continue from, if a previous
-	// operation did not show all results. To get the next results, call the operation
+	// request did not show all results. To get the next results, make the request
 	// again with this value.
 	NextToken *string
 
@@ -104,6 +104,9 @@ func (c *Client) addOperationListSubjectsMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListSubjects(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

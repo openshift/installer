@@ -1,9 +1,11 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package resource
 
 import (
 	"context"
-
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 )
 
 // Implementation handler for a UpgradeState operation.
@@ -19,7 +21,7 @@ type StateUpgrader struct {
 	//
 	// If not set, prior state data is available in the
 	// UpgradeResourceStateRequest type RawState field.
-	PriorSchema *tfsdk.Schema
+	PriorSchema *schema.Schema
 
 	// Provider defined logic for upgrading a resource state from the prior
 	// state version to the current schema version.

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package path
 
 import "strings"
@@ -30,6 +33,18 @@ func (e *Expressions) Append(expressions ...Expression) Expressions {
 func (e Expressions) Contains(checkExpression Expression) bool {
 	for _, expression := range e {
 		if expression.Equal(checkExpression) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// Matches returns true if one of the expressions in the collection matches the
+// given path.
+func (e Expressions) Matches(checkPath Path) bool {
+	for _, expression := range e {
+		if expression.Matches(checkPath) {
 			return true
 		}
 	}
