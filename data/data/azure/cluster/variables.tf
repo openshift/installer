@@ -11,13 +11,13 @@ variable "elb_backend_pool_v6_id" {
 }
 
 variable "ilb_backend_pool_v4_id" {
-  type        = string
+  type        = list(string)
   default     = null
   description = "The internal load balancer bakend pool id. used to attach the bootstrap NIC"
 }
 
 variable "ilb_backend_pool_v6_id" {
-  type        = string
+  type        = list(string)
   default     = null
   description = "The internal load balancer bakend pool id for ipv6. used to attach the bootstrap NIC"
 }
@@ -33,12 +33,12 @@ variable "public_lb_pip_v6_fqdn" {
 }
 
 variable "internal_lb_ip_v4_address" {
-  type    = string
+  type    = list(string)
   default = null
 }
 
 variable "internal_lb_ip_v6_address" {
-  type    = string
+  type    = list(string)
   default = null
 }
 
@@ -48,7 +48,7 @@ variable "virtual_network_id" {
 }
 
 variable "master_subnet_id" {
-  type        = string
+  type        = list(string)
   description = "The subnet ID for the bootstrap node."
 }
 
@@ -86,4 +86,9 @@ completely and therefore the `vnet/public-lb.tf`
 conditional need to be recreated. See
 https://github.com/hashicorp/terraform/issues/12570
 EOF
+}
+
+variable "master_subnet_zone_map" {
+  type = map
+  description = "Mapping of subnet ID and its availability zone"
 }

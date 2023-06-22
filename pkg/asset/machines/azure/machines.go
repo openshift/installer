@@ -232,6 +232,16 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
 
+	subnetIdx := 0
+	if platform.OutboundType == azure.NatGatewayOutboundType {
+		// There are as many subnets as AZs when using NAT gateways
+		subnetIdx = *azIdx
+	}
+	// Don't change the subnet name if it's been specified by the user
+	if platform.VirtualNetwork == "" {
+		subnet = fmt.Sprintf("%s-%d", subnet, subnetIdx)
+	}
+
 	spec := &machineapi.AzureMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",

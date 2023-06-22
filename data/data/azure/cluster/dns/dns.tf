@@ -32,7 +32,7 @@ resource "azurerm_private_dns_a_record" "apiint_internal" {
   zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  records             = [var.internal_lb_ipaddress_v4]
+  records             = var.internal_lb_ipaddress_v4
   tags                = var.azure_extra_tags
 }
 
@@ -43,7 +43,7 @@ resource "azurerm_private_dns_aaaa_record" "apiint_internal_v6" {
   zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  records             = [var.internal_lb_ipaddress_v6]
+  records             = var.internal_lb_ipaddress_v6
   tags                = var.azure_extra_tags
 }
 
@@ -54,7 +54,7 @@ resource "azurerm_private_dns_a_record" "api_internal" {
   zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  records             = [var.internal_lb_ipaddress_v4]
+  records             = var.internal_lb_ipaddress_v4
   tags                = var.azure_extra_tags
 }
 
@@ -65,7 +65,7 @@ resource "azurerm_private_dns_aaaa_record" "api_internal_v6" {
   zone_name           = azurerm_private_dns_zone.private.name
   resource_group_name = var.resource_group_name
   ttl                 = 300
-  records             = [var.internal_lb_ipaddress_v6]
+  records             = var.internal_lb_ipaddress_v6
   tags                = var.azure_extra_tags
 }
 

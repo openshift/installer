@@ -52,10 +52,11 @@ type config struct {
 	ResourceGroupName                       string            `json:"azure_resource_group_name"`
 	NetworkResourceGroupName                string            `json:"azure_network_resource_group_name"`
 	VirtualNetwork                          string            `json:"azure_virtual_network"`
-	ControlPlaneSubnet                      string            `json:"azure_control_plane_subnet"`
-	ComputeSubnet                           string            `json:"azure_compute_subnet"`
+	ControlPlaneSubnet                      []string          `json:"azure_control_plane_subnet"`
+	ComputeSubnet                           []string          `json:"azure_compute_subnet"`
 	PreexistingNetwork                      bool              `json:"azure_preexisting_network"`
 	Private                                 bool              `json:"azure_private"`
+	OutboundType                            string            `json:"azure_outbound_routing_type"`
 	BootstrapIgnitionStub                   string            `json:"azure_bootstrap_ignition_stub"`
 	BootstrapIgnitionURLPlaceholder         string            `json:"azure_bootstrap_ignition_url_placeholder"`
 	HyperVGeneration                        string            `json:"azure_hypervgeneration_version"`
@@ -97,7 +98,6 @@ type TFVarsSources struct {
 // TFVars generates Azure-specific Terraform variables launching the cluster.
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterConfig := sources.MasterConfigs[0]
-	workerConfig := sources.WorkerConfigs[0]
 
 	region := masterConfig.Location
 
@@ -152,6 +152,16 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		Version:   masterConfig.Image.Version,
 	}
 
+	masterSubnets := make([]string, len(sources.MasterConfigs))
+	for i, c := range sources.MasterConfigs {
+		masterSubnets[i] = c.Subnet
+	}
+
+	workerSubnets := make([]string, len(sources.WorkerConfigs))
+	for i, c := range sources.WorkerConfigs {
+		workerSubnets[i] = c.Subnet
+	}
+
 	cfg := &config{
 		Auth:                                    sources.Auth,
 		Environment:                             environment,
@@ -167,12 +177,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageURL:                                sources.ImageURL,
 		ImageRelease:                            sources.ImageRelease,
 		Private:                                 sources.Publish == types.InternalPublishingStrategy,
+		OutboundType:                            string(sources.OutboundType),
 		ResourceGroupName:                       sources.ResourceGroupName,
 		BaseDomainResourceGroupName:             sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:                masterConfig.NetworkResourceGroup,
 		VirtualNetwork:                          masterConfig.Vnet,
-		ControlPlaneSubnet:                      masterConfig.Subnet,
-		ComputeSubnet:                           workerConfig.Subnet,
+		ControlPlaneSubnet:                      masterSubnets,
+		ComputeSubnet:                           workerSubnets,
 		PreexistingNetwork:                      sources.PreexistingNetwork,
 		BootstrapIgnitionStub:                   sources.BootstrapIgnStub,
 		BootstrapIgnitionURLPlaceholder:         sources.BootstrapIgnitionURLPlaceholder,

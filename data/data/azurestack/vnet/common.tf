@@ -6,7 +6,7 @@ data "azurestack_subnet" "preexisting_master_subnet" {
 
   resource_group_name  = var.azure_network_resource_group_name
   virtual_network_name = var.azure_virtual_network
-  name                 = var.azure_control_plane_subnet
+  name                 = var.azure_control_plane_subnet[0]
 }
 
 data "azurestack_subnet" "preexisting_worker_subnet" {
@@ -14,7 +14,7 @@ data "azurestack_subnet" "preexisting_worker_subnet" {
 
   resource_group_name  = var.azure_network_resource_group_name
   virtual_network_name = var.azure_virtual_network
-  name                 = var.azure_compute_subnet
+  name                 = var.azure_compute_subnet[0]
 }
 
 data "azurestack_virtual_network" "preexisting_virtual_network" {

@@ -39,7 +39,7 @@ resource "azurerm_network_interface" "master" {
     content {
       primary                       = ip_configuration.value.primary
       name                          = ip_configuration.value.name
-      subnet_id                     = var.subnet_id
+      subnet_id                     = element(var.subnet_id, count.index)
       private_ip_address_version    = ip_configuration.value.ip_address_version
       private_ip_address_allocation = "Dynamic"
     }
@@ -72,7 +72,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "master_in
   count = var.use_ipv4 ? var.instance_count : 0
 
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
-  backend_address_pool_id = var.ilb_backend_pool_v4_id
+  backend_address_pool_id = element(var.ilb_backend_pool_v4_id, count.index)
   ip_configuration_name   = local.ip_v4_configuration_name
 }
 
@@ -80,16 +80,17 @@ resource "azurerm_network_interface_backend_address_pool_association" "master_in
   count = var.use_ipv6 ? var.instance_count : 0
 
   network_interface_id    = element(azurerm_network_interface.master.*.id, count.index)
-  backend_address_pool_id = var.ilb_backend_pool_v6_id
+  backend_address_pool_id = element(var.ilb_backend_pool_v6_id, count.index)
   ip_configuration_name   = local.ip_v6_configuration_name
 }
 
 resource "azurerm_linux_virtual_machine" "master" {
   count = var.instance_count
 
-  name                  = "${var.cluster_id}-master-${count.index}"
-  location              = var.region
-  zone                  = var.availability_zones[count.index] != "" ? var.availability_zones[count.index] : null
+  name     = "${var.cluster_id}-master-${count.index}"
+  location = var.region
+  // The VM zone has to be the same as the subnet's it is associated with when using NAT gateway
+  zone                  = var.outbound_type == "NatGateway" ? var.master_subnet_zone_map[azurerm_network_interface.master[count.index].ip_configuration[0].subnet_id] : var.availability_zones[count.index] != "" ? var.availability_zones[count.index] : null
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
   size                  = var.vm_size
