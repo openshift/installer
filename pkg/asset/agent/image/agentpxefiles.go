@@ -1,6 +1,7 @@
 package image
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -26,6 +27,11 @@ type AgentPXEFiles struct {
 	cpuArch     string
 	tmpPath     string
 	ipxeBaseURL string
+	kernelArgs  string
+}
+
+type coreOSKargs struct {
+	DefaultKernelArgs string `json:"default"`
 }
 
 var _ asset.WritableAsset = (*AgentPXEFiles)(nil)
@@ -65,6 +71,11 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	a.cpuArch = agentArtifacts.CPUArch
 	a.ipxeBaseURL = strings.Trim(agentconfig.Config.IPxeBaseURL, "/")
 
+	kernelArgs, err := getKernelArgs(filepath.Join(a.tmpPath, "coreos", "kargs.json"))
+	if err != nil {
+		return err
+	}
+	a.kernelArgs = kernelArgs
 	return nil
 }
 
@@ -93,27 +104,29 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	agentRootfsimgFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
-	fileReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "rootfs.img"))
+	rootfsReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "rootfs.img"))
 	if err != nil {
 		return err
 	}
-	err = a.copy(agentRootfsimgFile, fileReader)
+	defer rootfsReader.Close()
+	err = a.copy(agentRootfsimgFile, rootfsReader)
 	if err != nil {
 		return err
 	}
 
 	agentVmlinuzFile := filepath.Join(pxeAssetsFullPath, fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch))
-	fileReader, err = os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
+	kernelReader, err := os.Open(filepath.Join(a.tmpPath, "images", "pxeboot", "vmlinuz"))
 	if err != nil {
 		return err
 	}
-	err = a.copy(agentVmlinuzFile, fileReader)
+	defer kernelReader.Close()
+	err = a.copy(agentVmlinuzFile, kernelReader)
 	if err != nil {
 		return err
 	}
 
 	if a.ipxeBaseURL != "" {
-		err = a.createiPXEScript(a.cpuArch, a.ipxeBaseURL, pxeAssetsFullPath)
+		err = a.createiPXEScript(a.cpuArch, a.ipxeBaseURL, pxeAssetsFullPath, a.kernelArgs)
 		if err != nil {
 			return err
 		}
@@ -157,17 +170,17 @@ func (a *AgentPXEFiles) copy(filepath string, src io.Reader) error {
 	return nil
 }
 
-func (a *AgentPXEFiles) createiPXEScript(cpuArch, ipxeBaseURL, pxeAssetsFullPath string) error {
+func (a *AgentPXEFiles) createiPXEScript(cpuArch, ipxeBaseURL, pxeAssetsFullPath, kernelArgs string) error {
 	iPXEScriptTemplate := `#!ipxe
 initrd --name initrd %s/%s
-kernel %s/%s initrd=initrd coreos.live.rootfs_url=%s/%s ignition.firstboot ignition.platform.id=metal
+kernel %s/%s initrd=initrd coreos.live.rootfs_url=%s/%s %s
 boot
 `
 
 	iPXEScript := fmt.Sprintf(iPXEScriptTemplate, ipxeBaseURL,
 		fmt.Sprintf("agent.%s-initrd.img", a.cpuArch), ipxeBaseURL,
 		fmt.Sprintf("agent.%s-vmlinuz", a.cpuArch), ipxeBaseURL,
-		fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch))
+		fmt.Sprintf("agent.%s-rootfs.img", a.cpuArch), kernelArgs)
 
 	iPXEFile := fmt.Sprintf("agent.%s.ipxe", a.cpuArch)
 
@@ -178,4 +191,27 @@ boot
 	logrus.Infof("Created iPXE script %s in %s directory", iPXEFile, pxeAssetsFullPath)
 
 	return nil
+}
+
+func getKernelArgs(filepath string) (string, error) {
+	kargs, err := os.Open(filepath)
+	if err != nil {
+		return "", err
+	}
+	defer kargs.Close()
+
+	data, err := io.ReadAll(kargs)
+	if err != nil {
+		return "", err
+	}
+
+	var args coreOSKargs
+	err = json.Unmarshal(data, &args)
+	if err != nil {
+		return "", err
+	}
+
+	// Get the last 2 kernel params i.e. "ignition.firstboot" and "ignition.platform.id=metal"
+	kernelArgs := strings.SplitN(args.DefaultKernelArgs, " ", 2)[1]
+	return kernelArgs, nil
 }
