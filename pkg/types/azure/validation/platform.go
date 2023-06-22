@@ -88,6 +88,10 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	if p.OutboundType == azure.UserDefinedRoutingOutboundType && p.VirtualNetwork == "" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
 	}
+	if p.OutboundType == azure.NatGatewayOutboundType && p.VirtualNetwork != "" {
+		// For now, BYO network and NAT gateways are not compatible
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is not allowed when installing to pre-existing network", azure.NatGatewayOutboundType)))
+	}
 
 	// support for Azure user-defined tags made available through
 	// RFE-2017 is for AzurePublicCloud only.
