@@ -1,6 +1,7 @@
 package image
 
 import (
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,11 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
 	config "github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -120,9 +123,22 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 		return err
 	}
 	defer kernelReader.Close()
-	err = a.copy(agentVmlinuzFile, kernelReader)
-	if err != nil {
-		return err
+
+	if a.cpuArch == arch.RpmArch(types.ArchitectureARM64) {
+		gzipReader, err := gzip.NewReader(kernelReader)
+		if err != nil {
+			panic(err)
+		}
+		defer gzipReader.Close()
+		err = a.copy(agentVmlinuzFile, gzipReader)
+		if err != nil {
+			return err
+		}
+	} else {
+		err = a.copy(agentVmlinuzFile, kernelReader)
+		if err != nil {
+			return err
+		}
 	}
 
 	if a.ipxeBaseURL != "" {
