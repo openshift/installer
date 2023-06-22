@@ -59,13 +59,13 @@ func TestIgnition_getTemplateData(t *testing.T) {
 			},
 		},
 	}
-	releaseImage := "quay.io:443/openshift-release-dev/ocp-release:4.10.0-rc.1-x86_64"
-	releaseImageMirror := "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image"
+	releaseImage := clusterImageSet.Spec.ReleaseImage
+	releaseImageMirror := "virthost.ostest.test.metalkube.org:5000/localimages/local-release-image:4.10.0-rc.1-x86_64"
 	infraEnvID := "random-infra-env-id"
 	haveMirrorConfig := true
 	publicContainerRegistries := "quay.io,registry.ci.openshift.org"
 
-	releaseImageList, err := releaseImageList(clusterImageSet.Spec.ReleaseImage, "x86_64")
+	releaseImageList, err := releaseImageList(releaseImageMirror, "x86_64")
 	assert.NoError(t, err)
 
 	arch := "x86_64"

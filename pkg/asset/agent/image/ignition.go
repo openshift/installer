@@ -157,18 +157,26 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		archName = infraEnv.Spec.CpuArchitecture
 	}
 
-	releaseImageList, err := releaseImageList(agentManifests.ClusterImageSet.Spec.ReleaseImage, archName)
-	if err != nil {
-		return err
-	}
-
 	registriesConfig := &mirror.RegistriesConf{}
 	registryCABundle := &mirror.CaBundle{}
 	dependencies.Get(registriesConfig, registryCABundle)
 
-	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
-
 	releaseImageMirror := mirror.GetMirrorFromRelease(agentManifests.ClusterImageSet.Spec.ReleaseImage, registriesConfig)
+
+	// Set the releaseImage to the mirror (if it is defined) in order to pass DNS validations in assisted-service
+	var releaseImage string
+	if releaseImageMirror != "" {
+		releaseImage = releaseImageMirror
+	} else {
+		releaseImage = agentManifests.ClusterImageSet.Spec.ReleaseImage
+	}
+
+	releaseImageList, err := releaseImageList(releaseImage, archName)
+	if err != nil {
+		return err
+	}
+
+	publicContainerRegistries := getPublicContainerRegistries(registriesConfig)
 
 	infraEnvID := uuid.New().String()
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
@@ -187,7 +195,7 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		clusterName,
 		agentManifests.GetPullSecretData(),
 		releaseImageList,
-		agentManifests.ClusterImageSet.Spec.ReleaseImage,
+		releaseImage,
 		releaseImageMirror,
 		len(registriesConfig.MirrorConfig) > 0,
 		publicContainerRegistries,
