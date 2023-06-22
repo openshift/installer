@@ -31,8 +31,8 @@ func (c *Client) AddClientIDToOpenIDConnectProvider(ctx context.Context, params 
 
 type AddClientIDToOpenIDConnectProviderInput struct {
 
-	// The client ID (also known as audience) to add to the IAM OpenID Connect provider
-	// resource.
+	// The client ID (also known as audience) to add to the IAM OpenID Connect
+	// provider resource.
 	//
 	// This member is required.
 	ClientID *string
@@ -103,6 +103,9 @@ func (c *Client) addOperationAddClientIDToOpenIDConnectProviderMiddlewares(stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opAddClientIDToOpenIDConnectProvider(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tfprotov5"
 	"github.com/hashicorp/terraform-plugin-mux/internal/logging"
+	"github.com/hashicorp/terraform-plugin-mux/internal/tf5dynamicvalue"
 )
 
 // PrepareProviderConfig calls the PrepareProviderConfig method on each server
@@ -48,7 +49,7 @@ func (s muxServer) PrepareProviderConfig(ctx context.Context, req *tfprotov5.Pre
 			continue
 		}
 
-		equal, err := dynamicValueEquals(s.providerSchema.ValueType(), res.PreparedConfig, resp.PreparedConfig)
+		equal, err := tf5dynamicvalue.Equals(s.providerSchema.ValueType(), res.PreparedConfig, resp.PreparedConfig)
 
 		if err != nil {
 			return nil, fmt.Errorf("unable to compare PrepareProviderConfig PreparedConfig responses: %w", err)

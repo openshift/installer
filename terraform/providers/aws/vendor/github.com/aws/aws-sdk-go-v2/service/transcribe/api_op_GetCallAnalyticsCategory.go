@@ -41,8 +41,8 @@ type GetCallAnalyticsCategoryInput struct {
 
 type GetCallAnalyticsCategoryOutput struct {
 
-	// Provides you with the properties of the Call Analytics category you specified in
-	// your GetCallAnalyticsCategory request.
+	// Provides you with the properties of the Call Analytics category you specified
+	// in your GetCallAnalyticsCategory request.
 	CategoryProperties *types.CategoryProperties
 
 	// Metadata pertaining to the operation's result.
@@ -100,6 +100,9 @@ func (c *Client) addOperationGetCallAnalyticsCategoryMiddlewares(stack *middlewa
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetCallAnalyticsCategory(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

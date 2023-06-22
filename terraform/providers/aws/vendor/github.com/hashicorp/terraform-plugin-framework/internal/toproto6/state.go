@@ -1,9 +1,13 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package toproto6
 
 import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwschemadata"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
@@ -14,20 +18,11 @@ func State(ctx context.Context, fw *tfsdk.State) (*tfprotov6.DynamicValue, diag.
 		return nil, nil
 	}
 
-	var diags diag.Diagnostics
-
-	proto6, err := tfprotov6.NewDynamicValue(fw.Schema.Type().TerraformType(ctx), fw.Raw)
-
-	if err != nil {
-		diags.AddError(
-			"Unable to Convert State",
-			"An unexpected error was encountered when converting the state to the protocol type. "+
-				"This is always an issue in terraform-plugin-framework used to implement the provider and should be reported to the provider developers.\n\n"+
-				"Please report this to the provider developer:\n\n"+err.Error(),
-		)
-
-		return nil, diags
+	data := &fwschemadata.Data{
+		Description:    fwschemadata.DataDescriptionState,
+		Schema:         fw.Schema,
+		TerraformValue: fw.Raw,
 	}
 
-	return &proto6, nil
+	return DynamicValue(ctx, data)
 }

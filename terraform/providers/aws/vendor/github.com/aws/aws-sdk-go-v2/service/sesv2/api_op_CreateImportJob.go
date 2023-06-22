@@ -44,8 +44,8 @@ type CreateImportJobInput struct {
 	noSmithyDocumentSerde
 }
 
-// An HTTP 200 response if the request succeeds, or an error message if the request
-// fails.
+// An HTTP 200 response if the request succeeds, or an error message if the
+// request fails.
 type CreateImportJobOutput struct {
 
 	// A string that represents the import job ID.
@@ -106,6 +106,9 @@ func (c *Client) addOperationCreateImportJobMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateImportJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

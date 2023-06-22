@@ -31,11 +31,29 @@ const (
 	// "BackupPolicyNotFoundFault".
 	ErrCodeBackupPolicyNotFoundFault = "BackupPolicyNotFoundFault"
 
+	// ErrCodeBlueGreenDeploymentAlreadyExistsFault for service response error code
+	// "BlueGreenDeploymentAlreadyExistsFault".
+	//
+	// A blue/green deployment with the specified name already exists.
+	ErrCodeBlueGreenDeploymentAlreadyExistsFault = "BlueGreenDeploymentAlreadyExistsFault"
+
+	// ErrCodeBlueGreenDeploymentNotFoundFault for service response error code
+	// "BlueGreenDeploymentNotFoundFault".
+	//
+	// BlueGreenDeploymentIdentifier doesn't refer to an existing blue/green deployment.
+	ErrCodeBlueGreenDeploymentNotFoundFault = "BlueGreenDeploymentNotFoundFault"
+
 	// ErrCodeCertificateNotFoundFault for service response error code
 	// "CertificateNotFound".
 	//
 	// CertificateIdentifier doesn't refer to an existing certificate.
 	ErrCodeCertificateNotFoundFault = "CertificateNotFound"
+
+	// ErrCodeCreateCustomDBEngineVersionFault for service response error code
+	// "CreateCustomDBEngineVersionFault".
+	//
+	// An error occurred while trying to create the CEV.
+	ErrCodeCreateCustomDBEngineVersionFault = "CreateCustomDBEngineVersionFault"
 
 	// ErrCodeCustomAvailabilityZoneNotFoundFault for service response error code
 	// "CustomAvailabilityZoneNotFound".
@@ -370,6 +388,12 @@ const (
 	// Domain doesn't refer to an existing Active Directory domain.
 	ErrCodeDomainNotFoundFault = "DomainNotFoundFault"
 
+	// ErrCodeEc2ImagePropertiesNotSupportedFault for service response error code
+	// "Ec2ImagePropertiesNotSupportedFault".
+	//
+	// The AMI configuration prerequisite has not been met.
+	ErrCodeEc2ImagePropertiesNotSupportedFault = "Ec2ImagePropertiesNotSupportedFault"
+
 	// ErrCodeEventSubscriptionQuotaExceededFault for service response error code
 	// "EventSubscriptionQuotaExceeded".
 	//
@@ -455,6 +479,13 @@ const (
 	// be able to resolve this error by updating your subnet group to use different
 	// Availability Zones that have more storage available.
 	ErrCodeInsufficientStorageClusterCapacityFault = "InsufficientStorageClusterCapacity"
+
+	// ErrCodeInvalidBlueGreenDeploymentStateFault for service response error code
+	// "InvalidBlueGreenDeploymentStateFault".
+	//
+	// The blue/green deployment can't be switched over or deleted because there
+	// is an invalid configuration in the green environment.
+	ErrCodeInvalidBlueGreenDeploymentStateFault = "InvalidBlueGreenDeploymentStateFault"
 
 	// ErrCodeInvalidCustomDBEngineVersionStateFault for service response error code
 	// "InvalidCustomDBEngineVersionStateFault".
@@ -725,6 +756,18 @@ const (
 	// The request would result in the user exceeding the allowed number of DB snapshots.
 	ErrCodeSnapshotQuotaExceededFault = "SnapshotQuotaExceeded"
 
+	// ErrCodeSourceClusterNotSupportedFault for service response error code
+	// "SourceClusterNotSupportedFault".
+	//
+	// The source DB cluster isn't supported for a blue/green deployment.
+	ErrCodeSourceClusterNotSupportedFault = "SourceClusterNotSupportedFault"
+
+	// ErrCodeSourceDatabaseNotSupportedFault for service response error code
+	// "SourceDatabaseNotSupportedFault".
+	//
+	// The source DB instance isn't supported for a blue/green deployment.
+	ErrCodeSourceDatabaseNotSupportedFault = "SourceDatabaseNotSupportedFault"
+
 	// ErrCodeSourceNotFoundFault for service response error code
 	// "SourceNotFound".
 	//
@@ -738,10 +781,17 @@ const (
 	// available across all DB instances.
 	ErrCodeStorageQuotaExceededFault = "StorageQuotaExceeded"
 
+	// ErrCodeStorageTypeNotAvailableFault for service response error code
+	// "StorageTypeNotAvailableFault".
+	//
+	// The aurora-iopt1 storage type isn't available, because you modified the DB
+	// cluster to use this storage type less than one month ago.
+	ErrCodeStorageTypeNotAvailableFault = "StorageTypeNotAvailableFault"
+
 	// ErrCodeStorageTypeNotSupportedFault for service response error code
 	// "StorageTypeNotSupported".
 	//
-	// Storage of the StorageType specified can't be associated with the DB instance.
+	// The specified StorageType can't be associated with the DB instance.
 	ErrCodeStorageTypeNotSupportedFault = "StorageTypeNotSupported"
 
 	// ErrCodeSubnetAlreadyInUse for service response error code

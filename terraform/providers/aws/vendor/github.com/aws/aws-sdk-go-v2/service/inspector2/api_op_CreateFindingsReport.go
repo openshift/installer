@@ -11,7 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a finding report.
+// Creates a finding report. By default only ACTIVE findings are returned in the
+// report. To see SUPRESSED or CLOSED findings you must specify a value for the
+// findingStatus filter criteria.
 func (c *Client) CreateFindingsReport(ctx context.Context, params *CreateFindingsReportInput, optFns ...func(*Options)) (*CreateFindingsReportOutput, error) {
 	if params == nil {
 		params = &CreateFindingsReportInput{}
@@ -105,6 +107,9 @@ func (c *Client) addOperationCreateFindingsReportMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateFindingsReport(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

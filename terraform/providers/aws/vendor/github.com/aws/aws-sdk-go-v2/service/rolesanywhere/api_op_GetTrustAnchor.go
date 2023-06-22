@@ -11,7 +11,7 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Gets a trust anchor. Required permissions: rolesanywhere:GetTrustAnchor.
+// Gets a trust anchor. Required permissions: rolesanywhere:GetTrustAnchor .
 func (c *Client) GetTrustAnchor(ctx context.Context, params *GetTrustAnchorInput, optFns ...func(*Options)) (*GetTrustAnchorOutput, error) {
 	if params == nil {
 		params = &GetTrustAnchorInput{}
@@ -99,6 +99,9 @@ func (c *Client) addOperationGetTrustAnchorMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetTrustAnchor(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

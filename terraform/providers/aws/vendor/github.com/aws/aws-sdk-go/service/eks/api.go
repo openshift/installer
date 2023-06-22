@@ -271,12 +271,9 @@ func (c *EKS) CreateAddonRequest(input *CreateAddonInput) (req *request.Request,
 // Creates an Amazon EKS add-on.
 //
 // Amazon EKS add-ons help to automate the provisioning and lifecycle management
-// of common operational software for Amazon EKS clusters. Amazon EKS add-ons
-// require clusters running version 1.18 or later because Amazon EKS add-ons
-// rely on the Server-side Apply Kubernetes feature, which is only available
-// in Kubernetes 1.18 and later. For more information, see Amazon EKS add-ons
-// (https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html) in the
-// Amazon EKS User Guide.
+// of common operational software for Amazon EKS clusters. For more information,
+// see Amazon EKS add-ons (https://docs.aws.amazon.com/eks/latest/userguide/eks-add-ons.html)
+// in the Amazon EKS User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -644,9 +641,11 @@ func (c *EKS) CreateNodegroupRequest(input *CreateNodegroupInput) (req *request.
 //
 // An Amazon EKS managed node group is an Amazon EC2 Auto Scaling group and
 // associated Amazon EC2 instances that are managed by Amazon Web Services for
-// an Amazon EKS cluster. Each node group uses a version of the Amazon EKS optimized
-// Amazon Linux 2 AMI. For more information, see Managed Node Groups (https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html)
+// an Amazon EKS cluster. For more information, see Managed node groups (https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html)
 // in the Amazon EKS User Guide.
+//
+// Windows AMI types are only supported for commercial Regions that support
+// Windows Amazon EKS.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1312,6 +1311,94 @@ func (c *EKS) DescribeAddonWithContext(ctx aws.Context, input *DescribeAddonInpu
 	return out, req.Send()
 }
 
+const opDescribeAddonConfiguration = "DescribeAddonConfiguration"
+
+// DescribeAddonConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeAddonConfiguration operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeAddonConfiguration for more information on using the DescribeAddonConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeAddonConfigurationRequest method.
+//	req, resp := client.DescribeAddonConfigurationRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/eks-2017-11-01/DescribeAddonConfiguration
+func (c *EKS) DescribeAddonConfigurationRequest(input *DescribeAddonConfigurationInput) (req *request.Request, output *DescribeAddonConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDescribeAddonConfiguration,
+		HTTPMethod: "GET",
+		HTTPPath:   "/addons/configuration-schemas",
+	}
+
+	if input == nil {
+		input = &DescribeAddonConfigurationInput{}
+	}
+
+	output = &DescribeAddonConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeAddonConfiguration API operation for Amazon Elastic Kubernetes Service.
+//
+// Returns configuration options.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Elastic Kubernetes Service's
+// API operation DescribeAddonConfiguration for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ServerException
+//     These errors are usually caused by a server-side issue.
+//
+//   - ResourceNotFoundException
+//     The specified resource could not be found. You can view your available clusters
+//     with ListClusters. You can view your available managed node groups with ListNodegroups.
+//     Amazon EKS clusters and node groups are Region-specific.
+//
+//   - InvalidParameterException
+//     The specified parameter is invalid. Review the available parameters for the
+//     API request.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/eks-2017-11-01/DescribeAddonConfiguration
+func (c *EKS) DescribeAddonConfiguration(input *DescribeAddonConfigurationInput) (*DescribeAddonConfigurationOutput, error) {
+	req, out := c.DescribeAddonConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DescribeAddonConfigurationWithContext is the same as DescribeAddonConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeAddonConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *EKS) DescribeAddonConfigurationWithContext(ctx aws.Context, input *DescribeAddonConfigurationInput, opts ...request.Option) (*DescribeAddonConfigurationOutput, error) {
+	req, out := c.DescribeAddonConfigurationRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribeAddonVersions = "DescribeAddonVersions"
 
 // DescribeAddonVersionsRequest generates a "aws/request.Request" representing the
@@ -1361,7 +1448,9 @@ func (c *EKS) DescribeAddonVersionsRequest(input *DescribeAddonVersionsInput) (r
 
 // DescribeAddonVersions API operation for Amazon Elastic Kubernetes Service.
 //
-// Describes the Kubernetes versions that the add-on can be used with.
+// Describes the versions for an add-on. Information such as the Kubernetes
+// versions that you can use the add-on with, the owner, publisher, and the
+// type of the add-on are returned.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3837,8 +3926,10 @@ func (c *EKS) UpdateNodegroupVersionRequest(input *UpdateNodegroupVersionInput) 
 // available AMI version of a node group's current Kubernetes version by not
 // specifying a Kubernetes version in the request. You can update to the latest
 // AMI version of your cluster's current Kubernetes version by specifying your
-// cluster's Kubernetes version in the request. For more information, see Amazon
-// EKS optimized Amazon Linux 2 AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html)
+// cluster's Kubernetes version in the request. For information about Linux
+// versions, see Amazon EKS optimized Amazon Linux AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html)
+// in the Amazon EKS User Guide. For information about Windows versions, see
+// Amazon EKS optimized Windows AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-versions-windows.html)
 // in the Amazon EKS User Guide.
 //
 // You cannot roll back a node group to an earlier Kubernetes version or AMI
@@ -3990,17 +4081,29 @@ type Addon struct {
 	// The name of the cluster.
 	ClusterName *string `locationName:"clusterName" min:"1" type:"string"`
 
+	// The configuration values that you provided.
+	ConfigurationValues *string `locationName:"configurationValues" type:"string"`
+
 	// The date and time that the add-on was created.
 	CreatedAt *time.Time `locationName:"createdAt" type:"timestamp"`
 
-	// An object representing the health of the add-on.
+	// An object that represents the health of the add-on.
 	Health *AddonHealth `locationName:"health" type:"structure"`
+
+	// Information about an Amazon EKS add-on from the Amazon Web Services Marketplace.
+	MarketplaceInformation *MarketplaceInformation `locationName:"marketplaceInformation" type:"structure"`
 
 	// The date and time that the add-on was last modified.
 	ModifiedAt *time.Time `locationName:"modifiedAt" type:"timestamp"`
 
-	// The Amazon Resource Name (ARN) of the IAM role that is bound to the Kubernetes
-	// service account used by the add-on.
+	// The owner of the add-on.
+	Owner *string `locationName:"owner" type:"string"`
+
+	// The publisher of the add-on.
+	Publisher *string `locationName:"publisher" type:"string"`
+
+	// The Amazon Resource Name (ARN) of the IAM role that's bound to the Kubernetes
+	// service account that the add-on uses.
 	ServiceAccountRoleArn *string `locationName:"serviceAccountRoleArn" type:"string"`
 
 	// The status of the add-on.
@@ -4055,6 +4158,12 @@ func (s *Addon) SetClusterName(v string) *Addon {
 	return s
 }
 
+// SetConfigurationValues sets the ConfigurationValues field's value.
+func (s *Addon) SetConfigurationValues(v string) *Addon {
+	s.ConfigurationValues = &v
+	return s
+}
+
 // SetCreatedAt sets the CreatedAt field's value.
 func (s *Addon) SetCreatedAt(v time.Time) *Addon {
 	s.CreatedAt = &v
@@ -4067,9 +4176,27 @@ func (s *Addon) SetHealth(v *AddonHealth) *Addon {
 	return s
 }
 
+// SetMarketplaceInformation sets the MarketplaceInformation field's value.
+func (s *Addon) SetMarketplaceInformation(v *MarketplaceInformation) *Addon {
+	s.MarketplaceInformation = v
+	return s
+}
+
 // SetModifiedAt sets the ModifiedAt field's value.
 func (s *Addon) SetModifiedAt(v time.Time) *Addon {
 	s.ModifiedAt = &v
+	return s
+}
+
+// SetOwner sets the Owner field's value.
+func (s *Addon) SetOwner(v string) *Addon {
+	s.Owner = &v
+	return s
+}
+
+// SetPublisher sets the Publisher field's value.
+func (s *Addon) SetPublisher(v string) *Addon {
+	s.Publisher = &v
 	return s
 }
 
@@ -4134,6 +4261,15 @@ type AddonInfo struct {
 	// Kubernetes versions.
 	AddonVersions []*AddonVersionInfo `locationName:"addonVersions" type:"list"`
 
+	// Information about the add-on from the Amazon Web Services Marketplace.
+	MarketplaceInformation *MarketplaceInformation `locationName:"marketplaceInformation" type:"structure"`
+
+	// The owner of the add-on.
+	Owner *string `locationName:"owner" type:"string"`
+
+	// The publisher of the add-on.
+	Publisher *string `locationName:"publisher" type:"string"`
+
 	// The type of the add-on.
 	Type *string `locationName:"type" type:"string"`
 }
@@ -4165,6 +4301,24 @@ func (s *AddonInfo) SetAddonName(v string) *AddonInfo {
 // SetAddonVersions sets the AddonVersions field's value.
 func (s *AddonInfo) SetAddonVersions(v []*AddonVersionInfo) *AddonInfo {
 	s.AddonVersions = v
+	return s
+}
+
+// SetMarketplaceInformation sets the MarketplaceInformation field's value.
+func (s *AddonInfo) SetMarketplaceInformation(v *MarketplaceInformation) *AddonInfo {
+	s.MarketplaceInformation = v
+	return s
+}
+
+// SetOwner sets the Owner field's value.
+func (s *AddonInfo) SetOwner(v string) *AddonInfo {
+	s.Owner = &v
+	return s
+}
+
+// SetPublisher sets the Publisher field's value.
+func (s *AddonInfo) SetPublisher(v string) *AddonInfo {
+	s.Publisher = &v
 	return s
 }
 
@@ -4236,6 +4390,9 @@ type AddonVersionInfo struct {
 
 	// An object representing the compatibilities of a version.
 	Compatibilities []*Compatibility `locationName:"compatibilities" type:"list"`
+
+	// Whether the add-on requires configuration.
+	RequiresConfiguration *bool `locationName:"requiresConfiguration" type:"boolean"`
 }
 
 // String returns the string representation.
@@ -4271,6 +4428,12 @@ func (s *AddonVersionInfo) SetArchitecture(v []*string) *AddonVersionInfo {
 // SetCompatibilities sets the Compatibilities field's value.
 func (s *AddonVersionInfo) SetCompatibilities(v []*Compatibility) *AddonVersionInfo {
 	s.Compatibilities = v
+	return s
+}
+
+// SetRequiresConfiguration sets the RequiresConfiguration field's value.
+func (s *AddonVersionInfo) SetRequiresConfiguration(v bool) *AddonVersionInfo {
+	s.RequiresConfiguration = &v
 	return s
 }
 
@@ -5206,11 +5369,83 @@ func (s *ConnectorConfigResponse) SetRoleArn(v string) *ConnectorConfigResponse 
 	return s
 }
 
+// The placement configuration for all the control plane instances of your local
+// Amazon EKS cluster on an Amazon Web Services Outpost. For more information,
+// see Capacity considerations (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html)
+// in the Amazon EKS User Guide
+type ControlPlanePlacementRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the placement group for the Kubernetes control plane instances.
+	// This setting can't be changed after cluster creation.
+	GroupName *string `locationName:"groupName" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ControlPlanePlacementRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ControlPlanePlacementRequest) GoString() string {
+	return s.String()
+}
+
+// SetGroupName sets the GroupName field's value.
+func (s *ControlPlanePlacementRequest) SetGroupName(v string) *ControlPlanePlacementRequest {
+	s.GroupName = &v
+	return s
+}
+
+// The placement configuration for all the control plane instances of your local
+// Amazon EKS cluster on an Amazon Web Services Outpost. For more information,
+// see Capacity considerations (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html)
+// in the Amazon EKS User Guide.
+type ControlPlanePlacementResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the placement group for the Kubernetes control plane instances.
+	GroupName *string `locationName:"groupName" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ControlPlanePlacementResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ControlPlanePlacementResponse) GoString() string {
+	return s.String()
+}
+
+// SetGroupName sets the GroupName field's value.
+func (s *ControlPlanePlacementResponse) SetGroupName(v string) *ControlPlanePlacementResponse {
+	s.GroupName = &v
+	return s
+}
+
 type CreateAddonInput struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the add-on. The name must match one of the names returned by
-	// DescribeAddonVersions (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html).
+	// The name of the add-on. The name must match one of the names that DescribeAddonVersions
+	// (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html)
+	// returns.
 	//
 	// AddonName is a required field
 	AddonName *string `locationName:"addonName" type:"string" required:"true"`
@@ -5227,6 +5462,11 @@ type CreateAddonInput struct {
 	//
 	// ClusterName is a required field
 	ClusterName *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The set of configuration values for the add-on that's created. The values
+	// that you provide are validated against the schema in DescribeAddonConfiguration
+	// (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonConfiguration.html).
+	ConfigurationValues *string `locationName:"configurationValues" type:"string"`
 
 	// How to resolve field value conflicts for an Amazon EKS add-on. Conflicts
 	// are handled based on the value you choose:
@@ -5333,6 +5573,12 @@ func (s *CreateAddonInput) SetClusterName(v string) *CreateAddonInput {
 	return s
 }
 
+// SetConfigurationValues sets the ConfigurationValues field's value.
+func (s *CreateAddonInput) SetConfigurationValues(v string) *CreateAddonInput {
+	s.ConfigurationValues = &v
+	return s
+}
+
 // SetResolveConflicts sets the ResolveConflicts field's value.
 func (s *CreateAddonInput) SetResolveConflicts(v string) *CreateAddonInput {
 	s.ResolveConflicts = &v
@@ -5414,8 +5660,8 @@ type CreateClusterInput struct {
 
 	// An object representing the configuration of your local Amazon EKS cluster
 	// on an Amazon Web Services Outpost. Before creating a local cluster on an
-	// Outpost, review Creating an Amazon EKS cluster on an Amazon Web Services
-	// Outpost (https://docs.aws.amazon.com/eks/latest/userguide/create-cluster-outpost.html)
+	// Outpost, review Local clusters for Amazon EKS on Amazon Web Services Outposts
+	// (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-local-cluster-overview.html)
 	// in the Amazon EKS User Guide. This object isn't available for creating Amazon
 	// EKS clusters on the Amazon Web Services cloud.
 	OutpostConfig *OutpostConfigRequest `locationName:"outpostConfig" type:"structure"`
@@ -5753,13 +5999,12 @@ func (s *CreateFargateProfileOutput) SetFargateProfile(v *FargateProfile) *Creat
 type CreateNodegroupInput struct {
 	_ struct{} `type:"structure"`
 
-	// The AMI type for your node group. GPU instance types should use the AL2_x86_64_GPU
-	// AMI type. Non-GPU instances should use the AL2_x86_64 AMI type. Arm instances
-	// should use the AL2_ARM_64 AMI type. All types use the Amazon EKS optimized
-	// Amazon Linux 2 AMI. If you specify launchTemplate, and your launch template
-	// uses a custom AMI, then don't specify amiType, or the node group deployment
-	// will fail. For more information about using launch templates with Amazon
-	// EKS, see Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
+	// The AMI type for your node group. If you specify launchTemplate, and your
+	// launch template uses a custom AMI, then don't specify amiType, or the node
+	// group deployment will fail. If your launch template uses a Windows custom
+	// AMI, then add eks:kube-proxy-windows to your Windows nodes rolearn in the
+	// aws-auth ConfigMap. For more information about using launch templates with
+	// Amazon EKS, see Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
 	// in the Amazon EKS User Guide.
 	AmiType *string `locationName:"amiType" type:"string" enum:"AMITypes"`
 
@@ -5776,22 +6021,23 @@ type CreateNodegroupInput struct {
 	ClusterName *string `location:"uri" locationName:"name" type:"string" required:"true"`
 
 	// The root device disk size (in GiB) for your node group instances. The default
-	// disk size is 20 GiB. If you specify launchTemplate, then don't specify diskSize,
+	// disk size is 20 GiB for Linux and Bottlerocket. The default disk size is
+	// 50 GiB for Windows. If you specify launchTemplate, then don't specify diskSize,
 	// or the node group deployment will fail. For more information about using
 	// launch templates with Amazon EKS, see Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
 	// in the Amazon EKS User Guide.
 	DiskSize *int64 `locationName:"diskSize" type:"integer"`
 
 	// Specify the instance types for a node group. If you specify a GPU instance
-	// type, be sure to specify AL2_x86_64_GPU with the amiType parameter. If you
-	// specify launchTemplate, then you can specify zero or one instance type in
-	// your launch template or you can specify 0-20 instance types for instanceTypes.
-	// If however, you specify an instance type in your launch template and specify
-	// any instanceTypes, the node group deployment will fail. If you don't specify
-	// an instance type in a launch template or for instanceTypes, then t3.medium
-	// is used, by default. If you specify Spot for capacityType, then we recommend
-	// specifying multiple values for instanceTypes. For more information, see Managed
-	// node group capacity types (https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html#managed-node-group-capacity-types)
+	// type, make sure to also specify an applicable GPU AMI type with the amiType
+	// parameter. If you specify launchTemplate, then you can specify zero or one
+	// instance type in your launch template or you can specify 0-20 instance types
+	// for instanceTypes. If however, you specify an instance type in your launch
+	// template and specify any instanceTypes, the node group deployment will fail.
+	// If you don't specify an instance type in a launch template or for instanceTypes,
+	// then t3.medium is used, by default. If you specify Spot for capacityType,
+	// then we recommend specifying multiple values for instanceTypes. For more
+	// information, see Managed node group capacity types (https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html#managed-node-group-capacity-types)
 	// and Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
 	// in the Amazon EKS User Guide.
 	InstanceTypes []*string `locationName:"instanceTypes" type:"list"`
@@ -5829,19 +6075,25 @@ type CreateNodegroupInput struct {
 
 	// The AMI version of the Amazon EKS optimized AMI to use with your node group.
 	// By default, the latest available AMI version for the node group's current
-	// Kubernetes version is used. For more information, see Amazon EKS optimized
-	// Amazon Linux 2 AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html)
-	// in the Amazon EKS User Guide. If you specify launchTemplate, and your launch
-	// template uses a custom AMI, then don't specify releaseVersion, or the node
-	// group deployment will fail. For more information about using launch templates
-	// with Amazon EKS, see Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
+	// Kubernetes version is used. For information about Linux versions, see Amazon
+	// EKS optimized Amazon Linux AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html)
+	// in the Amazon EKS User Guide. Amazon EKS managed node groups support the
+	// November 2022 and later releases of the Windows AMIs. For information about
+	// Windows versions, see Amazon EKS optimized Windows AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-versions-windows.html)
+	// in the Amazon EKS User Guide.
+	//
+	// If you specify launchTemplate, and your launch template uses a custom AMI,
+	// then don't specify releaseVersion, or the node group deployment will fail.
+	// For more information about using launch templates with Amazon EKS, see Launch
+	// template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
 	// in the Amazon EKS User Guide.
 	ReleaseVersion *string `locationName:"releaseVersion" type:"string"`
 
-	// The remote access (SSH) configuration to use with your node group. If you
-	// specify launchTemplate, then don't specify remoteAccess, or the node group
-	// deployment will fail. For more information about using launch templates with
-	// Amazon EKS, see Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
+	// The remote access configuration to use with your node group. For Linux, the
+	// protocol is SSH. For Windows, the protocol is RDP. If you specify launchTemplate,
+	// then don't specify remoteAccess, or the node group deployment will fail.
+	// For more information about using launch templates with Amazon EKS, see Launch
+	// template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
 	// in the Amazon EKS User Guide.
 	RemoteAccess *RemoteAccessConfig `locationName:"remoteAccess" type:"structure"`
 
@@ -6103,7 +6355,7 @@ type DeleteAddonInput struct {
 
 	// Specifying this option preserves the add-on software on your cluster but
 	// Amazon EKS stops managing any settings for the add-on. If an IAM account
-	// is associated with the add-on, it is not removed.
+	// is associated with the add-on, it isn't removed.
 	Preserve *bool `location:"querystring" locationName:"preserve" type:"boolean"`
 }
 
@@ -6552,6 +6804,120 @@ func (s *DeregisterClusterOutput) SetCluster(v *Cluster) *DeregisterClusterOutpu
 	return s
 }
 
+type DescribeAddonConfigurationInput struct {
+	_ struct{} `type:"structure" nopayload:"true"`
+
+	// The name of the add-on. The name must match one of the names that DescribeAddonVersions
+	// (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html)
+	// returns.
+	//
+	// AddonName is a required field
+	AddonName *string `location:"querystring" locationName:"addonName" type:"string" required:"true"`
+
+	// The version of the add-on. The version must match one of the versions returned
+	// by DescribeAddonVersions (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html).
+	//
+	// AddonVersion is a required field
+	AddonVersion *string `location:"querystring" locationName:"addonVersion" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAddonConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAddonConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeAddonConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeAddonConfigurationInput"}
+	if s.AddonName == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddonName"))
+	}
+	if s.AddonVersion == nil {
+		invalidParams.Add(request.NewErrParamRequired("AddonVersion"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddonName sets the AddonName field's value.
+func (s *DescribeAddonConfigurationInput) SetAddonName(v string) *DescribeAddonConfigurationInput {
+	s.AddonName = &v
+	return s
+}
+
+// SetAddonVersion sets the AddonVersion field's value.
+func (s *DescribeAddonConfigurationInput) SetAddonVersion(v string) *DescribeAddonConfigurationInput {
+	s.AddonVersion = &v
+	return s
+}
+
+type DescribeAddonConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the add-on.
+	AddonName *string `locationName:"addonName" type:"string"`
+
+	// The version of the add-on. The version must match one of the versions returned
+	// by DescribeAddonVersions (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonVersions.html).
+	AddonVersion *string `locationName:"addonVersion" type:"string"`
+
+	// A JSON schema that's used to validate the configuration values that you provide
+	// when an addon is created or updated.
+	ConfigurationSchema *string `locationName:"configurationSchema" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAddonConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeAddonConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// SetAddonName sets the AddonName field's value.
+func (s *DescribeAddonConfigurationOutput) SetAddonName(v string) *DescribeAddonConfigurationOutput {
+	s.AddonName = &v
+	return s
+}
+
+// SetAddonVersion sets the AddonVersion field's value.
+func (s *DescribeAddonConfigurationOutput) SetAddonVersion(v string) *DescribeAddonConfigurationOutput {
+	s.AddonVersion = &v
+	return s
+}
+
+// SetConfigurationSchema sets the ConfigurationSchema field's value.
+func (s *DescribeAddonConfigurationOutput) SetConfigurationSchema(v string) *DescribeAddonConfigurationOutput {
+	s.ConfigurationSchema = &v
+	return s
+}
+
 type DescribeAddonInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -6658,7 +7024,7 @@ type DescribeAddonVersionsInput struct {
 	// ListAddons (https://docs.aws.amazon.com/eks/latest/APIReference/API_ListAddons.html).
 	AddonName *string `location:"querystring" locationName:"addonName" type:"string"`
 
-	// The Kubernetes versions that the add-on can be used with.
+	// The Kubernetes versions that you can use the add-on with.
 	KubernetesVersion *string `location:"querystring" locationName:"kubernetesVersion" type:"string"`
 
 	// The maximum number of results to return.
@@ -6672,6 +7038,17 @@ type DescribeAddonVersionsInput struct {
 	// This token should be treated as an opaque identifier that is used only to
 	// retrieve the next items in a list and not for other programmatic purposes.
 	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
+
+	// The owner of the add-on. For valid owners, don't specify a value for this
+	// property.
+	Owners []*string `location:"querystring" locationName:"owners" type:"list"`
+
+	// The publisher of the add-on. For valid publishers, don't specify a value
+	// for this property.
+	Publishers []*string `location:"querystring" locationName:"publishers" type:"list"`
+
+	// The type of the add-on. For valid types, don't specify a value for this property.
+	Types []*string `location:"querystring" locationName:"types" type:"list"`
 }
 
 // String returns the string representation.
@@ -6729,10 +7106,29 @@ func (s *DescribeAddonVersionsInput) SetNextToken(v string) *DescribeAddonVersio
 	return s
 }
 
+// SetOwners sets the Owners field's value.
+func (s *DescribeAddonVersionsInput) SetOwners(v []*string) *DescribeAddonVersionsInput {
+	s.Owners = v
+	return s
+}
+
+// SetPublishers sets the Publishers field's value.
+func (s *DescribeAddonVersionsInput) SetPublishers(v []*string) *DescribeAddonVersionsInput {
+	s.Publishers = v
+	return s
+}
+
+// SetTypes sets the Types field's value.
+func (s *DescribeAddonVersionsInput) SetTypes(v []*string) *DescribeAddonVersionsInput {
+	s.Types = v
+	return s
+}
+
 type DescribeAddonVersionsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The list of available versions with Kubernetes version compatibility.
+	// The list of available versions with Kubernetes version compatibility and
+	// other properties.
 	Addons []*AddonInfo `locationName:"addons" type:"list"`
 
 	// The nextToken value returned from a previous paginated DescribeAddonVersionsResponse
@@ -8190,15 +8586,8 @@ type LaunchTemplateSpecification struct {
 	// in the request, but not both.
 	Name *string `locationName:"name" type:"string"`
 
-	// The launch template version number, $Latest, or $Default.
-	//
-	// If the value is $Latest, Amazon EKS uses the latest version of the launch
-	// template.
-	//
-	// If the value is $Default, Amazon EKS uses the default version of the launch
-	// template.
-	//
-	// Default: The default version of the launch template.
+	// The version number of the launch template to use. If no version is specified,
+	// then the template's default version is used.
 	Version *string `locationName:"version" type:"string"`
 }
 
@@ -9152,6 +9541,47 @@ func (s *Logging) SetClusterLogging(v []*LogSetup) *Logging {
 	return s
 }
 
+// Information about an Amazon EKS add-on from the Amazon Web Services Marketplace.
+type MarketplaceInformation struct {
+	_ struct{} `type:"structure"`
+
+	// The product ID from the Amazon Web Services Marketplace.
+	ProductId *string `locationName:"productId" type:"string"`
+
+	// The product URL from the Amazon Web Services Marketplace.
+	ProductUrl *string `locationName:"productUrl" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MarketplaceInformation) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MarketplaceInformation) GoString() string {
+	return s.String()
+}
+
+// SetProductId sets the ProductId field's value.
+func (s *MarketplaceInformation) SetProductId(v string) *MarketplaceInformation {
+	s.ProductId = &v
+	return s
+}
+
+// SetProductUrl sets the ProductUrl field's value.
+func (s *MarketplaceInformation) SetProductUrl(v string) *MarketplaceInformation {
+	s.ProductUrl = &v
+	return s
+}
+
 // An object representing an Amazon EKS managed node group.
 type Nodegroup struct {
 	_ struct{} `type:"structure"`
@@ -10020,32 +10450,30 @@ func (s *OidcIdentityProviderConfigRequest) SetUsernamePrefix(v string) *OidcIde
 
 // The configuration of your local Amazon EKS cluster on an Amazon Web Services
 // Outpost. Before creating a cluster on an Outpost, review Creating a local
-// Amazon EKS cluster on an Amazon Web Services Outpost (https://docs.aws.amazon.com/eks/latest/userguide/create-cluster-outpost.html)
+// cluster on an Outpost (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-local-cluster-create.html)
 // in the Amazon EKS User Guide. This API isn't available for Amazon EKS clusters
 // on the Amazon Web Services cloud.
 type OutpostConfigRequest struct {
 	_ struct{} `type:"structure"`
 
 	// The Amazon EC2 instance type that you want to use for your local Amazon EKS
-	// cluster on Outposts. The instance type that you specify is used for all Kubernetes
-	// control plane instances. The instance type can't be changed after cluster
-	// creation.
+	// cluster on Outposts. Choose an instance type based on the number of nodes
+	// that your cluster will have. For more information, see Capacity considerations
+	// (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html)
+	// in the Amazon EKS User Guide.
 	//
-	// Choose an instance type based on the number of nodes that your cluster will
-	// have. If your cluster will have:
-	//
-	//    * 1–20 nodes, then we recommend specifying a large instance type.
-	//
-	//    * 21–100 nodes, then we recommend specifying an xlarge instance type.
-	//
-	//    * 101–250 nodes, then we recommend specifying a 2xlarge instance type.
-	//
-	// For a list of the available Amazon EC2 instance types, see Compute and storage
-	// in Outposts rack features (http://aws.amazon.com/outposts/rack/features/).
-	// The control plane is not automatically scaled by Amazon EKS.
+	// The instance type that you specify is used for all Kubernetes control plane
+	// instances. The instance type can't be changed after cluster creation. The
+	// control plane is not automatically scaled by Amazon EKS.
 	//
 	// ControlPlaneInstanceType is a required field
 	ControlPlaneInstanceType *string `locationName:"controlPlaneInstanceType" type:"string" required:"true"`
+
+	// An object representing the placement configuration for all the control plane
+	// instances of your local Amazon EKS cluster on an Amazon Web Services Outpost.
+	// For more information, see Capacity considerations (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html)
+	// in the Amazon EKS User Guide.
+	ControlPlanePlacement *ControlPlanePlacementRequest `locationName:"controlPlanePlacement" type:"structure"`
 
 	// The ARN of the Outpost that you want to use for your local Amazon EKS cluster
 	// on Outposts. Only a single Outpost ARN is supported.
@@ -10094,6 +10522,12 @@ func (s *OutpostConfigRequest) SetControlPlaneInstanceType(v string) *OutpostCon
 	return s
 }
 
+// SetControlPlanePlacement sets the ControlPlanePlacement field's value.
+func (s *OutpostConfigRequest) SetControlPlanePlacement(v *ControlPlanePlacementRequest) *OutpostConfigRequest {
+	s.ControlPlanePlacement = v
+	return s
+}
+
 // SetOutpostArns sets the OutpostArns field's value.
 func (s *OutpostConfigRequest) SetOutpostArns(v []*string) *OutpostConfigRequest {
 	s.OutpostArns = v
@@ -10111,6 +10545,12 @@ type OutpostConfigResponse struct {
 	//
 	// ControlPlaneInstanceType is a required field
 	ControlPlaneInstanceType *string `locationName:"controlPlaneInstanceType" type:"string" required:"true"`
+
+	// An object representing the placement configuration for all the control plane
+	// instances of your local Amazon EKS cluster on an Amazon Web Services Outpost.
+	// For more information, see Capacity considerations (https://docs.aws.amazon.com/eks/latest/userguide/eks-outposts-capacity-considerations.html)
+	// in the Amazon EKS User Guide.
+	ControlPlanePlacement *ControlPlanePlacementResponse `locationName:"controlPlanePlacement" type:"structure"`
 
 	// The ARN of the Outpost that you specified for use with your local Amazon
 	// EKS cluster on Outposts.
@@ -10140,6 +10580,12 @@ func (s OutpostConfigResponse) GoString() string {
 // SetControlPlaneInstanceType sets the ControlPlaneInstanceType field's value.
 func (s *OutpostConfigResponse) SetControlPlaneInstanceType(v string) *OutpostConfigResponse {
 	s.ControlPlaneInstanceType = &v
+	return s
+}
+
+// SetControlPlanePlacement sets the ControlPlanePlacement field's value.
+func (s *OutpostConfigResponse) SetControlPlanePlacement(v *ControlPlanePlacementResponse) *OutpostConfigResponse {
+	s.ControlPlanePlacement = v
 	return s
 }
 
@@ -10315,17 +10761,20 @@ func (s *RegisterClusterOutput) SetCluster(v *Cluster) *RegisterClusterOutput {
 type RemoteAccessConfig struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon EC2 SSH key that provides access for SSH communication with the
-	// nodes in the managed node group. For more information, see Amazon EC2 key
-	// pairs and Linux instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
-	// in the Amazon Elastic Compute Cloud User Guide for Linux Instances.
+	// The Amazon EC2 SSH key name that provides access for SSH communication with
+	// the nodes in the managed node group. For more information, see Amazon EC2
+	// key pairs and Linux instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html)
+	// in the Amazon Elastic Compute Cloud User Guide for Linux Instances. For Windows,
+	// an Amazon EC2 SSH key is used to obtain the RDP password. For more information,
+	// see Amazon EC2 key pairs and Windows instances (https://docs.aws.amazon.com/AWSEC2/latest/WindowsGuide/ec2-key-pairs.html)
+	// in the Amazon Elastic Compute Cloud User Guide for Windows Instances.
 	Ec2SshKey *string `locationName:"ec2SshKey" type:"string"`
 
-	// The security groups that are allowed SSH access (port 22) to the nodes. If
-	// you specify an Amazon EC2 SSH key but do not specify a source security group
-	// when you create a managed node group, then port 22 on the nodes is opened
-	// to the internet (0.0.0.0/0). For more information, see Security Groups for
-	// Your VPC (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
+	// The security group IDs that are allowed SSH access (port 22) to the nodes.
+	// For Windows, the port is 3389. If you specify an Amazon EC2 SSH key but don't
+	// specify a source security group when you create a managed node group, then
+	// the port on the nodes is opened to the internet (0.0.0.0/0). For more information,
+	// see Security Groups for Your VPC (https://docs.aws.amazon.com/vpc/latest/userguide/VPC_SecurityGroups.html)
 	// in the Amazon Virtual Private Cloud User Guide.
 	SourceSecurityGroups []*string `locationName:"sourceSecurityGroups" type:"list"`
 }
@@ -11199,6 +11648,11 @@ type UpdateAddonInput struct {
 	// ClusterName is a required field
 	ClusterName *string `location:"uri" locationName:"name" min:"1" type:"string" required:"true"`
 
+	// The set of configuration values for the add-on that's created. The values
+	// that you provide are validated against the schema in DescribeAddonConfiguration
+	// (https://docs.aws.amazon.com/eks/latest/APIReference/API_DescribeAddonConfiguration.html).
+	ConfigurationValues *string `locationName:"configurationValues" type:"string"`
+
 	// How to resolve field value conflicts for an Amazon EKS add-on if you've changed
 	// a value from the Amazon EKS default value. Conflicts are handled based on
 	// the option you choose:
@@ -11291,6 +11745,12 @@ func (s *UpdateAddonInput) SetClientRequestToken(v string) *UpdateAddonInput {
 // SetClusterName sets the ClusterName field's value.
 func (s *UpdateAddonInput) SetClusterName(v string) *UpdateAddonInput {
 	s.ClusterName = &v
+	return s
+}
+
+// SetConfigurationValues sets the ConfigurationValues field's value.
+func (s *UpdateAddonInput) SetConfigurationValues(v string) *UpdateAddonInput {
+	s.ConfigurationValues = &v
 	return s
 }
 
@@ -11790,12 +12250,17 @@ type UpdateNodegroupVersionInput struct {
 
 	// The AMI version of the Amazon EKS optimized AMI to use for the update. By
 	// default, the latest available AMI version for the node group's Kubernetes
-	// version is used. For more information, see Amazon EKS optimized Amazon Linux
-	// 2 AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html)
-	// in the Amazon EKS User Guide. If you specify launchTemplate, and your launch
-	// template uses a custom AMI, then don't specify releaseVersion, or the node
-	// group update will fail. For more information about using launch templates
-	// with Amazon EKS, see Launch template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
+	// version is used. For information about Linux versions, see Amazon EKS optimized
+	// Amazon Linux AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-linux-ami-versions.html)
+	// in the Amazon EKS User Guide. Amazon EKS managed node groups support the
+	// November 2022 and later releases of the Windows AMIs. For information about
+	// Windows versions, see Amazon EKS optimized Windows AMI versions (https://docs.aws.amazon.com/eks/latest/userguide/eks-ami-versions-windows.html)
+	// in the Amazon EKS User Guide.
+	//
+	// If you specify launchTemplate, and your launch template uses a custom AMI,
+	// then don't specify releaseVersion, or the node group update will fail. For
+	// more information about using launch templates with Amazon EKS, see Launch
+	// template support (https://docs.aws.amazon.com/eks/latest/userguide/launch-templates.html)
 	// in the Amazon EKS User Guide.
 	ReleaseVersion *string `locationName:"releaseVersion" type:"string"`
 
@@ -11972,7 +12437,7 @@ type UpdateTaintsPayload struct {
 	// Kubernetes taints to be added or updated.
 	AddOrUpdateTaints []*Taint `locationName:"addOrUpdateTaints" type:"list"`
 
-	// Kubernetes taints to be removed.
+	// Kubernetes taints to remove.
 	RemoveTaints []*Taint `locationName:"removeTaints" type:"list"`
 }
 
@@ -12073,13 +12538,8 @@ type VpcConfigRequest struct {
 	// interfaces that Amazon EKS creates to use that allow communication between
 	// your nodes and the Kubernetes control plane. If you don't specify any security
 	// groups, then familiarize yourself with the difference between Amazon EKS
-	// defaults for clusters deployed with Kubernetes:
-	//
-	//    * 1.14 Amazon EKS platform version eks.2 and earlier
-	//
-	//    * 1.14 Amazon EKS platform version eks.3 and later
-	//
-	// For more information, see Amazon EKS security group considerations (https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html)
+	// defaults for clusters deployed with Kubernetes. For more information, see
+	// Amazon EKS security group considerations (https://docs.aws.amazon.com/eks/latest/userguide/sec-group-reqs.html)
 	// in the Amazon EKS User Guide .
 	SecurityGroupIds []*string `locationName:"securityGroupIds" type:"list"`
 
@@ -12268,6 +12728,18 @@ const (
 
 	// AMITypesBottlerocketX8664Nvidia is a AMITypes enum value
 	AMITypesBottlerocketX8664Nvidia = "BOTTLEROCKET_x86_64_NVIDIA"
+
+	// AMITypesWindowsCore2019X8664 is a AMITypes enum value
+	AMITypesWindowsCore2019X8664 = "WINDOWS_CORE_2019_x86_64"
+
+	// AMITypesWindowsFull2019X8664 is a AMITypes enum value
+	AMITypesWindowsFull2019X8664 = "WINDOWS_FULL_2019_x86_64"
+
+	// AMITypesWindowsCore2022X8664 is a AMITypes enum value
+	AMITypesWindowsCore2022X8664 = "WINDOWS_CORE_2022_x86_64"
+
+	// AMITypesWindowsFull2022X8664 is a AMITypes enum value
+	AMITypesWindowsFull2022X8664 = "WINDOWS_FULL_2022_x86_64"
 )
 
 // AMITypes_Values returns all elements of the AMITypes enum
@@ -12281,6 +12753,10 @@ func AMITypes_Values() []string {
 		AMITypesBottlerocketX8664,
 		AMITypesBottlerocketArm64Nvidia,
 		AMITypesBottlerocketX8664Nvidia,
+		AMITypesWindowsCore2019X8664,
+		AMITypesWindowsFull2019X8664,
+		AMITypesWindowsCore2022X8664,
+		AMITypesWindowsFull2022X8664,
 	}
 }
 

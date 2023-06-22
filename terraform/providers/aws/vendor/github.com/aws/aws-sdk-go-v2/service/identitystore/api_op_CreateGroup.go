@@ -36,8 +36,9 @@ type CreateGroupInput struct {
 	// A string containing the description of the group.
 	Description *string
 
-	// A string containing the name of the group. This value is commonly displayed when
-	// the group is referenced.
+	// A string containing the name of the group. This value is commonly displayed
+	// when the group is referenced. "Administrator" and "AWSAdministrators" are
+	// reserved names and can't be used for users or groups.
 	DisplayName *string
 
 	noSmithyDocumentSerde
@@ -110,6 +111,9 @@ func (c *Client) addOperationCreateGroupMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateGroup(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

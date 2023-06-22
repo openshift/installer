@@ -12,8 +12,8 @@ import (
 	"time"
 )
 
-// Gets information on the settings of query suggestions for an index. This is used
-// to check the current settings applied to query suggestions.
+// Gets information on the settings of query suggestions for an index. This is
+// used to check the current settings applied to query suggestions.
 // DescribeQuerySuggestionsConfig is currently not supported in the Amazon Web
 // Services GovCloud (US-West) region.
 func (c *Client) DescribeQuerySuggestionsConfig(ctx context.Context, params *DescribeQuerySuggestionsConfigInput, optFns ...func(*Options)) (*DescribeQuerySuggestionsConfigOutput, error) {
@@ -44,17 +44,24 @@ type DescribeQuerySuggestionsConfigInput struct {
 
 type DescribeQuerySuggestionsConfigOutput struct {
 
+	// Configuration information for the document fields/attributes that you want to
+	// base query suggestions on.
+	AttributeSuggestionsConfig *types.AttributeSuggestionsDescribeConfig
+
 	// TRUE to use all queries, otherwise use only queries that include user
 	// information to generate the query suggestions.
 	IncludeQueriesWithoutUserInformation *bool
 
-	// The date-time query suggestions for an index was last cleared. After you clear
-	// suggestions, Amazon Kendra learns new suggestions based on new queries added to
-	// the query log from the time you cleared suggestions. Amazon Kendra only
+	// The Unix timestamp when query suggestions for an index was last cleared. After
+	// you clear suggestions, Amazon Kendra learns new suggestions based on new queries
+	// added to the query log from the time you cleared suggestions. Amazon Kendra only
 	// considers re-occurences of a query from the time you cleared suggestions.
 	LastClearTime *time.Time
 
-	// The date-time query suggestions for an index was last updated.
+	// The Unix timestamp when query suggestions for an index was last updated. Amazon
+	// Kendra automatically updates suggestions every 24 hours, after you change a
+	// setting or after you apply a block list (https://docs.aws.amazon.com/kendra/latest/dg/query-suggestions.html#query-suggestions-blocklist)
+	// .
 	LastSuggestionsBuildTime *time.Time
 
 	// The minimum number of unique users who must search a query in order for the
@@ -66,25 +73,27 @@ type DescribeQuerySuggestionsConfigOutput struct {
 	MinimumQueryCount *int32
 
 	// Whether query suggestions are currently in ENABLED mode or LEARN_ONLY mode. By
-	// default, Amazon Kendra enables query suggestions.LEARN_ONLY turns off query
+	// default, Amazon Kendra enables query suggestions. LEARN_ONLY turns off query
 	// suggestions for your users. You can change the mode using the
-	// UpdateQuerySuggestionsConfig
-	// (https://docs.aws.amazon.com/kendra/latest/dg/API_UpdateQuerySuggestionsConfig.html)
+	// UpdateQuerySuggestionsConfig (https://docs.aws.amazon.com/kendra/latest/dg/API_UpdateQuerySuggestionsConfig.html)
 	// API.
 	Mode types.Mode
 
 	// How recent your queries are in your query log time window (in days).
 	QueryLogLookBackWindowInDays *int32
 
-	// Whether the status of query suggestions settings is currently ACTIVE or
-	// UPDATING. Active means the current settings apply and Updating means your
-	// changed settings are in the process of applying.
+	// Whether the status of query suggestions settings is currently ACTIVE or UPDATING
+	// . Active means the current settings apply and Updating means your changed
+	// settings are in the process of applying.
 	Status types.QuerySuggestionsStatus
 
-	// The current total count of query suggestions for an index. This count can change
-	// when you update your query suggestions settings, if you filter out certain
-	// queries from suggestions using a block list, and as the query log accumulates
-	// more queries for Amazon Kendra to learn from.
+	// The current total count of query suggestions for an index. This count can
+	// change when you update your query suggestions settings, if you filter out
+	// certain queries from suggestions using a block list, and as the query log
+	// accumulates more queries for Amazon Kendra to learn from. If the count is much
+	// lower than you expected, it could be because Amazon Kendra needs more queries in
+	// the query history to learn from or your current query suggestions settings are
+	// too strict.
 	TotalSuggestionsCount *int32
 
 	// Metadata pertaining to the operation's result.
@@ -142,6 +151,9 @@ func (c *Client) addOperationDescribeQuerySuggestionsConfigMiddlewares(stack *mi
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeQuerySuggestionsConfig(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

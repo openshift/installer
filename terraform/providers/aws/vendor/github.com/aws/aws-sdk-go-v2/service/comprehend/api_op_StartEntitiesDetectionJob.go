@@ -35,11 +35,9 @@ func (c *Client) StartEntitiesDetectionJob(ctx context.Context, params *StartEnt
 
 type StartEntitiesDetectionJobInput struct {
 
-	// The Amazon Resource Name (ARN) of the AWS Identity and Access Management (IAM)
-	// role that grants Amazon Comprehend read access to your input data. For more
-	// information, see
-	// https://docs.aws.amazon.com/comprehend/latest/dg/access-control-managing-permissions.html#auth-role-permissions
-	// (https://docs.aws.amazon.com/comprehend/latest/dg/access-control-managing-permissions.html#auth-role-permissions).
+	// The Amazon Resource Name (ARN) of the IAM role that grants Amazon Comprehend
+	// read access to your input data. For more information, see Role-based permissions (https://docs.aws.amazon.com/comprehend/latest/dg/security_iam_id-based-policy-examples.html#auth-role-permissions)
+	// .
 	//
 	// This member is required.
 	DataAccessRoleArn *string
@@ -49,10 +47,10 @@ type StartEntitiesDetectionJobInput struct {
 	// This member is required.
 	InputDataConfig *types.InputDataConfig
 
-	// The language of the input documents. All documents must be in the same language.
-	// You can specify any of the languages supported by Amazon Comprehend. If custom
-	// entities recognition is used, this parameter is ignored and the language used
-	// for training the model is used instead.
+	// The language of the input documents. All documents must be in the same
+	// language. You can specify any of the languages supported by Amazon Comprehend.
+	// If custom entities recognition is used, this parameter is ignored and the
+	// language used for training the model is used instead.
 	//
 	// This member is required.
 	LanguageCode types.LanguageCode
@@ -66,36 +64,37 @@ type StartEntitiesDetectionJobInput struct {
 	// Amazon Comprehend generates one.
 	ClientRequestToken *string
 
-	// The Amazon Resource Name (ARN) that identifies the specific entity recognizer to
-	// be used by the StartEntitiesDetectionJob. This ARN is optional and is only used
-	// for a custom entity recognition job.
+	// The Amazon Resource Name (ARN) that identifies the specific entity recognizer
+	// to be used by the StartEntitiesDetectionJob . This ARN is optional and is only
+	// used for a custom entity recognition job.
 	EntityRecognizerArn *string
+
+	// The Amazon Resource Number (ARN) of the flywheel associated with the model to
+	// use.
+	FlywheelArn *string
 
 	// The identifier of the job.
 	JobName *string
 
-	// Tags to be associated with the entities detection job. A tag is a key-value pair
+	// Tags to associate with the entities detection job. A tag is a key-value pair
 	// that adds metadata to a resource used by Amazon Comprehend. For example, a tag
 	// with "Sales" as the key might be added to a resource to indicate its use by the
 	// sales department.
 	Tags []types.Tag
 
-	// ID for the AWS Key Management Service (KMS) key that Amazon Comprehend uses to
-	// encrypt data on the storage volume attached to the ML compute instance(s) that
-	// process the analysis job. The VolumeKmsKeyId can be either of the following
-	// formats:
-	//
-	// * KMS Key ID: "1234abcd-12ab-34cd-56ef-1234567890ab"
-	//
-	// * Amazon
-	// Resource Name (ARN) of a KMS Key:
-	// "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
+	// ID for the Amazon Web Services Key Management Service (KMS) key that Amazon
+	// Comprehend uses to encrypt data on the storage volume attached to the ML compute
+	// instance(s) that process the analysis job. The VolumeKmsKeyId can be either of
+	// the following formats:
+	//   - KMS Key ID: "1234abcd-12ab-34cd-56ef-1234567890ab"
+	//   - Amazon Resource Name (ARN) of a KMS Key:
+	//   "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab"
 	VolumeKmsKeyId *string
 
 	// Configuration parameters for an optional private Virtual Private Cloud (VPC)
 	// containing the resources you are using for your entity detection job. For more
-	// information, see Amazon VPC
-	// (https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html).
+	// information, see Amazon VPC (https://docs.aws.amazon.com/vpc/latest/userguide/what-is-amazon-vpc.html)
+	// .
 	VpcConfig *types.VpcConfig
 
 	noSmithyDocumentSerde
@@ -103,10 +102,14 @@ type StartEntitiesDetectionJobInput struct {
 
 type StartEntitiesDetectionJobOutput struct {
 
+	// The ARN of the custom entity recognition model.
+	EntityRecognizerArn *string
+
 	// The Amazon Resource Name (ARN) of the entities detection job. It is a unique,
-	// fully qualified identifier for the job. It includes the AWS account, Region, and
-	// the job ID. The format of the ARN is as follows:
-	// arn::comprehend:::entities-detection-job/ The following is an example job ARN:
+	// fully qualified identifier for the job. It includes the Amazon Web Services
+	// account, Amazon Web Services Region, and the job ID. The format of the ARN is as
+	// follows: arn::comprehend:::entities-detection-job/ The following is an example
+	// job ARN:
 	// arn:aws:comprehend:us-west-2:111122223333:entities-detection-job/1234abcd12ab34cd56ef1234567890ab
 	JobArn *string
 
@@ -115,24 +118,13 @@ type StartEntitiesDetectionJobOutput struct {
 	JobId *string
 
 	// The status of the job.
-	//
-	// * SUBMITTED - The job has been received and is queued
-	// for processing.
-	//
-	// * IN_PROGRESS - Amazon Comprehend is processing the job.
-	//
-	// *
-	// COMPLETED - The job was successfully completed and the output is available.
-	//
-	// *
-	// FAILED - The job did not complete. To get details, use the operation.
-	//
-	// *
-	// STOP_REQUESTED - Amazon Comprehend has received a stop request for the job and
-	// is processing the request.
-	//
-	// * STOPPED - The job was successfully stopped without
-	// completing.
+	//   - SUBMITTED - The job has been received and is queued for processing.
+	//   - IN_PROGRESS - Amazon Comprehend is processing the job.
+	//   - COMPLETED - The job was successfully completed and the output is available.
+	//   - FAILED - The job did not complete. To get details, use the operation.
+	//   - STOP_REQUESTED - Amazon Comprehend has received a stop request for the job
+	//   and is processing the request.
+	//   - STOPPED - The job was successfully stopped without completing.
 	JobStatus types.JobStatus
 
 	// Metadata pertaining to the operation's result.
@@ -193,6 +185,9 @@ func (c *Client) addOperationStartEntitiesDetectionJobMiddlewares(stack *middlew
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opStartEntitiesDetectionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

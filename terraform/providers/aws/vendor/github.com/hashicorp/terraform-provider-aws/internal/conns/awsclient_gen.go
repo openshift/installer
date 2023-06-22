@@ -2,20 +2,52 @@
 package conns
 
 import (
+	"context"
+	"net/http"
+
+	"github.com/aws/aws-sdk-go-v2/service/accessanalyzer"
+	"github.com/aws/aws-sdk-go-v2/service/account"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
+	"github.com/aws/aws-sdk-go-v2/service/auditmanager"
+	"github.com/aws/aws-sdk-go-v2/service/cleanrooms"
+	"github.com/aws/aws-sdk-go-v2/service/cloudcontrol"
+	cloudwatchlogs_sdkv2 "github.com/aws/aws-sdk-go-v2/service/cloudwatchlogs"
 	"github.com/aws/aws-sdk-go-v2/service/comprehend"
+	"github.com/aws/aws-sdk-go-v2/service/computeoptimizer"
+	directoryservice_sdkv2 "github.com/aws/aws-sdk-go-v2/service/directoryservice"
+	"github.com/aws/aws-sdk-go-v2/service/docdbelastic"
+	ec2_sdkv2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/finspace"
 	"github.com/aws/aws-sdk-go-v2/service/fis"
+	"github.com/aws/aws-sdk-go-v2/service/glacier"
+	"github.com/aws/aws-sdk-go-v2/service/healthlake"
 	"github.com/aws/aws-sdk-go-v2/service/identitystore"
 	"github.com/aws/aws-sdk-go-v2/service/inspector2"
+	"github.com/aws/aws-sdk-go-v2/service/ivschat"
 	"github.com/aws/aws-sdk-go-v2/service/kendra"
+	lambda_sdkv2 "github.com/aws/aws-sdk-go-v2/service/lambda"
+	"github.com/aws/aws-sdk-go-v2/service/lightsail"
 	"github.com/aws/aws-sdk-go-v2/service/medialive"
+	"github.com/aws/aws-sdk-go-v2/service/oam"
+	"github.com/aws/aws-sdk-go-v2/service/opensearchserverless"
+	"github.com/aws/aws-sdk-go-v2/service/pipes"
+	"github.com/aws/aws-sdk-go-v2/service/rbin"
+	rds_sdkv2 "github.com/aws/aws-sdk-go-v2/service/rds"
+	"github.com/aws/aws-sdk-go-v2/service/resourceexplorer2"
 	"github.com/aws/aws-sdk-go-v2/service/rolesanywhere"
 	"github.com/aws/aws-sdk-go-v2/service/route53domains"
+	s3control_sdkv2 "github.com/aws/aws-sdk-go-v2/service/s3control"
+	"github.com/aws/aws-sdk-go-v2/service/scheduler"
+	"github.com/aws/aws-sdk-go-v2/service/securitylake"
 	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	ssm_sdkv2 "github.com/aws/aws-sdk-go-v2/service/ssm"
+	"github.com/aws/aws-sdk-go-v2/service/ssmcontacts"
+	"github.com/aws/aws-sdk-go-v2/service/ssmincidents"
+	"github.com/aws/aws-sdk-go-v2/service/swf"
 	"github.com/aws/aws-sdk-go-v2/service/transcribe"
+	"github.com/aws/aws-sdk-go-v2/service/vpclattice"
+	"github.com/aws/aws-sdk-go-v2/service/xray"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/accessanalyzer"
-	"github.com/aws/aws-sdk-go/service/account"
-	"github.com/aws/aws-sdk-go/service/acm"
 	"github.com/aws/aws-sdk-go/service/acmpca"
 	"github.com/aws/aws-sdk-go/service/alexaforbusiness"
 	"github.com/aws/aws-sdk-go/service/amplify"
@@ -38,7 +70,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/appstream"
 	"github.com/aws/aws-sdk-go/service/appsync"
 	"github.com/aws/aws-sdk-go/service/athena"
-	"github.com/aws/aws-sdk-go/service/auditmanager"
 	"github.com/aws/aws-sdk-go/service/augmentedairuntime"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/autoscalingplans"
@@ -50,10 +81,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/budgets"
 	"github.com/aws/aws-sdk-go/service/chime"
 	"github.com/aws/aws-sdk-go/service/chimesdkidentity"
+	"github.com/aws/aws-sdk-go/service/chimesdkmediapipelines"
 	"github.com/aws/aws-sdk-go/service/chimesdkmeetings"
 	"github.com/aws/aws-sdk-go/service/chimesdkmessaging"
+	"github.com/aws/aws-sdk-go/service/chimesdkvoice"
 	"github.com/aws/aws-sdk-go/service/cloud9"
-	"github.com/aws/aws-sdk-go/service/cloudcontrolapi"
 	"github.com/aws/aws-sdk-go/service/clouddirectory"
 	"github.com/aws/aws-sdk-go/service/cloudformation"
 	"github.com/aws/aws-sdk-go/service/cloudfront"
@@ -79,7 +111,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go/service/cognitosync"
 	"github.com/aws/aws-sdk-go/service/comprehendmedical"
-	"github.com/aws/aws-sdk-go/service/computeoptimizer"
 	"github.com/aws/aws-sdk-go/service/configservice"
 	"github.com/aws/aws-sdk-go/service/connect"
 	"github.com/aws/aws-sdk-go/service/connectcontactlens"
@@ -123,7 +154,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/emrcontainers"
 	"github.com/aws/aws-sdk-go/service/emrserverless"
 	"github.com/aws/aws-sdk-go/service/eventbridge"
-	"github.com/aws/aws-sdk-go/service/finspace"
 	"github.com/aws/aws-sdk-go/service/finspacedata"
 	"github.com/aws/aws-sdk-go/service/firehose"
 	"github.com/aws/aws-sdk-go/service/fms"
@@ -132,7 +162,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/frauddetector"
 	"github.com/aws/aws-sdk-go/service/fsx"
 	"github.com/aws/aws-sdk-go/service/gamelift"
-	"github.com/aws/aws-sdk-go/service/glacier"
 	"github.com/aws/aws-sdk-go/service/globalaccelerator"
 	"github.com/aws/aws-sdk-go/service/glue"
 	"github.com/aws/aws-sdk-go/service/gluedatabrew"
@@ -141,11 +170,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/groundstation"
 	"github.com/aws/aws-sdk-go/service/guardduty"
 	"github.com/aws/aws-sdk-go/service/health"
-	"github.com/aws/aws-sdk-go/service/healthlake"
 	"github.com/aws/aws-sdk-go/service/honeycode"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/imagebuilder"
 	"github.com/aws/aws-sdk-go/service/inspector"
+	"github.com/aws/aws-sdk-go/service/internetmonitor"
 	"github.com/aws/aws-sdk-go/service/iot"
 	"github.com/aws/aws-sdk-go/service/iot1clickdevicesservice"
 	"github.com/aws/aws-sdk-go/service/iot1clickprojects"
@@ -180,7 +209,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/lexruntimeservice"
 	"github.com/aws/aws-sdk-go/service/lexruntimev2"
 	"github.com/aws/aws-sdk-go/service/licensemanager"
-	"github.com/aws/aws-sdk-go/service/lightsail"
 	"github.com/aws/aws-sdk-go/service/locationservice"
 	"github.com/aws/aws-sdk-go/service/lookoutequipment"
 	"github.com/aws/aws-sdk-go/service/lookoutforvision"
@@ -238,7 +266,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/ram"
 	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/aws/aws-sdk-go/service/rdsdataservice"
-	"github.com/aws/aws-sdk-go/service/recyclebin"
 	"github.com/aws/aws-sdk-go/service/redshift"
 	"github.com/aws/aws-sdk-go/service/redshiftdataapiservice"
 	"github.com/aws/aws-sdk-go/service/redshiftserverless"
@@ -278,15 +305,12 @@ import (
 	"github.com/aws/aws-sdk-go/service/sns"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/aws/aws-sdk-go/service/ssm"
-	"github.com/aws/aws-sdk-go/service/ssmcontacts"
-	"github.com/aws/aws-sdk-go/service/ssmincidents"
 	"github.com/aws/aws-sdk-go/service/sso"
 	"github.com/aws/aws-sdk-go/service/ssoadmin"
 	"github.com/aws/aws-sdk-go/service/ssooidc"
 	"github.com/aws/aws-sdk-go/service/storagegateway"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/aws/aws-sdk-go/service/support"
-	"github.com/aws/aws-sdk-go/service/swf"
 	"github.com/aws/aws-sdk-go/service/synthetics"
 	"github.com/aws/aws-sdk-go/service/textract"
 	"github.com/aws/aws-sdk-go/service/timestreamquery"
@@ -305,327 +329,1638 @@ import (
 	"github.com/aws/aws-sdk-go/service/workmailmessageflow"
 	"github.com/aws/aws-sdk-go/service/workspaces"
 	"github.com/aws/aws-sdk-go/service/workspacesweb"
-	"github.com/aws/aws-sdk-go/service/xray"
-	"github.com/hashicorp/terraform-provider-aws/internal/experimental/intf"
 	tftags "github.com/hashicorp/terraform-provider-aws/internal/tags"
 )
 
 type AWSClient struct {
-	AccountID                 string
-	DefaultTagsConfig         *tftags.DefaultConfig
-	DNSSuffix                 string
-	IgnoreTagsConfig          *tftags.IgnoreConfig
-	MediaConvertAccountConn   *mediaconvert.MediaConvert
-	Partition                 string
-	Region                    string
-	ReverseDNSPrefix          string
-	S3ConnURICleaningDisabled *s3.S3
-	ServiceMap                map[string]intf.ServiceData
-	Session                   *session.Session
-	SupportedPlatforms        []string
-	TerraformVersion          string
+	AccountID               string
+	DefaultTagsConfig       *tftags.DefaultConfig
+	DNSSuffix               string
+	IgnoreTagsConfig        *tftags.IgnoreConfig
+	MediaConvertAccountConn *mediaconvert.MediaConvert
+	Partition               string
+	Region                  string
+	ReverseDNSPrefix        string
+	ServicePackages         map[string]ServicePackage
+	Session                 *session.Session
+	TerraformVersion        string
 
-	ACMConn                          *acm.ACM
-	ACMPCAConn                       *acmpca.ACMPCA
-	AMPConn                          *prometheusservice.PrometheusService
-	APIGatewayConn                   *apigateway.APIGateway
-	APIGatewayManagementAPIConn      *apigatewaymanagementapi.ApiGatewayManagementApi
-	APIGatewayV2Conn                 *apigatewayv2.ApiGatewayV2
-	AccessAnalyzerConn               *accessanalyzer.AccessAnalyzer
-	AccountConn                      *account.Account
-	AlexaForBusinessConn             *alexaforbusiness.AlexaForBusiness
-	AmplifyConn                      *amplify.Amplify
-	AmplifyBackendConn               *amplifybackend.AmplifyBackend
-	AmplifyUIBuilderConn             *amplifyuibuilder.AmplifyUIBuilder
-	AppAutoScalingConn               *applicationautoscaling.ApplicationAutoScaling
-	AppConfigConn                    *appconfig.AppConfig
-	AppConfigDataConn                *appconfigdata.AppConfigData
-	AppFlowConn                      *appflow.Appflow
-	AppIntegrationsConn              *appintegrationsservice.AppIntegrationsService
-	AppMeshConn                      *appmesh.AppMesh
-	AppRunnerConn                    *apprunner.AppRunner
-	AppStreamConn                    *appstream.AppStream
-	AppSyncConn                      *appsync.AppSync
-	ApplicationCostProfilerConn      *applicationcostprofiler.ApplicationCostProfiler
-	ApplicationInsightsConn          *applicationinsights.ApplicationInsights
-	AthenaConn                       *athena.Athena
-	AuditManagerConn                 *auditmanager.AuditManager
-	AutoScalingConn                  *autoscaling.AutoScaling
-	AutoScalingPlansConn             *autoscalingplans.AutoScalingPlans
-	BackupConn                       *backup.Backup
-	BackupGatewayConn                *backupgateway.BackupGateway
-	BatchConn                        *batch.Batch
-	BillingConductorConn             *billingconductor.BillingConductor
-	BraketConn                       *braket.Braket
-	BudgetsConn                      *budgets.Budgets
-	CEConn                           *costexplorer.CostExplorer
-	CURConn                          *costandusagereportservice.CostandUsageReportService
-	ChimeConn                        *chime.Chime
-	ChimeSDKIdentityConn             *chimesdkidentity.ChimeSDKIdentity
-	ChimeSDKMeetingsConn             *chimesdkmeetings.ChimeSDKMeetings
-	ChimeSDKMessagingConn            *chimesdkmessaging.ChimeSDKMessaging
-	Cloud9Conn                       *cloud9.Cloud9
-	CloudControlConn                 *cloudcontrolapi.CloudControlApi
-	CloudDirectoryConn               *clouddirectory.CloudDirectory
-	CloudFormationConn               *cloudformation.CloudFormation
-	CloudFrontConn                   *cloudfront.CloudFront
-	CloudHSMV2Conn                   *cloudhsmv2.CloudHSMV2
-	CloudSearchConn                  *cloudsearch.CloudSearch
-	CloudSearchDomainConn            *cloudsearchdomain.CloudSearchDomain
-	CloudTrailConn                   *cloudtrail.CloudTrail
-	CloudWatchConn                   *cloudwatch.CloudWatch
-	CodeArtifactConn                 *codeartifact.CodeArtifact
-	CodeBuildConn                    *codebuild.CodeBuild
-	CodeCommitConn                   *codecommit.CodeCommit
-	CodeGuruProfilerConn             *codeguruprofiler.CodeGuruProfiler
-	CodeGuruReviewerConn             *codegurureviewer.CodeGuruReviewer
-	CodePipelineConn                 *codepipeline.CodePipeline
-	CodeStarConn                     *codestar.CodeStar
-	CodeStarConnectionsConn          *codestarconnections.CodeStarConnections
-	CodeStarNotificationsConn        *codestarnotifications.CodeStarNotifications
-	CognitoIDPConn                   *cognitoidentityprovider.CognitoIdentityProvider
-	CognitoIdentityConn              *cognitoidentity.CognitoIdentity
-	CognitoSyncConn                  *cognitosync.CognitoSync
-	ComprehendConn                   *comprehend.Client
-	ComprehendMedicalConn            *comprehendmedical.ComprehendMedical
-	ComputeOptimizerConn             *computeoptimizer.ComputeOptimizer
-	ConfigServiceConn                *configservice.ConfigService
-	ConnectConn                      *connect.Connect
-	ConnectContactLensConn           *connectcontactlens.ConnectContactLens
-	ConnectParticipantConn           *connectparticipant.ConnectParticipant
-	ControlTowerConn                 *controltower.ControlTower
-	CustomerProfilesConn             *customerprofiles.CustomerProfiles
-	DAXConn                          *dax.DAX
-	DLMConn                          *dlm.DLM
-	DMSConn                          *databasemigrationservice.DatabaseMigrationService
-	DRSConn                          *drs.Drs
-	DSConn                           *directoryservice.DirectoryService
-	DataBrewConn                     *gluedatabrew.GlueDataBrew
-	DataExchangeConn                 *dataexchange.DataExchange
-	DataPipelineConn                 *datapipeline.DataPipeline
-	DataSyncConn                     *datasync.DataSync
-	DeployConn                       *codedeploy.CodeDeploy
-	DetectiveConn                    *detective.Detective
-	DevOpsGuruConn                   *devopsguru.DevOpsGuru
-	DeviceFarmConn                   *devicefarm.DeviceFarm
-	DirectConnectConn                *directconnect.DirectConnect
-	DiscoveryConn                    *applicationdiscoveryservice.ApplicationDiscoveryService
-	DocDBConn                        *docdb.DocDB
-	DynamoDBConn                     *dynamodb.DynamoDB
-	DynamoDBStreamsConn              *dynamodbstreams.DynamoDBStreams
-	EBSConn                          *ebs.EBS
-	EC2Conn                          *ec2.EC2
-	EC2InstanceConnectConn           *ec2instanceconnect.EC2InstanceConnect
-	ECRConn                          *ecr.ECR
-	ECRPublicConn                    *ecrpublic.ECRPublic
-	ECSConn                          *ecs.ECS
-	EFSConn                          *efs.EFS
-	EKSConn                          *eks.EKS
-	ELBConn                          *elb.ELB
-	ELBV2Conn                        *elbv2.ELBV2
-	EMRConn                          *emr.EMR
-	EMRContainersConn                *emrcontainers.EMRContainers
-	EMRServerlessConn                *emrserverless.EMRServerless
-	ElastiCacheConn                  *elasticache.ElastiCache
-	ElasticBeanstalkConn             *elasticbeanstalk.ElasticBeanstalk
-	ElasticInferenceConn             *elasticinference.ElasticInference
-	ElasticTranscoderConn            *elastictranscoder.ElasticTranscoder
-	ElasticsearchConn                *elasticsearchservice.ElasticsearchService
-	EventsConn                       *eventbridge.EventBridge
-	EvidentlyConn                    *cloudwatchevidently.CloudWatchEvidently
-	FISConn                          *fis.Client
-	FMSConn                          *fms.FMS
-	FSxConn                          *fsx.FSx
-	FinSpaceConn                     *finspace.Finspace
-	FinSpaceDataConn                 *finspacedata.FinSpaceData
-	FirehoseConn                     *firehose.Firehose
-	ForecastConn                     *forecastservice.ForecastService
-	ForecastQueryConn                *forecastqueryservice.ForecastQueryService
-	FraudDetectorConn                *frauddetector.FraudDetector
-	GameLiftConn                     *gamelift.GameLift
-	GlacierConn                      *glacier.Glacier
-	GlobalAcceleratorConn            *globalaccelerator.GlobalAccelerator
-	GlueConn                         *glue.Glue
-	GrafanaConn                      *managedgrafana.ManagedGrafana
-	GreengrassConn                   *greengrass.Greengrass
-	GreengrassV2Conn                 *greengrassv2.GreengrassV2
-	GroundStationConn                *groundstation.GroundStation
-	GuardDutyConn                    *guardduty.GuardDuty
-	HealthConn                       *health.Health
-	HealthLakeConn                   *healthlake.HealthLake
-	HoneycodeConn                    *honeycode.Honeycode
-	IAMConn                          *iam.IAM
-	IVSConn                          *ivs.IVS
-	IdentityStoreConn                *identitystore.Client
-	ImageBuilderConn                 *imagebuilder.Imagebuilder
-	InspectorConn                    *inspector.Inspector
-	Inspector2Conn                   *inspector2.Client
-	IoTConn                          *iot.IoT
-	IoT1ClickDevicesConn             *iot1clickdevicesservice.IoT1ClickDevicesService
-	IoT1ClickProjectsConn            *iot1clickprojects.IoT1ClickProjects
-	IoTAnalyticsConn                 *iotanalytics.IoTAnalytics
-	IoTDataConn                      *iotdataplane.IoTDataPlane
-	IoTDeviceAdvisorConn             *iotdeviceadvisor.IoTDeviceAdvisor
-	IoTEventsConn                    *iotevents.IoTEvents
-	IoTEventsDataConn                *ioteventsdata.IoTEventsData
-	IoTFleetHubConn                  *iotfleethub.IoTFleetHub
-	IoTJobsDataConn                  *iotjobsdataplane.IoTJobsDataPlane
-	IoTSecureTunnelingConn           *iotsecuretunneling.IoTSecureTunneling
-	IoTSiteWiseConn                  *iotsitewise.IoTSiteWise
-	IoTThingsGraphConn               *iotthingsgraph.IoTThingsGraph
-	IoTTwinMakerConn                 *iottwinmaker.IoTTwinMaker
-	IoTWirelessConn                  *iotwireless.IoTWireless
-	KMSConn                          *kms.KMS
-	KafkaConn                        *kafka.Kafka
-	KafkaConnectConn                 *kafkaconnect.KafkaConnect
-	KendraConn                       *kendra.Client
-	KeyspacesConn                    *keyspaces.Keyspaces
-	KinesisConn                      *kinesis.Kinesis
-	KinesisAnalyticsConn             *kinesisanalytics.KinesisAnalytics
-	KinesisAnalyticsV2Conn           *kinesisanalyticsv2.KinesisAnalyticsV2
-	KinesisVideoConn                 *kinesisvideo.KinesisVideo
-	KinesisVideoArchivedMediaConn    *kinesisvideoarchivedmedia.KinesisVideoArchivedMedia
-	KinesisVideoMediaConn            *kinesisvideomedia.KinesisVideoMedia
-	KinesisVideoSignalingConn        *kinesisvideosignalingchannels.KinesisVideoSignalingChannels
-	LakeFormationConn                *lakeformation.LakeFormation
-	LambdaConn                       *lambda.Lambda
-	LexModelsConn                    *lexmodelbuildingservice.LexModelBuildingService
-	LexModelsV2Conn                  *lexmodelsv2.LexModelsV2
-	LexRuntimeConn                   *lexruntimeservice.LexRuntimeService
-	LexRuntimeV2Conn                 *lexruntimev2.LexRuntimeV2
-	LicenseManagerConn               *licensemanager.LicenseManager
-	LightsailConn                    *lightsail.Lightsail
-	LocationConn                     *locationservice.LocationService
-	LogsConn                         *cloudwatchlogs.CloudWatchLogs
-	LookoutEquipmentConn             *lookoutequipment.LookoutEquipment
-	LookoutMetricsConn               *lookoutmetrics.LookoutMetrics
-	LookoutVisionConn                *lookoutforvision.LookoutForVision
-	MQConn                           *mq.MQ
-	MTurkConn                        *mturk.MTurk
-	MWAAConn                         *mwaa.MWAA
-	MachineLearningConn              *machinelearning.MachineLearning
-	MacieConn                        *macie.Macie
-	Macie2Conn                       *macie2.Macie2
-	ManagedBlockchainConn            *managedblockchain.ManagedBlockchain
-	MarketplaceCatalogConn           *marketplacecatalog.MarketplaceCatalog
-	MarketplaceCommerceAnalyticsConn *marketplacecommerceanalytics.MarketplaceCommerceAnalytics
-	MarketplaceEntitlementConn       *marketplaceentitlementservice.MarketplaceEntitlementService
-	MarketplaceMeteringConn          *marketplacemetering.MarketplaceMetering
-	MediaConnectConn                 *mediaconnect.MediaConnect
-	MediaConvertConn                 *mediaconvert.MediaConvert
-	MediaLiveConn                    *medialive.Client
-	MediaPackageConn                 *mediapackage.MediaPackage
-	MediaPackageVODConn              *mediapackagevod.MediaPackageVod
-	MediaStoreConn                   *mediastore.MediaStore
-	MediaStoreDataConn               *mediastoredata.MediaStoreData
-	MediaTailorConn                  *mediatailor.MediaTailor
-	MemoryDBConn                     *memorydb.MemoryDB
-	MgHConn                          *migrationhub.MigrationHub
-	MgnConn                          *mgn.Mgn
-	MigrationHubConfigConn           *migrationhubconfig.MigrationHubConfig
-	MigrationHubRefactorSpacesConn   *migrationhubrefactorspaces.MigrationHubRefactorSpaces
-	MigrationHubStrategyConn         *migrationhubstrategyrecommendations.MigrationHubStrategyRecommendations
-	MobileConn                       *mobile.Mobile
-	NeptuneConn                      *neptune.Neptune
-	NetworkFirewallConn              *networkfirewall.NetworkFirewall
-	NetworkManagerConn               *networkmanager.NetworkManager
-	NimbleConn                       *nimblestudio.NimbleStudio
-	OpenSearchConn                   *opensearchservice.OpenSearchService
-	OpsWorksConn                     *opsworks.OpsWorks
-	OpsWorksCMConn                   *opsworkscm.OpsWorksCM
-	OrganizationsConn                *organizations.Organizations
-	OutpostsConn                     *outposts.Outposts
-	PIConn                           *pi.PI
-	PanoramaConn                     *panorama.Panorama
-	PersonalizeConn                  *personalize.Personalize
-	PersonalizeEventsConn            *personalizeevents.PersonalizeEvents
-	PersonalizeRuntimeConn           *personalizeruntime.PersonalizeRuntime
-	PinpointConn                     *pinpoint.Pinpoint
-	PinpointEmailConn                *pinpointemail.PinpointEmail
-	PinpointSMSVoiceConn             *pinpointsmsvoice.PinpointSMSVoice
-	PollyConn                        *polly.Polly
-	PricingConn                      *pricing.Pricing
-	ProtonConn                       *proton.Proton
-	QLDBConn                         *qldb.QLDB
-	QLDBSessionConn                  *qldbsession.QLDBSession
-	QuickSightConn                   *quicksight.QuickSight
-	RAMConn                          *ram.RAM
-	RBinConn                         *recyclebin.RecycleBin
-	RDSConn                          *rds.RDS
-	RDSDataConn                      *rdsdataservice.RDSDataService
-	RUMConn                          *cloudwatchrum.CloudWatchRUM
-	RedshiftConn                     *redshift.Redshift
-	RedshiftDataConn                 *redshiftdataapiservice.RedshiftDataAPIService
-	RedshiftServerlessConn           *redshiftserverless.RedshiftServerless
-	RekognitionConn                  *rekognition.Rekognition
-	ResilienceHubConn                *resiliencehub.ResilienceHub
-	ResourceGroupsConn               *resourcegroups.ResourceGroups
-	ResourceGroupsTaggingAPIConn     *resourcegroupstaggingapi.ResourceGroupsTaggingAPI
-	RoboMakerConn                    *robomaker.RoboMaker
-	RolesAnywhereConn                *rolesanywhere.Client
-	Route53Conn                      *route53.Route53
-	Route53DomainsConn               *route53domains.Client
-	Route53RecoveryClusterConn       *route53recoverycluster.Route53RecoveryCluster
-	Route53RecoveryControlConfigConn *route53recoverycontrolconfig.Route53RecoveryControlConfig
-	Route53RecoveryReadinessConn     *route53recoveryreadiness.Route53RecoveryReadiness
-	Route53ResolverConn              *route53resolver.Route53Resolver
-	S3Conn                           *s3.S3
-	S3ControlConn                    *s3control.S3Control
-	S3OutpostsConn                   *s3outposts.S3Outposts
-	SESConn                          *ses.SES
-	SESV2Conn                        *sesv2.Client
-	SFNConn                          *sfn.SFN
-	SMSConn                          *sms.SMS
-	SNSConn                          *sns.SNS
-	SQSConn                          *sqs.SQS
-	SSMConn                          *ssm.SSM
-	SSMContactsConn                  *ssmcontacts.SSMContacts
-	SSMIncidentsConn                 *ssmincidents.SSMIncidents
-	SSOConn                          *sso.SSO
-	SSOAdminConn                     *ssoadmin.SSOAdmin
-	SSOOIDCConn                      *ssooidc.SSOOIDC
-	STSConn                          *sts.STS
-	SWFConn                          *swf.SWF
-	SageMakerConn                    *sagemaker.SageMaker
-	SageMakerA2IRuntimeConn          *augmentedairuntime.AugmentedAIRuntime
-	SageMakerEdgeConn                *sagemakeredgemanager.SagemakerEdgeManager
-	SageMakerFeatureStoreRuntimeConn *sagemakerfeaturestoreruntime.SageMakerFeatureStoreRuntime
-	SageMakerRuntimeConn             *sagemakerruntime.SageMakerRuntime
-	SavingsPlansConn                 *savingsplans.SavingsPlans
-	SchemasConn                      *schemas.Schemas
-	SecretsManagerConn               *secretsmanager.SecretsManager
-	SecurityHubConn                  *securityhub.SecurityHub
-	ServerlessRepoConn               *serverlessapplicationrepository.ServerlessApplicationRepository
-	ServiceCatalogConn               *servicecatalog.ServiceCatalog
-	ServiceCatalogAppRegistryConn    *appregistry.AppRegistry
-	ServiceDiscoveryConn             *servicediscovery.ServiceDiscovery
-	ServiceQuotasConn                *servicequotas.ServiceQuotas
-	ShieldConn                       *shield.Shield
-	SignerConn                       *signer.Signer
-	SimpleDBConn                     *simpledb.SimpleDB
-	SnowDeviceManagementConn         *snowdevicemanagement.SnowDeviceManagement
-	SnowballConn                     *snowball.Snowball
-	StorageGatewayConn               *storagegateway.StorageGateway
-	SupportConn                      *support.Support
-	SyntheticsConn                   *synthetics.Synthetics
-	TextractConn                     *textract.Textract
-	TimestreamQueryConn              *timestreamquery.TimestreamQuery
-	TimestreamWriteConn              *timestreamwrite.TimestreamWrite
-	TranscribeConn                   *transcribe.Client
-	TranscribeStreamingConn          *transcribestreamingservice.TranscribeStreamingService
-	TransferConn                     *transfer.Transfer
-	TranslateConn                    *translate.Translate
-	VoiceIDConn                      *voiceid.VoiceID
-	WAFConn                          *waf.WAF
-	WAFRegionalConn                  *wafregional.WAFRegional
-	WAFV2Conn                        *wafv2.WAFV2
-	WellArchitectedConn              *wellarchitected.WellArchitected
-	WisdomConn                       *connectwisdomservice.ConnectWisdomService
-	WorkDocsConn                     *workdocs.WorkDocs
-	WorkLinkConn                     *worklink.WorkLink
-	WorkMailConn                     *workmail.WorkMail
-	WorkMailMessageFlowConn          *workmailmessageflow.WorkMailMessageFlow
-	WorkSpacesConn                   *workspaces.WorkSpaces
-	WorkSpacesWebConn                *workspacesweb.WorkSpacesWeb
-	XRayConn                         *xray.XRay
+	httpClient *http.Client
+
+	dsClient        lazyClient[*directoryservice_sdkv2.Client]
+	ec2Client       lazyClient[*ec2_sdkv2.Client]
+	lambdaClient    lazyClient[*lambda_sdkv2.Client]
+	logsClient      lazyClient[*cloudwatchlogs_sdkv2.Client]
+	rdsClient       lazyClient[*rds_sdkv2.Client]
+	s3controlClient lazyClient[*s3control_sdkv2.Client]
+	ssmClient       lazyClient[*ssm_sdkv2.Client]
+
+	acmClient                        *acm.Client
+	acmpcaConn                       *acmpca.ACMPCA
+	ampConn                          *prometheusservice.PrometheusService
+	apigatewayConn                   *apigateway.APIGateway
+	apigatewaymanagementapiConn      *apigatewaymanagementapi.ApiGatewayManagementApi
+	apigatewayv2Conn                 *apigatewayv2.ApiGatewayV2
+	accessanalyzerClient             *accessanalyzer.Client
+	accountClient                    *account.Client
+	alexaforbusinessConn             *alexaforbusiness.AlexaForBusiness
+	amplifyConn                      *amplify.Amplify
+	amplifybackendConn               *amplifybackend.AmplifyBackend
+	amplifyuibuilderConn             *amplifyuibuilder.AmplifyUIBuilder
+	applicationautoscalingConn       *applicationautoscaling.ApplicationAutoScaling
+	appconfigConn                    *appconfig.AppConfig
+	appconfigdataConn                *appconfigdata.AppConfigData
+	appflowConn                      *appflow.Appflow
+	appintegrationsConn              *appintegrationsservice.AppIntegrationsService
+	appmeshConn                      *appmesh.AppMesh
+	apprunnerConn                    *apprunner.AppRunner
+	appstreamConn                    *appstream.AppStream
+	appsyncConn                      *appsync.AppSync
+	applicationcostprofilerConn      *applicationcostprofiler.ApplicationCostProfiler
+	applicationinsightsConn          *applicationinsights.ApplicationInsights
+	athenaConn                       *athena.Athena
+	auditmanagerClient               *auditmanager.Client
+	autoscalingConn                  *autoscaling.AutoScaling
+	autoscalingplansConn             *autoscalingplans.AutoScalingPlans
+	backupConn                       *backup.Backup
+	backupgatewayConn                *backupgateway.BackupGateway
+	batchConn                        *batch.Batch
+	billingconductorConn             *billingconductor.BillingConductor
+	braketConn                       *braket.Braket
+	budgetsConn                      *budgets.Budgets
+	ceConn                           *costexplorer.CostExplorer
+	curConn                          *costandusagereportservice.CostandUsageReportService
+	chimeConn                        *chime.Chime
+	chimesdkidentityConn             *chimesdkidentity.ChimeSDKIdentity
+	chimesdkmediapipelinesConn       *chimesdkmediapipelines.ChimeSDKMediaPipelines
+	chimesdkmeetingsConn             *chimesdkmeetings.ChimeSDKMeetings
+	chimesdkmessagingConn            *chimesdkmessaging.ChimeSDKMessaging
+	chimesdkvoiceConn                *chimesdkvoice.ChimeSDKVoice
+	cleanroomsClient                 *cleanrooms.Client
+	cloud9Conn                       *cloud9.Cloud9
+	cloudcontrolClient               *cloudcontrol.Client
+	clouddirectoryConn               *clouddirectory.CloudDirectory
+	cloudformationConn               *cloudformation.CloudFormation
+	cloudfrontConn                   *cloudfront.CloudFront
+	cloudhsmv2Conn                   *cloudhsmv2.CloudHSMV2
+	cloudsearchConn                  *cloudsearch.CloudSearch
+	cloudsearchdomainConn            *cloudsearchdomain.CloudSearchDomain
+	cloudtrailConn                   *cloudtrail.CloudTrail
+	cloudwatchConn                   *cloudwatch.CloudWatch
+	codeartifactConn                 *codeartifact.CodeArtifact
+	codebuildConn                    *codebuild.CodeBuild
+	codecommitConn                   *codecommit.CodeCommit
+	codeguruprofilerConn             *codeguruprofiler.CodeGuruProfiler
+	codegurureviewerConn             *codegurureviewer.CodeGuruReviewer
+	codepipelineConn                 *codepipeline.CodePipeline
+	codestarConn                     *codestar.CodeStar
+	codestarconnectionsConn          *codestarconnections.CodeStarConnections
+	codestarnotificationsConn        *codestarnotifications.CodeStarNotifications
+	cognitoidpConn                   *cognitoidentityprovider.CognitoIdentityProvider
+	cognitoidentityConn              *cognitoidentity.CognitoIdentity
+	cognitosyncConn                  *cognitosync.CognitoSync
+	comprehendClient                 *comprehend.Client
+	comprehendmedicalConn            *comprehendmedical.ComprehendMedical
+	computeoptimizerClient           *computeoptimizer.Client
+	configserviceConn                *configservice.ConfigService
+	connectConn                      *connect.Connect
+	connectcontactlensConn           *connectcontactlens.ConnectContactLens
+	connectparticipantConn           *connectparticipant.ConnectParticipant
+	controltowerConn                 *controltower.ControlTower
+	customerprofilesConn             *customerprofiles.CustomerProfiles
+	daxConn                          *dax.DAX
+	dlmConn                          *dlm.DLM
+	dmsConn                          *databasemigrationservice.DatabaseMigrationService
+	drsConn                          *drs.Drs
+	dsConn                           *directoryservice.DirectoryService
+	databrewConn                     *gluedatabrew.GlueDataBrew
+	dataexchangeConn                 *dataexchange.DataExchange
+	datapipelineConn                 *datapipeline.DataPipeline
+	datasyncConn                     *datasync.DataSync
+	deployConn                       *codedeploy.CodeDeploy
+	detectiveConn                    *detective.Detective
+	devopsguruConn                   *devopsguru.DevOpsGuru
+	devicefarmConn                   *devicefarm.DeviceFarm
+	directconnectConn                *directconnect.DirectConnect
+	discoveryConn                    *applicationdiscoveryservice.ApplicationDiscoveryService
+	docdbConn                        *docdb.DocDB
+	docdbelasticClient               *docdbelastic.Client
+	dynamodbConn                     *dynamodb.DynamoDB
+	dynamodbstreamsConn              *dynamodbstreams.DynamoDBStreams
+	ebsConn                          *ebs.EBS
+	ec2Conn                          *ec2.EC2
+	ec2instanceconnectConn           *ec2instanceconnect.EC2InstanceConnect
+	ecrConn                          *ecr.ECR
+	ecrpublicConn                    *ecrpublic.ECRPublic
+	ecsConn                          *ecs.ECS
+	efsConn                          *efs.EFS
+	eksConn                          *eks.EKS
+	elbConn                          *elb.ELB
+	elbv2Conn                        *elbv2.ELBV2
+	emrConn                          *emr.EMR
+	emrcontainersConn                *emrcontainers.EMRContainers
+	emrserverlessConn                *emrserverless.EMRServerless
+	elasticacheConn                  *elasticache.ElastiCache
+	elasticbeanstalkConn             *elasticbeanstalk.ElasticBeanstalk
+	elasticinferenceConn             *elasticinference.ElasticInference
+	elastictranscoderConn            *elastictranscoder.ElasticTranscoder
+	esConn                           *elasticsearchservice.ElasticsearchService
+	eventsConn                       *eventbridge.EventBridge
+	evidentlyConn                    *cloudwatchevidently.CloudWatchEvidently
+	fisClient                        *fis.Client
+	fmsConn                          *fms.FMS
+	fsxConn                          *fsx.FSx
+	finspaceClient                   *finspace.Client
+	finspacedataConn                 *finspacedata.FinSpaceData
+	firehoseConn                     *firehose.Firehose
+	forecastConn                     *forecastservice.ForecastService
+	forecastqueryConn                *forecastqueryservice.ForecastQueryService
+	frauddetectorConn                *frauddetector.FraudDetector
+	gameliftConn                     *gamelift.GameLift
+	glacierClient                    *glacier.Client
+	globalacceleratorConn            *globalaccelerator.GlobalAccelerator
+	glueConn                         *glue.Glue
+	grafanaConn                      *managedgrafana.ManagedGrafana
+	greengrassConn                   *greengrass.Greengrass
+	greengrassv2Conn                 *greengrassv2.GreengrassV2
+	groundstationConn                *groundstation.GroundStation
+	guarddutyConn                    *guardduty.GuardDuty
+	healthConn                       *health.Health
+	healthlakeClient                 *healthlake.Client
+	honeycodeConn                    *honeycode.Honeycode
+	iamConn                          *iam.IAM
+	ivsConn                          *ivs.IVS
+	ivschatClient                    *ivschat.Client
+	identitystoreClient              *identitystore.Client
+	imagebuilderConn                 *imagebuilder.Imagebuilder
+	inspectorConn                    *inspector.Inspector
+	inspector2Client                 *inspector2.Client
+	internetmonitorConn              *internetmonitor.InternetMonitor
+	iotConn                          *iot.IoT
+	iot1clickdevicesConn             *iot1clickdevicesservice.IoT1ClickDevicesService
+	iot1clickprojectsConn            *iot1clickprojects.IoT1ClickProjects
+	iotanalyticsConn                 *iotanalytics.IoTAnalytics
+	iotdataConn                      *iotdataplane.IoTDataPlane
+	iotdeviceadvisorConn             *iotdeviceadvisor.IoTDeviceAdvisor
+	ioteventsConn                    *iotevents.IoTEvents
+	ioteventsdataConn                *ioteventsdata.IoTEventsData
+	iotfleethubConn                  *iotfleethub.IoTFleetHub
+	iotjobsdataConn                  *iotjobsdataplane.IoTJobsDataPlane
+	iotsecuretunnelingConn           *iotsecuretunneling.IoTSecureTunneling
+	iotsitewiseConn                  *iotsitewise.IoTSiteWise
+	iotthingsgraphConn               *iotthingsgraph.IoTThingsGraph
+	iottwinmakerConn                 *iottwinmaker.IoTTwinMaker
+	iotwirelessConn                  *iotwireless.IoTWireless
+	kmsConn                          *kms.KMS
+	kafkaConn                        *kafka.Kafka
+	kafkaconnectConn                 *kafkaconnect.KafkaConnect
+	kendraClient                     *kendra.Client
+	keyspacesConn                    *keyspaces.Keyspaces
+	kinesisConn                      *kinesis.Kinesis
+	kinesisanalyticsConn             *kinesisanalytics.KinesisAnalytics
+	kinesisanalyticsv2Conn           *kinesisanalyticsv2.KinesisAnalyticsV2
+	kinesisvideoConn                 *kinesisvideo.KinesisVideo
+	kinesisvideoarchivedmediaConn    *kinesisvideoarchivedmedia.KinesisVideoArchivedMedia
+	kinesisvideomediaConn            *kinesisvideomedia.KinesisVideoMedia
+	kinesisvideosignalingConn        *kinesisvideosignalingchannels.KinesisVideoSignalingChannels
+	lakeformationConn                *lakeformation.LakeFormation
+	lambdaConn                       *lambda.Lambda
+	lexmodelsConn                    *lexmodelbuildingservice.LexModelBuildingService
+	lexmodelsv2Conn                  *lexmodelsv2.LexModelsV2
+	lexruntimeConn                   *lexruntimeservice.LexRuntimeService
+	lexruntimev2Conn                 *lexruntimev2.LexRuntimeV2
+	licensemanagerConn               *licensemanager.LicenseManager
+	lightsailClient                  *lightsail.Client
+	locationConn                     *locationservice.LocationService
+	logsConn                         *cloudwatchlogs.CloudWatchLogs
+	lookoutequipmentConn             *lookoutequipment.LookoutEquipment
+	lookoutmetricsConn               *lookoutmetrics.LookoutMetrics
+	lookoutvisionConn                *lookoutforvision.LookoutForVision
+	mqConn                           *mq.MQ
+	mturkConn                        *mturk.MTurk
+	mwaaConn                         *mwaa.MWAA
+	machinelearningConn              *machinelearning.MachineLearning
+	macieConn                        *macie.Macie
+	macie2Conn                       *macie2.Macie2
+	managedblockchainConn            *managedblockchain.ManagedBlockchain
+	marketplacecatalogConn           *marketplacecatalog.MarketplaceCatalog
+	marketplacecommerceanalyticsConn *marketplacecommerceanalytics.MarketplaceCommerceAnalytics
+	marketplaceentitlementConn       *marketplaceentitlementservice.MarketplaceEntitlementService
+	marketplacemeteringConn          *marketplacemetering.MarketplaceMetering
+	mediaconnectConn                 *mediaconnect.MediaConnect
+	mediaconvertConn                 *mediaconvert.MediaConvert
+	medialiveClient                  *medialive.Client
+	mediapackageConn                 *mediapackage.MediaPackage
+	mediapackagevodConn              *mediapackagevod.MediaPackageVod
+	mediastoreConn                   *mediastore.MediaStore
+	mediastoredataConn               *mediastoredata.MediaStoreData
+	mediatailorConn                  *mediatailor.MediaTailor
+	memorydbConn                     *memorydb.MemoryDB
+	mghConn                          *migrationhub.MigrationHub
+	mgnConn                          *mgn.Mgn
+	migrationhubconfigConn           *migrationhubconfig.MigrationHubConfig
+	migrationhubrefactorspacesConn   *migrationhubrefactorspaces.MigrationHubRefactorSpaces
+	migrationhubstrategyConn         *migrationhubstrategyrecommendations.MigrationHubStrategyRecommendations
+	mobileConn                       *mobile.Mobile
+	neptuneConn                      *neptune.Neptune
+	networkfirewallConn              *networkfirewall.NetworkFirewall
+	networkmanagerConn               *networkmanager.NetworkManager
+	nimbleConn                       *nimblestudio.NimbleStudio
+	oamClient                        *oam.Client
+	opensearchConn                   *opensearchservice.OpenSearchService
+	opensearchserverlessClient       *opensearchserverless.Client
+	opsworksConn                     *opsworks.OpsWorks
+	opsworkscmConn                   *opsworkscm.OpsWorksCM
+	organizationsConn                *organizations.Organizations
+	outpostsConn                     *outposts.Outposts
+	piConn                           *pi.PI
+	panoramaConn                     *panorama.Panorama
+	personalizeConn                  *personalize.Personalize
+	personalizeeventsConn            *personalizeevents.PersonalizeEvents
+	personalizeruntimeConn           *personalizeruntime.PersonalizeRuntime
+	pinpointConn                     *pinpoint.Pinpoint
+	pinpointemailConn                *pinpointemail.PinpointEmail
+	pinpointsmsvoiceConn             *pinpointsmsvoice.PinpointSMSVoice
+	pipesClient                      *pipes.Client
+	pollyConn                        *polly.Polly
+	pricingConn                      *pricing.Pricing
+	protonConn                       *proton.Proton
+	qldbConn                         *qldb.QLDB
+	qldbsessionConn                  *qldbsession.QLDBSession
+	quicksightConn                   *quicksight.QuickSight
+	ramConn                          *ram.RAM
+	rbinClient                       *rbin.Client
+	rdsConn                          *rds.RDS
+	rdsdataConn                      *rdsdataservice.RDSDataService
+	rumConn                          *cloudwatchrum.CloudWatchRUM
+	redshiftConn                     *redshift.Redshift
+	redshiftdataConn                 *redshiftdataapiservice.RedshiftDataAPIService
+	redshiftserverlessConn           *redshiftserverless.RedshiftServerless
+	rekognitionConn                  *rekognition.Rekognition
+	resiliencehubConn                *resiliencehub.ResilienceHub
+	resourceexplorer2Client          *resourceexplorer2.Client
+	resourcegroupsConn               *resourcegroups.ResourceGroups
+	resourcegroupstaggingapiConn     *resourcegroupstaggingapi.ResourceGroupsTaggingAPI
+	robomakerConn                    *robomaker.RoboMaker
+	rolesanywhereClient              *rolesanywhere.Client
+	route53Conn                      *route53.Route53
+	route53domainsClient             *route53domains.Client
+	route53recoveryclusterConn       *route53recoverycluster.Route53RecoveryCluster
+	route53recoverycontrolconfigConn *route53recoverycontrolconfig.Route53RecoveryControlConfig
+	route53recoveryreadinessConn     *route53recoveryreadiness.Route53RecoveryReadiness
+	route53resolverConn              *route53resolver.Route53Resolver
+	s3Conn                           *s3.S3
+	s3controlConn                    *s3control.S3Control
+	s3outpostsConn                   *s3outposts.S3Outposts
+	sesConn                          *ses.SES
+	sesv2Client                      *sesv2.Client
+	sfnConn                          *sfn.SFN
+	smsConn                          *sms.SMS
+	snsConn                          *sns.SNS
+	sqsConn                          *sqs.SQS
+	ssmConn                          *ssm.SSM
+	ssmcontactsClient                *ssmcontacts.Client
+	ssmincidentsClient               *ssmincidents.Client
+	ssoConn                          *sso.SSO
+	ssoadminConn                     *ssoadmin.SSOAdmin
+	ssooidcConn                      *ssooidc.SSOOIDC
+	stsConn                          *sts.STS
+	swfClient                        *swf.Client
+	sagemakerConn                    *sagemaker.SageMaker
+	sagemakera2iruntimeConn          *augmentedairuntime.AugmentedAIRuntime
+	sagemakeredgeConn                *sagemakeredgemanager.SagemakerEdgeManager
+	sagemakerfeaturestoreruntimeConn *sagemakerfeaturestoreruntime.SageMakerFeatureStoreRuntime
+	sagemakerruntimeConn             *sagemakerruntime.SageMakerRuntime
+	savingsplansConn                 *savingsplans.SavingsPlans
+	schedulerClient                  *scheduler.Client
+	schemasConn                      *schemas.Schemas
+	secretsmanagerConn               *secretsmanager.SecretsManager
+	securityhubConn                  *securityhub.SecurityHub
+	securitylakeClient               *securitylake.Client
+	serverlessrepoConn               *serverlessapplicationrepository.ServerlessApplicationRepository
+	servicecatalogConn               *servicecatalog.ServiceCatalog
+	servicecatalogappregistryConn    *appregistry.AppRegistry
+	servicediscoveryConn             *servicediscovery.ServiceDiscovery
+	servicequotasConn                *servicequotas.ServiceQuotas
+	shieldConn                       *shield.Shield
+	signerConn                       *signer.Signer
+	sdbConn                          *simpledb.SimpleDB
+	snowdevicemanagementConn         *snowdevicemanagement.SnowDeviceManagement
+	snowballConn                     *snowball.Snowball
+	storagegatewayConn               *storagegateway.StorageGateway
+	supportConn                      *support.Support
+	syntheticsConn                   *synthetics.Synthetics
+	textractConn                     *textract.Textract
+	timestreamqueryConn              *timestreamquery.TimestreamQuery
+	timestreamwriteConn              *timestreamwrite.TimestreamWrite
+	transcribeClient                 *transcribe.Client
+	transcribestreamingConn          *transcribestreamingservice.TranscribeStreamingService
+	transferConn                     *transfer.Transfer
+	translateConn                    *translate.Translate
+	vpclatticeClient                 *vpclattice.Client
+	voiceidConn                      *voiceid.VoiceID
+	wafConn                          *waf.WAF
+	wafregionalConn                  *wafregional.WAFRegional
+	wafv2Conn                        *wafv2.WAFV2
+	wellarchitectedConn              *wellarchitected.WellArchitected
+	wisdomConn                       *connectwisdomservice.ConnectWisdomService
+	workdocsConn                     *workdocs.WorkDocs
+	worklinkConn                     *worklink.WorkLink
+	workmailConn                     *workmail.WorkMail
+	workmailmessageflowConn          *workmailmessageflow.WorkMailMessageFlow
+	workspacesConn                   *workspaces.WorkSpaces
+	workspaceswebConn                *workspacesweb.WorkSpacesWeb
+	xrayClient                       *xray.Client
+}
+
+func (client *AWSClient) ACMClient(context.Context) *acm.Client {
+	return client.acmClient
+}
+
+func (client *AWSClient) ACMPCAConn(context.Context) *acmpca.ACMPCA {
+	return client.acmpcaConn
+}
+
+func (client *AWSClient) AMPConn(context.Context) *prometheusservice.PrometheusService {
+	return client.ampConn
+}
+
+func (client *AWSClient) APIGatewayConn(context.Context) *apigateway.APIGateway {
+	return client.apigatewayConn
+}
+
+func (client *AWSClient) APIGatewayManagementAPIConn(context.Context) *apigatewaymanagementapi.ApiGatewayManagementApi {
+	return client.apigatewaymanagementapiConn
+}
+
+func (client *AWSClient) APIGatewayV2Conn(context.Context) *apigatewayv2.ApiGatewayV2 {
+	return client.apigatewayv2Conn
+}
+
+func (client *AWSClient) AccessAnalyzerClient(context.Context) *accessanalyzer.Client {
+	return client.accessanalyzerClient
+}
+
+func (client *AWSClient) AccountClient(context.Context) *account.Client {
+	return client.accountClient
+}
+
+func (client *AWSClient) AlexaForBusinessConn(context.Context) *alexaforbusiness.AlexaForBusiness {
+	return client.alexaforbusinessConn
+}
+
+func (client *AWSClient) AmplifyConn(context.Context) *amplify.Amplify {
+	return client.amplifyConn
+}
+
+func (client *AWSClient) AmplifyBackendConn(context.Context) *amplifybackend.AmplifyBackend {
+	return client.amplifybackendConn
+}
+
+func (client *AWSClient) AmplifyUIBuilderConn(context.Context) *amplifyuibuilder.AmplifyUIBuilder {
+	return client.amplifyuibuilderConn
+}
+
+func (client *AWSClient) AppAutoScalingConn(context.Context) *applicationautoscaling.ApplicationAutoScaling {
+	return client.applicationautoscalingConn
+}
+
+func (client *AWSClient) AppConfigConn(context.Context) *appconfig.AppConfig {
+	return client.appconfigConn
+}
+
+func (client *AWSClient) AppConfigDataConn(context.Context) *appconfigdata.AppConfigData {
+	return client.appconfigdataConn
+}
+
+func (client *AWSClient) AppFlowConn(context.Context) *appflow.Appflow {
+	return client.appflowConn
+}
+
+func (client *AWSClient) AppIntegrationsConn(context.Context) *appintegrationsservice.AppIntegrationsService {
+	return client.appintegrationsConn
+}
+
+func (client *AWSClient) AppMeshConn(context.Context) *appmesh.AppMesh {
+	return client.appmeshConn
+}
+
+func (client *AWSClient) AppRunnerConn(context.Context) *apprunner.AppRunner {
+	return client.apprunnerConn
+}
+
+func (client *AWSClient) AppStreamConn(context.Context) *appstream.AppStream {
+	return client.appstreamConn
+}
+
+func (client *AWSClient) AppSyncConn(context.Context) *appsync.AppSync {
+	return client.appsyncConn
+}
+
+func (client *AWSClient) ApplicationCostProfilerConn(context.Context) *applicationcostprofiler.ApplicationCostProfiler {
+	return client.applicationcostprofilerConn
+}
+
+func (client *AWSClient) ApplicationInsightsConn(context.Context) *applicationinsights.ApplicationInsights {
+	return client.applicationinsightsConn
+}
+
+func (client *AWSClient) AthenaConn(context.Context) *athena.Athena {
+	return client.athenaConn
+}
+
+func (client *AWSClient) AuditManagerClient(context.Context) *auditmanager.Client {
+	return client.auditmanagerClient
+}
+
+func (client *AWSClient) AutoScalingConn(context.Context) *autoscaling.AutoScaling {
+	return client.autoscalingConn
+}
+
+func (client *AWSClient) AutoScalingPlansConn(context.Context) *autoscalingplans.AutoScalingPlans {
+	return client.autoscalingplansConn
+}
+
+func (client *AWSClient) BackupConn(context.Context) *backup.Backup {
+	return client.backupConn
+}
+
+func (client *AWSClient) BackupGatewayConn(context.Context) *backupgateway.BackupGateway {
+	return client.backupgatewayConn
+}
+
+func (client *AWSClient) BatchConn(context.Context) *batch.Batch {
+	return client.batchConn
+}
+
+func (client *AWSClient) BillingConductorConn(context.Context) *billingconductor.BillingConductor {
+	return client.billingconductorConn
+}
+
+func (client *AWSClient) BraketConn(context.Context) *braket.Braket {
+	return client.braketConn
+}
+
+func (client *AWSClient) BudgetsConn(context.Context) *budgets.Budgets {
+	return client.budgetsConn
+}
+
+func (client *AWSClient) CEConn(context.Context) *costexplorer.CostExplorer {
+	return client.ceConn
+}
+
+func (client *AWSClient) CURConn(context.Context) *costandusagereportservice.CostandUsageReportService {
+	return client.curConn
+}
+
+func (client *AWSClient) ChimeConn(context.Context) *chime.Chime {
+	return client.chimeConn
+}
+
+func (client *AWSClient) ChimeSDKIdentityConn(context.Context) *chimesdkidentity.ChimeSDKIdentity {
+	return client.chimesdkidentityConn
+}
+
+func (client *AWSClient) ChimeSDKMediaPipelinesConn(context.Context) *chimesdkmediapipelines.ChimeSDKMediaPipelines {
+	return client.chimesdkmediapipelinesConn
+}
+
+func (client *AWSClient) ChimeSDKMeetingsConn(context.Context) *chimesdkmeetings.ChimeSDKMeetings {
+	return client.chimesdkmeetingsConn
+}
+
+func (client *AWSClient) ChimeSDKMessagingConn(context.Context) *chimesdkmessaging.ChimeSDKMessaging {
+	return client.chimesdkmessagingConn
+}
+
+func (client *AWSClient) ChimeSDKVoiceConn(context.Context) *chimesdkvoice.ChimeSDKVoice {
+	return client.chimesdkvoiceConn
+}
+
+func (client *AWSClient) CleanRoomsClient(context.Context) *cleanrooms.Client {
+	return client.cleanroomsClient
+}
+
+func (client *AWSClient) Cloud9Conn(context.Context) *cloud9.Cloud9 {
+	return client.cloud9Conn
+}
+
+func (client *AWSClient) CloudControlClient(context.Context) *cloudcontrol.Client {
+	return client.cloudcontrolClient
+}
+
+func (client *AWSClient) CloudDirectoryConn(context.Context) *clouddirectory.CloudDirectory {
+	return client.clouddirectoryConn
+}
+
+func (client *AWSClient) CloudFormationConn(context.Context) *cloudformation.CloudFormation {
+	return client.cloudformationConn
+}
+
+func (client *AWSClient) CloudFrontConn(context.Context) *cloudfront.CloudFront {
+	return client.cloudfrontConn
+}
+
+func (client *AWSClient) CloudHSMV2Conn(context.Context) *cloudhsmv2.CloudHSMV2 {
+	return client.cloudhsmv2Conn
+}
+
+func (client *AWSClient) CloudSearchConn(context.Context) *cloudsearch.CloudSearch {
+	return client.cloudsearchConn
+}
+
+func (client *AWSClient) CloudSearchDomainConn(context.Context) *cloudsearchdomain.CloudSearchDomain {
+	return client.cloudsearchdomainConn
+}
+
+func (client *AWSClient) CloudTrailConn(context.Context) *cloudtrail.CloudTrail {
+	return client.cloudtrailConn
+}
+
+func (client *AWSClient) CloudWatchConn(context.Context) *cloudwatch.CloudWatch {
+	return client.cloudwatchConn
+}
+
+func (client *AWSClient) CodeArtifactConn(context.Context) *codeartifact.CodeArtifact {
+	return client.codeartifactConn
+}
+
+func (client *AWSClient) CodeBuildConn(context.Context) *codebuild.CodeBuild {
+	return client.codebuildConn
+}
+
+func (client *AWSClient) CodeCommitConn(context.Context) *codecommit.CodeCommit {
+	return client.codecommitConn
+}
+
+func (client *AWSClient) CodeGuruProfilerConn(context.Context) *codeguruprofiler.CodeGuruProfiler {
+	return client.codeguruprofilerConn
+}
+
+func (client *AWSClient) CodeGuruReviewerConn(context.Context) *codegurureviewer.CodeGuruReviewer {
+	return client.codegurureviewerConn
+}
+
+func (client *AWSClient) CodePipelineConn(context.Context) *codepipeline.CodePipeline {
+	return client.codepipelineConn
+}
+
+func (client *AWSClient) CodeStarConn(context.Context) *codestar.CodeStar {
+	return client.codestarConn
+}
+
+func (client *AWSClient) CodeStarConnectionsConn(context.Context) *codestarconnections.CodeStarConnections {
+	return client.codestarconnectionsConn
+}
+
+func (client *AWSClient) CodeStarNotificationsConn(context.Context) *codestarnotifications.CodeStarNotifications {
+	return client.codestarnotificationsConn
+}
+
+func (client *AWSClient) CognitoIDPConn(context.Context) *cognitoidentityprovider.CognitoIdentityProvider {
+	return client.cognitoidpConn
+}
+
+func (client *AWSClient) CognitoIdentityConn(context.Context) *cognitoidentity.CognitoIdentity {
+	return client.cognitoidentityConn
+}
+
+func (client *AWSClient) CognitoSyncConn(context.Context) *cognitosync.CognitoSync {
+	return client.cognitosyncConn
+}
+
+func (client *AWSClient) ComprehendClient(context.Context) *comprehend.Client {
+	return client.comprehendClient
+}
+
+func (client *AWSClient) ComprehendMedicalConn(context.Context) *comprehendmedical.ComprehendMedical {
+	return client.comprehendmedicalConn
+}
+
+func (client *AWSClient) ComputeOptimizerClient(context.Context) *computeoptimizer.Client {
+	return client.computeoptimizerClient
+}
+
+func (client *AWSClient) ConfigServiceConn(context.Context) *configservice.ConfigService {
+	return client.configserviceConn
+}
+
+func (client *AWSClient) ConnectConn(context.Context) *connect.Connect {
+	return client.connectConn
+}
+
+func (client *AWSClient) ConnectContactLensConn(context.Context) *connectcontactlens.ConnectContactLens {
+	return client.connectcontactlensConn
+}
+
+func (client *AWSClient) ConnectParticipantConn(context.Context) *connectparticipant.ConnectParticipant {
+	return client.connectparticipantConn
+}
+
+func (client *AWSClient) ControlTowerConn(context.Context) *controltower.ControlTower {
+	return client.controltowerConn
+}
+
+func (client *AWSClient) CustomerProfilesConn(context.Context) *customerprofiles.CustomerProfiles {
+	return client.customerprofilesConn
+}
+
+func (client *AWSClient) DAXConn(context.Context) *dax.DAX {
+	return client.daxConn
+}
+
+func (client *AWSClient) DLMConn(context.Context) *dlm.DLM {
+	return client.dlmConn
+}
+
+func (client *AWSClient) DMSConn(context.Context) *databasemigrationservice.DatabaseMigrationService {
+	return client.dmsConn
+}
+
+func (client *AWSClient) DRSConn(context.Context) *drs.Drs {
+	return client.drsConn
+}
+
+func (client *AWSClient) DSConn(context.Context) *directoryservice.DirectoryService {
+	return client.dsConn
+}
+
+func (client *AWSClient) DSClient(context.Context) *directoryservice_sdkv2.Client {
+	return client.dsClient.Client()
+}
+
+func (client *AWSClient) DataBrewConn(context.Context) *gluedatabrew.GlueDataBrew {
+	return client.databrewConn
+}
+
+func (client *AWSClient) DataExchangeConn(context.Context) *dataexchange.DataExchange {
+	return client.dataexchangeConn
+}
+
+func (client *AWSClient) DataPipelineConn(context.Context) *datapipeline.DataPipeline {
+	return client.datapipelineConn
+}
+
+func (client *AWSClient) DataSyncConn(context.Context) *datasync.DataSync {
+	return client.datasyncConn
+}
+
+func (client *AWSClient) DeployConn(context.Context) *codedeploy.CodeDeploy {
+	return client.deployConn
+}
+
+func (client *AWSClient) DetectiveConn(context.Context) *detective.Detective {
+	return client.detectiveConn
+}
+
+func (client *AWSClient) DevOpsGuruConn(context.Context) *devopsguru.DevOpsGuru {
+	return client.devopsguruConn
+}
+
+func (client *AWSClient) DeviceFarmConn(context.Context) *devicefarm.DeviceFarm {
+	return client.devicefarmConn
+}
+
+func (client *AWSClient) DirectConnectConn(context.Context) *directconnect.DirectConnect {
+	return client.directconnectConn
+}
+
+func (client *AWSClient) DiscoveryConn(context.Context) *applicationdiscoveryservice.ApplicationDiscoveryService {
+	return client.discoveryConn
+}
+
+func (client *AWSClient) DocDBConn(context.Context) *docdb.DocDB {
+	return client.docdbConn
+}
+
+func (client *AWSClient) DocDBElasticClient(context.Context) *docdbelastic.Client {
+	return client.docdbelasticClient
+}
+
+func (client *AWSClient) DynamoDBConn(context.Context) *dynamodb.DynamoDB {
+	return client.dynamodbConn
+}
+
+func (client *AWSClient) DynamoDBStreamsConn(context.Context) *dynamodbstreams.DynamoDBStreams {
+	return client.dynamodbstreamsConn
+}
+
+func (client *AWSClient) EBSConn(context.Context) *ebs.EBS {
+	return client.ebsConn
+}
+
+func (client *AWSClient) EC2Conn(context.Context) *ec2.EC2 {
+	return client.ec2Conn
+}
+
+func (client *AWSClient) EC2Client(context.Context) *ec2_sdkv2.Client {
+	return client.ec2Client.Client()
+}
+
+func (client *AWSClient) EC2InstanceConnectConn(context.Context) *ec2instanceconnect.EC2InstanceConnect {
+	return client.ec2instanceconnectConn
+}
+
+func (client *AWSClient) ECRConn(context.Context) *ecr.ECR {
+	return client.ecrConn
+}
+
+func (client *AWSClient) ECRPublicConn(context.Context) *ecrpublic.ECRPublic {
+	return client.ecrpublicConn
+}
+
+func (client *AWSClient) ECSConn(context.Context) *ecs.ECS {
+	return client.ecsConn
+}
+
+func (client *AWSClient) EFSConn(context.Context) *efs.EFS {
+	return client.efsConn
+}
+
+func (client *AWSClient) EKSConn(context.Context) *eks.EKS {
+	return client.eksConn
+}
+
+func (client *AWSClient) ELBConn(context.Context) *elb.ELB {
+	return client.elbConn
+}
+
+func (client *AWSClient) ELBV2Conn(context.Context) *elbv2.ELBV2 {
+	return client.elbv2Conn
+}
+
+func (client *AWSClient) EMRConn(context.Context) *emr.EMR {
+	return client.emrConn
+}
+
+func (client *AWSClient) EMRContainersConn(context.Context) *emrcontainers.EMRContainers {
+	return client.emrcontainersConn
+}
+
+func (client *AWSClient) EMRServerlessConn(context.Context) *emrserverless.EMRServerless {
+	return client.emrserverlessConn
+}
+
+func (client *AWSClient) ElastiCacheConn(context.Context) *elasticache.ElastiCache {
+	return client.elasticacheConn
+}
+
+func (client *AWSClient) ElasticBeanstalkConn(context.Context) *elasticbeanstalk.ElasticBeanstalk {
+	return client.elasticbeanstalkConn
+}
+
+func (client *AWSClient) ElasticInferenceConn(context.Context) *elasticinference.ElasticInference {
+	return client.elasticinferenceConn
+}
+
+func (client *AWSClient) ElasticTranscoderConn(context.Context) *elastictranscoder.ElasticTranscoder {
+	return client.elastictranscoderConn
+}
+
+func (client *AWSClient) ElasticsearchConn(context.Context) *elasticsearchservice.ElasticsearchService {
+	return client.esConn
+}
+
+func (client *AWSClient) EventsConn(context.Context) *eventbridge.EventBridge {
+	return client.eventsConn
+}
+
+func (client *AWSClient) EvidentlyConn(context.Context) *cloudwatchevidently.CloudWatchEvidently {
+	return client.evidentlyConn
+}
+
+func (client *AWSClient) FISClient(context.Context) *fis.Client {
+	return client.fisClient
+}
+
+func (client *AWSClient) FMSConn(context.Context) *fms.FMS {
+	return client.fmsConn
+}
+
+func (client *AWSClient) FSxConn(context.Context) *fsx.FSx {
+	return client.fsxConn
+}
+
+func (client *AWSClient) FinSpaceClient(context.Context) *finspace.Client {
+	return client.finspaceClient
+}
+
+func (client *AWSClient) FinSpaceDataConn(context.Context) *finspacedata.FinSpaceData {
+	return client.finspacedataConn
+}
+
+func (client *AWSClient) FirehoseConn(context.Context) *firehose.Firehose {
+	return client.firehoseConn
+}
+
+func (client *AWSClient) ForecastConn(context.Context) *forecastservice.ForecastService {
+	return client.forecastConn
+}
+
+func (client *AWSClient) ForecastQueryConn(context.Context) *forecastqueryservice.ForecastQueryService {
+	return client.forecastqueryConn
+}
+
+func (client *AWSClient) FraudDetectorConn(context.Context) *frauddetector.FraudDetector {
+	return client.frauddetectorConn
+}
+
+func (client *AWSClient) GameLiftConn(context.Context) *gamelift.GameLift {
+	return client.gameliftConn
+}
+
+func (client *AWSClient) GlacierClient(context.Context) *glacier.Client {
+	return client.glacierClient
+}
+
+func (client *AWSClient) GlobalAcceleratorConn(context.Context) *globalaccelerator.GlobalAccelerator {
+	return client.globalacceleratorConn
+}
+
+func (client *AWSClient) GlueConn(context.Context) *glue.Glue {
+	return client.glueConn
+}
+
+func (client *AWSClient) GrafanaConn(context.Context) *managedgrafana.ManagedGrafana {
+	return client.grafanaConn
+}
+
+func (client *AWSClient) GreengrassConn(context.Context) *greengrass.Greengrass {
+	return client.greengrassConn
+}
+
+func (client *AWSClient) GreengrassV2Conn(context.Context) *greengrassv2.GreengrassV2 {
+	return client.greengrassv2Conn
+}
+
+func (client *AWSClient) GroundStationConn(context.Context) *groundstation.GroundStation {
+	return client.groundstationConn
+}
+
+func (client *AWSClient) GuardDutyConn(context.Context) *guardduty.GuardDuty {
+	return client.guarddutyConn
+}
+
+func (client *AWSClient) HealthConn(context.Context) *health.Health {
+	return client.healthConn
+}
+
+func (client *AWSClient) HealthLakeClient(context.Context) *healthlake.Client {
+	return client.healthlakeClient
+}
+
+func (client *AWSClient) HoneycodeConn(context.Context) *honeycode.Honeycode {
+	return client.honeycodeConn
+}
+
+func (client *AWSClient) IAMConn(context.Context) *iam.IAM {
+	return client.iamConn
+}
+
+func (client *AWSClient) IVSConn(context.Context) *ivs.IVS {
+	return client.ivsConn
+}
+
+func (client *AWSClient) IVSChatClient(context.Context) *ivschat.Client {
+	return client.ivschatClient
+}
+
+func (client *AWSClient) IdentityStoreClient(context.Context) *identitystore.Client {
+	return client.identitystoreClient
+}
+
+func (client *AWSClient) ImageBuilderConn(context.Context) *imagebuilder.Imagebuilder {
+	return client.imagebuilderConn
+}
+
+func (client *AWSClient) InspectorConn(context.Context) *inspector.Inspector {
+	return client.inspectorConn
+}
+
+func (client *AWSClient) Inspector2Client(context.Context) *inspector2.Client {
+	return client.inspector2Client
+}
+
+func (client *AWSClient) InternetMonitorConn(context.Context) *internetmonitor.InternetMonitor {
+	return client.internetmonitorConn
+}
+
+func (client *AWSClient) IoTConn(context.Context) *iot.IoT {
+	return client.iotConn
+}
+
+func (client *AWSClient) IoT1ClickDevicesConn(context.Context) *iot1clickdevicesservice.IoT1ClickDevicesService {
+	return client.iot1clickdevicesConn
+}
+
+func (client *AWSClient) IoT1ClickProjectsConn(context.Context) *iot1clickprojects.IoT1ClickProjects {
+	return client.iot1clickprojectsConn
+}
+
+func (client *AWSClient) IoTAnalyticsConn(context.Context) *iotanalytics.IoTAnalytics {
+	return client.iotanalyticsConn
+}
+
+func (client *AWSClient) IoTDataConn(context.Context) *iotdataplane.IoTDataPlane {
+	return client.iotdataConn
+}
+
+func (client *AWSClient) IoTDeviceAdvisorConn(context.Context) *iotdeviceadvisor.IoTDeviceAdvisor {
+	return client.iotdeviceadvisorConn
+}
+
+func (client *AWSClient) IoTEventsConn(context.Context) *iotevents.IoTEvents {
+	return client.ioteventsConn
+}
+
+func (client *AWSClient) IoTEventsDataConn(context.Context) *ioteventsdata.IoTEventsData {
+	return client.ioteventsdataConn
+}
+
+func (client *AWSClient) IoTFleetHubConn(context.Context) *iotfleethub.IoTFleetHub {
+	return client.iotfleethubConn
+}
+
+func (client *AWSClient) IoTJobsDataConn(context.Context) *iotjobsdataplane.IoTJobsDataPlane {
+	return client.iotjobsdataConn
+}
+
+func (client *AWSClient) IoTSecureTunnelingConn(context.Context) *iotsecuretunneling.IoTSecureTunneling {
+	return client.iotsecuretunnelingConn
+}
+
+func (client *AWSClient) IoTSiteWiseConn(context.Context) *iotsitewise.IoTSiteWise {
+	return client.iotsitewiseConn
+}
+
+func (client *AWSClient) IoTThingsGraphConn(context.Context) *iotthingsgraph.IoTThingsGraph {
+	return client.iotthingsgraphConn
+}
+
+func (client *AWSClient) IoTTwinMakerConn(context.Context) *iottwinmaker.IoTTwinMaker {
+	return client.iottwinmakerConn
+}
+
+func (client *AWSClient) IoTWirelessConn(context.Context) *iotwireless.IoTWireless {
+	return client.iotwirelessConn
+}
+
+func (client *AWSClient) KMSConn(context.Context) *kms.KMS {
+	return client.kmsConn
+}
+
+func (client *AWSClient) KafkaConn(context.Context) *kafka.Kafka {
+	return client.kafkaConn
+}
+
+func (client *AWSClient) KafkaConnectConn(context.Context) *kafkaconnect.KafkaConnect {
+	return client.kafkaconnectConn
+}
+
+func (client *AWSClient) KendraClient(context.Context) *kendra.Client {
+	return client.kendraClient
+}
+
+func (client *AWSClient) KeyspacesConn(context.Context) *keyspaces.Keyspaces {
+	return client.keyspacesConn
+}
+
+func (client *AWSClient) KinesisConn(context.Context) *kinesis.Kinesis {
+	return client.kinesisConn
+}
+
+func (client *AWSClient) KinesisAnalyticsConn(context.Context) *kinesisanalytics.KinesisAnalytics {
+	return client.kinesisanalyticsConn
+}
+
+func (client *AWSClient) KinesisAnalyticsV2Conn(context.Context) *kinesisanalyticsv2.KinesisAnalyticsV2 {
+	return client.kinesisanalyticsv2Conn
+}
+
+func (client *AWSClient) KinesisVideoConn(context.Context) *kinesisvideo.KinesisVideo {
+	return client.kinesisvideoConn
+}
+
+func (client *AWSClient) KinesisVideoArchivedMediaConn(context.Context) *kinesisvideoarchivedmedia.KinesisVideoArchivedMedia {
+	return client.kinesisvideoarchivedmediaConn
+}
+
+func (client *AWSClient) KinesisVideoMediaConn(context.Context) *kinesisvideomedia.KinesisVideoMedia {
+	return client.kinesisvideomediaConn
+}
+
+func (client *AWSClient) KinesisVideoSignalingConn(context.Context) *kinesisvideosignalingchannels.KinesisVideoSignalingChannels {
+	return client.kinesisvideosignalingConn
+}
+
+func (client *AWSClient) LakeFormationConn(context.Context) *lakeformation.LakeFormation {
+	return client.lakeformationConn
+}
+
+func (client *AWSClient) LambdaConn(context.Context) *lambda.Lambda {
+	return client.lambdaConn
+}
+
+func (client *AWSClient) LambdaClient(context.Context) *lambda_sdkv2.Client {
+	return client.lambdaClient.Client()
+}
+
+func (client *AWSClient) LexModelsConn(context.Context) *lexmodelbuildingservice.LexModelBuildingService {
+	return client.lexmodelsConn
+}
+
+func (client *AWSClient) LexModelsV2Conn(context.Context) *lexmodelsv2.LexModelsV2 {
+	return client.lexmodelsv2Conn
+}
+
+func (client *AWSClient) LexRuntimeConn(context.Context) *lexruntimeservice.LexRuntimeService {
+	return client.lexruntimeConn
+}
+
+func (client *AWSClient) LexRuntimeV2Conn(context.Context) *lexruntimev2.LexRuntimeV2 {
+	return client.lexruntimev2Conn
+}
+
+func (client *AWSClient) LicenseManagerConn(context.Context) *licensemanager.LicenseManager {
+	return client.licensemanagerConn
+}
+
+func (client *AWSClient) LightsailClient(context.Context) *lightsail.Client {
+	return client.lightsailClient
+}
+
+func (client *AWSClient) LocationConn(context.Context) *locationservice.LocationService {
+	return client.locationConn
+}
+
+func (client *AWSClient) LogsConn(context.Context) *cloudwatchlogs.CloudWatchLogs {
+	return client.logsConn
+}
+
+func (client *AWSClient) LogsClient(context.Context) *cloudwatchlogs_sdkv2.Client {
+	return client.logsClient.Client()
+}
+
+func (client *AWSClient) LookoutEquipmentConn(context.Context) *lookoutequipment.LookoutEquipment {
+	return client.lookoutequipmentConn
+}
+
+func (client *AWSClient) LookoutMetricsConn(context.Context) *lookoutmetrics.LookoutMetrics {
+	return client.lookoutmetricsConn
+}
+
+func (client *AWSClient) LookoutVisionConn(context.Context) *lookoutforvision.LookoutForVision {
+	return client.lookoutvisionConn
+}
+
+func (client *AWSClient) MQConn(context.Context) *mq.MQ {
+	return client.mqConn
+}
+
+func (client *AWSClient) MTurkConn(context.Context) *mturk.MTurk {
+	return client.mturkConn
+}
+
+func (client *AWSClient) MWAAConn(context.Context) *mwaa.MWAA {
+	return client.mwaaConn
+}
+
+func (client *AWSClient) MachineLearningConn(context.Context) *machinelearning.MachineLearning {
+	return client.machinelearningConn
+}
+
+func (client *AWSClient) MacieConn(context.Context) *macie.Macie {
+	return client.macieConn
+}
+
+func (client *AWSClient) Macie2Conn(context.Context) *macie2.Macie2 {
+	return client.macie2Conn
+}
+
+func (client *AWSClient) ManagedBlockchainConn(context.Context) *managedblockchain.ManagedBlockchain {
+	return client.managedblockchainConn
+}
+
+func (client *AWSClient) MarketplaceCatalogConn(context.Context) *marketplacecatalog.MarketplaceCatalog {
+	return client.marketplacecatalogConn
+}
+
+func (client *AWSClient) MarketplaceCommerceAnalyticsConn(context.Context) *marketplacecommerceanalytics.MarketplaceCommerceAnalytics {
+	return client.marketplacecommerceanalyticsConn
+}
+
+func (client *AWSClient) MarketplaceEntitlementConn(context.Context) *marketplaceentitlementservice.MarketplaceEntitlementService {
+	return client.marketplaceentitlementConn
+}
+
+func (client *AWSClient) MarketplaceMeteringConn(context.Context) *marketplacemetering.MarketplaceMetering {
+	return client.marketplacemeteringConn
+}
+
+func (client *AWSClient) MediaConnectConn(context.Context) *mediaconnect.MediaConnect {
+	return client.mediaconnectConn
+}
+
+func (client *AWSClient) MediaConvertConn(context.Context) *mediaconvert.MediaConvert {
+	return client.mediaconvertConn
+}
+
+func (client *AWSClient) MediaLiveClient(context.Context) *medialive.Client {
+	return client.medialiveClient
+}
+
+func (client *AWSClient) MediaPackageConn(context.Context) *mediapackage.MediaPackage {
+	return client.mediapackageConn
+}
+
+func (client *AWSClient) MediaPackageVODConn(context.Context) *mediapackagevod.MediaPackageVod {
+	return client.mediapackagevodConn
+}
+
+func (client *AWSClient) MediaStoreConn(context.Context) *mediastore.MediaStore {
+	return client.mediastoreConn
+}
+
+func (client *AWSClient) MediaStoreDataConn(context.Context) *mediastoredata.MediaStoreData {
+	return client.mediastoredataConn
+}
+
+func (client *AWSClient) MediaTailorConn(context.Context) *mediatailor.MediaTailor {
+	return client.mediatailorConn
+}
+
+func (client *AWSClient) MemoryDBConn(context.Context) *memorydb.MemoryDB {
+	return client.memorydbConn
+}
+
+func (client *AWSClient) MgHConn(context.Context) *migrationhub.MigrationHub {
+	return client.mghConn
+}
+
+func (client *AWSClient) MgnConn(context.Context) *mgn.Mgn {
+	return client.mgnConn
+}
+
+func (client *AWSClient) MigrationHubConfigConn(context.Context) *migrationhubconfig.MigrationHubConfig {
+	return client.migrationhubconfigConn
+}
+
+func (client *AWSClient) MigrationHubRefactorSpacesConn(context.Context) *migrationhubrefactorspaces.MigrationHubRefactorSpaces {
+	return client.migrationhubrefactorspacesConn
+}
+
+func (client *AWSClient) MigrationHubStrategyConn(context.Context) *migrationhubstrategyrecommendations.MigrationHubStrategyRecommendations {
+	return client.migrationhubstrategyConn
+}
+
+func (client *AWSClient) MobileConn(context.Context) *mobile.Mobile {
+	return client.mobileConn
+}
+
+func (client *AWSClient) NeptuneConn(context.Context) *neptune.Neptune {
+	return client.neptuneConn
+}
+
+func (client *AWSClient) NetworkFirewallConn(context.Context) *networkfirewall.NetworkFirewall {
+	return client.networkfirewallConn
+}
+
+func (client *AWSClient) NetworkManagerConn(context.Context) *networkmanager.NetworkManager {
+	return client.networkmanagerConn
+}
+
+func (client *AWSClient) NimbleConn(context.Context) *nimblestudio.NimbleStudio {
+	return client.nimbleConn
+}
+
+func (client *AWSClient) ObservabilityAccessManagerClient(context.Context) *oam.Client {
+	return client.oamClient
+}
+
+func (client *AWSClient) OpenSearchConn(context.Context) *opensearchservice.OpenSearchService {
+	return client.opensearchConn
+}
+
+func (client *AWSClient) OpenSearchServerlessClient(context.Context) *opensearchserverless.Client {
+	return client.opensearchserverlessClient
+}
+
+func (client *AWSClient) OpsWorksConn(context.Context) *opsworks.OpsWorks {
+	return client.opsworksConn
+}
+
+func (client *AWSClient) OpsWorksCMConn(context.Context) *opsworkscm.OpsWorksCM {
+	return client.opsworkscmConn
+}
+
+func (client *AWSClient) OrganizationsConn(context.Context) *organizations.Organizations {
+	return client.organizationsConn
+}
+
+func (client *AWSClient) OutpostsConn(context.Context) *outposts.Outposts {
+	return client.outpostsConn
+}
+
+func (client *AWSClient) PIConn(context.Context) *pi.PI {
+	return client.piConn
+}
+
+func (client *AWSClient) PanoramaConn(context.Context) *panorama.Panorama {
+	return client.panoramaConn
+}
+
+func (client *AWSClient) PersonalizeConn(context.Context) *personalize.Personalize {
+	return client.personalizeConn
+}
+
+func (client *AWSClient) PersonalizeEventsConn(context.Context) *personalizeevents.PersonalizeEvents {
+	return client.personalizeeventsConn
+}
+
+func (client *AWSClient) PersonalizeRuntimeConn(context.Context) *personalizeruntime.PersonalizeRuntime {
+	return client.personalizeruntimeConn
+}
+
+func (client *AWSClient) PinpointConn(context.Context) *pinpoint.Pinpoint {
+	return client.pinpointConn
+}
+
+func (client *AWSClient) PinpointEmailConn(context.Context) *pinpointemail.PinpointEmail {
+	return client.pinpointemailConn
+}
+
+func (client *AWSClient) PinpointSMSVoiceConn(context.Context) *pinpointsmsvoice.PinpointSMSVoice {
+	return client.pinpointsmsvoiceConn
+}
+
+func (client *AWSClient) PipesClient(context.Context) *pipes.Client {
+	return client.pipesClient
+}
+
+func (client *AWSClient) PollyConn(context.Context) *polly.Polly {
+	return client.pollyConn
+}
+
+func (client *AWSClient) PricingConn(context.Context) *pricing.Pricing {
+	return client.pricingConn
+}
+
+func (client *AWSClient) ProtonConn(context.Context) *proton.Proton {
+	return client.protonConn
+}
+
+func (client *AWSClient) QLDBConn(context.Context) *qldb.QLDB {
+	return client.qldbConn
+}
+
+func (client *AWSClient) QLDBSessionConn(context.Context) *qldbsession.QLDBSession {
+	return client.qldbsessionConn
+}
+
+func (client *AWSClient) QuickSightConn(context.Context) *quicksight.QuickSight {
+	return client.quicksightConn
+}
+
+func (client *AWSClient) RAMConn(context.Context) *ram.RAM {
+	return client.ramConn
+}
+
+func (client *AWSClient) RBinClient(context.Context) *rbin.Client {
+	return client.rbinClient
+}
+
+func (client *AWSClient) RDSConn(context.Context) *rds.RDS {
+	return client.rdsConn
+}
+
+func (client *AWSClient) RDSClient(context.Context) *rds_sdkv2.Client {
+	return client.rdsClient.Client()
+}
+
+func (client *AWSClient) RDSDataConn(context.Context) *rdsdataservice.RDSDataService {
+	return client.rdsdataConn
+}
+
+func (client *AWSClient) RUMConn(context.Context) *cloudwatchrum.CloudWatchRUM {
+	return client.rumConn
+}
+
+func (client *AWSClient) RedshiftConn(context.Context) *redshift.Redshift {
+	return client.redshiftConn
+}
+
+func (client *AWSClient) RedshiftDataConn(context.Context) *redshiftdataapiservice.RedshiftDataAPIService {
+	return client.redshiftdataConn
+}
+
+func (client *AWSClient) RedshiftServerlessConn(context.Context) *redshiftserverless.RedshiftServerless {
+	return client.redshiftserverlessConn
+}
+
+func (client *AWSClient) RekognitionConn(context.Context) *rekognition.Rekognition {
+	return client.rekognitionConn
+}
+
+func (client *AWSClient) ResilienceHubConn(context.Context) *resiliencehub.ResilienceHub {
+	return client.resiliencehubConn
+}
+
+func (client *AWSClient) ResourceExplorer2Client(context.Context) *resourceexplorer2.Client {
+	return client.resourceexplorer2Client
+}
+
+func (client *AWSClient) ResourceGroupsConn(context.Context) *resourcegroups.ResourceGroups {
+	return client.resourcegroupsConn
+}
+
+func (client *AWSClient) ResourceGroupsTaggingAPIConn(context.Context) *resourcegroupstaggingapi.ResourceGroupsTaggingAPI {
+	return client.resourcegroupstaggingapiConn
+}
+
+func (client *AWSClient) RoboMakerConn(context.Context) *robomaker.RoboMaker {
+	return client.robomakerConn
+}
+
+func (client *AWSClient) RolesAnywhereClient(context.Context) *rolesanywhere.Client {
+	return client.rolesanywhereClient
+}
+
+func (client *AWSClient) Route53Conn(context.Context) *route53.Route53 {
+	return client.route53Conn
+}
+
+func (client *AWSClient) Route53DomainsClient(context.Context) *route53domains.Client {
+	return client.route53domainsClient
+}
+
+func (client *AWSClient) Route53RecoveryClusterConn(context.Context) *route53recoverycluster.Route53RecoveryCluster {
+	return client.route53recoveryclusterConn
+}
+
+func (client *AWSClient) Route53RecoveryControlConfigConn(context.Context) *route53recoverycontrolconfig.Route53RecoveryControlConfig {
+	return client.route53recoverycontrolconfigConn
+}
+
+func (client *AWSClient) Route53RecoveryReadinessConn(context.Context) *route53recoveryreadiness.Route53RecoveryReadiness {
+	return client.route53recoveryreadinessConn
+}
+
+func (client *AWSClient) Route53ResolverConn(context.Context) *route53resolver.Route53Resolver {
+	return client.route53resolverConn
+}
+
+func (client *AWSClient) S3Conn(context.Context) *s3.S3 {
+	return client.s3Conn
+}
+
+func (client *AWSClient) S3ControlConn(context.Context) *s3control.S3Control {
+	return client.s3controlConn
+}
+
+func (client *AWSClient) S3ControlClient(context.Context) *s3control_sdkv2.Client {
+	return client.s3controlClient.Client()
+}
+
+func (client *AWSClient) S3OutpostsConn(context.Context) *s3outposts.S3Outposts {
+	return client.s3outpostsConn
+}
+
+func (client *AWSClient) SESConn(context.Context) *ses.SES {
+	return client.sesConn
+}
+
+func (client *AWSClient) SESV2Client(context.Context) *sesv2.Client {
+	return client.sesv2Client
+}
+
+func (client *AWSClient) SFNConn(context.Context) *sfn.SFN {
+	return client.sfnConn
+}
+
+func (client *AWSClient) SMSConn(context.Context) *sms.SMS {
+	return client.smsConn
+}
+
+func (client *AWSClient) SNSConn(context.Context) *sns.SNS {
+	return client.snsConn
+}
+
+func (client *AWSClient) SQSConn(context.Context) *sqs.SQS {
+	return client.sqsConn
+}
+
+func (client *AWSClient) SSMConn(context.Context) *ssm.SSM {
+	return client.ssmConn
+}
+
+func (client *AWSClient) SSMClient(context.Context) *ssm_sdkv2.Client {
+	return client.ssmClient.Client()
+}
+
+func (client *AWSClient) SSMContactsClient(context.Context) *ssmcontacts.Client {
+	return client.ssmcontactsClient
+}
+
+func (client *AWSClient) SSMIncidentsClient(context.Context) *ssmincidents.Client {
+	return client.ssmincidentsClient
+}
+
+func (client *AWSClient) SSOConn(context.Context) *sso.SSO {
+	return client.ssoConn
+}
+
+func (client *AWSClient) SSOAdminConn(context.Context) *ssoadmin.SSOAdmin {
+	return client.ssoadminConn
+}
+
+func (client *AWSClient) SSOOIDCConn(context.Context) *ssooidc.SSOOIDC {
+	return client.ssooidcConn
+}
+
+func (client *AWSClient) STSConn(context.Context) *sts.STS {
+	return client.stsConn
+}
+
+func (client *AWSClient) SWFClient(context.Context) *swf.Client {
+	return client.swfClient
+}
+
+func (client *AWSClient) SageMakerConn(context.Context) *sagemaker.SageMaker {
+	return client.sagemakerConn
+}
+
+func (client *AWSClient) SageMakerA2IRuntimeConn(context.Context) *augmentedairuntime.AugmentedAIRuntime {
+	return client.sagemakera2iruntimeConn
+}
+
+func (client *AWSClient) SageMakerEdgeConn(context.Context) *sagemakeredgemanager.SagemakerEdgeManager {
+	return client.sagemakeredgeConn
+}
+
+func (client *AWSClient) SageMakerFeatureStoreRuntimeConn(context.Context) *sagemakerfeaturestoreruntime.SageMakerFeatureStoreRuntime {
+	return client.sagemakerfeaturestoreruntimeConn
+}
+
+func (client *AWSClient) SageMakerRuntimeConn(context.Context) *sagemakerruntime.SageMakerRuntime {
+	return client.sagemakerruntimeConn
+}
+
+func (client *AWSClient) SavingsPlansConn(context.Context) *savingsplans.SavingsPlans {
+	return client.savingsplansConn
+}
+
+func (client *AWSClient) SchedulerClient(context.Context) *scheduler.Client {
+	return client.schedulerClient
+}
+
+func (client *AWSClient) SchemasConn(context.Context) *schemas.Schemas {
+	return client.schemasConn
+}
+
+func (client *AWSClient) SecretsManagerConn(context.Context) *secretsmanager.SecretsManager {
+	return client.secretsmanagerConn
+}
+
+func (client *AWSClient) SecurityHubConn(context.Context) *securityhub.SecurityHub {
+	return client.securityhubConn
+}
+
+func (client *AWSClient) SecurityLakeClient(context.Context) *securitylake.Client {
+	return client.securitylakeClient
+}
+
+func (client *AWSClient) ServerlessRepoConn(context.Context) *serverlessapplicationrepository.ServerlessApplicationRepository {
+	return client.serverlessrepoConn
+}
+
+func (client *AWSClient) ServiceCatalogConn(context.Context) *servicecatalog.ServiceCatalog {
+	return client.servicecatalogConn
+}
+
+func (client *AWSClient) ServiceCatalogAppRegistryConn(context.Context) *appregistry.AppRegistry {
+	return client.servicecatalogappregistryConn
+}
+
+func (client *AWSClient) ServiceDiscoveryConn(context.Context) *servicediscovery.ServiceDiscovery {
+	return client.servicediscoveryConn
+}
+
+func (client *AWSClient) ServiceQuotasConn(context.Context) *servicequotas.ServiceQuotas {
+	return client.servicequotasConn
+}
+
+func (client *AWSClient) ShieldConn(context.Context) *shield.Shield {
+	return client.shieldConn
+}
+
+func (client *AWSClient) SignerConn(context.Context) *signer.Signer {
+	return client.signerConn
+}
+
+func (client *AWSClient) SimpleDBConn(context.Context) *simpledb.SimpleDB {
+	return client.sdbConn
+}
+
+func (client *AWSClient) SnowDeviceManagementConn(context.Context) *snowdevicemanagement.SnowDeviceManagement {
+	return client.snowdevicemanagementConn
+}
+
+func (client *AWSClient) SnowballConn(context.Context) *snowball.Snowball {
+	return client.snowballConn
+}
+
+func (client *AWSClient) StorageGatewayConn(context.Context) *storagegateway.StorageGateway {
+	return client.storagegatewayConn
+}
+
+func (client *AWSClient) SupportConn(context.Context) *support.Support {
+	return client.supportConn
+}
+
+func (client *AWSClient) SyntheticsConn(context.Context) *synthetics.Synthetics {
+	return client.syntheticsConn
+}
+
+func (client *AWSClient) TextractConn(context.Context) *textract.Textract {
+	return client.textractConn
+}
+
+func (client *AWSClient) TimestreamQueryConn(context.Context) *timestreamquery.TimestreamQuery {
+	return client.timestreamqueryConn
+}
+
+func (client *AWSClient) TimestreamWriteConn(context.Context) *timestreamwrite.TimestreamWrite {
+	return client.timestreamwriteConn
+}
+
+func (client *AWSClient) TranscribeClient(context.Context) *transcribe.Client {
+	return client.transcribeClient
+}
+
+func (client *AWSClient) TranscribeStreamingConn(context.Context) *transcribestreamingservice.TranscribeStreamingService {
+	return client.transcribestreamingConn
+}
+
+func (client *AWSClient) TransferConn(context.Context) *transfer.Transfer {
+	return client.transferConn
+}
+
+func (client *AWSClient) TranslateConn(context.Context) *translate.Translate {
+	return client.translateConn
+}
+
+func (client *AWSClient) VPCLatticeClient(context.Context) *vpclattice.Client {
+	return client.vpclatticeClient
+}
+
+func (client *AWSClient) VoiceIDConn(context.Context) *voiceid.VoiceID {
+	return client.voiceidConn
+}
+
+func (client *AWSClient) WAFConn(context.Context) *waf.WAF {
+	return client.wafConn
+}
+
+func (client *AWSClient) WAFRegionalConn(context.Context) *wafregional.WAFRegional {
+	return client.wafregionalConn
+}
+
+func (client *AWSClient) WAFV2Conn(context.Context) *wafv2.WAFV2 {
+	return client.wafv2Conn
+}
+
+func (client *AWSClient) WellArchitectedConn(context.Context) *wellarchitected.WellArchitected {
+	return client.wellarchitectedConn
+}
+
+func (client *AWSClient) WisdomConn(context.Context) *connectwisdomservice.ConnectWisdomService {
+	return client.wisdomConn
+}
+
+func (client *AWSClient) WorkDocsConn(context.Context) *workdocs.WorkDocs {
+	return client.workdocsConn
+}
+
+func (client *AWSClient) WorkLinkConn(context.Context) *worklink.WorkLink {
+	return client.worklinkConn
+}
+
+func (client *AWSClient) WorkMailConn(context.Context) *workmail.WorkMail {
+	return client.workmailConn
+}
+
+func (client *AWSClient) WorkMailMessageFlowConn(context.Context) *workmailmessageflow.WorkMailMessageFlow {
+	return client.workmailmessageflowConn
+}
+
+func (client *AWSClient) WorkSpacesConn(context.Context) *workspaces.WorkSpaces {
+	return client.workspacesConn
+}
+
+func (client *AWSClient) WorkSpacesWebConn(context.Context) *workspacesweb.WorkSpacesWeb {
+	return client.workspaceswebConn
+}
+
+func (client *AWSClient) XRayClient(context.Context) *xray.Client {
+	return client.xrayClient
 }

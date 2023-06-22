@@ -32,8 +32,8 @@ func (c *Client) GetContactReachabilityStatus(ctx context.Context, params *GetCo
 
 type GetContactReachabilityStatusInput struct {
 
-	// The name of the domain for which you want to know whether the registrant contact
-	// has confirmed that the email address is valid.
+	// The name of the domain for which you want to know whether the registrant
+	// contact has confirmed that the email address is valid.
 	DomainName *string
 
 	noSmithyDocumentSerde
@@ -102,6 +102,9 @@ func (c *Client) addOperationGetContactReachabilityStatusMiddlewares(stack *midd
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetContactReachabilityStatus(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

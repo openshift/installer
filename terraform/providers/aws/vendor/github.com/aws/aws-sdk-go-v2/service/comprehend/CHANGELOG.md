@@ -1,3 +1,88 @@
+# v1.24.4 (2023-06-15)
+
+* No change notes available for this release.
+
+# v1.24.3 (2023-06-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.24.2 (2023-05-04)
+
+* No change notes available for this release.
+
+# v1.24.1 (2023-04-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.24.0 (2023-04-19)
+
+* **Feature**: This release supports native document models for custom classification, in addition to plain-text models. You train native document models using documents (PDF, Word, images) in their native format.
+
+# v1.23.2 (2023-04-10)
+
+* No change notes available for this release.
+
+# v1.23.1 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.23.0 (2023-03-24)
+
+* **Feature**: This release adds a new field (FlywheelArn) to the EntitiesDetectionJobProperties object. The FlywheelArn field is returned in the DescribeEntitiesDetectionJob and ListEntitiesDetectionJobs responses when the EntitiesDetection job is started with a FlywheelArn instead of an EntityRecognizerArn .
+
+# v1.22.2 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.22.1 (2023-03-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.22.0 (2023-02-28)
+
+* **Feature**: Amazon Comprehend now supports flywheels to help you train and manage new model versions for custom models.
+
+# v1.21.4 (2023-02-22)
+
+* **Bug Fix**: Prevent nil pointer dereference when retrieving error codes.
+
+# v1.21.3 (2023-02-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.21.2 (2023-02-15)
+
+* **Announcement**: When receiving an error response in restJson-based services, an incorrect error type may have been returned based on the content of the response. This has been fixed via PR #2012 tracked in issue #1910.
+* **Bug Fix**: Correct error type parsing for restJson services.
+
+# v1.21.1 (2023-02-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.21.0 (2023-01-05)
+
+* **Feature**: Add `ErrorCodeOverride` field to all error structs (aws/smithy-go#401).
+
+# v1.20.2 (2022-12-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.20.1 (2022-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.20.0 (2022-12-01)
+
+* **Feature**: Comprehend now supports semi-structured documents (such as PDF files or image files) as inputs for custom analysis using the synchronous APIs (ClassifyDocument and DetectEntities).
+
+# v1.19.2 (2022-10-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.19.1 (2022-10-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.19.0 (2022-09-21)
 
 * **Feature**: Amazon Comprehend now supports synchronous mode for targeted sentiment API operations.

@@ -30,8 +30,8 @@ func (c *Client) DescribeKeyPhrasesDetectionJob(ctx context.Context, params *Des
 
 type DescribeKeyPhrasesDetectionJobInput struct {
 
-	// The identifier that Amazon Comprehend generated for the job. The operation
-	// returns this identifier in its response.
+	// The identifier that Amazon Comprehend generated for the job. The
+	// StartKeyPhrasesDetectionJob operation returns this identifier in its response.
 	//
 	// This member is required.
 	JobId *string
@@ -100,6 +100,9 @@ func (c *Client) addOperationDescribeKeyPhrasesDetectionJobMiddlewares(stack *mi
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeKeyPhrasesDetectionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -485,9 +485,8 @@ func (c *IVS) DeleteChannelRequest(input *DeleteChannelInput) (req *request.Requ
 //
 // If you try to delete a live channel, you will get an error (409 ConflictException).
 // To delete a channel that is live, call StopStream, wait for the Amazon EventBridge
-// "Stream End" event (to verify that the stream's state was changed from Live
-// to Offline), then call DeleteChannel. (See Using EventBridge with Amazon
-// IVS (https://docs.aws.amazon.com/ivs/latest/userguide/eventbridge.html).)
+// "Stream End" event (to verify that the stream's state is no longer Live),
+// then call DeleteChannel. (See Using EventBridge with Amazon IVS (https://docs.aws.amazon.com/ivs/latest/userguide/eventbridge.html).)
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2701,9 +2700,9 @@ func (c *IVS) UpdateChannelRequest(input *UpdateChannelInput) (req *request.Requ
 
 // UpdateChannel API operation for Amazon Interactive Video Service.
 //
-// Updates a channel's configuration. This does not affect an ongoing stream
-// of this channel. You must stop and restart the stream for the changes to
-// take effect.
+// Updates a channel's configuration. Live channels cannot be updated. You must
+// stop the ongoing stream, update the channel, and restart the stream for the
+// changes to take effect.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3015,7 +3014,7 @@ func (s *BatchGetChannelOutput) SetErrors(v []*BatchError) *BatchGetChannelOutpu
 type BatchGetStreamKeyInput struct {
 	_ struct{} `type:"structure"`
 
-	// Array of ARNs, one per channel.
+	// Array of ARNs, one per stream key.
 	//
 	// Arns is a required field
 	Arns []*string `locationName:"arns" min:"1" type:"list" required:"true"`
@@ -3114,6 +3113,9 @@ type Channel struct {
 	// when you set up streaming software.
 	IngestEndpoint *string `locationName:"ingestEndpoint" type:"string"`
 
+	// Whether the channel allows insecure RTMP ingest. Default: false.
+	InsecureIngest *bool `locationName:"insecureIngest" type:"boolean"`
+
 	// Channel latency mode. Use NORMAL to broadcast and deliver live video up to
 	// Full HD. Use LOW for near-real-time interaction with viewers. Default: LOW.
 	// (Note: In the Amazon IVS console, LOW and NORMAL correspond to Ultra-low
@@ -3126,32 +3128,70 @@ type Channel struct {
 	// Channel playback URL.
 	PlaybackUrl *string `locationName:"playbackUrl" type:"string"`
 
+	// Optional transcode preset for the channel. This is selectable only for ADVANCED_HD
+	// and ADVANCED_SD channel types. For those channel types, the default preset
+	// is HIGHER_BANDWIDTH_DELIVERY. For other channel types (BASIC and STANDARD),
+	// preset is the empty string ("").
+	Preset *string `locationName:"preset" type:"string" enum:"TranscodePreset"`
+
 	// Recording-configuration ARN. A value other than an empty string indicates
 	// that recording is enabled. Default: "" (empty string, recording is disabled).
 	RecordingConfigurationArn *string `locationName:"recordingConfigurationArn" type:"string"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
 	Tags map[string]*string `locationName:"tags" type:"map"`
 
 	// Channel type, which determines the allowable resolution and bitrate. If you
-	// exceed the allowable resolution or bitrate, the stream probably will disconnect
-	// immediately. Default: STANDARD. Valid values:
+	// exceed the allowable input resolution or bitrate, the stream probably will
+	// disconnect immediately. Some types generate multiple qualities (renditions)
+	// from the original input; this automatically gives viewers the best experience
+	// for their devices and network conditions. Some types provide transcoded video;
+	// transcoding allows higher playback quality across a range of download speeds.
+	// Default: STANDARD. Valid values:
+	//
+	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input quality
+	//    to viewers. The viewer’s video-quality choice is limited to the original
+	//    input. Input resolution can be up to 1080p and bitrate can be up to 1.5
+	//    Mbps for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    Original audio is passed through.
 	//
 	//    * STANDARD: Video is transcoded: multiple qualities are generated from
 	//    the original input, to automatically give viewers the best experience
 	//    for their devices and network conditions. Transcoding allows higher playback
 	//    quality across a range of download speeds. Resolution can be up to 1080p
 	//    and bitrate can be up to 8.5 Mbps. Audio is transcoded only for renditions
-	//    360p and below; above that, audio is passed through. This is the default.
+	//    360p and below; above that, audio is passed through. This is the default
+	//    when you create a channel.
 	//
-	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input to
-	//    viewers. The viewer’s video-quality choice is limited to the original
-	//    input. Resolution can be up to 1080p and bitrate can be up to 1.5 Mbps
-	//    for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    * ADVANCED_SD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at SD quality
+	//    (480p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	//    * ADVANCED_HD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at HD quality
+	//    (720p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	// Optional transcode presets (available for the ADVANCED types) allow you to
+	// trade off available download bandwidth and video quality, to optimize the
+	// viewing experience. There are two presets:
+	//
+	//    * Constrained bandwidth delivery uses a lower bitrate for each quality
+	//    level. Use it if you have low download bandwidth and/or simple video content
+	//    (e.g., talking heads)
+	//
+	//    * Higher bandwidth delivery uses a higher bitrate for each quality level.
+	//    Use it if you have high download bandwidth and/or complex video content
+	//    (e.g., flashes and quick scene changes).
 	Type *string `locationName:"type" type:"string" enum:"ChannelType"`
 }
 
@@ -3191,6 +3231,12 @@ func (s *Channel) SetIngestEndpoint(v string) *Channel {
 	return s
 }
 
+// SetInsecureIngest sets the InsecureIngest field's value.
+func (s *Channel) SetInsecureIngest(v bool) *Channel {
+	s.InsecureIngest = &v
+	return s
+}
+
 // SetLatencyMode sets the LatencyMode field's value.
 func (s *Channel) SetLatencyMode(v string) *Channel {
 	s.LatencyMode = &v
@@ -3206,6 +3252,12 @@ func (s *Channel) SetName(v string) *Channel {
 // SetPlaybackUrl sets the PlaybackUrl field's value.
 func (s *Channel) SetPlaybackUrl(v string) *Channel {
 	s.PlaybackUrl = &v
+	return s
+}
+
+// SetPreset sets the Preset field's value.
+func (s *Channel) SetPreset(v string) *Channel {
+	s.Preset = &v
 	return s
 }
 
@@ -3304,6 +3356,9 @@ type ChannelSummary struct {
 	// false.
 	Authorized *bool `locationName:"authorized" type:"boolean"`
 
+	// Whether the channel allows insecure RTMP ingest. Default: false.
+	InsecureIngest *bool `locationName:"insecureIngest" type:"boolean"`
+
 	// Channel latency mode. Use NORMAL to broadcast and deliver live video up to
 	// Full HD. Use LOW for near-real-time interaction with viewers. Default: LOW.
 	// (Note: In the Amazon IVS console, LOW and NORMAL correspond to Ultra-low
@@ -3313,16 +3368,71 @@ type ChannelSummary struct {
 	// Channel name.
 	Name *string `locationName:"name" type:"string"`
 
+	// Optional transcode preset for the channel. This is selectable only for ADVANCED_HD
+	// and ADVANCED_SD channel types. For those channel types, the default preset
+	// is HIGHER_BANDWIDTH_DELIVERY. For other channel types (BASIC and STANDARD),
+	// preset is the empty string ("").
+	Preset *string `locationName:"preset" type:"string" enum:"TranscodePreset"`
+
 	// Recording-configuration ARN. A value other than an empty string indicates
 	// that recording is enabled. Default: "" (empty string, recording is disabled).
 	RecordingConfigurationArn *string `locationName:"recordingConfigurationArn" type:"string"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
 	Tags map[string]*string `locationName:"tags" type:"map"`
+
+	// Channel type, which determines the allowable resolution and bitrate. If you
+	// exceed the allowable input resolution or bitrate, the stream probably will
+	// disconnect immediately. Some types generate multiple qualities (renditions)
+	// from the original input; this automatically gives viewers the best experience
+	// for their devices and network conditions. Some types provide transcoded video;
+	// transcoding allows higher playback quality across a range of download speeds.
+	// Default: STANDARD. Valid values:
+	//
+	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input quality
+	//    to viewers. The viewer’s video-quality choice is limited to the original
+	//    input. Input resolution can be up to 1080p and bitrate can be up to 1.5
+	//    Mbps for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    Original audio is passed through.
+	//
+	//    * STANDARD: Video is transcoded: multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Transcoding allows higher playback
+	//    quality across a range of download speeds. Resolution can be up to 1080p
+	//    and bitrate can be up to 8.5 Mbps. Audio is transcoded only for renditions
+	//    360p and below; above that, audio is passed through. This is the default
+	//    when you create a channel.
+	//
+	//    * ADVANCED_SD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at SD quality
+	//    (480p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	//    * ADVANCED_HD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at HD quality
+	//    (720p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	// Optional transcode presets (available for the ADVANCED types) allow you to
+	// trade off available download bandwidth and video quality, to optimize the
+	// viewing experience. There are two presets:
+	//
+	//    * Constrained bandwidth delivery uses a lower bitrate for each quality
+	//    level. Use it if you have low download bandwidth and/or simple video content
+	//    (e.g., talking heads)
+	//
+	//    * Higher bandwidth delivery uses a higher bitrate for each quality level.
+	//    Use it if you have high download bandwidth and/or complex video content
+	//    (e.g., flashes and quick scene changes).
+	Type *string `locationName:"type" type:"string" enum:"ChannelType"`
 }
 
 // String returns the string representation.
@@ -3355,6 +3465,12 @@ func (s *ChannelSummary) SetAuthorized(v bool) *ChannelSummary {
 	return s
 }
 
+// SetInsecureIngest sets the InsecureIngest field's value.
+func (s *ChannelSummary) SetInsecureIngest(v bool) *ChannelSummary {
+	s.InsecureIngest = &v
+	return s
+}
+
 // SetLatencyMode sets the LatencyMode field's value.
 func (s *ChannelSummary) SetLatencyMode(v string) *ChannelSummary {
 	s.LatencyMode = &v
@@ -3367,6 +3483,12 @@ func (s *ChannelSummary) SetName(v string) *ChannelSummary {
 	return s
 }
 
+// SetPreset sets the Preset field's value.
+func (s *ChannelSummary) SetPreset(v string) *ChannelSummary {
+	s.Preset = &v
+	return s
+}
+
 // SetRecordingConfigurationArn sets the RecordingConfigurationArn field's value.
 func (s *ChannelSummary) SetRecordingConfigurationArn(v string) *ChannelSummary {
 	s.RecordingConfigurationArn = &v
@@ -3376,6 +3498,12 @@ func (s *ChannelSummary) SetRecordingConfigurationArn(v string) *ChannelSummary 
 // SetTags sets the Tags field's value.
 func (s *ChannelSummary) SetTags(v map[string]*string) *ChannelSummary {
 	s.Tags = v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *ChannelSummary) SetType(v string) *ChannelSummary {
+	s.Type = &v
 	return s
 }
 
@@ -3452,6 +3580,9 @@ type CreateChannelInput struct {
 	// false.
 	Authorized *bool `locationName:"authorized" type:"boolean"`
 
+	// Whether the channel allows insecure RTMP ingest. Default: false.
+	InsecureIngest *bool `locationName:"insecureIngest" type:"boolean"`
+
 	// Channel latency mode. Use NORMAL to broadcast and deliver live video up to
 	// Full HD. Use LOW for near-real-time interaction with viewers. (Note: In the
 	// Amazon IVS console, LOW and NORMAL correspond to Ultra-low and Standard,
@@ -3460,6 +3591,12 @@ type CreateChannelInput struct {
 
 	// Channel name.
 	Name *string `locationName:"name" type:"string"`
+
+	// Optional transcode preset for the channel. This is selectable only for ADVANCED_HD
+	// and ADVANCED_SD channel types. For those channel types, the default preset
+	// is HIGHER_BANDWIDTH_DELIVERY. For other channel types (BASIC and STANDARD),
+	// preset is the empty string ("").
+	Preset *string `locationName:"preset" type:"string" enum:"TranscodePreset"`
 
 	// Recording-configuration ARN. Default: "" (empty string, recording is disabled).
 	RecordingConfigurationArn *string `locationName:"recordingConfigurationArn" type:"string"`
@@ -3472,20 +3609,52 @@ type CreateChannelInput struct {
 	Tags map[string]*string `locationName:"tags" type:"map"`
 
 	// Channel type, which determines the allowable resolution and bitrate. If you
-	// exceed the allowable resolution or bitrate, the stream probably will disconnect
-	// immediately. Default: STANDARD. Valid values:
+	// exceed the allowable input resolution or bitrate, the stream probably will
+	// disconnect immediately. Some types generate multiple qualities (renditions)
+	// from the original input; this automatically gives viewers the best experience
+	// for their devices and network conditions. Some types provide transcoded video;
+	// transcoding allows higher playback quality across a range of download speeds.
+	// Default: STANDARD. Valid values:
+	//
+	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input quality
+	//    to viewers. The viewer’s video-quality choice is limited to the original
+	//    input. Input resolution can be up to 1080p and bitrate can be up to 1.5
+	//    Mbps for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    Original audio is passed through.
 	//
 	//    * STANDARD: Video is transcoded: multiple qualities are generated from
 	//    the original input, to automatically give viewers the best experience
 	//    for their devices and network conditions. Transcoding allows higher playback
 	//    quality across a range of download speeds. Resolution can be up to 1080p
 	//    and bitrate can be up to 8.5 Mbps. Audio is transcoded only for renditions
-	//    360p and below; above that, audio is passed through. This is the default.
+	//    360p and below; above that, audio is passed through. This is the default
+	//    when you create a channel.
 	//
-	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input to
-	//    viewers. The viewer’s video-quality choice is limited to the original
-	//    input. Resolution can be up to 1080p and bitrate can be up to 1.5 Mbps
-	//    for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    * ADVANCED_SD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at SD quality
+	//    (480p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	//    * ADVANCED_HD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at HD quality
+	//    (720p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	// Optional transcode presets (available for the ADVANCED types) allow you to
+	// trade off available download bandwidth and video quality, to optimize the
+	// viewing experience. There are two presets:
+	//
+	//    * Constrained bandwidth delivery uses a lower bitrate for each quality
+	//    level. Use it if you have low download bandwidth and/or simple video content
+	//    (e.g., talking heads)
+	//
+	//    * Higher bandwidth delivery uses a higher bitrate for each quality level.
+	//    Use it if you have high download bandwidth and/or complex video content
+	//    (e.g., flashes and quick scene changes).
 	Type *string `locationName:"type" type:"string" enum:"ChannelType"`
 }
 
@@ -3513,6 +3682,12 @@ func (s *CreateChannelInput) SetAuthorized(v bool) *CreateChannelInput {
 	return s
 }
 
+// SetInsecureIngest sets the InsecureIngest field's value.
+func (s *CreateChannelInput) SetInsecureIngest(v bool) *CreateChannelInput {
+	s.InsecureIngest = &v
+	return s
+}
+
 // SetLatencyMode sets the LatencyMode field's value.
 func (s *CreateChannelInput) SetLatencyMode(v string) *CreateChannelInput {
 	s.LatencyMode = &v
@@ -3522,6 +3697,12 @@ func (s *CreateChannelInput) SetLatencyMode(v string) *CreateChannelInput {
 // SetName sets the Name field's value.
 func (s *CreateChannelInput) SetName(v string) *CreateChannelInput {
 	s.Name = &v
+	return s
+}
+
+// SetPreset sets the Preset field's value.
+func (s *CreateChannelInput) SetPreset(v string) *CreateChannelInput {
+	s.Preset = &v
 	return s
 }
 
@@ -5533,6 +5714,9 @@ func (s *ListTagsForResourceInput) SetResourceArn(v string) *ListTagsForResource
 type ListTagsForResourceOutput struct {
 	_ struct{} `type:"structure"`
 
+	// Tags attached to the resource. Array of maps, each of the form string:string
+	// (key:value).
+	//
 	// Tags is a required field
 	Tags map[string]*string `locationName:"tags" type:"map" required:"true"`
 }
@@ -5640,8 +5824,8 @@ type PlaybackKeyPair struct {
 	// Playback-key-pair name. The value does not need to be unique.
 	Name *string `locationName:"name" type:"string"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -5700,8 +5884,8 @@ type PlaybackKeyPairSummary struct {
 	// Playback-key-pair name. The value does not need to be unique.
 	Name *string `locationName:"name" type:"string"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -5866,8 +6050,8 @@ type RecordingConfiguration struct {
 	// State is a required field
 	State *string `locationName:"state" type:"string" required:"true" enum:"RecordingConfigurationState"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -5963,8 +6147,8 @@ type RecordingConfigurationSummary struct {
 	// State is a required field
 	State *string `locationName:"state" type:"string" required:"true" enum:"RecordingConfigurationState"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -6291,7 +6475,9 @@ type Stream struct {
 	// is returned as a string.
 	StartTime *time.Time `locationName:"startTime" type:"timestamp" timestampFormat:"iso8601"`
 
-	// The stream’s state.
+	// The stream’s state. Do not rely on the OFFLINE state, as the API may not
+	// return it; instead, a "NotBroadcasting" error will indicate that the stream
+	// is not live.
 	State *string `locationName:"state" type:"string" enum:"StreamState"`
 
 	// Unique identifier for a live or previously live stream in the specified channel.
@@ -6458,8 +6644,8 @@ type StreamKey struct {
 	// Channel ARN for the stream.
 	ChannelArn *string `locationName:"channelArn" min:"1" type:"string"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -6525,8 +6711,8 @@ type StreamKeySummary struct {
 	// Channel ARN for the stream.
 	ChannelArn *string `locationName:"channelArn" min:"1" type:"string"`
 
-	// Array of 1-50 maps, each of the form string:string (key:value). See Tagging
-	// Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Tags attached to the resource. Array of 1-50 maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -6736,7 +6922,9 @@ type StreamSummary struct {
 	// is returned as a string.
 	StartTime *time.Time `locationName:"startTime" type:"timestamp" timestampFormat:"iso8601"`
 
-	// The stream’s state.
+	// The stream’s state. Do not rely on the OFFLINE state, as the API may not
+	// return it; instead, a "NotBroadcasting" error will indicate that the stream
+	// is not live.
 	State *string `locationName:"state" type:"string" enum:"StreamState"`
 
 	// Unique identifier for a live or previously live stream in the specified channel.
@@ -6878,11 +7066,11 @@ type TagResourceInput struct {
 	// ResourceArn is a required field
 	ResourceArn *string `location:"uri" locationName:"resourceArn" min:"1" type:"string" required:"true"`
 
-	// Array of tags to be added or updated. See Tagging Amazon Web Services Resources
-	// (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html) for more
-	// information, including restrictions that apply to tags and "Tag naming limits
-	// and requirements"; Amazon IVS has no service-specific constraints beyond
-	// what is documented there.
+	// Array of tags to be added or updated. Array of maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// for more information, including restrictions that apply to tags and "Tag
+	// naming limits and requirements"; Amazon IVS has no service-specific constraints
+	// beyond what is documented there.
 	//
 	// Tags is a required field
 	Tags map[string]*string `locationName:"tags" type:"map" required:"true"`
@@ -7042,7 +7230,7 @@ type ThumbnailConfiguration struct {
 	// IVS Streaming Configuration (https://docs.aws.amazon.com/ivs/latest/userguide/streaming-config.html)
 	// for information on setting IDR/Keyframe to the recommended value in video-encoder
 	// settings.
-	TargetIntervalSeconds *int64 `locationName:"targetIntervalSeconds" min:"5" type:"long"`
+	TargetIntervalSeconds *int64 `locationName:"targetIntervalSeconds" min:"1" type:"long"`
 }
 
 // String returns the string representation.
@@ -7066,8 +7254,8 @@ func (s ThumbnailConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ThumbnailConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ThumbnailConfiguration"}
-	if s.TargetIntervalSeconds != nil && *s.TargetIntervalSeconds < 5 {
-		invalidParams.Add(request.NewErrParamMinValue("TargetIntervalSeconds", 5))
+	if s.TargetIntervalSeconds != nil && *s.TargetIntervalSeconds < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("TargetIntervalSeconds", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -7096,7 +7284,8 @@ type UntagResourceInput struct {
 	// ResourceArn is a required field
 	ResourceArn *string `location:"uri" locationName:"resourceArn" min:"1" type:"string" required:"true"`
 
-	// Array of tags to be removed. See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
+	// Array of tags to be removed. Array of maps, each of the form string:string
+	// (key:value). See Tagging Amazon Web Services Resources (https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html)
 	// for more information, including restrictions that apply to tags and "Tag
 	// naming limits and requirements"; Amazon IVS has no service-specific constraints
 	// beyond what is documented there.
@@ -7187,6 +7376,9 @@ type UpdateChannelInput struct {
 	// Whether the channel is private (enabled for playback authorization).
 	Authorized *bool `locationName:"authorized" type:"boolean"`
 
+	// Whether the channel allows insecure RTMP ingest. Default: false.
+	InsecureIngest *bool `locationName:"insecureIngest" type:"boolean"`
+
 	// Channel latency mode. Use NORMAL to broadcast and deliver live video up to
 	// Full HD. Use LOW for near-real-time interaction with viewers. (Note: In the
 	// Amazon IVS console, LOW and NORMAL correspond to Ultra-low and Standard,
@@ -7196,26 +7388,64 @@ type UpdateChannelInput struct {
 	// Channel name.
 	Name *string `locationName:"name" type:"string"`
 
+	// Optional transcode preset for the channel. This is selectable only for ADVANCED_HD
+	// and ADVANCED_SD channel types. For those channel types, the default preset
+	// is HIGHER_BANDWIDTH_DELIVERY. For other channel types (BASIC and STANDARD),
+	// preset is the empty string ("").
+	Preset *string `locationName:"preset" type:"string" enum:"TranscodePreset"`
+
 	// Recording-configuration ARN. If this is set to an empty string, recording
 	// is disabled. A value other than an empty string indicates that recording
 	// is enabled
 	RecordingConfigurationArn *string `locationName:"recordingConfigurationArn" type:"string"`
 
 	// Channel type, which determines the allowable resolution and bitrate. If you
-	// exceed the allowable resolution or bitrate, the stream probably will disconnect
-	// immediately. Valid values:
+	// exceed the allowable input resolution or bitrate, the stream probably will
+	// disconnect immediately. Some types generate multiple qualities (renditions)
+	// from the original input; this automatically gives viewers the best experience
+	// for their devices and network conditions. Some types provide transcoded video;
+	// transcoding allows higher playback quality across a range of download speeds.
+	// Default: STANDARD. Valid values:
+	//
+	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input quality
+	//    to viewers. The viewer’s video-quality choice is limited to the original
+	//    input. Input resolution can be up to 1080p and bitrate can be up to 1.5
+	//    Mbps for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    Original audio is passed through.
 	//
 	//    * STANDARD: Video is transcoded: multiple qualities are generated from
 	//    the original input, to automatically give viewers the best experience
 	//    for their devices and network conditions. Transcoding allows higher playback
 	//    quality across a range of download speeds. Resolution can be up to 1080p
 	//    and bitrate can be up to 8.5 Mbps. Audio is transcoded only for renditions
-	//    360p and below; above that, audio is passed through. This is the default.
+	//    360p and below; above that, audio is passed through. This is the default
+	//    when you create a channel.
 	//
-	//    * BASIC: Video is transmuxed: Amazon IVS delivers the original input to
-	//    viewers. The viewer’s video-quality choice is limited to the original
-	//    input. Resolution can be up to 1080p and bitrate can be up to 1.5 Mbps
-	//    for 480p and up to 3.5 Mbps for resolutions between 480p and 1080p.
+	//    * ADVANCED_SD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at SD quality
+	//    (480p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	//    * ADVANCED_HD: Video is transcoded; multiple qualities are generated from
+	//    the original input, to automatically give viewers the best experience
+	//    for their devices and network conditions. Input resolution can be up to
+	//    1080p and bitrate can be up to 8.5 Mbps; output is capped at HD quality
+	//    (720p). You can select an optional transcode preset (see below). Audio
+	//    for all renditions is transcoded, and an audio-only rendition is available.
+	//
+	// Optional transcode presets (available for the ADVANCED types) allow you to
+	// trade off available download bandwidth and video quality, to optimize the
+	// viewing experience. There are two presets:
+	//
+	//    * Constrained bandwidth delivery uses a lower bitrate for each quality
+	//    level. Use it if you have low download bandwidth and/or simple video content
+	//    (e.g., talking heads)
+	//
+	//    * Higher bandwidth delivery uses a higher bitrate for each quality level.
+	//    Use it if you have high download bandwidth and/or complex video content
+	//    (e.g., flashes and quick scene changes).
 	Type *string `locationName:"type" type:"string" enum:"ChannelType"`
 }
 
@@ -7265,6 +7495,12 @@ func (s *UpdateChannelInput) SetAuthorized(v bool) *UpdateChannelInput {
 	return s
 }
 
+// SetInsecureIngest sets the InsecureIngest field's value.
+func (s *UpdateChannelInput) SetInsecureIngest(v bool) *UpdateChannelInput {
+	s.InsecureIngest = &v
+	return s
+}
+
 // SetLatencyMode sets the LatencyMode field's value.
 func (s *UpdateChannelInput) SetLatencyMode(v string) *UpdateChannelInput {
 	s.LatencyMode = &v
@@ -7274,6 +7510,12 @@ func (s *UpdateChannelInput) SetLatencyMode(v string) *UpdateChannelInput {
 // SetName sets the Name field's value.
 func (s *UpdateChannelInput) SetName(v string) *UpdateChannelInput {
 	s.Name = &v
+	return s
+}
+
+// SetPreset sets the Preset field's value.
+func (s *UpdateChannelInput) SetPreset(v string) *UpdateChannelInput {
+	s.Preset = &v
 	return s
 }
 
@@ -7509,6 +7751,12 @@ const (
 
 	// ChannelTypeStandard is a ChannelType enum value
 	ChannelTypeStandard = "STANDARD"
+
+	// ChannelTypeAdvancedSd is a ChannelType enum value
+	ChannelTypeAdvancedSd = "ADVANCED_SD"
+
+	// ChannelTypeAdvancedHd is a ChannelType enum value
+	ChannelTypeAdvancedHd = "ADVANCED_HD"
 )
 
 // ChannelType_Values returns all elements of the ChannelType enum
@@ -7516,6 +7764,8 @@ func ChannelType_Values() []string {
 	return []string{
 		ChannelTypeBasic,
 		ChannelTypeStandard,
+		ChannelTypeAdvancedSd,
+		ChannelTypeAdvancedHd,
 	}
 }
 
@@ -7588,5 +7838,21 @@ func StreamState_Values() []string {
 	return []string{
 		StreamStateLive,
 		StreamStateOffline,
+	}
+}
+
+const (
+	// TranscodePresetHigherBandwidthDelivery is a TranscodePreset enum value
+	TranscodePresetHigherBandwidthDelivery = "HIGHER_BANDWIDTH_DELIVERY"
+
+	// TranscodePresetConstrainedBandwidthDelivery is a TranscodePreset enum value
+	TranscodePresetConstrainedBandwidthDelivery = "CONSTRAINED_BANDWIDTH_DELIVERY"
+)
+
+// TranscodePreset_Values returns all elements of the TranscodePreset enum
+func TranscodePreset_Values() []string {
+	return []string{
+		TranscodePresetHigherBandwidthDelivery,
+		TranscodePresetConstrainedBandwidthDelivery,
 	}
 }

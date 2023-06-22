@@ -234,7 +234,11 @@ func compareArray(av, bv []interface{}, p string) []JsonPatchOperation {
 	processArray(av, bv, func(i int, value interface{}) {
 		retval = append(retval, NewPatch("remove", makePath(p, i), nil))
 	})
-
+	reversed := make([]JsonPatchOperation, len(retval))
+	for i := 0; i < len(retval); i++ {
+		reversed[len(retval)-1-i] = retval[i]
+	}
+	retval = reversed
 	// Find elements that need to be added.
 	// NOTE we pass in `bv` then `av` so that processArray can find the missing elements.
 	processArray(bv, av, func(i int, value interface{}) {

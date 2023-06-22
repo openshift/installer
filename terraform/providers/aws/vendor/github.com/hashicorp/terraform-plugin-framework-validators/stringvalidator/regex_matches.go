@@ -6,10 +6,10 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
-var _ tfsdk.AttributeValidator = regexMatchesValidator{}
+var _ validator.String = regexMatchesValidator{}
 
 // regexMatchesValidator validates that a string Attribute's value matches the specified regular expression.
 type regexMatchesValidator struct {
@@ -31,18 +31,18 @@ func (validator regexMatchesValidator) MarkdownDescription(ctx context.Context) 
 }
 
 // Validate performs the validation.
-func (validator regexMatchesValidator) Validate(ctx context.Context, request tfsdk.ValidateAttributeRequest, response *tfsdk.ValidateAttributeResponse) {
-	s, ok := validateString(ctx, request, response)
-
-	if !ok {
+func (v regexMatchesValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
+	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
 	}
 
-	if ok := validator.regexp.MatchString(s); !ok {
+	value := request.ConfigValue.ValueString()
+
+	if !v.regexp.MatchString(value) {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueMatchDiagnostic(
-			request.AttributePath,
-			validator.Description(ctx),
-			s,
+			request.Path,
+			v.Description(ctx),
+			value,
 		))
 	}
 }
@@ -56,7 +56,7 @@ func (validator regexMatchesValidator) Validate(ctx context.Context, request tfs
 // Null (unconfigured) and unknown (known after apply) values are skipped.
 // Optionally an error message can be provided to return something friendlier
 // than "value must match regular expression 'regexp'".
-func RegexMatches(regexp *regexp.Regexp, message string) tfsdk.AttributeValidator {
+func RegexMatches(regexp *regexp.Regexp, message string) validator.String {
 	return regexMatchesValidator{
 		regexp:  regexp,
 		message: message,

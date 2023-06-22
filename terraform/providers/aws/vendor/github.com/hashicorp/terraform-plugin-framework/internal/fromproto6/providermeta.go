@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fromproto6
 
 import (
@@ -25,7 +28,7 @@ func ProviderMeta(ctx context.Context, proto6DynamicValue *tfprotov6.DynamicValu
 
 	fw := &tfsdk.Config{
 		Raw:    tftypes.NewValue(schema.Type().TerraformType(ctx), nil),
-		Schema: tfsdkSchema(schema),
+		Schema: schema,
 	}
 
 	if proto6DynamicValue == nil {

@@ -54,8 +54,8 @@ type GetConfigurationSetOutput struct {
 	// you send using the configuration set.
 	DeliveryOptions *types.DeliveryOptions
 
-	// An object that defines whether or not Amazon SES collects reputation metrics for
-	// the emails that you send that use the configuration set.
+	// An object that defines whether or not Amazon SES collects reputation metrics
+	// for the emails that you send that use the configuration set.
 	ReputationOptions *types.ReputationOptions
 
 	// An object that defines whether or not Amazon SES can send email that you send
@@ -73,6 +73,10 @@ type GetConfigurationSetOutput struct {
 	// An object that defines the open and click tracking options for emails that you
 	// send using the configuration set.
 	TrackingOptions *types.TrackingOptions
+
+	// An object that contains information about the VDM preferences for your
+	// configuration set.
+	VdmOptions *types.VdmOptions
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -129,6 +133,9 @@ func (c *Client) addOperationGetConfigurationSetMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetConfigurationSet(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

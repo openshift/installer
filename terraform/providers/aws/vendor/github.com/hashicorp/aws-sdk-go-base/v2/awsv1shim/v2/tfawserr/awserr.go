@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package tfawserr
 
 import (
@@ -8,10 +11,10 @@ import (
 )
 
 // ErrMessageAndOrigErrContain returns true if the error matches all these conditions:
-//  * err is of type awserr.Error
-//  * Error.Code() matches code
-//  * Error.Message() contains message
-//  * Error.OrigErr() contains origErrMessage
+//   - err is of type awserr.Error
+//   - Error.Code() matches code
+//   - Error.Message() contains message
+//   - Error.OrigErr() contains origErrMessage
 func ErrMessageAndOrigErrContain(err error, code string, message string, origErrMessage string) bool {
 	if !ErrMessageContains(err, code, message) {
 		return false
@@ -30,8 +33,8 @@ func ErrMessageAndOrigErrContain(err error, code string, message string, origErr
 }
 
 // ErrCodeEquals returns true if the error matches all these conditions:
-//  * err is of type awserr.Error
-//  * Error.Code() equals one of the passed codes
+//   - err is of type awserr.Error
+//   - Error.Code() equals one of the passed codes
 func ErrCodeEquals(err error, codes ...string) bool {
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
@@ -45,8 +48,8 @@ func ErrCodeEquals(err error, codes ...string) bool {
 }
 
 // ErrCodeContains returns true if the error matches all these conditions:
-//  * err is of type awserr.Error
-//  * Error.Code() contains code
+//   - err is of type awserr.Error
+//   - Error.Code() contains code
 func ErrCodeContains(err error, code string) bool {
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
@@ -56,9 +59,9 @@ func ErrCodeContains(err error, code string) bool {
 }
 
 // ErrMessageContains returns true if the error matches all these conditions:
-//  * err is of type awserr.Error
-//  * Error.Code() equals code
-//  * Error.Message() contains message
+//   - err is of type awserr.Error
+//   - Error.Code() equals code
+//   - Error.Message() contains message
 func ErrMessageContains(err error, code string, message string) bool {
 	var awsErr awserr.Error
 	if errors.As(err, &awsErr) {
@@ -68,8 +71,9 @@ func ErrMessageContains(err error, code string, message string) bool {
 }
 
 // ErrStatusCodeEquals returns true if the error matches all these conditions:
-//  * err is of type awserr.RequestFailure
-//  * RequestFailure.StatusCode() equals statusCode
+//   - err is of type awserr.RequestFailure
+//   - RequestFailure.StatusCode() equals statusCode
+//
 // It is always preferable to use ErrMessageContains() except in older APIs (e.g. S3)
 // that sometimes only respond with status codes.
 func ErrStatusCodeEquals(err error, statusCode int) bool {

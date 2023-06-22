@@ -12,10 +12,11 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates an new set of frequently asked question (FAQ) questions and answers.
-// Adding FAQs to an index is an asynchronous operation. For an example of adding
-// an FAQ to an index using Python and Java SDKs, see Using your FAQ file
-// (https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file).
+// Creates a set of frequently ask questions (FAQs) using a specified FAQ file
+// stored in an Amazon S3 bucket. Adding FAQs to an index is an asynchronous
+// operation. For an example of adding an FAQ to an index using Python and Java
+// SDKs, see Using your FAQ file (https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html#using-faq-file)
+// .
 func (c *Client) CreateFaq(ctx context.Context, params *CreateFaqInput, optFns ...func(*Options)) (*CreateFaqOutput, error) {
 	if params == nil {
 		params = &CreateFaqInput{}
@@ -43,9 +44,9 @@ type CreateFaqInput struct {
 	// This member is required.
 	Name *string
 
-	// The Amazon Resource Name (ARN) of a role with permission to access the S3 bucket
-	// that contains the FAQs. For more information, see IAM Roles for Amazon Kendra
-	// (https://docs.aws.amazon.com/kendra/latest/dg/iam-roles.html).
+	// The Amazon Resource Name (ARN) of an IAM role with permission to access the S3
+	// bucket that contains the FAQs. For more information, see IAM access roles for
+	// Amazon Kendra (https://docs.aws.amazon.com/kendra/latest/dg/iam-roles.html) .
 	//
 	// This member is required.
 	RoleArn *string
@@ -55,8 +56,9 @@ type CreateFaqInput struct {
 	// This member is required.
 	S3Path *types.S3Path
 
-	// A token that you provide to identify the request to create a FAQ. Multiple calls
-	// to the CreateFaqRequest API with the same client token will create only one FAQ.
+	// A token that you provide to identify the request to create a FAQ. Multiple
+	// calls to the CreateFaqRequest API with the same client token will create only
+	// one FAQ.
 	ClientToken *string
 
 	// A description for the FAQ.
@@ -66,14 +68,14 @@ type CreateFaqInput struct {
 	// CSV format that includes customs attributes in a header, and a JSON format that
 	// includes custom attributes. The format must match the format of the file stored
 	// in the S3 bucket identified in the S3Path parameter. For more information, see
-	// Adding questions and answers
-	// (https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html).
+	// Adding questions and answers (https://docs.aws.amazon.com/kendra/latest/dg/in-creating-faq.html)
+	// .
 	FileFormat types.FaqFileFormat
 
 	// The code for a language. This allows you to support a language for the FAQ
 	// document. English is supported by default. For more information on supported
 	// languages, including their codes, see Adding documents in languages other than
-	// English (https://docs.aws.amazon.com/kendra/latest/dg/in-adding-languages.html).
+	// English (https://docs.aws.amazon.com/kendra/latest/dg/in-adding-languages.html) .
 	LanguageCode *string
 
 	// A list of key-value pairs that identify the FAQ. You can use the tags to
@@ -85,7 +87,7 @@ type CreateFaqInput struct {
 
 type CreateFaqOutput struct {
 
-	// The unique identifier of the FAQ.
+	// The identifier of the FAQ.
 	Id *string
 
 	// Metadata pertaining to the operation's result.
@@ -146,6 +148,9 @@ func (c *Client) addOperationCreateFaqMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateFaq(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

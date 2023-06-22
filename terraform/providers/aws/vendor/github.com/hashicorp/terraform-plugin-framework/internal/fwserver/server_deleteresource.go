@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -38,7 +41,7 @@ func (s *Server) DeleteResource(ctx context.Context, req *DeleteResourceRequest,
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -47,7 +50,7 @@ func (s *Server) DeleteResource(ctx context.Context, req *DeleteResourceRequest,
 		configureResp := resource.ConfigureResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
 		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
@@ -59,13 +62,13 @@ func (s *Server) DeleteResource(ctx context.Context, req *DeleteResourceRequest,
 
 	deleteReq := resource.DeleteRequest{
 		State: tfsdk.State{
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 			Raw:    tftypes.NewValue(req.ResourceSchema.Type().TerraformType(ctx), nil),
 		},
 	}
 	deleteResp := resource.DeleteResponse{
 		State: tfsdk.State{
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 			Raw:    tftypes.NewValue(req.ResourceSchema.Type().TerraformType(ctx), nil),
 		},
 	}

@@ -11,8 +11,8 @@ import (
 )
 
 // Attaches a resource-based policy to a custom model. You can use this policy to
-// authorize an entity in another AWS account to import the custom model, which
-// replicates it in Amazon Comprehend in their account.
+// authorize an entity in another Amazon Web Services account to import the custom
+// model, which replicates it in Amazon Comprehend in their account.
 func (c *Client) PutResourcePolicy(ctx context.Context, params *PutResourcePolicyInput, optFns ...func(*Options)) (*PutResourcePolicyOutput, error) {
 	if params == nil {
 		params = &PutResourcePolicyInput{}
@@ -35,11 +35,11 @@ type PutResourcePolicyInput struct {
 	// This member is required.
 	ResourceArn *string
 
-	// The JSON resource-based policy to attach to your custom model. Provide your JSON
-	// as a UTF-8 encoded string without line breaks. To provide valid JSON for your
-	// policy, enclose the attribute names and values in double quotes. If the JSON
-	// body is also enclosed in double quotes, then you must escape the double quotes
-	// that are inside the policy: "{\"attribute\": \"value\", \"attribute\":
+	// The JSON resource-based policy to attach to your custom model. Provide your
+	// JSON as a UTF-8 encoded string without line breaks. To provide valid JSON for
+	// your policy, enclose the attribute names and values in double quotes. If the
+	// JSON body is also enclosed in double quotes, then you must escape the double
+	// quotes that are inside the policy: "{\"attribute\": \"value\", \"attribute\":
 	// [\"value\"]}" To avoid escaping quotes, you can use single quotes to enclose the
 	// policy and double quotes to enclose the JSON names and values: '{"attribute":
 	// "value", "attribute": ["value"]}'
@@ -116,6 +116,9 @@ func (c *Client) addOperationPutResourcePolicyMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opPutResourcePolicy(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

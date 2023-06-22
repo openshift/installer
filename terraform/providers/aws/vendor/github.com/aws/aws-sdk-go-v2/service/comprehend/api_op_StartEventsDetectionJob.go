@@ -30,8 +30,8 @@ func (c *Client) StartEventsDetectionJob(ctx context.Context, params *StartEvent
 
 type StartEventsDetectionJobInput struct {
 
-	// The Amazon Resource Name (ARN) of the AWS Identity and Access Management (IAM)
-	// role that grants Amazon Comprehend read access to your input data.
+	// The Amazon Resource Name (ARN) of the IAM role that grants Amazon Comprehend
+	// read access to your input data.
 	//
 	// This member is required.
 	DataAccessRoleArn *string
@@ -56,17 +56,17 @@ type StartEventsDetectionJobInput struct {
 	// This member is required.
 	TargetEventTypes []string
 
-	// An unique identifier for the request. If you don't set the client request token,
-	// Amazon Comprehend generates one.
+	// An unique identifier for the request. If you don't set the client request
+	// token, Amazon Comprehend generates one.
 	ClientRequestToken *string
 
 	// The identifier of the events detection job.
 	JobName *string
 
-	// Tags to be associated with the events detection job. A tag is a key-value pair
-	// that adds metadata to a resource used by Amazon Comprehend. For example, a tag
-	// with "Sales" as the key might be added to a resource to indicate its use by the
-	// sales department.
+	// Tags to associate with the events detection job. A tag is a key-value pair that
+	// adds metadata to a resource used by Amazon Comprehend. For example, a tag with
+	// "Sales" as the key might be added to a resource to indicate its use by the sales
+	// department.
 	Tags []types.Tag
 
 	noSmithyDocumentSerde
@@ -75,14 +75,15 @@ type StartEventsDetectionJobInput struct {
 type StartEventsDetectionJobOutput struct {
 
 	// The Amazon Resource Name (ARN) of the events detection job. It is a unique,
-	// fully qualified identifier for the job. It includes the AWS account, Region, and
-	// the job ID. The format of the ARN is as follows:
-	// arn::comprehend:::events-detection-job/ The following is an example job ARN:
+	// fully qualified identifier for the job. It includes the Amazon Web Services
+	// account, Amazon Web Services Region, and the job ID. The format of the ARN is as
+	// follows: arn::comprehend:::events-detection-job/ The following is an example
+	// job ARN:
 	// arn:aws:comprehend:us-west-2:111122223333:events-detection-job/1234abcd12ab34cd56ef1234567890ab
 	JobArn *string
 
-	// An unique identifier for the request. If you don't set the client request token,
-	// Amazon Comprehend generates one.
+	// An unique identifier for the request. If you don't set the client request
+	// token, Amazon Comprehend generates one.
 	JobId *string
 
 	// The status of the events detection job.
@@ -146,6 +147,9 @@ func (c *Client) addOperationStartEventsDetectionJobMiddlewares(stack *middlewar
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opStartEventsDetectionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

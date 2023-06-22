@@ -552,7 +552,8 @@ func (c *FSx) CreateDataRepositoryAssociationRequest(input *CreateDataRepository
 // repository association is a link between a directory on the file system and
 // an Amazon S3 bucket or prefix. You can have a maximum of 8 data repository
 // associations on a file system. Data repository associations are supported
-// only for file systems with the Persistent_2 deployment type.
+// on all FSx for Lustre 2.12 and newer file systems, excluding scratch_1 deployment
+// type.
 //
 // Each data repository association must have a unique Amazon FSx file system
 // directory and a unique S3 bucket or prefix associated with it. You can configure
@@ -1705,8 +1706,9 @@ func (c *FSx) DeleteDataRepositoryAssociationRequest(input *DeleteDataRepository
 // Deleting the data repository association unlinks the file system from the
 // Amazon S3 bucket. When deleting a data repository association, you have the
 // option of deleting the data in the file system that corresponds to the data
-// repository association. Data repository associations are supported only for
-// file systems with the Persistent_2 deployment type.
+// repository association. Data repository associations are supported on all
+// FSx for Lustre 2.12 and newer file systems, excluding scratch_1 deployment
+// type.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2230,6 +2232,10 @@ func (c *FSx) DeleteVolumeRequest(input *DeleteVolumeInput) (req *request.Reques
 //   - VolumeNotFound
 //     No Amazon FSx volumes were found based upon the supplied parameters.
 //
+//   - ServiceLimitExceeded
+//     An error indicating that a particular service limit was exceeded. You can
+//     increase some service limits by contacting Amazon Web Services Support.
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/fsx-2018-03-01/DeleteVolume
 func (c *FSx) DeleteVolume(input *DeleteVolumeInput) (*DeleteVolumeOutput, error) {
 	req, out := c.DeleteVolumeRequest(input)
@@ -2475,8 +2481,9 @@ func (c *FSx) DescribeDataRepositoryAssociationsRequest(input *DescribeDataRepos
 // Returns the description of specific Amazon FSx for Lustre or Amazon File
 // Cache data repository associations, if one or more AssociationIds values
 // are provided in the request, or if filters are used in the request. Data
-// repository associations are supported only for Amazon FSx for Lustre file
-// systems with the Persistent_2 deployment type and for Amazon File Cache resources.
+// repository associations are supported on Amazon File Cache resources and
+// all FSx for Lustre 2.12 and newer file systems, excluding scratch_1 deployment
+// type.
 //
 // You can use filters to narrow the response to include just data repository
 // associations for specific file systems (use the file-system-id filter with
@@ -4349,7 +4356,8 @@ func (c *FSx) UpdateDataRepositoryAssociationRequest(input *UpdateDataRepository
 //
 // Updates the configuration of an existing data repository association on an
 // Amazon FSx for Lustre file system. Data repository associations are supported
-// only for file systems with the Persistent_2 deployment type.
+// on all FSx for Lustre 2.12 and newer file systems, excluding scratch_1 deployment
+// type.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4547,7 +4555,7 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 // Use this operation to update the configuration of an existing Amazon FSx
 // file system. You can update multiple properties in a single request.
 //
-// For Amazon FSx for Windows File Server file systems, you can update the following
+// For FSx for Windows File Server file systems, you can update the following
 // properties:
 //
 //   - AuditLogConfiguration
@@ -4564,7 +4572,7 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 //
 //   - WeeklyMaintenanceStartTime
 //
-// For Amazon FSx for Lustre file systems, you can update the following properties:
+// For FSx for Lustre file systems, you can update the following properties:
 //
 //   - AutoImportPolicy
 //
@@ -4580,8 +4588,9 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 //
 //   - WeeklyMaintenanceStartTime
 //
-// For Amazon FSx for NetApp ONTAP file systems, you can update the following
-// properties:
+// For FSx for ONTAP file systems, you can update the following properties:
+//
+//   - AddRouteTableIds
 //
 //   - AutomaticBackupRetentionDays
 //
@@ -4591,14 +4600,15 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 //
 //   - FsxAdminPassword
 //
+//   - RemoveRouteTableIds
+//
 //   - StorageCapacity
 //
 //   - ThroughputCapacity
 //
 //   - WeeklyMaintenanceStartTime
 //
-// For the Amazon FSx for OpenZFS file systems, you can update the following
-// properties:
+// For FSx for OpenZFS file systems, you can update the following properties:
 //
 //   - AutomaticBackupRetentionDays
 //
@@ -4607,6 +4617,10 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 //   - CopyTagsToVolumes
 //
 //   - DailyAutomaticBackupStartTime
+//
+//   - DiskIopsConfiguration
+//
+//   - StorageCapacity
 //
 //   - ThroughputCapacity
 //
@@ -4631,6 +4645,9 @@ func (c *FSx) UpdateFileSystemRequest(input *UpdateFileSystemInput) (req *reques
 //     The error returned when a second request is received with the same client
 //     request token but different parameters settings. A client request token should
 //     always uniquely identify a single request.
+//
+//   - InvalidNetworkSettings
+//     One or more network settings specified in the request are invalid.
 //
 //   - InternalServerError
 //     A generic error indicating a server-side failure.
@@ -4795,7 +4812,7 @@ func (c *FSx) UpdateStorageVirtualMachineRequest(input *UpdateStorageVirtualMach
 
 // UpdateStorageVirtualMachine API operation for Amazon FSx.
 //
-// Updates an Amazon FSx for ONTAP storage virtual machine (SVM).
+// Updates an FSx for ONTAP storage virtual machine (SVM).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5105,6 +5122,10 @@ type AdministrativeAction struct {
 	//    Amazon FSx for OpenZFS volume initiated from the Amazon FSx console, API
 	//    (UpdateVolume), or CLI (update-volume).
 	//
+	//    * VOLUME_RESTORE - An Amazon FSx for OpenZFS volume is returned to the
+	//    state saved by the specified snapshot, initiated from an API (RestoreVolumeFromSnapshot)
+	//    or CLI (restore-volume-from-snapshot).
+	//
 	//    * SNAPSHOT_UPDATE - A snapshot update to an Amazon FSx for OpenZFS volume
 	//    initiated from the Amazon FSx console, API (UpdateSnapshot), or CLI (update-snapshot).
 	//
@@ -5345,7 +5366,7 @@ type AssociateFileSystemAliasesInput struct {
 	Aliases []*string `type:"list" required:"true"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -5457,8 +5478,8 @@ func (s *AssociateFileSystemAliasesOutput) SetAliases(v []*Alias) *AssociateFile
 // Amazon FSx for Lustre automatically exports the defined changes asynchronously
 // once your application finishes modifying the file.
 //
-// This AutoExportPolicy is supported only for Amazon FSx for Lustre file systems
-// with the Persistent_2 deployment type.
+// The AutoExportPolicy is only supported on Amazon FSx for Lustre file systems
+// with a data repository association.
 type AutoExportPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -5506,8 +5527,8 @@ func (s *AutoExportPolicy) SetEvents(v []*string) *AutoExportPolicy {
 // listings up to date by importing changes to your Amazon FSx for Lustre file
 // system as you modify objects in a linked S3 bucket.
 //
-// The AutoImportPolicy is supported only for Amazon FSx for Lustre file systems
-// with the Persistent_2 deployment type.
+// The AutoImportPolicy is only supported on Amazon FSx for Lustre file systems
+// with a data repository association.
 type AutoImportPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -5608,7 +5629,7 @@ type Backup struct {
 	// use to construct Amazon Resource Names (ARNs) for resources.
 	OwnerId *string `min:"12" type:"string"`
 
-	// The current percent of progress of an asynchronous task.
+	// Displays the current percent of progress of an asynchronous task.
 	ProgressPercent *int64 `type:"integer"`
 
 	// The Amazon Resource Name (ARN) for the backup resource.
@@ -6246,8 +6267,7 @@ type CompletionReport struct {
 	// Path you provide must be located within the file system’s ExportPath. An
 	// example Path value is "s3://myBucket/myExportPath/optionalPrefix". The report
 	// provides the following information for each file in the report: FilePath,
-	// FileStatus, and ErrorCode. To learn more about a file system's ExportPath,
-	// see .
+	// FileStatus, and ErrorCode.
 	Path *string `min:"3" type:"string"`
 
 	// Required if Enabled is set to true. Specifies the scope of the CompletionReport;
@@ -6319,7 +6339,7 @@ type CopyBackupInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -6498,7 +6518,7 @@ func (s *CopyBackupOutput) SetBackup(v *Backup) *CopyBackupOutput {
 type CreateBackupInput struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) A string of up to 64 ASCII characters that Amazon FSx uses to
+	// (Optional) A string of up to 63 ASCII characters that Amazon FSx uses to
 	// ensure idempotent creation. This string is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
@@ -6632,7 +6652,7 @@ type CreateDataRepositoryAssociationInput struct {
 	BatchImportMetaDataOnCreate *bool `type:"boolean"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -6835,7 +6855,7 @@ type CreateDataRepositoryTaskInput struct {
 	CapacityToRelease *int64 `min:"1" type:"long"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -7017,7 +7037,7 @@ func (s *CreateDataRepositoryTaskOutput) SetDataRepositoryTask(v *DataRepository
 type CreateFileCacheInput struct {
 	_ struct{} `type:"structure"`
 
-	// An idempotency token for resource creation, in a string of up to 64 ASCII
+	// An idempotency token for resource creation, in a string of up to 63 ASCII
 	// characters. This token is automatically filled on your behalf when you use
 	// the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	//
@@ -7379,7 +7399,7 @@ type CreateFileSystemFromBackupInput struct {
 	// BackupId is a required field
 	BackupId *string `min:"12" type:"string" required:"true"`
 
-	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// A string of up to 63 ASCII characters that Amazon FSx uses to ensure idempotent
 	// creation. This string is automatically filled on your behalf when you use
 	// the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
@@ -7413,9 +7433,8 @@ type CreateFileSystemFromBackupInput struct {
 
 	// The Lustre configuration for the file system being created.
 	//
-	// The following parameters are not supported for file systems with the Persistent_2
-	// deployment type. Instead, use CreateDataRepositoryAssociation to create a
-	// data repository association to link your Lustre file system to a data repository.
+	// The following parameters are not supported for file systems with a data repository
+	// association created with .
 	//
 	//    * AutoImportPolicy
 	//
@@ -7667,7 +7686,7 @@ func (s *CreateFileSystemFromBackupOutput) SetFileSystem(v *FileSystem) *CreateF
 type CreateFileSystemInput struct {
 	_ struct{} `type:"structure"`
 
-	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// A string of up to 63 ASCII characters that Amazon FSx uses to ensure idempotent
 	// creation. This string is automatically filled on your behalf when you use
 	// the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
@@ -7714,9 +7733,8 @@ type CreateFileSystemInput struct {
 
 	// The Lustre configuration for the file system being created.
 	//
-	// The following parameters are not supported for file systems with the Persistent_2
-	// deployment type. Instead, use CreateDataRepositoryAssociation to create a
-	// data repository association to link your Lustre file system to a data repository.
+	// The following parameters are not supported for file systems with a data repository
+	// association created with .
 	//
 	//    * AutoImportPolicy
 	//
@@ -7975,9 +7993,8 @@ func (s *CreateFileSystemInput) SetWindowsConfiguration(v *CreateFileSystemWindo
 
 // The Lustre configuration for the file system being created.
 //
-// The following parameters are not supported for file systems with the Persistent_2
-// deployment type. Instead, use CreateDataRepositoryAssociation to create a
-// data repository association to link your Lustre file system to a data repository.
+// The following parameters are not supported for file systems with a data repository
+// association created with .
 //
 //   - AutoImportPolicy
 //
@@ -7989,11 +8006,10 @@ func (s *CreateFileSystemInput) SetWindowsConfiguration(v *CreateFileSystemWindo
 type CreateFileSystemLustreConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// (Optional) Available with Scratch and Persistent_1 deployment types. When
-	// you create your file system, your existing S3 objects appear as file and
-	// directory listings. Use this property to choose how Amazon FSx keeps your
-	// file and directory listings up to date as you add or modify objects in your
-	// linked S3 bucket. AutoImportPolicy can have the following values:
+	// (Optional) When you create your file system, your existing S3 objects appear
+	// as file and directory listings. Use this parameter to choose how Amazon FSx
+	// keeps your file and directory listings up to date as you add or modify objects
+	// in your linked S3 bucket. AutoImportPolicy can have the following values:
 	//
 	//    * NONE - (Default) AutoImport is off. Amazon FSx only updates file and
 	//    directory listings from the linked S3 bucket when the file system is created.
@@ -8017,9 +8033,7 @@ type CreateFileSystemLustreConfiguration struct {
 	// For more information, see Automatically import updates from your S3 bucket
 	// (https://docs.aws.amazon.com/fsx/latest/LustreGuide/older-deployment-types.html#legacy-auto-import-from-s3).
 	//
-	// This parameter is not supported for file systems with the Persistent_2 deployment
-	// type. Instead, use CreateDataRepositoryAssociation to create a data repository
-	// association to link your Lustre file system to a data repository.
+	// This parameter is not supported for file systems with a data repository association.
 	AutoImportPolicy *string `type:"string" enum:"AutoImportPolicyType"`
 
 	// The number of days to retain automatic backups. Setting this property to
@@ -8084,10 +8098,9 @@ type CreateFileSystemLustreConfiguration struct {
 	//
 	// Encryption of data in transit is automatically turned on when you access
 	// SCRATCH_2, PERSISTENT_1 and PERSISTENT_2 file systems from Amazon EC2 instances
-	// that support automatic encryption (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/data-
-	// protection.html) in the Amazon Web Services Regions where they are available.
-	// For more information about encryption in transit for FSx for Lustre file
-	// systems, see Encrypting data in transit (https://docs.aws.amazon.com/fsx/latest/LustreGuide/encryption-in-transit-fsxl.html)
+	// that support automatic encryption in the Amazon Web Services Regions where
+	// they are available. For more information about encryption in transit for
+	// FSx for Lustre file systems, see Encrypting data in transit (https://docs.aws.amazon.com/fsx/latest/LustreGuide/encryption-in-transit-fsxl.html)
 	// in the Amazon FSx for Lustre User Guide.
 	//
 	// (Default = SCRATCH_1)
@@ -8102,13 +8115,13 @@ type CreateFileSystemLustreConfiguration struct {
 	// This parameter is required when StorageType is set to HDD.
 	DriveCacheType *string `type:"string" enum:"DriveCacheType"`
 
-	// (Optional) Available with Scratch and Persistent_1 deployment types. Specifies
-	// the path in the Amazon S3 bucket where the root of your Amazon FSx file system
-	// is exported. The path must use the same Amazon S3 bucket as specified in
-	// ImportPath. You can provide an optional prefix to which new and changed data
-	// is to be exported from your Amazon FSx for Lustre file system. If an ExportPath
-	// value is not provided, Amazon FSx sets a default export path, s3://import-bucket/FSxLustre[creation-timestamp].
-	// The timestamp is in UTC format, for example s3://import-bucket/FSxLustre20181105T222312Z.
+	// (Optional) Specifies the path in the Amazon S3 bucket where the root of your
+	// Amazon FSx file system is exported. The path must use the same Amazon S3
+	// bucket as specified in ImportPath. You can provide an optional prefix to
+	// which new and changed data is to be exported from your Amazon FSx for Lustre
+	// file system. If an ExportPath value is not provided, Amazon FSx sets a default
+	// export path, s3://import-bucket/FSxLustre[creation-timestamp]. The timestamp
+	// is in UTC format, for example s3://import-bucket/FSxLustre20181105T222312Z.
 	//
 	// The Amazon S3 export bucket must be the same as the import bucket specified
 	// by ImportPath. If you specify only a bucket name, such as s3://import-bucket,
@@ -8118,9 +8131,7 @@ type CreateFileSystemLustreConfiguration struct {
 	// Amazon FSx exports the contents of your file system to that export prefix
 	// in the Amazon S3 bucket.
 	//
-	// This parameter is not supported for file systems with the Persistent_2 deployment
-	// type. Instead, use CreateDataRepositoryAssociation to create a data repository
-	// association to link your Lustre file system to a data repository.
+	// This parameter is not supported for file systems with a data repository association.
 	ExportPath *string `min:"3" type:"string"`
 
 	// (Optional) The path to the Amazon S3 bucket (including the optional prefix)
@@ -8130,9 +8141,7 @@ type CreateFileSystemLustreConfiguration struct {
 	// If you specify a prefix after the Amazon S3 bucket name, only object keys
 	// with that prefix are loaded into the file system.
 	//
-	// This parameter is not supported for file systems with the Persistent_2 deployment
-	// type. Instead, use CreateDataRepositoryAssociation to create a data repository
-	// association to link your Lustre file system to a data repository.
+	// This parameter is not supported for file systems with a data repository association.
 	ImportPath *string `min:"3" type:"string"`
 
 	// (Optional) For files imported from a data repository, this value determines
@@ -8144,9 +8153,7 @@ type CreateFileSystemLustreConfiguration struct {
 	// The default chunk size is 1,024 MiB (1 GiB) and can go as high as 512,000
 	// MiB (500 GiB). Amazon S3 objects have a maximum size of 5 TB.
 	//
-	// This parameter is not supported for file systems with the Persistent_2 deployment
-	// type. Instead, use CreateDataRepositoryAssociation to create a data repository
-	// association to link your Lustre file system to a data repository.
+	// This parameter is not supported for file systems with a data repository association.
 	ImportedFileChunkSize *int64 `min:"1" type:"integer"`
 
 	// The Lustre logging configuration used when creating an Amazon FSx for Lustre
@@ -8356,11 +8363,13 @@ type CreateFileSystemOntapConfiguration struct {
 	DiskIopsConfiguration *DiskIopsConfiguration `type:"structure"`
 
 	// (Multi-AZ only) Specifies the IP address range in which the endpoints to
-	// access your file system will be created. By default, Amazon FSx selects an
-	// unused IP address range for you from the 198.19.* range.
-	//
-	// The Endpoint IP address range you select for your file system must exist
-	// outside the VPC's CIDR range and must be at least /30 or larger.
+	// access your file system will be created. By default in the Amazon FSx API,
+	// Amazon FSx selects an unused IP address range for you from the 198.19.* range.
+	// By default in the Amazon FSx console, Amazon FSx chooses the last 64 IP addresses
+	// from the VPC’s primary CIDR range to use as the endpoint IP address range
+	// for the file system. You can have overlapping endpoint IP addresses for file
+	// systems deployed in the same VPC/route tables, as long as they don't overlap
+	// with any subnet.
 	EndpointIpAddressRange *string `min:"9" type:"string"`
 
 	// The ONTAP administrative password for the fsxadmin user with which you administer
@@ -8382,7 +8391,7 @@ type CreateFileSystemOntapConfiguration struct {
 	RouteTableIds []*string `type:"list"`
 
 	// Sets the throughput capacity for the file system that you're creating. Valid
-	// values are 128, 256, 512, 1024, and 2048 MBps.
+	// values are 128, 256, 512, 1024, 2048, and 4096 MBps.
 	//
 	// ThroughputCapacity is a required field
 	ThroughputCapacity *int64 `min:"8" type:"integer" required:"true"`
@@ -8544,18 +8553,32 @@ type CreateFileSystemOpenZFSConfiguration struct {
 	// 05:00 specifies 5 AM daily.
 	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
 
-	// Specifies the file system deployment type. Amazon FSx for OpenZFS supports
-	// SINGLE_AZ_1. SINGLE_AZ_1 deployment type is configured for redundancy within
-	// a single Availability Zone.
+	// Specifies the file system deployment type. Single AZ deployment types are
+	// configured for redundancy within a single Availability Zone in an Amazon
+	// Web Services Region . Valid values are the following:
+	//
+	//    * SINGLE_AZ_1- (Default) Creates file systems with throughput capacities
+	//    of 64 - 4,096 MBps. Single_AZ_1 is available in all Amazon Web Services
+	//    Regions where Amazon FSx for OpenZFS is available, except US West (Oregon).
+	//
+	//    * SINGLE_AZ_2- Creates file systems with throughput capacities of 160
+	//    - 10,240 MBps using an NVMe L2ARC cache. Single_AZ_2 is available only
+	//    in the US East (N. Virginia), US East (Ohio), US West (Oregon), and Europe
+	//    (Ireland) Amazon Web Services Regions.
+	//
+	// For more information, see: Deployment type availability (https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/availability-durability.html#available-aws-regions)
+	// and File system performance (https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/performance.html#zfs-fs-performance)
+	// in the Amazon FSx for OpenZFS User Guide.
 	//
 	// DeploymentType is a required field
 	DeploymentType *string `type:"string" required:"true" enum:"OpenZFSDeploymentType"`
 
 	// The SSD IOPS (input/output operations per second) configuration for an Amazon
-	// FSx for NetApp ONTAP or Amazon FSx for OpenZFS file system. The default is
-	// 3 IOPS per GB of storage capacity, but you can provision additional IOPS
-	// per GB of storage. The configuration consists of the total number of provisioned
-	// SSD IOPS and how the amount was provisioned (by the customer or by the system).
+	// FSx for NetApp ONTAP or FSx for OpenZFS file system. By default, Amazon FSx
+	// automatically provisions 3 IOPS per GB of storage capacity. You can provision
+	// additional IOPS per GB of storage. The configuration consists of the total
+	// number of provisioned SSD IOPS and how it is was provisioned, or the mode
+	// (by the customer or by Amazon FSx).
 	DiskIopsConfiguration *DiskIopsConfiguration `type:"structure"`
 
 	// The configuration Amazon FSx uses when creating the root value of the Amazon
@@ -8563,9 +8586,16 @@ type CreateFileSystemOpenZFSConfiguration struct {
 	RootVolumeConfiguration *OpenZFSCreateRootVolumeConfiguration `type:"structure"`
 
 	// Specifies the throughput of an Amazon FSx for OpenZFS file system, measured
-	// in megabytes per second (MB/s). Valid values are 64, 128, 256, 512, 1024,
-	// 2048, 3072, or 4096 MB/s. You pay for additional throughput capacity that
-	// you provision.
+	// in megabytes per second (MBps). Valid values depend on the DeploymentType
+	// you choose, as follows:
+	//
+	//    * For SINGLE_AZ_1, valid values are 64, 128, 256, 512, 1024, 2048, 3072,
+	//    or 4096 MBps.
+	//
+	//    * For SINGLE_AZ_2, valid values are 160, 320, 640, 1280, 2560, 3840, 5120,
+	//    7680, or 10240 MBps.
+	//
+	// You pay for additional throughput capacity that you provision.
 	//
 	// ThroughputCapacity is a required field
 	ThroughputCapacity *int64 `min:"8" type:"integer" required:"true"`
@@ -8807,10 +8837,11 @@ type CreateFileSystemWindowsConfiguration struct {
 	PreferredSubnetId *string `min:"15" type:"string"`
 
 	// The configuration that Amazon FSx uses to join a FSx for Windows File Server
-	// file system or an ONTAP storage virtual machine (SVM) to a self-managed (including
-	// on-premises) Microsoft Active Directory (AD) directory. For more information,
-	// see Using Amazon FSx with your self-managed Microsoft Active Directory (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/self-managed-AD.html)
-	// or Managing SVMs (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-svms.html).
+	// file system or an FSx for ONTAP storage virtual machine (SVM) to a self-managed
+	// (including on-premises) Microsoft Active Directory (AD) directory. For more
+	// information, see Using Amazon FSx for Windows with your self-managed Microsoft
+	// Active Directory (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/self-managed-AD.html)
+	// or Managing FSx for ONTAP SVMs (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-svms.html).
 	SelfManagedActiveDirectoryConfiguration *SelfManagedActiveDirectoryConfiguration `type:"structure"`
 
 	// Sets the throughput capacity of an Amazon FSx file system, measured in megabytes
@@ -8951,11 +8982,30 @@ func (s *CreateFileSystemWindowsConfiguration) SetWeeklyMaintenanceStartTime(v s
 type CreateOntapVolumeConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// A boolean flag indicating whether tags for the volume should be copied to
+	// backups. This value defaults to false. If it's set to true, all tags for
+	// the volume are copied to all automatic and user-initiated backups where the
+	// user doesn't specify tags. If this value is true, and you specify one or
+	// more tags, only the specified tags are copied to backups. If you specify
+	// one or more tags when creating a user-initiated backup, no tags are copied
+	// from the volume, regardless of this value.
+	CopyTagsToBackups *bool `type:"boolean"`
+
 	// Specifies the location in the SVM's namespace where the volume is mounted.
-	// The JunctionPath must have a leading forward slash, such as /vol3.
+	// This parameter is required. The JunctionPath must have a leading forward
+	// slash, such as /vol3.
+	JunctionPath *string `min:"1" type:"string"`
+
+	// Specifies the type of volume you are creating. Valid values are the following:
 	//
-	// JunctionPath is a required field
-	JunctionPath *string `min:"1" type:"string" required:"true"`
+	//    * RW specifies a read/write volume. RW is the default.
+	//
+	//    * DP specifies a data-protection volume. A DP volume is read-only and
+	//    can be used as the destination of a NetApp SnapMirror relationship.
+	//
+	// For more information, see Volume types (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/volume-types)
+	// in the Amazon FSx for NetApp ONTAP User Guide.
+	OntapVolumeType *string `type:"string" enum:"InputOntapVolumeType"`
 
 	// Specifies the security style for the volume. If a volume's security style
 	// is not specified, it is automatically set to the root volume's security style.
@@ -8978,15 +9028,37 @@ type CreateOntapVolumeConfiguration struct {
 	SecurityStyle *string `type:"string" enum:"SecurityStyle"`
 
 	// Specifies the size of the volume, in megabytes (MB), that you are creating.
+	// Provide any whole number in the range of 20–104857600 to specify the size
+	// of the volume.
 	//
 	// SizeInMegabytes is a required field
 	SizeInMegabytes *int64 `type:"integer" required:"true"`
 
-	// Set to true to enable deduplication, compression, and compaction storage
-	// efficiency features on the volume.
+	// Specifies the snapshot policy for the volume. There are three built-in snapshot
+	// policies:
 	//
-	// StorageEfficiencyEnabled is a required field
-	StorageEfficiencyEnabled *bool `type:"boolean" required:"true"`
+	//    * default: This is the default policy. A maximum of six hourly snapshots
+	//    taken five minutes past the hour. A maximum of two daily snapshots taken
+	//    Monday through Saturday at 10 minutes after midnight. A maximum of two
+	//    weekly snapshots taken every Sunday at 15 minutes after midnight.
+	//
+	//    * default-1weekly: This policy is the same as the default policy except
+	//    that it only retains one snapshot from the weekly schedule.
+	//
+	//    * none: This policy does not take any snapshots. This policy can be assigned
+	//    to volumes to prevent automatic snapshots from being taken.
+	//
+	// You can also provide the name of a custom policy that you created with the
+	// ONTAP CLI or REST API.
+	//
+	// For more information, see Snapshot policies (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/snapshots-ontap.html#snapshot-policies)
+	// in the Amazon FSx for NetApp ONTAP User Guide.
+	SnapshotPolicy *string `min:"1" type:"string"`
+
+	// Set to true to enable deduplication, compression, and compaction storage
+	// efficiency features on the volume, or set to false to disable them. This
+	// parameter is required.
+	StorageEfficiencyEnabled *bool `type:"boolean"`
 
 	// Specifies the ONTAP SVM in which to create the volume.
 	//
@@ -9035,17 +9107,14 @@ func (s CreateOntapVolumeConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *CreateOntapVolumeConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "CreateOntapVolumeConfiguration"}
-	if s.JunctionPath == nil {
-		invalidParams.Add(request.NewErrParamRequired("JunctionPath"))
-	}
 	if s.JunctionPath != nil && len(*s.JunctionPath) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("JunctionPath", 1))
 	}
 	if s.SizeInMegabytes == nil {
 		invalidParams.Add(request.NewErrParamRequired("SizeInMegabytes"))
 	}
-	if s.StorageEfficiencyEnabled == nil {
-		invalidParams.Add(request.NewErrParamRequired("StorageEfficiencyEnabled"))
+	if s.SnapshotPolicy != nil && len(*s.SnapshotPolicy) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SnapshotPolicy", 1))
 	}
 	if s.StorageVirtualMachineId == nil {
 		invalidParams.Add(request.NewErrParamRequired("StorageVirtualMachineId"))
@@ -9065,9 +9134,21 @@ func (s *CreateOntapVolumeConfiguration) Validate() error {
 	return nil
 }
 
+// SetCopyTagsToBackups sets the CopyTagsToBackups field's value.
+func (s *CreateOntapVolumeConfiguration) SetCopyTagsToBackups(v bool) *CreateOntapVolumeConfiguration {
+	s.CopyTagsToBackups = &v
+	return s
+}
+
 // SetJunctionPath sets the JunctionPath field's value.
 func (s *CreateOntapVolumeConfiguration) SetJunctionPath(v string) *CreateOntapVolumeConfiguration {
 	s.JunctionPath = &v
+	return s
+}
+
+// SetOntapVolumeType sets the OntapVolumeType field's value.
+func (s *CreateOntapVolumeConfiguration) SetOntapVolumeType(v string) *CreateOntapVolumeConfiguration {
+	s.OntapVolumeType = &v
 	return s
 }
 
@@ -9080,6 +9161,12 @@ func (s *CreateOntapVolumeConfiguration) SetSecurityStyle(v string) *CreateOntap
 // SetSizeInMegabytes sets the SizeInMegabytes field's value.
 func (s *CreateOntapVolumeConfiguration) SetSizeInMegabytes(v int64) *CreateOntapVolumeConfiguration {
 	s.SizeInMegabytes = &v
+	return s
+}
+
+// SetSnapshotPolicy sets the SnapshotPolicy field's value.
+func (s *CreateOntapVolumeConfiguration) SetSnapshotPolicy(v string) *CreateOntapVolumeConfiguration {
+	s.SnapshotPolicy = &v
 	return s
 }
 
@@ -9392,7 +9479,7 @@ type CreateSnapshotInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -9531,7 +9618,7 @@ type CreateStorageVirtualMachineInput struct {
 	ActiveDirectoryConfiguration *CreateSvmActiveDirectoryConfiguration `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -9724,10 +9811,11 @@ type CreateSvmActiveDirectoryConfiguration struct {
 	NetBiosName *string `min:"1" type:"string" required:"true"`
 
 	// The configuration that Amazon FSx uses to join a FSx for Windows File Server
-	// file system or an ONTAP storage virtual machine (SVM) to a self-managed (including
-	// on-premises) Microsoft Active Directory (AD) directory. For more information,
-	// see Using Amazon FSx with your self-managed Microsoft Active Directory (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/self-managed-AD.html)
-	// or Managing SVMs (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-svms.html).
+	// file system or an FSx for ONTAP storage virtual machine (SVM) to a self-managed
+	// (including on-premises) Microsoft Active Directory (AD) directory. For more
+	// information, see Using Amazon FSx for Windows with your self-managed Microsoft
+	// Active Directory (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/self-managed-AD.html)
+	// or Managing FSx for ONTAP SVMs (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-svms.html).
 	SelfManagedActiveDirectoryConfiguration *SelfManagedActiveDirectoryConfiguration `type:"structure"`
 }
 
@@ -9791,7 +9879,7 @@ type CreateVolumeFromBackupInput struct {
 	BackupId *string `min:"12" type:"string" required:"true"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -9934,7 +10022,7 @@ type CreateVolumeInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -10101,9 +10189,9 @@ func (s *CreateVolumeOutput) SetVolume(v *Volume) *CreateVolumeOutput {
 //
 //   - DescribeDataRepositoryAssociations
 //
-// Data repository associations are supported only for an Amazon FSx for Lustre
-// file system with the Persistent_2 deployment type and for an Amazon File
-// Cache resource.
+// Data repository associations are supported on Amazon File Cache resources
+// and all FSx for Lustre 2.12 and newer file systems, excluding scratch_1 deployment
+// type.
 type DataRepositoryAssociation struct {
 	_ struct{} `type:"structure"`
 
@@ -10151,7 +10239,7 @@ type DataRepositoryAssociation struct {
 	// supported for S3 data repositories.
 	DataRepositorySubdirectories []*string `type:"list"`
 
-	// Provides detailed information about the data respository if its Lifecycle
+	// Provides detailed information about the data repository if its Lifecycle
 	// is set to MISCONFIGURED or FAILED.
 	FailureDetails *DataRepositoryFailureDetails `type:"structure"`
 
@@ -10430,8 +10518,8 @@ func (s *DataRepositoryAssociationNotFound) RequestID() string {
 // The data repository configuration object for Lustre file systems returned
 // in the response of the CreateFileSystem operation.
 //
-// This data type is not supported for file systems with the Persistent_2 deployment
-// type. Instead, use .
+// This data type is not supported on file systems with a data repository association.
+// For file systems with a data repository association, see .
 type DataRepositoryConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -10464,7 +10552,7 @@ type DataRepositoryConfiguration struct {
 	// store new and changed Lustre file system files in S3.
 	ExportPath *string `min:"3" type:"string"`
 
-	// Provides detailed information about the data respository if its Lifecycle
+	// Provides detailed information about the data repository if its Lifecycle
 	// is set to MISCONFIGURED or FAILED.
 	FailureDetails *DataRepositoryFailureDetails `type:"structure"`
 
@@ -10560,7 +10648,7 @@ func (s *DataRepositoryConfiguration) SetLifecycle(v string) *DataRepositoryConf
 	return s
 }
 
-// Provides detailed information about the data respository if its Lifecycle
+// Provides detailed information about the data repository if its Lifecycle
 // is set to MISCONFIGURED or FAILED.
 type DataRepositoryFailureDetails struct {
 	_ struct{} `type:"structure"`
@@ -10697,6 +10785,8 @@ type DataRepositoryTask struct {
 	//
 	//    * AUTO_RELEASE_DATA tasks automatically release files from an Amazon File
 	//    Cache resource.
+	//
+	//    * RELEASE_DATA_FROM_FILESYSTEM tasks are not supported.
 	//
 	// Type is a required field
 	Type *string `type:"string" required:"true" enum:"DataRepositoryTaskType"`
@@ -11175,7 +11265,7 @@ type DeleteBackupInput struct {
 	// BackupId is a required field
 	BackupId *string `min:"12" type:"string" required:"true"`
 
-	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// A string of up to 63 ASCII characters that Amazon FSx uses to ensure idempotent
 	// deletion. This parameter is automatically filled on your behalf when using
 	// the CLI or SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
@@ -11281,7 +11371,7 @@ type DeleteDataRepositoryAssociationInput struct {
 	AssociationId *string `min:"13" type:"string" required:"true"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -11399,7 +11489,7 @@ type DeleteFileCacheInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -11503,7 +11593,7 @@ func (s *DeleteFileCacheOutput) SetLifecycle(v string) *DeleteFileCacheOutput {
 type DeleteFileSystemInput struct {
 	_ struct{} `type:"structure"`
 
-	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// A string of up to 63 ASCII characters that Amazon FSx uses to ensure idempotent
 	// deletion. This token is automatically filled on your behalf when using the
 	// Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
@@ -12032,7 +12122,7 @@ type DeleteSnapshotInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -12136,7 +12226,7 @@ type DeleteStorageVirtualMachineInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -12239,7 +12329,7 @@ type DeleteVolumeInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -12995,7 +13085,7 @@ type DescribeFileSystemAliasesInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -13611,7 +13701,7 @@ type DisassociateFileSystemAliasesInput struct {
 	Aliases []*string `type:"list" required:"true"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -13715,18 +13805,20 @@ func (s *DisassociateFileSystemAliasesOutput) SetAliases(v []*Alias) *Disassocia
 }
 
 // The SSD IOPS (input/output operations per second) configuration for an Amazon
-// FSx for NetApp ONTAP or Amazon FSx for OpenZFS file system. The default is
-// 3 IOPS per GB of storage capacity, but you can provision additional IOPS
-// per GB of storage. The configuration consists of the total number of provisioned
-// SSD IOPS and how the amount was provisioned (by the customer or by the system).
+// FSx for NetApp ONTAP or FSx for OpenZFS file system. By default, Amazon FSx
+// automatically provisions 3 IOPS per GB of storage capacity. You can provision
+// additional IOPS per GB of storage. The configuration consists of the total
+// number of provisioned SSD IOPS and how it is was provisioned, or the mode
+// (by the customer or by Amazon FSx).
 type DiskIopsConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// The total number of SSD IOPS provisioned for the file system.
 	Iops *int64 `type:"long"`
 
-	// Specifies whether the number of IOPS for the file system is using the system
-	// default (AUTOMATIC) or was provisioned by the customer (USER_PROVISIONED).
+	// Specifies whether the file system is using the AUTOMATIC setting of SSD IOPS
+	// of 3 IOPS per GB of storage capacity, , or if it using a USER_PROVISIONED
+	// value.
 	Mode *string `type:"string" enum:"DiskIopsConfigurationMode"`
 }
 
@@ -14684,8 +14776,8 @@ type FileSystem struct {
 	OpenZFSConfiguration *OpenZFSFileSystemConfiguration `type:"structure"`
 
 	// The Amazon Web Services account that created the file system. If the file
-	// system was created by an Identity and Access Management (IAM) user, the Amazon
-	// Web Services account to which the IAM user belongs is the owner.
+	// system was created by a user in IAM Identity Center, the Amazon Web Services
+	// account to which the IAM user belongs is the owner.
 	OwnerId *string `min:"12" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the file system resource.
@@ -14873,8 +14965,8 @@ func (s *FileSystem) SetWindowsConfiguration(v *WindowsFileSystemConfiguration) 
 type FileSystemEndpoint struct {
 	_ struct{} `type:"structure"`
 
-	// The Domain Name Service (DNS) name for the file system. You can mount your
-	// file system using its DNS name.
+	// The file system's DNS name. You can mount your file system using its DNS
+	// name.
 	DNSName *string `min:"16" type:"string"`
 
 	// IP addresses of the file system endpoint.
@@ -16019,8 +16111,8 @@ type LustreFileSystemConfiguration struct {
 	// The data repository configuration object for Lustre file systems returned
 	// in the response of the CreateFileSystem operation.
 	//
-	// This data type is not supported for file systems with the Persistent_2 deployment
-	// type. Instead, use .
+	// This data type is not supported on file systems with a data repository association.
+	// For file systems with a data repository association, see .
 	DataRepositoryConfiguration *DataRepositoryConfiguration `type:"structure"`
 
 	// The deployment type of the FSx for Lustre file system. Scratch deployment
@@ -16763,19 +16855,27 @@ type OntapFileSystemConfiguration struct {
 	// of provisioned IOPS and the provision mode.
 	DiskIopsConfiguration *DiskIopsConfiguration `type:"structure"`
 
-	// (Multi-AZ only) The IP address range in which the endpoints to access your
-	// file system are created.
-	//
-	// The Endpoint IP address range you select for your file system must exist
-	// outside the VPC's CIDR range and must be at least /30 or larger. If you do
-	// not specify this optional parameter, Amazon FSx will automatically select
-	// a CIDR block for you.
+	// (Multi-AZ only) Specifies the IP address range in which the endpoints to
+	// access your file system will be created. By default in the Amazon FSx API,
+	// Amazon FSx selects an unused IP address range for you from the 198.19.* range.
+	// By default in the Amazon FSx console, Amazon FSx chooses the last 64 IP addresses
+	// from the VPC’s primary CIDR range to use as the endpoint IP address range
+	// for the file system. You can have overlapping endpoint IP addresses for file
+	// systems deployed in the same VPC/route tables.
 	EndpointIpAddressRange *string `min:"9" type:"string"`
 
 	// The Management and Intercluster endpoints that are used to access data or
 	// to manage the file system using the NetApp ONTAP CLI, REST API, or NetApp
 	// SnapMirror.
 	Endpoints *FileSystemEndpoints `type:"structure"`
+
+	// You can use the fsxadmin user account to access the NetApp ONTAP CLI and
+	// REST API. The password value is always redacted in the response.
+	//
+	// FsxAdminPassword is a sensitive parameter and its value will be
+	// replaced with "sensitive" in string returned by OntapFileSystemConfiguration's
+	// String and GoString methods.
+	FsxAdminPassword *string `min:"8" type:"string" sensitive:"true"`
 
 	// The ID for a subnet. A subnet is a range of IP addresses in your virtual
 	// private cloud (VPC). For more information, see VPC and subnets (https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Subnets.html)
@@ -16857,6 +16957,12 @@ func (s *OntapFileSystemConfiguration) SetEndpoints(v *FileSystemEndpoints) *Ont
 	return s
 }
 
+// SetFsxAdminPassword sets the FsxAdminPassword field's value.
+func (s *OntapFileSystemConfiguration) SetFsxAdminPassword(v string) *OntapFileSystemConfiguration {
+	s.FsxAdminPassword = &v
+	return s
+}
+
 // SetPreferredSubnetId sets the PreferredSubnetId field's value.
 func (s *OntapFileSystemConfiguration) SetPreferredSubnetId(v string) *OntapFileSystemConfiguration {
 	s.PreferredSubnetId = &v
@@ -16884,6 +16990,15 @@ func (s *OntapFileSystemConfiguration) SetWeeklyMaintenanceStartTime(v string) *
 // The configuration of an Amazon FSx for NetApp ONTAP volume.
 type OntapVolumeConfiguration struct {
 	_ struct{} `type:"structure"`
+
+	// A boolean flag indicating whether tags for the volume should be copied to
+	// backups. This value defaults to false. If it's set to true, all tags for
+	// the volume are copied to all automatic and user-initiated backups where the
+	// user doesn't specify tags. If this value is true, and you specify one or
+	// more tags, only the specified tags are copied to backups. If you specify
+	// one or more tags when creating a user-initiated backup, no tags are copied
+	// from the volume, regardless of this value.
+	CopyTagsToBackups *bool `type:"boolean"`
 
 	// Specifies the FlexCache endpoint type of the volume. Valid values are the
 	// following:
@@ -16923,6 +17038,27 @@ type OntapVolumeConfiguration struct {
 
 	// The configured size of the volume, in megabytes (MBs).
 	SizeInMegabytes *int64 `type:"integer"`
+
+	// Specifies the snapshot policy for the volume. There are three built-in snapshot
+	// policies:
+	//
+	//    * default: This is the default policy. A maximum of six hourly snapshots
+	//    taken five minutes past the hour. A maximum of two daily snapshots taken
+	//    Monday through Saturday at 10 minutes after midnight. A maximum of two
+	//    weekly snapshots taken every Sunday at 15 minutes after midnight.
+	//
+	//    * default-1weekly: This policy is the same as the default policy except
+	//    that it only retains one snapshot from the weekly schedule.
+	//
+	//    * none: This policy does not take any snapshots. This policy can be assigned
+	//    to volumes to prevent automatic snapshots from being taken.
+	//
+	// You can also provide the name of a custom policy that you created with the
+	// ONTAP CLI or REST API.
+	//
+	// For more information, see Snapshot policies (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/snapshots-ontap.html#snapshot-policies)
+	// in the Amazon FSx for NetApp ONTAP User Guide.
+	SnapshotPolicy *string `min:"1" type:"string"`
 
 	// The volume's storage efficiency setting.
 	StorageEfficiencyEnabled *bool `type:"boolean"`
@@ -16965,6 +17101,12 @@ func (s OntapVolumeConfiguration) GoString() string {
 	return s.String()
 }
 
+// SetCopyTagsToBackups sets the CopyTagsToBackups field's value.
+func (s *OntapVolumeConfiguration) SetCopyTagsToBackups(v bool) *OntapVolumeConfiguration {
+	s.CopyTagsToBackups = &v
+	return s
+}
+
 // SetFlexCacheEndpointType sets the FlexCacheEndpointType field's value.
 func (s *OntapVolumeConfiguration) SetFlexCacheEndpointType(v string) *OntapVolumeConfiguration {
 	s.FlexCacheEndpointType = &v
@@ -16992,6 +17134,12 @@ func (s *OntapVolumeConfiguration) SetSecurityStyle(v string) *OntapVolumeConfig
 // SetSizeInMegabytes sets the SizeInMegabytes field's value.
 func (s *OntapVolumeConfiguration) SetSizeInMegabytes(v int64) *OntapVolumeConfiguration {
 	s.SizeInMegabytes = &v
+	return s
+}
+
+// SetSnapshotPolicy sets the SnapshotPolicy field's value.
+func (s *OntapVolumeConfiguration) SetSnapshotPolicy(v string) *OntapVolumeConfiguration {
+	s.SnapshotPolicy = &v
 	return s
 }
 
@@ -17272,22 +17420,22 @@ type OpenZFSFileSystemConfiguration struct {
 	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
 
 	// Specifies the file-system deployment type. Amazon FSx for OpenZFS supports
-	// SINGLE_AZ_1. SINGLE_AZ_1 is a file system configured for a single Availability
-	// Zone (AZ) of redundancy.
+	// SINGLE_AZ_1 and SINGLE_AZ_2.
 	DeploymentType *string `type:"string" enum:"OpenZFSDeploymentType"`
 
 	// The SSD IOPS (input/output operations per second) configuration for an Amazon
-	// FSx for NetApp ONTAP or Amazon FSx for OpenZFS file system. The default is
-	// 3 IOPS per GB of storage capacity, but you can provision additional IOPS
-	// per GB of storage. The configuration consists of the total number of provisioned
-	// SSD IOPS and how the amount was provisioned (by the customer or by the system).
+	// FSx for NetApp ONTAP or FSx for OpenZFS file system. By default, Amazon FSx
+	// automatically provisions 3 IOPS per GB of storage capacity. You can provision
+	// additional IOPS per GB of storage. The configuration consists of the total
+	// number of provisioned SSD IOPS and how it is was provisioned, or the mode
+	// (by the customer or by Amazon FSx).
 	DiskIopsConfiguration *DiskIopsConfiguration `type:"structure"`
 
 	// The ID of the root volume of the OpenZFS file system.
 	RootVolumeId *string `min:"23" type:"string"`
 
 	// The throughput of an Amazon FSx file system, measured in megabytes per second
-	// (MBps). Valid values are 64, 128, 256, 512, 1024, 2048, 3072, or 4096 MB/s.
+	// (MBps).
 	ThroughputCapacity *int64 `min:"8" type:"integer"`
 
 	// A recurring weekly time, in the format D:HH:MM.
@@ -17588,6 +17736,14 @@ type OpenZFSVolumeConfiguration struct {
 	//    write throughput speeds.
 	DataCompressionType *string `type:"string" enum:"OpenZFSDataCompressionType"`
 
+	// A Boolean value indicating whether dependent clone volumes created from intermediate
+	// snapshots should be deleted when a volume is restored from snapshot.
+	DeleteClonedVolumes *bool `type:"boolean"`
+
+	// A Boolean value indicating whether snapshots between the current state and
+	// the specified snapshot should be deleted when a volume is restored from snapshot.
+	DeleteIntermediateSnaphots *bool `type:"boolean"`
+
 	// The configuration object for mounting a Network File System (NFS) file system.
 	NfsExports []*OpenZFSNfsExport `type:"list"`
 
@@ -17606,6 +17762,9 @@ type OpenZFSVolumeConfiguration struct {
 	// workloads should use the default record size. For guidance on when to set
 	// a custom record size, see the Amazon FSx for OpenZFS User Guide.
 	RecordSizeKiB *int64 `min:"4" type:"integer"`
+
+	// Specifies the ID of the snapshot to which the volume was restored.
+	RestoreToSnapshot *string `min:"11" type:"string"`
 
 	// The maximum amount of storage in gibibtyes (GiB) that the volume can use
 	// from its parent. You can specify a quota larger than the storage on the parent
@@ -17653,6 +17812,18 @@ func (s *OpenZFSVolumeConfiguration) SetDataCompressionType(v string) *OpenZFSVo
 	return s
 }
 
+// SetDeleteClonedVolumes sets the DeleteClonedVolumes field's value.
+func (s *OpenZFSVolumeConfiguration) SetDeleteClonedVolumes(v bool) *OpenZFSVolumeConfiguration {
+	s.DeleteClonedVolumes = &v
+	return s
+}
+
+// SetDeleteIntermediateSnaphots sets the DeleteIntermediateSnaphots field's value.
+func (s *OpenZFSVolumeConfiguration) SetDeleteIntermediateSnaphots(v bool) *OpenZFSVolumeConfiguration {
+	s.DeleteIntermediateSnaphots = &v
+	return s
+}
+
 // SetNfsExports sets the NfsExports field's value.
 func (s *OpenZFSVolumeConfiguration) SetNfsExports(v []*OpenZFSNfsExport) *OpenZFSVolumeConfiguration {
 	s.NfsExports = v
@@ -17680,6 +17851,12 @@ func (s *OpenZFSVolumeConfiguration) SetReadOnly(v bool) *OpenZFSVolumeConfigura
 // SetRecordSizeKiB sets the RecordSizeKiB field's value.
 func (s *OpenZFSVolumeConfiguration) SetRecordSizeKiB(v int64) *OpenZFSVolumeConfiguration {
 	s.RecordSizeKiB = &v
+	return s
+}
+
+// SetRestoreToSnapshot sets the RestoreToSnapshot field's value.
+func (s *OpenZFSVolumeConfiguration) SetRestoreToSnapshot(v string) *OpenZFSVolumeConfiguration {
+	s.RestoreToSnapshot = &v
 	return s
 }
 
@@ -17711,7 +17888,7 @@ type ReleaseFileSystemNfsV3LocksInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -17945,7 +18122,7 @@ type RestoreVolumeFromSnapshotInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -18042,6 +18219,11 @@ func (s *RestoreVolumeFromSnapshotInput) SetVolumeId(v string) *RestoreVolumeFro
 type RestoreVolumeFromSnapshotOutput struct {
 	_ struct{} `type:"structure"`
 
+	// A list of administrative actions for the file system that are in process
+	// or waiting to be processed. Administrative actions describe changes to the
+	// Amazon FSx system.
+	AdministrativeActions []*AdministrativeAction `type:"list"`
+
 	// The lifecycle state of the volume being restored.
 	Lifecycle *string `type:"string" enum:"VolumeLifecycle"`
 
@@ -18065,6 +18247,12 @@ func (s RestoreVolumeFromSnapshotOutput) String() string {
 // value will be replaced with "sensitive".
 func (s RestoreVolumeFromSnapshotOutput) GoString() string {
 	return s.String()
+}
+
+// SetAdministrativeActions sets the AdministrativeActions field's value.
+func (s *RestoreVolumeFromSnapshotOutput) SetAdministrativeActions(v []*AdministrativeAction) *RestoreVolumeFromSnapshotOutput {
+	s.AdministrativeActions = v
+	return s
 }
 
 // SetLifecycle sets the Lifecycle field's value.
@@ -18207,10 +18395,11 @@ func (s *SelfManagedActiveDirectoryAttributes) SetUserName(v string) *SelfManage
 }
 
 // The configuration that Amazon FSx uses to join a FSx for Windows File Server
-// file system or an ONTAP storage virtual machine (SVM) to a self-managed (including
-// on-premises) Microsoft Active Directory (AD) directory. For more information,
-// see Using Amazon FSx with your self-managed Microsoft Active Directory (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/self-managed-AD.html)
-// or Managing SVMs (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-svms.html).
+// file system or an FSx for ONTAP storage virtual machine (SVM) to a self-managed
+// (including on-premises) Microsoft Active Directory (AD) directory. For more
+// information, see Using Amazon FSx for Windows with your self-managed Microsoft
+// Active Directory (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/self-managed-AD.html)
+// or Managing FSx for ONTAP SVMs (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-svms.html).
 type SelfManagedActiveDirectoryConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -18360,27 +18549,41 @@ func (s *SelfManagedActiveDirectoryConfiguration) SetUserName(v string) *SelfMan
 	return s
 }
 
-// The configuration that Amazon FSx uses to join the Windows File Server instance
-// to a self-managed Microsoft Active Directory (AD) directory.
+// Specifies changes you are making to the self-managed Microsoft Active Directory
+// (AD) configuration to which an FSx for Windows File Server file system or
+// an FSx for ONTAP SVM is joined.
 type SelfManagedActiveDirectoryConfigurationUpdates struct {
 	_ struct{} `type:"structure"`
 
-	// A list of up to three IP addresses of DNS servers or domain controllers in
-	// the self-managed AD directory.
+	// A list of up to three DNS server or domain controller IP addresses in your
+	// self-managed AD domain.
 	DnsIps []*string `min:"1" type:"list"`
 
-	// The password for the service account on your self-managed AD domain that
-	// Amazon FSx will use to join to your AD domain.
+	// Specifies an updated fully qualified domain name of your self-managed AD
+	// configuration.
+	DomainName *string `min:"1" type:"string"`
+
+	// Specifies the updated name of the self-managed AD domain group whose members
+	// are granted administrative privileges for the Amazon FSx resource.
+	FileSystemAdministratorsGroup *string `min:"1" type:"string"`
+
+	// Specifies an updated fully qualified distinguished name of the organization
+	// unit within your self-managed AD.
+	OrganizationalUnitDistinguishedName *string `min:"1" type:"string"`
+
+	// Specifies the updated password for the service account on your self-managed
+	// AD domain. Amazon FSx uses this account to join to your self-managed AD domain.
 	//
 	// Password is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by SelfManagedActiveDirectoryConfigurationUpdates's
 	// String and GoString methods.
 	Password *string `min:"1" type:"string" sensitive:"true"`
 
-	// The user name for the service account on your self-managed AD domain that
-	// Amazon FSx will use to join to your AD domain. This account must have the
-	// permission to join computers to the domain in the organizational unit provided
-	// in OrganizationalUnitDistinguishedName.
+	// Specifies the updated user name for the service account on your self-managed
+	// AD domain. Amazon FSx uses this account to join to your self-managed AD domain.
+	//
+	// This account must have the permissions required to join computers to the
+	// domain in the organizational unit provided in OrganizationalUnitDistinguishedName.
 	UserName *string `min:"1" type:"string"`
 }
 
@@ -18408,6 +18611,15 @@ func (s *SelfManagedActiveDirectoryConfigurationUpdates) Validate() error {
 	if s.DnsIps != nil && len(s.DnsIps) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DnsIps", 1))
 	}
+	if s.DomainName != nil && len(*s.DomainName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DomainName", 1))
+	}
+	if s.FileSystemAdministratorsGroup != nil && len(*s.FileSystemAdministratorsGroup) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FileSystemAdministratorsGroup", 1))
+	}
+	if s.OrganizationalUnitDistinguishedName != nil && len(*s.OrganizationalUnitDistinguishedName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("OrganizationalUnitDistinguishedName", 1))
+	}
 	if s.Password != nil && len(*s.Password) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Password", 1))
 	}
@@ -18424,6 +18636,24 @@ func (s *SelfManagedActiveDirectoryConfigurationUpdates) Validate() error {
 // SetDnsIps sets the DnsIps field's value.
 func (s *SelfManagedActiveDirectoryConfigurationUpdates) SetDnsIps(v []*string) *SelfManagedActiveDirectoryConfigurationUpdates {
 	s.DnsIps = v
+	return s
+}
+
+// SetDomainName sets the DomainName field's value.
+func (s *SelfManagedActiveDirectoryConfigurationUpdates) SetDomainName(v string) *SelfManagedActiveDirectoryConfigurationUpdates {
+	s.DomainName = &v
+	return s
+}
+
+// SetFileSystemAdministratorsGroup sets the FileSystemAdministratorsGroup field's value.
+func (s *SelfManagedActiveDirectoryConfigurationUpdates) SetFileSystemAdministratorsGroup(v string) *SelfManagedActiveDirectoryConfigurationUpdates {
+	s.FileSystemAdministratorsGroup = &v
+	return s
+}
+
+// SetOrganizationalUnitDistinguishedName sets the OrganizationalUnitDistinguishedName field's value.
+func (s *SelfManagedActiveDirectoryConfigurationUpdates) SetOrganizationalUnitDistinguishedName(v string) *SelfManagedActiveDirectoryConfigurationUpdates {
+	s.OrganizationalUnitDistinguishedName = &v
 	return s
 }
 
@@ -19075,14 +19305,13 @@ func (s *StorageVirtualMachineNotFound) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// Describes the configuration of the Microsoft Active Directory (AD) directory
-// to which the Amazon FSx for ONTAP storage virtual machine (SVM) is joined.
-// Pleae note, account credentials are not returned in the response payload.
+// Describes the Microsoft Active Directory (AD) directory configuration to
+// which the FSx for ONTAP storage virtual machine (SVM) is joined. Note that
+// account credentials are not returned in the response payload.
 type SvmActiveDirectoryConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The NetBIOS name of the Active Directory computer object that is joined to
-	// your SVM.
+	// The NetBIOS name of the AD computer object to which the SVM is joined.
 	NetBiosName *string `min:"1" type:"string"`
 
 	// The configuration of the self-managed Microsoft Active Directory (AD) directory
@@ -19128,8 +19357,8 @@ func (s *SvmActiveDirectoryConfiguration) SetSelfManagedActiveDirectoryConfigura
 type SvmEndpoint struct {
 	_ struct{} `type:"structure"`
 
-	// The Domain Name Service (DNS) name for the file system. You can mount your
-	// file system using its DNS name.
+	// The file system's DNS name. You can mount your file system using its DNS
+	// name.
 	DNSName *string `min:"16" type:"string"`
 
 	// The SVM endpoint's IP addresses.
@@ -19649,7 +19878,7 @@ type UpdateDataRepositoryAssociationInput struct {
 	AssociationId *string `min:"13" type:"string" required:"true"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -19769,7 +19998,7 @@ type UpdateFileCacheInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -19931,7 +20160,7 @@ func (s *UpdateFileCacheOutput) SetFileCache(v *FileCache) *UpdateFileCacheOutpu
 type UpdateFileSystemInput struct {
 	_ struct{} `type:"structure"`
 
-	// A string of up to 64 ASCII characters that Amazon FSx uses to ensure idempotent
+	// A string of up to 63 ASCII characters that Amazon FSx uses to ensure idempotent
 	// updates. This string is automatically filled on your behalf when you use
 	// the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
@@ -19948,22 +20177,16 @@ type UpdateFileSystemInput struct {
 	// The configuration updates for an Amazon FSx for NetApp ONTAP file system.
 	OntapConfiguration *UpdateFileSystemOntapConfiguration `type:"structure"`
 
-	// The configuration updates for an Amazon FSx for OpenZFS file system.
+	// The configuration updates for an FSx for OpenZFS file system.
 	OpenZFSConfiguration *UpdateFileSystemOpenZFSConfiguration `type:"structure"`
 
-	// Use this parameter to increase the storage capacity of an Amazon FSx for
-	// Windows File Server, Amazon FSx for Lustre, or Amazon FSx for NetApp ONTAP
-	// file system. Specifies the storage capacity target value, in GiB, to increase
-	// the storage capacity for the file system that you're updating.
+	// Use this parameter to increase the storage capacity of an FSx for Windows
+	// File Server, FSx for Lustre, FSx for OpenZFS, or FSx for ONTAP file system.
+	// Specifies the storage capacity target value, in GiB, to increase the storage
+	// capacity for the file system that you're updating.
 	//
 	// You can't make a storage capacity increase request if there is an existing
 	// storage capacity increase request in progress.
-	//
-	// For Windows file systems, the storage capacity target value must be at least
-	// 10 percent greater than the current storage capacity value. To increase storage
-	// capacity, the file system must have at least 16 MBps of throughput capacity.
-	// For more information, see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html)
-	// in the Amazon FSx for Windows File Server User Guide.
 	//
 	// For Lustre file systems, the storage capacity target value can be the following:
 	//
@@ -19979,7 +20202,18 @@ type UpdateFileSystemInput struct {
 	//    * For SCRATCH_1 file systems, you can't increase the storage capacity.
 	//
 	// For more information, see Managing storage and throughput capacity (https://docs.aws.amazon.com/fsx/latest/LustreGuide/managing-storage-capacity.html)
-	// in the Amazon FSx for Lustre User Guide.
+	// in the FSx for Lustre User Guide.
+	//
+	// For FSx for OpenZFS file systems, the storage capacity target value must
+	// be at least 10 percent greater than the current storage capacity value. For
+	// more information, see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/managing-storage-capacity.html)
+	// in the FSx for OpenZFS User Guide.
+	//
+	// For Windows file systems, the storage capacity target value must be at least
+	// 10 percent greater than the current storage capacity value. To increase storage
+	// capacity, the file system must have at least 16 MBps of throughput capacity.
+	// For more information, see Managing storage capacity (https://docs.aws.amazon.com/fsx/latest/WindowsGuide/managing-storage-capacity.html)
+	// in the Amazon FSxfor Windows File Server User Guide.
 	//
 	// For ONTAP file systems, the storage capacity target value must be at least
 	// 10 percent greater than the current storage capacity value. For more information,
@@ -20120,9 +20354,7 @@ type UpdateFileSystemLustreConfiguration struct {
 	//    any existing objects that are changed in the S3 bucket, and any objects
 	//    that were deleted in the S3 bucket.
 	//
-	// The AutoImportPolicy parameter is not supported for Lustre file systems with
-	// the Persistent_2 deployment type. Instead, use to update a data repository
-	// association on your Persistent_2 file system.
+	// This parameter is not supported for file systems with a data repository association.
 	AutoImportPolicy *string `type:"string" enum:"AutoImportPolicyType"`
 
 	// The number of days to retain automatic backups. Setting this property to
@@ -20255,6 +20487,10 @@ func (s *UpdateFileSystemLustreConfiguration) SetWeeklyMaintenanceStartTime(v st
 type UpdateFileSystemOntapConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// (Multi-AZ only) A list of IDs of new virtual private cloud (VPC) route tables
+	// to associate (add) with your Amazon FSx for NetApp ONTAP file system.
+	AddRouteTableIds []*string `type:"list"`
+
 	// The number of days to retain automatic backups. Setting this property to
 	// 0 disables automatic backups. You can retain automatic backups for a maximum
 	// of 90 days. The default is 0.
@@ -20265,23 +20501,35 @@ type UpdateFileSystemOntapConfiguration struct {
 	// 05:00 specifies 5 AM daily.
 	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
 
-	// The SSD IOPS (input/output operations per second) configuration for an Amazon
+	// The SSD IOPS (input output operations per second) configuration for an Amazon
 	// FSx for NetApp ONTAP file system. The default is 3 IOPS per GB of storage
 	// capacity, but you can provision additional IOPS per GB of storage. The configuration
 	// consists of an IOPS mode (AUTOMATIC or USER_PROVISIONED), and in the case
-	// of USER_PROVISIONED IOPS, the total number of SSD IOPS provisioned.
+	// of USER_PROVISIONED IOPS, the total number of SSD IOPS provisioned. For more
+	// information, see Updating SSD storage capacity and IOPS (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/increase-primary-storage.html).
 	DiskIopsConfiguration *DiskIopsConfiguration `type:"structure"`
 
-	// The ONTAP administrative password for the fsxadmin user.
+	// Update the password for the fsxadmin user by entering a new password. You
+	// use the fsxadmin user to access the NetApp ONTAP CLI and REST API to manage
+	// your file system resources. For more information, see Managing resources
+	// using NetApp Applicaton (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-resources-ontap-apps.html).
 	//
 	// FsxAdminPassword is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by UpdateFileSystemOntapConfiguration's
 	// String and GoString methods.
 	FsxAdminPassword *string `min:"8" type:"string" sensitive:"true"`
 
-	// Specifies the throughput of an FSx for NetApp ONTAP file system, measured
-	// in megabytes per second (MBps). Valid values are 128, 256, 512, 1024, or
-	// 2048 MB/s.
+	// (Multi-AZ only) A list of IDs of existing virtual private cloud (VPC) route
+	// tables to disassociate (remove) from your Amazon FSx for NetApp ONTAP file
+	// system. You can use the API operation to retrieve the list of VPC route table
+	// IDs for a file system.
+	RemoveRouteTableIds []*string `type:"list"`
+
+	// Enter a new value to change the amount of throughput capacity for the file
+	// system. Throughput capacity is measured in megabytes per second (MBps). Valid
+	// values are 128, 256, 512, 1024, 2048, and 4096 MBps. For more information,
+	// see Managing throughput capacity (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/managing-throughput-capacity.html)
+	// in the FSx for ONTAP User Guide.
 	ThroughputCapacity *int64 `min:"8" type:"integer"`
 
 	// A recurring weekly time, in the format D:HH:MM.
@@ -20337,6 +20585,12 @@ func (s *UpdateFileSystemOntapConfiguration) Validate() error {
 	return nil
 }
 
+// SetAddRouteTableIds sets the AddRouteTableIds field's value.
+func (s *UpdateFileSystemOntapConfiguration) SetAddRouteTableIds(v []*string) *UpdateFileSystemOntapConfiguration {
+	s.AddRouteTableIds = v
+	return s
+}
+
 // SetAutomaticBackupRetentionDays sets the AutomaticBackupRetentionDays field's value.
 func (s *UpdateFileSystemOntapConfiguration) SetAutomaticBackupRetentionDays(v int64) *UpdateFileSystemOntapConfiguration {
 	s.AutomaticBackupRetentionDays = &v
@@ -20358,6 +20612,12 @@ func (s *UpdateFileSystemOntapConfiguration) SetDiskIopsConfiguration(v *DiskIop
 // SetFsxAdminPassword sets the FsxAdminPassword field's value.
 func (s *UpdateFileSystemOntapConfiguration) SetFsxAdminPassword(v string) *UpdateFileSystemOntapConfiguration {
 	s.FsxAdminPassword = &v
+	return s
+}
+
+// SetRemoveRouteTableIds sets the RemoveRouteTableIds field's value.
+func (s *UpdateFileSystemOntapConfiguration) SetRemoveRouteTableIds(v []*string) *UpdateFileSystemOntapConfiguration {
+	s.RemoveRouteTableIds = v
 	return s
 }
 
@@ -20405,14 +20665,22 @@ type UpdateFileSystemOpenZFSConfiguration struct {
 	DailyAutomaticBackupStartTime *string `min:"5" type:"string"`
 
 	// The SSD IOPS (input/output operations per second) configuration for an Amazon
-	// FSx for NetApp ONTAP or Amazon FSx for OpenZFS file system. The default is
-	// 3 IOPS per GB of storage capacity, but you can provision additional IOPS
-	// per GB of storage. The configuration consists of the total number of provisioned
-	// SSD IOPS and how the amount was provisioned (by the customer or by the system).
+	// FSx for NetApp ONTAP or FSx for OpenZFS file system. By default, Amazon FSx
+	// automatically provisions 3 IOPS per GB of storage capacity. You can provision
+	// additional IOPS per GB of storage. The configuration consists of the total
+	// number of provisioned SSD IOPS and how it is was provisioned, or the mode
+	// (by the customer or by Amazon FSx).
 	DiskIopsConfiguration *DiskIopsConfiguration `type:"structure"`
 
-	// The throughput of an Amazon FSx file system, measured in megabytes per second
-	// (MBps). Valid values are 64, 128, 256, 512, 1024, 2048, 3072, or 4096 MB/s.
+	// The throughput of an Amazon FSx for OpenZFS file system, measured in megabytes
+	// per second (MB/s). Valid values depend on the DeploymentType you choose,
+	// as follows:
+	//
+	//    * For SINGLE_AZ_1, valid values are 64, 128, 256, 512, 1024, 2048, 3072,
+	//    or 4096 MB/s.
+	//
+	//    * For SINGLE_AZ_2, valid values are 160, 320, 640, 1280, 2560, 3840, 5120,
+	//    7680, or 10240 MB/s.
 	ThroughputCapacity *int64 `min:"8" type:"integer"`
 
 	// A recurring weekly time, in the format D:HH:MM.
@@ -20667,6 +20935,15 @@ func (s *UpdateFileSystemWindowsConfiguration) SetWeeklyMaintenanceStartTime(v s
 type UpdateOntapVolumeConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// A boolean flag indicating whether tags for the volume should be copied to
+	// backups. This value defaults to false. If it's set to true, all tags for
+	// the volume are copied to all automatic and user-initiated backups where the
+	// user doesn't specify tags. If this value is true, and you specify one or
+	// more tags, only the specified tags are copied to backups. If you specify
+	// one or more tags when creating a user-initiated backup, no tags are copied
+	// from the volume, regardless of this value.
+	CopyTagsToBackups *bool `type:"boolean"`
+
 	// Specifies the location in the SVM's namespace where the volume is mounted.
 	// The JunctionPath must have a leading forward slash, such as /vol3.
 	JunctionPath *string `min:"1" type:"string"`
@@ -20676,6 +20953,27 @@ type UpdateOntapVolumeConfiguration struct {
 
 	// Specifies the size of the volume in megabytes.
 	SizeInMegabytes *int64 `type:"integer"`
+
+	// Specifies the snapshot policy for the volume. There are three built-in snapshot
+	// policies:
+	//
+	//    * default: This is the default policy. A maximum of six hourly snapshots
+	//    taken five minutes past the hour. A maximum of two daily snapshots taken
+	//    Monday through Saturday at 10 minutes after midnight. A maximum of two
+	//    weekly snapshots taken every Sunday at 15 minutes after midnight.
+	//
+	//    * default-1weekly: This policy is the same as the default policy except
+	//    that it only retains one snapshot from the weekly schedule.
+	//
+	//    * none: This policy does not take any snapshots. This policy can be assigned
+	//    to volumes to prevent automatic snapshots from being taken.
+	//
+	// You can also provide the name of a custom policy that you created with the
+	// ONTAP CLI or REST API.
+	//
+	// For more information, see Snapshot policies (https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/snapshots-ontap.html#snapshot-policies)
+	// in the Amazon FSx for NetApp ONTAP User Guide.
+	SnapshotPolicy *string `min:"1" type:"string"`
 
 	// Default is false. Set to true to enable the deduplication, compression, and
 	// compaction storage efficiency features on the volume.
@@ -20709,6 +21007,9 @@ func (s *UpdateOntapVolumeConfiguration) Validate() error {
 	if s.JunctionPath != nil && len(*s.JunctionPath) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("JunctionPath", 1))
 	}
+	if s.SnapshotPolicy != nil && len(*s.SnapshotPolicy) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SnapshotPolicy", 1))
+	}
 	if s.TieringPolicy != nil {
 		if err := s.TieringPolicy.Validate(); err != nil {
 			invalidParams.AddNested("TieringPolicy", err.(request.ErrInvalidParams))
@@ -20719,6 +21020,12 @@ func (s *UpdateOntapVolumeConfiguration) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetCopyTagsToBackups sets the CopyTagsToBackups field's value.
+func (s *UpdateOntapVolumeConfiguration) SetCopyTagsToBackups(v bool) *UpdateOntapVolumeConfiguration {
+	s.CopyTagsToBackups = &v
+	return s
 }
 
 // SetJunctionPath sets the JunctionPath field's value.
@@ -20736,6 +21043,12 @@ func (s *UpdateOntapVolumeConfiguration) SetSecurityStyle(v string) *UpdateOntap
 // SetSizeInMegabytes sets the SizeInMegabytes field's value.
 func (s *UpdateOntapVolumeConfiguration) SetSizeInMegabytes(v int64) *UpdateOntapVolumeConfiguration {
 	s.SizeInMegabytes = &v
+	return s
+}
+
+// SetSnapshotPolicy sets the SnapshotPolicy field's value.
+func (s *UpdateOntapVolumeConfiguration) SetSnapshotPolicy(v string) *UpdateOntapVolumeConfiguration {
+	s.SnapshotPolicy = &v
 	return s
 }
 
@@ -20903,7 +21216,7 @@ type UpdateSnapshotInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -21014,12 +21327,11 @@ func (s *UpdateSnapshotOutput) SetSnapshot(v *Snapshot) *UpdateSnapshotOutput {
 type UpdateStorageVirtualMachineInput struct {
 	_ struct{} `type:"structure"`
 
-	// Updates the Microsoft Active Directory (AD) configuration for an SVM that
-	// is joined to an AD.
+	// Specifies updates to an SVM's Microsoft Active Directory (AD) configuration.
 	ActiveDirectoryConfiguration *UpdateSvmActiveDirectoryConfiguration `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -21028,7 +21340,7 @@ type UpdateStorageVirtualMachineInput struct {
 	// StorageVirtualMachineId is a required field
 	StorageVirtualMachineId *string `min:"21" type:"string" required:"true"`
 
-	// Enter a new SvmAdminPassword if you are updating it.
+	// Specifies a new SvmAdminPassword.
 	//
 	// SvmAdminPassword is a sensitive parameter and its value will be
 	// replaced with "sensitive" in string returned by UpdateStorageVirtualMachineInput's
@@ -21136,14 +21448,19 @@ func (s *UpdateStorageVirtualMachineOutput) SetStorageVirtualMachine(v *StorageV
 	return s
 }
 
-// Updates the Microsoft Active Directory (AD) configuration of an SVM joined
-// to an AD. Please note, account credentials are not returned in the response
-// payload.
+// Specifies updates to an FSx for ONTAP storage virtual machine's (SVM) Microsoft
+// Active Directory (AD) configuration. Note that account credentials are not
+// returned in the response payload.
 type UpdateSvmActiveDirectoryConfiguration struct {
 	_ struct{} `type:"structure"`
 
-	// The configuration that Amazon FSx uses to join the Windows File Server instance
-	// to a self-managed Microsoft Active Directory (AD) directory.
+	// Specifies an updated NetBIOS name of the AD computer object NetBiosName to
+	// which an SVM is joined.
+	NetBiosName *string `min:"1" type:"string"`
+
+	// Specifies changes you are making to the self-managed Microsoft Active Directory
+	// (AD) configuration to which an FSx for Windows File Server file system or
+	// an FSx for ONTAP SVM is joined.
 	SelfManagedActiveDirectoryConfiguration *SelfManagedActiveDirectoryConfigurationUpdates `type:"structure"`
 }
 
@@ -21168,6 +21485,9 @@ func (s UpdateSvmActiveDirectoryConfiguration) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *UpdateSvmActiveDirectoryConfiguration) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "UpdateSvmActiveDirectoryConfiguration"}
+	if s.NetBiosName != nil && len(*s.NetBiosName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NetBiosName", 1))
+	}
 	if s.SelfManagedActiveDirectoryConfiguration != nil {
 		if err := s.SelfManagedActiveDirectoryConfiguration.Validate(); err != nil {
 			invalidParams.AddNested("SelfManagedActiveDirectoryConfiguration", err.(request.ErrInvalidParams))
@@ -21180,6 +21500,12 @@ func (s *UpdateSvmActiveDirectoryConfiguration) Validate() error {
 	return nil
 }
 
+// SetNetBiosName sets the NetBiosName field's value.
+func (s *UpdateSvmActiveDirectoryConfiguration) SetNetBiosName(v string) *UpdateSvmActiveDirectoryConfiguration {
+	s.NetBiosName = &v
+	return s
+}
+
 // SetSelfManagedActiveDirectoryConfiguration sets the SelfManagedActiveDirectoryConfiguration field's value.
 func (s *UpdateSvmActiveDirectoryConfiguration) SetSelfManagedActiveDirectoryConfiguration(v *SelfManagedActiveDirectoryConfigurationUpdates) *UpdateSvmActiveDirectoryConfiguration {
 	s.SelfManagedActiveDirectoryConfiguration = v
@@ -21190,7 +21516,7 @@ type UpdateVolumeInput struct {
 	_ struct{} `type:"structure"`
 
 	// (Optional) An idempotency token for resource creation, in a string of up
-	// to 64 ASCII characters. This token is automatically filled on your behalf
+	// to 63 ASCII characters. This token is automatically filled on your behalf
 	// when you use the Command Line Interface (CLI) or an Amazon Web Services SDK.
 	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
 
@@ -21327,9 +21653,9 @@ func (s *UpdateVolumeOutput) SetVolume(v *Volume) *UpdateVolumeOutput {
 type Volume struct {
 	_ struct{} `type:"structure"`
 
-	// A list of administrative actions for the file system that are in process
-	// or waiting to be processed. Administrative actions describe changes to the
-	// Amazon FSx system that you initiated.
+	// A list of administrative actions for the volume that are in process or waiting
+	// to be processed. Administrative actions describe changes to the volume that
+	// you have initiated using the UpdateVolume action.
 	AdministrativeActions []*AdministrativeAction `type:"list"`
 
 	// The time that the resource was created, in seconds (since 1970-01-01T00:00:00Z),
@@ -22056,6 +22382,10 @@ func ActiveDirectoryErrorType_Values() []string {
 //     Amazon FSx for OpenZFS volume initiated from the Amazon FSx console, API
 //     (UpdateVolume), or CLI (update-volume).
 //
+//   - VOLUME_RESTORE - An Amazon FSx for OpenZFS volume is returned to the
+//     state saved by the specified snapshot, initiated from an API (RestoreVolumeFromSnapshot)
+//     or CLI (restore-volume-from-snapshot).
+//
 //   - SNAPSHOT_UPDATE - A snapshot update to an Amazon FSx for OpenZFS volume
 //     initiated from the Amazon FSx console, API (UpdateSnapshot), or CLI (update-snapshot).
 //
@@ -22082,6 +22412,9 @@ const (
 
 	// AdministrativeActionTypeReleaseNfsV3Locks is a AdministrativeActionType enum value
 	AdministrativeActionTypeReleaseNfsV3Locks = "RELEASE_NFS_V3_LOCKS"
+
+	// AdministrativeActionTypeVolumeRestore is a AdministrativeActionType enum value
+	AdministrativeActionTypeVolumeRestore = "VOLUME_RESTORE"
 )
 
 // AdministrativeActionType_Values returns all elements of the AdministrativeActionType enum
@@ -22094,6 +22427,7 @@ func AdministrativeActionType_Values() []string {
 		AdministrativeActionTypeVolumeUpdate,
 		AdministrativeActionTypeSnapshotUpdate,
 		AdministrativeActionTypeReleaseNfsV3Locks,
+		AdministrativeActionTypeVolumeRestore,
 	}
 }
 
@@ -22616,6 +22950,22 @@ func FlexCacheEndpointType_Values() []string {
 }
 
 const (
+	// InputOntapVolumeTypeRw is a InputOntapVolumeType enum value
+	InputOntapVolumeTypeRw = "RW"
+
+	// InputOntapVolumeTypeDp is a InputOntapVolumeType enum value
+	InputOntapVolumeTypeDp = "DP"
+)
+
+// InputOntapVolumeType_Values returns all elements of the InputOntapVolumeType enum
+func InputOntapVolumeType_Values() []string {
+	return []string{
+		InputOntapVolumeTypeRw,
+		InputOntapVolumeTypeDp,
+	}
+}
+
+const (
 	// LustreAccessAuditLogLevelDisabled is a LustreAccessAuditLogLevel enum value
 	LustreAccessAuditLogLevelDisabled = "DISABLED"
 
@@ -22750,12 +23100,16 @@ func OpenZFSDataCompressionType_Values() []string {
 const (
 	// OpenZFSDeploymentTypeSingleAz1 is a OpenZFSDeploymentType enum value
 	OpenZFSDeploymentTypeSingleAz1 = "SINGLE_AZ_1"
+
+	// OpenZFSDeploymentTypeSingleAz2 is a OpenZFSDeploymentType enum value
+	OpenZFSDeploymentTypeSingleAz2 = "SINGLE_AZ_2"
 )
 
 // OpenZFSDeploymentType_Values returns all elements of the OpenZFSDeploymentType enum
 func OpenZFSDeploymentType_Values() []string {
 	return []string{
 		OpenZFSDeploymentTypeSingleAz1,
+		OpenZFSDeploymentTypeSingleAz2,
 	}
 }
 
@@ -22972,7 +23326,7 @@ func Status_Values() []string {
 	}
 }
 
-// The storage type for your Amazon FSx file system.
+// Specifies the file system's storage type.
 const (
 	// StorageTypeSsd is a StorageType enum value
 	StorageTypeSsd = "SSD"

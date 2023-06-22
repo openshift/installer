@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package attr
 
 import (
@@ -27,8 +30,22 @@ type Value interface {
 	// a tftypes.Value.
 	ToTerraformValue(context.Context) (tftypes.Value, error)
 
-	// Equal must return true if the Value is considered semantically equal
-	// to the Value passed as an argument.
+	// Equal should return true if the Value is considered type and data
+	// value equivalent to the Value passed as an argument.
+	//
+	// Most types should verify the associated Type is exactly equal to prevent
+	// potential data consistency issues. For example:
+	//
+	//  - basetypes.Number is inequal to basetypes.Int64 or basetypes.Float64
+	//  - basetypes.String is inequal to a custom Go type that embeds it
+	//
+	// Additionally, most types should verify that known values are compared
+	// to comply with Terraform's data consistency rules. For example:
+	//
+	//  - In a list, element order is significant
+	//  - In a string, runes are compared byte-wise (e.g. whitespace is
+	//    significant in JSON-encoded strings)
+	//
 	Equal(Value) bool
 
 	// IsNull returns true if the Value is not set, or is explicitly set to null.

@@ -11,10 +11,9 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Disables a trust anchor. When disabled, CreateSession
-// (https://docs.aws.amazon.com/rolesanywhere/latest/APIReference/API_CreateSession.html)
-// requests specifying this trust anchor are unauthorized. Required permissions:
-// rolesanywhere:DisableTrustAnchor.
+// Disables a trust anchor. When disabled, temporary credential requests
+// specifying this trust anchor are unauthorized. Required permissions:
+// rolesanywhere:DisableTrustAnchor .
 func (c *Client) DisableTrustAnchor(ctx context.Context, params *DisableTrustAnchorInput, optFns ...func(*Options)) (*DisableTrustAnchorOutput, error) {
 	if params == nil {
 		params = &DisableTrustAnchorInput{}
@@ -102,6 +101,9 @@ func (c *Client) addOperationDisableTrustAnchorMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDisableTrustAnchor(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

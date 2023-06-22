@@ -12,7 +12,7 @@ import (
 )
 
 // Gets a certificate revocation list (CRL). Required permissions:
-// rolesanywhere:GetCrl.
+// rolesanywhere:GetCrl .
 func (c *Client) GetCrl(ctx context.Context, params *GetCrlInput, optFns ...func(*Options)) (*GetCrlOutput, error) {
 	if params == nil {
 		params = &GetCrlInput{}
@@ -101,6 +101,9 @@ func (c *Client) addOperationGetCrlMiddlewares(stack *middleware.Stack, options 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetCrl(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

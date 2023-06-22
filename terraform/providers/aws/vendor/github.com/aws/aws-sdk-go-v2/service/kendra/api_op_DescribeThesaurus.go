@@ -45,13 +45,13 @@ type DescribeThesaurusInput struct {
 
 type DescribeThesaurusOutput struct {
 
-	// The Unix datetime that the thesaurus was created.
+	// The Unix timestamp when the thesaurus was created.
 	CreatedAt *time.Time
 
 	// The thesaurus description.
 	Description *string
 
-	// When the Status field value is FAILED, the ErrorMessage field provides more
+	// When the Status field value is FAILED , the ErrorMessage field provides more
 	// information.
 	ErrorMessage *string
 
@@ -68,15 +68,15 @@ type DescribeThesaurusOutput struct {
 	Name *string
 
 	// An IAM role that gives Amazon Kendra permissions to access thesaurus file
-	// specified in SourceS3Path.
+	// specified in SourceS3Path .
 	RoleArn *string
 
 	// Information required to find a specific file in an Amazon S3 bucket.
 	SourceS3Path *types.S3Path
 
-	// The current status of the thesaurus. When the value is ACTIVE, queries are able
-	// to use the thesaurus. If the Status field value is FAILED, the ErrorMessage
-	// field provides more information. If the status is ACTIVE_BUT_UPDATE_FAILED, it
+	// The current status of the thesaurus. When the value is ACTIVE , queries are able
+	// to use the thesaurus. If the Status field value is FAILED , the ErrorMessage
+	// field provides more information. If the status is ACTIVE_BUT_UPDATE_FAILED , it
 	// means that Amazon Kendra could not ingest the new thesaurus file. The old
 	// thesaurus file is still active.
 	Status types.ThesaurusStatus
@@ -85,10 +85,10 @@ type DescribeThesaurusOutput struct {
 	SynonymRuleCount *int64
 
 	// The number of unique terms in the thesaurus file. For example, the synonyms
-	// a,b,c and a=>d, the term count would be 4.
+	// a,b,c and a=>d , the term count would be 4.
 	TermCount *int64
 
-	// The Unix datetime that the thesaurus was last updated.
+	// The Unix timestamp when the thesaurus was last updated.
 	UpdatedAt *time.Time
 
 	// Metadata pertaining to the operation's result.
@@ -146,6 +146,9 @@ func (c *Client) addOperationDescribeThesaurusMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeThesaurus(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -11,9 +11,8 @@ import (
 )
 
 // Creates a new custom verification email template. For more information about
-// custom verification email templates, see Using Custom Verification Email
-// Templates
-// (https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-verify-address-custom.html)
+// custom verification email templates, see Using custom verification email
+// templates (https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html#send-email-verify-address-custom)
 // in the Amazon SES Developer Guide. You can execute this operation no more than
 // once per second.
 func (c *Client) CreateCustomVerificationEmailTemplate(ctx context.Context, params *CreateCustomVerificationEmailTemplateInput, optFns ...func(*Options)) (*CreateCustomVerificationEmailTemplateOutput, error) {
@@ -53,8 +52,7 @@ type CreateCustomVerificationEmailTemplateInput struct {
 
 	// The content of the custom verification email. The total size of the email must
 	// be less than 10 MB. The message body may contain HTML, with some limitations.
-	// For more information, see Custom Verification Email Frequently Asked Questions
-	// (https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-verify-address-custom.html#custom-verification-emails-faq)
+	// For more information, see Custom verification email frequently asked questions (https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html#send-email-verify-address-custom-faq)
 	// in the Amazon SES Developer Guide.
 	//
 	// This member is required.
@@ -73,8 +71,8 @@ type CreateCustomVerificationEmailTemplateInput struct {
 	noSmithyDocumentSerde
 }
 
-// If the action is successful, the service sends back an HTTP 200 response with an
-// empty HTTP body.
+// If the action is successful, the service sends back an HTTP 200 response with
+// an empty HTTP body.
 type CreateCustomVerificationEmailTemplateOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -131,6 +129,9 @@ func (c *Client) addOperationCreateCustomVerificationEmailTemplateMiddlewares(st
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateCustomVerificationEmailTemplate(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

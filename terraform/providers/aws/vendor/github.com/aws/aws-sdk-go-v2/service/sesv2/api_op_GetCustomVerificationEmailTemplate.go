@@ -12,8 +12,7 @@ import (
 
 // Returns the custom email verification template for the template name you
 // specify. For more information about custom verification email templates, see
-// Using Custom Verification Email Templates
-// (https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-verify-address-custom.html)
+// Using custom verification email templates (https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html#send-email-verify-address-custom)
 // in the Amazon SES Developer Guide. You can execute this operation no more than
 // once per second.
 func (c *Client) GetCustomVerificationEmailTemplate(ctx context.Context, params *GetCustomVerificationEmailTemplateInput, optFns ...func(*Options)) (*GetCustomVerificationEmailTemplateOutput, error) {
@@ -120,6 +119,9 @@ func (c *Client) addOperationGetCustomVerificationEmailTemplateMiddlewares(stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetCustomVerificationEmailTemplate(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

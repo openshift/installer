@@ -1,10 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package datasource
 
 import (
 	"context"
-
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
 // DataSource represents an instance of a data source type. This is the core
@@ -13,15 +13,15 @@ import (
 // Data sources can optionally implement these additional concepts:
 //
 //   - Configure: Include provider-level data or clients.
-//   - Validation: Schema-based via tfsdk.Attribute or entire configuration
+//   - Validation: Schema-based or entire configuration
 //     via DataSourceWithConfigValidators or DataSourceWithValidateConfig.
 type DataSource interface {
 	// Metadata should return the full name of the data source, such as
 	// examplecloud_thing.
 	Metadata(context.Context, MetadataRequest, *MetadataResponse)
 
-	// GetSchema returns the schema for this data source.
-	GetSchema(context.Context) (tfsdk.Schema, diag.Diagnostics)
+	// Schema should return the schema for this data source.
+	Schema(context.Context, SchemaRequest, *SchemaResponse)
 
 	// Read is called when the provider must read data source values in
 	// order to update state. Config values should be read from the

@@ -1,6 +1,94 @@
 <!-- markdownlint-disable single-title -->
 # v2.0.0 (Unreleased)
 
+# v2.0.0-beta.29 (2023-06-08)
+
+ENHANCEMENT
+
+* Enables support for Adaptive retry mode ([#489](https://github.com/hashicorp/aws-sdk-go-base/pull/489))
+
+# v2.0.0-beta.28 (2023-06-01)
+
+BUG FIXES
+
+* Limits HTTP response body size in logs to 4 KB ([#490](https://github.com/hashicorp/aws-sdk-go-base/pull/490))
+
+ENHANCEMENTS
+
+* Updates limit of HTTP requsest body size in logs to 1 KB ([#490](https://github.com/hashicorp/aws-sdk-go-base/pull/490))
+
+# v2.0.0-beta.27 (2023-05-24)
+
+BUG FIXES
+
+* Reintroduces special handling to work around very high AWS API retry counts removed in v2.0.0-beta.26 ([#481](https://github.com/hashicorp/aws-sdk-go-base/pull/481))
+
+# v2.0.0-beta.26 (2023-05-23)
+
+BREAKING CHANGES
+
+* Removes special handling to work around very high AWS API retry counts. ([#462](https://github.com/hashicorp/aws-sdk-go-base/pull/462))
+
+# v2.0.0-beta.25 (2023-03-23)
+
+ENHANCEMENTS
+
+* Enables more logging during setup. ([#386](https://github.com/hashicorp/aws-sdk-go-base/pull/386))
+
+# v2.0.0-beta.24 (2023-02-23)
+
+BUG FIXES
+
+* Avoids retries on `Expired Token` errors. ([#362](https://github.com/hashicorp/aws-sdk-go-base/pull/362))
+
+# v2.0.0-beta.23 (2023-02-09)
+
+BUG FIXES
+
+* Truncates HTTP request bodies in logs. ([#351](https://github.com/hashicorp/aws-sdk-go-base/pull/351))
+
+ENHANCEMENTS
+
+* Adds support for AWS region `ap-southeast-4`. ([#348](https://github.com/hashicorp/aws-sdk-go-base/pull/348))
+
+# v2.0.0-beta.22 (2023-02-02)
+
+BREAKING CHANGES
+
+* Adds `context.Context` return value to `GetAwsConfig` with configured logger. Adds `context.Context` parameter to `awsbasev1.GetSession`. ([#341](https://github.com/hashicorp/aws-sdk-go-base/pull/341))
+
+BUG FIXES
+
+* Scrubs sensitive values from HTTP request and response logs. ([#341](https://github.com/hashicorp/aws-sdk-go-base/pull/341))
+
+ENHANCEMENTS
+
+* Uses structured logging. ([#341](https://github.com/hashicorp/aws-sdk-go-base/pull/341))
+
+# v2.0.0-beta.21 (2023-01-13)
+
+ENHANCEMENTS
+
+* Adds support for a congfigurable HTTP client. ([#340](https://github.com/hashicorp/aws-sdk-go-base/pull/340))
+
+# v2.0.0-beta.20 (2022-11-22)
+
+ENHANCEMENTS
+
+* Adds support for AWS region `ap-south-2`. ([#339](https://github.com/hashicorp/aws-sdk-go-base/pull/339))
+
+# v2.0.0-beta.19 (2022-11-16)
+
+ENHANCEMENTS
+
+* Adds support for AWS region `eu-south-2`. ([#337](https://github.com/hashicorp/aws-sdk-go-base/pull/337))
+
+# v2.0.0-beta.18 (2022-11-15)
+
+ENHANCEMENTS
+
+* Adds support for AWS region `eu-central-2`. ([#335](https://github.com/hashicorp/aws-sdk-go-base/pull/335))
+
 # v2.0.0-beta.17 (2022-08-31)
 
 ENHANCEMENTS

@@ -12,8 +12,8 @@ import (
 )
 
 // Enables you to provide feedback to Amazon Kendra to improve the performance of
-// your index. SubmitFeedback is currently not supported in the Amazon Web Services
-// GovCloud (US-West) region.
+// your index. SubmitFeedback is currently not supported in the Amazon Web
+// Services GovCloud (US-West) region.
 func (c *Client) SubmitFeedback(ctx context.Context, params *SubmitFeedbackInput, optFns ...func(*Options)) (*SubmitFeedbackOutput, error) {
 	if params == nil {
 		params = &SubmitFeedbackInput{}
@@ -108,6 +108,9 @@ func (c *Client) addOperationSubmitFeedbackMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opSubmitFeedback(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

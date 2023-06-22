@@ -37,8 +37,8 @@ type UpdateTagsForDomainInput struct {
 	// This member is required.
 	DomainName *string
 
-	// A list of the tag keys and values that you want to add or update. If you specify
-	// a key that already exists, the corresponding value will be replaced.
+	// A list of the tag keys and values that you want to add or update. If you
+	// specify a key that already exists, the corresponding value will be replaced.
 	TagsToUpdate []types.Tag
 
 	noSmithyDocumentSerde
@@ -100,6 +100,9 @@ func (c *Client) addOperationUpdateTagsForDomainMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateTagsForDomain(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

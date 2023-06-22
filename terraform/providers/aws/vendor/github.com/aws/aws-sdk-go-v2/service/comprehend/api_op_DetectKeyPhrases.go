@@ -47,10 +47,10 @@ type DetectKeyPhrasesInput struct {
 
 type DetectKeyPhrasesOutput struct {
 
-	// A collection of key phrases that Amazon Comprehend identified in the input text.
-	// For each key phrase, the response provides the text of the key phrase, where the
-	// key phrase begins and ends, and the level of confidence that Amazon Comprehend
-	// has in the accuracy of the detection.
+	// A collection of key phrases that Amazon Comprehend identified in the input
+	// text. For each key phrase, the response provides the text of the key phrase,
+	// where the key phrase begins and ends, and the level of confidence that Amazon
+	// Comprehend has in the accuracy of the detection.
 	KeyPhrases []types.KeyPhrase
 
 	// Metadata pertaining to the operation's result.
@@ -108,6 +108,9 @@ func (c *Client) addOperationDetectKeyPhrasesMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDetectKeyPhrases(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

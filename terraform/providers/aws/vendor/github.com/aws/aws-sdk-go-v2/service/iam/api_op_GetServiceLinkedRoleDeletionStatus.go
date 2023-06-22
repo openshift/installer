@@ -34,7 +34,7 @@ func (c *Client) GetServiceLinkedRoleDeletionStatus(ctx context.Context, params 
 type GetServiceLinkedRoleDeletionStatusInput struct {
 
 	// The deletion task identifier. This identifier is returned by the
-	// DeleteServiceLinkedRole operation in the format task/aws-service-role///.
+	// DeleteServiceLinkedRole operation in the format task/aws-service-role/// .
 	//
 	// This member is required.
 	DeletionTaskId *string
@@ -107,6 +107,9 @@ func (c *Client) addOperationGetServiceLinkedRoleDeletionStatusMiddlewares(stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetServiceLinkedRoleDeletionStatus(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

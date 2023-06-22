@@ -44,27 +44,27 @@ type DescribeIndexOutput struct {
 	// meet the needs of your application. This contains the capacity units used for
 	// the index. A query or document storage capacity of zero indicates that the index
 	// is using the default capacity. For more information on the default capacity for
-	// an index and adjusting this, see Adjusting capacity
-	// (https://docs.aws.amazon.com/kendra/latest/dg/adjusting-capacity.html).
+	// an index and adjusting this, see Adjusting capacity (https://docs.aws.amazon.com/kendra/latest/dg/adjusting-capacity.html)
+	// .
 	CapacityUnits *types.CapacityUnitsConfiguration
 
-	// The Unix datetime that the index was created.
+	// The Unix timestamp when the index was created.
 	CreatedAt *time.Time
 
 	// The description for the index.
 	Description *string
 
-	// Configuration information for document metadata or fields. Document metadata are
-	// fields or attributes associated with your documents. For example, the company
-	// department name associated with each document.
+	// Configuration information for document metadata or fields. Document metadata
+	// are fields or attributes associated with your documents. For example, the
+	// company department name associated with each document.
 	DocumentMetadataConfigurations []types.DocumentMetadataConfiguration
 
 	// The Amazon Kendra edition used for the index. You decide the edition when you
 	// create the index.
 	Edition types.IndexEdition
 
-	// When the Status field value is FAILED, the ErrorMessage field contains a message
-	// that explains why.
+	// When the Status field value is FAILED , the ErrorMessage field contains a
+	// message that explains why.
 	ErrorMessage *string
 
 	// The identifier of the index.
@@ -85,12 +85,12 @@ type DescribeIndexOutput struct {
 	// data. Amazon Kendra doesn't support asymmetric CMKs.
 	ServerSideEncryptionConfiguration *types.ServerSideEncryptionConfiguration
 
-	// The current status of the index. When the value is ACTIVE, the index is ready
-	// for use. If the Status field value is FAILED, the ErrorMessage field contains a
-	// message that explains why.
+	// The current status of the index. When the value is ACTIVE , the index is ready
+	// for use. If the Status field value is FAILED , the ErrorMessage field contains
+	// a message that explains why.
 	Status types.IndexStatus
 
-	// The Unix datetime that the index was last updated.
+	// The Unix when the index was last updated.
 	UpdatedAt *time.Time
 
 	// The user context policy for the Amazon Kendra index.
@@ -159,6 +159,9 @@ func (c *Client) addOperationDescribeIndexMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIndex(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

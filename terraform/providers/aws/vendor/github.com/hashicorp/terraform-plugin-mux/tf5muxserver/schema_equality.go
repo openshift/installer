@@ -15,6 +15,7 @@ var schemaCmpOptions = []cmp.Option{
 	cmpopts.SortSlices(func(i, j *tfprotov5.SchemaNestedBlock) bool {
 		return i.TypeName < j.TypeName
 	}),
+	cmpopts.IgnoreFields(tfprotov5.SchemaNestedBlock{}, "MinItems", "MaxItems"),
 }
 
 // schemaDiff outputs the difference between schemas while accounting for

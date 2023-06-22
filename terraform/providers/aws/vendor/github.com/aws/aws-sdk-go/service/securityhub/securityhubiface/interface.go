@@ -68,6 +68,10 @@ type SecurityHubAPI interface {
 	AcceptInvitationWithContext(aws.Context, *securityhub.AcceptInvitationInput, ...request.Option) (*securityhub.AcceptInvitationOutput, error)
 	AcceptInvitationRequest(*securityhub.AcceptInvitationInput) (*request.Request, *securityhub.AcceptInvitationOutput)
 
+	BatchDeleteAutomationRules(*securityhub.BatchDeleteAutomationRulesInput) (*securityhub.BatchDeleteAutomationRulesOutput, error)
+	BatchDeleteAutomationRulesWithContext(aws.Context, *securityhub.BatchDeleteAutomationRulesInput, ...request.Option) (*securityhub.BatchDeleteAutomationRulesOutput, error)
+	BatchDeleteAutomationRulesRequest(*securityhub.BatchDeleteAutomationRulesInput) (*request.Request, *securityhub.BatchDeleteAutomationRulesOutput)
+
 	BatchDisableStandards(*securityhub.BatchDisableStandardsInput) (*securityhub.BatchDisableStandardsOutput, error)
 	BatchDisableStandardsWithContext(aws.Context, *securityhub.BatchDisableStandardsInput, ...request.Option) (*securityhub.BatchDisableStandardsOutput, error)
 	BatchDisableStandardsRequest(*securityhub.BatchDisableStandardsInput) (*request.Request, *securityhub.BatchDisableStandardsOutput)
@@ -76,17 +80,41 @@ type SecurityHubAPI interface {
 	BatchEnableStandardsWithContext(aws.Context, *securityhub.BatchEnableStandardsInput, ...request.Option) (*securityhub.BatchEnableStandardsOutput, error)
 	BatchEnableStandardsRequest(*securityhub.BatchEnableStandardsInput) (*request.Request, *securityhub.BatchEnableStandardsOutput)
 
+	BatchGetAutomationRules(*securityhub.BatchGetAutomationRulesInput) (*securityhub.BatchGetAutomationRulesOutput, error)
+	BatchGetAutomationRulesWithContext(aws.Context, *securityhub.BatchGetAutomationRulesInput, ...request.Option) (*securityhub.BatchGetAutomationRulesOutput, error)
+	BatchGetAutomationRulesRequest(*securityhub.BatchGetAutomationRulesInput) (*request.Request, *securityhub.BatchGetAutomationRulesOutput)
+
+	BatchGetSecurityControls(*securityhub.BatchGetSecurityControlsInput) (*securityhub.BatchGetSecurityControlsOutput, error)
+	BatchGetSecurityControlsWithContext(aws.Context, *securityhub.BatchGetSecurityControlsInput, ...request.Option) (*securityhub.BatchGetSecurityControlsOutput, error)
+	BatchGetSecurityControlsRequest(*securityhub.BatchGetSecurityControlsInput) (*request.Request, *securityhub.BatchGetSecurityControlsOutput)
+
+	BatchGetStandardsControlAssociations(*securityhub.BatchGetStandardsControlAssociationsInput) (*securityhub.BatchGetStandardsControlAssociationsOutput, error)
+	BatchGetStandardsControlAssociationsWithContext(aws.Context, *securityhub.BatchGetStandardsControlAssociationsInput, ...request.Option) (*securityhub.BatchGetStandardsControlAssociationsOutput, error)
+	BatchGetStandardsControlAssociationsRequest(*securityhub.BatchGetStandardsControlAssociationsInput) (*request.Request, *securityhub.BatchGetStandardsControlAssociationsOutput)
+
 	BatchImportFindings(*securityhub.BatchImportFindingsInput) (*securityhub.BatchImportFindingsOutput, error)
 	BatchImportFindingsWithContext(aws.Context, *securityhub.BatchImportFindingsInput, ...request.Option) (*securityhub.BatchImportFindingsOutput, error)
 	BatchImportFindingsRequest(*securityhub.BatchImportFindingsInput) (*request.Request, *securityhub.BatchImportFindingsOutput)
+
+	BatchUpdateAutomationRules(*securityhub.BatchUpdateAutomationRulesInput) (*securityhub.BatchUpdateAutomationRulesOutput, error)
+	BatchUpdateAutomationRulesWithContext(aws.Context, *securityhub.BatchUpdateAutomationRulesInput, ...request.Option) (*securityhub.BatchUpdateAutomationRulesOutput, error)
+	BatchUpdateAutomationRulesRequest(*securityhub.BatchUpdateAutomationRulesInput) (*request.Request, *securityhub.BatchUpdateAutomationRulesOutput)
 
 	BatchUpdateFindings(*securityhub.BatchUpdateFindingsInput) (*securityhub.BatchUpdateFindingsOutput, error)
 	BatchUpdateFindingsWithContext(aws.Context, *securityhub.BatchUpdateFindingsInput, ...request.Option) (*securityhub.BatchUpdateFindingsOutput, error)
 	BatchUpdateFindingsRequest(*securityhub.BatchUpdateFindingsInput) (*request.Request, *securityhub.BatchUpdateFindingsOutput)
 
+	BatchUpdateStandardsControlAssociations(*securityhub.BatchUpdateStandardsControlAssociationsInput) (*securityhub.BatchUpdateStandardsControlAssociationsOutput, error)
+	BatchUpdateStandardsControlAssociationsWithContext(aws.Context, *securityhub.BatchUpdateStandardsControlAssociationsInput, ...request.Option) (*securityhub.BatchUpdateStandardsControlAssociationsOutput, error)
+	BatchUpdateStandardsControlAssociationsRequest(*securityhub.BatchUpdateStandardsControlAssociationsInput) (*request.Request, *securityhub.BatchUpdateStandardsControlAssociationsOutput)
+
 	CreateActionTarget(*securityhub.CreateActionTargetInput) (*securityhub.CreateActionTargetOutput, error)
 	CreateActionTargetWithContext(aws.Context, *securityhub.CreateActionTargetInput, ...request.Option) (*securityhub.CreateActionTargetOutput, error)
 	CreateActionTargetRequest(*securityhub.CreateActionTargetInput) (*request.Request, *securityhub.CreateActionTargetOutput)
+
+	CreateAutomationRule(*securityhub.CreateAutomationRuleInput) (*securityhub.CreateAutomationRuleOutput, error)
+	CreateAutomationRuleWithContext(aws.Context, *securityhub.CreateAutomationRuleInput, ...request.Option) (*securityhub.CreateAutomationRuleOutput, error)
+	CreateAutomationRuleRequest(*securityhub.CreateAutomationRuleInput) (*request.Request, *securityhub.CreateAutomationRuleOutput)
 
 	CreateFindingAggregator(*securityhub.CreateFindingAggregatorInput) (*securityhub.CreateFindingAggregatorOutput, error)
 	CreateFindingAggregatorWithContext(aws.Context, *securityhub.CreateFindingAggregatorInput, ...request.Option) (*securityhub.CreateFindingAggregatorOutput, error)
@@ -211,6 +239,13 @@ type SecurityHubAPI interface {
 	GetFindingAggregatorWithContext(aws.Context, *securityhub.GetFindingAggregatorInput, ...request.Option) (*securityhub.GetFindingAggregatorOutput, error)
 	GetFindingAggregatorRequest(*securityhub.GetFindingAggregatorInput) (*request.Request, *securityhub.GetFindingAggregatorOutput)
 
+	GetFindingHistory(*securityhub.GetFindingHistoryInput) (*securityhub.GetFindingHistoryOutput, error)
+	GetFindingHistoryWithContext(aws.Context, *securityhub.GetFindingHistoryInput, ...request.Option) (*securityhub.GetFindingHistoryOutput, error)
+	GetFindingHistoryRequest(*securityhub.GetFindingHistoryInput) (*request.Request, *securityhub.GetFindingHistoryOutput)
+
+	GetFindingHistoryPages(*securityhub.GetFindingHistoryInput, func(*securityhub.GetFindingHistoryOutput, bool) bool) error
+	GetFindingHistoryPagesWithContext(aws.Context, *securityhub.GetFindingHistoryInput, func(*securityhub.GetFindingHistoryOutput, bool) bool, ...request.Option) error
+
 	GetFindings(*securityhub.GetFindingsInput) (*securityhub.GetFindingsOutput, error)
 	GetFindingsWithContext(aws.Context, *securityhub.GetFindingsInput, ...request.Option) (*securityhub.GetFindingsOutput, error)
 	GetFindingsRequest(*securityhub.GetFindingsInput) (*request.Request, *securityhub.GetFindingsOutput)
@@ -244,6 +279,10 @@ type SecurityHubAPI interface {
 	InviteMembers(*securityhub.InviteMembersInput) (*securityhub.InviteMembersOutput, error)
 	InviteMembersWithContext(aws.Context, *securityhub.InviteMembersInput, ...request.Option) (*securityhub.InviteMembersOutput, error)
 	InviteMembersRequest(*securityhub.InviteMembersInput) (*request.Request, *securityhub.InviteMembersOutput)
+
+	ListAutomationRules(*securityhub.ListAutomationRulesInput) (*securityhub.ListAutomationRulesOutput, error)
+	ListAutomationRulesWithContext(aws.Context, *securityhub.ListAutomationRulesInput, ...request.Option) (*securityhub.ListAutomationRulesOutput, error)
+	ListAutomationRulesRequest(*securityhub.ListAutomationRulesInput) (*request.Request, *securityhub.ListAutomationRulesOutput)
 
 	ListEnabledProductsForImport(*securityhub.ListEnabledProductsForImportInput) (*securityhub.ListEnabledProductsForImportOutput, error)
 	ListEnabledProductsForImportWithContext(aws.Context, *securityhub.ListEnabledProductsForImportInput, ...request.Option) (*securityhub.ListEnabledProductsForImportOutput, error)
@@ -279,6 +318,20 @@ type SecurityHubAPI interface {
 
 	ListOrganizationAdminAccountsPages(*securityhub.ListOrganizationAdminAccountsInput, func(*securityhub.ListOrganizationAdminAccountsOutput, bool) bool) error
 	ListOrganizationAdminAccountsPagesWithContext(aws.Context, *securityhub.ListOrganizationAdminAccountsInput, func(*securityhub.ListOrganizationAdminAccountsOutput, bool) bool, ...request.Option) error
+
+	ListSecurityControlDefinitions(*securityhub.ListSecurityControlDefinitionsInput) (*securityhub.ListSecurityControlDefinitionsOutput, error)
+	ListSecurityControlDefinitionsWithContext(aws.Context, *securityhub.ListSecurityControlDefinitionsInput, ...request.Option) (*securityhub.ListSecurityControlDefinitionsOutput, error)
+	ListSecurityControlDefinitionsRequest(*securityhub.ListSecurityControlDefinitionsInput) (*request.Request, *securityhub.ListSecurityControlDefinitionsOutput)
+
+	ListSecurityControlDefinitionsPages(*securityhub.ListSecurityControlDefinitionsInput, func(*securityhub.ListSecurityControlDefinitionsOutput, bool) bool) error
+	ListSecurityControlDefinitionsPagesWithContext(aws.Context, *securityhub.ListSecurityControlDefinitionsInput, func(*securityhub.ListSecurityControlDefinitionsOutput, bool) bool, ...request.Option) error
+
+	ListStandardsControlAssociations(*securityhub.ListStandardsControlAssociationsInput) (*securityhub.ListStandardsControlAssociationsOutput, error)
+	ListStandardsControlAssociationsWithContext(aws.Context, *securityhub.ListStandardsControlAssociationsInput, ...request.Option) (*securityhub.ListStandardsControlAssociationsOutput, error)
+	ListStandardsControlAssociationsRequest(*securityhub.ListStandardsControlAssociationsInput) (*request.Request, *securityhub.ListStandardsControlAssociationsOutput)
+
+	ListStandardsControlAssociationsPages(*securityhub.ListStandardsControlAssociationsInput, func(*securityhub.ListStandardsControlAssociationsOutput, bool) bool) error
+	ListStandardsControlAssociationsPagesWithContext(aws.Context, *securityhub.ListStandardsControlAssociationsInput, func(*securityhub.ListStandardsControlAssociationsOutput, bool) bool, ...request.Option) error
 
 	ListTagsForResource(*securityhub.ListTagsForResourceInput) (*securityhub.ListTagsForResourceOutput, error)
 	ListTagsForResourceWithContext(aws.Context, *securityhub.ListTagsForResourceInput, ...request.Option) (*securityhub.ListTagsForResourceOutput, error)

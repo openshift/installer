@@ -1,3 +1,80 @@
+# v1.16.13 (2023-06-15)
+
+* No change notes available for this release.
+
+# v1.16.12 (2023-06-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.11 (2023-05-04)
+
+* No change notes available for this release.
+
+# v1.16.10 (2023-04-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.9 (2023-04-10)
+
+* No change notes available for this release.
+
+# v1.16.8 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.7 (2023-04-05)
+
+* **Documentation**: Documentation updates for Identity Store CLI command reference.
+
+# v1.16.6 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.5 (2023-03-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.4 (2023-02-22)
+
+* **Bug Fix**: Prevent nil pointer dereference when retrieving error codes.
+
+# v1.16.3 (2023-02-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.2 (2023-02-15)
+
+* **Announcement**: When receiving an error response in restJson-based services, an incorrect error type may have been returned based on the content of the response. This has been fixed via PR #2012 tracked in issue #1910.
+* **Bug Fix**: Correct error type parsing for restJson services.
+
+# v1.16.1 (2023-02-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.16.0 (2023-01-05)
+
+* **Feature**: Add `ErrorCodeOverride` field to all error structs (aws/smithy-go#401).
+
+# v1.15.10 (2022-12-21)
+
+* No change notes available for this release.
+
+# v1.15.9 (2022-12-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.8 (2022-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.7 (2022-10-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.15.6 (2022-10-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.15.5 (2022-09-22)
 
 * **Documentation**: Documentation updates for the Identity Store CLI Reference.

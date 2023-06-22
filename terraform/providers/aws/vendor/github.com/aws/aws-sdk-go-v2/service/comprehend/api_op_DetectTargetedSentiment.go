@@ -13,8 +13,8 @@ import (
 
 // Inspects the input text and returns a sentiment analysis for each entity
 // identified in the text. For more information about targeted sentiment, see
-// Targeted sentiment
-// (https://docs.aws.amazon.com/comprehend/latest/dg/how-targeted-sentiment.html).
+// Targeted sentiment (https://docs.aws.amazon.com/comprehend/latest/dg/how-targeted-sentiment.html)
+// .
 func (c *Client) DetectTargetedSentiment(ctx context.Context, params *DetectTargetedSentimentInput, optFns ...func(*Options)) (*DetectTargetedSentimentOutput, error) {
 	if params == nil {
 		params = &DetectTargetedSentimentInput{}
@@ -107,6 +107,9 @@ func (c *Client) addOperationDetectTargetedSentimentMiddlewares(stack *middlewar
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDetectTargetedSentiment(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

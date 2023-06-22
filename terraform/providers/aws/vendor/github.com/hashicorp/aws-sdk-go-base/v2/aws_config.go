@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package awsbase
 
 import (
@@ -11,6 +14,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/defaults"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -20,75 +24,148 @@ import (
 	"github.com/hashicorp/aws-sdk-go-base/v2/internal/awsconfig"
 	"github.com/hashicorp/aws-sdk-go-base/v2/internal/constants"
 	"github.com/hashicorp/aws-sdk-go-base/v2/internal/endpoints"
+	"github.com/hashicorp/aws-sdk-go-base/v2/logging"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
-func GetAwsConfig(ctx context.Context, c *Config) (aws.Config, error) {
+const loggerName string = "aws-base"
+
+func configCommonLogging(ctx context.Context) context.Context {
+	// Catch as last resort, but prefer the custom masking in the request-response logging
+	return tflog.MaskAllFieldValuesRegexes(ctx, logging.UniqueIDRegex)
+}
+
+func GetAwsConfig(ctx context.Context, c *Config) (context.Context, aws.Config, error) {
+	ctx = configCommonLogging(ctx)
+
+	baseCtx, logger := logging.New(ctx, loggerName)
+	baseCtx = logging.RegisterLogger(baseCtx, logger)
+
+	logger.Trace(baseCtx, "Resolving AWS configuration")
+
 	if metadataUrl := os.Getenv("AWS_METADATA_URL"); metadataUrl != "" {
-		log.Println(`[WARN] The environment variable "AWS_METADATA_URL" is deprecated. Use "AWS_EC2_METADATA_SERVICE_ENDPOINT" instead.`)
+		logger.Warn(baseCtx, `The environment variable "AWS_METADATA_URL" is deprecated. Use "AWS_EC2_METADATA_SERVICE_ENDPOINT" instead.`)
 		if ec2MetadataServiceEndpoint := os.Getenv("AWS_EC2_METADATA_SERVICE_ENDPOINT"); ec2MetadataServiceEndpoint != "" {
 			if ec2MetadataServiceEndpoint != metadataUrl {
-				log.Printf(`[WARN] The environment variable "AWS_EC2_METADATA_SERVICE_ENDPOINT" is already set to %q. Ignoring "AWS_METADATA_URL".`, ec2MetadataServiceEndpoint)
+				logger.Warn(baseCtx, fmt.Sprintf(`The environment variable "AWS_EC2_METADATA_SERVICE_ENDPOINT" is already set to %q. Ignoring "AWS_METADATA_URL".`, ec2MetadataServiceEndpoint))
 			}
 		} else {
-			log.Printf(`[WARN] Setting "AWS_EC2_METADATA_SERVICE_ENDPOINT" to %q.`, metadataUrl)
+			logger.Warn(baseCtx, fmt.Sprintf(`Setting "AWS_EC2_METADATA_SERVICE_ENDPOINT" to %q.`, metadataUrl))
 			os.Setenv("AWS_EC2_METADATA_SERVICE_ENDPOINT", metadataUrl)
 		}
 	}
 
-	credentialsProvider, initialSource, err := getCredentialsProvider(ctx, c)
+	logger.Debug(baseCtx, "Resolving credentials provider")
+	credentialsProvider, initialSource, err := getCredentialsProvider(baseCtx, c)
 	if err != nil {
-		return aws.Config{}, err
+		return ctx, aws.Config{}, err
 	}
-	creds, _ := credentialsProvider.Retrieve(ctx)
-	log.Printf("[INFO] Retrieved credentials from %q", creds.Source)
+	creds, err := credentialsProvider.Retrieve(baseCtx)
+	if err != nil {
+		return ctx, aws.Config{}, fmt.Errorf("retrieving credentials: %w", err)
+	}
+	logger.Info(baseCtx, "Retrieved credentials", map[string]any{
+		"tf_aws.credentials_source": creds.Source,
+	})
 
-	loadOptions, err := commonLoadOptions(c)
+	loadOptions, err := commonLoadOptions(baseCtx, c)
 	if err != nil {
-		return aws.Config{}, err
+		return ctx, aws.Config{}, err
 	}
+
+	// The providers set `MaxRetries` to a very large value.
+	// Add retries here so that authentication has a reasonable number of retries
+	if c.MaxRetries != 0 {
+		loadOptions = append(
+			loadOptions,
+			config.WithRetryMaxAttempts(c.MaxRetries),
+		)
+	}
+
 	loadOptions = append(
 		loadOptions,
 		config.WithCredentialsProvider(credentialsProvider),
 	)
+
 	if initialSource == ec2rolecreds.ProviderName {
 		loadOptions = append(
 			loadOptions,
 			config.WithEC2IMDSRegion(),
 		)
 	}
-	awsConfig, err := config.LoadDefaultConfig(ctx, loadOptions...)
+
+	logger.Debug(baseCtx, "Loading configuration")
+	awsConfig, err := config.LoadDefaultConfig(baseCtx, loadOptions...)
 	if err != nil {
-		return awsConfig, fmt.Errorf("loading configuration: %w", err)
+		return ctx, aws.Config{}, fmt.Errorf("loading configuration: %w", err)
 	}
 
-	resolveRetryer(ctx, &awsConfig)
+	resolveRetryer(baseCtx, &awsConfig)
 
 	if !c.SkipCredsValidation {
-		if _, _, err := getAccountIDAndPartitionFromSTSGetCallerIdentity(ctx, stsClient(awsConfig, c)); err != nil {
-			return awsConfig, fmt.Errorf("error validating provider credentials: %w", err)
+		if _, _, err := getAccountIDAndPartitionFromSTSGetCallerIdentity(baseCtx, stsClient(baseCtx, awsConfig, c)); err != nil {
+			return ctx, awsConfig, fmt.Errorf("validating provider credentials: %w", err)
 		}
 	}
 
-	return awsConfig, nil
+	return ctx, awsConfig, nil
 }
 
 // Adapted from the per-service-client `resolveRetryer()` functions in the AWS SDK for Go v2
 // e.g. https://github.com/aws/aws-sdk-go-v2/blob/main/service/accessanalyzer/api_client.go
-// Currently only supports "standard" retry mode
 func resolveRetryer(ctx context.Context, awsConfig *aws.Config) {
-	var standardOptions []func(*retry.StandardOptions)
+	retryMode := awsConfig.RetryMode
+	if len(retryMode) == 0 {
+		defaultsMode := resolveDefaultsMode(ctx, awsConfig)
+		modeConfig, err := defaults.GetModeConfiguration(defaultsMode)
+		if err == nil {
+			retryMode = modeConfig.RetryMode
+		}
+	}
+	if len(retryMode) == 0 {
+		retryMode = aws.RetryModeStandard
+	}
 
+	var standardOptions []func(*retry.StandardOptions)
 	if v, found, _ := awsconfig.GetRetryMaxAttempts(ctx, awsConfig.ConfigSources); found && v != 0 {
 		standardOptions = append(standardOptions, func(so *retry.StandardOptions) {
 			so.MaxAttempts = v
 		})
 	}
 
+	var retryer aws.RetryerV2
+	switch retryMode {
+	case aws.RetryModeAdaptive:
+		var adaptiveOptions []func(*retry.AdaptiveModeOptions)
+		if len(standardOptions) != 0 {
+			adaptiveOptions = append(adaptiveOptions, func(ao *retry.AdaptiveModeOptions) {
+				ao.StandardOptions = append(ao.StandardOptions, standardOptions...)
+			})
+		}
+		retryer = retry.NewAdaptiveMode(adaptiveOptions...)
+
+	default:
+		retryer = retry.NewStandard(standardOptions...)
+	}
+
 	awsConfig.Retryer = func() aws.Retryer {
 		return &networkErrorShortcutter{
-			RetryerV2: retry.NewStandard(standardOptions...),
+			RetryerV2: retryer,
 		}
 	}
+}
+
+// Adapted from the per-service-client `setResolvedDefaultsMode()` functions in the AWS SDK for Go v2
+// e.g. https://github.com/aws/aws-sdk-go-v2/blob/main/service/accessanalyzer/api_client.go
+func resolveDefaultsMode(_ context.Context, awsConfig *aws.Config) aws.DefaultsMode {
+	var mode aws.DefaultsMode
+	mode.SetFromString(string(awsConfig.DefaultsMode))
+
+	if mode == aws.DefaultsModeAuto {
+		mode = defaults.ResolveDefaultsModeAuto(awsConfig.Region, awsConfig.RuntimeEnvironment)
+	}
+
+	return mode
 }
 
 // networkErrorShortcutter is used to enable networking error shortcutting
@@ -103,7 +180,8 @@ func (r *networkErrorShortcutter) RetryDelay(attempt int, err error) (time.Durat
 		if errors.As(err, &netOpErr) {
 			// It's disappointing that we have to do string matching here, rather than being able to using `errors.Is()` or even strings exported by the Go `net` package
 			if strings.Contains(netOpErr.Error(), "no such host") || strings.Contains(netOpErr.Error(), "connection refused") {
-				log.Printf("[WARN] Disabling retries after next request due to networking issue: %s", err)
+				// TODO: figure out how to get correct logger here
+				log.Printf("[WARN] Disabling retries after next request due to networking error: %s", err)
 				return 0, &retry.MaxAttemptsError{
 					Attempt: attempt,
 					Err:     err,
@@ -116,11 +194,14 @@ func (r *networkErrorShortcutter) RetryDelay(attempt int, err error) (time.Durat
 }
 
 func GetAwsAccountIDAndPartition(ctx context.Context, awsConfig aws.Config, c *Config) (string, string, error) {
+	ctx, logger := logging.New(ctx, loggerName)
+	ctx = logging.RegisterLogger(ctx, logger)
+
 	if !c.SkipCredsValidation {
-		stsClient := stsClient(awsConfig, c)
+		stsClient := stsClient(ctx, awsConfig, c)
 		accountID, partition, err := getAccountIDAndPartitionFromSTSGetCallerIdentity(ctx, stsClient)
 		if err != nil {
-			return "", "", fmt.Errorf("error validating provider credentials: %w", err)
+			return "", "", fmt.Errorf("validating provider credentials: %w", err)
 		}
 
 		return accountID, partition, nil
@@ -132,8 +213,8 @@ func GetAwsAccountIDAndPartition(ctx context.Context, awsConfig aws.Config, c *C
 			credentialsProviderName = credentialsValue.Source
 		}
 
-		iamClient := iamClient(awsConfig, c)
-		stsClient := stsClient(awsConfig, c)
+		iamClient := iamClient(ctx, awsConfig, c)
+		stsClient := stsClient(ctx, awsConfig, c)
 		accountID, partition, err := getAccountIDAndPartition(ctx, iamClient, stsClient, credentialsProviderName)
 
 		if err == nil {
@@ -149,10 +230,23 @@ func GetAwsAccountIDAndPartition(ctx context.Context, awsConfig aws.Config, c *C
 	return "", endpoints.PartitionForRegion(awsConfig.Region), nil
 }
 
-func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
-	httpClient, err := defaultHttpClient(c)
-	if err != nil {
-		return nil, err
+func commonLoadOptions(ctx context.Context, c *Config) ([]func(*config.LoadOptions) error, error) {
+	logger := logging.RetrieveLogger(ctx)
+
+	var err error
+	var httpClient config.HTTPClient
+
+	if v := c.HTTPClient; v == nil {
+		logger.Trace(ctx, "Building default HTTP client")
+		httpClient, err = defaultHttpClient(c)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		logger.Debug(ctx, "Setting HTTP client", map[string]any{
+			"tf_aws.http_client.source": configSourceProviderConfig,
+		})
+		httpClient = v
 	}
 
 	apiOptions := make([]func(*middleware.Stack) error, 0)
@@ -173,8 +267,17 @@ func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
 	})
 
 	if v := os.Getenv(constants.AppendUserAgentEnvVar); v != "" {
-		log.Printf("[DEBUG] Using additional User-Agent Info: %s", v)
+		logger.Debug(ctx, "Adding User-Agent info", map[string]any{
+			"source": fmt.Sprintf("envvar(%q)", constants.AppendUserAgentEnvVar),
+			"value":  v,
+		})
 		apiOptions = append(apiOptions, awsmiddleware.AddUserAgentKey(v))
+	}
+
+	if !c.SuppressDebugLog {
+		apiOptions = append(apiOptions, func(stack *middleware.Stack) error {
+			return stack.Deserialize.Add(&requestResponseLogger{}, middleware.After)
+		})
 	}
 
 	loadOptions := []func(*config.LoadOptions) error{
@@ -184,17 +287,10 @@ func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
 		config.WithEC2IMDSClientEnableState(c.EC2MetadataServiceEnableState),
 	}
 
-	if c.MaxRetries != 0 {
-		loadOptions = append(
-			loadOptions,
-			config.WithRetryMaxAttempts(c.MaxRetries),
-		)
-	}
-
 	if !c.SuppressDebugLog {
 		loadOptions = append(
 			loadOptions,
-			config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody|aws.LogRetries),
+			config.WithClientLogMode(aws.LogDeprecatedUsage|aws.LogRetries),
 			config.WithLogger(debugLogger{}),
 		)
 	}
@@ -234,6 +330,12 @@ func commonLoadOptions(c *Config) ([]func(*config.LoadOptions) error, error) {
 	if c.EC2MetadataServiceEndpoint != "" {
 		loadOptions = append(loadOptions,
 			config.WithEC2IMDSEndpoint(c.EC2MetadataServiceEndpoint),
+		)
+	}
+
+	if c.RetryMode != "" {
+		loadOptions = append(loadOptions,
+			config.WithRetryMode(c.RetryMode),
 		)
 	}
 

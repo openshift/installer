@@ -34,16 +34,16 @@ func (c *Client) DeleteAccessKey(ctx context.Context, params *DeleteAccessKeyInp
 type DeleteAccessKeyInput struct {
 
 	// The access key ID for the access key ID and secret access key you want to
-	// delete. This parameter allows (through its regex pattern
-	// (http://wikipedia.org/wiki/regex)) a string of characters that can consist of
-	// any upper or lowercased letter or digit.
+	// delete. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters that can consist of any upper or lowercased letter or
+	// digit.
 	//
 	// This member is required.
 	AccessKeyId *string
 
 	// The name of the user whose access key pair you want to delete. This parameter
-	// allows (through its regex pattern (http://wikipedia.org/wiki/regex)) a string of
-	// characters consisting of upper and lowercase alphanumeric characters with no
+	// allows (through its regex pattern (http://wikipedia.org/wiki/regex) ) a string
+	// of characters consisting of upper and lowercase alphanumeric characters with no
 	// spaces. You can also include any of the following characters: _+=,.@-
 	UserName *string
 
@@ -106,6 +106,9 @@ func (c *Client) addOperationDeleteAccessKeyMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteAccessKey(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

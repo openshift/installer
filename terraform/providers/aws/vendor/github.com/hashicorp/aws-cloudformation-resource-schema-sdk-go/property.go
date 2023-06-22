@@ -5,6 +5,11 @@ import (
 )
 
 const (
+	PropertyArrayTypeAttributeList = "AttributeList"
+	PropertyArrayTypeStandard      = "Standard"
+)
+
+const (
 	PropertyFormatDate                = "date"
 	PropertyFormatDateTime            = "date-time"
 	PropertyFormatEmail               = "email"
@@ -39,6 +44,7 @@ type Property struct {
 	AdditionalProperties *bool                `json:"additionalProperties,omitempty"`
 	AllOf                []*PropertySubschema `json:"allOf,omitempty"`
 	AnyOf                []*PropertySubschema `json:"anyOf,omitempty"`
+	ArrayType            *string              `json:"arrayType,omitempty"`
 	Comment              *string              `json:"$comment,omitempty"`
 	Default              interface{}          `json:"default,omitempty"`
 	Description          *string              `json:"description,omitempty"`

@@ -3192,9 +3192,9 @@ func (c *DevOpsGuru) SearchInsightsRequest(input *SearchInsightsInput) (req *req
 // SearchInsights API operation for Amazon DevOps Guru.
 //
 // Returns a list of insights in your Amazon Web Services account. You can specify
-// which insights are returned by their start time, one or more statuses (ONGOING,
-// CLOSED, and CLOSED), one or more severities (LOW, MEDIUM, and HIGH), and
-// type (REACTIVE or PROACTIVE).
+// which insights are returned by their start time, one or more statuses (ONGOING
+// or CLOSED), one or more severities (LOW, MEDIUM, and HIGH), and type (REACTIVE
+// or PROACTIVE).
 //
 // Use the Filters parameter to specify status and severity search parameters.
 // Use the Type parameter to specify REACTIVE or PROACTIVE in your search.
@@ -4561,6 +4561,10 @@ func (s *CloudFormationCostEstimationResourceCollectionFilter) SetStackNames(v [
 type CloudFormationHealth struct {
 	_ struct{} `type:"structure"`
 
+	// Number of resources that DevOps Guru is monitoring in your account that are
+	// specified by an Amazon Web Services CloudFormation stack.
+	AnalyzedResourceCount *int64 `type:"long"`
+
 	// Information about the health of the Amazon Web Services resources in your
 	// account that are specified by an Amazon Web Services CloudFormation stack,
 	// including the number of open proactive, open reactive insights, and the Mean
@@ -4587,6 +4591,12 @@ func (s CloudFormationHealth) String() string {
 // value will be replaced with "sensitive".
 func (s CloudFormationHealth) GoString() string {
 	return s.String()
+}
+
+// SetAnalyzedResourceCount sets the AnalyzedResourceCount field's value.
+func (s *CloudFormationHealth) SetAnalyzedResourceCount(v int64) *CloudFormationHealth {
+	s.AnalyzedResourceCount = &v
+	return s
 }
 
 // SetInsight sets the Insight field's value.
@@ -4873,7 +4883,7 @@ type CostEstimationResourceCollectionFilter struct {
 	// tag to resources from different services to indicate that the resources are
 	// related. For example, you can assign the same tag to an Amazon DynamoDB table
 	// resource that you assign to an Lambda function. For more information about
-	// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+	// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 	// whitepaper.
 	//
 	// Each Amazon Web Services tag has two parts.
@@ -5090,6 +5100,10 @@ func (s DescribeAccountHealthInput) GoString() string {
 type DescribeAccountHealthOutput struct {
 	_ struct{} `type:"structure"`
 
+	// Number of resources that DevOps Guru is monitoring in your Amazon Web Services
+	// account.
+	AnalyzedResourceCount *int64 `type:"long"`
+
 	// An integer that specifies the number of metrics that have been analyzed in
 	// your Amazon Web Services account.
 	//
@@ -5131,6 +5145,12 @@ func (s DescribeAccountHealthOutput) String() string {
 // value will be replaced with "sensitive".
 func (s DescribeAccountHealthOutput) GoString() string {
 	return s.String()
+}
+
+// SetAnalyzedResourceCount sets the AnalyzedResourceCount field's value.
+func (s *DescribeAccountHealthOutput) SetAnalyzedResourceCount(v int64) *DescribeAccountHealthOutput {
+	s.AnalyzedResourceCount = &v
+	return s
 }
 
 // SetMetricsAnalyzed sets the MetricsAnalyzed field's value.
@@ -5956,7 +5976,7 @@ type DescribeOrganizationResourceCollectionHealthOutput struct {
 	// tag to resources from different services to indicate that the resources are
 	// related. For example, you can assign the same tag to an Amazon DynamoDB table
 	// resource that you assign to an Lambda function. For more information about
-	// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+	// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 	// whitepaper.
 	//
 	// Each Amazon Web Services tag has two parts.
@@ -6119,7 +6139,7 @@ type DescribeResourceCollectionHealthOutput struct {
 	// tag to resources from different services to indicate that the resources are
 	// related. For example, you can assign the same tag to an Amazon DynamoDB table
 	// resource that you assign to an Lambda function. For more information about
-	// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+	// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 	// whitepaper.
 	//
 	// Each Amazon Web Services tag has two parts.
@@ -6992,11 +7012,46 @@ func (s *InternalServerException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Specifies one or more service names that are used to list anomalies.
+type ListAnomaliesForInsightFilters struct {
+	_ struct{} `type:"structure"`
+
+	// A collection of the names of Amazon Web Services services.
+	ServiceCollection *ServiceCollection `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListAnomaliesForInsightFilters) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListAnomaliesForInsightFilters) GoString() string {
+	return s.String()
+}
+
+// SetServiceCollection sets the ServiceCollection field's value.
+func (s *ListAnomaliesForInsightFilters) SetServiceCollection(v *ServiceCollection) *ListAnomaliesForInsightFilters {
+	s.ServiceCollection = v
+	return s
+}
+
 type ListAnomaliesForInsightInput struct {
 	_ struct{} `type:"structure"`
 
 	// The ID of the Amazon Web Services account.
 	AccountId *string `min:"12" type:"string"`
+
+	// Specifies one or more service names that are used to list anomalies.
+	Filters *ListAnomaliesForInsightFilters `type:"structure"`
 
 	// The ID of the insight. The returned anomalies belong to this insight.
 	//
@@ -7062,6 +7117,12 @@ func (s *ListAnomaliesForInsightInput) Validate() error {
 // SetAccountId sets the AccountId field's value.
 func (s *ListAnomaliesForInsightInput) SetAccountId(v string) *ListAnomaliesForInsightInput {
 	s.AccountId = &v
+	return s
+}
+
+// SetFilters sets the Filters field's value.
+func (s *ListAnomaliesForInsightInput) SetFilters(v *ListAnomaliesForInsightFilters) *ListAnomaliesForInsightInput {
+	s.Filters = v
 	return s
 }
 
@@ -7955,9 +8016,7 @@ type ListMonitoredResourcesInput struct {
 
 	// Filters to determine which monitored resources you want to retrieve. You
 	// can filter by resource type or resource permission status.
-	//
-	// Filters is a required field
-	Filters *ListMonitoredResourcesFilters `type:"structure" required:"true"`
+	Filters *ListMonitoredResourcesFilters `type:"structure"`
 
 	// The maximum number of results to return with a single call. To retrieve the
 	// remaining results, make another call with the returned nextToken value.
@@ -7989,9 +8048,6 @@ func (s ListMonitoredResourcesInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *ListMonitoredResourcesInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "ListMonitoredResourcesInput"}
-	if s.Filters == nil {
-		invalidParams.Add(request.NewErrParamRequired("Filters"))
-	}
 	if s.MaxResults != nil && *s.MaxResults < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
 	}
@@ -8626,8 +8682,20 @@ func (s *LogsAnomalyDetectionIntegrationConfig) SetOptInStatus(v string) *LogsAn
 type MonitoredResourceIdentifier struct {
 	_ struct{} `type:"structure"`
 
+	// The time at which DevOps Guru last updated this resource.
+	LastUpdated *time.Time `type:"timestamp"`
+
 	// The name of the resource being monitored.
 	MonitoredResourceName *string `min:"1" type:"string"`
+
+	// A collection of Amazon Web Services resources supported by DevOps Guru. The
+	// two types of Amazon Web Services resource collections supported are Amazon
+	// Web Services CloudFormation stacks and Amazon Web Services resources that
+	// contain the same Amazon Web Services tag. DevOps Guru can be configured to
+	// analyze the Amazon Web Services resources that are defined in the stacks
+	// or that are tagged using the same tag key. You can specify up to 500 Amazon
+	// Web Services CloudFormation stacks.
+	ResourceCollection *ResourceCollection `type:"structure"`
 
 	// The permission status of a resource.
 	ResourcePermission *string `type:"string" enum:"ResourcePermission"`
@@ -8654,9 +8722,21 @@ func (s MonitoredResourceIdentifier) GoString() string {
 	return s.String()
 }
 
+// SetLastUpdated sets the LastUpdated field's value.
+func (s *MonitoredResourceIdentifier) SetLastUpdated(v time.Time) *MonitoredResourceIdentifier {
+	s.LastUpdated = &v
+	return s
+}
+
 // SetMonitoredResourceName sets the MonitoredResourceName field's value.
 func (s *MonitoredResourceIdentifier) SetMonitoredResourceName(v string) *MonitoredResourceIdentifier {
 	s.MonitoredResourceName = &v
+	return s
+}
+
+// SetResourceCollection sets the ResourceCollection field's value.
+func (s *MonitoredResourceIdentifier) SetResourceCollection(v *ResourceCollection) *MonitoredResourceIdentifier {
+	s.ResourceCollection = v
 	return s
 }
 
@@ -9525,6 +9605,9 @@ type ProactiveAnomaly struct {
 	// of related anomalies.
 	AssociatedInsightId *string `min:"1" type:"string"`
 
+	// A description of the proactive anomaly.
+	Description *string `type:"string"`
+
 	// The ID of a proactive anomaly.
 	Id *string `min:"1" type:"string"`
 
@@ -9607,6 +9690,12 @@ func (s *ProactiveAnomaly) SetAssociatedInsightId(v string) *ProactiveAnomaly {
 	return s
 }
 
+// SetDescription sets the Description field's value.
+func (s *ProactiveAnomaly) SetDescription(v string) *ProactiveAnomaly {
+	s.Description = &v
+	return s
+}
+
 // SetId sets the Id field's value.
 func (s *ProactiveAnomaly) SetId(v string) *ProactiveAnomaly {
 	s.Id = &v
@@ -9680,6 +9769,9 @@ type ProactiveAnomalySummary struct {
 	// The ID of the insight that contains this anomaly. An insight is composed
 	// of related anomalies.
 	AssociatedInsightId *string `min:"1" type:"string"`
+
+	// A description of the proactive anomaly.
+	Description *string `type:"string"`
 
 	// The ID of the anomaly.
 	Id *string `min:"1" type:"string"`
@@ -9760,6 +9852,12 @@ func (s *ProactiveAnomalySummary) SetAnomalyTimeRange(v *AnomalyTimeRange) *Proa
 // SetAssociatedInsightId sets the AssociatedInsightId field's value.
 func (s *ProactiveAnomalySummary) SetAssociatedInsightId(v string) *ProactiveAnomalySummary {
 	s.AssociatedInsightId = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *ProactiveAnomalySummary) SetDescription(v string) *ProactiveAnomalySummary {
+	s.Description = &v
 	return s
 }
 
@@ -11328,7 +11426,7 @@ type ResourceCollection struct {
 	// tag to resources from different services to indicate that the resources are
 	// related. For example, you can assign the same tag to an Amazon DynamoDB table
 	// resource that you assign to an Lambda function. For more information about
-	// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+	// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 	// whitepaper.
 	//
 	// Each Amazon Web Services tag has two parts.
@@ -11422,7 +11520,7 @@ type ResourceCollectionFilter struct {
 	// tag to resources from different services to indicate that the resources are
 	// related. For example, you can assign the same tag to an Amazon DynamoDB table
 	// resource that you assign to an Lambda function. For more information about
-	// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+	// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 	// whitepaper.
 	//
 	// Each Amazon Web Services tag has two parts.
@@ -11551,8 +11649,12 @@ func (s *ResourceNotFoundException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-// Specifies one or more severity values and one or more status values that
-// are used to search for insights.
+// Specifies values used to filter responses when searching for insights. You
+// can use a ResourceCollection, ServiceCollection, array of severities, and
+// an array of status values. Each filter type contains one or more values to
+// search for. If you specify multiple filter types, the filter types are joined
+// with an AND, and the request returns only results that match all of the specified
+// filters.
 type SearchInsightsFilters struct {
 	_ struct{} `type:"structure"`
 
@@ -12072,6 +12174,10 @@ func (s *ServiceCollection) SetServiceNames(v []*string) *ServiceCollection {
 type ServiceHealth struct {
 	_ struct{} `type:"structure"`
 
+	// Number of resources that DevOps Guru is monitoring in an analyzed Amazon
+	// Web Services service.
+	AnalyzedResourceCount *int64 `type:"long"`
+
 	// Represents the health of an Amazon Web Services service. This is a ServiceInsightHealth
 	// that contains the number of open proactive and reactive insights for this
 	// service.
@@ -12097,6 +12203,12 @@ func (s ServiceHealth) String() string {
 // value will be replaced with "sensitive".
 func (s ServiceHealth) GoString() string {
 	return s.String()
+}
+
+// SetAnalyzedResourceCount sets the AnalyzedResourceCount field's value.
+func (s *ServiceHealth) SetAnalyzedResourceCount(v int64) *ServiceHealth {
+	s.AnalyzedResourceCount = &v
+	return s
 }
 
 // SetInsight sets the Insight field's value.
@@ -12536,7 +12648,7 @@ func (s *StartTimeRange) SetToTime(v time.Time) *StartTimeRange {
 // tag to resources from different services to indicate that the resources are
 // related. For example, you can assign the same tag to an Amazon DynamoDB table
 // resource that you assign to an Lambda function. For more information about
-// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 // whitepaper.
 //
 // Each Amazon Web Services tag has two parts.
@@ -12801,6 +12913,10 @@ func (s *TagCostEstimationResourceCollectionFilter) SetTagValues(v []*string) *T
 type TagHealth struct {
 	_ struct{} `type:"structure"`
 
+	// Number of resources that DevOps Guru is monitoring in your account that are
+	// specified by an Amazon Web Services tag.
+	AnalyzedResourceCount *int64 `type:"long"`
+
 	// An Amazon Web Services tag key that is used to identify the Amazon Web Services
 	// resources that DevOps Guru analyzes. All Amazon Web Services resources in
 	// your account and Region tagged with this key make up your DevOps Guru application
@@ -12848,6 +12964,12 @@ func (s TagHealth) String() string {
 // value will be replaced with "sensitive".
 func (s TagHealth) GoString() string {
 	return s.String()
+}
+
+// SetAnalyzedResourceCount sets the AnalyzedResourceCount field's value.
+func (s *TagHealth) SetAnalyzedResourceCount(v int64) *TagHealth {
+	s.AnalyzedResourceCount = &v
+	return s
 }
 
 // SetAppBoundaryKey sets the AppBoundaryKey field's value.
@@ -13088,7 +13210,7 @@ type UpdateResourceCollectionFilter struct {
 	// tag to resources from different services to indicate that the resources are
 	// related. For example, you can assign the same tag to an Amazon DynamoDB table
 	// resource that you assign to an Lambda function. For more information about
-	// using tags, see the Tagging best practices (https://d1.awsstatic.com/whitepapers/aws-tagging-best-practices.pdf)
+	// using tags, see the Tagging best practices (https://docs.aws.amazon.com/whitepapers/latest/tagging-best-practices/tagging-best-practices.html)
 	// whitepaper.
 	//
 	// Each Amazon Web Services tag has two parts.
@@ -14051,12 +14173,116 @@ func ResourcePermission_Values() []string {
 const (
 	// ResourceTypeFilterLogGroups is a ResourceTypeFilter enum value
 	ResourceTypeFilterLogGroups = "LOG_GROUPS"
+
+	// ResourceTypeFilterCloudfrontDistribution is a ResourceTypeFilter enum value
+	ResourceTypeFilterCloudfrontDistribution = "CLOUDFRONT_DISTRIBUTION"
+
+	// ResourceTypeFilterDynamodbTable is a ResourceTypeFilter enum value
+	ResourceTypeFilterDynamodbTable = "DYNAMODB_TABLE"
+
+	// ResourceTypeFilterEc2NatGateway is a ResourceTypeFilter enum value
+	ResourceTypeFilterEc2NatGateway = "EC2_NAT_GATEWAY"
+
+	// ResourceTypeFilterEcsCluster is a ResourceTypeFilter enum value
+	ResourceTypeFilterEcsCluster = "ECS_CLUSTER"
+
+	// ResourceTypeFilterEcsService is a ResourceTypeFilter enum value
+	ResourceTypeFilterEcsService = "ECS_SERVICE"
+
+	// ResourceTypeFilterEksCluster is a ResourceTypeFilter enum value
+	ResourceTypeFilterEksCluster = "EKS_CLUSTER"
+
+	// ResourceTypeFilterElasticBeanstalkEnvironment is a ResourceTypeFilter enum value
+	ResourceTypeFilterElasticBeanstalkEnvironment = "ELASTIC_BEANSTALK_ENVIRONMENT"
+
+	// ResourceTypeFilterElasticLoadBalancerLoadBalancer is a ResourceTypeFilter enum value
+	ResourceTypeFilterElasticLoadBalancerLoadBalancer = "ELASTIC_LOAD_BALANCER_LOAD_BALANCER"
+
+	// ResourceTypeFilterElasticLoadBalancingV2LoadBalancer is a ResourceTypeFilter enum value
+	ResourceTypeFilterElasticLoadBalancingV2LoadBalancer = "ELASTIC_LOAD_BALANCING_V2_LOAD_BALANCER"
+
+	// ResourceTypeFilterElasticLoadBalancingV2TargetGroup is a ResourceTypeFilter enum value
+	ResourceTypeFilterElasticLoadBalancingV2TargetGroup = "ELASTIC_LOAD_BALANCING_V2_TARGET_GROUP"
+
+	// ResourceTypeFilterElasticacheCacheCluster is a ResourceTypeFilter enum value
+	ResourceTypeFilterElasticacheCacheCluster = "ELASTICACHE_CACHE_CLUSTER"
+
+	// ResourceTypeFilterElasticsearchDomain is a ResourceTypeFilter enum value
+	ResourceTypeFilterElasticsearchDomain = "ELASTICSEARCH_DOMAIN"
+
+	// ResourceTypeFilterKinesisStream is a ResourceTypeFilter enum value
+	ResourceTypeFilterKinesisStream = "KINESIS_STREAM"
+
+	// ResourceTypeFilterLambdaFunction is a ResourceTypeFilter enum value
+	ResourceTypeFilterLambdaFunction = "LAMBDA_FUNCTION"
+
+	// ResourceTypeFilterOpenSearchServiceDomain is a ResourceTypeFilter enum value
+	ResourceTypeFilterOpenSearchServiceDomain = "OPEN_SEARCH_SERVICE_DOMAIN"
+
+	// ResourceTypeFilterRdsDbInstance is a ResourceTypeFilter enum value
+	ResourceTypeFilterRdsDbInstance = "RDS_DB_INSTANCE"
+
+	// ResourceTypeFilterRdsDbCluster is a ResourceTypeFilter enum value
+	ResourceTypeFilterRdsDbCluster = "RDS_DB_CLUSTER"
+
+	// ResourceTypeFilterRedshiftCluster is a ResourceTypeFilter enum value
+	ResourceTypeFilterRedshiftCluster = "REDSHIFT_CLUSTER"
+
+	// ResourceTypeFilterRoute53HostedZone is a ResourceTypeFilter enum value
+	ResourceTypeFilterRoute53HostedZone = "ROUTE53_HOSTED_ZONE"
+
+	// ResourceTypeFilterRoute53HealthCheck is a ResourceTypeFilter enum value
+	ResourceTypeFilterRoute53HealthCheck = "ROUTE53_HEALTH_CHECK"
+
+	// ResourceTypeFilterS3Bucket is a ResourceTypeFilter enum value
+	ResourceTypeFilterS3Bucket = "S3_BUCKET"
+
+	// ResourceTypeFilterSagemakerEndpoint is a ResourceTypeFilter enum value
+	ResourceTypeFilterSagemakerEndpoint = "SAGEMAKER_ENDPOINT"
+
+	// ResourceTypeFilterSnsTopic is a ResourceTypeFilter enum value
+	ResourceTypeFilterSnsTopic = "SNS_TOPIC"
+
+	// ResourceTypeFilterSqsQueue is a ResourceTypeFilter enum value
+	ResourceTypeFilterSqsQueue = "SQS_QUEUE"
+
+	// ResourceTypeFilterStepFunctionsActivity is a ResourceTypeFilter enum value
+	ResourceTypeFilterStepFunctionsActivity = "STEP_FUNCTIONS_ACTIVITY"
+
+	// ResourceTypeFilterStepFunctionsStateMachine is a ResourceTypeFilter enum value
+	ResourceTypeFilterStepFunctionsStateMachine = "STEP_FUNCTIONS_STATE_MACHINE"
 )
 
 // ResourceTypeFilter_Values returns all elements of the ResourceTypeFilter enum
 func ResourceTypeFilter_Values() []string {
 	return []string{
 		ResourceTypeFilterLogGroups,
+		ResourceTypeFilterCloudfrontDistribution,
+		ResourceTypeFilterDynamodbTable,
+		ResourceTypeFilterEc2NatGateway,
+		ResourceTypeFilterEcsCluster,
+		ResourceTypeFilterEcsService,
+		ResourceTypeFilterEksCluster,
+		ResourceTypeFilterElasticBeanstalkEnvironment,
+		ResourceTypeFilterElasticLoadBalancerLoadBalancer,
+		ResourceTypeFilterElasticLoadBalancingV2LoadBalancer,
+		ResourceTypeFilterElasticLoadBalancingV2TargetGroup,
+		ResourceTypeFilterElasticacheCacheCluster,
+		ResourceTypeFilterElasticsearchDomain,
+		ResourceTypeFilterKinesisStream,
+		ResourceTypeFilterLambdaFunction,
+		ResourceTypeFilterOpenSearchServiceDomain,
+		ResourceTypeFilterRdsDbInstance,
+		ResourceTypeFilterRdsDbCluster,
+		ResourceTypeFilterRedshiftCluster,
+		ResourceTypeFilterRoute53HostedZone,
+		ResourceTypeFilterRoute53HealthCheck,
+		ResourceTypeFilterS3Bucket,
+		ResourceTypeFilterSagemakerEndpoint,
+		ResourceTypeFilterSnsTopic,
+		ResourceTypeFilterSqsQueue,
+		ResourceTypeFilterStepFunctionsActivity,
+		ResourceTypeFilterStepFunctionsStateMachine,
 	}
 }
 

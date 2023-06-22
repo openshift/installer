@@ -4,9 +4,9 @@
 // the tfprotov5.ProviderServer (https://pkg.go.dev/github.com/hashicorp/terraform-plugin-go/tfprotov5#ProviderServer)
 // interface, such as:
 //
-//     - https://pkg.go.dev/github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server
-//     - https://pkg.go.dev/github.com/hashicorp/terraform-plugin-mux/tf6to5server
-//     - https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema
+//   - https://pkg.go.dev/github.com/hashicorp/terraform-plugin-go/tfprotov5/tf5server
+//   - https://pkg.go.dev/github.com/hashicorp/terraform-plugin-mux/tf6to5server
+//   - https://pkg.go.dev/github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema
 //
 // Refer to the NewMuxServer() function for creating a combined server.
 package tf5muxserver

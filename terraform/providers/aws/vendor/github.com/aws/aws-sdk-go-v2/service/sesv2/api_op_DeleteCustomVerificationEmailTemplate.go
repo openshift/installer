@@ -11,9 +11,8 @@ import (
 )
 
 // Deletes an existing custom verification email template. For more information
-// about custom verification email templates, see Using Custom Verification Email
-// Templates
-// (https://docs.aws.amazon.com/ses/latest/DeveloperGuide/send-email-verify-address-custom.html)
+// about custom verification email templates, see Using custom verification email
+// templates (https://docs.aws.amazon.com/ses/latest/dg/creating-identities.html#send-email-verify-address-custom)
 // in the Amazon SES Developer Guide. You can execute this operation no more than
 // once per second.
 func (c *Client) DeleteCustomVerificationEmailTemplate(ctx context.Context, params *DeleteCustomVerificationEmailTemplateInput, optFns ...func(*Options)) (*DeleteCustomVerificationEmailTemplateOutput, error) {
@@ -42,8 +41,8 @@ type DeleteCustomVerificationEmailTemplateInput struct {
 	noSmithyDocumentSerde
 }
 
-// If the action is successful, the service sends back an HTTP 200 response with an
-// empty HTTP body.
+// If the action is successful, the service sends back an HTTP 200 response with
+// an empty HTTP body.
 type DeleteCustomVerificationEmailTemplateOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -100,6 +99,9 @@ func (c *Client) addOperationDeleteCustomVerificationEmailTemplateMiddlewares(st
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteCustomVerificationEmailTemplate(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

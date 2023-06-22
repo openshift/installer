@@ -34,8 +34,8 @@ type UntagResourceInput struct {
 	// This member is required.
 	ResourceArn *string
 
-	// The initial part of a key-value pair that forms a tag being removed from a given
-	// resource. For example, a tag with "Sales" as the key might be added to a
+	// The initial part of a key-value pair that forms a tag being removed from a
+	// given resource. For example, a tag with "Sales" as the key might be added to a
 	// resource to indicate its use by the sales department. Keys must be unique and
 	// cannot be duplicated for a particular resource.
 	//
@@ -101,6 +101,9 @@ func (c *Client) addOperationUntagResourceMiddlewares(stack *middleware.Stack, o
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUntagResource(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

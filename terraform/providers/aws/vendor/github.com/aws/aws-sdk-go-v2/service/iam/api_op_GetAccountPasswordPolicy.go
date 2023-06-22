@@ -14,8 +14,8 @@ import (
 // Retrieves the password policy for the Amazon Web Services account. This tells
 // you the complexity requirements and mandatory rotation periods for the IAM user
 // passwords in your account. For more information about using a password policy,
-// see Managing an IAM password policy
-// (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html).
+// see Managing an IAM password policy (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_ManagingPasswordPolicies.html)
+// .
 func (c *Client) GetAccountPasswordPolicy(ctx context.Context, params *GetAccountPasswordPolicyInput, optFns ...func(*Options)) (*GetAccountPasswordPolicyOutput, error) {
 	if params == nil {
 		params = &GetAccountPasswordPolicyInput{}
@@ -95,6 +95,9 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetAccountPasswordPolicy(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

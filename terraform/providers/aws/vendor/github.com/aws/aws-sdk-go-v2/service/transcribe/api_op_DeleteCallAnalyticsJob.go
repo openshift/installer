@@ -10,8 +10,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes a Call Analytics job. To use this operation, specify the name of the job
-// you want to delete using CallAnalyticsJobName. Job names are case sensitive.
+// Deletes a Call Analytics job. To use this operation, specify the name of the
+// job you want to delete using CallAnalyticsJobName . Job names are case sensitive.
 func (c *Client) DeleteCallAnalyticsJob(ctx context.Context, params *DeleteCallAnalyticsJobInput, optFns ...func(*Options)) (*DeleteCallAnalyticsJobOutput, error) {
 	if params == nil {
 		params = &DeleteCallAnalyticsJobInput{}
@@ -94,6 +94,9 @@ func (c *Client) addOperationDeleteCallAnalyticsJobMiddlewares(stack *middleware
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteCallAnalyticsJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

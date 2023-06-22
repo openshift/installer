@@ -12,7 +12,7 @@ import (
 )
 
 // Creates a relationship between a member and a group. The following identifiers
-// must be specified: GroupId, IdentityStoreId, and MemberId.
+// must be specified: GroupId , IdentityStoreId , and MemberId .
 func (c *Client) CreateGroupMembership(ctx context.Context, params *CreateGroupMembershipInput, optFns ...func(*Options)) (*CreateGroupMembershipOutput, error) {
 	if params == nil {
 		params = &CreateGroupMembershipInput{}
@@ -117,6 +117,9 @@ func (c *Client) addOperationCreateGroupMembershipMiddlewares(stack *middleware.
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateGroupMembership(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

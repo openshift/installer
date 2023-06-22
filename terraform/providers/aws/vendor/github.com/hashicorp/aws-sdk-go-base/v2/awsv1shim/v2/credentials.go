@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package awsv1shim
 
 import ( // nosemgrep: no-sdkv2-imports-in-awsv1shim

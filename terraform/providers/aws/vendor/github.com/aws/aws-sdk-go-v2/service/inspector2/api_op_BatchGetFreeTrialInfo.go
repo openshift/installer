@@ -39,8 +39,8 @@ type BatchGetFreeTrialInfoInput struct {
 
 type BatchGetFreeTrialInfoOutput struct {
 
-	// An array of objects that provide Amazon Inspector free trial details for each of
-	// the requested accounts.
+	// An array of objects that provide Amazon Inspector free trial details for each
+	// of the requested accounts.
 	//
 	// This member is required.
 	Accounts []types.FreeTrialAccountInfo
@@ -106,6 +106,9 @@ func (c *Client) addOperationBatchGetFreeTrialInfoMiddlewares(stack *middleware.
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opBatchGetFreeTrialInfo(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

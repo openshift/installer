@@ -126,6 +126,10 @@ const (
 	//    * ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED: You attempted to exceed the number
 	//    of accounts that you can create in one day.
 	//
+	//    * ACCOUNT_CREATION_NOT_COMPLETE: Your account setup isn't complete or
+	//    your account isn't fully active. You must complete the account setup before
+	//    you create an organization.
+	//
 	//    * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
 	//    the number of accounts in an organization. If you need more accounts,
 	//    contact Amazon Web Services Support (https://docs.aws.amazon.com/support/home#/)
@@ -573,6 +577,12 @@ const (
 	// in the Organizations User Guide.
 	ErrCodePolicyTypeNotEnabledException = "PolicyTypeNotEnabledException"
 
+	// ErrCodeResourcePolicyNotFoundException for service response error code
+	// "ResourcePolicyNotFoundException".
+	//
+	// We can't find a resource policy request with the parameter that you specified.
+	ErrCodeResourcePolicyNotFoundException = "ResourcePolicyNotFoundException"
+
 	// ErrCodeRootNotFoundException for service response error code
 	// "RootNotFoundException".
 	//
@@ -657,6 +667,7 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"PolicyTypeAlreadyEnabledException":              newErrorPolicyTypeAlreadyEnabledException,
 	"PolicyTypeNotAvailableForOrganizationException": newErrorPolicyTypeNotAvailableForOrganizationException,
 	"PolicyTypeNotEnabledException":                  newErrorPolicyTypeNotEnabledException,
+	"ResourcePolicyNotFoundException":                newErrorResourcePolicyNotFoundException,
 	"RootNotFoundException":                          newErrorRootNotFoundException,
 	"ServiceException":                               newErrorServiceException,
 	"SourceParentNotFoundException":                  newErrorSourceParentNotFoundException,

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package provider contains all interfaces, request types, and response
 // types for a provider implementation.
 //

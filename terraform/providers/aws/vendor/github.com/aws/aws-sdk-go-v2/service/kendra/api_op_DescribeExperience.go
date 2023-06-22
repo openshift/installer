@@ -14,8 +14,8 @@ import (
 
 // Gets information about your Amazon Kendra experience such as a search
 // application. For more information on creating a search application experience,
-// see Building a search experience with no code
-// (https://docs.aws.amazon.com/kendra/latest/dg/deploying-search-experience-no-code.html).
+// see Building a search experience with no code (https://docs.aws.amazon.com/kendra/latest/dg/deploying-search-experience-no-code.html)
+// .
 func (c *Client) DescribeExperience(ctx context.Context, params *DescribeExperienceInput, optFns ...func(*Options)) (*DescribeExperienceOutput, error) {
 	if params == nil {
 		params = &DescribeExperienceInput{}
@@ -49,12 +49,12 @@ type DescribeExperienceInput struct {
 type DescribeExperienceOutput struct {
 
 	// Shows the configuration information for your Amazon Kendra experience. This
-	// includes ContentSourceConfiguration, which specifies the data source IDs and/or
-	// FAQ IDs, and UserIdentityConfiguration, which specifies the user or group
+	// includes ContentSourceConfiguration , which specifies the data source IDs and/or
+	// FAQ IDs, and UserIdentityConfiguration , which specifies the user or group
 	// information to grant access to your Amazon Kendra experience.
 	Configuration *types.ExperienceConfiguration
 
-	// Shows the date-time your Amazon Kendra experience was created.
+	// The Unix timestamp when your Amazon Kendra experience was created.
 	CreatedAt *time.Time
 
 	// Shows the description for your Amazon Kendra experience.
@@ -82,11 +82,11 @@ type DescribeExperienceOutput struct {
 	RoleArn *string
 
 	// The current processing status of your Amazon Kendra experience. When the status
-	// is ACTIVE, your Amazon Kendra experience is ready to use. When the status is
-	// FAILED, the ErrorMessage field contains the reason that this failed.
+	// is ACTIVE , your Amazon Kendra experience is ready to use. When the status is
+	// FAILED , the ErrorMessage field contains the reason that this failed.
 	Status types.ExperienceStatus
 
-	// Shows the date-time your Amazon Kendra experience was last updated.
+	// The Unix timestamp when your Amazon Kendra experience was last updated.
 	UpdatedAt *time.Time
 
 	// Metadata pertaining to the operation's result.
@@ -144,6 +144,9 @@ func (c *Client) addOperationDescribeExperienceMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeExperience(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

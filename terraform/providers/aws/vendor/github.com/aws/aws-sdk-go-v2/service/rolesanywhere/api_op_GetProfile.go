@@ -11,7 +11,7 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Gets a profile. Required permissions: rolesanywhere:GetProfile.
+// Gets a profile. Required permissions: rolesanywhere:GetProfile .
 func (c *Client) GetProfile(ctx context.Context, params *GetProfileInput, optFns ...func(*Options)) (*GetProfileOutput, error) {
 	if params == nil {
 		params = &GetProfileInput{}
@@ -97,6 +97,9 @@ func (c *Client) addOperationGetProfileMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetProfile(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

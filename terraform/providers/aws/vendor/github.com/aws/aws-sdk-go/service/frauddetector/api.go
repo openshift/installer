@@ -661,6 +661,101 @@ func (c *FraudDetector) CreateDetectorVersionWithContext(ctx aws.Context, input 
 	return out, req.Send()
 }
 
+const opCreateList = "CreateList"
+
+// CreateListRequest generates a "aws/request.Request" representing the
+// client's request for the CreateList operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateList for more information on using the CreateList
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateListRequest method.
+//	req, resp := client.CreateListRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/CreateList
+func (c *FraudDetector) CreateListRequest(input *CreateListInput) (req *request.Request, output *CreateListOutput) {
+	op := &request.Operation{
+		Name:       opCreateList,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateListInput{}
+	}
+
+	output = &CreateListOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// CreateList API operation for Amazon Fraud Detector.
+//
+// Creates a list.
+//
+// List is a set of input data for a variable in your event dataset. You use
+// the input data in a rule that's associated with your detector. For more information,
+// see Lists (https://docs.aws.amazon.com/frauddetector/latest/ug/lists.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Fraud Detector's
+// API operation CreateList for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     An exception indicating a specified value is not allowed.
+//
+//   - InternalServerException
+//     An exception indicating an internal server error.
+//
+//   - ThrottlingException
+//     An exception indicating a throttling error.
+//
+//   - AccessDeniedException
+//     An exception indicating Amazon Fraud Detector does not have the needed permissions.
+//     This can occur if you submit a request, such as PutExternalModel, that specifies
+//     a role that is not in your account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/CreateList
+func (c *FraudDetector) CreateList(input *CreateListInput) (*CreateListOutput, error) {
+	req, out := c.CreateListRequest(input)
+	return out, req.Send()
+}
+
+// CreateListWithContext is the same as CreateList with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateList for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) CreateListWithContext(ctx aws.Context, input *CreateListInput, opts ...request.Option) (*CreateListOutput, error) {
+	req, out := c.CreateListRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateModel = "CreateModel"
 
 // CreateModelRequest generates a "aws/request.Request" representing the
@@ -1554,7 +1649,9 @@ func (c *FraudDetector) DeleteEventRequest(input *DeleteEventInput) (req *reques
 // Deletes the specified event.
 //
 // When you delete an event, Amazon Fraud Detector permanently deletes that
-// event and the event data is no longer stored in Amazon Fraud Detector.
+// event and the event data is no longer stored in Amazon Fraud Detector. If
+// deleteAuditHistory is True, event data is available through search for up
+// to 30 seconds after the delete operation is completed.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1987,6 +2084,103 @@ func (c *FraudDetector) DeleteLabel(input *DeleteLabelInput) (*DeleteLabelOutput
 // for more information on using Contexts.
 func (c *FraudDetector) DeleteLabelWithContext(ctx aws.Context, input *DeleteLabelInput, opts ...request.Option) (*DeleteLabelOutput, error) {
 	req, out := c.DeleteLabelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteList = "DeleteList"
+
+// DeleteListRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteList operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteList for more information on using the DeleteList
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteListRequest method.
+//	req, resp := client.DeleteListRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/DeleteList
+func (c *FraudDetector) DeleteListRequest(input *DeleteListInput) (req *request.Request, output *DeleteListOutput) {
+	op := &request.Operation{
+		Name:       opDeleteList,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteListInput{}
+	}
+
+	output = &DeleteListOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteList API operation for Amazon Fraud Detector.
+//
+// Deletes the list, provided it is not used in a rule.
+//
+// When you delete a list, Amazon Fraud Detector permanently deletes that list
+// and the elements in the list.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Fraud Detector's
+// API operation DeleteList for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     An exception indicating a specified value is not allowed.
+//
+//   - InternalServerException
+//     An exception indicating an internal server error.
+//
+//   - ThrottlingException
+//     An exception indicating a throttling error.
+//
+//   - AccessDeniedException
+//     An exception indicating Amazon Fraud Detector does not have the needed permissions.
+//     This can occur if you submit a request, such as PutExternalModel, that specifies
+//     a role that is not in your account.
+//
+//   - ConflictException
+//     An exception indicating there was a conflict during a delete operation.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/DeleteList
+func (c *FraudDetector) DeleteList(input *DeleteListInput) (*DeleteListOutput, error) {
+	req, out := c.DeleteListRequest(input)
+	return out, req.Send()
+}
+
+// DeleteListWithContext is the same as DeleteList with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteList for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) DeleteListWithContext(ctx aws.Context, input *DeleteListInput, opts ...request.Option) (*DeleteListOutput, error) {
+	req, out := c.DeleteListRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -4390,6 +4584,307 @@ func (c *FraudDetector) GetLabelsPagesWithContext(ctx aws.Context, input *GetLab
 	return p.Err()
 }
 
+const opGetListElements = "GetListElements"
+
+// GetListElementsRequest generates a "aws/request.Request" representing the
+// client's request for the GetListElements operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetListElements for more information on using the GetListElements
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetListElementsRequest method.
+//	req, resp := client.GetListElementsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/GetListElements
+func (c *FraudDetector) GetListElementsRequest(input *GetListElementsInput) (req *request.Request, output *GetListElementsOutput) {
+	op := &request.Operation{
+		Name:       opGetListElements,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &GetListElementsInput{}
+	}
+
+	output = &GetListElementsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetListElements API operation for Amazon Fraud Detector.
+//
+// Gets all the elements in the specified list.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Fraud Detector's
+// API operation GetListElements for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     An exception indicating a specified value is not allowed.
+//
+//   - ResourceNotFoundException
+//     An exception indicating the specified resource was not found.
+//
+//   - InternalServerException
+//     An exception indicating an internal server error.
+//
+//   - ThrottlingException
+//     An exception indicating a throttling error.
+//
+//   - AccessDeniedException
+//     An exception indicating Amazon Fraud Detector does not have the needed permissions.
+//     This can occur if you submit a request, such as PutExternalModel, that specifies
+//     a role that is not in your account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/GetListElements
+func (c *FraudDetector) GetListElements(input *GetListElementsInput) (*GetListElementsOutput, error) {
+	req, out := c.GetListElementsRequest(input)
+	return out, req.Send()
+}
+
+// GetListElementsWithContext is the same as GetListElements with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetListElements for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) GetListElementsWithContext(ctx aws.Context, input *GetListElementsInput, opts ...request.Option) (*GetListElementsOutput, error) {
+	req, out := c.GetListElementsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// GetListElementsPages iterates over the pages of a GetListElements operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetListElements method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a GetListElements operation.
+//	pageNum := 0
+//	err := client.GetListElementsPages(params,
+//	    func(page *frauddetector.GetListElementsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *FraudDetector) GetListElementsPages(input *GetListElementsInput, fn func(*GetListElementsOutput, bool) bool) error {
+	return c.GetListElementsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetListElementsPagesWithContext same as GetListElementsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) GetListElementsPagesWithContext(ctx aws.Context, input *GetListElementsInput, fn func(*GetListElementsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetListElementsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetListElementsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*GetListElementsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opGetListsMetadata = "GetListsMetadata"
+
+// GetListsMetadataRequest generates a "aws/request.Request" representing the
+// client's request for the GetListsMetadata operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetListsMetadata for more information on using the GetListsMetadata
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetListsMetadataRequest method.
+//	req, resp := client.GetListsMetadataRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/GetListsMetadata
+func (c *FraudDetector) GetListsMetadataRequest(input *GetListsMetadataInput) (req *request.Request, output *GetListsMetadataOutput) {
+	op := &request.Operation{
+		Name:       opGetListsMetadata,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &GetListsMetadataInput{}
+	}
+
+	output = &GetListsMetadataOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetListsMetadata API operation for Amazon Fraud Detector.
+//
+// Gets the metadata of either all the lists under the account or the specified
+// list.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Fraud Detector's
+// API operation GetListsMetadata for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     An exception indicating a specified value is not allowed.
+//
+//   - ResourceNotFoundException
+//     An exception indicating the specified resource was not found.
+//
+//   - InternalServerException
+//     An exception indicating an internal server error.
+//
+//   - ThrottlingException
+//     An exception indicating a throttling error.
+//
+//   - AccessDeniedException
+//     An exception indicating Amazon Fraud Detector does not have the needed permissions.
+//     This can occur if you submit a request, such as PutExternalModel, that specifies
+//     a role that is not in your account.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/GetListsMetadata
+func (c *FraudDetector) GetListsMetadata(input *GetListsMetadataInput) (*GetListsMetadataOutput, error) {
+	req, out := c.GetListsMetadataRequest(input)
+	return out, req.Send()
+}
+
+// GetListsMetadataWithContext is the same as GetListsMetadata with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetListsMetadata for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) GetListsMetadataWithContext(ctx aws.Context, input *GetListsMetadataInput, opts ...request.Option) (*GetListsMetadataOutput, error) {
+	req, out := c.GetListsMetadataRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// GetListsMetadataPages iterates over the pages of a GetListsMetadata operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See GetListsMetadata method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a GetListsMetadata operation.
+//	pageNum := 0
+//	err := client.GetListsMetadataPages(params,
+//	    func(page *frauddetector.GetListsMetadataOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *FraudDetector) GetListsMetadataPages(input *GetListsMetadataInput, fn func(*GetListsMetadataOutput, bool) bool) error {
+	return c.GetListsMetadataPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// GetListsMetadataPagesWithContext same as GetListsMetadataPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) GetListsMetadataPagesWithContext(ctx aws.Context, input *GetListsMetadataInput, fn func(*GetListsMetadataOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *GetListsMetadataInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.GetListsMetadataRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*GetListsMetadataOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opGetModelVersion = "GetModelVersion"
 
 // GetModelVersionRequest generates a "aws/request.Request" representing the
@@ -6764,6 +7259,103 @@ func (c *FraudDetector) UpdateEventLabelWithContext(ctx aws.Context, input *Upda
 	return out, req.Send()
 }
 
+const opUpdateList = "UpdateList"
+
+// UpdateListRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateList operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateList for more information on using the UpdateList
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateListRequest method.
+//	req, resp := client.UpdateListRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/UpdateList
+func (c *FraudDetector) UpdateListRequest(input *UpdateListInput) (req *request.Request, output *UpdateListOutput) {
+	op := &request.Operation{
+		Name:       opUpdateList,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateListInput{}
+	}
+
+	output = &UpdateListOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateList API operation for Amazon Fraud Detector.
+//
+// Updates a list.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Fraud Detector's
+// API operation UpdateList for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ValidationException
+//     An exception indicating a specified value is not allowed.
+//
+//   - ResourceNotFoundException
+//     An exception indicating the specified resource was not found.
+//
+//   - InternalServerException
+//     An exception indicating an internal server error.
+//
+//   - ThrottlingException
+//     An exception indicating a throttling error.
+//
+//   - AccessDeniedException
+//     An exception indicating Amazon Fraud Detector does not have the needed permissions.
+//     This can occur if you submit a request, such as PutExternalModel, that specifies
+//     a role that is not in your account.
+//
+//   - ConflictException
+//     An exception indicating there was a conflict during a delete operation.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/frauddetector-2019-11-15/UpdateList
+func (c *FraudDetector) UpdateList(input *UpdateListInput) (*UpdateListOutput, error) {
+	req, out := c.UpdateListRequest(input)
+	return out, req.Send()
+}
+
+// UpdateListWithContext is the same as UpdateList with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateList for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *FraudDetector) UpdateListWithContext(ctx aws.Context, input *UpdateListInput, opts ...request.Option) (*UpdateListOutput, error) {
+	req, out := c.UpdateListRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateModel = "UpdateModel"
 
 // UpdateModelRequest generates a "aws/request.Request" representing the
@@ -7726,6 +8318,85 @@ func (s *AggregatedVariablesImportanceMetrics) SetLogOddsMetrics(v []*Aggregated
 	return s
 }
 
+// The metadata of a list.
+type AllowDenyList struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the list.
+	Arn *string `locationName:"arn" min:"1" type:"string"`
+
+	// The time the list was created.
+	CreatedTime *string `locationName:"createdTime" min:"11" type:"string"`
+
+	// The description of the list.
+	Description *string `locationName:"description" min:"1" type:"string"`
+
+	// The name of the list.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The time the list was last updated.
+	UpdatedTime *string `locationName:"updatedTime" min:"11" type:"string"`
+
+	// The variable type of the list.
+	VariableType *string `locationName:"variableType" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AllowDenyList) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AllowDenyList) GoString() string {
+	return s.String()
+}
+
+// SetArn sets the Arn field's value.
+func (s *AllowDenyList) SetArn(v string) *AllowDenyList {
+	s.Arn = &v
+	return s
+}
+
+// SetCreatedTime sets the CreatedTime field's value.
+func (s *AllowDenyList) SetCreatedTime(v string) *AllowDenyList {
+	s.CreatedTime = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *AllowDenyList) SetDescription(v string) *AllowDenyList {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AllowDenyList) SetName(v string) *AllowDenyList {
+	s.Name = &v
+	return s
+}
+
+// SetUpdatedTime sets the UpdatedTime field's value.
+func (s *AllowDenyList) SetUpdatedTime(v string) *AllowDenyList {
+	s.UpdatedTime = &v
+	return s
+}
+
+// SetVariableType sets the VariableType field's value.
+func (s *AllowDenyList) SetVariableType(v string) *AllowDenyList {
+	s.VariableType = &v
+	return s
+}
+
 // Provides the error of the batch create variable API.
 type BatchCreateVariableError struct {
 	_ struct{} `type:"structure"`
@@ -8531,8 +9202,12 @@ type CreateBatchImportJobInput struct {
 	EventTypeName *string `locationName:"eventTypeName" min:"1" type:"string" required:"true"`
 
 	// The ARN of the IAM role created for Amazon S3 bucket that holds your data
-	// file. The IAM role must have read and write permissions to both input and
-	// output S3 buckets.
+	// file.
+	//
+	// The IAM role must have read permissions to your input S3 bucket and write
+	// permissions to your output S3 bucket. For more information about bucket permissions,
+	// see User policy examples (https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-policies-s3.html)
+	// in the Amazon S3 User Guide.
 	//
 	// IamRoleArn is a required field
 	IamRoleArn *string `locationName:"iamRoleArn" min:"1" type:"string" required:"true"`
@@ -8700,6 +9375,11 @@ type CreateBatchPredictionJobInput struct {
 	EventTypeName *string `locationName:"eventTypeName" min:"1" type:"string" required:"true"`
 
 	// The ARN of the IAM role to use for this job request.
+	//
+	// The IAM Role must have read permissions to your input S3 bucket and write
+	// permissions to your output S3 bucket. For more information about bucket permissions,
+	// see User policy examples (https://docs.aws.amazon.com/AmazonS3/latest/userguide/example-policies-s3.html)
+	// in the Amazon S3 User Guide.
 	//
 	// IamRoleArn is a required field
 	IamRoleArn *string `locationName:"iamRoleArn" min:"1" type:"string" required:"true"`
@@ -9070,6 +9750,132 @@ func (s *CreateDetectorVersionOutput) SetDetectorVersionId(v string) *CreateDete
 func (s *CreateDetectorVersionOutput) SetStatus(v string) *CreateDetectorVersionOutput {
 	s.Status = &v
 	return s
+}
+
+type CreateListInput struct {
+	_ struct{} `type:"structure"`
+
+	// The description of the list.
+	Description *string `locationName:"description" min:"1" type:"string"`
+
+	// The names of the elements, if providing. You can also create an empty list
+	// and add elements later using the UpdateList (https://docs.aws.amazon.com/frauddetector/latest/api/API_Updatelist.html)
+	// API.
+	Elements []*string `locationName:"elements" type:"list"`
+
+	// The name of the list.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+
+	// A collection of the key and value pairs.
+	Tags []*Tag `locationName:"tags" type:"list"`
+
+	// The variable type of the list. You can only assign the variable type with
+	// String data type. For more information, see Variable types (https://docs.aws.amazon.com/frauddetector/latest/ug/create-a-variable.html#variable-types).
+	VariableType *string `locationName:"variableType" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateListInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateListInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateListInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateListInput"}
+	if s.Description != nil && len(*s.Description) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.VariableType != nil && len(*s.VariableType) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VariableType", 1))
+	}
+	if s.Tags != nil {
+		for i, v := range s.Tags {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Tags", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateListInput) SetDescription(v string) *CreateListInput {
+	s.Description = &v
+	return s
+}
+
+// SetElements sets the Elements field's value.
+func (s *CreateListInput) SetElements(v []*string) *CreateListInput {
+	s.Elements = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateListInput) SetName(v string) *CreateListInput {
+	s.Name = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateListInput) SetTags(v []*Tag) *CreateListInput {
+	s.Tags = v
+	return s
+}
+
+// SetVariableType sets the VariableType field's value.
+func (s *CreateListInput) SetVariableType(v string) *CreateListInput {
+	s.VariableType = &v
+	return s
+}
+
+type CreateListOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateListOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateListOutput) GoString() string {
+	return s.String()
 }
 
 type CreateModelInput struct {
@@ -9593,7 +10399,7 @@ type CreateVariableInput struct {
 	// DataSource is a required field
 	DataSource *string `locationName:"dataSource" type:"string" required:"true" enum:"DataSource"`
 
-	// The data type.
+	// The data type of the variable.
 	//
 	// DataType is a required field
 	DataType *string `locationName:"dataType" type:"string" required:"true" enum:"DataType"`
@@ -10157,6 +10963,7 @@ type DeleteEventInput struct {
 	_ struct{} `type:"structure"`
 
 	// Specifies whether or not to delete any predictions associated with the event.
+	// If set to True,
 	DeleteAuditHistory *bool `locationName:"deleteAuditHistory" type:"boolean"`
 
 	// The ID of the event to delete.
@@ -10549,6 +11356,77 @@ func (s DeleteLabelOutput) String() string {
 // be included in the string output. The member name will be present, but the
 // value will be replaced with "sensitive".
 func (s DeleteLabelOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteListInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the list to delete.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteListInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteListInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteListInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteListInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *DeleteListInput) SetName(v string) *DeleteListInput {
+	s.Name = &v
+	return s
+}
+
+type DeleteListOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteListOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteListOutput) GoString() string {
 	return s.String()
 }
 
@@ -11787,6 +12665,53 @@ func (s *Event) SetLabelTimestamp(v string) *Event {
 	return s
 }
 
+// The event orchestration status.
+type EventOrchestration struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies if event orchestration is enabled through Amazon EventBridge.
+	//
+	// EventBridgeEnabled is a required field
+	EventBridgeEnabled *bool `locationName:"eventBridgeEnabled" type:"boolean" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EventOrchestration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EventOrchestration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EventOrchestration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EventOrchestration"}
+	if s.EventBridgeEnabled == nil {
+		invalidParams.Add(request.NewErrParamRequired("EventBridgeEnabled"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEventBridgeEnabled sets the EventBridgeEnabled field's value.
+func (s *EventOrchestration) SetEventBridgeEnabled(v bool) *EventOrchestration {
+	s.EventBridgeEnabled = &v
+	return s
+}
+
 // Information about the summary of an event prediction.
 type EventPredictionSummary struct {
 	_ struct{} `type:"structure"`
@@ -11886,6 +12811,9 @@ type EventType struct {
 	// and improve fraud predictions.
 	EventIngestion *string `locationName:"eventIngestion" type:"string" enum:"EventIngestion"`
 
+	// The event orchestration status.
+	EventOrchestration *EventOrchestration `locationName:"eventOrchestration" type:"structure"`
+
 	// The event type event variables.
 	EventVariables []*string `locationName:"eventVariables" type:"list"`
 
@@ -11947,6 +12875,12 @@ func (s *EventType) SetEntityTypes(v []*string) *EventType {
 // SetEventIngestion sets the EventIngestion field's value.
 func (s *EventType) SetEventIngestion(v string) *EventType {
 	s.EventIngestion = &v
+	return s
+}
+
+// SetEventOrchestration sets the EventOrchestration field's value.
+func (s *EventType) SetEventOrchestration(v *EventOrchestration) *EventType {
+	s.EventOrchestration = v
 	return s
 }
 
@@ -14146,6 +15080,221 @@ func (s *GetLabelsOutput) SetNextToken(v string) *GetLabelsOutput {
 	return s
 }
 
+type GetListElementsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of objects to return for the request.
+	MaxResults *int64 `locationName:"maxResults" min:"500" type:"integer"`
+
+	// The name of the list.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The next token for the subsequent request.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListElementsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListElementsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetListElementsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetListElementsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 500 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 500))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *GetListElementsInput) SetMaxResults(v int64) *GetListElementsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *GetListElementsInput) SetName(v string) *GetListElementsInput {
+	s.Name = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetListElementsInput) SetNextToken(v string) *GetListElementsInput {
+	s.NextToken = &v
+	return s
+}
+
+type GetListElementsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The list elements.
+	Elements []*string `locationName:"elements" type:"list"`
+
+	// The next page token.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListElementsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListElementsOutput) GoString() string {
+	return s.String()
+}
+
+// SetElements sets the Elements field's value.
+func (s *GetListElementsOutput) SetElements(v []*string) *GetListElementsOutput {
+	s.Elements = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetListElementsOutput) SetNextToken(v string) *GetListElementsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type GetListsMetadataInput struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of objects to return for the request.
+	MaxResults *int64 `locationName:"maxResults" min:"5" type:"integer"`
+
+	// The name of the list.
+	Name *string `locationName:"name" min:"1" type:"string"`
+
+	// The next token for the subsequent request.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListsMetadataInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListsMetadataInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetListsMetadataInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetListsMetadataInput"}
+	if s.MaxResults != nil && *s.MaxResults < 5 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 5))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *GetListsMetadataInput) SetMaxResults(v int64) *GetListsMetadataInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *GetListsMetadataInput) SetName(v string) *GetListsMetadataInput {
+	s.Name = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetListsMetadataInput) SetNextToken(v string) *GetListsMetadataInput {
+	s.NextToken = &v
+	return s
+}
+
+type GetListsMetadataOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The metadata of the specified list or all lists under the account.
+	Lists []*AllowDenyList `locationName:"lists" type:"list"`
+
+	// The next page token.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListsMetadataOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetListsMetadataOutput) GoString() string {
+	return s.String()
+}
+
+// SetLists sets the Lists field's value.
+func (s *GetListsMetadataOutput) SetLists(v []*AllowDenyList) *GetListsMetadataOutput {
+	s.Lists = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetListsMetadataOutput) SetNextToken(v string) *GetListsMetadataOutput {
+	s.NextToken = &v
+	return s
+}
+
 type GetModelVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -15171,6 +16320,21 @@ type LabelSchema struct {
 	LabelMapper map[string][]*string `locationName:"labelMapper" type:"map"`
 
 	// The action to take for unlabeled events.
+	//
+	//    * Use IGNORE if you want the unlabeled events to be ignored. This is recommended
+	//    when the majority of the events in the dataset are labeled.
+	//
+	//    * Use FRAUD if you want to categorize all unlabeled events as “Fraud”.
+	//    This is recommended when most of the events in your dataset are fraudulent.
+	//
+	//    * Use LEGIT if you want to categorize all unlabeled events as “Legit”.
+	//    This is recommended when most of the events in your dataset are legitimate.
+	//
+	//    * Use AUTO if you want Amazon Fraud Detector to decide how to use the
+	//    unlabeled data. This is recommended when there is significant unlabeled
+	//    events in the dataset.
+	//
+	// By default, Amazon Fraud Detector ignores the unlabeled data.
 	UnlabeledEventsTreatment *string `locationName:"unlabeledEventsTreatment" type:"string" enum:"UnlabeledEventsTreatment"`
 }
 
@@ -16307,6 +17471,10 @@ type OFIModelPerformance struct {
 	// The area under the curve (auc). This summarizes the total positive rate (tpr)
 	// and false positive rate (FPR) across all possible model score thresholds.
 	Auc *float64 `locationName:"auc" type:"float"`
+
+	// Indicates the range of area under curve (auc) expected from the OFI model.
+	// A range greater than 0.1 indicates higher model uncertainity.
+	UncertaintyRange *UncertaintyRange `locationName:"uncertaintyRange" type:"structure"`
 }
 
 // String returns the string representation.
@@ -16330,6 +17498,12 @@ func (s OFIModelPerformance) GoString() string {
 // SetAuc sets the Auc field's value.
 func (s *OFIModelPerformance) SetAuc(v float64) *OFIModelPerformance {
 	s.Auc = &v
+	return s
+}
+
+// SetUncertaintyRange sets the UncertaintyRange field's value.
+func (s *OFIModelPerformance) SetUncertaintyRange(v *UncertaintyRange) *OFIModelPerformance {
+	s.UncertaintyRange = v
 	return s
 }
 
@@ -16791,8 +17965,12 @@ type PutEventTypeInput struct {
 	// EntityTypes is a required field
 	EntityTypes []*string `locationName:"entityTypes" min:"1" type:"list" required:"true"`
 
-	// Specifies if ingenstion is enabled or disabled.
+	// Specifies if ingestion is enabled or disabled.
 	EventIngestion *string `locationName:"eventIngestion" type:"string" enum:"EventIngestion"`
+
+	// Enables or disables event orchestration. If enabled, you can send event predictions
+	// to select AWS services for downstream processing of the events.
+	EventOrchestration *EventOrchestration `locationName:"eventOrchestration" type:"structure"`
 
 	// The event type variables.
 	//
@@ -16853,6 +18031,11 @@ func (s *PutEventTypeInput) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
+	if s.EventOrchestration != nil {
+		if err := s.EventOrchestration.Validate(); err != nil {
+			invalidParams.AddNested("EventOrchestration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Tags != nil {
 		for i, v := range s.Tags {
 			if v == nil {
@@ -16885,6 +18068,12 @@ func (s *PutEventTypeInput) SetEntityTypes(v []*string) *PutEventTypeInput {
 // SetEventIngestion sets the EventIngestion field's value.
 func (s *PutEventTypeInput) SetEventIngestion(v string) *PutEventTypeInput {
 	s.EventIngestion = &v
+	return s
+}
+
+// SetEventOrchestration sets the EventOrchestration field's value.
+func (s *PutEventTypeInput) SetEventOrchestration(v *EventOrchestration) *PutEventTypeInput {
+	s.EventOrchestration = v
 	return s
 }
 
@@ -17109,6 +18298,9 @@ type PutKMSEncryptionKeyInput struct {
 
 	// The KMS encryption key ARN.
 	//
+	// The KMS key must be single-Region key. Amazon Fraud Detector does not support
+	// multi-Region KMS key.
+	//
 	// KmsEncryptionKeyArn is a required field
 	KmsEncryptionKeyArn *string `locationName:"kmsEncryptionKeyArn" min:"7" type:"string" required:"true"`
 }
@@ -17186,6 +18378,7 @@ type PutLabelInput struct {
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
+	// A collection of key and value pairs.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
 
@@ -17994,6 +19187,10 @@ type TFIModelPerformance struct {
 	// The area under the curve (auc). This summarizes the total positive rate (tpr)
 	// and false positive rate (FPR) across all possible model score thresholds.
 	Auc *float64 `locationName:"auc" type:"float"`
+
+	// Indicates the range of area under curve (auc) expected from the TFI model.
+	// A range greater than 0.1 indicates higher model uncertainity.
+	UncertaintyRange *UncertaintyRange `locationName:"uncertaintyRange" type:"structure"`
 }
 
 // String returns the string representation.
@@ -18017,6 +19214,12 @@ func (s TFIModelPerformance) GoString() string {
 // SetAuc sets the Auc field's value.
 func (s *TFIModelPerformance) SetAuc(v float64) *TFIModelPerformance {
 	s.Auc = &v
+	return s
+}
+
+// SetUncertaintyRange sets the UncertaintyRange field's value.
+func (s *TFIModelPerformance) SetUncertaintyRange(v *UncertaintyRange) *TFIModelPerformance {
+	s.UncertaintyRange = v
 	return s
 }
 
@@ -18550,6 +19753,53 @@ func (s *TrainingResultV2) SetVariableImportanceMetrics(v *VariableImportanceMet
 	return s
 }
 
+// Range of area under curve (auc) expected from the model. A range greater
+// than 0.1 indicates higher model uncertainity. A range is the difference between
+// upper and lower bound of auc.
+type UncertaintyRange struct {
+	_ struct{} `type:"structure"`
+
+	// The lower bound value of the area under curve (auc).
+	//
+	// LowerBoundValue is a required field
+	LowerBoundValue *float64 `locationName:"lowerBoundValue" type:"float" required:"true"`
+
+	// The upper bound value of the area under curve (auc).
+	//
+	// UpperBoundValue is a required field
+	UpperBoundValue *float64 `locationName:"upperBoundValue" type:"float" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UncertaintyRange) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UncertaintyRange) GoString() string {
+	return s.String()
+}
+
+// SetLowerBoundValue sets the LowerBoundValue field's value.
+func (s *UncertaintyRange) SetLowerBoundValue(v float64) *UncertaintyRange {
+	s.LowerBoundValue = &v
+	return s
+}
+
+// SetUpperBoundValue sets the UpperBoundValue field's value.
+func (s *UncertaintyRange) SetUpperBoundValue(v float64) *UncertaintyRange {
+	s.UpperBoundValue = &v
+	return s
+}
+
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18931,6 +20181,8 @@ type UpdateDetectorVersionStatusInput struct {
 
 	// The new status.
 	//
+	// The only supported values are ACTIVE and INACTIVE
+	//
 	// Status is a required field
 	Status *string `locationName:"status" type:"string" required:"true" enum:"DetectorVersionStatus"`
 }
@@ -19138,6 +20390,133 @@ func (s UpdateEventLabelOutput) String() string {
 // be included in the string output. The member name will be present, but the
 // value will be replaced with "sensitive".
 func (s UpdateEventLabelOutput) GoString() string {
+	return s.String()
+}
+
+type UpdateListInput struct {
+	_ struct{} `type:"structure"`
+
+	// The new description.
+	Description *string `locationName:"description" min:"1" type:"string"`
+
+	// One or more list elements to add or replace. If you are providing the elements,
+	// make sure to specify the updateMode to use.
+	//
+	// If you are deleting all elements from the list, use REPLACE for the updateMode
+	// and provide an empty list (0 elements).
+	Elements []*string `locationName:"elements" type:"list"`
+
+	// The name of the list to update.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The update mode (type).
+	//
+	//    * Use APPEND if you are adding elements to the list.
+	//
+	//    * Use REPLACE if you replacing existing elements in the list.
+	//
+	//    * Use REMOVE if you are removing elements from the list.
+	UpdateMode *string `locationName:"updateMode" type:"string" enum:"ListUpdateMode"`
+
+	// The variable type you want to assign to the list.
+	//
+	// You cannot update a variable type of a list that already has a variable type
+	// assigned to it. You can assign a variable type to a list only if the list
+	// does not already have a variable type.
+	VariableType *string `locationName:"variableType" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateListInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateListInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateListInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateListInput"}
+	if s.Description != nil && len(*s.Description) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Description", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.VariableType != nil && len(*s.VariableType) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VariableType", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateListInput) SetDescription(v string) *UpdateListInput {
+	s.Description = &v
+	return s
+}
+
+// SetElements sets the Elements field's value.
+func (s *UpdateListInput) SetElements(v []*string) *UpdateListInput {
+	s.Elements = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateListInput) SetName(v string) *UpdateListInput {
+	s.Name = &v
+	return s
+}
+
+// SetUpdateMode sets the UpdateMode field's value.
+func (s *UpdateListInput) SetUpdateMode(v string) *UpdateListInput {
+	s.UpdateMode = &v
+	return s
+}
+
+// SetVariableType sets the VariableType field's value.
+func (s *UpdateListInput) SetVariableType(v string) *UpdateListInput {
+	s.VariableType = &v
+	return s
+}
+
+type UpdateListOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateListOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateListOutput) GoString() string {
 	return s.String()
 }
 
@@ -20306,6 +21685,9 @@ const (
 
 	// DataTypeBoolean is a DataType enum value
 	DataTypeBoolean = "BOOLEAN"
+
+	// DataTypeDatetime is a DataType enum value
+	DataTypeDatetime = "DATETIME"
 )
 
 // DataType_Values returns all elements of the DataType enum
@@ -20315,6 +21697,7 @@ func DataType_Values() []string {
 		DataTypeInteger,
 		DataTypeFloat,
 		DataTypeBoolean,
+		DataTypeDatetime,
 	}
 }
 
@@ -20363,6 +21746,26 @@ const (
 func Language_Values() []string {
 	return []string{
 		LanguageDetectorpl,
+	}
+}
+
+const (
+	// ListUpdateModeReplace is a ListUpdateMode enum value
+	ListUpdateModeReplace = "REPLACE"
+
+	// ListUpdateModeAppend is a ListUpdateMode enum value
+	ListUpdateModeAppend = "APPEND"
+
+	// ListUpdateModeRemove is a ListUpdateMode enum value
+	ListUpdateModeRemove = "REMOVE"
+)
+
+// ListUpdateMode_Values returns all elements of the ListUpdateMode enum
+func ListUpdateMode_Values() []string {
+	return []string{
+		ListUpdateModeReplace,
+		ListUpdateModeAppend,
+		ListUpdateModeRemove,
 	}
 }
 
@@ -20507,6 +21910,9 @@ const (
 
 	// UnlabeledEventsTreatmentLegit is a UnlabeledEventsTreatment enum value
 	UnlabeledEventsTreatmentLegit = "LEGIT"
+
+	// UnlabeledEventsTreatmentAuto is a UnlabeledEventsTreatment enum value
+	UnlabeledEventsTreatmentAuto = "AUTO"
 )
 
 // UnlabeledEventsTreatment_Values returns all elements of the UnlabeledEventsTreatment enum
@@ -20515,5 +21921,6 @@ func UnlabeledEventsTreatment_Values() []string {
 		UnlabeledEventsTreatmentIgnore,
 		UnlabeledEventsTreatmentFraud,
 		UnlabeledEventsTreatmentLegit,
+		UnlabeledEventsTreatmentAuto,
 	}
 }

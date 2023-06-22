@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -36,33 +39,33 @@ type ValidateSchemaResponse struct {
 func SchemaValidate(ctx context.Context, s fwschema.Schema, req ValidateSchemaRequest, resp *ValidateSchemaResponse) {
 	for name, attribute := range s.GetAttributes() {
 
-		attributeReq := tfsdk.ValidateAttributeRequest{
+		attributeReq := ValidateAttributeRequest{
 			AttributePath:           path.Root(name),
 			AttributePathExpression: path.MatchRoot(name),
 			Config:                  req.Config,
 		}
-		attributeResp := &tfsdk.ValidateAttributeResponse{
-			Diagnostics: resp.Diagnostics,
-		}
+		// Instantiate a new response for each request to prevent validators
+		// from modifying or removing diagnostics.
+		attributeResp := &ValidateAttributeResponse{}
 
 		AttributeValidate(ctx, attribute, attributeReq, attributeResp)
 
-		resp.Diagnostics = attributeResp.Diagnostics
+		resp.Diagnostics.Append(attributeResp.Diagnostics...)
 	}
 
 	for name, block := range s.GetBlocks() {
-		attributeReq := tfsdk.ValidateAttributeRequest{
+		attributeReq := ValidateAttributeRequest{
 			AttributePath:           path.Root(name),
 			AttributePathExpression: path.MatchRoot(name),
 			Config:                  req.Config,
 		}
-		attributeResp := &tfsdk.ValidateAttributeResponse{
-			Diagnostics: resp.Diagnostics,
-		}
+		// Instantiate a new response for each request to prevent validators
+		// from modifying or removing diagnostics.
+		attributeResp := &ValidateAttributeResponse{}
 
 		BlockValidate(ctx, block, attributeReq, attributeResp)
 
-		resp.Diagnostics = attributeResp.Diagnostics
+		resp.Diagnostics.Append(attributeResp.Diagnostics...)
 	}
 
 	if s.GetDeprecationMessage() != "" {

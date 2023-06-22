@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package endpoints
 
 import (
@@ -59,13 +62,17 @@ var partitions = []partition{
 			"ap-northeast-2", // Asia Pacific (Seoul).
 			"ap-northeast-3", // Asia Pacific (Osaka).
 			"ap-south-1",     // Asia Pacific (Mumbai).
+			"ap-south-2",     // Asia Pacific (Hyderabad).
 			"ap-southeast-1", // Asia Pacific (Singapore).
 			"ap-southeast-2", // Asia Pacific (Sydney).
 			"ap-southeast-3", // Asia Pacific (Jakarta).
+			"ap-southeast-4", // Asia Pacific (Melbourne).
 			"ca-central-1",   // Canada (Central).
 			"eu-central-1",   // Europe (Frankfurt).
+			"eu-central-2",   // Europe (Zurich).
 			"eu-north-1",     // Europe (Stockholm).
 			"eu-south-1",     // Europe (Milan).
+			"eu-south-2",     // Europe (Spain).
 			"eu-west-1",      // Europe (Ireland).
 			"eu-west-2",      // Europe (London).
 			"eu-west-3",      // Europe (Paris).

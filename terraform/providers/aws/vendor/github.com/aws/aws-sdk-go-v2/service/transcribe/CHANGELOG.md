@@ -1,3 +1,88 @@
+# v1.26.8 (2023-06-15)
+
+* No change notes available for this release.
+
+# v1.26.7 (2023-06-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.6 (2023-05-04)
+
+* No change notes available for this release.
+
+# v1.26.5 (2023-04-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.4 (2023-04-10)
+
+* No change notes available for this release.
+
+# v1.26.3 (2023-04-07)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.2 (2023-03-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.1 (2023-03-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.26.0 (2023-03-03)
+
+* **Feature**: Amazon Transcribe now supports role access for these API operations: CreateVocabulary, UpdateVocabulary, CreateVocabularyFilter, and UpdateVocabularyFilter.
+
+# v1.25.4 (2023-02-22)
+
+* **Bug Fix**: Prevent nil pointer dereference when retrieving error codes.
+
+# v1.25.3 (2023-02-20)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.25.2 (2023-02-15)
+
+* **Announcement**: When receiving an error response in restJson-based services, an incorrect error type may have been returned based on the content of the response. This has been fixed via PR #2012 tracked in issue #1910.
+* **Bug Fix**: Correct error type parsing for restJson services.
+
+# v1.25.1 (2023-02-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.25.0 (2023-01-05)
+
+* **Feature**: Add `ErrorCodeOverride` field to all error structs (aws/smithy-go#401).
+
+# v1.24.0 (2022-12-20)
+
+* **Feature**: Enable our batch transcription jobs for Swedish and Vietnamese.
+
+# v1.23.1 (2022-12-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.23.0 (2022-12-05)
+
+* **Feature**: Amazon Transcribe now supports creating custom language models in the following languages: Japanese (ja-JP) and German (de-DE).
+
+# v1.22.1 (2022-12-02)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.22.0 (2022-11-28)
+
+* **Feature**: This release adds support for 'inputType' for post-call and real-time (streaming) Call Analytics within Amazon Transcribe.
+
+# v1.21.11 (2022-10-24)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.21.10 (2022-10-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.21.9 (2022-09-20)
 
 * **Dependency Update**: Updated to the latest SDK module versions
