@@ -13,22 +13,6 @@ func withServerGroupPolicy(serverGroupPolicy string) func(*openstack.MachinePool
 	return func(mp *openstack.MachinePool) { mp.ServerGroupPolicy = openstack.ServerGroupPolicy(serverGroupPolicy) }
 }
 
-func withZones() func(*openstack.MachinePool) {
-	return func(mp *openstack.MachinePool) { mp.Zones = []string{"one", "two", "three"} }
-}
-
-func withVolumeZones() func(*openstack.MachinePool) {
-	return func(mp *openstack.MachinePool) {
-		mp.RootVolume = &openstack.RootVolume{Zones: []string{"one", "two", "three"}}
-	}
-}
-
-func withFailureDomain(fd openstack.FailureDomain) func(*openstack.MachinePool) {
-	return func(mp *openstack.MachinePool) {
-		mp.FailureDomains = append(mp.FailureDomains, fd)
-	}
-}
-
 func testMachinePool(options ...func(*openstack.MachinePool)) *openstack.MachinePool {
 	var mp openstack.MachinePool
 	for _, apply := range options {
@@ -84,64 +68,6 @@ func TestValidateMachinePool(t *testing.T) {
 			"default",
 			check(
 				someErrorType(field.ErrorTypeNotSupported),
-				exactlyNErrors(1),
-			),
-		},
-		{
-			"failure domains",
-			testMachinePool(withFailureDomain(openstack.FailureDomain{
-				PortTargets: []openstack.NamedPortTarget{{ID: "one"}, {ID: "two"}},
-			})),
-			"master",
-			check(noError),
-		},
-		{
-			"failure domains on worker",
-			testMachinePool(withFailureDomain(openstack.FailureDomain{
-				PortTargets: []openstack.NamedPortTarget{{ID: "one"}, {ID: "two"}},
-			})),
-			"worker",
-			check(
-				someErrorType(field.ErrorTypeForbidden),
-				exactlyNErrors(1),
-			),
-		},
-		{
-			"failure domains, duplicate portTarget ID",
-			testMachinePool(withFailureDomain(openstack.FailureDomain{
-				PortTargets: []openstack.NamedPortTarget{{ID: "one"}, {ID: "one"}},
-			})),
-			"master",
-			check(
-				someErrorType(field.ErrorTypeDuplicate),
-				exactlyNErrors(1),
-			),
-		},
-		{
-			"failure domains together with zones",
-			testMachinePool(
-				withZones(),
-				withFailureDomain(openstack.FailureDomain{
-					PortTargets: []openstack.NamedPortTarget{{ID: "one"}, {ID: "two"}},
-				}),
-			),
-			"master",
-			check(
-				someErrorType(field.ErrorTypeForbidden),
-				exactlyNErrors(1),
-			),
-		},
-		{
-			"failure domains together with root volume zones",
-			testMachinePool(
-				withVolumeZones(),
-				withFailureDomain(openstack.FailureDomain{
-					PortTargets: []openstack.NamedPortTarget{{ID: "one"}, {ID: "two"}},
-				}),
-			),
-			"master",
-			check(
-				someErrorType(field.ErrorTypeForbidden),
 				exactlyNErrors(1),
 			),
 		},
