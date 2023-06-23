@@ -30,7 +30,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		return nil, err
 	}
 
-	volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
+	volumeAZs := []string{openstackdefaults.DefaultRootVolumeAZ()}
 	if mpool.RootVolume != nil && len(mpool.RootVolume.Zones) != 0 {
 		volumeAZs = mpool.RootVolume.Zones
 	}

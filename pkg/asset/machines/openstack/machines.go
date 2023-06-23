@@ -11,6 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
@@ -32,24 +33,19 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
-		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
-		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
 
 	mpool := pool.Platform.OpenStack
 	platform := config.Platform.OpenStack
 	trunkSupport, err := checkNetworkExtensionAvailability(platform.Cloud, "trunk", nil)
 	if err != nil {
-		return nil, err
-	}
-
-	volumeAZs := openstackdefaults.DefaultRootVolumeAZ()
-	if mpool.RootVolume != nil && len(mpool.RootVolume.Zones) != 0 {
-		volumeAZs = mpool.RootVolume.Zones
+		return nil, nil, err
 	}
 
 	total := int64(1)
@@ -57,15 +53,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	machines := make([]machineapi.Machine, 0, total)
+	failureDomains := failureDomainsFromSpec(*mpool)
 	for idx := int64(0); idx < total; idx++ {
-		failureDomain := machinev1.OpenStackFailureDomain{
-			AvailabilityZone: mpool.Zones[uint(idx)%uint(len(mpool.Zones))],
-			RootVolume: &machinev1.RootVolume{
-				AvailabilityZone: volumeAZs[uint(idx)%uint(len(volumeAZs))],
-			},
-		}
-
-		var provider *machinev1alpha1.OpenstackProviderSpec
+		failureDomain := failureDomains[uint(idx)%uint(len(failureDomains))]
 
 		provider, err := generateProvider(
 			clusterID,
@@ -78,9 +68,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			failureDomain,
 		)
 		if err != nil {
-			return nil, err
+			return nil, nil, fmt.Errorf("failed to generate the Machine providerSpec for replica %d: %w", idx, err)
 		}
-
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -105,7 +94,71 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 
-	return machines, nil
+	machineSetProvider, err := generateProvider(
+		clusterID,
+		platform,
+		mpool,
+		osImage,
+		role,
+		userDataSecret,
+		trunkSupport,
+		machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}},
+	)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate the CPMS providerSpec: %w", err)
+	}
+
+	replicas := int32(total)
+
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			State:    machinev1.ControlPlaneMachineSetStateActive,
+			Replicas: &replicas,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: machineSetProvider},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	if CPMSFailureDomains := pruneFailureDomains(failureDomains); CPMSFailureDomains != nil {
+		controlPlaneMachineSet.Spec.Template.OpenShiftMachineV1Beta1Machine.FailureDomains = machinev1.FailureDomains{
+			Platform:  v1.OpenStackPlatformType,
+			OpenStack: CPMSFailureDomains,
+		}
+	}
+	return machines, controlPlaneMachineSet, nil
 }
 
 func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
@@ -196,6 +249,97 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		spec.Image = osImage
 	}
 	return &spec, nil
+}
+
+// failureDomainIsEmpty returns true if the failure domain only contains nil or
+// zero values.
+func failureDomainIsEmpty(failureDomain machinev1.OpenStackFailureDomain) bool {
+	if failureDomain.AvailabilityZone == "" {
+		if failureDomain.RootVolume == nil {
+			return true
+		}
+		if failureDomain.RootVolume.AvailabilityZone == "" {
+			return true
+		}
+	}
+	return false
+}
+
+// pruneFailureDomains returns nil if the only failure domain in the given
+// slice is empty. One empty failure domain is not syntactically valid in CPMS.
+func pruneFailureDomains(failureDomains []machinev1.OpenStackFailureDomain) []machinev1.OpenStackFailureDomain {
+	if len(failureDomains) == 1 && failureDomainIsEmpty(failureDomains[0]) {
+		return nil
+	}
+	return failureDomains
+}
+
+// failureDomainsFromSpec returns as many failure domains as there are zones in
+// the given machine-pool. The returned failure domains have nil RootVolume if
+// and only if the given machine-pool has nil RootVolume. The returned failure
+// domain slice is guaranteed to have at least one element.
+func failureDomainsFromSpec(mpool openstack.MachinePool) []machinev1.OpenStackFailureDomain {
+	var numberOfFailureDomains int
+	{
+		numberOfFailureDomains = len(mpool.Zones)
+
+		if mpool.RootVolume != nil {
+			// At this point, after validation, there can't be a
+			// number of Compute zones different from the nunmber
+			// of Root volumes zones. However, we want to consider
+			// the case where one of them is left as its default
+			// (length zero), or is set to one value (length one).
+			//
+			// As a consequence, one of these is true:
+			//
+			// * there are as many Compute zones as Root volumes zones
+			// * there are zero or one Compute zones
+			// * there are zero or one Root volumes zones
+			if computes, volumes := len(mpool.Zones), len(mpool.RootVolume.Zones); computes > 1 && volumes > 1 && computes != volumes {
+				panic("Compute and Storage availability zones in the machine-pool should have been validated to have equal length")
+			}
+
+			if volumes := len(mpool.RootVolume.Zones); volumes > numberOfFailureDomains {
+				numberOfFailureDomains = volumes
+			}
+		}
+	}
+
+	// No failure domain is exactly like one failure domain with the default values.
+	if numberOfFailureDomains < 1 {
+		numberOfFailureDomains = 1
+	}
+
+	failureDomains := make([]machinev1.OpenStackFailureDomain, numberOfFailureDomains)
+
+	for i := range failureDomains {
+		switch len(mpool.Zones) {
+		case 0:
+			failureDomains[i].AvailabilityZone = openstackdefaults.DefaultComputeAZ()
+		case 1:
+			failureDomains[i].AvailabilityZone = mpool.Zones[0]
+		default:
+			failureDomains[i].AvailabilityZone = mpool.Zones[i]
+		}
+
+		if mpool.RootVolume != nil {
+			switch len(mpool.RootVolume.Zones) {
+			case 0:
+				failureDomains[i].RootVolume = &machinev1.RootVolume{
+					AvailabilityZone: openstackdefaults.DefaultRootVolumeAZ(),
+				}
+			case 1:
+				failureDomains[i].RootVolume = &machinev1.RootVolume{
+					AvailabilityZone: mpool.RootVolume.Zones[0],
+				}
+			default:
+				failureDomains[i].RootVolume = &machinev1.RootVolume{
+					AvailabilityZone: mpool.RootVolume.Zones[i],
+				}
+			}
+		}
+	}
+	return failureDomains
 }
 
 func checkNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.ClientOpts) (bool, error) {
