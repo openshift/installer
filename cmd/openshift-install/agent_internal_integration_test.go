@@ -105,10 +105,12 @@ func runIntegrationTest(t *testing.T, testFolder string) {
 		},
 
 		Cmds: map[string]func(*testscript.TestScript, bool, []string){
-			"isocmp":              isoCmp,
-			"ignitionImgContains": ignitionImgContains,
-			"configImgContains":   configImgContains,
-			"initrdImgContains":   initrdImgContains,
+			"isocmp":                  isoCmp,
+			"ignitionImgContains":     ignitionImgContains,
+			"configImgContains":       configImgContains,
+			"initrdImgContains":       initrdImgContains,
+			"unconfiguredIgnContains": unconfiguredIgnContains,
+			"unconfiguredIgnCmp":      unconfiguredIgnCmp,
 		},
 	})
 }
@@ -155,6 +157,46 @@ func archiveFileNames(isoPath string) (string, string, error) {
 	return "", "", errors.NotFound(fmt.Sprintf("ISO %s has unrecognized prefix", isoPath))
 }
 
+// [!] ignitionContains `isoPath` `file` check if the specified file `file`
+// [!] unconfiguredIgnContains `file` check if the specified file `file`
+// is stored within the unconfigured ignition Storage Files.
+func unconfiguredIgnContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 1 {
+		ts.Fatalf("usage: unconfiguredIgnContains file")
+	}
+	ignitionStorageContains(ts, neg, []string{"unconfigured-agent.ign", args[0]})
+}
+
+// [!] ignitionStorageContains `ignPath` `file` check if the specified file `file`
+// is stored within the ignition Storage Files.
+func ignitionStorageContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: ignitionStorageContains ignPath file")
+	}
+
+	workDir := ts.Getenv("WORK")
+	ignPath, eFilePath := args[0], args[1]
+	ignPathAbs := filepath.Join(workDir, ignPath)
+
+	config, err := readIgnition(ts, ignPathAbs)
+	ts.Check(err)
+
+	found := false
+	for _, f := range config.Storage.Files {
+		if f.Path == eFilePath {
+			found = true
+		}
+	}
+
+	if !found && !neg {
+		ts.Fatalf("%s does not contain %s", ignPath, eFilePath)
+	}
+
+	if neg && found {
+		ts.Fatalf("%s should not contain %s", ignPath, eFilePath)
+	}
+}
+
 // [!] isoCmp `isoPath` `isoFile` `expectedFile` check that the content of the file
 // `isoFile` - extracted from the ISO embedded configuration file referenced
 // by `isoPath` - matches the content of the local file `expectedFile`.
@@ -179,6 +221,53 @@ func isoCmp(ts *testscript.TestScript, neg bool, args []string) {
 	eData, err := os.ReadFile(eFilePathAbs)
 	ts.Check(err)
 
+	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
+}
+
+// [!] unconfiguredIgnCmp `fileInIgn` `expectedFile` check that the content
+// of the file `fileInIgn` extracted from the unconfigured ignition
+// configuration file matches the content of the local file `expectedFile`.
+func unconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: iunconfiguredIgnCmp file1 file2")
+	}
+	argsNext := []string{"unconfigured-agent.ign", args[0], args[1]}
+	ignitionStorageCmp(ts, neg, argsNext)
+}
+
+// [!] ignitionStorageCmp `ignPath` `ignFile` `expectedFile` check that the content of the file
+// `ignFile` - extracted from the ignition configuration file referenced
+// by `ignPath` - matches the content of the local file `expectedFile`.
+func ignitionStorageCmp(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 3 {
+		ts.Fatalf("usage: ignitionStorageCmp ignPath file1 file2")
+	}
+
+	workDir := ts.Getenv("WORK")
+	ignPath, aFilePath, eFilePath := args[0], args[1], args[2]
+	ignPathAbs := filepath.Join(workDir, ignPath)
+
+	config, err := readIgnition(ts, ignPathAbs)
+	ts.Check(err)
+
+	aData, err := readFileFromIgnitionCfg(&config, aFilePath)
+	ts.Check(err)
+
+	eFilePathAbs := filepath.Join(workDir, eFilePath)
+	eData, err := os.ReadFile(eFilePathAbs)
+	ts.Check(err)
+
+	byteCompare(ts, neg, aData, eData, aFilePath, eFilePath)
+}
+
+func readIgnition(ts *testscript.TestScript, ignPath string) (config igntypes.Config, err error) {
+	rawIgn, err := os.ReadFile(ignPath)
+	ts.Check(err)
+	err = json.Unmarshal(rawIgn, &config)
+	return config, err
+}
+
+func byteCompare(ts *testscript.TestScript, neg bool, aData, eData []byte, aFilePath, eFilePath string) {
 	aText := string(aData)
 	eText := string(eData)
 
@@ -211,6 +300,20 @@ func readFileFromISO(isoPath, archiveFile, ignitionFile, nodePath string) ([]byt
 	}
 
 	return config, nil
+}
+
+func readFileFromIgnitionCfg(config *igntypes.Config, nodePath string) ([]byte, error) {
+	for _, f := range config.Storage.Files {
+		if f.Node.Path == nodePath {
+			actualData, err := dataurl.DecodeString(*f.FileEmbedded1.Contents.Source)
+			if err != nil {
+				return nil, err
+			}
+			return actualData.Data, nil
+		}
+	}
+
+	return nil, errors.NotFound(nodePath)
 }
 
 func extractArchiveFile(isoPath, archive, fileName string) ([]byte, error) {

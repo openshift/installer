@@ -39,6 +39,8 @@ const manifestPath = "/etc/assisted/manifests"
 const hostnamesPath = "/etc/assisted/hostnames"
 const nmConnectionsPath = "/etc/assisted/network"
 const extraManifestPath = "/etc/assisted/extra-manifests"
+const registriesConfPath = "/etc/containers/registries.conf"
+const registryCABundlePath = "/etc/pki/ca-trust/source/anchors/domain.crt"
 
 // Ignition is an asset that generates the agent installer ignition file.
 type Ignition struct {
@@ -206,25 +208,9 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		getRendezvousHostEnv(agentTemplateData.ServiceProtocol, nodeZeroIP))
 	config.Storage.Files = append(config.Storage.Files, rendezvousHostFile)
 
-	// Set up bootstrap service recording
-	if err := bootstrap.AddStorageFiles(&config,
-		"/usr/local/bin/bootstrap-service-record.sh",
-		"bootstrap/files/usr/local/bin/bootstrap-service-record.sh",
-		nil); err != nil {
+	err = addBootstrapScripts(&config, agentManifests.ClusterImageSet.Spec.ReleaseImage)
+	if err != nil {
 		return err
-	}
-
-	// Use bootstrap script to get container images
-	relImgData := struct{ ReleaseImage string }{
-		ReleaseImage: agentManifests.ClusterImageSet.Spec.ReleaseImage,
-	}
-	for _, script := range []string{"release-image.sh", "release-image-download.sh"} {
-		if err := bootstrap.AddStorageFiles(&config,
-			"/usr/local/bin/"+script,
-			"bootstrap/files/usr/local/bin/"+script+".template",
-			relImgData); err != nil {
-			return err
-		}
 	}
 
 	// add ZTP manifests to manifestPath
@@ -248,7 +234,37 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
-	agentEnabledServices := []string{
+	enabledServices := getDefaultEnabledServices()
+	// Enable pre-network-manager-config.service only when there are network configs defined
+	if len(agentManifests.StaticNetworkConfigs) != 0 {
+		enabledServices = append(enabledServices, "pre-network-manager-config.service")
+	}
+
+	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
+	if err != nil {
+		return err
+	}
+
+	addTLSData(&config, dependencies)
+
+	addMirrorData(&config, registriesConfig, registryCABundle)
+
+	err = addHostConfig(&config, agentConfigAsset)
+	if err != nil {
+		return err
+	}
+
+	err = addExtraManifests(&config, extraManifests)
+	if err != nil {
+		return err
+	}
+
+	a.Config = &config
+	return nil
+}
+
+func getDefaultEnabledServices() []string {
+	return []string{
 		"agent-interactive-console.service",
 		"agent.service",
 		"assisted-service-db.service",
@@ -258,33 +274,33 @@ func (a *Ignition) Generate(dependencies asset.Parents) error {
 		"node-zero.service",
 		"multipathd.service",
 		"selinux.service",
+		"install-status.service",
 		"set-hostname.service",
 		"start-cluster-installation.service",
-		"install-status.service",
 	}
+}
 
-	// Enable pre-network-manager-config.service only when there are network configs defined
-	if len(agentManifests.StaticNetworkConfigs) != 0 {
-		agentEnabledServices = append(agentEnabledServices, "pre-network-manager-config.service")
-	}
-
-	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, agentEnabledServices)
-	if err != nil {
+func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err error) {
+	// Set up bootstrap service recording
+	if err := bootstrap.AddStorageFiles(config,
+		"/usr/local/bin/bootstrap-service-record.sh",
+		"bootstrap/files/usr/local/bin/bootstrap-service-record.sh",
+		nil); err != nil {
 		return err
 	}
 
-	addTLSData(&config, dependencies)
-
-	addMirrorData(&config, registriesConfig, registryCABundle)
-
-	addHostConfig(&config, agentConfigAsset)
-
-	err = addExtraManifests(&config, extraManifests)
-	if err != nil {
-		return err
+	// Use bootstrap script to get container images
+	relImgData := struct{ ReleaseImage string }{
+		ReleaseImage: releaseImage,
 	}
-
-	a.Config = &config
+	for _, script := range []string{"release-image.sh", "release-image-download.sh"} {
+		if err := bootstrap.AddStorageFiles(config,
+			"/usr/local/bin/"+script,
+			"bootstrap/files/usr/local/bin/"+script+".template",
+			relImgData); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -374,21 +390,20 @@ func addTLSData(config *igntypes.Config, dependencies asset.Parents) {
 	dependencies.Get(pwd)
 	config.Storage.Files = append(config.Storage.Files,
 		ignition.FileFromBytes("/opt/agent/tls/kubeadmin-password.hash", "root", 0600, pwd.PasswordHash))
-
 }
 
 func addMirrorData(config *igntypes.Config, registriesConfig *mirror.RegistriesConf, registryCABundle *mirror.CaBundle) {
 
 	// This is required for assisted-service to build the ICSP for openshift-install
 	if registriesConfig.File != nil {
-		registriesFile := ignition.FileFromBytes("/etc/containers/registries.conf",
+		registriesFile := ignition.FileFromBytes(registriesConfPath,
 			"root", 0600, registriesConfig.File.Data)
 		config.Storage.Files = append(config.Storage.Files, registriesFile)
 	}
 
 	// This is required for the agent to run the podman commands to the mirror
 	if registryCABundle.File != nil && len(registryCABundle.File.Data) > 0 {
-		caFile := ignition.FileFromBytes("/etc/pki/ca-trust/source/anchors/domain.crt",
+		caFile := ignition.FileFromBytes(registryCABundlePath,
 			"root", 0600, registryCABundle.File.Data)
 		config.Storage.Files = append(config.Storage.Files, caFile)
 	}
