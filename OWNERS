@@ -4,6 +4,7 @@
 approvers:
   - installer-team
   - sdodson
+  - zaneb
 reviewers:
   - installer-team
 component: Installer

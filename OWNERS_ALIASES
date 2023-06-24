@@ -2,12 +2,16 @@
 
 aliases:
   installer-team:
+    - andfasano
     - AnnaZivkovic
     - barbacbd
+    - bfournie
     - jhixson74
     - patrickdillon
+    - pawanpinjarkar
     - r4f4
     - rna-afk
+    - rwsu
     - sadasu
   libvirt-approvers:
     - praveenkumar
