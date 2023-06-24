@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -11,21 +12,21 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listNetworkRoutes(networkURL string) ([]cloudResource, error) {
-	return o.listRoutesWithFilter("items(name),nextPageToken", fmt.Sprintf("network eq %q", networkURL), nil)
+func (o *ClusterUninstaller) listNetworkRoutes(ctx context.Context, networkURL string) ([]cloudResource, error) {
+	return o.listRoutesWithFilter(ctx, "items(name),nextPageToken", fmt.Sprintf("network eq %q", networkURL), nil)
 }
 
-func (o *ClusterUninstaller) listRoutes() ([]cloudResource, error) {
-	return o.listRoutesWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listRoutes(ctx context.Context) ([]cloudResource, error) {
+	return o.listRoutesWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listRoutesWithFilter lists routes in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listRoutesWithFilter(fields string, filter string, filterFunc func(*compute.Route) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listRoutesWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.Route) bool) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing routes")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.Routes.List(o.ProjectID).Fields(googleapi.Field(fields))
@@ -61,9 +62,9 @@ func (o *ClusterUninstaller) listRoutesWithFilter(fields string, filter string, 
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteRoute(item cloudResource) error {
+func (o *ClusterUninstaller) deleteRoute(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting route %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Routes.Delete(o.ProjectID, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -84,14 +85,14 @@ func (o *ClusterUninstaller) deleteRoute(item cloudResource) error {
 
 // destroyRutes removes all route resources that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyRoutes() error {
-	found, err := o.listRoutes()
+func (o *ClusterUninstaller) destroyRoutes(ctx context.Context) error {
+	found, err := o.listRoutes(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("route", found)
 	for _, item := range items {
-		err := o.deleteRoute(item)
+		err := o.deleteRoute(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

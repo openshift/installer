@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
+	machinev1 "github.com/openshift/api/machine/v1"
 	clusterapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -55,9 +56,11 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			role,
 			userDataSecret,
 			trunkSupport,
-			openstack.FailureDomain{
-				ComputeAvailabilityZone: az,
-				StorageAvailabilityZone: volumeAZs[idx%len(volumeAZs)],
+			machinev1.OpenStackFailureDomain{
+				AvailabilityZone: az,
+				RootVolume: &machinev1.RootVolume{
+					AvailabilityZone: volumeAZs[idx%len(volumeAZs)],
+				},
 			},
 		)
 		if err != nil {

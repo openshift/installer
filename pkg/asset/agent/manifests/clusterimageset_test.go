@@ -29,12 +29,21 @@ func TestClusterImageSet_Generate(t *testing.T) {
 		expectedConfig *hivev1.ClusterImageSet
 	}{
 		{
-			name: "missing install config",
+			name: "missing install config should still generate a ClusterImageSet with empty namespace",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{},
-				&releaseimage.Image{},
+				&releaseimage.Image{
+					PullSpec: currentRelease,
+				},
 			},
-			expectedError: "missing configuration or manifest file",
+			expectedConfig: &hivev1.ClusterImageSet{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "openshift-was not built correctly",
+				},
+				Spec: hivev1.ClusterImageSetSpec{
+					ReleaseImage: currentRelease,
+				},
+			},
 		},
 		{
 			name: "invalid ClusterImageSet configuration",

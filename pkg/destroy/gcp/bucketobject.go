@@ -1,13 +1,15 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	storage "google.golang.org/api/storage/v1"
 )
 
-func (o *ClusterUninstaller) listBucketObjects(bucket cloudResource) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listBucketObjects(ctx context.Context, bucket cloudResource) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing objects for storage bucket %s", bucket.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.storageSvc.Objects.List(bucket.name).Fields("items(name),nextPageToken")
@@ -28,9 +30,9 @@ func (o *ClusterUninstaller) listBucketObjects(bucket cloudResource) ([]cloudRes
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteBucketObject(bucket cloudResource, item cloudResource) error {
+func (o *ClusterUninstaller) deleteBucketObject(ctx context.Context, bucket cloudResource, item cloudResource) error {
 	o.Logger.Debugf("Deleting storate object %s/%s", bucket.name, item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	err := o.storageSvc.Objects.Delete(bucket.name, item.name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {

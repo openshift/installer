@@ -90,7 +90,6 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, clusterName, templateData.ClusterName)
 	assert.Equal(t, "http", templateData.ServiceProtocol)
 	assert.Equal(t, pullSecret, templateData.PullSecret)
-	assert.Equal(t, agentClusterInstall.Spec.APIVIP, templateData.APIVIP)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.ControlPlaneAgents, templateData.ControlPlaneAgents)
 	assert.Equal(t, agentClusterInstall.Spec.ProvisionRequirements.WorkerAgents, templateData.WorkerAgents)
 	assert.Equal(t, releaseImageList, templateData.ReleaseImages)
@@ -156,7 +155,7 @@ func TestIgnition_addStaticNetworkConfig(t *testing.T) {
 					NetworkYaml: "interfaces:\n- ipv4:\n    address:\n    - ip: bad-ip\n      prefix-length: 24\n    enabled: true\n  mac-address: 52:54:01:aa:aa:a1\n  name: eth0\n  state: up\n  type: ethernet\n",
 				},
 			},
-			expectedError:    "invalid IP address syntax",
+			expectedError:    "failed to create StaticNetwork config data: failed to create static config for host 0: failed to execute 'nmstatectl gc', error: invalid IP address syntax",
 			expectedFileList: nil,
 		},
 	}
@@ -269,7 +268,6 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func TestAddHostConfig_Roles(t *testing.T) {
@@ -333,11 +331,28 @@ func TestAddHostConfig_Roles(t *testing.T) {
 			}
 		})
 	}
-
 }
 
 func generatedFiles(otherFiles ...string) []string {
-	defaultFiles := []string{
+	files := []string{
+		"/etc/assisted/rendezvous-host.env",
+		"/etc/assisted/manifests/agent-config.yaml",
+		// TODO: ZTP manifest files should also be present. Bug?
+		// "/etc/assisted/manifests/cluster-deployment.yaml",
+		// "/etc/assisted/manifests/agent-cluster-install.yaml",
+		// "/etc/assisted/manifests/pull-secret.yaml",
+		// "/etc/assisted/manifests/cluster-image-set.yaml",
+		// "/etc/assisted/manifests/infraenv.yaml",
+		"/etc/assisted/network/host0/eth0.nmconnection",
+		"/etc/assisted/network/host0/mac_interface.ini",
+		"/usr/local/bin/pre-network-manager-config.sh",
+		"/opt/agent/tls/kubeadmin-password.hash"}
+	files = append(files, otherFiles...)
+	return append(files, commonFiles()...)
+}
+
+func commonFiles() []string {
+	return []string{
 		"/etc/issue",
 		"/etc/multipath.conf",
 		"/etc/containers/containers.conf",
@@ -357,33 +372,26 @@ func generatedFiles(otherFiles ...string) []string {
 		"/usr/local/bin/bootstrap-service-record.sh",
 		"/usr/local/bin/release-image.sh",
 		"/usr/local/bin/release-image-download.sh",
-		"/etc/assisted/rendezvous-host.env",
-		"/etc/assisted/manifests/agent-config.yaml",
-		"/etc/assisted/network/host0/eth0.nmconnection",
-		"/etc/assisted/network/host0/mac_interface.ini",
-		"/usr/local/bin/pre-network-manager-config.sh",
-		"/opt/agent/tls/kubeadmin-password.hash",
 		"/etc/assisted/agent-installer.env",
 		"/etc/motd.d/10-agent-installer",
 		"/etc/systemd/system.conf.d/10-default-env.conf",
 		"/usr/local/bin/install-status.sh",
 		"/usr/local/bin/issue_status.sh",
 	}
-	return append(defaultFiles, otherFiles...)
 }
 
 func TestIgnition_Generate(t *testing.T) {
-	// Generate calls addStaticNetworkConfig which calls nmstatectl
-	_, execErr := exec.LookPath("nmstatectl")
-	if execErr != nil {
-		t.Skip("No nmstatectl binary available")
-	}
+	skipTestIfnmstatectlIsMissing(t)
 
 	// This patch currently allows testing the Ignition asset using the embedded resources.
 	// TODO: Replace it by mocking the filesystem in bootstrap.AddStorageFiles()
-	workingDirectory, _ := os.Getwd()
-	os.Chdir(path.Join(workingDirectory, "../../../../data"))
-	secretDataBytes, _ := base64.StdEncoding.DecodeString("super-secret")
+	workingDirectory, err := os.Getwd()
+	assert.NoError(t, err)
+	err = os.Chdir(path.Join(workingDirectory, "../../../../data"))
+	assert.NoError(t, err)
+
+	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
+	assert.NoError(t, err)
 
 	cases := []struct {
 		name                                  string
@@ -477,17 +485,9 @@ metadata:
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			deps := buildIgnitionAssetDefaultDependencies(t)
 
-			deps := buildIgnitionAssetDefaultDependencies()
-
-			for _, od := range tc.overrideDeps {
-				for i, d := range deps {
-					if d.Name() == od.Name() {
-						deps[i] = od
-						break
-					}
-				}
-			}
+			overrideDeps(deps, tc.overrideDeps)
 
 			parents := asset.Parents{}
 			parents.Add(deps...)
@@ -503,45 +503,77 @@ metadata:
 				assert.Len(t, ignitionAsset.Config.Storage.Directories, 1)
 				assert.Equal(t, "/etc/assisted/extra-manifests", ignitionAsset.Config.Storage.Directories[0].Node.Path)
 
-				if len(tc.expectedFiles) > 0 {
-					assert.Equal(t, len(tc.expectedFiles), len(ignitionAsset.Config.Storage.Files))
+				assertExpectedFiles(t, ignitionAsset.Config, tc.expectedFiles, tc.expectedFileContent)
 
-					for _, f := range tc.expectedFiles {
-						found := false
-						for _, i := range ignitionAsset.Config.Storage.Files {
-							if i.Node.Path == f {
-								if expectedData, ok := tc.expectedFileContent[i.Node.Path]; ok {
-									actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
-									assert.NoError(t, err)
-									assert.Regexp(t, expectedData, string(actualData.Data))
-								}
-
-								found = true
-								break
-							}
-						}
-						assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
-					}
-				}
-
-				for _, unit := range ignitionAsset.Config.Systemd.Units {
-					if unit.Name == "pre-network-manager-config.service" {
-						if unit.Enabled == nil {
-							assert.Equal(t, tc.preNetworkManagerConfigServiceEnabled, false)
-						} else {
-							assert.Equal(t, tc.preNetworkManagerConfigServiceEnabled, *unit.Enabled)
-						}
-					}
-				}
+				assertPreNetworkConfigServiceEnabled(t, ignitionAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
 			}
 		})
 	}
 }
 
+func skipTestIfnmstatectlIsMissing(t *testing.T) {
+	t.Helper()
+	// Generate calls addStaticNetworkConfig which calls nmstatectl
+	_, execErr := exec.LookPath("nmstatectl")
+	if execErr != nil {
+		t.Skip("No nmstatectl binary available")
+	}
+}
+
+func overrideDeps(deps []asset.Asset, overrides []asset.Asset) {
+	for _, od := range overrides {
+		for i, d := range deps {
+			if d.Name() == od.Name() {
+				deps[i] = od
+				break
+			}
+		}
+	}
+}
+
+func assertPreNetworkConfigServiceEnabled(t *testing.T, config *igntypes.Config, enabled bool) {
+	t.Helper()
+	for _, unit := range config.Systemd.Units {
+		if unit.Name == "pre-network-manager-config.service" {
+			if unit.Enabled == nil {
+				assert.Equal(t, enabled, false)
+			} else {
+				assert.Equal(t, enabled, *unit.Enabled)
+			}
+		}
+	}
+}
+
+func assertExpectedFiles(t *testing.T, config *igntypes.Config, expectedFiles []string, expectedFileContent map[string]string) {
+	t.Helper()
+	if len(expectedFiles) > 0 {
+		assert.Equal(t, len(expectedFiles), len(config.Storage.Files))
+
+		for _, f := range expectedFiles {
+			found := false
+			for _, i := range config.Storage.Files {
+				if i.Node.Path == f {
+					if expectedData, ok := expectedFileContent[i.Node.Path]; ok {
+						actualData, err := dataurl.DecodeString(*i.FileEmbedded1.Contents.Source)
+						assert.NoError(t, err)
+						assert.Regexp(t, expectedData, string(actualData.Data))
+					}
+
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, fmt.Sprintf("Expected file %s not found", f))
+		}
+	}
+}
+
 // This test util create the minimum valid set of dependencies for the
 // Ignition asset
-func buildIgnitionAssetDefaultDependencies() []asset.Asset {
-	secretDataBytes, _ := base64.StdEncoding.DecodeString("super-secret")
+func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
+	t.Helper()
+	secretDataBytes, err := base64.StdEncoding.DecodeString("c3VwZXItc2VjcmV0Cg==")
+	assert.NoError(t, err)
 
 	return []asset.Asset{
 		&manifests.AgentManifests{
@@ -692,7 +724,6 @@ func TestIgnition_getMirrorFromRelease(t *testing.T) {
 			mirror := mirror.GetMirrorFromRelease(tc.release, &tc.registriesConf)
 
 			assert.Equal(t, tc.expectedMirror, mirror)
-
 		})
 	}
 }
@@ -772,7 +803,6 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 			publicContainerRegistries := getPublicContainerRegistries(&tc.registriesConf)
 
 			assert.Equal(t, tc.expectedRegistries, publicContainerRegistries)
-
 		})
 	}
 }

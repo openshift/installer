@@ -100,7 +100,20 @@ var (
 		},
 	}
 
-	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget}
+	agentUnconfiguredIgnitionTarget = target{
+		name: "Agent unconfigured ignition",
+		command: &cobra.Command{
+			Use:    "unconfigured-ignition",
+			Short:  "Generates an agent ignition that excludes cluster configuration",
+			Args:   cobra.ExactArgs(0),
+			Hidden: true,
+		},
+		assets: []asset.WritableAsset{
+			&image.UnconfiguredIgnition{},
+		},
+	}
+
+	agentTargets = []target{agentConfigTarget, agentManifestsTarget, agentImageTarget, agentPXEFilesTarget, agentConfigImageTarget, agentUnconfiguredIgnitionTarget}
 )
 
 func newAgentCreateCmd() *cobra.Command {

@@ -319,6 +319,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
+
 		auth := azuretfvars.Auth{
 			SubscriptionID:            session.Credentials.SubscriptionID,
 			ClientID:                  session.Credentials.ClientID,
@@ -326,6 +327,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			TenantID:                  session.Credentials.TenantID,
 			ClientCertificatePath:     session.Credentials.ClientCertificatePath,
 			ClientCertificatePassword: session.Credentials.ClientCertificatePassword,
+			UseMSI:                    session.AuthType == aztypes.ManagedIdentityAuth,
 		}
 		masters, err := mastersAsset.Machines()
 		if err != nil {

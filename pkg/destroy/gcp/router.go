@@ -1,6 +1,8 @@
 package gcp
 
 import (
+	"context"
+
 	"github.com/pkg/errors"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/googleapi"
@@ -8,17 +10,17 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-func (o *ClusterUninstaller) listRouters() ([]cloudResource, error) {
-	return o.listRoutersWithFilter("items(name),nextPageToken", o.clusterIDFilter(), nil)
+func (o *ClusterUninstaller) listRouters(ctx context.Context) ([]cloudResource, error) {
+	return o.listRoutersWithFilter(ctx, "items(name),nextPageToken", o.clusterIDFilter(), nil)
 }
 
 // listRoutersWithFilter lists routers in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listRoutersWithFilter(fields string, filter string, filterFunc func(*compute.Router) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listRoutersWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.Router) bool) ([]cloudResource, error) {
 	o.Logger.Debug("Listing routers")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.Routers.List(o.ProjectID, o.Region).Fields(googleapi.Field(fields))
@@ -51,9 +53,9 @@ func (o *ClusterUninstaller) listRoutersWithFilter(fields string, filter string,
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteRouter(item cloudResource) error {
+func (o *ClusterUninstaller) deleteRouter(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting router %s", item.name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Routers.Delete(o.ProjectID, o.Region, item.name).RequestId(o.requestID(item.typeName, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -74,14 +76,14 @@ func (o *ClusterUninstaller) deleteRouter(item cloudResource) error {
 
 // destroyRouters removes all router resources that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyRouters() error {
-	found, err := o.listRouters()
+func (o *ClusterUninstaller) destroyRouters(ctx context.Context) error {
+	found, err := o.listRouters(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("router", found)
 	for _, item := range items {
-		err := o.deleteRouter(item)
+		err := o.deleteRouter(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

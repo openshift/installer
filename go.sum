@@ -1054,8 +1054,8 @@ github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d/go.m
 github.com/opencontainers/runtime-spec v1.0.3-0.20210326190908-1c3f411f0417/go.mod h1:jwyrGlmzljRJv/Fgzds9SsS/C5hL+LL3ko9hs6T5lQ0=
 github.com/opencontainers/selinux v1.5.2/go.mod h1:yTcKuYAh6R95iDpefGLQaPaRwJFwyzAJufJyiTt7s0g=
 github.com/opencontainers/selinux v1.8.2/go.mod h1:MUIHuUEvKB1wtJjQdOyYRgOnLD2xAPP8dBsCoU0KuF8=
-github.com/openshift/api v0.0.0-20230531161518-2346bf94f19e h1:ELcgpoysjPXc3Gf4TrlP/OAJMgZeDUaQAFpfcnNdw2o=
-github.com/openshift/api v0.0.0-20230531161518-2346bf94f19e/go.mod h1:4VWG+W22wrB4HfBL88P40DxLEpSOaiBVxUnfalfJo9k=
+github.com/openshift/api v0.0.0-20230607130528-611114dca681 h1:kSvo4fjZyYRu7z7PVkZlqcYhoS4mZHVFYVUkG3WkvIE=
+github.com/openshift/api v0.0.0-20230607130528-611114dca681/go.mod h1:4VWG+W22wrB4HfBL88P40DxLEpSOaiBVxUnfalfJo9k=
 github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8 h1:oZ3VAWiM8tPRBM+vYI4GBmlrqyoqizcgZ7pBy5EX2K8=
 github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8/go.mod h1:bH4+AsmPy8mQQvtgedBm2Crs93TDWeXEMlIPrlEMpjA=
 github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61 h1:HtUYJBAdRgfVYide0bq3GsT/4n5uPWteA1rIZVXEL7k=

@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -16,9 +17,9 @@ type dnsZone struct {
 	project string
 }
 
-func (o *ClusterUninstaller) listDNSZones() (private *dnsZone, public []dnsZone, err error) {
+func (o *ClusterUninstaller) listDNSZones(ctx context.Context) (private *dnsZone, public []dnsZone, err error) {
 	o.Logger.Debugf("Listing DNS Zones")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	projects := []string{o.ProjectID}
@@ -48,14 +49,14 @@ func (o *ClusterUninstaller) listDNSZones() (private *dnsZone, public []dnsZone,
 	return
 }
 
-func (o *ClusterUninstaller) deleteDNSZone(name string) error {
+func (o *ClusterUninstaller) deleteDNSZone(ctx context.Context, name string) error {
 	if !o.isClusterResource(name) {
 		o.Logger.Warnf("Skipping deletion of DNS Zone %s, not created by installer", name)
 		return nil
 	}
 
 	o.Logger.Debugf("Deleting DNS zones %s", name)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	err := o.dnsSvc.ManagedZones.Delete(o.ProjectID, name).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -65,8 +66,8 @@ func (o *ClusterUninstaller) deleteDNSZone(name string) error {
 	return nil
 }
 
-func (o *ClusterUninstaller) listDNSZoneRecordSets(zone *dnsZone) ([]*dns.ResourceRecordSet, error) {
-	ctx, cancel := o.contextWithTimeout()
+func (o *ClusterUninstaller) listDNSZoneRecordSets(ctx context.Context, zone *dnsZone) ([]*dns.ResourceRecordSet, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	req := o.dnsSvc.ResourceRecordSets.List(zone.project, zone.name)
 	result := []*dns.ResourceRecordSet{}
@@ -80,7 +81,7 @@ func (o *ClusterUninstaller) listDNSZoneRecordSets(zone *dnsZone) ([]*dns.Resour
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteDNSZoneRecordSets(zone *dnsZone, recordSets []*dns.ResourceRecordSet) error {
+func (o *ClusterUninstaller) deleteDNSZoneRecordSets(ctx context.Context, zone *dnsZone, recordSets []*dns.ResourceRecordSet) error {
 	change := &dns.Change{}
 	for _, rr := range recordSets {
 		if (rr.Type == "NS" || rr.Type == "SOA") && strings.TrimRight(rr.Name, ".") == strings.TrimRight(zone.domain, ".") {
@@ -91,7 +92,7 @@ func (o *ClusterUninstaller) deleteDNSZoneRecordSets(zone *dnsZone, recordSets [
 	if len(change.Deletions) == 0 {
 		return nil
 	}
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	o.Logger.Debugf("Deleting %d recordset(s) in zone %s", len(change.Deletions), zone.name)
 	change, err := o.dnsSvc.Changes.Create(zone.project, zone.name, change).ClientOperationId(o.requestID("recordsets", zone.name)).Context(ctx).Do()
@@ -160,8 +161,8 @@ func (o *ClusterUninstaller) getMatchingRecordSets(parentRecords, childRecords [
 // from the private zone are matched to records in the parent zone (by using type
 // and name for each record). Matching records are removed from the public zone.
 // Finally all records are removed from the private zone and the private zone is removed.
-func (o *ClusterUninstaller) destroyDNS() error {
-	privateZone, publicZones, err := o.listDNSZones()
+func (o *ClusterUninstaller) destroyDNS(ctx context.Context) error {
+	privateZone, publicZones, err := o.listDNSZones(ctx)
 	if err != nil {
 		return err
 	}
@@ -170,30 +171,30 @@ func (o *ClusterUninstaller) destroyDNS() error {
 		return nil
 	}
 
-	zoneRecordSets, err := o.listDNSZoneRecordSets(privateZone)
+	zoneRecordSets, err := o.listDNSZoneRecordSets(ctx, privateZone)
 	if err != nil {
 		return err
 	}
 
 	parentZones := getParentDNSZones(privateZone.domain, publicZones, o.Logger)
 	for _, parentZone := range parentZones {
-		parentRecordSets, err := o.listDNSZoneRecordSets(parentZone)
+		parentRecordSets, err := o.listDNSZoneRecordSets(ctx, parentZone)
 		if err != nil {
 			return err
 		}
 		matchingRecordSets := o.getMatchingRecordSets(parentRecordSets, zoneRecordSets)
 		if len(matchingRecordSets) > 0 {
-			err = o.deleteDNSZoneRecordSets(parentZone, matchingRecordSets)
+			err = o.deleteDNSZoneRecordSets(ctx, parentZone, matchingRecordSets)
 			if err != nil {
 				return err
 			}
 		}
 	}
-	err = o.deleteDNSZoneRecordSets(privateZone, zoneRecordSets)
+	err = o.deleteDNSZoneRecordSets(ctx, privateZone, zoneRecordSets)
 	if err != nil {
 		return err
 	}
-	err = o.deleteDNSZone(privateZone.name)
+	err = o.deleteDNSZone(ctx, privateZone.name)
 	if err != nil {
 		return err
 	}

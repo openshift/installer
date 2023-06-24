@@ -1,6 +1,7 @@
 package gcp
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/pkg/errors"
@@ -43,17 +44,17 @@ func (o *ClusterUninstaller) storageLabelOrClusterIDFilter() string {
 	return fmt.Sprintf("%s OR (%s) OR (%s)", o.clusterLabelOrClusterIDFilter(), o.storageIDFilter(), o.storageLabelFilter())
 }
 
-func (o *ClusterUninstaller) listDisks() ([]cloudResource, error) {
-	return o.listDisksWithFilter("items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
+func (o *ClusterUninstaller) listDisks(ctx context.Context) ([]cloudResource, error) {
+	return o.listDisksWithFilter(ctx, "items/*/disks(name,zone,type,sizeGb),nextPageToken", o.storageLabelOrClusterIDFilter(), nil)
 }
 
 // listDisksWithFilter lists disks in the project that satisfy the filter criteria.
 // The fields parameter specifies which fields should be returned in the result, the filter string contains
 // a filter string passed to the API to filter results. The filterFunc is a client-side filtering function
 // that determines whether a particular result should be returned or not.
-func (o *ClusterUninstaller) listDisksWithFilter(fields string, filter string, filterFunc func(*compute.Disk) bool) ([]cloudResource, error) {
+func (o *ClusterUninstaller) listDisksWithFilter(ctx context.Context, fields string, filter string, filterFunc func(*compute.Disk) bool) ([]cloudResource, error) {
 	o.Logger.Debug("Listing disks")
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	result := []cloudResource{}
 	req := o.computeSvc.Disks.AggregatedList(o.ProjectID).Fields(googleapi.Field(fields))
@@ -93,9 +94,9 @@ func (o *ClusterUninstaller) listDisksWithFilter(fields string, filter string, f
 	return result, nil
 }
 
-func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
+func (o *ClusterUninstaller) deleteDisk(ctx context.Context, item cloudResource) error {
 	o.Logger.Debugf("Deleting disk %s in zone %s", item.name, item.zone)
-	ctx, cancel := o.contextWithTimeout()
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	op, err := o.computeSvc.Disks.Delete(o.ProjectID, item.zone, item.name).RequestId(o.requestID(item.typeName, item.zone, item.name)).Context(ctx).Do()
 	if err != nil && !isNoOp(err) {
@@ -116,14 +117,14 @@ func (o *ClusterUninstaller) deleteDisk(item cloudResource) error {
 
 // destroyDisks removes all disk resources that have a name prefixed
 // with the cluster's infra ID.
-func (o *ClusterUninstaller) destroyDisks() error {
-	found, err := o.listDisks()
+func (o *ClusterUninstaller) destroyDisks(ctx context.Context) error {
+	found, err := o.listDisks(ctx)
 	if err != nil {
 		return err
 	}
 	items := o.insertPendingItems("disk", found)
 	for _, item := range items {
-		err := o.deleteDisk(item)
+		err := o.deleteDisk(ctx, item)
 		if err != nil {
 			o.errorTracker.suppressWarning(item.key, err, o.Logger)
 		}

@@ -224,20 +224,6 @@ func TFVars(
 		// Terraform expects each master to get an array, empty or otherwise.
 		additionalPorts[i] = []terraformPort{}
 		machinesPorts[i] = defaultMachinesPort
-		if mastermpool != nil && len(mastermpool.FailureDomains) > 0 {
-			failureDomain := &mastermpool.FailureDomains[i%len(mastermpool.FailureDomains)]
-			for j := range failureDomain.PortTargets {
-				terraformPort, err := portTargetToTerraformPort(networkClient, failureDomain.PortTargets[j].PortTarget)
-				if err != nil {
-					return nil, fmt.Errorf("failed to resolve portTarget %q of master %d :%w", failureDomain.PortTargets[j].ID, i, err)
-				}
-				if failureDomain.PortTargets[j].ID == "control-plane" {
-					machinesPorts[i] = &terraformPort
-				} else {
-					additionalPorts[i] = append(additionalPorts[i], terraformPort)
-				}
-			}
-		}
 	}
 
 	var additionalSecurityGroupIDs []string

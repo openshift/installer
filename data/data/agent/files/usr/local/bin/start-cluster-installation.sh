@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# shellcheck disable=SC1091
 source issue_status.sh
 
 BASE_URL="${SERVICE_BASE_URL}api/assisted-install/v2"
@@ -15,13 +16,11 @@ do
     fi
 done
 
-echo -e "\nInfra env id is ${INFRA_ENV_ID}" 1>&2
+printf '\nInfra env id is %s\n' "${INFRA_ENV_ID}" 1>&2
 
-required_master_nodes={{.ControlPlaneAgents}}
-required_worker_nodes={{.WorkerAgents}}
-total_required_nodes=$(( ${required_master_nodes}+${required_worker_nodes} ))
-echo "Number of required master nodes: ${required_master_nodes}" 1>&2
-echo "Number of required worker nodes: ${required_worker_nodes}" 1>&2
+total_required_nodes=$(( REQUIRED_MASTER_NODES + REQUIRED_WORKER_NODES ))
+echo "Number of required master nodes: ${REQUIRED_MASTER_NODES}" 1>&2
+echo "Number of required worker nodes: ${REQUIRED_WORKER_NODES}" 1>&2
 echo "Total number of required nodes: ${total_required_nodes}" 1>&2
 
 status_issue="90_start-install"
@@ -55,14 +54,6 @@ done
 
 echo "All ${total_required_nodes} hosts are ready." 1>&2
 clear_issue "${status_issue}"
-
-if [[ "${APIVIP}" != "" ]]; then
-    api_vip=$(curl -s -S "${BASE_URL}/clusters" | jq -r .[].api_vip)
-    if [ "${api_vip}" == null ]; then
-        echo "Setting api vip" 1>&2
-        curl -s -S -X PATCH "${BASE_URL}/clusters/${cluster_id}" -H "Content-Type: application/json" -d '{"api_vip": "{{.APIVIP}}"}'
-    fi
-fi
 
 while [[ "${cluster_status}" != "installed" ]]
 do
