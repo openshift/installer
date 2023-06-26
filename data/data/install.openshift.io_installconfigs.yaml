@@ -2063,6 +2063,33 @@ spec:
                     items:
                       type: string
                     type: array
+                  userConfiguredDNSLB:
+                    description: "UserConfiguredDNSLB contains all the API and API-Int
+                      LB information. \n This field is used to Enable the use of a
+                      custom DNS solution when the DNS provided by the underlying
+                      cloud platform cannot be used. When Enabled, the user can provide
+                      information about user created API and API-Int LBs using this
+                      field."
+                    properties:
+                      apiIntLBName:
+                        description: ApiIntLBName is the name of the API-Int NLB created
+                          by the user.
+                        type: string
+                      apiLBName:
+                        description: ApiLBName is the name of the API NLB created
+                          by the user.
+                        type: string
+                      userDNS:
+                        default: Disabled
+                        description: UserDNS specifies whether the customer is responsible
+                          for configuring DNS entries for API and API-Int prior to
+                          cluster installation.
+                        enum:
+                        - ""
+                        - Enabled
+                        - Disabled
+                        type: string
+                    type: object
                   userTags:
                     additionalProperties:
                       type: string

@@ -101,6 +101,16 @@ type Platform struct {
 	//
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
+
+	// UserConfiguredDNSLB contains all the API and API-Int LB information.
+	//
+	// This field is used to Enable the use of a custom DNS solution when
+	// the DNS provided by the underlying cloud platform cannot be used.
+	// When Enabled, the user can provide information about user created
+	// API and API-Int LBs using this field.
+	//
+	// +optional
+	UserConfiguredDNSLB UserConfiguredDNSLB `json:"userConfiguredDNSLB,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
@@ -116,6 +126,35 @@ type ServiceEndpoint struct {
 	//
 	// +kubebuilder:validation:Pattern=`^https://`
 	URL string `json:"url"`
+}
+
+// UserDNSConfiguration specifies whether the csutomer is using their own DNS
+// +kubebuilder:validation:Enum="";Enabled;Disabled
+type UserDNSConfiguration string
+
+const (
+	// UserDNSEnabled indicates that user has pre-configured their own DNS.
+	UserDNSEnabled UserDNSConfiguration = "Enabled"
+	// UserDNSDisabled indicates that user has not pre-configured their own DNS.
+	// Installer would continue to be responsible for configuring the cloud DNS.
+	UserDNSDisabled UserDNSConfiguration = "Disabled"
+)
+
+// UserConfiguredDNSLB is used to specify the customer's intent in using a
+// custom DNS solution. It contains informmation about the pre-created LB
+// resources for API and API-Int.
+type UserConfiguredDNSLB struct {
+	// UserDNS specifies whether the customer is responsible for
+	// configuring DNS entries for API and API-Int prior to cluster
+	// installation.
+	// +kubebuilder:default=Disabled
+	UserDNS UserDNSConfiguration `json:"userDNS,omitempty"`
+
+	// ApiLBName is the name of the API NLB created by the user.
+	APILBName string `json:"apiLBName,omitempty"`
+
+	// ApiIntLBName is the name of the API-Int NLB created by the user.
+	APIIntLBName string `json:"apiIntLBName,omitempty"`
 }
 
 // IsSecretRegion returns true if the region is part of either the ISO or ISOB partitions.

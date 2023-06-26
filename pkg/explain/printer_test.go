@@ -186,6 +186,10 @@ func Test_PrintFields(t *testing.T) {
     subnets <[]string>
       Subnets specifies existing subnets (by ID) where cluster resources will be created.  Leave unset to have the installer create subnets in a new VPC on your behalf.
 
+    userConfiguredDNSLB <object>
+      UserConfiguredDNSLB contains all the API and API-Int LB information. 
+ This field is used to Enable the use of a custom DNS solution when the DNS provided by the underlying cloud platform cannot be used. When Enabled, the user can provide information about user created API and API-Int LBs using this field.
+
     userTags <object>
       UserTags additional keys and values that the installer will add as tags to all resources that it creates. Resources created by the cluster itself may not include these tags.`,
 	}, {
