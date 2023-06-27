@@ -57,6 +57,8 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, validateCredentialMode(client, ic)...)
+	allErrs = append(allErrs, validatePreexistingServiceAccountXpn(client, ic)...)
+	allErrs = append(allErrs, validateServiceAccountPresent(client, ic)...)
 
 	return allErrs.ToAggregate()
 }
@@ -95,6 +97,21 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 	return allErrs
 }
 
+func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.NetworkProjectID != "" {
+		creds := client.GetCredentials()
+		if creds != nil && creds.JSON == nil {
+			if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.ServiceAccount == "" {
+				errMsg := "service account must be provided when authentication credentials do not provide a service account"
+				allErrs = append(allErrs, field.Required(field.NewPath("controlPlane").Child("platform").Child("gcp").Child("serviceAccount"), errMsg))
+			}
+		}
+	}
+	return allErrs
+}
+
 // validateInstanceTypes checks that the user-provided instance types are valid.
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -120,6 +137,27 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
 			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "gcp"), ic.GCP.ProjectID, ic.GCP.Region, compute.Platform.GCP.Zones,
 				compute.Platform.GCP.InstanceType, computeReq)...)
+		}
+	}
+
+	return allErrs
+}
+
+func validatePreexistingServiceAccountXpn(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if ic.GCP.NetworkProjectID != "" {
+		if ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.ServiceAccount != "" {
+			fldPath := field.NewPath("controlPlane").Child("platform").Child("gcp").Child("serviceAccount")
+
+			// The service account is required for resources in the host project.
+			serviceAccount, err := client.GetServiceAccount(context.Background(), ic.GCP.ProjectID, ic.ControlPlane.Platform.GCP.ServiceAccount)
+			if err != nil {
+				return append(allErrs, field.InternalError(fldPath, err))
+			}
+			if serviceAccount == "" {
+				return append(allErrs, field.NotFound(fldPath, ic.ControlPlane.Platform.GCP.ServiceAccount))
+			}
 		}
 	}
 
