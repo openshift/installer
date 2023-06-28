@@ -27,7 +27,7 @@ var openshiftNamespaceRegex = regexp.MustCompile(`^([^/]*\.)?openshift.io/`)
 const userTagLimit = 25
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, publish types.PublishingStrategy, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.Region == "" {
@@ -58,6 +58,7 @@ func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
 
+	allErrs = append(allErrs, validateUserConfiguredDNSLB(p.UserConfiguredDNSLB, publish, fldPath.Child("userConfiguredDNSLB"))...)
 	return allErrs
 }
 
@@ -168,4 +169,28 @@ func validateServiceURL(uri string) error {
 	}
 
 	return nil
+}
+
+func validateUserConfiguredDNSLB(userConfig aws.UserConfiguredDNSLB, publish types.PublishingStrategy, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	switch {
+	case userConfig.UserDNS == aws.UserDNSEnabled:
+		if userConfig.APIIntLBName == "" {
+			allErrs = append(allErrs,
+				field.Required(fldPath, "have to provide pre-created API-Int LB Name when user configured DNS is Enabled"))
+		}
+		if publish == types.ExternalPublishingStrategy && userConfig.APILBName == "" {
+			allErrs = append(allErrs,
+				field.Required(fldPath, "have to provide pre-created API LB Name when user configured DNS is Enabled and the publishing strategy is External"))
+		}
+	case userConfig.UserDNS == aws.UserDNSDisabled || userConfig.UserDNS == "":
+		if userConfig.APILBName != "" || userConfig.APIIntLBName != "" {
+			allErrs = append(allErrs,
+				field.Invalid(fldPath, userConfig, "API and API-Int LB Names will be ignored when user configured DNS is Disabled or unspecified"))
+		}
+	default:
+		allErrs = append(allErrs,
+			field.Invalid(fldPath, userConfig.UserDNS, "provided for userDNS"))
+	}
+	return allErrs
 }
