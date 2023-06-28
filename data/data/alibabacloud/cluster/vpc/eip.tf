@@ -5,6 +5,7 @@ resource "alicloud_eip_address" "eip" {
   address_name         = "${local.prefix}-eip"
   payment_type         = "PayAsYouGo"
   internet_charge_type = "PayByTraffic"
+  bandwidth            = 200
   resource_group_id    = var.resource_group_id
   tags = merge(
     {
