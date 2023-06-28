@@ -206,14 +206,13 @@ func (o *ClusterUninstaller) cleanSharedRoute53(ctx context.Context, session *se
 }
 
 func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, session *session.Session, id string, logger logrus.FieldLogger) error {
-	publicClient := route53.New(session)
-
 	// The private hosted zone (phz) may belong to a different account,
 	// in which case we need a separate client.
-	phzClient := publicClient
+	publicZoneClient := route53.New(session)
+	privateZoneClient := route53.New(session)
 	if o.HostedZoneRole != "" {
 		creds := stscreds.NewCredentials(session, o.HostedZoneRole)
-		phzClient = route53.New(session, &aws.Config{Credentials: creds})
+		privateZoneClient = route53.New(session, &aws.Config{Credentials: creds})
 		logger.Infof("Assuming role %s to destroy records in private hosted zone", o.HostedZoneRole)
 	}
 
@@ -223,13 +222,13 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, session 
 	}
 	dottedClusterDomain := o.ClusterDomain + "."
 
-	publicZoneID, err := findAncestorPublicRoute53(ctx, publicClient, dottedClusterDomain, logger)
+	publicZoneID, err := findAncestorPublicRoute53(ctx, publicZoneClient, dottedClusterDomain, logger)
 	if err != nil {
 		return err
 	}
 
 	var lastError error
-	err = phzClient.ListResourceRecordSetsPagesWithContext(
+	err = privateZoneClient.ListResourceRecordSetsPagesWithContext(
 		ctx,
 		&route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(id)},
 		func(results *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
@@ -246,7 +245,7 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, session 
 				// delete any matching record sets in the public hosted zone
 				if publicZoneID != "" {
 					publicZoneLogger := logger.WithField("id", publicZoneID)
-					if err := deleteMatchingRecordSetInPublicZone(ctx, publicClient, publicZoneID, recordSet, publicZoneLogger); err != nil {
+					if err := deleteMatchingRecordSetInPublicZone(ctx, publicZoneClient, publicZoneID, recordSet, publicZoneLogger); err != nil {
 						if lastError != nil {
 							publicZoneLogger.Debug(lastError)
 						}
@@ -258,7 +257,7 @@ func (o *ClusterUninstaller) cleanSharedHostedZone(ctx context.Context, session 
 					publicZoneLogger.WithFields(recordsetFields).Debug("Deleted from public zone")
 				}
 				// delete the record set
-				if err := deleteRoute53RecordSet(ctx, phzClient, id, recordSet, logger); err != nil {
+				if err := deleteRoute53RecordSet(ctx, privateZoneClient, id, recordSet, logger); err != nil {
 					if lastError != nil {
 						logger.Debug(lastError)
 					}
