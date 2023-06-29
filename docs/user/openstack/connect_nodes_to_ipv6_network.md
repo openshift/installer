@@ -1,4 +1,4 @@
-# Connect workers nodes and Pods to IPv6 network
+# Connecting worker nodes and pods to an IPv6 network
 
 To connect your workers at the time of installation you can use [additionalNetworkIDs](https://github.com/openshift/installer/blob/master/docs/user/openstack/customization.md#additional-networks) parameter in the install config and set IPv6 network ID there:
 

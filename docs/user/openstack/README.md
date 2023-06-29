@@ -60,13 +60,17 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 - [Troubleshooting your cluster](troubleshooting.md)
 - [Customizing your install](customization.md)
 - [Installing OpenShift on OpenStack User-Provisioned Infrastructure](install_upi.md)
-- [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
 - [Deploying OpenShift with OVS-DPDK](ovs-dpdk.md)
 - [Deploying OpenShift with an external load balancer](external_load_balancer.md)
 - [Provider Networks](provider_networks.md)
 - [Migrate the Image Registry from Cinder to Swift](image-registry-storage-swift.md)
+- [Image Registry With A Custom PVC Backend](image_registry_with_custom_pvc_backends.md)
+- [Adding Worker Nodes By Hand](add_worker_nodes_by_hand.md)
+- [Connecting workers nodes and pods to an IPv6 network](connect_nodes_to_ipv6_network.md)
+- [Connecting worker nodes to a dedicated Manila network](connect_nodes_to_manila_network.md)
+- [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 
 ## OpenStack Requirements
 
