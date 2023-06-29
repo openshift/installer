@@ -200,3 +200,8 @@ variable "aws_worker_iam_role_name" {
   description = "The name of the IAM role that will be attached to worker instances."
   default     = ""
 }
+
+variable "aws_preserve_bootstrap_ignition" {
+  type = bool
+  description = "The variable that needs to be set to avoid destuction of S3 objects during bootstrap destroy."
+}

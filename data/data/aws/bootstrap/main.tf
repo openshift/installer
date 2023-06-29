@@ -45,6 +45,7 @@ data "aws_partition" "current" {}
 data "aws_ebs_default_kms_key" "current" {}
 
 resource "aws_s3_bucket" "ignition" {
+  count  = var.aws_preserve_bootstrap_ignition ? 0 : 1
   bucket = var.aws_ignition_bucket
 
   tags = merge(
@@ -60,7 +61,8 @@ resource "aws_s3_bucket" "ignition" {
 }
 
 resource "aws_s3_object" "ignition" {
-  bucket = aws_s3_bucket.ignition.id
+  count  = var.aws_preserve_bootstrap_ignition ? 0 : 1
+  bucket = aws_s3_bucket.ignition[0].id
   key    = "bootstrap.ign"
   source = var.ignition_bootstrap_file
 
