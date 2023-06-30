@@ -445,6 +445,7 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 	// fmt.Printf("ValidateCapacityWithPools: compute(%v) = {%v, %v, %v, %v}, worker(%v) = {%v, %v, %v, %v}\n", numCompute, computeSystemType, computeProcessorType, computeProcessors, computeMemoryGiB, numWorker, workerSystemType, workerProcessorType, workerProcessors, workerMemoryGiB)
 
 	switch computeProcessorType {
+	case "Capped":
 	case "Dedicated":
 	case "Shared":
 		// @TODO I would think we should reduce the number of cores by some factor.
@@ -456,6 +457,7 @@ func ValidateCapacityWithPools(controlPlanes []machinev1beta1.Machine, computes 
 	}
 
 	switch workerProcessorType {
+	case "Capped":
 	case "Dedicated":
 	case "Shared":
 		// @TODO I would think we should reduce the number of cores by some factor.
