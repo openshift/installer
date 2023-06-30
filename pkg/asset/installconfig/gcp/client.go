@@ -101,7 +101,7 @@ func (c *Client) GetNetwork(ctx context.Context, network, project string) (*comp
 
 // GetPublicDomains returns all of the domains from among the project's public DNS zones.
 func (c *Client) GetPublicDomains(ctx context.Context, project string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -127,7 +127,7 @@ func (c *Client) GetPublicDomains(ctx context.Context, project string) ([]string
 // GetDNSZoneByName returns a DNS zone matching the `zoneName` if the DNS zone exists
 // and can be seen (correct permissions for a private zone) in the project.
 func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -179,7 +179,7 @@ func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isP
 
 // GetRecordSets returns all the records for a DNS zone.
 func (c *Client) GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), defaultTimeout)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
