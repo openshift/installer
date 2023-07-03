@@ -52,9 +52,6 @@ type Client struct {
 
 // NewClient initializes a client with a session.
 func NewClient(ctx context.Context) (*Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	ssn, err := GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
@@ -222,9 +219,6 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 }
 
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
-	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
-	defer cancel()
-
 	svc, err := compute.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create compute service")
