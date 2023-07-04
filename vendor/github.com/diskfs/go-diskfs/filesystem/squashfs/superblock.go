@@ -17,12 +17,12 @@ type compression uint16
 
 const (
 	compressionNone compression = 0
-	compressionGzip             = 1
-	compressionLzma             = 2
-	compressionLzo              = 3
-	compressionXz               = 4
-	compressionLz4              = 5
-	compressionZstd             = 6
+	compressionGzip compression = 1
+	compressionLzma compression = 2
+	compressionLzo  compression = 3
+	compressionXz   compression = 4
+	compressionLz4  compression = 5
+	compressionZstd compression = 6
 )
 
 const (
@@ -36,8 +36,8 @@ type inodeRef struct {
 
 func (i *inodeRef) toUint64() uint64 {
 	var u uint64
-	u = u | (uint64(i.block) << 16)
-	u = u | uint64(i.offset)
+	u |= (uint64(i.block) << 16)
+	u |= uint64(i.offset)
 	return u
 }
 func parseRootInode(u uint64) *inodeRef {
@@ -140,7 +140,7 @@ func (s *superblockFlags) bytes() []byte {
 func parseFlags(b []byte) (*superblockFlags, error) {
 	targetLength := 2
 	if len(b) != targetLength {
-		return nil, fmt.Errorf("Received %d bytes instead of expected %d", len(b), targetLength)
+		return nil, fmt.Errorf("received %d bytes instead of expected %d", len(b), targetLength)
 	}
 	flags := binary.LittleEndian.Uint16(b)
 	s := &superblockFlags{
@@ -184,27 +184,27 @@ func (s *superblock) toBytes() []byte {
 }
 func parseSuperblock(b []byte) (*superblock, error) {
 	if len(b) != superblockSize {
-		return nil, fmt.Errorf("Superblock had %d bytes instead of expected %d", len(b), superblockSize)
+		return nil, fmt.Errorf("superblock had %d bytes instead of expected %d", len(b), superblockSize)
 	}
 	magic := binary.LittleEndian.Uint32(b[0:4])
 	if magic != superblockMagic {
-		return nil, fmt.Errorf("Superblock had magic of %d instead of expected %d", magic, superblockMagic)
+		return nil, fmt.Errorf("superblock had magic of %d instead of expected %d", magic, superblockMagic)
 	}
 	majorVersion := binary.LittleEndian.Uint16(b[28:30])
 	minorVersion := binary.LittleEndian.Uint16(b[30:32])
 	if majorVersion != superblockMajorVersion || minorVersion != superblockMinorVersion {
-		return nil, fmt.Errorf("Superblock version mismatch, received %d.%d instead of expected %d.%d", majorVersion, minorVersion, superblockMajorVersion, superblockMinorVersion)
+		return nil, fmt.Errorf("superblock version mismatch, received %d.%d instead of expected %d.%d", majorVersion, minorVersion, superblockMajorVersion, superblockMinorVersion)
 	}
 
 	blocksize := binary.LittleEndian.Uint32(b[12:16])
 	blocklog := binary.LittleEndian.Uint16(b[22:24])
 	expectedLog := uint16(math.Log2(float64(blocksize)))
 	if expectedLog != blocklog {
-		return nil, fmt.Errorf("Superblock block log mismatch, actual %d expected %d", blocklog, expectedLog)
+		return nil, fmt.Errorf("superblock block log mismatch, actual %d expected %d", blocklog, expectedLog)
 	}
 	flags, err := parseFlags(b[24:26])
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing flags bytes: %v", err)
+		return nil, fmt.Errorf("error parsing flags bytes: %v", err)
 	}
 	s := &superblock{
 		inodes:              binary.LittleEndian.Uint32(b[4:8]),

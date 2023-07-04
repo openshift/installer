@@ -317,7 +317,7 @@ func readFileFromIgnitionCfg(config *igntypes.Config, nodePath string) ([]byte, 
 }
 
 func extractArchiveFile(isoPath, archive, fileName string) ([]byte, error) {
-	disk, err := diskfs.OpenWithMode(isoPath, diskfs.ReadOnly)
+	disk, err := diskfs.Open(isoPath, diskfs.WithOpenMode(diskfs.ReadOnly))
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +414,7 @@ func initrdImgContains(ts *testscript.TestScript, neg bool, args []string) {
 }
 
 func checkFileFromInitrdImg(isoPath string, fileName string) error {
-	disk, err := diskfs.OpenWithMode(isoPath, diskfs.ReadOnly)
+	disk, err := diskfs.Open(isoPath, diskfs.WithOpenMode(diskfs.ReadOnly))
 	if err != nil {
 		return err
 	}

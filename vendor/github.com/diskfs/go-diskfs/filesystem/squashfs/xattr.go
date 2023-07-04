@@ -7,9 +7,9 @@ import (
 
 const (
 	xAttrIDEntrySize      uint32 = 16
-	xAttrHeaderSize              = 16
-	noXattrInodeFlag             = 0xffffffff
-	noXattrSuperblockFlag        = 0xffffffffffffffff
+	xAttrHeaderSize       uint32 = 16
+	noXattrInodeFlag      uint32 = 0xffffffff
+	noXattrSuperblockFlag uint64 = 0xffffffffffffffff
 )
 
 type xAttrIndex struct {
@@ -20,7 +20,7 @@ type xAttrIndex struct {
 
 func parseXAttrIndex(b []byte) (*xAttrIndex, error) {
 	if len(b) < int(xAttrIDEntrySize) {
-		return nil, fmt.Errorf("Cannot parse xAttr Index of size %d less than minimum %d", len(b), xAttrIDEntrySize)
+		return nil, fmt.Errorf("cannot parse xAttr Index of size %d less than minimum %d", len(b), xAttrIDEntrySize)
 	}
 	return &xAttrIndex{
 		pos:   binary.LittleEndian.Uint64(b[0:8]),
@@ -36,7 +36,7 @@ type xAttrTable struct {
 
 func (x *xAttrTable) find(pos int) (map[string]string, error) {
 	if pos >= len(x.list) {
-		return nil, fmt.Errorf("Position %d is greater than list size %d", pos, len(x.list))
+		return nil, fmt.Errorf("position %d is greater than list size %d", pos, len(x.list))
 	}
 	entry := x.list[pos]
 	b := x.data[entry.pos:]
@@ -49,7 +49,7 @@ func (x *xAttrTable) find(pos int) (map[string]string, error) {
 			return nil, fmt.Errorf("insufficient bytes %d to read the xattr at position %d", len(b[ptr:]), ptr)
 		}
 		// get the type and size
-		//xType := binary.LittleEndian.Uint16(b[ptr : ptr+2])
+		//   xType := binary.LittleEndian.Uint16(b[ptr : ptr+2])
 		xSize := int(binary.LittleEndian.Uint16(b[ptr+2 : ptr+4]))
 		nameStart := ptr + 4
 		valHeaderStart := nameStart + xSize
@@ -59,7 +59,7 @@ func (x *xAttrTable) find(pos int) (map[string]string, error) {
 			return nil, fmt.Errorf("xattr header has size %d, but only %d bytes available to read at position %d", xSize, len(b[pos+4:]), ptr)
 		}
 		if xSize < 1 {
-			return nil, fmt.Errorf("No name given for xattr at position %d", ptr)
+			return nil, fmt.Errorf("no name given for xattr at position %d", ptr)
 		}
 		key := string(b[nameStart : nameStart+xSize])
 		// read the size of the value

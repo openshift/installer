@@ -7,7 +7,8 @@ import (
 )
 
 // File represents a single file in an iso9660 filesystem
-//  it is NOT used when working in a workspace, where we just use the underlying OS
+//
+//	it is NOT used when working in a workspace, where we just use the underlying OS
 type File struct {
 	*directoryEntry
 	isReadWrite bool
@@ -47,9 +48,12 @@ func (fl *File) Read(b []byte) (int, error) {
 	}
 
 	// just read the requested number of bytes and change our offset
-	file.ReadAt(b[0:maxRead], int64(location)*fs.blocksize+int64(fl.offset))
+	_, err := file.ReadAt(b[0:maxRead], int64(location)*fs.blocksize+fl.offset)
+	if err != nil && err != io.EOF {
+		return 0, err
+	}
 
-	fl.offset = fl.offset + int64(maxRead)
+	fl.offset += int64(maxRead)
 	var retErr error
 	if fl.offset >= int64(fl.size) {
 		retErr = io.EOF
@@ -58,9 +62,10 @@ func (fl *File) Read(b []byte) (int, error) {
 }
 
 // Write writes len(b) bytes to the File.
-//  you cannot write to an iso, so this returns an error
+//
+//	you cannot write to an iso, so this returns an error
 func (fl *File) Write(p []byte) (int, error) {
-	return 0, fmt.Errorf("Cannot write to a read-only iso filesystem")
+	return 0, fmt.Errorf("cannot write to a read-only iso filesystem")
 }
 
 // Seek set the offset to a particular point in the file
@@ -78,7 +83,7 @@ func (fl *File) Seek(offset int64, whence int) (int64, error) {
 		newOffset = fl.offset + offset
 	}
 	if newOffset < 0 {
-		return fl.offset, fmt.Errorf("Cannot set offset %d before start of file", offset)
+		return fl.offset, fmt.Errorf("cannot set offset %d before start of file", offset)
 	}
 	fl.offset = newOffset
 	return fl.offset, nil
