@@ -81,7 +81,8 @@ func NewV2GetHostIgnitionOK() *V2GetHostIgnitionOK {
 	return &V2GetHostIgnitionOK{}
 }
 
-/* V2GetHostIgnitionOK describes a response with status code 200, with default header values.
+/*
+V2GetHostIgnitionOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type V2GetHostIgnitionOK struct {
 	Payload *models.HostIgnitionParams
 }
 
+// IsSuccess returns true when this v2 get host ignition o k response has a 2xx status code
+func (o *V2GetHostIgnitionOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 get host ignition o k response has a 3xx status code
+func (o *V2GetHostIgnitionOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition o k response has a 4xx status code
+func (o *V2GetHostIgnitionOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get host ignition o k response has a 5xx status code
+func (o *V2GetHostIgnitionOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get host ignition o k response a status code equal to that given
+func (o *V2GetHostIgnitionOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2GetHostIgnitionOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionOK  %+v", 200, o.Payload)
 }
+
+func (o *V2GetHostIgnitionOK) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionOK  %+v", 200, o.Payload)
+}
+
 func (o *V2GetHostIgnitionOK) GetPayload() *models.HostIgnitionParams {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewV2GetHostIgnitionUnauthorized() *V2GetHostIgnitionUnauthorized {
 	return &V2GetHostIgnitionUnauthorized{}
 }
 
-/* V2GetHostIgnitionUnauthorized describes a response with status code 401, with default header values.
+/*
+V2GetHostIgnitionUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -121,9 +153,39 @@ type V2GetHostIgnitionUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get host ignition unauthorized response has a 2xx status code
+func (o *V2GetHostIgnitionUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition unauthorized response has a 3xx status code
+func (o *V2GetHostIgnitionUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition unauthorized response has a 4xx status code
+func (o *V2GetHostIgnitionUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get host ignition unauthorized response has a 5xx status code
+func (o *V2GetHostIgnitionUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get host ignition unauthorized response a status code equal to that given
+func (o *V2GetHostIgnitionUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2GetHostIgnitionUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2GetHostIgnitionUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2GetHostIgnitionUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewV2GetHostIgnitionForbidden() *V2GetHostIgnitionForbidden {
 	return &V2GetHostIgnitionForbidden{}
 }
 
-/* V2GetHostIgnitionForbidden describes a response with status code 403, with default header values.
+/*
+V2GetHostIgnitionForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -153,9 +216,39 @@ type V2GetHostIgnitionForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get host ignition forbidden response has a 2xx status code
+func (o *V2GetHostIgnitionForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition forbidden response has a 3xx status code
+func (o *V2GetHostIgnitionForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition forbidden response has a 4xx status code
+func (o *V2GetHostIgnitionForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get host ignition forbidden response has a 5xx status code
+func (o *V2GetHostIgnitionForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get host ignition forbidden response a status code equal to that given
+func (o *V2GetHostIgnitionForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2GetHostIgnitionForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2GetHostIgnitionForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2GetHostIgnitionForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewV2GetHostIgnitionNotFound() *V2GetHostIgnitionNotFound {
 	return &V2GetHostIgnitionNotFound{}
 }
 
-/* V2GetHostIgnitionNotFound describes a response with status code 404, with default header values.
+/*
+V2GetHostIgnitionNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -185,9 +279,39 @@ type V2GetHostIgnitionNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get host ignition not found response has a 2xx status code
+func (o *V2GetHostIgnitionNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition not found response has a 3xx status code
+func (o *V2GetHostIgnitionNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition not found response has a 4xx status code
+func (o *V2GetHostIgnitionNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get host ignition not found response has a 5xx status code
+func (o *V2GetHostIgnitionNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get host ignition not found response a status code equal to that given
+func (o *V2GetHostIgnitionNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2GetHostIgnitionNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2GetHostIgnitionNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2GetHostIgnitionNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewV2GetHostIgnitionMethodNotAllowed() *V2GetHostIgnitionMethodNotAllowed {
 	return &V2GetHostIgnitionMethodNotAllowed{}
 }
 
-/* V2GetHostIgnitionMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2GetHostIgnitionMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -217,9 +342,39 @@ type V2GetHostIgnitionMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get host ignition method not allowed response has a 2xx status code
+func (o *V2GetHostIgnitionMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition method not allowed response has a 3xx status code
+func (o *V2GetHostIgnitionMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition method not allowed response has a 4xx status code
+func (o *V2GetHostIgnitionMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get host ignition method not allowed response has a 5xx status code
+func (o *V2GetHostIgnitionMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get host ignition method not allowed response a status code equal to that given
+func (o *V2GetHostIgnitionMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2GetHostIgnitionMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2GetHostIgnitionMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2GetHostIgnitionMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewV2GetHostIgnitionInternalServerError() *V2GetHostIgnitionInternalServerE
 	return &V2GetHostIgnitionInternalServerError{}
 }
 
-/* V2GetHostIgnitionInternalServerError describes a response with status code 500, with default header values.
+/*
+V2GetHostIgnitionInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -249,9 +405,39 @@ type V2GetHostIgnitionInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get host ignition internal server error response has a 2xx status code
+func (o *V2GetHostIgnitionInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition internal server error response has a 3xx status code
+func (o *V2GetHostIgnitionInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition internal server error response has a 4xx status code
+func (o *V2GetHostIgnitionInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get host ignition internal server error response has a 5xx status code
+func (o *V2GetHostIgnitionInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get host ignition internal server error response a status code equal to that given
+func (o *V2GetHostIgnitionInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2GetHostIgnitionInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2GetHostIgnitionInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2GetHostIgnitionInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewV2GetHostIgnitionNotImplemented() *V2GetHostIgnitionNotImplemented {
 	return &V2GetHostIgnitionNotImplemented{}
 }
 
-/* V2GetHostIgnitionNotImplemented describes a response with status code 501, with default header values.
+/*
+V2GetHostIgnitionNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -281,9 +468,39 @@ type V2GetHostIgnitionNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get host ignition not implemented response has a 2xx status code
+func (o *V2GetHostIgnitionNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition not implemented response has a 3xx status code
+func (o *V2GetHostIgnitionNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition not implemented response has a 4xx status code
+func (o *V2GetHostIgnitionNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get host ignition not implemented response has a 5xx status code
+func (o *V2GetHostIgnitionNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get host ignition not implemented response a status code equal to that given
+func (o *V2GetHostIgnitionNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2GetHostIgnitionNotImplemented) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2GetHostIgnitionNotImplemented) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2GetHostIgnitionNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewV2GetHostIgnitionServiceUnavailable() *V2GetHostIgnitionServiceUnavailab
 	return &V2GetHostIgnitionServiceUnavailable{}
 }
 
-/* V2GetHostIgnitionServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2GetHostIgnitionServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -313,9 +531,39 @@ type V2GetHostIgnitionServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get host ignition service unavailable response has a 2xx status code
+func (o *V2GetHostIgnitionServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get host ignition service unavailable response has a 3xx status code
+func (o *V2GetHostIgnitionServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get host ignition service unavailable response has a 4xx status code
+func (o *V2GetHostIgnitionServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get host ignition service unavailable response has a 5xx status code
+func (o *V2GetHostIgnitionServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get host ignition service unavailable response a status code equal to that given
+func (o *V2GetHostIgnitionServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2GetHostIgnitionServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2GetHostIgnitionServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2GetHostIgnitionServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2GetHostIgnitionServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

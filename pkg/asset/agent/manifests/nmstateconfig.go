@@ -205,11 +205,11 @@ func (n *NMStateConfig) finish() error {
 func (n *NMStateConfig) validateWithNMStateCtl() error {
 	level := logrus.GetLevel()
 	logrus.SetLevel(logrus.WarnLevel)
-	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"))
 	defer logrus.SetLevel(level)
 
 	// Validate the network config using nmstatectl
-	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(context.Background(), n.StaticNetworkConfig); err != nil {
+	if err := staticNetworkConfigGenerator.ValidateStaticConfigParams(n.StaticNetworkConfig); err != nil {
 		return errors.Wrapf(err, "staticNetwork configuration is not valid")
 	}
 	return nil
@@ -282,7 +282,7 @@ func GetNMIgnitionFiles(staticNetworkConfig []*models.HostStaticNetworkConfig) (
 
 	level := logrus.GetLevel()
 	logrus.SetLevel(logrus.WarnLevel)
-	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"), staticnetworkconfig.Config{MaxConcurrentGenerations: 2})
+	staticNetworkConfigGenerator := staticnetworkconfig.New(logrus.WithField("pkg", "manifests"))
 	defer logrus.SetLevel(level)
 
 	networkConfigStr, err := staticNetworkConfigGenerator.FormatStaticNetworkConfigForDB(staticNetworkConfig)

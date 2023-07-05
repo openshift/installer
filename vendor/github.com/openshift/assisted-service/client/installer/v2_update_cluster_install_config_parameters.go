@@ -52,10 +52,12 @@ func NewV2UpdateClusterInstallConfigParamsWithHTTPClient(client *http.Client) *V
 	}
 }
 
-/* V2UpdateClusterInstallConfigParams contains all the parameters to send to the API endpoint
-   for the v2 update cluster install config operation.
+/*
+V2UpdateClusterInstallConfigParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update cluster install config operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateClusterInstallConfigParams struct {
 

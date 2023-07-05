@@ -57,7 +57,8 @@ func NewV2ListFeatureSupportLevelsOK() *V2ListFeatureSupportLevelsOK {
 	return &V2ListFeatureSupportLevelsOK{}
 }
 
-/* V2ListFeatureSupportLevelsOK describes a response with status code 200, with default header values.
+/*
+V2ListFeatureSupportLevelsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -65,9 +66,39 @@ type V2ListFeatureSupportLevelsOK struct {
 	Payload models.FeatureSupportLevels
 }
 
+// IsSuccess returns true when this v2 list feature support levels o k response has a 2xx status code
+func (o *V2ListFeatureSupportLevelsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list feature support levels o k response has a 3xx status code
+func (o *V2ListFeatureSupportLevelsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list feature support levels o k response has a 4xx status code
+func (o *V2ListFeatureSupportLevelsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list feature support levels o k response has a 5xx status code
+func (o *V2ListFeatureSupportLevelsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list feature support levels o k response a status code equal to that given
+func (o *V2ListFeatureSupportLevelsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListFeatureSupportLevelsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListFeatureSupportLevelsOK) String() string {
+	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListFeatureSupportLevelsOK) GetPayload() models.FeatureSupportLevels {
 	return o.Payload
 }
@@ -87,7 +118,8 @@ func NewV2ListFeatureSupportLevelsUnauthorized() *V2ListFeatureSupportLevelsUnau
 	return &V2ListFeatureSupportLevelsUnauthorized{}
 }
 
-/* V2ListFeatureSupportLevelsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ListFeatureSupportLevelsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -95,9 +127,39 @@ type V2ListFeatureSupportLevelsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list feature support levels unauthorized response has a 2xx status code
+func (o *V2ListFeatureSupportLevelsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list feature support levels unauthorized response has a 3xx status code
+func (o *V2ListFeatureSupportLevelsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list feature support levels unauthorized response has a 4xx status code
+func (o *V2ListFeatureSupportLevelsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list feature support levels unauthorized response has a 5xx status code
+func (o *V2ListFeatureSupportLevelsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list feature support levels unauthorized response a status code equal to that given
+func (o *V2ListFeatureSupportLevelsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ListFeatureSupportLevelsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ListFeatureSupportLevelsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ListFeatureSupportLevelsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -119,7 +181,8 @@ func NewV2ListFeatureSupportLevelsForbidden() *V2ListFeatureSupportLevelsForbidd
 	return &V2ListFeatureSupportLevelsForbidden{}
 }
 
-/* V2ListFeatureSupportLevelsForbidden describes a response with status code 403, with default header values.
+/*
+V2ListFeatureSupportLevelsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -127,9 +190,39 @@ type V2ListFeatureSupportLevelsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list feature support levels forbidden response has a 2xx status code
+func (o *V2ListFeatureSupportLevelsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list feature support levels forbidden response has a 3xx status code
+func (o *V2ListFeatureSupportLevelsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list feature support levels forbidden response has a 4xx status code
+func (o *V2ListFeatureSupportLevelsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list feature support levels forbidden response has a 5xx status code
+func (o *V2ListFeatureSupportLevelsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list feature support levels forbidden response a status code equal to that given
+func (o *V2ListFeatureSupportLevelsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ListFeatureSupportLevelsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ListFeatureSupportLevelsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ListFeatureSupportLevelsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -151,7 +244,8 @@ func NewV2ListFeatureSupportLevelsServiceUnavailable() *V2ListFeatureSupportLeve
 	return &V2ListFeatureSupportLevelsServiceUnavailable{}
 }
 
-/* V2ListFeatureSupportLevelsServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2ListFeatureSupportLevelsServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -159,9 +253,39 @@ type V2ListFeatureSupportLevelsServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list feature support levels service unavailable response has a 2xx status code
+func (o *V2ListFeatureSupportLevelsServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list feature support levels service unavailable response has a 3xx status code
+func (o *V2ListFeatureSupportLevelsServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list feature support levels service unavailable response has a 4xx status code
+func (o *V2ListFeatureSupportLevelsServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list feature support levels service unavailable response has a 5xx status code
+func (o *V2ListFeatureSupportLevelsServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list feature support levels service unavailable response a status code equal to that given
+func (o *V2ListFeatureSupportLevelsServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2ListFeatureSupportLevelsServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2ListFeatureSupportLevelsServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/feature-support-levels][%d] v2ListFeatureSupportLevelsServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2ListFeatureSupportLevelsServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

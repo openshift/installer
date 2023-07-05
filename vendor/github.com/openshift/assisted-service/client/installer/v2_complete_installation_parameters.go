@@ -54,10 +54,12 @@ func NewV2CompleteInstallationParamsWithHTTPClient(client *http.Client) *V2Compl
 	}
 }
 
-/* V2CompleteInstallationParams contains all the parameters to send to the API endpoint
-   for the v2 complete installation operation.
+/*
+V2CompleteInstallationParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 complete installation operation.
+
+	Typically these are written to a http.Request.
 */
 type V2CompleteInstallationParams struct {
 

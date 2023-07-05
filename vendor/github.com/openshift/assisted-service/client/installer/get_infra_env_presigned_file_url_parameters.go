@@ -52,10 +52,12 @@ func NewGetInfraEnvPresignedFileURLParamsWithHTTPClient(client *http.Client) *Ge
 	}
 }
 
-/* GetInfraEnvPresignedFileURLParams contains all the parameters to send to the API endpoint
-   for the get infra env presigned file URL operation.
+/*
+GetInfraEnvPresignedFileURLParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get infra env presigned file URL operation.
+
+	Typically these are written to a http.Request.
 */
 type GetInfraEnvPresignedFileURLParams struct {
 

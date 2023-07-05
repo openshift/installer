@@ -54,10 +54,12 @@ func NewV2PostStepReplyParamsWithHTTPClient(client *http.Client) *V2PostStepRepl
 	}
 }
 
-/* V2PostStepReplyParams contains all the parameters to send to the API endpoint
-   for the v2 post step reply operation.
+/*
+V2PostStepReplyParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 post step reply operation.
+
+	Typically these are written to a http.Request.
 */
 type V2PostStepReplyParams struct {
 

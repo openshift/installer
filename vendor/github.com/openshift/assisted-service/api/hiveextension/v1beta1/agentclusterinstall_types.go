@@ -150,9 +150,25 @@ type AgentClusterInstallSpec struct {
 	// +optional
 	APIVIP string `json:"apiVIP,omitempty"`
 
+	// APIVIPs are the virtual IPs used to reach the OpenShift cluster's API.
+	// Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at
+	// most one IP address per IP stack used). The order of stacks should be the same as order
+	// of subnets in Cluster Networks, Service Networks, and Machine Networks.
+	// +kubebuilder:validation:MaxItems=2
+	// +optional
+	APIVIPs []string `json:"apiVIPs,omitempty"`
+
 	// IngressVIP is the virtual IP used for cluster ingress traffic.
 	// +optional
 	IngressVIP string `json:"ingressVIP,omitempty"`
+
+	// IngressVIPs are the virtual IPs used for cluster ingress traffic.
+	// Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at
+	// most one IP address per IP stack used). The order of stacks should be the same as order
+	// of subnets in Cluster Networks, Service Networks, and Machine Networks.
+	// +kubebuilder:validation:MaxItems=2
+	// +optional
+	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 
 	// HoldInstallation will prevent installation from happening when true.
 	// Inspection and validation will proceed as usual, but once the RequirementsMet condition is true,
@@ -175,6 +191,10 @@ type AgentClusterInstallSpec struct {
 	// PlatformType is the name for the specific platform upon which to perform the installation.
 	// +optional
 	PlatformType PlatformType `json:"platformType,omitempty"`
+
+	// Set to true to allow control plane nodes to be schedulable
+	// +optional
+	MastersSchedulable bool `json:"mastersSchedulable,omitempty"`
 }
 
 // IgnitionEndpoint stores the data to of the custom ignition endpoint.
@@ -228,9 +248,19 @@ type AgentClusterInstallStatus struct {
 	// +optional
 	APIVIP string `json:"apiVIP,omitempty"`
 
+	// APIVIPs are the virtual IPs used to reach the OpenShift cluster's API.
+	// +kubebuilder:validation:MaxItems=2
+	// +optional
+	APIVIPs []string `json:"apiVIPs,omitempty"`
+
 	// IngressVIP is the virtual IP used for cluster ingress traffic.
 	// +optional
 	IngressVIP string `json:"ingressVIP,omitempty"`
+
+	// IngressVIPs are the virtual IPs used for cluster ingress traffic.
+	// +kubebuilder:validation:MaxItems=2
+	// +optional
+	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 
 	// UserManagedNetworking indicates if the networking is managed by the user.
 	// +optional
@@ -342,7 +372,7 @@ const (
 )
 
 // PlatformType is a specific supported infrastructure provider.
-// +kubebuilder:validation:Enum="";BareMetal;None;VSphere
+// +kubebuilder:validation:Enum="";BareMetal;None;VSphere;Nutanix
 type PlatformType string
 
 const (
@@ -354,6 +384,9 @@ const (
 
 	// VSpherePlatformType represents VMWare vSphere infrastructure.
 	VSpherePlatformType PlatformType = "VSphere"
+
+	// NutanixPlatformType represents Nutanix infrastructure.
+	NutanixPlatformType PlatformType = "Nutanix"
 )
 
 // AgentMachinePool is a pool of machines to be installed.

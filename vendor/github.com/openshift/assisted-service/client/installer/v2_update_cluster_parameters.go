@@ -54,10 +54,12 @@ func NewV2UpdateClusterParamsWithHTTPClient(client *http.Client) *V2UpdateCluste
 	}
 }
 
-/* V2UpdateClusterParams contains all the parameters to send to the API endpoint
-   for the v2 update cluster operation.
+/*
+V2UpdateClusterParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update cluster operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateClusterParams struct {
 

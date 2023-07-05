@@ -19,6 +19,9 @@ import (
 // swagger:model completion-params
 type CompletionParams struct {
 
+	// additional data from the cluster
+	Data map[string]interface{} `json:"data,omitempty"`
+
 	// error info
 	ErrorInfo string `json:"error_info,omitempty"`
 

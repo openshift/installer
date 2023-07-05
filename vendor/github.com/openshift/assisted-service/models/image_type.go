@@ -20,8 +20,12 @@ import (
 type ImageType string
 
 func NewImageType(value ImageType) *ImageType {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated ImageType.
+func (m ImageType) Pointer() *ImageType {
+	return &m
 }
 
 const (

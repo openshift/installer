@@ -54,10 +54,12 @@ func NewV2CreateClusterManifestParamsWithHTTPClient(client *http.Client) *V2Crea
 	}
 }
 
-/* V2CreateClusterManifestParams contains all the parameters to send to the API endpoint
-   for the v2 create cluster manifest operation.
+/*
+V2CreateClusterManifestParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 create cluster manifest operation.
+
+	Typically these are written to a http.Request.
 */
 type V2CreateClusterManifestParams struct {
 

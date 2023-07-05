@@ -57,7 +57,8 @@ func NewV2GetClusterDefaultConfigOK() *V2GetClusterDefaultConfigOK {
 	return &V2GetClusterDefaultConfigOK{}
 }
 
-/* V2GetClusterDefaultConfigOK describes a response with status code 200, with default header values.
+/*
+V2GetClusterDefaultConfigOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -65,9 +66,39 @@ type V2GetClusterDefaultConfigOK struct {
 	Payload *models.ClusterDefaultConfig
 }
 
+// IsSuccess returns true when this v2 get cluster default config o k response has a 2xx status code
+func (o *V2GetClusterDefaultConfigOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 get cluster default config o k response has a 3xx status code
+func (o *V2GetClusterDefaultConfigOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get cluster default config o k response has a 4xx status code
+func (o *V2GetClusterDefaultConfigOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get cluster default config o k response has a 5xx status code
+func (o *V2GetClusterDefaultConfigOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get cluster default config o k response a status code equal to that given
+func (o *V2GetClusterDefaultConfigOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2GetClusterDefaultConfigOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigOK  %+v", 200, o.Payload)
 }
+
+func (o *V2GetClusterDefaultConfigOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigOK  %+v", 200, o.Payload)
+}
+
 func (o *V2GetClusterDefaultConfigOK) GetPayload() *models.ClusterDefaultConfig {
 	return o.Payload
 }
@@ -89,7 +120,8 @@ func NewV2GetClusterDefaultConfigUnauthorized() *V2GetClusterDefaultConfigUnauth
 	return &V2GetClusterDefaultConfigUnauthorized{}
 }
 
-/* V2GetClusterDefaultConfigUnauthorized describes a response with status code 401, with default header values.
+/*
+V2GetClusterDefaultConfigUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -97,9 +129,39 @@ type V2GetClusterDefaultConfigUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get cluster default config unauthorized response has a 2xx status code
+func (o *V2GetClusterDefaultConfigUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get cluster default config unauthorized response has a 3xx status code
+func (o *V2GetClusterDefaultConfigUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get cluster default config unauthorized response has a 4xx status code
+func (o *V2GetClusterDefaultConfigUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get cluster default config unauthorized response has a 5xx status code
+func (o *V2GetClusterDefaultConfigUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get cluster default config unauthorized response a status code equal to that given
+func (o *V2GetClusterDefaultConfigUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2GetClusterDefaultConfigUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2GetClusterDefaultConfigUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2GetClusterDefaultConfigUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -121,7 +183,8 @@ func NewV2GetClusterDefaultConfigForbidden() *V2GetClusterDefaultConfigForbidden
 	return &V2GetClusterDefaultConfigForbidden{}
 }
 
-/* V2GetClusterDefaultConfigForbidden describes a response with status code 403, with default header values.
+/*
+V2GetClusterDefaultConfigForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -129,9 +192,39 @@ type V2GetClusterDefaultConfigForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get cluster default config forbidden response has a 2xx status code
+func (o *V2GetClusterDefaultConfigForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get cluster default config forbidden response has a 3xx status code
+func (o *V2GetClusterDefaultConfigForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get cluster default config forbidden response has a 4xx status code
+func (o *V2GetClusterDefaultConfigForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get cluster default config forbidden response has a 5xx status code
+func (o *V2GetClusterDefaultConfigForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get cluster default config forbidden response a status code equal to that given
+func (o *V2GetClusterDefaultConfigForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2GetClusterDefaultConfigForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2GetClusterDefaultConfigForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2GetClusterDefaultConfigForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -153,7 +246,8 @@ func NewV2GetClusterDefaultConfigInternalServerError() *V2GetClusterDefaultConfi
 	return &V2GetClusterDefaultConfigInternalServerError{}
 }
 
-/* V2GetClusterDefaultConfigInternalServerError describes a response with status code 500, with default header values.
+/*
+V2GetClusterDefaultConfigInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -161,9 +255,39 @@ type V2GetClusterDefaultConfigInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get cluster default config internal server error response has a 2xx status code
+func (o *V2GetClusterDefaultConfigInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get cluster default config internal server error response has a 3xx status code
+func (o *V2GetClusterDefaultConfigInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get cluster default config internal server error response has a 4xx status code
+func (o *V2GetClusterDefaultConfigInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get cluster default config internal server error response has a 5xx status code
+func (o *V2GetClusterDefaultConfigInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get cluster default config internal server error response a status code equal to that given
+func (o *V2GetClusterDefaultConfigInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2GetClusterDefaultConfigInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2GetClusterDefaultConfigInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/default-config][%d] v2GetClusterDefaultConfigInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2GetClusterDefaultConfigInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

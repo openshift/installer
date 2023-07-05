@@ -20,8 +20,12 @@ import (
 type LogsState string
 
 func NewLogsState(value LogsState) *LogsState {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated LogsState.
+func (m LogsState) Pointer() *LogsState {
+	return &m
 }
 
 const (

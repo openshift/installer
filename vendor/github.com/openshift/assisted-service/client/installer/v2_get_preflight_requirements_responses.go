@@ -69,7 +69,8 @@ func NewV2GetPreflightRequirementsOK() *V2GetPreflightRequirementsOK {
 	return &V2GetPreflightRequirementsOK{}
 }
 
-/* V2GetPreflightRequirementsOK describes a response with status code 200, with default header values.
+/*
+V2GetPreflightRequirementsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -77,9 +78,39 @@ type V2GetPreflightRequirementsOK struct {
 	Payload *models.PreflightHardwareRequirements
 }
 
+// IsSuccess returns true when this v2 get preflight requirements o k response has a 2xx status code
+func (o *V2GetPreflightRequirementsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 get preflight requirements o k response has a 3xx status code
+func (o *V2GetPreflightRequirementsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get preflight requirements o k response has a 4xx status code
+func (o *V2GetPreflightRequirementsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get preflight requirements o k response has a 5xx status code
+func (o *V2GetPreflightRequirementsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get preflight requirements o k response a status code equal to that given
+func (o *V2GetPreflightRequirementsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2GetPreflightRequirementsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2GetPreflightRequirementsOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2GetPreflightRequirementsOK) GetPayload() *models.PreflightHardwareRequirements {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewV2GetPreflightRequirementsUnauthorized() *V2GetPreflightRequirementsUnau
 	return &V2GetPreflightRequirementsUnauthorized{}
 }
 
-/* V2GetPreflightRequirementsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2GetPreflightRequirementsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -109,9 +141,39 @@ type V2GetPreflightRequirementsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get preflight requirements unauthorized response has a 2xx status code
+func (o *V2GetPreflightRequirementsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get preflight requirements unauthorized response has a 3xx status code
+func (o *V2GetPreflightRequirementsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get preflight requirements unauthorized response has a 4xx status code
+func (o *V2GetPreflightRequirementsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get preflight requirements unauthorized response has a 5xx status code
+func (o *V2GetPreflightRequirementsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get preflight requirements unauthorized response a status code equal to that given
+func (o *V2GetPreflightRequirementsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2GetPreflightRequirementsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2GetPreflightRequirementsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2GetPreflightRequirementsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewV2GetPreflightRequirementsForbidden() *V2GetPreflightRequirementsForbidd
 	return &V2GetPreflightRequirementsForbidden{}
 }
 
-/* V2GetPreflightRequirementsForbidden describes a response with status code 403, with default header values.
+/*
+V2GetPreflightRequirementsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -141,9 +204,39 @@ type V2GetPreflightRequirementsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 get preflight requirements forbidden response has a 2xx status code
+func (o *V2GetPreflightRequirementsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get preflight requirements forbidden response has a 3xx status code
+func (o *V2GetPreflightRequirementsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get preflight requirements forbidden response has a 4xx status code
+func (o *V2GetPreflightRequirementsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get preflight requirements forbidden response has a 5xx status code
+func (o *V2GetPreflightRequirementsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get preflight requirements forbidden response a status code equal to that given
+func (o *V2GetPreflightRequirementsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2GetPreflightRequirementsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2GetPreflightRequirementsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2GetPreflightRequirementsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewV2GetPreflightRequirementsNotFound() *V2GetPreflightRequirementsNotFound
 	return &V2GetPreflightRequirementsNotFound{}
 }
 
-/* V2GetPreflightRequirementsNotFound describes a response with status code 404, with default header values.
+/*
+V2GetPreflightRequirementsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -173,9 +267,39 @@ type V2GetPreflightRequirementsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get preflight requirements not found response has a 2xx status code
+func (o *V2GetPreflightRequirementsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get preflight requirements not found response has a 3xx status code
+func (o *V2GetPreflightRequirementsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get preflight requirements not found response has a 4xx status code
+func (o *V2GetPreflightRequirementsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get preflight requirements not found response has a 5xx status code
+func (o *V2GetPreflightRequirementsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get preflight requirements not found response a status code equal to that given
+func (o *V2GetPreflightRequirementsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2GetPreflightRequirementsNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2GetPreflightRequirementsNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2GetPreflightRequirementsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewV2GetPreflightRequirementsMethodNotAllowed() *V2GetPreflightRequirements
 	return &V2GetPreflightRequirementsMethodNotAllowed{}
 }
 
-/* V2GetPreflightRequirementsMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2GetPreflightRequirementsMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -205,9 +330,39 @@ type V2GetPreflightRequirementsMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get preflight requirements method not allowed response has a 2xx status code
+func (o *V2GetPreflightRequirementsMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get preflight requirements method not allowed response has a 3xx status code
+func (o *V2GetPreflightRequirementsMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get preflight requirements method not allowed response has a 4xx status code
+func (o *V2GetPreflightRequirementsMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 get preflight requirements method not allowed response has a 5xx status code
+func (o *V2GetPreflightRequirementsMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 get preflight requirements method not allowed response a status code equal to that given
+func (o *V2GetPreflightRequirementsMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2GetPreflightRequirementsMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2GetPreflightRequirementsMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2GetPreflightRequirementsMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewV2GetPreflightRequirementsInternalServerError() *V2GetPreflightRequireme
 	return &V2GetPreflightRequirementsInternalServerError{}
 }
 
-/* V2GetPreflightRequirementsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2GetPreflightRequirementsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -237,9 +393,39 @@ type V2GetPreflightRequirementsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 get preflight requirements internal server error response has a 2xx status code
+func (o *V2GetPreflightRequirementsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 get preflight requirements internal server error response has a 3xx status code
+func (o *V2GetPreflightRequirementsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 get preflight requirements internal server error response has a 4xx status code
+func (o *V2GetPreflightRequirementsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 get preflight requirements internal server error response has a 5xx status code
+func (o *V2GetPreflightRequirementsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 get preflight requirements internal server error response a status code equal to that given
+func (o *V2GetPreflightRequirementsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2GetPreflightRequirementsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2GetPreflightRequirementsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/preflight-requirements][%d] v2GetPreflightRequirementsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2GetPreflightRequirementsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

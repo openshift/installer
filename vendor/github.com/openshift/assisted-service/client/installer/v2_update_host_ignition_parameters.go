@@ -54,10 +54,12 @@ func NewV2UpdateHostIgnitionParamsWithHTTPClient(client *http.Client) *V2UpdateH
 	}
 }
 
-/* V2UpdateHostIgnitionParams contains all the parameters to send to the API endpoint
-   for the v2 update host ignition operation.
+/*
+V2UpdateHostIgnitionParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update host ignition operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateHostIgnitionParams struct {
 

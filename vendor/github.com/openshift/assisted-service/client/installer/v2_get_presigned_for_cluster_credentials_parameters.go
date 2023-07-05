@@ -52,10 +52,12 @@ func NewV2GetPresignedForClusterCredentialsParamsWithHTTPClient(client *http.Cli
 	}
 }
 
-/* V2GetPresignedForClusterCredentialsParams contains all the parameters to send to the API endpoint
-   for the v2 get presigned for cluster credentials operation.
+/*
+V2GetPresignedForClusterCredentialsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 get presigned for cluster credentials operation.
+
+	Typically these are written to a http.Request.
 */
 type V2GetPresignedForClusterCredentialsParams struct {
 

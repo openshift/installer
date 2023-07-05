@@ -63,7 +63,8 @@ func NewV2ListOperatorPropertiesOK() *V2ListOperatorPropertiesOK {
 	return &V2ListOperatorPropertiesOK{}
 }
 
-/* V2ListOperatorPropertiesOK describes a response with status code 200, with default header values.
+/*
+V2ListOperatorPropertiesOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -71,9 +72,39 @@ type V2ListOperatorPropertiesOK struct {
 	Payload models.OperatorProperties
 }
 
+// IsSuccess returns true when this v2 list operator properties o k response has a 2xx status code
+func (o *V2ListOperatorPropertiesOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list operator properties o k response has a 3xx status code
+func (o *V2ListOperatorPropertiesOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list operator properties o k response has a 4xx status code
+func (o *V2ListOperatorPropertiesOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list operator properties o k response has a 5xx status code
+func (o *V2ListOperatorPropertiesOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list operator properties o k response a status code equal to that given
+func (o *V2ListOperatorPropertiesOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListOperatorPropertiesOK) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListOperatorPropertiesOK) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListOperatorPropertiesOK) GetPayload() models.OperatorProperties {
 	return o.Payload
 }
@@ -93,7 +124,8 @@ func NewV2ListOperatorPropertiesUnauthorized() *V2ListOperatorPropertiesUnauthor
 	return &V2ListOperatorPropertiesUnauthorized{}
 }
 
-/* V2ListOperatorPropertiesUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ListOperatorPropertiesUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -101,9 +133,39 @@ type V2ListOperatorPropertiesUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list operator properties unauthorized response has a 2xx status code
+func (o *V2ListOperatorPropertiesUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list operator properties unauthorized response has a 3xx status code
+func (o *V2ListOperatorPropertiesUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list operator properties unauthorized response has a 4xx status code
+func (o *V2ListOperatorPropertiesUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list operator properties unauthorized response has a 5xx status code
+func (o *V2ListOperatorPropertiesUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list operator properties unauthorized response a status code equal to that given
+func (o *V2ListOperatorPropertiesUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ListOperatorPropertiesUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ListOperatorPropertiesUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ListOperatorPropertiesUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -125,7 +187,8 @@ func NewV2ListOperatorPropertiesForbidden() *V2ListOperatorPropertiesForbidden {
 	return &V2ListOperatorPropertiesForbidden{}
 }
 
-/* V2ListOperatorPropertiesForbidden describes a response with status code 403, with default header values.
+/*
+V2ListOperatorPropertiesForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -133,9 +196,39 @@ type V2ListOperatorPropertiesForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list operator properties forbidden response has a 2xx status code
+func (o *V2ListOperatorPropertiesForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list operator properties forbidden response has a 3xx status code
+func (o *V2ListOperatorPropertiesForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list operator properties forbidden response has a 4xx status code
+func (o *V2ListOperatorPropertiesForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list operator properties forbidden response has a 5xx status code
+func (o *V2ListOperatorPropertiesForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list operator properties forbidden response a status code equal to that given
+func (o *V2ListOperatorPropertiesForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ListOperatorPropertiesForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ListOperatorPropertiesForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ListOperatorPropertiesForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -157,7 +250,8 @@ func NewV2ListOperatorPropertiesNotFound() *V2ListOperatorPropertiesNotFound {
 	return &V2ListOperatorPropertiesNotFound{}
 }
 
-/* V2ListOperatorPropertiesNotFound describes a response with status code 404, with default header values.
+/*
+V2ListOperatorPropertiesNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -165,9 +259,39 @@ type V2ListOperatorPropertiesNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list operator properties not found response has a 2xx status code
+func (o *V2ListOperatorPropertiesNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list operator properties not found response has a 3xx status code
+func (o *V2ListOperatorPropertiesNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list operator properties not found response has a 4xx status code
+func (o *V2ListOperatorPropertiesNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list operator properties not found response has a 5xx status code
+func (o *V2ListOperatorPropertiesNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list operator properties not found response a status code equal to that given
+func (o *V2ListOperatorPropertiesNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2ListOperatorPropertiesNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2ListOperatorPropertiesNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2ListOperatorPropertiesNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -189,7 +313,8 @@ func NewV2ListOperatorPropertiesInternalServerError() *V2ListOperatorPropertiesI
 	return &V2ListOperatorPropertiesInternalServerError{}
 }
 
-/* V2ListOperatorPropertiesInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ListOperatorPropertiesInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -197,9 +322,39 @@ type V2ListOperatorPropertiesInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list operator properties internal server error response has a 2xx status code
+func (o *V2ListOperatorPropertiesInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list operator properties internal server error response has a 3xx status code
+func (o *V2ListOperatorPropertiesInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list operator properties internal server error response has a 4xx status code
+func (o *V2ListOperatorPropertiesInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list operator properties internal server error response has a 5xx status code
+func (o *V2ListOperatorPropertiesInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list operator properties internal server error response a status code equal to that given
+func (o *V2ListOperatorPropertiesInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ListOperatorPropertiesInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ListOperatorPropertiesInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/supported-operators/{operator_name}][%d] v2ListOperatorPropertiesInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ListOperatorPropertiesInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

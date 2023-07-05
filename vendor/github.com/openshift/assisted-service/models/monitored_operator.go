@@ -50,6 +50,9 @@ type MonitoredOperator struct {
 
 	// Positive number represents a timeout in seconds for the operator to be available.
 	TimeoutSeconds int64 `json:"timeout_seconds,omitempty"`
+
+	// Operator version
+	Version string `json:"version,omitempty"`
 }
 
 // Validate validates this monitored operator

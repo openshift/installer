@@ -52,10 +52,12 @@ func NewV2GetCredentialsParamsWithHTTPClient(client *http.Client) *V2GetCredenti
 	}
 }
 
-/* V2GetCredentialsParams contains all the parameters to send to the API endpoint
-   for the v2 get credentials operation.
+/*
+V2GetCredentialsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 get credentials operation.
+
+	Typically these are written to a http.Request.
 */
 type V2GetCredentialsParams struct {
 

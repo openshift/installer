@@ -87,14 +87,44 @@ func NewV2UpdateHostLogsProgressNoContent() *V2UpdateHostLogsProgressNoContent {
 	return &V2UpdateHostLogsProgressNoContent{}
 }
 
-/* V2UpdateHostLogsProgressNoContent describes a response with status code 204, with default header values.
+/*
+V2UpdateHostLogsProgressNoContent describes a response with status code 204, with default header values.
 
 Update cluster install progress.
 */
 type V2UpdateHostLogsProgressNoContent struct {
 }
 
+// IsSuccess returns true when this v2 update host logs progress no content response has a 2xx status code
+func (o *V2UpdateHostLogsProgressNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update host logs progress no content response has a 3xx status code
+func (o *V2UpdateHostLogsProgressNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress no content response has a 4xx status code
+func (o *V2UpdateHostLogsProgressNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host logs progress no content response has a 5xx status code
+func (o *V2UpdateHostLogsProgressNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host logs progress no content response a status code equal to that given
+func (o *V2UpdateHostLogsProgressNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *V2UpdateHostLogsProgressNoContent) Error() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressNoContent ", 204)
+}
+
+func (o *V2UpdateHostLogsProgressNoContent) String() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressNoContent ", 204)
 }
 
@@ -108,7 +138,8 @@ func NewV2UpdateHostLogsProgressUnauthorized() *V2UpdateHostLogsProgressUnauthor
 	return &V2UpdateHostLogsProgressUnauthorized{}
 }
 
-/* V2UpdateHostLogsProgressUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateHostLogsProgressUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -116,9 +147,39 @@ type V2UpdateHostLogsProgressUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host logs progress unauthorized response has a 2xx status code
+func (o *V2UpdateHostLogsProgressUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress unauthorized response has a 3xx status code
+func (o *V2UpdateHostLogsProgressUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress unauthorized response has a 4xx status code
+func (o *V2UpdateHostLogsProgressUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host logs progress unauthorized response has a 5xx status code
+func (o *V2UpdateHostLogsProgressUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host logs progress unauthorized response a status code equal to that given
+func (o *V2UpdateHostLogsProgressUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateHostLogsProgressUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -140,7 +201,8 @@ func NewV2UpdateHostLogsProgressForbidden() *V2UpdateHostLogsProgressForbidden {
 	return &V2UpdateHostLogsProgressForbidden{}
 }
 
-/* V2UpdateHostLogsProgressForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateHostLogsProgressForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -148,9 +210,39 @@ type V2UpdateHostLogsProgressForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host logs progress forbidden response has a 2xx status code
+func (o *V2UpdateHostLogsProgressForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress forbidden response has a 3xx status code
+func (o *V2UpdateHostLogsProgressForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress forbidden response has a 4xx status code
+func (o *V2UpdateHostLogsProgressForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host logs progress forbidden response has a 5xx status code
+func (o *V2UpdateHostLogsProgressForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host logs progress forbidden response a status code equal to that given
+func (o *V2UpdateHostLogsProgressForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateHostLogsProgressForbidden) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressForbidden) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -172,7 +264,8 @@ func NewV2UpdateHostLogsProgressNotFound() *V2UpdateHostLogsProgressNotFound {
 	return &V2UpdateHostLogsProgressNotFound{}
 }
 
-/* V2UpdateHostLogsProgressNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateHostLogsProgressNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -180,9 +273,39 @@ type V2UpdateHostLogsProgressNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host logs progress not found response has a 2xx status code
+func (o *V2UpdateHostLogsProgressNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress not found response has a 3xx status code
+func (o *V2UpdateHostLogsProgressNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress not found response has a 4xx status code
+func (o *V2UpdateHostLogsProgressNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host logs progress not found response has a 5xx status code
+func (o *V2UpdateHostLogsProgressNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host logs progress not found response a status code equal to that given
+func (o *V2UpdateHostLogsProgressNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateHostLogsProgressNotFound) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressNotFound) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -204,7 +327,8 @@ func NewV2UpdateHostLogsProgressMethodNotAllowed() *V2UpdateHostLogsProgressMeth
 	return &V2UpdateHostLogsProgressMethodNotAllowed{}
 }
 
-/* V2UpdateHostLogsProgressMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateHostLogsProgressMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -212,9 +336,39 @@ type V2UpdateHostLogsProgressMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host logs progress method not allowed response has a 2xx status code
+func (o *V2UpdateHostLogsProgressMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress method not allowed response has a 3xx status code
+func (o *V2UpdateHostLogsProgressMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress method not allowed response has a 4xx status code
+func (o *V2UpdateHostLogsProgressMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host logs progress method not allowed response has a 5xx status code
+func (o *V2UpdateHostLogsProgressMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host logs progress method not allowed response a status code equal to that given
+func (o *V2UpdateHostLogsProgressMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateHostLogsProgressMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -236,7 +390,8 @@ func NewV2UpdateHostLogsProgressConflict() *V2UpdateHostLogsProgressConflict {
 	return &V2UpdateHostLogsProgressConflict{}
 }
 
-/* V2UpdateHostLogsProgressConflict describes a response with status code 409, with default header values.
+/*
+V2UpdateHostLogsProgressConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -244,9 +399,39 @@ type V2UpdateHostLogsProgressConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host logs progress conflict response has a 2xx status code
+func (o *V2UpdateHostLogsProgressConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress conflict response has a 3xx status code
+func (o *V2UpdateHostLogsProgressConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress conflict response has a 4xx status code
+func (o *V2UpdateHostLogsProgressConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host logs progress conflict response has a 5xx status code
+func (o *V2UpdateHostLogsProgressConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host logs progress conflict response a status code equal to that given
+func (o *V2UpdateHostLogsProgressConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2UpdateHostLogsProgressConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressConflict) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -268,7 +453,8 @@ func NewV2UpdateHostLogsProgressInternalServerError() *V2UpdateHostLogsProgressI
 	return &V2UpdateHostLogsProgressInternalServerError{}
 }
 
-/* V2UpdateHostLogsProgressInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateHostLogsProgressInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -276,9 +462,39 @@ type V2UpdateHostLogsProgressInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host logs progress internal server error response has a 2xx status code
+func (o *V2UpdateHostLogsProgressInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress internal server error response has a 3xx status code
+func (o *V2UpdateHostLogsProgressInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress internal server error response has a 4xx status code
+func (o *V2UpdateHostLogsProgressInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host logs progress internal server error response has a 5xx status code
+func (o *V2UpdateHostLogsProgressInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host logs progress internal server error response a status code equal to that given
+func (o *V2UpdateHostLogsProgressInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateHostLogsProgressInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -300,7 +516,8 @@ func NewV2UpdateHostLogsProgressNotImplemented() *V2UpdateHostLogsProgressNotImp
 	return &V2UpdateHostLogsProgressNotImplemented{}
 }
 
-/* V2UpdateHostLogsProgressNotImplemented describes a response with status code 501, with default header values.
+/*
+V2UpdateHostLogsProgressNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -308,9 +525,39 @@ type V2UpdateHostLogsProgressNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host logs progress not implemented response has a 2xx status code
+func (o *V2UpdateHostLogsProgressNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress not implemented response has a 3xx status code
+func (o *V2UpdateHostLogsProgressNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress not implemented response has a 4xx status code
+func (o *V2UpdateHostLogsProgressNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host logs progress not implemented response has a 5xx status code
+func (o *V2UpdateHostLogsProgressNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host logs progress not implemented response a status code equal to that given
+func (o *V2UpdateHostLogsProgressNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2UpdateHostLogsProgressNotImplemented) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressNotImplemented) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -332,7 +579,8 @@ func NewV2UpdateHostLogsProgressServiceUnavailable() *V2UpdateHostLogsProgressSe
 	return &V2UpdateHostLogsProgressServiceUnavailable{}
 }
 
-/* V2UpdateHostLogsProgressServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2UpdateHostLogsProgressServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -340,9 +588,39 @@ type V2UpdateHostLogsProgressServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host logs progress service unavailable response has a 2xx status code
+func (o *V2UpdateHostLogsProgressServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host logs progress service unavailable response has a 3xx status code
+func (o *V2UpdateHostLogsProgressServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host logs progress service unavailable response has a 4xx status code
+func (o *V2UpdateHostLogsProgressServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host logs progress service unavailable response has a 5xx status code
+func (o *V2UpdateHostLogsProgressServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host logs progress service unavailable response a status code equal to that given
+func (o *V2UpdateHostLogsProgressServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2UpdateHostLogsProgressServiceUnavailable) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2UpdateHostLogsProgressServiceUnavailable) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/logs-progress][%d] v2UpdateHostLogsProgressServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2UpdateHostLogsProgressServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

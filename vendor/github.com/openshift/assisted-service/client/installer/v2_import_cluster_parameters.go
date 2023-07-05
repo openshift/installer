@@ -54,10 +54,12 @@ func NewV2ImportClusterParamsWithHTTPClient(client *http.Client) *V2ImportCluste
 	}
 }
 
-/* V2ImportClusterParams contains all the parameters to send to the API endpoint
-   for the v2 import cluster operation.
+/*
+V2ImportClusterParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 import cluster operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ImportClusterParams struct {
 

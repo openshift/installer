@@ -97,7 +97,8 @@ func NewV2DownloadInfraEnvFilesOK(writer io.Writer) *V2DownloadInfraEnvFilesOK {
 	}
 }
 
-/* V2DownloadInfraEnvFilesOK describes a response with status code 200, with default header values.
+/*
+V2DownloadInfraEnvFilesOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -105,9 +106,39 @@ type V2DownloadInfraEnvFilesOK struct {
 	Payload io.Writer
 }
 
+// IsSuccess returns true when this v2 download infra env files o k response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 download infra env files o k response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files o k response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download infra env files o k response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files o k response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2DownloadInfraEnvFilesOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesOK  %+v", 200, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesOK) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesOK  %+v", 200, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesOK) GetPayload() io.Writer {
 	return o.Payload
 }
@@ -127,7 +158,8 @@ func NewV2DownloadInfraEnvFilesBadRequest() *V2DownloadInfraEnvFilesBadRequest {
 	return &V2DownloadInfraEnvFilesBadRequest{}
 }
 
-/* V2DownloadInfraEnvFilesBadRequest describes a response with status code 400, with default header values.
+/*
+V2DownloadInfraEnvFilesBadRequest describes a response with status code 400, with default header values.
 
 Bad Request.
 */
@@ -135,9 +167,39 @@ type V2DownloadInfraEnvFilesBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files bad request response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files bad request response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files bad request response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download infra env files bad request response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files bad request response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2DownloadInfraEnvFilesBadRequest) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesBadRequest) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -159,7 +221,8 @@ func NewV2DownloadInfraEnvFilesUnauthorized() *V2DownloadInfraEnvFilesUnauthoriz
 	return &V2DownloadInfraEnvFilesUnauthorized{}
 }
 
-/* V2DownloadInfraEnvFilesUnauthorized describes a response with status code 401, with default header values.
+/*
+V2DownloadInfraEnvFilesUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -167,9 +230,39 @@ type V2DownloadInfraEnvFilesUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 download infra env files unauthorized response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files unauthorized response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files unauthorized response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download infra env files unauthorized response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files unauthorized response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2DownloadInfraEnvFilesUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -191,7 +284,8 @@ func NewV2DownloadInfraEnvFilesForbidden() *V2DownloadInfraEnvFilesForbidden {
 	return &V2DownloadInfraEnvFilesForbidden{}
 }
 
-/* V2DownloadInfraEnvFilesForbidden describes a response with status code 403, with default header values.
+/*
+V2DownloadInfraEnvFilesForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -199,9 +293,39 @@ type V2DownloadInfraEnvFilesForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 download infra env files forbidden response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files forbidden response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files forbidden response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download infra env files forbidden response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files forbidden response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2DownloadInfraEnvFilesForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -223,7 +347,8 @@ func NewV2DownloadInfraEnvFilesNotFound() *V2DownloadInfraEnvFilesNotFound {
 	return &V2DownloadInfraEnvFilesNotFound{}
 }
 
-/* V2DownloadInfraEnvFilesNotFound describes a response with status code 404, with default header values.
+/*
+V2DownloadInfraEnvFilesNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -231,9 +356,39 @@ type V2DownloadInfraEnvFilesNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files not found response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files not found response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files not found response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download infra env files not found response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files not found response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2DownloadInfraEnvFilesNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -255,7 +410,8 @@ func NewV2DownloadInfraEnvFilesMethodNotAllowed() *V2DownloadInfraEnvFilesMethod
 	return &V2DownloadInfraEnvFilesMethodNotAllowed{}
 }
 
-/* V2DownloadInfraEnvFilesMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2DownloadInfraEnvFilesMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -263,9 +419,39 @@ type V2DownloadInfraEnvFilesMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files method not allowed response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files method not allowed response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files method not allowed response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download infra env files method not allowed response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files method not allowed response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2DownloadInfraEnvFilesMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -287,7 +473,8 @@ func NewV2DownloadInfraEnvFilesConflict() *V2DownloadInfraEnvFilesConflict {
 	return &V2DownloadInfraEnvFilesConflict{}
 }
 
-/* V2DownloadInfraEnvFilesConflict describes a response with status code 409, with default header values.
+/*
+V2DownloadInfraEnvFilesConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -295,9 +482,39 @@ type V2DownloadInfraEnvFilesConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files conflict response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files conflict response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files conflict response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download infra env files conflict response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download infra env files conflict response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2DownloadInfraEnvFilesConflict) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesConflict) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -319,7 +536,8 @@ func NewV2DownloadInfraEnvFilesInternalServerError() *V2DownloadInfraEnvFilesInt
 	return &V2DownloadInfraEnvFilesInternalServerError{}
 }
 
-/* V2DownloadInfraEnvFilesInternalServerError describes a response with status code 500, with default header values.
+/*
+V2DownloadInfraEnvFilesInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -327,9 +545,39 @@ type V2DownloadInfraEnvFilesInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files internal server error response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files internal server error response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files internal server error response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download infra env files internal server error response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 download infra env files internal server error response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2DownloadInfraEnvFilesInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -351,7 +599,8 @@ func NewV2DownloadInfraEnvFilesNotImplemented() *V2DownloadInfraEnvFilesNotImple
 	return &V2DownloadInfraEnvFilesNotImplemented{}
 }
 
-/* V2DownloadInfraEnvFilesNotImplemented describes a response with status code 501, with default header values.
+/*
+V2DownloadInfraEnvFilesNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -359,9 +608,39 @@ type V2DownloadInfraEnvFilesNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files not implemented response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files not implemented response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files not implemented response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download infra env files not implemented response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 download infra env files not implemented response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2DownloadInfraEnvFilesNotImplemented) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesNotImplemented) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -383,7 +662,8 @@ func NewV2DownloadInfraEnvFilesServiceUnavailable() *V2DownloadInfraEnvFilesServ
 	return &V2DownloadInfraEnvFilesServiceUnavailable{}
 }
 
-/* V2DownloadInfraEnvFilesServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2DownloadInfraEnvFilesServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -391,9 +671,39 @@ type V2DownloadInfraEnvFilesServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download infra env files service unavailable response has a 2xx status code
+func (o *V2DownloadInfraEnvFilesServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download infra env files service unavailable response has a 3xx status code
+func (o *V2DownloadInfraEnvFilesServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download infra env files service unavailable response has a 4xx status code
+func (o *V2DownloadInfraEnvFilesServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download infra env files service unavailable response has a 5xx status code
+func (o *V2DownloadInfraEnvFilesServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 download infra env files service unavailable response a status code equal to that given
+func (o *V2DownloadInfraEnvFilesServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2DownloadInfraEnvFilesServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2DownloadInfraEnvFilesServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}/downloads/files][%d] v2DownloadInfraEnvFilesServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2DownloadInfraEnvFilesServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

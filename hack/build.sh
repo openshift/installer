@@ -70,10 +70,7 @@ then
 	GOOS='' GOARCH='' go generate ./data
 fi
 
-if (echo "${TAGS}" | grep -q 'libvirt')
-then
-	export CGO_ENABLED=1
-fi
+export CGO_ENABLED=1
 
 # shellcheck disable=SC2086
 go build ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install

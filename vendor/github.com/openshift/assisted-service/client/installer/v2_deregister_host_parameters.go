@@ -52,10 +52,12 @@ func NewV2DeregisterHostParamsWithHTTPClient(client *http.Client) *V2DeregisterH
 	}
 }
 
-/* V2DeregisterHostParams contains all the parameters to send to the API endpoint
-   for the v2 deregister host operation.
+/*
+V2DeregisterHostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 deregister host operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DeregisterHostParams struct {
 

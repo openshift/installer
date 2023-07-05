@@ -87,7 +87,8 @@ func NewBindHostOK() *BindHostOK {
 	return &BindHostOK{}
 }
 
-/* BindHostOK describes a response with status code 200, with default header values.
+/*
+BindHostOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -95,9 +96,39 @@ type BindHostOK struct {
 	Payload *models.Host
 }
 
+// IsSuccess returns true when this bind host o k response has a 2xx status code
+func (o *BindHostOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this bind host o k response has a 3xx status code
+func (o *BindHostOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host o k response has a 4xx status code
+func (o *BindHostOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this bind host o k response has a 5xx status code
+func (o *BindHostOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bind host o k response a status code equal to that given
+func (o *BindHostOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *BindHostOK) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostOK  %+v", 200, o.Payload)
 }
+
+func (o *BindHostOK) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostOK  %+v", 200, o.Payload)
+}
+
 func (o *BindHostOK) GetPayload() *models.Host {
 	return o.Payload
 }
@@ -119,7 +150,8 @@ func NewBindHostBadRequest() *BindHostBadRequest {
 	return &BindHostBadRequest{}
 }
 
-/* BindHostBadRequest describes a response with status code 400, with default header values.
+/*
+BindHostBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -127,9 +159,39 @@ type BindHostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this bind host bad request response has a 2xx status code
+func (o *BindHostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host bad request response has a 3xx status code
+func (o *BindHostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host bad request response has a 4xx status code
+func (o *BindHostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bind host bad request response has a 5xx status code
+func (o *BindHostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bind host bad request response a status code equal to that given
+func (o *BindHostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *BindHostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *BindHostBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *BindHostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -151,7 +213,8 @@ func NewBindHostUnauthorized() *BindHostUnauthorized {
 	return &BindHostUnauthorized{}
 }
 
-/* BindHostUnauthorized describes a response with status code 401, with default header values.
+/*
+BindHostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -159,9 +222,39 @@ type BindHostUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this bind host unauthorized response has a 2xx status code
+func (o *BindHostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host unauthorized response has a 3xx status code
+func (o *BindHostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host unauthorized response has a 4xx status code
+func (o *BindHostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bind host unauthorized response has a 5xx status code
+func (o *BindHostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bind host unauthorized response a status code equal to that given
+func (o *BindHostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *BindHostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *BindHostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *BindHostUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -183,7 +276,8 @@ func NewBindHostForbidden() *BindHostForbidden {
 	return &BindHostForbidden{}
 }
 
-/* BindHostForbidden describes a response with status code 403, with default header values.
+/*
+BindHostForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -191,9 +285,39 @@ type BindHostForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this bind host forbidden response has a 2xx status code
+func (o *BindHostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host forbidden response has a 3xx status code
+func (o *BindHostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host forbidden response has a 4xx status code
+func (o *BindHostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bind host forbidden response has a 5xx status code
+func (o *BindHostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bind host forbidden response a status code equal to that given
+func (o *BindHostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *BindHostForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *BindHostForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *BindHostForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -215,7 +339,8 @@ func NewBindHostNotFound() *BindHostNotFound {
 	return &BindHostNotFound{}
 }
 
-/* BindHostNotFound describes a response with status code 404, with default header values.
+/*
+BindHostNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -223,9 +348,39 @@ type BindHostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this bind host not found response has a 2xx status code
+func (o *BindHostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host not found response has a 3xx status code
+func (o *BindHostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host not found response has a 4xx status code
+func (o *BindHostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bind host not found response has a 5xx status code
+func (o *BindHostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bind host not found response a status code equal to that given
+func (o *BindHostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *BindHostNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *BindHostNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *BindHostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -247,7 +402,8 @@ func NewBindHostMethodNotAllowed() *BindHostMethodNotAllowed {
 	return &BindHostMethodNotAllowed{}
 }
 
-/* BindHostMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+BindHostMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -255,9 +411,39 @@ type BindHostMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this bind host method not allowed response has a 2xx status code
+func (o *BindHostMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host method not allowed response has a 3xx status code
+func (o *BindHostMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host method not allowed response has a 4xx status code
+func (o *BindHostMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this bind host method not allowed response has a 5xx status code
+func (o *BindHostMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this bind host method not allowed response a status code equal to that given
+func (o *BindHostMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *BindHostMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *BindHostMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *BindHostMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -279,7 +465,8 @@ func NewBindHostInternalServerError() *BindHostInternalServerError {
 	return &BindHostInternalServerError{}
 }
 
-/* BindHostInternalServerError describes a response with status code 500, with default header values.
+/*
+BindHostInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -287,9 +474,39 @@ type BindHostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this bind host internal server error response has a 2xx status code
+func (o *BindHostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host internal server error response has a 3xx status code
+func (o *BindHostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host internal server error response has a 4xx status code
+func (o *BindHostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this bind host internal server error response has a 5xx status code
+func (o *BindHostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this bind host internal server error response a status code equal to that given
+func (o *BindHostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *BindHostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *BindHostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *BindHostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -311,7 +528,8 @@ func NewBindHostNotImplemented() *BindHostNotImplemented {
 	return &BindHostNotImplemented{}
 }
 
-/* BindHostNotImplemented describes a response with status code 501, with default header values.
+/*
+BindHostNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -319,9 +537,39 @@ type BindHostNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this bind host not implemented response has a 2xx status code
+func (o *BindHostNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host not implemented response has a 3xx status code
+func (o *BindHostNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host not implemented response has a 4xx status code
+func (o *BindHostNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this bind host not implemented response has a 5xx status code
+func (o *BindHostNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this bind host not implemented response a status code equal to that given
+func (o *BindHostNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *BindHostNotImplemented) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *BindHostNotImplemented) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *BindHostNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -343,7 +591,8 @@ func NewBindHostServiceUnavailable() *BindHostServiceUnavailable {
 	return &BindHostServiceUnavailable{}
 }
 
-/* BindHostServiceUnavailable describes a response with status code 503, with default header values.
+/*
+BindHostServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -351,9 +600,39 @@ type BindHostServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this bind host service unavailable response has a 2xx status code
+func (o *BindHostServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this bind host service unavailable response has a 3xx status code
+func (o *BindHostServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this bind host service unavailable response has a 4xx status code
+func (o *BindHostServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this bind host service unavailable response has a 5xx status code
+func (o *BindHostServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this bind host service unavailable response a status code equal to that given
+func (o *BindHostServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *BindHostServiceUnavailable) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *BindHostServiceUnavailable) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/bind][%d] bindHostServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *BindHostServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

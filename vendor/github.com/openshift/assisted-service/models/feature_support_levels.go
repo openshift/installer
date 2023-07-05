@@ -14,7 +14,7 @@ import (
 	"github.com/go-openapi/swag"
 )
 
-// FeatureSupportLevels feature support levels
+// FeatureSupportLevels (DEPRECATED) List of objects that containing a list of feature-support level and attached to openshift-version
 //
 // swagger:model feature-support-levels
 type FeatureSupportLevels []*FeatureSupportLevel

@@ -24,9 +24,12 @@ type ClusterCreateParams struct {
 	// A comma-separated list of NTP sources (name or IP) going to be added to all the hosts.
 	AdditionalNtpSource *string `json:"additional_ntp_source,omitempty"`
 
-	// The virtual IP used to reach the OpenShift cluster's API.
+	// (DEPRECATED) The virtual IP used to reach the OpenShift cluster's API.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))?$
 	APIVip string `json:"api_vip,omitempty"`
+
+	// The virtual IPs used to reach the OpenShift cluster's API. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
+	APIVips []*APIVip `json:"api_vips"`
 
 	// Base domain of the cluster. All DNS records must be sub-domains of this base and include the cluster name.
 	BaseDNSDomain string `json:"base_dns_domain,omitempty"`
@@ -44,6 +47,7 @@ type ClusterCreateParams struct {
 	ClusterNetworks []*ClusterNetwork `json:"cluster_networks"`
 
 	// The CPU architecture of the image (x86_64/arm64/etc).
+	// Enum: [x86_64 aarch64 arm64 ppc64le s390x multi]
 	CPUArchitecture string `json:"cpu_architecture,omitempty"`
 
 	// Installation disks encryption mode and host roles to be applied.
@@ -72,9 +76,12 @@ type ClusterCreateParams struct {
 	// Explicit ignition endpoint overrides the default ignition endpoint.
 	IgnitionEndpoint *IgnitionEndpoint `json:"ignition_endpoint,omitempty" gorm:"embedded;embeddedPrefix:ignition_endpoint_"`
 
-	// The virtual IP used for cluster ingress traffic.
+	// (DEPRECATED) The virtual IP used for cluster ingress traffic.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$
 	IngressVip string `json:"ingress_vip,omitempty"`
+
+	// The virtual IPs used for cluster ingress traffic. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
+	IngressVips []*IngressVip `json:"ingress_vips"`
 
 	// Machine networks that are associated with this cluster.
 	MachineNetworks []*MachineNetwork `json:"machine_networks"`
@@ -140,6 +147,10 @@ func (m *ClusterCreateParams) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateAPIVips(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateClusterNetworkCidr(formats); err != nil {
 		res = append(res, err)
 	}
@@ -149,6 +160,10 @@ func (m *ClusterCreateParams) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateClusterNetworks(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCPUArchitecture(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -169,6 +184,10 @@ func (m *ClusterCreateParams) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateIngressVip(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateIngressVips(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -226,6 +245,32 @@ func (m *ClusterCreateParams) validateAPIVip(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *ClusterCreateParams) validateAPIVips(formats strfmt.Registry) error {
+	if swag.IsZero(m.APIVips) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.APIVips); i++ {
+		if swag.IsZero(m.APIVips[i]) { // not required
+			continue
+		}
+
+		if m.APIVips[i] != nil {
+			if err := m.APIVips[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *ClusterCreateParams) validateClusterNetworkCidr(formats strfmt.Registry) error {
 	if swag.IsZero(m.ClusterNetworkCidr) { // not required
 		return nil
@@ -275,6 +320,60 @@ func (m *ClusterCreateParams) validateClusterNetworks(formats strfmt.Registry) e
 			}
 		}
 
+	}
+
+	return nil
+}
+
+var clusterCreateParamsTypeCPUArchitecturePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["x86_64","aarch64","arm64","ppc64le","s390x","multi"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		clusterCreateParamsTypeCPUArchitecturePropEnum = append(clusterCreateParamsTypeCPUArchitecturePropEnum, v)
+	}
+}
+
+const (
+
+	// ClusterCreateParamsCPUArchitectureX8664 captures enum value "x86_64"
+	ClusterCreateParamsCPUArchitectureX8664 string = "x86_64"
+
+	// ClusterCreateParamsCPUArchitectureAarch64 captures enum value "aarch64"
+	ClusterCreateParamsCPUArchitectureAarch64 string = "aarch64"
+
+	// ClusterCreateParamsCPUArchitectureArm64 captures enum value "arm64"
+	ClusterCreateParamsCPUArchitectureArm64 string = "arm64"
+
+	// ClusterCreateParamsCPUArchitecturePpc64le captures enum value "ppc64le"
+	ClusterCreateParamsCPUArchitecturePpc64le string = "ppc64le"
+
+	// ClusterCreateParamsCPUArchitectureS390x captures enum value "s390x"
+	ClusterCreateParamsCPUArchitectureS390x string = "s390x"
+
+	// ClusterCreateParamsCPUArchitectureMulti captures enum value "multi"
+	ClusterCreateParamsCPUArchitectureMulti string = "multi"
+)
+
+// prop value enum
+func (m *ClusterCreateParams) validateCPUArchitectureEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, clusterCreateParamsTypeCPUArchitecturePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *ClusterCreateParams) validateCPUArchitecture(formats strfmt.Registry) error {
+	if swag.IsZero(m.CPUArchitecture) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateCPUArchitectureEnum("cpu_architecture", "body", m.CPUArchitecture); err != nil {
+		return err
 	}
 
 	return nil
@@ -415,6 +514,32 @@ func (m *ClusterCreateParams) validateIngressVip(formats strfmt.Registry) error 
 
 	if err := validate.Pattern("ingress_vip", "body", m.IngressVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$`); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *ClusterCreateParams) validateIngressVips(formats strfmt.Registry) error {
+	if swag.IsZero(m.IngressVips) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.IngressVips); i++ {
+		if swag.IsZero(m.IngressVips[i]) { // not required
+			continue
+		}
+
+		if m.IngressVips[i] != nil {
+			if err := m.IngressVips[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -610,6 +735,10 @@ func (m *ClusterCreateParams) validateServiceNetworks(formats strfmt.Registry) e
 func (m *ClusterCreateParams) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateAPIVips(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateClusterNetworks(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -619,6 +748,10 @@ func (m *ClusterCreateParams) ContextValidate(ctx context.Context, formats strfm
 	}
 
 	if err := m.contextValidateIgnitionEndpoint(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateIngressVips(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -641,6 +774,26 @@ func (m *ClusterCreateParams) ContextValidate(ctx context.Context, formats strfm
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *ClusterCreateParams) contextValidateAPIVips(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.APIVips); i++ {
+
+		if m.APIVips[i] != nil {
+			if err := m.APIVips[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 
@@ -691,6 +844,26 @@ func (m *ClusterCreateParams) contextValidateIgnitionEndpoint(ctx context.Contex
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *ClusterCreateParams) contextValidateIngressVips(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.IngressVips); i++ {
+
+		if m.IngressVips[i] != nil {
+			if err := m.IngressVips[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil

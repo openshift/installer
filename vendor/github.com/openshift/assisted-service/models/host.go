@@ -113,14 +113,14 @@ type Host struct {
 	Kind *string `json:"kind"`
 
 	// logs collected at
-	// Format: datetime
+	// Format: date-time
 	LogsCollectedAt strfmt.DateTime `json:"logs_collected_at,omitempty" gorm:"type:timestamp with time zone"`
 
 	// The progress of log collection or empty if logs are not applicable
 	LogsInfo LogsState `json:"logs_info,omitempty" gorm:"type:varchar(2048)"`
 
 	// logs started at
-	// Format: datetime
+	// Format: date-time
 	LogsStartedAt strfmt.DateTime `json:"logs_started_at,omitempty" gorm:"type:timestamp with time zone"`
 
 	// machine config pool name
@@ -413,7 +413,7 @@ func (m *Host) validateLogsCollectedAt(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.FormatOf("logs_collected_at", "body", "datetime", m.LogsCollectedAt.String(), formats); err != nil {
+	if err := validate.FormatOf("logs_collected_at", "body", "date-time", m.LogsCollectedAt.String(), formats); err != nil {
 		return err
 	}
 
@@ -442,7 +442,7 @@ func (m *Host) validateLogsStartedAt(formats strfmt.Registry) error {
 		return nil
 	}
 
-	if err := validate.FormatOf("logs_started_at", "body", "datetime", m.LogsStartedAt.String(), formats); err != nil {
+	if err := validate.FormatOf("logs_started_at", "body", "date-time", m.LogsStartedAt.String(), formats); err != nil {
 		return err
 	}
 

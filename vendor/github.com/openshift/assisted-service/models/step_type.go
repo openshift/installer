@@ -20,8 +20,12 @@ import (
 type StepType string
 
 func NewStepType(value StepType) *StepType {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated StepType.
+func (m StepType) Pointer() *StepType {
+	return &m
 }
 
 const (
@@ -79,6 +83,9 @@ const (
 
 	// StepTypeRebootForReclaim captures enum value "reboot-for-reclaim"
 	StepTypeRebootForReclaim StepType = "reboot-for-reclaim"
+
+	// StepTypeVerifyVips captures enum value "verify-vips"
+	StepTypeVerifyVips StepType = "verify-vips"
 )
 
 // for schema
@@ -86,7 +93,7 @@ var stepTypeEnum []interface{}
 
 func init() {
 	var res []StepType
-	if err := json.Unmarshal([]byte(`["connectivity-check","execute","inventory","install","free-network-addresses","dhcp-lease-allocate","api-vip-connectivity-check","tang-connectivity-check","ntp-synchronizer","installation-disk-speed-check","container-image-availability","domain-resolution","stop-installation","logs-gather","next-step-runner","upgrade-agent","download-boot-artifacts","reboot-for-reclaim"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["connectivity-check","execute","inventory","install","free-network-addresses","dhcp-lease-allocate","api-vip-connectivity-check","tang-connectivity-check","ntp-synchronizer","installation-disk-speed-check","container-image-availability","domain-resolution","stop-installation","logs-gather","next-step-runner","upgrade-agent","download-boot-artifacts","reboot-for-reclaim","verify-vips"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

@@ -63,7 +63,8 @@ func NewGetClusterSupportedPlatformsOK() *GetClusterSupportedPlatformsOK {
 	return &GetClusterSupportedPlatformsOK{}
 }
 
-/* GetClusterSupportedPlatformsOK describes a response with status code 200, with default header values.
+/*
+GetClusterSupportedPlatformsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -71,9 +72,39 @@ type GetClusterSupportedPlatformsOK struct {
 	Payload []models.PlatformType
 }
 
+// IsSuccess returns true when this get cluster supported platforms o k response has a 2xx status code
+func (o *GetClusterSupportedPlatformsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this get cluster supported platforms o k response has a 3xx status code
+func (o *GetClusterSupportedPlatformsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get cluster supported platforms o k response has a 4xx status code
+func (o *GetClusterSupportedPlatformsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get cluster supported platforms o k response has a 5xx status code
+func (o *GetClusterSupportedPlatformsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get cluster supported platforms o k response a status code equal to that given
+func (o *GetClusterSupportedPlatformsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *GetClusterSupportedPlatformsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsOK  %+v", 200, o.Payload)
 }
+
+func (o *GetClusterSupportedPlatformsOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsOK  %+v", 200, o.Payload)
+}
+
 func (o *GetClusterSupportedPlatformsOK) GetPayload() []models.PlatformType {
 	return o.Payload
 }
@@ -93,7 +124,8 @@ func NewGetClusterSupportedPlatformsUnauthorized() *GetClusterSupportedPlatforms
 	return &GetClusterSupportedPlatformsUnauthorized{}
 }
 
-/* GetClusterSupportedPlatformsUnauthorized describes a response with status code 401, with default header values.
+/*
+GetClusterSupportedPlatformsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -101,9 +133,39 @@ type GetClusterSupportedPlatformsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this get cluster supported platforms unauthorized response has a 2xx status code
+func (o *GetClusterSupportedPlatformsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get cluster supported platforms unauthorized response has a 3xx status code
+func (o *GetClusterSupportedPlatformsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get cluster supported platforms unauthorized response has a 4xx status code
+func (o *GetClusterSupportedPlatformsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get cluster supported platforms unauthorized response has a 5xx status code
+func (o *GetClusterSupportedPlatformsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get cluster supported platforms unauthorized response a status code equal to that given
+func (o *GetClusterSupportedPlatformsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *GetClusterSupportedPlatformsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *GetClusterSupportedPlatformsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *GetClusterSupportedPlatformsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -125,7 +187,8 @@ func NewGetClusterSupportedPlatformsForbidden() *GetClusterSupportedPlatformsFor
 	return &GetClusterSupportedPlatformsForbidden{}
 }
 
-/* GetClusterSupportedPlatformsForbidden describes a response with status code 403, with default header values.
+/*
+GetClusterSupportedPlatformsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -133,9 +196,39 @@ type GetClusterSupportedPlatformsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this get cluster supported platforms forbidden response has a 2xx status code
+func (o *GetClusterSupportedPlatformsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get cluster supported platforms forbidden response has a 3xx status code
+func (o *GetClusterSupportedPlatformsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get cluster supported platforms forbidden response has a 4xx status code
+func (o *GetClusterSupportedPlatformsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get cluster supported platforms forbidden response has a 5xx status code
+func (o *GetClusterSupportedPlatformsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get cluster supported platforms forbidden response a status code equal to that given
+func (o *GetClusterSupportedPlatformsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *GetClusterSupportedPlatformsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *GetClusterSupportedPlatformsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *GetClusterSupportedPlatformsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -157,7 +250,8 @@ func NewGetClusterSupportedPlatformsNotFound() *GetClusterSupportedPlatformsNotF
 	return &GetClusterSupportedPlatformsNotFound{}
 }
 
-/* GetClusterSupportedPlatformsNotFound describes a response with status code 404, with default header values.
+/*
+GetClusterSupportedPlatformsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -165,9 +259,39 @@ type GetClusterSupportedPlatformsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get cluster supported platforms not found response has a 2xx status code
+func (o *GetClusterSupportedPlatformsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get cluster supported platforms not found response has a 3xx status code
+func (o *GetClusterSupportedPlatformsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get cluster supported platforms not found response has a 4xx status code
+func (o *GetClusterSupportedPlatformsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get cluster supported platforms not found response has a 5xx status code
+func (o *GetClusterSupportedPlatformsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get cluster supported platforms not found response a status code equal to that given
+func (o *GetClusterSupportedPlatformsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *GetClusterSupportedPlatformsNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *GetClusterSupportedPlatformsNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *GetClusterSupportedPlatformsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -189,7 +313,8 @@ func NewGetClusterSupportedPlatformsInternalServerError() *GetClusterSupportedPl
 	return &GetClusterSupportedPlatformsInternalServerError{}
 }
 
-/* GetClusterSupportedPlatformsInternalServerError describes a response with status code 500, with default header values.
+/*
+GetClusterSupportedPlatformsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -197,9 +322,39 @@ type GetClusterSupportedPlatformsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get cluster supported platforms internal server error response has a 2xx status code
+func (o *GetClusterSupportedPlatformsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get cluster supported platforms internal server error response has a 3xx status code
+func (o *GetClusterSupportedPlatformsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get cluster supported platforms internal server error response has a 4xx status code
+func (o *GetClusterSupportedPlatformsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get cluster supported platforms internal server error response has a 5xx status code
+func (o *GetClusterSupportedPlatformsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get cluster supported platforms internal server error response a status code equal to that given
+func (o *GetClusterSupportedPlatformsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *GetClusterSupportedPlatformsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *GetClusterSupportedPlatformsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/supported-platforms][%d] getClusterSupportedPlatformsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *GetClusterSupportedPlatformsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

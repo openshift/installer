@@ -52,10 +52,12 @@ func NewV2ListOfClusterOperatorsParamsWithHTTPClient(client *http.Client) *V2Lis
 	}
 }
 
-/* V2ListOfClusterOperatorsParams contains all the parameters to send to the API endpoint
-   for the v2 list of cluster operators operation.
+/*
+V2ListOfClusterOperatorsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 list of cluster operators operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ListOfClusterOperatorsParams struct {
 

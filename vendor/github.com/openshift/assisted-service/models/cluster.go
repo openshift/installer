@@ -30,12 +30,15 @@ type Cluster struct {
 	// Format: uuid
 	AmsSubscriptionID strfmt.UUID `json:"ams_subscription_id,omitempty"`
 
-	// The virtual IP used to reach the OpenShift cluster's API.
+	// (DEPRECATED) The virtual IP used to reach the OpenShift cluster's API.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$
 	APIVip string `json:"api_vip,omitempty"`
 
 	// The domain name used to reach the OpenShift cluster API.
 	APIVipDNSName *string `json:"api_vip_dns_name,omitempty"`
+
+	// The virtual IPs used to reach the OpenShift cluster's API. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
+	APIVips []*APIVip `json:"api_vips" gorm:"foreignkey:ClusterID;references:ID"`
 
 	// Base domain of the cluster. All DNS records must be sub-domains of this base and include the cluster name.
 	BaseDNSDomain string `json:"base_dns_domain,omitempty"`
@@ -64,6 +67,7 @@ type Cluster struct {
 	ControllerLogsStartedAt strfmt.DateTime `json:"controller_logs_started_at,omitempty" gorm:"type:timestamp with time zone"`
 
 	// The CPU architecture of the image (x86_64/arm64/etc).
+	// Enum: [x86_64 aarch64 arm64 ppc64le s390x multi]
 	CPUArchitecture string `json:"cpu_architecture,omitempty"`
 
 	// The time that this cluster was created.
@@ -123,6 +127,12 @@ type Cluster struct {
 	// Explicit ignition endpoint overrides the default ignition endpoint.
 	IgnitionEndpoint *IgnitionEndpoint `json:"ignition_endpoint,omitempty" gorm:"embedded;embeddedPrefix:ignition_endpoint_"`
 
+	// Json formatted string containing a list of cluster validations to be ignored. May also contain a list with a single string "all" to ignore all cluster validations. Some validations cannot be ignored.
+	IgnoredClusterValidations string `json:"ignored_cluster_validations,omitempty" gorm:"type:text"`
+
+	// Json formatted string containing a list of host validations to be ignored. May also contain a list with a single string "all" to ignore all host validations. Some validations cannot be ignored.
+	IgnoredHostValidations string `json:"ignored_host_validations,omitempty" gorm:"type:text"`
+
 	// image info
 	// Required: true
 	ImageInfo *ImageInfo `json:"image_info" gorm:"embedded;embeddedPrefix:image_"`
@@ -131,15 +141,18 @@ type Cluster struct {
 	// regular cluster. Clusters are considered imported when they are
 	// created via the ../clusters/import endpoint. Day-2 clusters converted
 	// from day-1 clusters by kube-api controllers or the
-	// ../clusters/<cluster_id>/actions/allow-add-workers endpoint are not
+	// ../clusters/<cluster_id>/actions/allow-add-hosts endpoint are not
 	// considered imported. Imported clusters usually lack a lot of
 	// information and are filled with default values that don't necessarily
 	// reflect the actual cluster they represent
 	Imported *bool `json:"imported,omitempty"`
 
-	// The virtual IP used for cluster ingress traffic.
+	// (DEPRECATED) The virtual IP used for cluster ingress traffic.
 	// Pattern: ^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$
 	IngressVip string `json:"ingress_vip,omitempty"`
+
+	// The virtual IPs used for cluster ingress traffic. Enter one IP address for single-stack clusters, or up to two for dual-stack clusters (at most one IP address per IP stack used). The order of stacks should be the same as order of subnets in Cluster Networks, Service Networks, and Machine Networks.
+	IngressVips []*IngressVip `json:"ingress_vips" gorm:"foreignkey:ClusterID;references:ID"`
 
 	// The time that this cluster completed installation.
 	// Format: date-time
@@ -152,6 +165,9 @@ type Cluster struct {
 	// The time that this cluster started installation.
 	// Format: date-time
 	InstallStartedAt strfmt.DateTime `json:"install_started_at,omitempty" gorm:"type:timestamp with time zone"`
+
+	// Json formatted string containing ip collisions detected in the cluster.
+	IPCollisions string `json:"ip_collisions,omitempty" gorm:"type:text"`
 
 	// Indicates the type of this object. Will be 'Cluster' if this is a complete object,
 	// 'AddHostsCluster' for cluster that add hosts to existing OCP cluster,
@@ -274,6 +290,10 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateAPIVips(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateClusterNetworkCidr(formats); err != nil {
 		res = append(res, err)
 	}
@@ -291,6 +311,10 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateControllerLogsStartedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateCPUArchitecture(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -335,6 +359,10 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateIngressVip(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateIngressVips(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -436,6 +464,32 @@ func (m *Cluster) validateAPIVip(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Cluster) validateAPIVips(formats strfmt.Registry) error {
+	if swag.IsZero(m.APIVips) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.APIVips); i++ {
+		if swag.IsZero(m.APIVips[i]) { // not required
+			continue
+		}
+
+		if m.APIVips[i] != nil {
+			if err := m.APIVips[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *Cluster) validateClusterNetworkCidr(formats strfmt.Registry) error {
 	if swag.IsZero(m.ClusterNetworkCidr) { // not required
 		return nil
@@ -508,6 +562,60 @@ func (m *Cluster) validateControllerLogsStartedAt(formats strfmt.Registry) error
 	}
 
 	if err := validate.FormatOf("controller_logs_started_at", "body", "date-time", m.ControllerLogsStartedAt.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var clusterTypeCPUArchitecturePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["x86_64","aarch64","arm64","ppc64le","s390x","multi"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		clusterTypeCPUArchitecturePropEnum = append(clusterTypeCPUArchitecturePropEnum, v)
+	}
+}
+
+const (
+
+	// ClusterCPUArchitectureX8664 captures enum value "x86_64"
+	ClusterCPUArchitectureX8664 string = "x86_64"
+
+	// ClusterCPUArchitectureAarch64 captures enum value "aarch64"
+	ClusterCPUArchitectureAarch64 string = "aarch64"
+
+	// ClusterCPUArchitectureArm64 captures enum value "arm64"
+	ClusterCPUArchitectureArm64 string = "arm64"
+
+	// ClusterCPUArchitecturePpc64le captures enum value "ppc64le"
+	ClusterCPUArchitecturePpc64le string = "ppc64le"
+
+	// ClusterCPUArchitectureS390x captures enum value "s390x"
+	ClusterCPUArchitectureS390x string = "s390x"
+
+	// ClusterCPUArchitectureMulti captures enum value "multi"
+	ClusterCPUArchitectureMulti string = "multi"
+)
+
+// prop value enum
+func (m *Cluster) validateCPUArchitectureEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, clusterTypeCPUArchitecturePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Cluster) validateCPUArchitecture(formats strfmt.Registry) error {
+	if swag.IsZero(m.CPUArchitecture) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateCPUArchitectureEnum("cpu_architecture", "body", m.CPUArchitecture); err != nil {
 		return err
 	}
 
@@ -755,6 +863,32 @@ func (m *Cluster) validateIngressVip(formats strfmt.Registry) error {
 
 	if err := validate.Pattern("ingress_vip", "body", m.IngressVip, `^(?:(?:(?:[0-9]{1,3}\.){3}[0-9]{1,3})|(?:(?:[0-9a-fA-F]*:[0-9a-fA-F]*){2,}))$`); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *Cluster) validateIngressVips(formats strfmt.Registry) error {
+	if swag.IsZero(m.IngressVips) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.IngressVips); i++ {
+		if swag.IsZero(m.IngressVips[i]) { // not required
+			continue
+		}
+
+		if m.IngressVips[i] != nil {
+			if err := m.IngressVips[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -1145,6 +1279,10 @@ func (m *Cluster) validateUpdatedAt(formats strfmt.Registry) error {
 func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateAPIVips(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateClusterNetworks(ctx, formats); err != nil {
 		res = append(res, err)
 	}
@@ -1166,6 +1304,10 @@ func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 	}
 
 	if err := m.contextValidateImageInfo(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateIngressVips(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -1196,6 +1338,26 @@ func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Cluster) contextValidateAPIVips(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.APIVips); i++ {
+
+		if m.APIVips[i] != nil {
+			if err := m.APIVips[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("api_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 
@@ -1302,6 +1464,26 @@ func (m *Cluster) contextValidateImageInfo(ctx context.Context, formats strfmt.R
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *Cluster) contextValidateIngressVips(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.IngressVips); i++ {
+
+		if m.IngressVips[i] != nil {
+			if err := m.IngressVips[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("ingress_vips" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
