@@ -20,6 +20,7 @@ type AgentArtifacts struct {
 	RendezvousIP string
 	TmpPath      string
 	IgnitionByte []byte
+	Kargs        []byte
 	ISOPath      string
 }
 
@@ -27,6 +28,7 @@ type AgentArtifacts struct {
 func (a *AgentArtifacts) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&Ignition{},
+		&Kargs{},
 		&BaseIso{},
 		&manifests.AgentManifests{},
 		&mirror.RegistriesConf{},
@@ -36,11 +38,12 @@ func (a *AgentArtifacts) Dependencies() []asset.Asset {
 // Generate generates the configurations for the agent ISO image and PXE assets.
 func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	ignition := &Ignition{}
+	kargs := &Kargs{}
 	baseIso := &BaseIso{}
 	agentManifests := &manifests.AgentManifests{}
 	registriesConf := &mirror.RegistriesConf{}
 
-	dependencies.Get(ignition, baseIso, agentManifests, registriesConf)
+	dependencies.Get(ignition, kargs, baseIso, agentManifests, registriesConf)
 
 	ignitionByte, err := json.Marshal(ignition.Config)
 	if err != nil {
@@ -50,6 +53,7 @@ func (a *AgentArtifacts) Generate(dependencies asset.Parents) error {
 	a.RendezvousIP = ignition.RendezvousIP
 	a.IgnitionByte = ignitionByte
 	a.ISOPath = baseIso.File.Filename
+	a.Kargs = kargs.KernelCmdLine()
 
 	agentTuiFiles, err := a.fetchAgentTuiFiles(agentManifests.ClusterImageSet.Spec.ReleaseImage, agentManifests.GetPullSecretData(), registriesConf.MirrorConfig)
 	if err != nil {

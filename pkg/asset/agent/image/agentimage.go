@@ -3,8 +3,10 @@ package image
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 
 	"github.com/openshift/assisted-image-service/pkg/isoeditor"
 	"github.com/openshift/installer/pkg/asset"
@@ -53,6 +55,11 @@ func (a *AgentImage) Generate(dependencies asset.Parents) error {
 		return err
 	}
 
+	err = a.appendKargs(agentArtifacts.Kargs)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -90,6 +97,51 @@ func (a *AgentImage) updateIgnitionImg(ignition []byte) error {
 		return err
 	}
 
+	return nil
+}
+
+func updateKargsFile(tmpPath, filename string, embedArea *regexp.Regexp, kargs []byte) error {
+	file, err := os.OpenFile(filepath.Join(tmpPath, filename), os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return err
+	}
+	indices := embedArea.FindSubmatchIndex(content)
+	if len(indices) != 4 {
+		return fmt.Errorf("failed to find COREOS_KARG_EMBED_AREA in %s", filename)
+	}
+
+	if size := (indices[3] - indices[2]); len(kargs) > size {
+		return fmt.Errorf("kernel args content length (%d) exceeds embed area size (%d)", len(kargs), size)
+	}
+
+	if _, err := file.WriteAt(append(kargs, '\n'), int64(indices[2])); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (a *AgentImage) appendKargs(kargs []byte) error {
+	if len(kargs) == 0 {
+		return nil
+	}
+
+	kargsFiles, err := isoeditor.KargsFiles(a.isoPath)
+	if err != nil {
+		return err
+	}
+
+	embedArea := regexp.MustCompile(`(\n#*)# COREOS_KARG_EMBED_AREA`)
+	for _, f := range kargsFiles {
+		if err := updateKargsFile(a.tmpPath, f, embedArea, kargs); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
