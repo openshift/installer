@@ -1,7 +1,7 @@
 [Unit]
 Description=Service that monitors host-specific configuration status
-Wants=network-online.target create-cluster-and-infraenv.service
-After=network-online.target create-cluster-and-infraenv.service
+Wants=network-online.target agent-register-infraenv.service
+After=network-online.target agent-register-infraenv.service
 ConditionPathExists=/etc/assisted/node0
 
 [Service]

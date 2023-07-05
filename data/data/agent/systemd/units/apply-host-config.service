@@ -1,9 +1,9 @@
 [Unit]
 Description=Service that applies host-specific configuration
 Wants=network-online.target
-Requires=create-cluster-and-infraenv.service
+Requires=agent-register-infraenv.service
 PartOf=assisted-service-pod.service
-After=network-online.target create-cluster-and-infraenv.service
+After=network-online.target agent-register-infraenv.service
 ConditionPathExists=/etc/assisted/node0
 
 [Service]

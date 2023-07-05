@@ -4,7 +4,7 @@
 source "issue_status.sh"
 
 inactive_services() {
-    local services="assisted-service.service create-cluster-and-infraenv.service apply-host-config.service start-cluster-installation.service"
+    local services="assisted-service.service agent-register-cluster.service agent-register-infraenv.service apply-host-config.service start-cluster-installation.service"
     for s in ${services}; do
         if ! systemctl is-active "${s}" >/dev/null; then
             printf "%s " "${s}"
