@@ -434,6 +434,15 @@ func (a *AgentClusterInstall) validateSupportedPlatforms() field.ErrorList {
 	return allErrs
 }
 
+// FIPSEnabled returns whether FIPS is enabled in the cluster configuration.
+func (a *AgentClusterInstall) FIPSEnabled() bool {
+	icOverrides := agentClusterInstallInstallConfigOverrides{}
+	if err := json.Unmarshal([]byte(a.Config.Annotations[installConfigOverrides]), &icOverrides); err == nil {
+		return icOverrides.FIPS
+	}
+	return false
+}
+
 // GetExternalPlatformName returns the platform name for the external platform.
 func (a *AgentClusterInstall) GetExternalPlatformName() string {
 	if a.Config != nil && a.Config.Spec.ExternalPlatformSpec != nil {

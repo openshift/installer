@@ -12,6 +12,7 @@ import (
 // Kargs is an Asset that generates the additional kernel args.
 type Kargs struct {
 	consoleArgs string
+	fips        bool
 }
 
 // Dependencies returns the assets on which the Kargs asset depends.
@@ -31,6 +32,9 @@ func (a *Kargs) Generate(dependencies asset.Parents) error {
 		logrus.Debugf("Added kernel args to enable serial console for %s %s platform", hiveext.ExternalPlatformType, string(models.PlatformTypeOci))
 		a.consoleArgs = " console=ttyS0"
 	}
+
+	a.fips = agentClusterInstall.FIPSEnabled()
+
 	return nil
 }
 
@@ -41,5 +45,9 @@ func (a *Kargs) Name() string {
 
 // KernelCmdLine returns the data to be appended to the kernel arguments.
 func (a *Kargs) KernelCmdLine() []byte {
-	return []byte(a.consoleArgs)
+	cmdLine := a.consoleArgs
+	if a.fips {
+		cmdLine += " fips=1"
+	}
+	return []byte(cmdLine)
 }
