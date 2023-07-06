@@ -101,6 +101,14 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			Tags: map[string]string{"type": "private"},
 		}
 	case awstypes.Name:
+		// We donot want to configure Route53 when the user provided DNS is in use.
+		// so, do not set PrivateZone and PublicZone fields in the DNS manifest.
+		if installConfig.Config.AWS.UserConfiguredDNSLB.UserDNS == "Enabled" {
+			config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
+			config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
+			break
+		}
+
 		if installConfig.Config.Publish == types.ExternalPublishingStrategy {
 			sess, err := installConfig.AWS.Session(context.TODO())
 			if err != nil {
