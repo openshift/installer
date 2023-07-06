@@ -3,6 +3,7 @@
 
 locals {
   public_endpoints = var.publish_strategy == "External" ? true : false
+  byo_lbs          = var.aws_api_ext_lb_name == null ? false : true
   description      = "Created By OpenShift Installer"
 
   # CIDR block distribution:
@@ -63,4 +64,12 @@ data "aws_subnet" "edge_public" {
   count = var.edge_zones == null ? 0 : length(var.edge_zones)
 
   id = var.edge_zones == null ? null : aws_subnet.edge_public_subnet[count.index].id
+}
+
+data "aws_lb" "ext" {
+  name = local.byo_lbs ? var.api_ext_lb_name : aws_lb.api_external[0].name
+}
+
+data "aws_lb" "int" {
+  name = local.byo_lbs ? var.api_int_lb_name : aws_lb.api_internal[0].name
 }

@@ -287,6 +287,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			awsMP.Set(mp.Platform.AWS)
 			masterIAMRoleName = awsMP.IAMRole
 		}
+		apiIntLBName := ""
+		apiLBName := ""
+		if installConfig.Config.AWS.UserConfiguredDNSLB.UserDNS == "Enabled" {
+			apiIntLBName = installConfig.Config.AWS.UserConfiguredDNSLB.APIIntLBName
+			apiLBName = installConfig.Config.AWS.UserConfiguredDNSLB.APILBName
+		}
 
 		// AWS Zones is used to determine which route table the edge zone will be associated.
 		allZones, err := installConfig.AWS.AllZones(ctx)
@@ -314,6 +320,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			WorkerIAMRoleName:     workerIAMRoleName,
 			Architecture:          installConfig.Config.ControlPlane.Architecture,
 			Proxy:                 installConfig.Config.Proxy,
+			APILBName:             apiLBName,
+			APIIntLBName:          apiIntLBName,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

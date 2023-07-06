@@ -60,6 +60,7 @@ module "iam" {
 
 module "dns" {
   source = "./route53"
+  count  = var.aws_api_ext_lb_name == null ? 1 : 0
 
   api_external_lb_dns_name = module.vpc.aws_lb_api_external_dns_name
   api_external_lb_zone_id  = module.vpc.aws_lb_api_external_zone_id
@@ -75,6 +76,8 @@ module "dns" {
   region                   = var.aws_region
   publish_strategy         = var.aws_publish_strategy
   custom_endpoints         = var.custom_endpoints
+  api_ext_lb_name          = var.aws_api_ext_lb_name
+  api_int_lb_name          = var.aws_api_int_lb_name
 }
 
 module "vpc" {

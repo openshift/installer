@@ -45,6 +45,8 @@ type config struct {
 	WorkerIAMRoleName               string            `json:"aws_worker_iam_role_name,omitempty"`
 	MasterMetadataAuthentication    string            `json:"aws_master_instance_metadata_authentication,omitempty"`
 	BootstrapMetadataAuthentication string            `json:"aws_bootstrap_instance_metadata_authentication,omitempty"`
+	APILBName                       string            `json:"aws_api_ext_lb_name,omitempty"`
+	APIIntLBName                    string            `json:"aws_api_int_lb_name,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -72,6 +74,8 @@ type TFVarsSources struct {
 	Architecture types.Architecture
 
 	Proxy *types.Proxy
+
+	APILBName, APIIntLBName string
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -193,6 +197,8 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		IgnitionBucket:          sources.IgnitionBucket,
 		MasterIAMRoleName:       sources.MasterIAMRoleName,
 		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
+		APILBName:               sources.APILBName,
+		APIIntLBName:            sources.APIIntLBName,
 	}
 
 	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)

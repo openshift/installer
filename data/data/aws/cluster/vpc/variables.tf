@@ -54,3 +54,15 @@ variable "private_subnets" {
   type        = list(string)
   description = "Existing private subnets into which the cluster should be installed."
 }
+
+variable "ext_lb" {
+  type        = string
+  description = "external lb name in byo scenario"
+  default     = null
+}
+
+variable "int_lb" {
+  type        = string
+  description = "int lb name in byo scenario"
+  default     = null
+}

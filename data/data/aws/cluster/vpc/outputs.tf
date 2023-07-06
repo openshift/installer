@@ -61,18 +61,18 @@ output "aws_lb_target_group_arns_length" {
 }
 
 output "aws_lb_api_external_dns_name" {
-  value = local.public_endpoints ? aws_lb.api_external[0].dns_name : null
+  value = local.public_endpoints ? data.aws_lb.ext.dns_name : null
 }
 
 output "aws_lb_api_external_zone_id" {
-  value = local.public_endpoints ? aws_lb.api_external[0].zone_id : null
+  value = local.public_endpoints ? data.aws_lb.ext.zone_id : null
 }
 
 output "aws_lb_api_internal_dns_name" {
-  value = aws_lb.api_internal.dns_name
+  value = data.aws_lb.int.dns_name
 }
 
 output "aws_lb_api_internal_zone_id" {
-  value = aws_lb.api_internal.zone_id
+  value = data.aws_lb.int.zone_id
 }
 
