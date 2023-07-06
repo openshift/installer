@@ -25,7 +25,7 @@ RUN rpm --import https://packages.microsoft.com/keys/microsoft.asc && \
 
 RUN yum update -y && \
     yum install --setopt=tsflags=nodocs -y \
-      azure-cli \
+      azure-cli-2.49.0-1.el8 \
       gettext \
       google-cloud-cli \
       gzip \
