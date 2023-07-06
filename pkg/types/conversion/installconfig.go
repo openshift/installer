@@ -168,6 +168,35 @@ func convertOpenStack(config *types.InstallConfig) error {
 		config.Platform.OpenStack.DefaultMachinePlatform.FlavorName = config.Platform.OpenStack.DeprecatedFlavorName
 	}
 
+	// type has been deprecated in favor of types in the machinePools.
+	if config.ControlPlane != nil && config.ControlPlane.Platform.OpenStack.RootVolume != nil && config.ControlPlane.Platform.OpenStack.RootVolume.DeprecatedType != "" {
+		if len(config.ControlPlane.Platform.OpenStack.RootVolume.Types) > 0 {
+			// Return error if both type and types of rootVolume are specified in the config
+			return field.Forbidden(field.NewPath("controlPlane").Child("platform").Child("openstack").Child("rootVolume").Child("type"), "cannot specify type and types in rootVolume together")
+		}
+		config.ControlPlane.Platform.OpenStack.RootVolume.Types = []string{config.ControlPlane.Platform.OpenStack.RootVolume.DeprecatedType}
+		config.ControlPlane.Platform.OpenStack.RootVolume.DeprecatedType = ""
+	}
+	for _, pool := range config.Compute {
+		mpool := pool.Platform.OpenStack
+		if mpool.RootVolume != nil && mpool.RootVolume.DeprecatedType != "" {
+			if mpool.RootVolume.Types != nil && len(mpool.RootVolume.Types) > 0 {
+				// Return error if both type and types of rootVolume are specified in the config
+				return field.Forbidden(field.NewPath("compute").Child("platform").Child("openstack").Child("rootVolume").Child("type"), "cannot specify type and types in rootVolume together")
+			}
+			mpool.RootVolume.Types = []string{mpool.RootVolume.DeprecatedType}
+			mpool.RootVolume.DeprecatedType = ""
+		}
+	}
+	if config.Platform.OpenStack.DefaultMachinePlatform != nil && config.Platform.OpenStack.DefaultMachinePlatform.RootVolume != nil && config.Platform.OpenStack.DefaultMachinePlatform.RootVolume.DeprecatedType != "" {
+		if len(config.Platform.OpenStack.DefaultMachinePlatform.RootVolume.Types) > 0 {
+			// Return error if both type and types of defaultMachinePlatform are specified in the config
+			return field.Forbidden(field.NewPath("platform").Child("openstack").Child("type"), "cannot specify type and types in defaultMachinePlatform together")
+		}
+		config.Platform.OpenStack.DefaultMachinePlatform.RootVolume.Types = []string{config.Platform.OpenStack.DefaultMachinePlatform.RootVolume.DeprecatedType}
+		config.Platform.OpenStack.DefaultMachinePlatform.RootVolume.DeprecatedType = ""
+	}
+
 	if err := upconvertVIP(&config.Platform.OpenStack.APIVIPs, config.Platform.OpenStack.DeprecatedAPIVIP, "apiVIP", "apiVIPs", field.NewPath("platform").Child("openstack")); err != nil {
 		return err
 	}

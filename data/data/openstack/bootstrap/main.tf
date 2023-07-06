@@ -73,7 +73,7 @@ resource "openstack_blockstorage_volume_v3" "bootstrap_volume" {
   description = local.description
 
   size        = var.openstack_master_root_volume_size
-  volume_type = var.openstack_master_root_volume_type
+  volume_type = var.openstack_master_root_volume_types[0]
   image_id    = data.openstack_images_image_v2.base_image.id
 
   availability_zone = var.openstack_master_root_volume_availability_zones[0]

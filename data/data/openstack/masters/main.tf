@@ -64,7 +64,7 @@ resource "openstack_blockstorage_volume_v3" "master_volume" {
   count = var.openstack_master_root_volume_size == null ? 0 : var.master_count
 
   size = var.openstack_master_root_volume_size
-  volume_type = var.openstack_master_root_volume_type
+  volume_type = var.openstack_master_root_volume_types[count.index]
   image_id = data.openstack_images_image_v2.base_image.id
 
   availability_zone = var.openstack_master_root_volume_availability_zones[count.index]

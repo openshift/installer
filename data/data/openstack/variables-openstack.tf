@@ -1,9 +1,3 @@
-variable "openstack_master_root_volume_type" {
-  type        = string
-  default     = null
-  description = "The type of volume for the root block device of master nodes."
-}
-
 variable "openstack_master_root_volume_size" {
   type        = number
   default     = null
@@ -387,6 +381,12 @@ variable "openstack_master_root_volume_availability_zones" {
   type        = list(string)
   default     = [""]
   description = "List of availability Zones to Schedule the masters root volumes on."
+}
+
+variable "openstack_master_root_volume_types" {
+  type        = list(string)
+  default     = [""]
+  description = "List of volume types used by the masters root volumes."
 }
 
 variable "openstack_worker_server_group_names" {

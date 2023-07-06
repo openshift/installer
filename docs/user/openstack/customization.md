@@ -47,7 +47,8 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `type` (optional string): The OpenStack flavor name for machines in the pool.
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB. Must be set to at least 25.
-  * `type` (required string): The volume pool to create the volume from.
+  * `type` (optional string): The volume pool to create the volume from. It was replaced by `types`.
+  * `types` (required list of strings): The volume pool to create the volume from. If compute `zones` are defined with more than one type, the number of zones must match the number of types.
   * `zones` (optional list of strings): The names of the availability zones you want to install your root volumes on. If unset, the installer will use your default volume zone.
     If compute `zones` contains at least one value, `rootVolume.zones` must also contain at least one value.
     Indeed, when a machine is created with a compute availability zone and a storage root volume with no specified rootVolume.availabilityZone, [CAPO](https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/9d183bd479fe9aed4f6e7ac3d5eee46681c518e7/pkg/cloud/services/compute/instance.go#L439-L442) will use the compute AZ for the volume AZ.
@@ -106,7 +107,8 @@ compute:
       type: ml.large
       rootVolume:
         size: 30
-        type: performance
+        types:
+        - performance
   replicas: 3
 metadata:
   name: test-cluster
