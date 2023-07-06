@@ -471,6 +471,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
+		shim, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy("", installConfig.Config.AdditionalTrustBundle, installConfig.Config.Proxy)
+		if err != nil {
+			return err
+		}
+
 		img := streamArch.Images.Gcp
 		if img == nil {
 			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
@@ -481,16 +486,17 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
-				Auth:                auth,
-				MasterConfigs:       masterConfigs,
-				WorkerConfigs:       workerConfigs,
-				CreateFirewallRules: createFirewallRules,
-				ImageURI:            imageURL,
-				ImageLicenses:       installConfig.Config.GCP.Licenses,
-				PreexistingNetwork:  preexistingnetwork,
-				PublicZoneName:      publicZoneName,
-				PrivateZoneName:     privateZoneName,
-				PublishStrategy:     installConfig.Config.Publish,
+				Auth:                       auth,
+				MasterConfigs:              masterConfigs,
+				WorkerConfigs:              workerConfigs,
+				CreateFirewallRules:        createFirewallRules,
+				ImageURI:                   imageURL,
+				ImageLicenses:              installConfig.Config.GCP.Licenses,
+				PreexistingNetwork:         preexistingnetwork,
+				PublicZoneName:             publicZoneName,
+				PrivateZoneName:            privateZoneName,
+				PublishStrategy:            installConfig.Config.Publish,
+				BootstrapProxyIgnitionStub: string(shim),
 			},
 		)
 		if err != nil {

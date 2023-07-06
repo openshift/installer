@@ -29,6 +29,12 @@ resource "google_storage_bucket_object" "ignition" {
   content = var.ignition_bootstrap
 }
 
+resource "google_storage_bucket_object" "proxy" {
+  bucket  = google_storage_bucket.ignition.name
+  name    = "proxy.ign"
+  content = var.gcp_bootstrap_proxy_ignition_stub
+}
+
 resource "google_service_account" "bootstrap-node-sa" {
   count        = var.gcp_create_bootstrap_sa ? 1 : 0
   account_id   = "${var.cluster_id}-b"
@@ -55,9 +61,19 @@ data "google_storage_object_signed_url" "ignition_url" {
   credentials = var.gcp_create_bootstrap_sa ? base64decode(google_service_account_key.bootstrap[0].private_key) : null
 }
 
+data "google_storage_object_signed_url" "proxy_url" {
+  bucket      = google_storage_bucket.ignition.name
+  path        = "proxy.ign"
+  duration    = "1h"
+  credentials = var.gcp_create_bootstrap_sa ? base64decode(google_service_account_key.bootstrap[0].private_key) : null
+}
+
 data "ignition_config" "redirect" {
   replace {
     source = data.google_storage_object_signed_url.ignition_url.signed_url
+  }
+  merge {
+    source = data.google_storage_object_signed_url.proxy_url.signed_url
   }
 }
 

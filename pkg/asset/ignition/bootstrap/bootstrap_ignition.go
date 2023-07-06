@@ -50,6 +50,14 @@ func GenerateIgnitionShimWithCertBundleAndProxy(bootstrapConfigURL string, userC
 		},
 	}
 
+	if bootstrapConfigURL != "" {
+		ign.Ignition.Config = igntypes.IgnitionConfig{
+			Replace: igntypes.Resource{
+				Source: ignutil.StrToPtr(bootstrapConfigURL),
+			},
+		}
+	}
+
 	carefs, err := parseCertificateBundle([]byte(userCA))
 	if err != nil {
 		return nil, err

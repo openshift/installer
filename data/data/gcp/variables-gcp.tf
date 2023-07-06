@@ -175,3 +175,9 @@ variable "gcp_create_bootstrap_sa" {
   default = false
   description = "Whether a service account should be created to sign the ignition URL."
 }
+
+variable "gcp_bootstrap_proxy_ignition_stub" {
+  type = string
+  default = ""
+  description = "Ignition stub for the bootstrap process containing proxy information."
+}
