@@ -20,7 +20,8 @@ EOF
 storageclass.storage.k8s.io/custom-csi-storageclass created
 ```
 
-**Note**: OpenShift doesn't check that the availability zone exists. So, users must verify that they have entered the correct value.
+> **Note**
+> OpenShift doesn't check that the availability zone exists. So, users must verify that they have entered the correct value.
 
 2. Create a pvc using the storageclass in `openshift-image-registry-namespace`, change the size of the volume if necessary.
 
@@ -45,7 +46,8 @@ EOF
 persistentvolumeclaim/csi-pvc-imageregistry created
 ```
 
-**Note**: Setting the `imageregistry.openshift.io` annotation is important, because otherwise Cluster Image Registry Operator won't be able to consume this PVC.
+> **Note**
+> Setting the `imageregistry.openshift.io` annotation is important, because otherwise Cluster Image Registry Operator won't be able to consume this PVC.
 
 3. Replace the original volume claim in the image registry config.
 

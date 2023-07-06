@@ -33,7 +33,8 @@ The operation can take up to 5 minutes, during which time the machine will be gr
 
 A new worker machine for the cluster will soon be created automatically by the [machine-api-operator](https://github.com/openshift/machine-api-operator).
 
-**NOTE**: in future versions of OpenShift all broken machines will be automatically deleted and recovered by the machine-api-operator.
+> **Note**
+> In future versions of OpenShift all broken machines will be automatically deleted and recovered by the machine-api-operator.
 
 ## SSH access to the instances
 

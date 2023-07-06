@@ -60,13 +60,17 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 - [Troubleshooting your cluster](troubleshooting.md)
 - [Customizing your install](customization.md)
 - [Installing OpenShift on OpenStack User-Provisioned Infrastructure](install_upi.md)
-- [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 - [Deploying OpenShift bare-metal workers](deploy_baremetal_workers.md)
 - [Deploying OpenShift single root I/O virtualization (SRIOV) workers](deploy_sriov_workers.md)
 - [Deploying OpenShift with OVS-DPDK](ovs-dpdk.md)
 - [Deploying OpenShift with an external load balancer](external_load_balancer.md)
 - [Provider Networks](provider_networks.md)
 - [Migrate the Image Registry from Cinder to Swift](image-registry-storage-swift.md)
+- [Image Registry With A Custom PVC Backend](image_registry_with_custom_pvc_backends.md)
+- [Adding Worker Nodes By Hand](add_worker_nodes_by_hand.md)
+- [Connecting workers nodes and pods to an IPv6 network](connect_nodes_to_ipv6_network.md)
+- [Connecting worker nodes to a dedicated Manila network](connect_nodes_to_manila_network.md)
+- [Learn about the OpenShift on OpenStack networking infrastructure design](../../design/openstack/networking-infrastructure.md)
 
 ## OpenStack Requirements
 
@@ -102,8 +106,9 @@ For a successful installation it is required:
 - Depending on the type of [image registry backend](#image-registry-requirements) either 1 Swift container or an additional 100 GB volume.
 - OpenStack resource tagging
 
-> **NOTE:**
-> The installer will check OpenStack quota limits to make sure that the requested resources can be created. Note that it won't check for resource availability in the cloud, but only on the quotas.
+> **Note**
+> The installer will check OpenStack quota limits to make sure that the requested resources can be created.
+> Note that it won't check for resource availability in the cloud, but only on the quotas.
 
 You may need to increase the security group related quotas from their default values. For example (as an OpenStack administrator):
 
@@ -143,7 +148,12 @@ openstack role add --user <user> --project <project> swiftoperator
 
 If Swift is not available, the [PVC](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#persistentvolumeclaims) storage is used as the backend. For this purpose, a persistent volume of 100 GB will be created in Cinder and mounted to the image registry pod during the installation.
 
-**Note:** If you are deploying a cluster in an Availability Zone where Swift isn't available but where Cinder is, it is recommended to deploy the Image Registry with Cinder backend. It will try to schedule the volume into the same AZ as the Nova zone where the PVC is located; otherwise it'll pick the default availability zone. If needed, the Image registry can be moved to another availability zone by a day 2 operation.
+> **Note**
+> If you are deploying a cluster in an Availability Zone where Swift isn't available but where Cinder is,
+> it is recommended to deploy the Image Registry with Cinder backend.
+> It will try to schedule the volume into the same AZ as the Nova zone where the PVC is located;
+> otherwise it'll pick the default availability zone.
+> If needed, the Image registry can be moved to another availability zone by a day 2 operation.
 
 If you want to force Cinder to be used as a backend for the Image Registry, you need to remove the `swiftoperator` permissions. As an OpenStack administrator:
 
@@ -151,7 +161,9 @@ If you want to force Cinder to be used as a backend for the Image Registry, you 
 openstack role remove --user <user> --project <project> swiftoperator
 ```
 
-**Note:** Since Cinder supports only [ReadWriteOnce](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) access mode, it's not possible to have more than one replica of the image registry pod.
+> **Note**
+> Since Cinder supports only [ReadWriteOnce](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes) access mode,
+> it's not possible to have more than one replica of the image registry pod.
 
 ### Disk Requirements
 
@@ -218,8 +230,9 @@ openstack network list --long -c ID -c Name -c "Router Type"
 +--------------------------------------+----------------+-------------+
 ```
 
-> **NOTE:**
-> If the Neutron `trunk` service plug-in is enabled, trunk port will be created by default. For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
+> **Note**
+> If the Neutron `trunk` service plug-in is enabled, trunk port will be created by default.
+> For more information, please refer to [neutron trunk port](https://wiki.openstack.org/wiki/Neutron/TrunkPort).
 
 ### Nova Metadata Service
 
@@ -344,8 +357,12 @@ openstack floating ip create --description "Ingress <cluster name>.<base domain>
 # => <ingressFloatingIP>
 ```
 
-> **NOTE:**
-> These IP addresses will **not** show up attached to any particular server (e.g. when running `openstack server list`). Similarly, the API and Ingress ports will always be in the `DOWN` state. This is because the ports are not attached to the servers directly. Instead, their fixed IP addresses are managed by keepalived. This has no record in Neutron's database and as such, is not visible to OpenStack.
+> **Note**
+> These IP addresses will **not** show up attached to any particular server (e.g. when running `openstack server list`).
+> Similarly, the API and Ingress ports will always be in the `DOWN` state.
+> This is because the ports are not attached to the servers directly.
+> Instead, their fixed IP addresses are managed by keepalived.
+> This has no record in Neutron's database and as such, is not visible to OpenStack.
 
 *The network traffic will flow through even though the IPs and ports do not show up in the servers*.
 
@@ -584,8 +601,10 @@ In order to use Availability Zones, create one MachineSet per target
 Availability Zone, and set the Availability Zone in the `availabilityZone`
 property of the MachineSet.
 
-> **NOTE:**
-> When deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it. In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider, all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
+> **Note**
+> When deploying with `Kuryr` there is an Octavia API loadbalancer VM that will not fulfill the Availability Zones restrictions due to Octavia lack of support for it.
+> In addition, if Octavia only has the amphora provider instead of also the OVN-Octavia provider,
+> all the OpenShift services will be backed up by Octavia Load Balancer VMs which will not fulfill the Availability Zone restrictions either.
 
 [server-group-docs]: https://docs.openstack.org/api-ref/compute/?expanded=create-server-group-detail#create-server-group
 
@@ -600,7 +619,8 @@ Add the following external facing services to your new load balancer:
 - The master nodes serve the OpenShift API on port 6443 using TCP.
 - The apps hosted on the worker nodes are served on ports 80, and 443. They are both served using TCP.
 
-Note: Make sure the instance that your new load balancer is running on has security group rules that allow TCP traffic over these ports.
+> **Note**
+> Make sure the instance that your new load balancer is running on has security group rules that allow TCP traffic over these ports.
 
 #### HAProxy Example Load Balancer Config
 
@@ -663,7 +683,8 @@ Result:
 }
 ```
 
-Note: The versions in the sample output may differ from your own. As long as you get a JSON payload response, the API is accessible.
+> **Note**
+> The versions in the sample output may differ from your own. As long as you get a JSON payload response, the API is accessible.
 
 #### Verifying that Apps Reachable
 
@@ -701,8 +722,9 @@ If you need to update the OpenStack cloud provider configuration you can edit th
 oc edit configmap -n openshift-config cloud-provider-config
 ```
 
-> **NOTE:**
-> It can take a while to reconfigure the cluster depending on the size of it. The reconfiguration is completed once no node is getting `SchedulingDisabled` taint anymore.
+> **Note**
+> It can take a while to reconfigure the cluster depending on the size of it.
+> The reconfiguration is completed once no node is getting `SchedulingDisabled` taint anymore.
 
 There are several things you can change:
 

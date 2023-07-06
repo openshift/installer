@@ -63,7 +63,9 @@ of this method of installation.
 ## Prerequisites
 
 The file `inventory.yaml` contains the variables most likely to need customization.
-**NOTE**: some of the default pods (e.g. the `openshift-router`) require at least two nodes so that is the effective minimum.
+
+> **Note**
+> Some of the default pods (e.g. the `openshift-router`) require at least two nodes so that is the effective minimum.
 
 The requirements for UPI are broadly similar to the [ones for OpenStack IPI][ipi-reqs]:
 
@@ -201,7 +203,8 @@ $ gunzip rhcos-${RHCOSVERSION}-openstack.x86_64.qcow2.gz
 
 Next step is to create a Glance image.
 
-**NOTE:** *This document* will use `rhcos-${CLUSTER_NAME}` as the Glance image name. The name of the Glance image must be the one configured as `os_image_rhcos` in `inventory.yaml`.
+> **Note**
+> This document will use `rhcos-${CLUSTER_NAME}` as the Glance image name. The name of the Glance image must be the one configured as `os_image_rhcos` in `inventory.yaml`.
 
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
@@ -209,7 +212,9 @@ $ openstack image create --container-format=bare --disk-format=qcow2 --file rhco
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
-**NOTE:** Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
+> **Note**
+> Depending on your OpenStack environment you can upload the RHCOS image as `raw` or `qcow2`.
+> See [Disk and container formats for images](https://docs.openstack.org/image-guide/introduction.html#disk-and-container-formats-for-images) for more information.
 
 [qemu_guest_agent]: https://docs.openstack.org/nova/latest/admin/configuration/hypervisor-kvm.html
 If the RHCOS image being used supports it,  the [KVM Qemu Guest Agent][qemu_guest_agent] may be used to enable optional
@@ -234,7 +239,11 @@ $ openstack image show "rhcos-${CLUSTER_NAME}"
 
 If the variables `os_api_fip`, `os_ingress_fip` and `os_bootstrap_fip` are found in `inventory.yaml`, the corresponding floating IPs will be attached to the API load balancer, to the worker nodes load balancer and to the temporary machine used for the install process, respectively. Note that `os_external_network` is a requirement for those.
 
-**NOTE**: throughout this document, we will use `203.0.113.23` as the public IP address for the OpenShift API endpoint and `203.0.113.19` as the public IP for the ingress (`*.apps`) endpoint. `203.0.113.20` will be the public IP used for the bootstrap machine.
+> **Note**
+> Throughout this document, we will use `203.0.113.23` as the public IP address
+> for the OpenShift API endpoint and `203.0.113.19` as the public IP for the
+> ingress (`*.apps`) endpoint. `203.0.113.20` will be the public IP used for
+> the bootstrap machine.
 
 ```sh
 $ openstack floating ip create --description "OpenShift API" <external>
@@ -359,8 +368,9 @@ if "ingressVIP" in data["platform"]["openstack"]:
 open(path, "w").write(yaml.dump(data, default_flow_style=False))'
 ```
 
-**NOTE**: All the scripts in this guide work with Python 3 as well as Python 2. You can also choose to edit the
-`install-config.yaml` file by hand.
+> **Note**
+> All the scripts in this guide work with Python 3 as well as Python 2.
+> You can also choose to edit the `install-config.yaml` file by hand.
 
 ### Empty Compute Pools
 
@@ -540,7 +550,8 @@ openshift-qlvwv-bootstrap
 
 **`/opt/openshift/tls/cloud-ca-cert.pem`** (if applicable).
 
-**NOTE**: We recommend you back up the Ignition files before making any changes!
+> **Note**
+> We recommend you back up the Ignition files before making any changes!
 
 You can edit the Ignition file manually or run this Python script:
 
@@ -626,7 +637,8 @@ $ openstack image create --disk-format=raw --container-format=bare --file bootst
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
-**NOTE**: Make sure the created image has `active` status.
+> **Note**
+> Make sure the created image has `active` status.
 
 Copy and save `file` value of the output, it should look like `/v2/images/<image_id>/file`.
 
@@ -787,7 +799,8 @@ If you look inside, you will see that they contain very little. In fact, most of
 
 You can make your own changes here.
 
-**NOTE**: The worker nodes do not require any changes to their Ignition, but you can make your own by editing `worker.ign`.
+> **Note**
+> The worker nodes do not require any changes to their Ignition, but you can make your own by editing `worker.ign`.
 
 ## Network Topology
 
@@ -816,7 +829,8 @@ Outside connectivity will be provided by attaching the floating IP addresses (IP
 
 ### Subnet DNS (optional)
 
-**NOTE**: This step is optional and only necessary if you want to control the default resolvers your Nova servers will use.
+> **Note**
+> This step is optional and only necessary if you want to control the default resolvers your Nova servers will use.
 
 During deployment, the OpenShift nodes will need to be able to resolve public name records to download the OpenShift images and so on. They will also need to resolve the OpenStack API endpoint.
 
@@ -912,7 +926,8 @@ $ oc get nodes
 $ oc get pods -A
 ```
 
-**NOTE**: Only the API will be up at this point. The OpenShift UI will run on the compute nodes.
+> **Note**
+> Only the API will be up at this point. The OpenShift UI will run on the compute nodes.
 
 ### Delete the Bootstrap Resources
 <!--- e2e-openstack-upi: INCLUDE START --->
@@ -1085,8 +1100,9 @@ $ ansible-playbook -i inventory.yaml  \
 
 The playbook `down-load-balancers.yaml` idempotently deletes the load balancers created by the Kuryr installation, if any.
 
-**NOTE:** The deletion of load balancers with `provisioning_status` `PENDING-*` is skipped. Make sure to retry the
-`down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
+> **Note**
+> The deletion of load balancers with `provisioning_status` `PENDING-*` is skipped.
+> Make sure to retry the `down-load-balancers.yaml` playbook once the load balancers have transitioned to `ACTIVE`.
 
 Delete the RHCOS image if it's no longer useful.
 

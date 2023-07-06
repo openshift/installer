@@ -65,8 +65,9 @@ on a tenant network:
 
     openstack subnet create --dhcp --host-route destination=169.254.169.254/32,gateway=$ROUTER_IP" (...)
 
-**Note:** We're working on removing the nova-metadata requirement but for now it is strongly required to be
-          enabled in the cloud and reachable from the provider network.
+> **Note**
+> We're working on removing the nova-metadata requirement but for now it is
+> mandatory and must be reachable from the provider network.
 
 
 ## Deploying cluster with primary interface on a provider network with IPI
@@ -81,10 +82,9 @@ on a tenant network:
     - Set `platform.openstack.machinesSubnet` to the subnet ID of the provider network subnet.
     - Set `networking.machineNetwork.cidr` to the CIDR of the provider network subnet.
 
-**Note:**
-
-`platform.openstack.apiVIP` and `platform.openstack.ingressVIP` both need to be an unassigned IP
-address on the `networking.machineNetwork.cidr`.
+    > **Note**
+    > `platform.openstack.apiVIP` and `platform.openstack.ingressVIP` both need to
+    > be an unassigned IP address on the `networking.machineNetwork.cidr`.
 
     Example:
 
