@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/tombuildsstuff/kermit/sdk/web/2022-09-01/web"
 )
 
 const (

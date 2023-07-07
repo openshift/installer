@@ -1,7 +1,11 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package features
 
 type UserFeatures struct {
 	ApiManagement          ApiManagementFeatures
+	AppConfiguration       AppConfigurationFeatures
 	ApplicationInsights    ApplicationInsightFeatures
 	CognitiveAccount       CognitiveAccountFeatures
 	VirtualMachine         VirtualMachineFeatures
@@ -10,6 +14,7 @@ type UserFeatures struct {
 	TemplateDeployment     TemplateDeploymentFeatures
 	LogAnalyticsWorkspace  LogAnalyticsWorkspaceFeatures
 	ResourceGroup          ResourceGroupFeatures
+	ManagedDisk            ManagedDiskFeatures
 }
 
 type CognitiveAccountFeatures struct {
@@ -59,4 +64,13 @@ type ApiManagementFeatures struct {
 
 type ApplicationInsightFeatures struct {
 	DisableGeneratedRule bool
+}
+
+type ManagedDiskFeatures struct {
+	ExpandWithoutDowntime bool
+}
+
+type AppConfigurationFeatures struct {
+	PurgeSoftDeleteOnDestroy bool
+	RecoverSoftDeleted       bool
 }

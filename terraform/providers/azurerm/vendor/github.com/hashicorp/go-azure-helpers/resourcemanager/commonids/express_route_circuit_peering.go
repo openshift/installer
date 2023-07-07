@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package commonids
 
 import (
@@ -11,19 +14,19 @@ var _ resourceids.ResourceId = ExpressRouteCircuitPeeringId{}
 
 // ExpressRouteCircuitPeeringId is a struct representing the Resource ID for a Express Route Circuit Peering
 type ExpressRouteCircuitPeeringId struct {
-	SubscriptionId string
-	ResourceGroup  string
-	CircuitName    string
-	PeeringName    string
+	SubscriptionId    string
+	ResourceGroupName string
+	CircuitName       string
+	PeeringName       string
 }
 
 // NewExpressRouteCircuitPeeringID returns a new ExpressRouteCircuitPeeringId struct
-func NewExpressRouteCircuitPeeringID(subscriptionId string, resourceGroup string, circuitName string, peeringName string) ExpressRouteCircuitPeeringId {
+func NewExpressRouteCircuitPeeringID(subscriptionId string, resourceGroupName string, circuitName string, peeringName string) ExpressRouteCircuitPeeringId {
 	return ExpressRouteCircuitPeeringId{
-		SubscriptionId: subscriptionId,
-		ResourceGroup:  resourceGroup,
-		CircuitName:    circuitName,
-		PeeringName:    peeringName,
+		SubscriptionId:    subscriptionId,
+		ResourceGroupName: resourceGroupName,
+		CircuitName:       circuitName,
+		PeeringName:       peeringName,
 	}
 }
 
@@ -39,19 +42,19 @@ func ParseExpressRouteCircuitPeeringID(input string) (*ExpressRouteCircuitPeerin
 	id := ExpressRouteCircuitPeeringId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
 	}
 
-	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
+	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
 	}
 
 	if id.CircuitName, ok = parsed.Parsed["circuitName"]; !ok {
-		return nil, fmt.Errorf("the segment 'circuitName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "circuitName", *parsed)
 	}
 
 	if id.PeeringName, ok = parsed.Parsed["peeringName"]; !ok {
-		return nil, fmt.Errorf("the segment 'peeringName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "peeringName", *parsed)
 	}
 
 	return &id, nil
@@ -70,19 +73,19 @@ func ParseExpressRouteCircuitPeeringIDInsensitively(input string) (*ExpressRoute
 	id := ExpressRouteCircuitPeeringId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
 	}
 
-	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
+	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
 	}
 
 	if id.CircuitName, ok = parsed.Parsed["circuitName"]; !ok {
-		return nil, fmt.Errorf("the segment 'circuitName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "circuitName", *parsed)
 	}
 
 	if id.PeeringName, ok = parsed.Parsed["peeringName"]; !ok {
-		return nil, fmt.Errorf("the segment 'peeringName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "peeringName", *parsed)
 	}
 
 	return &id, nil
@@ -106,7 +109,7 @@ func ValidateExpressRouteCircuitPeeringID(input interface{}, key string) (warnin
 // ID returns the formatted Express Route Circuit Peering ID
 func (id ExpressRouteCircuitPeeringId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/expressRouteCircuits/%s/peerings/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.CircuitName, id.PeeringName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.CircuitName, id.PeeringName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Express Route Circuit Peering ID
@@ -115,7 +118,7 @@ func (id ExpressRouteCircuitPeeringId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("subscriptions", "subscriptions", "subscriptions"),
 		resourceids.SubscriptionIdSegment("subscriptionId", "12345678-1234-9876-4563-123456789012"),
 		resourceids.StaticSegment("resourceGroups", "resourceGroups", "resourceGroups"),
-		resourceids.ResourceGroupSegment("resourceGroup", "example-resource-group"),
+		resourceids.ResourceGroupSegment("resourceGroupName", "example-resource-group"),
 		resourceids.StaticSegment("providers", "providers", "providers"),
 		resourceids.ResourceProviderSegment("resourceProvider", "Microsoft.Network", "Microsoft.Network"),
 		resourceids.StaticSegment("expressRouteCircuits", "expressRouteCircuits", "expressRouteCircuits"),
@@ -129,7 +132,7 @@ func (id ExpressRouteCircuitPeeringId) Segments() []resourceids.Segment {
 func (id ExpressRouteCircuitPeeringId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
-		fmt.Sprintf("Resource Group: %q", id.ResourceGroup),
+		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
 		fmt.Sprintf("Circuit Name: %q", id.CircuitName),
 		fmt.Sprintf("Peering Name: %q", id.PeeringName),
 	}

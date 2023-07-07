@@ -1,9 +1,16 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package features
 
 func Default() UserFeatures {
 	return UserFeatures{
 		// NOTE: ensure all nested objects are fully populated
 		ApiManagement: ApiManagementFeatures{
+			PurgeSoftDeleteOnDestroy: true,
+			RecoverSoftDeleted:       true,
+		},
+		AppConfiguration: AppConfigurationFeatures{
 			PurgeSoftDeleteOnDestroy: true,
 			RecoverSoftDeleted:       true,
 		},
@@ -26,6 +33,9 @@ func Default() UserFeatures {
 		},
 		LogAnalyticsWorkspace: LogAnalyticsWorkspaceFeatures{
 			PermanentlyDeleteOnDestroy: true,
+		},
+		ManagedDisk: ManagedDiskFeatures{
+			ExpandWithoutDowntime: true,
 		},
 		ResourceGroup: ResourceGroupFeatures{
 			PreventDeletionIfContainsResources: true,
