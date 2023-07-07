@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"crypto/x509"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,8 +15,10 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -776,12 +779,64 @@ func getCOProgressingStatus(ctx context.Context, cc *configclient.Clientset, nam
 	return pStatus, err
 }
 
-func wrapWithReplay(w watch.Interface) watch.Interface {
+type replayingListWatch struct {
+	delegate cache.ListerWatcher
+
+	lastListItem *watch.Event
+	lastLock     sync.Mutex
+}
+
+func (r *replayingListWatch) List(options metav1.ListOptions) (runtime.Object, error) {
+	uncastList, err := r.delegate.List(options)
+	if err != nil {
+		return nil, err
+	}
+	items, err := meta.ExtractList(uncastList)
+	if err != nil {
+		return nil, fmt.Errorf("unable to understand list result %#v (%w)", uncastList, err)
+	}
+	if len(items) == 0 {
+		return uncastList, nil
+	}
+	lastItem := items[len(items)-1]
+	// we know this should be a clusteroperator, if testing fails on this, hardconvert it here.
+
+	r.lastLock.Lock()
+	defer r.lastLock.Unlock()
+	r.lastListItem = &watch.Event{
+		Type:   watch.Added,
+		Object: lastItem,
+	}
+
+	return uncastList, nil
+}
+
+// Watch is called strictly after List because it needs a resourceVersion.
+func (r *replayingListWatch) Watch(options metav1.ListOptions) (watch.Interface, error) {
+	w, err := r.delegate.Watch(options)
+	if err != nil {
+		return w, err
+	}
+
+	r.lastLock.Lock()
+	defer r.lastLock.Unlock()
+	return wrapWithReplay(w, r.lastListItem.DeepCopy()), nil
+}
+
+func wrapWithReplay(w watch.Interface, initialLastEvent *watch.Event) watch.Interface {
 	fw := &replayingWatch{
 		incoming: w,
 		result:   make(chan watch.Event),
 		closed:   make(chan struct{}),
 	}
+	if initialLastEvent != nil {
+		func() {
+			fw.lastLock.Lock()
+			defer fw.lastLock.Unlock()
+			fw.last = *initialLastEvent
+		}()
+	}
+
 	go fw.watchIncoming()
 	go fw.resendLast()
 	return fw
@@ -848,16 +903,8 @@ func (r *replayingWatch) resendLast() {
 }
 
 func replayingListWatcher(in cache.ListerWatcher) cache.ListerWatcher {
-	return &cache.ListWatch{
-		ListFunc: in.List,
-		WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			w, err := in.Watch(options)
-			if err != nil {
-				return w, err
-			}
-			return wrapWithReplay(w), nil
-		},
-		DisableChunking: true,
+	return &replayingListWatch{
+		delegate: in,
 	}
 }
 
