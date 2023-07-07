@@ -597,7 +597,7 @@ func waitForStableOperators(ctx context.Context, config *rest.Config) error {
 	wg.Wait()
 
 	if err != nil {
-		return err
+		logrus.Exit(exitCodeOperatorStabilityFailed)
 	}
 
 	timer.StopTimer("Cluster Operators Stable")
@@ -874,14 +874,12 @@ func coStabilityChecker() func(string, *configv1.ClusterOperatorStatusCondition,
 		}
 		if !wait.Interrupted(statusErr) {
 			logrus.Errorf("Error checking cluster operator %s Progressing status: %q", name, statusErr)
-			logrus.Exit(exitCodeOperatorStabilityFailed)
 			err = errors.New("cluster operators are not stable")
 		}
 		if meetsStabilityThreshold(status) {
 			logrus.Debugf("Cluster operator %s is now stable: Progressing=%s LastTransitionTime=%v DurationSinceTransition=%.fs Reason=%s Message=%s", name, status.Status, status.LastTransitionTime.Time, time.Since(status.LastTransitionTime.Time).Seconds(), status.Reason, status.Message)
 		} else {
 			logrus.Errorf("Cluster operator %s does not meet stability threshold of Progressing=false for greater than %.f seconds with Reason: %q and Message: %q", name, coStabilityThreshold, status.Reason, status.Message)
-			logrus.Exit(exitCodeOperatorStabilityFailed)
 			err = errors.New("cluster operators are not stable")
 		}
 		return err
