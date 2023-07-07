@@ -1,4 +1,4 @@
 #!/bin/sh
 # Example:  ./hack/go-integration-test.sh
 
-go test -run .Integration ./cmd/... ./data/... ./pkg/... "${@}"
+go test -parallel 1 -run .Integration ./cmd/... ./data/... ./pkg/... "${@}"
