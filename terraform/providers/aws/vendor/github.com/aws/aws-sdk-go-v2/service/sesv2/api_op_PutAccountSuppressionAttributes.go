@@ -33,21 +33,17 @@ type PutAccountSuppressionAttributesInput struct {
 	// A list that contains the reasons that email addresses will be automatically
 	// added to the suppression list for your account. This list can contain any or all
 	// of the following:
-	//
-	// * COMPLAINT – Amazon SES adds an email address to the
-	// suppression list for your account when a message sent to that address results in
-	// a complaint.
-	//
-	// * BOUNCE – Amazon SES adds an email address to the suppression
-	// list for your account when a message sent to that address results in a hard
-	// bounce.
+	//   - COMPLAINT – Amazon SES adds an email address to the suppression list for
+	//   your account when a message sent to that address results in a complaint.
+	//   - BOUNCE – Amazon SES adds an email address to the suppression list for your
+	//   account when a message sent to that address results in a hard bounce.
 	SuppressedReasons []types.SuppressionListReason
 
 	noSmithyDocumentSerde
 }
 
-// An HTTP 200 response if the request succeeds, or an error message if the request
-// fails.
+// An HTTP 200 response if the request succeeds, or an error message if the
+// request fails.
 type PutAccountSuppressionAttributesOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -101,6 +97,9 @@ func (c *Client) addOperationPutAccountSuppressionAttributesMiddlewares(stack *m
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opPutAccountSuppressionAttributes(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

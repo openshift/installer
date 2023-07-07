@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package toproto6
 
 import (
@@ -17,8 +20,6 @@ func Block(ctx context.Context, name string, path *tftypes.AttributePath, b fwsc
 		Block: &tfprotov6.SchemaBlock{
 			Deprecated: b.GetDeprecationMessage() != "",
 		},
-		MinItems: b.GetMinItems(),
-		MaxItems: b.GetMaxItems(),
 		TypeName: name,
 	}
 
@@ -44,7 +45,9 @@ func Block(ctx context.Context, name string, path *tftypes.AttributePath, b fwsc
 		return nil, path.NewErrorf("unrecognized nesting mode %v", nm)
 	}
 
-	for attrName, attr := range b.GetAttributes() {
+	nestedBlockObject := b.GetNestedObject()
+
+	for attrName, attr := range nestedBlockObject.GetAttributes() {
 		attrPath := path.WithAttributeName(attrName)
 		attrProto6, err := SchemaAttribute(ctx, attrName, attrPath, attr)
 
@@ -55,7 +58,7 @@ func Block(ctx context.Context, name string, path *tftypes.AttributePath, b fwsc
 		schemaNestedBlock.Block.Attributes = append(schemaNestedBlock.Block.Attributes, attrProto6)
 	}
 
-	for blockName, block := range b.GetBlocks() {
+	for blockName, block := range nestedBlockObject.GetBlocks() {
 		blockPath := path.WithAttributeName(blockName)
 		blockProto6, err := Block(ctx, blockName, blockPath, block)
 

@@ -35,8 +35,8 @@ func (c *Client) ListEntityRecognizers(ctx context.Context, params *ListEntityRe
 
 type ListEntityRecognizersInput struct {
 
-	// Filters the list of entities returned. You can filter on Status,
-	// SubmitTimeBefore, or SubmitTimeAfter. You can only set one filter at a time.
+	// Filters the list of entities returned. You can filter on Status ,
+	// SubmitTimeBefore , or SubmitTimeAfter . You can only set one filter at a time.
 	Filter *types.EntityRecognizerFilter
 
 	// The maximum number of results to return on each page. The default is 100.
@@ -108,6 +108,9 @@ func (c *Client) addOperationListEntityRecognizersMiddlewares(stack *middleware.
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListEntityRecognizers(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

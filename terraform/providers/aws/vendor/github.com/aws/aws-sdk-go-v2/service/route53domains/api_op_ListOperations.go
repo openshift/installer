@@ -36,18 +36,31 @@ type ListOperationsInput struct {
 
 	// For an initial request for a list of operations, omit this element. If the
 	// number of operations that are not yet complete is greater than the value that
-	// you specified for MaxItems, you can use Marker to return additional operations.
-	// Get the value of NextPageMarker from the previous response, and submit another
-	// request that includes the value of NextPageMarker in the Marker element.
+	// you specified for MaxItems , you can use Marker to return additional
+	// operations. Get the value of NextPageMarker from the previous response, and
+	// submit another request that includes the value of NextPageMarker in the Marker
+	// element.
 	Marker *string
 
 	// Number of domains to be returned. Default: 20
 	MaxItems *int32
 
+	// The sort type for returned values.
+	SortBy types.ListOperationsSortAttributeName
+
+	// The sort order ofr returned values, either ascending or descending.
+	SortOrder types.SortOrder
+
+	// The status of the operations.
+	Status []types.OperationStatus
+
 	// An optional parameter that lets you get information about all the operations
 	// that you submitted after a specified date and time. Specify the date and time in
 	// Unix time format and Coordinated Universal time (UTC).
 	SubmittedSince *time.Time
+
+	// An arrays of the domains operation types.
+	Type []types.OperationType
 
 	noSmithyDocumentSerde
 }
@@ -55,15 +68,13 @@ type ListOperationsInput struct {
 // The ListOperations response includes the following elements.
 type ListOperationsOutput struct {
 
-	// Lists summaries of the operations.
-	//
-	// This member is required.
-	Operations []types.OperationSummary
-
 	// If there are more operations than you specified for MaxItems in the request,
 	// submit another request and include the value of NextPageMarker in the value of
-	// Marker.
+	// Marker .
 	NextPageMarker *string
+
+	// Lists summaries of the operations.
+	Operations []types.OperationSummary
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -117,6 +128,9 @@ func (c *Client) addOperationListOperationsMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListOperations(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

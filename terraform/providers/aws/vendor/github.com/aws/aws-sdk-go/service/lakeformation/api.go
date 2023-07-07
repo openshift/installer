@@ -69,7 +69,7 @@ func (c *LakeFormation) AddLFTagsToResourceRequest(input *AddLFTagsToResourceInp
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -184,7 +184,7 @@ func (c *LakeFormation) AssumeDecoratedRoleWithSAMLRequest(input *AssumeDecorate
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - AccessDeniedException
 //     Access to a resource was denied.
@@ -435,7 +435,7 @@ func (c *LakeFormation) CancelTransactionRequest(input *CancelTransactionInput) 
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -536,7 +536,7 @@ func (c *LakeFormation) CommitTransactionRequest(input *CommitTransactionInput) 
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -635,7 +635,7 @@ func (c *LakeFormation) CreateDataCellsFilterRequest(input *CreateDataCellsFilte
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - ResourceNumberLimitExceededException
 //     A resource numerical limit was exceeded.
@@ -727,7 +727,7 @@ func (c *LakeFormation) CreateLFTagRequest(input *CreateLFTagInput) (req *reques
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -825,7 +825,7 @@ func (c *LakeFormation) DeleteDataCellsFilterRequest(input *DeleteDataCellsFilte
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -918,7 +918,7 @@ func (c *LakeFormation) DeleteLFTagRequest(input *DeleteLFTagInput) (req *reques
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -1026,7 +1026,7 @@ func (c *LakeFormation) DeleteObjectsOnCancelRequest(input *DeleteObjectsOnCance
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - TransactionCommittedException
 //     Contains details about an error where the specified transaction has already
@@ -1132,7 +1132,7 @@ func (c *LakeFormation) DeregisterResourceRequest(input *DeregisterResourceInput
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/DeregisterResource
 func (c *LakeFormation) DeregisterResource(input *DeregisterResourceInput) (*DeregisterResourceOutput, error) {
@@ -1221,7 +1221,7 @@ func (c *LakeFormation) DescribeResourceRequest(input *DescribeResourceInput) (r
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/DescribeResource
 func (c *LakeFormation) DescribeResource(input *DescribeResourceInput) (*DescribeResourceOutput, error) {
@@ -1300,7 +1300,7 @@ func (c *LakeFormation) DescribeTransactionRequest(input *DescribeTransactionInp
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -1396,7 +1396,7 @@ func (c *LakeFormation) ExtendTransactionRequest(input *ExtendTransactionInput) 
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -1432,6 +1432,97 @@ func (c *LakeFormation) ExtendTransaction(input *ExtendTransactionInput) (*Exten
 // for more information on using Contexts.
 func (c *LakeFormation) ExtendTransactionWithContext(ctx aws.Context, input *ExtendTransactionInput, opts ...request.Option) (*ExtendTransactionOutput, error) {
 	req, out := c.ExtendTransactionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetDataCellsFilter = "GetDataCellsFilter"
+
+// GetDataCellsFilterRequest generates a "aws/request.Request" representing the
+// client's request for the GetDataCellsFilter operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDataCellsFilter for more information on using the GetDataCellsFilter
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetDataCellsFilterRequest method.
+//	req, resp := client.GetDataCellsFilterRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/GetDataCellsFilter
+func (c *LakeFormation) GetDataCellsFilterRequest(input *GetDataCellsFilterInput) (req *request.Request, output *GetDataCellsFilterOutput) {
+	op := &request.Operation{
+		Name:       opGetDataCellsFilter,
+		HTTPMethod: "POST",
+		HTTPPath:   "/GetDataCellsFilter",
+	}
+
+	if input == nil {
+		input = &GetDataCellsFilterInput{}
+	}
+
+	output = &GetDataCellsFilterOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDataCellsFilter API operation for AWS Lake Formation.
+//
+// Returns a data cells filter.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Lake Formation's
+// API operation GetDataCellsFilter for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist.
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - AccessDeniedException
+//     Access to a resource was denied.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/GetDataCellsFilter
+func (c *LakeFormation) GetDataCellsFilter(input *GetDataCellsFilterInput) (*GetDataCellsFilterOutput, error) {
+	req, out := c.GetDataCellsFilterRequest(input)
+	return out, req.Send()
+}
+
+// GetDataCellsFilterWithContext is the same as GetDataCellsFilter with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDataCellsFilter for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LakeFormation) GetDataCellsFilterWithContext(ctx aws.Context, input *GetDataCellsFilterInput, opts ...request.Option) (*GetDataCellsFilterOutput, error) {
+	req, out := c.GetDataCellsFilterRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -1499,7 +1590,7 @@ func (c *LakeFormation) GetDataLakeSettingsRequest(input *GetDataLakeSettingsInp
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/GetDataLakeSettings
 func (c *LakeFormation) GetDataLakeSettings(input *GetDataLakeSettingsInput) (*GetDataLakeSettingsOutput, error) {
@@ -1589,7 +1680,7 @@ func (c *LakeFormation) GetEffectivePermissionsForPathRequest(input *GetEffectiv
 //     The input provided was not valid.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - OperationTimeoutException
 //     The operation timed out.
@@ -1725,7 +1816,7 @@ func (c *LakeFormation) GetLFTagRequest(input *GetLFTagInput) (req *request.Requ
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -2002,7 +2093,7 @@ func (c *LakeFormation) GetResourceLFTagsRequest(input *GetResourceLFTagsInput) 
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -2103,7 +2194,7 @@ func (c *LakeFormation) GetTableObjectsRequest(input *GetTableObjectsInput) (req
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -2265,7 +2356,7 @@ func (c *LakeFormation) GetTemporaryGluePartitionCredentialsRequest(input *GetTe
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - AccessDeniedException
 //     Access to a resource was denied.
@@ -2365,7 +2456,7 @@ func (c *LakeFormation) GetTemporaryGlueTableCredentialsRequest(input *GetTempor
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - AccessDeniedException
 //     Access to a resource was denied.
@@ -2690,7 +2781,7 @@ func (c *LakeFormation) GrantPermissionsRequest(input *GrantPermissionsInput) (r
 // and data organized in underlying data storage such as Amazon S3.
 //
 // For information about permissions, see Security and Access Control to Metadata
-// and Data (https://docs-aws.amazon.com/lake-formation/latest/dg/security-data-access.html).
+// and Data (https://docs.aws.amazon.com/lake-formation/latest/dg/security-data-access.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2705,7 +2796,7 @@ func (c *LakeFormation) GrantPermissionsRequest(input *GrantPermissionsInput) (r
 //     Two processes are trying to modify a resource simultaneously.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -2938,7 +3029,7 @@ func (c *LakeFormation) ListLFTagsRequest(input *ListLFTagsInput) (req *request.
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -3378,7 +3469,7 @@ func (c *LakeFormation) ListTableStorageOptimizersRequest(input *ListTableStorag
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -3784,7 +3875,7 @@ func (c *LakeFormation) RegisterResourceRequest(input *RegisterResourceInput) (r
 //     A resource to be created or added already exists.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - ResourceNumberLimitExceededException
 //     A resource numerical limit was exceeded.
@@ -3871,7 +3962,7 @@ func (c *LakeFormation) RemoveLFTagsFromResourceRequest(input *RemoveLFTagsFromR
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -3973,7 +4064,7 @@ func (c *LakeFormation) RevokePermissionsRequest(input *RevokePermissionsInput) 
 //     Two processes are trying to modify a resource simultaneously.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -4065,7 +4156,7 @@ func (c *LakeFormation) SearchDatabasesByLFTagsRequest(input *SearchDatabasesByL
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -4220,7 +4311,7 @@ func (c *LakeFormation) SearchTablesByLFTagsRequest(input *SearchTablesByLFTagsI
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InternalServiceException
 //     An internal service error occurred.
@@ -4486,6 +4577,101 @@ func (c *LakeFormation) StartTransactionWithContext(ctx aws.Context, input *Star
 	return out, req.Send()
 }
 
+const opUpdateDataCellsFilter = "UpdateDataCellsFilter"
+
+// UpdateDataCellsFilterRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateDataCellsFilter operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateDataCellsFilter for more information on using the UpdateDataCellsFilter
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateDataCellsFilterRequest method.
+//	req, resp := client.UpdateDataCellsFilterRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/UpdateDataCellsFilter
+func (c *LakeFormation) UpdateDataCellsFilterRequest(input *UpdateDataCellsFilterInput) (req *request.Request, output *UpdateDataCellsFilterOutput) {
+	op := &request.Operation{
+		Name:       opUpdateDataCellsFilter,
+		HTTPMethod: "POST",
+		HTTPPath:   "/UpdateDataCellsFilter",
+	}
+
+	if input == nil {
+		input = &UpdateDataCellsFilterInput{}
+	}
+
+	output = &UpdateDataCellsFilterOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(restjson.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// UpdateDataCellsFilter API operation for AWS Lake Formation.
+//
+// Updates a data cell filter.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Lake Formation's
+// API operation UpdateDataCellsFilter for usage and error information.
+//
+// Returned Error Types:
+//
+//   - ConcurrentModificationException
+//     Two processes are trying to modify a resource simultaneously.
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - AccessDeniedException
+//     Access to a resource was denied.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/UpdateDataCellsFilter
+func (c *LakeFormation) UpdateDataCellsFilter(input *UpdateDataCellsFilterInput) (*UpdateDataCellsFilterOutput, error) {
+	req, out := c.UpdateDataCellsFilterRequest(input)
+	return out, req.Send()
+}
+
+// UpdateDataCellsFilterWithContext is the same as UpdateDataCellsFilter with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateDataCellsFilter for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *LakeFormation) UpdateDataCellsFilterWithContext(ctx aws.Context, input *UpdateDataCellsFilterInput, opts ...request.Option) (*UpdateDataCellsFilterOutput, error) {
+	req, out := c.UpdateDataCellsFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateLFTag = "UpdateLFTag"
 
 // UpdateLFTagRequest generates a "aws/request.Request" representing the
@@ -4547,7 +4733,7 @@ func (c *LakeFormation) UpdateLFTagRequest(input *UpdateLFTagInput) (req *reques
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -4652,7 +4838,7 @@ func (c *LakeFormation) UpdateResourceRequest(input *UpdateResourceInput) (req *
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/lakeformation-2017-03-31/UpdateResource
 func (c *LakeFormation) UpdateResource(input *UpdateResourceInput) (*UpdateResourceOutput, error) {
@@ -4742,7 +4928,7 @@ func (c *LakeFormation) UpdateTableObjectsRequest(input *UpdateTableObjectsInput
 //     The operation timed out.
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - TransactionCommittedException
 //     Contains details about an error where the specified transaction has already
@@ -4839,7 +5025,7 @@ func (c *LakeFormation) UpdateTableStorageOptimizerRequest(input *UpdateTableSto
 // Returned Error Types:
 //
 //   - EntityNotFoundException
-//     A specified entity does not exist
+//     A specified entity does not exist.
 //
 //   - InvalidInputException
 //     The input provided was not valid.
@@ -6303,6 +6489,9 @@ type DataCellsFilter struct {
 	//
 	// TableName is a required field
 	TableName *string `min:"1" type:"string" required:"true"`
+
+	// The ID of the data cells filter version.
+	VersionId *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -6350,6 +6539,9 @@ func (s *DataCellsFilter) Validate() error {
 	if s.TableName != nil && len(*s.TableName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
 	}
+	if s.VersionId != nil && len(*s.VersionId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("VersionId", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -6396,6 +6588,12 @@ func (s *DataCellsFilter) SetTableCatalogId(v string) *DataCellsFilter {
 // SetTableName sets the TableName field's value.
 func (s *DataCellsFilter) SetTableName(v string) *DataCellsFilter {
 	s.TableName = &v
+	return s
+}
+
+// SetVersionId sets the VersionId field's value.
+func (s *DataCellsFilter) SetVersionId(v string) *DataCellsFilter {
+	s.VersionId = &v
 	return s
 }
 
@@ -6551,8 +6749,7 @@ type DataLakeSettings struct {
 	AuthorizedSessionTagValueList []*string `type:"list"`
 
 	// Specifies whether access control on newly created database is managed by
-	// Lake Formation permissions or exclusively by IAM permissions. You can override
-	// this default setting when you create a database.
+	// Lake Formation permissions or exclusively by IAM permissions.
 	//
 	// A null value indicates access control by Lake Formation permissions. A value
 	// that assigns ALL to IAM_ALLOWED_PRINCIPALS indicates access control by IAM
@@ -6590,6 +6787,11 @@ type DataLakeSettings struct {
 	// A list of the account IDs of Amazon Web Services accounts with Amazon EMR
 	// clusters that are to perform data filtering.>
 	ExternalDataFilteringAllowList []*DataLakePrincipal `type:"list"`
+
+	// A key-value map that provides an additional configuration on your data lake.
+	// CrossAccountVersion is the key you can configure in the Parameters field.
+	// Accepted values for the CrossAccountVersion key are 1, 2, and 3.
+	Parameters map[string]*string `type:"map"`
 
 	// A list of the resource-owning account IDs that the caller's account can use
 	// to share their user access details (user ARNs). The user ARNs can be logged
@@ -6701,6 +6903,12 @@ func (s *DataLakeSettings) SetDataLakeAdmins(v []*DataLakePrincipal) *DataLakeSe
 // SetExternalDataFilteringAllowList sets the ExternalDataFilteringAllowList field's value.
 func (s *DataLakeSettings) SetExternalDataFilteringAllowList(v []*DataLakePrincipal) *DataLakeSettings {
 	s.ExternalDataFilteringAllowList = v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *DataLakeSettings) SetParameters(v map[string]*string) *DataLakeSettings {
+	s.Parameters = v
 	return s
 }
 
@@ -7506,7 +7714,7 @@ func (s *DetailsMap) SetResourceShare(v []*string) *DetailsMap {
 	return s
 }
 
-// A specified entity does not exist
+// A specified entity does not exist.
 type EntityNotFoundException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -7841,6 +8049,137 @@ func (s *FilterCondition) SetField(v string) *FilterCondition {
 // SetStringValueList sets the StringValueList field's value.
 func (s *FilterCondition) SetStringValueList(v []*string) *FilterCondition {
 	s.StringValueList = v
+	return s
+}
+
+type GetDataCellsFilterInput struct {
+	_ struct{} `type:"structure"`
+
+	// A database in the Glue Data Catalog.
+	//
+	// DatabaseName is a required field
+	DatabaseName *string `min:"1" type:"string" required:"true"`
+
+	// The name given by the user to the data filter cell.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// The ID of the catalog to which the table belongs.
+	//
+	// TableCatalogId is a required field
+	TableCatalogId *string `min:"1" type:"string" required:"true"`
+
+	// A table in the database.
+	//
+	// TableName is a required field
+	TableName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataCellsFilterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataCellsFilterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDataCellsFilterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDataCellsFilterInput"}
+	if s.DatabaseName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
+	}
+	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.TableCatalogId == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableCatalogId"))
+	}
+	if s.TableCatalogId != nil && len(*s.TableCatalogId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableCatalogId", 1))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *GetDataCellsFilterInput) SetDatabaseName(v string) *GetDataCellsFilterInput {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *GetDataCellsFilterInput) SetName(v string) *GetDataCellsFilterInput {
+	s.Name = &v
+	return s
+}
+
+// SetTableCatalogId sets the TableCatalogId field's value.
+func (s *GetDataCellsFilterInput) SetTableCatalogId(v string) *GetDataCellsFilterInput {
+	s.TableCatalogId = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *GetDataCellsFilterInput) SetTableName(v string) *GetDataCellsFilterInput {
+	s.TableName = &v
+	return s
+}
+
+type GetDataCellsFilterOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A structure that describes certain columns on certain rows.
+	DataCellsFilter *DataCellsFilter `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataCellsFilterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataCellsFilterOutput) GoString() string {
+	return s.String()
+}
+
+// SetDataCellsFilter sets the DataCellsFilter field's value.
+func (s *GetDataCellsFilterOutput) SetDataCellsFilter(v *DataCellsFilter) *GetDataCellsFilterOutput {
+	s.DataCellsFilter = v
 	return s
 }
 
@@ -9871,7 +10210,7 @@ type LFTagPolicyResource struct {
 	// A list of LF-tag conditions that apply to the resource's LF-tag policy.
 	//
 	// Expression is a required field
-	Expression []*LFTag `min:"1" type:"list" required:"true"`
+	Expression []*LFTag `type:"list" required:"true"`
 
 	// The resource type for which the LF-tag policy applies.
 	//
@@ -9905,9 +10244,6 @@ func (s *LFTagPolicyResource) Validate() error {
 	}
 	if s.Expression == nil {
 		invalidParams.Add(request.NewErrParamRequired("Expression"))
-	}
-	if s.Expression != nil && len(s.Expression) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Expression", 1))
 	}
 	if s.ResourceType == nil {
 		invalidParams.Add(request.NewErrParamRequired("ResourceType"))
@@ -11320,8 +11656,11 @@ type RegisterResourceInput struct {
 	// registering this role with the Data Catalog. A service-linked role is a unique
 	// type of IAM role that is linked directly to Lake Formation.
 	//
-	// For more information, see Using Service-Linked Roles for Lake Formation (https://docs-aws.amazon.com/lake-formation/latest/dg/service-linked-roles.html).
+	// For more information, see Using Service-Linked Roles for Lake Formation (https://docs.aws.amazon.com/lake-formation/latest/dg/service-linked-roles.html).
 	UseServiceLinkedRole *bool `type:"boolean"`
+
+	// Whether or not the resource is a federated resource.
+	WithFederation *bool `type:"boolean"`
 }
 
 // String returns the string representation.
@@ -11370,6 +11709,12 @@ func (s *RegisterResourceInput) SetRoleArn(v string) *RegisterResourceInput {
 // SetUseServiceLinkedRole sets the UseServiceLinkedRole field's value.
 func (s *RegisterResourceInput) SetUseServiceLinkedRole(v bool) *RegisterResourceInput {
 	s.UseServiceLinkedRole = &v
+	return s
+}
+
+// SetWithFederation sets the WithFederation field's value.
+func (s *RegisterResourceInput) SetWithFederation(v bool) *RegisterResourceInput {
+	s.WithFederation = &v
 	return s
 }
 
@@ -11679,6 +12024,9 @@ type ResourceInfo struct {
 
 	// The IAM role that registered a resource.
 	RoleArn *string `type:"string"`
+
+	// Whether or not the resource is a federated resource.
+	WithFederation *bool `type:"boolean"`
 }
 
 // String returns the string representation.
@@ -11714,6 +12062,12 @@ func (s *ResourceInfo) SetResourceArn(v string) *ResourceInfo {
 // SetRoleArn sets the RoleArn field's value.
 func (s *ResourceInfo) SetRoleArn(v string) *ResourceInfo {
 	s.RoleArn = &v
+	return s
+}
+
+// SetWithFederation sets the WithFederation field's value.
+func (s *ResourceInfo) SetWithFederation(v bool) *ResourceInfo {
+	s.WithFederation = &v
 	return s
 }
 
@@ -11858,7 +12212,7 @@ type RevokePermissionsInput struct {
 	CatalogId *string `min:"1" type:"string"`
 
 	// The permissions revoked to the principal on the resource. For information
-	// about permissions, see Security and Access Control to Metadata and Data (https://docs-aws.amazon.com/lake-formation/latest/dg/security-data-access.html).
+	// about permissions, see Security and Access Control to Metadata and Data (https://docs.aws.amazon.com/lake-formation/latest/dg/security-data-access.html).
 	//
 	// Permissions is a required field
 	Permissions []*string `type:"list" required:"true" enum:"Permission"`
@@ -12033,7 +12387,7 @@ type SearchDatabasesByLFTagsInput struct {
 	// A list of conditions (LFTag structures) to search for in database resources.
 	//
 	// Expression is a required field
-	Expression []*LFTag `min:"1" type:"list" required:"true"`
+	Expression []*LFTag `type:"list" required:"true"`
 
 	// The maximum number of results to return.
 	MaxResults *int64 `min:"1" type:"integer"`
@@ -12068,9 +12422,6 @@ func (s *SearchDatabasesByLFTagsInput) Validate() error {
 	}
 	if s.Expression == nil {
 		invalidParams.Add(request.NewErrParamRequired("Expression"))
-	}
-	if s.Expression != nil && len(s.Expression) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Expression", 1))
 	}
 	if s.MaxResults != nil && *s.MaxResults < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
@@ -12168,7 +12519,7 @@ type SearchTablesByLFTagsInput struct {
 	// A list of conditions (LFTag structures) to search for in table resources.
 	//
 	// Expression is a required field
-	Expression []*LFTag `min:"1" type:"list" required:"true"`
+	Expression []*LFTag `type:"list" required:"true"`
 
 	// The maximum number of results to return.
 	MaxResults *int64 `min:"1" type:"integer"`
@@ -12203,9 +12554,6 @@ func (s *SearchTablesByLFTagsInput) Validate() error {
 	}
 	if s.Expression == nil {
 		invalidParams.Add(request.NewErrParamRequired("Expression"))
-	}
-	if s.Expression != nil && len(s.Expression) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("Expression", 1))
 	}
 	if s.MaxResults != nil && *s.MaxResults < 1 {
 		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
@@ -13295,6 +13643,79 @@ func (s *TransactionDescription) SetTransactionStatus(v string) *TransactionDesc
 	return s
 }
 
+type UpdateDataCellsFilterInput struct {
+	_ struct{} `type:"structure"`
+
+	// A DataCellsFilter structure containing information about the data cells filter.
+	//
+	// TableData is a required field
+	TableData *DataCellsFilter `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataCellsFilterInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataCellsFilterInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateDataCellsFilterInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateDataCellsFilterInput"}
+	if s.TableData == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableData"))
+	}
+	if s.TableData != nil {
+		if err := s.TableData.Validate(); err != nil {
+			invalidParams.AddNested("TableData", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetTableData sets the TableData field's value.
+func (s *UpdateDataCellsFilterInput) SetTableData(v *DataCellsFilter) *UpdateDataCellsFilterInput {
+	s.TableData = v
+	return s
+}
+
+type UpdateDataCellsFilterOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataCellsFilterOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataCellsFilterOutput) GoString() string {
+	return s.String()
+}
+
 type UpdateLFTagInput struct {
 	_ struct{} `type:"structure"`
 
@@ -13417,6 +13838,9 @@ type UpdateResourceInput struct {
 	//
 	// RoleArn is a required field
 	RoleArn *string `type:"string" required:"true"`
+
+	// Whether or not the resource is a federated resource.
+	WithFederation *bool `type:"boolean"`
 }
 
 // String returns the string representation.
@@ -13462,6 +13886,12 @@ func (s *UpdateResourceInput) SetResourceArn(v string) *UpdateResourceInput {
 // SetRoleArn sets the RoleArn field's value.
 func (s *UpdateResourceInput) SetRoleArn(v string) *UpdateResourceInput {
 	s.RoleArn = &v
+	return s
+}
+
+// SetWithFederation sets the WithFederation field's value.
+func (s *UpdateResourceInput) SetWithFederation(v bool) *UpdateResourceInput {
+	s.WithFederation = &v
 	return s
 }
 

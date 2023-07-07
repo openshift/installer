@@ -13,10 +13,10 @@ import (
 
 // Provides information about the specified medical transcription job. To view the
 // status of the specified medical transcription job, check the
-// TranscriptionJobStatus field. If the status is COMPLETED, the job is finished
-// and you can find the results at the location specified in TranscriptFileUri. If
-// the status is FAILED, FailureReason provides details on why your transcription
-// job failed. To get a list of your medical transcription jobs, use the operation.
+// TranscriptionJobStatus field. If the status is COMPLETED , the job is finished.
+// You can find the results at the location specified in TranscriptFileUri . If the
+// status is FAILED , FailureReason provides details on why your transcription job
+// failed. To get a list of your medical transcription jobs, use the operation.
 func (c *Client) GetMedicalTranscriptionJob(ctx context.Context, params *GetMedicalTranscriptionJobInput, optFns ...func(*Options)) (*GetMedicalTranscriptionJobOutput, error) {
 	if params == nil {
 		params = &GetMedicalTranscriptionJobInput{}
@@ -104,6 +104,9 @@ func (c *Client) addOperationGetMedicalTranscriptionJobMiddlewares(stack *middle
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetMedicalTranscriptionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

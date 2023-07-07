@@ -40,8 +40,8 @@ type ListThesauriInput struct {
 
 	// If the previous response was incomplete (because there is more data to
 	// retrieve), Amazon Kendra returns a pagination token in the response. You can use
-	// this pagination token to retrieve the next set of thesauri
-	// (ThesaurusSummaryItems).
+	// this pagination token to retrieve the next set of thesauri (
+	// ThesaurusSummaryItems ).
 	NextToken *string
 
 	noSmithyDocumentSerde
@@ -111,6 +111,9 @@ func (c *Client) addOperationListThesauriMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListThesauri(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

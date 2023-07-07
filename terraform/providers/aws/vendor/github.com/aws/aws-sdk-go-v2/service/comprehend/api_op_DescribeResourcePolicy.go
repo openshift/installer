@@ -30,7 +30,8 @@ func (c *Client) DescribeResourcePolicy(ctx context.Context, params *DescribeRes
 
 type DescribeResourcePolicyInput struct {
 
-	// The Amazon Resource Name (ARN) of the policy to describe.
+	// The Amazon Resource Name (ARN) of the custom model version that has the
+	// resource policy.
 	//
 	// This member is required.
 	ResourceArn *string
@@ -108,6 +109,9 @@ func (c *Client) addOperationDescribeResourcePolicyMiddlewares(stack *middleware
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeResourcePolicy(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

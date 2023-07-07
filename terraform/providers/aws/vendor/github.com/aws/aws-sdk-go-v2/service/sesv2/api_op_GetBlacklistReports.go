@@ -44,8 +44,8 @@ type GetBlacklistReportsInput struct {
 // An object that contains information about blacklist events.
 type GetBlacklistReportsOutput struct {
 
-	// An object that contains information about a blacklist that one of your dedicated
-	// IP addresses appears on.
+	// An object that contains information about a blacklist that one of your
+	// dedicated IP addresses appears on.
 	//
 	// This member is required.
 	BlacklistReport map[string][]types.BlacklistEntry
@@ -105,6 +105,9 @@ func (c *Client) addOperationGetBlacklistReportsMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetBlacklistReports(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

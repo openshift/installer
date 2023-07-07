@@ -10,6 +10,26 @@ import (
 	"github.com/aws/smithy-go/middleware"
 )
 
+type validateOpBatchGetMetricData struct {
+}
+
+func (*validateOpBatchGetMetricData) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpBatchGetMetricData) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*BatchGetMetricDataInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpBatchGetMetricDataInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpCreateConfigurationSetEventDestination struct {
 }
 
@@ -570,6 +590,26 @@ func (m *validateOpGetDedicatedIp) HandleInitialize(ctx context.Context, in midd
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpGetDedicatedIpPool struct {
+}
+
+func (*validateOpGetDedicatedIpPool) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpGetDedicatedIpPool) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*GetDedicatedIpPoolInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpGetDedicatedIpPoolInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpGetDeliverabilityTestReport struct {
 }
 
@@ -810,6 +850,26 @@ func (m *validateOpPutAccountDetails) HandleInitialize(ctx context.Context, in m
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpPutAccountVdmAttributes struct {
+}
+
+func (*validateOpPutAccountVdmAttributes) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpPutAccountVdmAttributes) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*PutAccountVdmAttributesInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpPutAccountVdmAttributesInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpPutConfigurationSetDeliveryOptions struct {
 }
 
@@ -910,6 +970,26 @@ func (m *validateOpPutConfigurationSetTrackingOptions) HandleInitialize(ctx cont
 	return next.HandleInitialize(ctx, in)
 }
 
+type validateOpPutConfigurationSetVdmOptions struct {
+}
+
+func (*validateOpPutConfigurationSetVdmOptions) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpPutConfigurationSetVdmOptions) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*PutConfigurationSetVdmOptionsInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpPutConfigurationSetVdmOptionsInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
 type validateOpPutDedicatedIpInPool struct {
 }
 
@@ -925,6 +1005,26 @@ func (m *validateOpPutDedicatedIpInPool) HandleInitialize(ctx context.Context, i
 		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
 	}
 	if err := validateOpPutDedicatedIpInPoolInput(input); err != nil {
+		return out, metadata, err
+	}
+	return next.HandleInitialize(ctx, in)
+}
+
+type validateOpPutDedicatedIpPoolScalingAttributes struct {
+}
+
+func (*validateOpPutDedicatedIpPoolScalingAttributes) ID() string {
+	return "OperationInputValidation"
+}
+
+func (m *validateOpPutDedicatedIpPoolScalingAttributes) HandleInitialize(ctx context.Context, in middleware.InitializeInput, next middleware.InitializeHandler) (
+	out middleware.InitializeOutput, metadata middleware.Metadata, err error,
+) {
+	input, ok := in.Parameters.(*PutDedicatedIpPoolScalingAttributesInput)
+	if !ok {
+		return out, metadata, fmt.Errorf("unknown input parameters type %T", in.Parameters)
+	}
+	if err := validateOpPutDedicatedIpPoolScalingAttributesInput(input); err != nil {
 		return out, metadata, err
 	}
 	return next.HandleInitialize(ctx, in)
@@ -1330,6 +1430,10 @@ func (m *validateOpUpdateEmailTemplate) HandleInitialize(ctx context.Context, in
 	return next.HandleInitialize(ctx, in)
 }
 
+func addOpBatchGetMetricDataValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpBatchGetMetricData{}, middleware.After)
+}
+
 func addOpCreateConfigurationSetEventDestinationValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpCreateConfigurationSetEventDestination{}, middleware.After)
 }
@@ -1442,6 +1546,10 @@ func addOpGetDedicatedIpValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetDedicatedIp{}, middleware.After)
 }
 
+func addOpGetDedicatedIpPoolValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpGetDedicatedIpPool{}, middleware.After)
+}
+
 func addOpGetDeliverabilityTestReportValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpGetDeliverabilityTestReport{}, middleware.After)
 }
@@ -1490,6 +1598,10 @@ func addOpPutAccountDetailsValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutAccountDetails{}, middleware.After)
 }
 
+func addOpPutAccountVdmAttributesValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpPutAccountVdmAttributes{}, middleware.After)
+}
+
 func addOpPutConfigurationSetDeliveryOptionsValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutConfigurationSetDeliveryOptions{}, middleware.After)
 }
@@ -1510,8 +1622,16 @@ func addOpPutConfigurationSetTrackingOptionsValidationMiddleware(stack *middlewa
 	return stack.Initialize.Add(&validateOpPutConfigurationSetTrackingOptions{}, middleware.After)
 }
 
+func addOpPutConfigurationSetVdmOptionsValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpPutConfigurationSetVdmOptions{}, middleware.After)
+}
+
 func addOpPutDedicatedIpInPoolValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpPutDedicatedIpInPool{}, middleware.After)
+}
+
+func addOpPutDedicatedIpPoolScalingAttributesValidationMiddleware(stack *middleware.Stack) error {
+	return stack.Initialize.Add(&validateOpPutDedicatedIpPoolScalingAttributes{}, middleware.After)
 }
 
 func addOpPutDedicatedIpWarmupAttributesValidationMiddleware(stack *middleware.Stack) error {
@@ -1592,6 +1712,50 @@ func addOpUpdateEmailIdentityPolicyValidationMiddleware(stack *middleware.Stack)
 
 func addOpUpdateEmailTemplateValidationMiddleware(stack *middleware.Stack) error {
 	return stack.Initialize.Add(&validateOpUpdateEmailTemplate{}, middleware.After)
+}
+
+func validateBatchGetMetricDataQueries(v []types.BatchGetMetricDataQuery) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "BatchGetMetricDataQueries"}
+	for i := range v {
+		if err := validateBatchGetMetricDataQuery(&v[i]); err != nil {
+			invalidParams.AddNested(fmt.Sprintf("[%d]", i), err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateBatchGetMetricDataQuery(v *types.BatchGetMetricDataQuery) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "BatchGetMetricDataQuery"}
+	if v.Id == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Id"))
+	}
+	if len(v.Namespace) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("Namespace"))
+	}
+	if len(v.Metric) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("Metric"))
+	}
+	if v.StartDate == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("StartDate"))
+	}
+	if v.EndDate == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("EndDate"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
 }
 
 func validateBody(v *types.Body) error {
@@ -2086,6 +2250,40 @@ func validateTrackingOptions(v *types.TrackingOptions) error {
 	invalidParams := smithy.InvalidParamsError{Context: "TrackingOptions"}
 	if v.CustomRedirectDomain == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("CustomRedirectDomain"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateVdmAttributes(v *types.VdmAttributes) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "VdmAttributes"}
+	if len(v.VdmEnabled) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("VdmEnabled"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpBatchGetMetricDataInput(v *BatchGetMetricDataInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "BatchGetMetricDataInput"}
+	if v.Queries == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("Queries"))
+	} else if v.Queries != nil {
+		if err := validateBatchGetMetricDataQueries(v.Queries); err != nil {
+			invalidParams.AddNested("Queries", err.(smithy.InvalidParamsError))
+		}
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -2621,6 +2819,21 @@ func validateOpGetDedicatedIpInput(v *GetDedicatedIpInput) error {
 	}
 }
 
+func validateOpGetDedicatedIpPoolInput(v *GetDedicatedIpPoolInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "GetDedicatedIpPoolInput"}
+	if v.PoolName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PoolName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpGetDeliverabilityTestReportInput(v *GetDeliverabilityTestReportInput) error {
 	if v == nil {
 		return nil
@@ -2819,6 +3032,25 @@ func validateOpPutAccountDetailsInput(v *PutAccountDetailsInput) error {
 	}
 }
 
+func validateOpPutAccountVdmAttributesInput(v *PutAccountVdmAttributesInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PutAccountVdmAttributesInput"}
+	if v.VdmAttributes == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("VdmAttributes"))
+	} else if v.VdmAttributes != nil {
+		if err := validateVdmAttributes(v.VdmAttributes); err != nil {
+			invalidParams.AddNested("VdmAttributes", err.(smithy.InvalidParamsError))
+		}
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpPutConfigurationSetDeliveryOptionsInput(v *PutConfigurationSetDeliveryOptionsInput) error {
 	if v == nil {
 		return nil
@@ -2894,6 +3126,21 @@ func validateOpPutConfigurationSetTrackingOptionsInput(v *PutConfigurationSetTra
 	}
 }
 
+func validateOpPutConfigurationSetVdmOptionsInput(v *PutConfigurationSetVdmOptionsInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PutConfigurationSetVdmOptionsInput"}
+	if v.ConfigurationSetName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("ConfigurationSetName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
 func validateOpPutDedicatedIpInPoolInput(v *PutDedicatedIpInPoolInput) error {
 	if v == nil {
 		return nil
@@ -2904,6 +3151,24 @@ func validateOpPutDedicatedIpInPoolInput(v *PutDedicatedIpInPoolInput) error {
 	}
 	if v.DestinationPoolName == nil {
 		invalidParams.Add(smithy.NewErrParamRequired("DestinationPoolName"))
+	}
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	} else {
+		return nil
+	}
+}
+
+func validateOpPutDedicatedIpPoolScalingAttributesInput(v *PutDedicatedIpPoolScalingAttributesInput) error {
+	if v == nil {
+		return nil
+	}
+	invalidParams := smithy.InvalidParamsError{Context: "PutDedicatedIpPoolScalingAttributesInput"}
+	if v.PoolName == nil {
+		invalidParams.Add(smithy.NewErrParamRequired("PoolName"))
+	}
+	if len(v.ScalingMode) == 0 {
+		invalidParams.Add(smithy.NewErrParamRequired("ScalingMode"))
 	}
 	if invalidParams.Len() > 0 {
 		return invalidParams

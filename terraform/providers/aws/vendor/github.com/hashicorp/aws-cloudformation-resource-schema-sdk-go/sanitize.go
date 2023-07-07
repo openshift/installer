@@ -2,6 +2,7 @@ package cfschema
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"regexp"
 	"strings"
@@ -14,9 +15,14 @@ var (
 
 // Sanitize returns a sanitized copy of the specified JSON Schema document.
 // The sanitized copy works around any problems with JSON Schema regex validation by
-//  - Rewriting all patternProperty regexes to the empty string (the regex is never used anyway)
-//  - Rewriting all unsupported (valid for ECMA-262 but not for Go) pattern regexes to the empty string
+//   - Rewriting all patternProperty regexes to the empty string (the regex is never used anyway)
+//   - Rewriting all unsupported (valid for ECMA-262 but not for Go) pattern regexes to the empty string
 func Sanitize(document string) (string, error) {
+	var formattedJSON bytes.Buffer
+	if err := json.Indent(&formattedJSON, []byte(document), "", "  "); err != nil {
+		return "", err
+	}
+	document = string(formattedJSON.Bytes())
 	document = sanitizePatternProperties.ReplaceAllString(document, `$1""`)
 
 	var sb strings.Builder

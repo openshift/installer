@@ -11,8 +11,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Inspects text and returns an inference of the prevailing sentiment (POSITIVE,
-// NEUTRAL, MIXED, or NEGATIVE).
+// Inspects text and returns an inference of the prevailing sentiment ( POSITIVE ,
+// NEUTRAL , MIXED , or NEGATIVE ).
 func (c *Client) DetectSentiment(ctx context.Context, params *DetectSentimentInput, optFns ...func(*Options)) (*DetectSentimentOutput, error) {
 	if params == nil {
 		params = &DetectSentimentInput{}
@@ -37,9 +37,7 @@ type DetectSentimentInput struct {
 	// This member is required.
 	LanguageCode types.LanguageCode
 
-	// A UTF-8 text string. The maximum string size is 5 KB. Amazon Comprehend performs
-	// real-time sentiment analysis on the first 500 characters of the input text and
-	// ignores any additional text in the input.
+	// A UTF-8 text string. The maximum string size is 5 KB.
 	//
 	// This member is required.
 	Text *string
@@ -111,6 +109,9 @@ func (c *Client) addOperationDetectSentimentMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDetectSentiment(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

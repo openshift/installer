@@ -30,7 +30,7 @@ func (c *Client) DeleteGroup(ctx context.Context, params *DeleteGroupInput, optF
 type DeleteGroupInput struct {
 
 	// The name of the IAM group to delete. This parameter allows (through its regex
-	// pattern (http://wikipedia.org/wiki/regex)) a string of characters consisting of
+	// pattern (http://wikipedia.org/wiki/regex) ) a string of characters consisting of
 	// upper and lowercase alphanumeric characters with no spaces. You can also include
 	// any of the following characters: _+=,.@-
 	//
@@ -96,6 +96,9 @@ func (c *Client) addOperationDeleteGroupMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteGroup(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package toproto6
 
 import (
@@ -13,14 +16,6 @@ import (
 // Attribute. Errors will be tftypes.AttributePathErrors based on `path`.
 // `name` is the name of the attribute.
 func SchemaAttribute(ctx context.Context, name string, path *tftypes.AttributePath, a fwschema.Attribute) (*tfprotov6.SchemaAttribute, error) {
-	if a.GetAttributes() != nil && len(a.GetAttributes().GetAttributes()) > 0 && a.GetType() != nil {
-		return nil, path.NewErrorf("cannot have both Attributes and Type set")
-	}
-
-	if (a.GetAttributes() == nil || len(a.GetAttributes().GetAttributes()) == 0) && a.GetType() == nil {
-		return nil, path.NewErrorf("must have Attributes or Type set")
-	}
-
 	if !a.IsRequired() && !a.IsOptional() && !a.IsComputed() {
 		return nil, path.NewErrorf("must have Required, Optional, or Computed set")
 	}
@@ -31,6 +26,7 @@ func SchemaAttribute(ctx context.Context, name string, path *tftypes.AttributePa
 		Optional:  a.IsOptional(),
 		Computed:  a.IsComputed(),
 		Sensitive: a.IsSensitive(),
+		Type:      a.GetType().TerraformType(ctx),
 	}
 
 	if a.GetDeprecationMessage() != "" {
@@ -47,14 +43,14 @@ func SchemaAttribute(ctx context.Context, name string, path *tftypes.AttributePa
 		schemaAttribute.DescriptionKind = tfprotov6.StringKindMarkdown
 	}
 
-	if a.GetType() != nil {
-		schemaAttribute.Type = a.GetType().TerraformType(ctx)
+	nestedAttribute, ok := a.(fwschema.NestedAttribute)
 
+	if !ok {
 		return schemaAttribute, nil
 	}
 
 	object := &tfprotov6.SchemaObject{}
-	nm := a.GetAttributes().GetNestingMode()
+	nm := nestedAttribute.GetNestingMode()
 	switch nm {
 	case fwschema.NestingModeSingle:
 		object.Nesting = tfprotov6.SchemaObjectNestingModeSingle
@@ -68,7 +64,7 @@ func SchemaAttribute(ctx context.Context, name string, path *tftypes.AttributePa
 		return nil, path.NewErrorf("unrecognized nesting mode %v", nm)
 	}
 
-	for nestedName, nestedA := range a.GetAttributes().GetAttributes() {
+	for nestedName, nestedA := range nestedAttribute.GetNestedObject().GetAttributes() {
 		nestedSchemaAttribute, err := SchemaAttribute(ctx, nestedName, path.WithAttributeName(nestedName), nestedA)
 
 		if err != nil {
@@ -91,6 +87,7 @@ func SchemaAttribute(ctx context.Context, name string, path *tftypes.AttributePa
 	})
 
 	schemaAttribute.NestedType = object
+	schemaAttribute.Type = nil
 
 	return schemaAttribute, nil
 }

@@ -351,13 +351,18 @@ func (c *ConnectWisdomService) CreateKnowledgeBaseRequest(input *CreateKnowledge
 // DataIntegrations with external knowledge bases such as Salesforce and ServiceNow.
 // If you do, you'll get an InvalidRequestException error.
 //
-//	<p>For example, you're programmatically managing your external knowledge
-//	base, and you want to add or remove one of the fields that is being ingested
-//	from Salesforce. Do the following:</p> <ol> <li> <p>Call <a href="https://docs.aws.amazon.com/wisdom/latest/APIReference/API_DeleteKnowledgeBase.html">DeleteKnowledgeBase</a>.</p>
-//	</li> <li> <p>Call <a href="https://docs.aws.amazon.com/appintegrations/latest/APIReference/API_DeleteDataIntegration.html">DeleteDataIntegration</a>.</p>
-//	</li> <li> <p>Call <a href="https://docs.aws.amazon.com/appintegrations/latest/APIReference/API_CreateDataIntegration.html">CreateDataIntegration</a>
-//	to recreate the DataIntegration or a create different one.</p> </li> <li>
-//	<p>Call CreateKnowledgeBase.</p> </li> </ol> </note>
+// For example, you're programmatically managing your external knowledge base,
+// and you want to add or remove one of the fields that is being ingested from
+// Salesforce. Do the following:
+//
+// Call DeleteKnowledgeBase (https://docs.aws.amazon.com/wisdom/latest/APIReference/API_DeleteKnowledgeBase.html).
+//
+// Call DeleteDataIntegration (https://docs.aws.amazon.com/appintegrations/latest/APIReference/API_DeleteDataIntegration.html).
+//
+// Call CreateDataIntegration (https://docs.aws.amazon.com/appintegrations/latest/APIReference/API_CreateDataIntegration.html)
+// to recreate the DataIntegration or a create different one.
+//
+// Call CreateKnowledgeBase.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2185,94 +2190,6 @@ func (c *ConnectWisdomService) NotifyRecommendationsReceivedWithContext(ctx aws.
 	return out, req.Send()
 }
 
-const opPutFeedback = "PutFeedback"
-
-// PutFeedbackRequest generates a "aws/request.Request" representing the
-// client's request for the PutFeedback operation. The "output" return
-// value will be populated with the request's response once the request completes
-// successfully.
-//
-// Use "Send" method on the returned Request to send the API call to the service.
-// the "output" return value is not valid until after Send returns without error.
-//
-// See PutFeedback for more information on using the PutFeedback
-// API call, and error handling.
-//
-// This method is useful when you want to inject custom logic or configuration
-// into the SDK's request lifecycle. Such as custom headers, or retry logic.
-//
-//	// Example sending a request using the PutFeedbackRequest method.
-//	req, resp := client.PutFeedbackRequest(params)
-//
-//	err := req.Send()
-//	if err == nil { // resp is now filled
-//	    fmt.Println(resp)
-//	}
-//
-// See also, https://docs.aws.amazon.com/goto/WebAPI/wisdom-2020-10-19/PutFeedback
-func (c *ConnectWisdomService) PutFeedbackRequest(input *PutFeedbackInput) (req *request.Request, output *PutFeedbackOutput) {
-	op := &request.Operation{
-		Name:       opPutFeedback,
-		HTTPMethod: "PUT",
-		HTTPPath:   "/assistants/{assistantId}/feedback",
-	}
-
-	if input == nil {
-		input = &PutFeedbackInput{}
-	}
-
-	output = &PutFeedbackOutput{}
-	req = c.newRequest(op, input, output)
-	return
-}
-
-// PutFeedback API operation for Amazon Connect Wisdom Service.
-//
-// Submits feedback to Wisdom. The feedback is used to improve future recommendations
-// from GetRecommendations (https://docs.aws.amazon.com/wisdom/latest/APIReference/API_GetRecommendations.html)
-// or results from QueryAssistant (https://docs.aws.amazon.com/wisdom/latest/APIReference/API_QueryAssistant.html).
-// Feedback can be resubmitted up to 6 hours after submission.
-//
-// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
-// with awserr.Error's Code and Message methods to get detailed information about
-// the error.
-//
-// See the AWS API reference guide for Amazon Connect Wisdom Service's
-// API operation PutFeedback for usage and error information.
-//
-// Returned Error Types:
-//
-//   - ValidationException
-//     The input fails to satisfy the constraints specified by a service.
-//
-//   - AccessDeniedException
-//     You do not have sufficient access to perform this action.
-//
-//   - ResourceNotFoundException
-//     The specified resource does not exist.
-//
-// See also, https://docs.aws.amazon.com/goto/WebAPI/wisdom-2020-10-19/PutFeedback
-func (c *ConnectWisdomService) PutFeedback(input *PutFeedbackInput) (*PutFeedbackOutput, error) {
-	req, out := c.PutFeedbackRequest(input)
-	return out, req.Send()
-}
-
-// PutFeedbackWithContext is the same as PutFeedback with the addition of
-// the ability to pass a context and additional request options.
-//
-// See PutFeedback for details on how to use this API operation.
-//
-// The context must be non-nil and will be used for request cancellation. If
-// the context is nil a panic will occur. In the future the SDK may create
-// sub-contexts for http.Requests. See https://golang.org/pkg/context/
-// for more information on using Contexts.
-func (c *ConnectWisdomService) PutFeedbackWithContext(ctx aws.Context, input *PutFeedbackInput, opts ...request.Option) (*PutFeedbackOutput, error) {
-	req, out := c.PutFeedbackRequest(input)
-	req.SetContext(ctx)
-	req.ApplyOptions(opts...)
-	return out, req.Send()
-}
-
 const opQueryAssistant = "QueryAssistant"
 
 // QueryAssistantRequest generates a "aws/request.Request" representing the
@@ -3290,10 +3207,30 @@ type AppIntegrationsConfiguration struct {
 	// The Amazon Resource Name (ARN) of the AppIntegrations DataIntegration to
 	// use for ingesting content.
 	//
+	//    * For Salesforce (https://developer.salesforce.com/docs/atlas.en-us.knowledge_dev.meta/knowledge_dev/sforce_api_objects_knowledge__kav.htm),
+	//    your AppIntegrations DataIntegration must have an ObjectConfiguration
+	//    if objectFields is not provided, including at least Id, ArticleNumber,
+	//    VersionNumber, Title, PublishStatus, and IsDeleted as source fields.
+	//
+	//    * For ServiceNow (https://developer.servicenow.com/dev.do#!/reference/api/rome/rest/knowledge-management-api),
+	//    your AppIntegrations DataIntegration must have an ObjectConfiguration
+	//    if objectFields is not provided, including at least number, short_description,
+	//    sys_mod_count, workflow_state, and active as source fields.
+	//
+	//    * For Zendesk (https://developer.zendesk.com/api-reference/help_center/help-center-api/articles/),
+	//    your AppIntegrations DataIntegration must have an ObjectConfiguration
+	//    if objectFields is not provided, including at least id, title, updated_at,
+	//    and draft as source fields.
+	//
+	//    * For SharePoint (https://learn.microsoft.com/en-us/sharepoint/dev/sp-add-ins/sharepoint-net-server-csom-jsom-and-rest-api-index),
+	//    your AppIntegrations DataIntegration must have a FileConfiguration, including
+	//    only file extensions that are among docx, pdf, html, htm, and txt.
+	//
 	// AppIntegrationArn is a required field
 	AppIntegrationArn *string `locationName:"appIntegrationArn" min:"1" type:"string" required:"true"`
 
 	// The fields from the source that are made available to your agents in Wisdom.
+	// Optional if ObjectConfiguration is included in the provided DataIntegration.
 	//
 	//    * For Salesforce (https://developer.salesforce.com/docs/atlas.en-us.knowledge_dev.meta/knowledge_dev/sforce_api_objects_knowledge__kav.htm),
 	//    you must include at least Id, ArticleNumber, VersionNumber, Title, PublishStatus,
@@ -3303,11 +3240,12 @@ type AppIntegrationsConfiguration struct {
 	//    you must include at least number, short_description, sys_mod_count, workflow_state,
 	//    and active.
 	//
+	//    * For Zendesk (https://developer.zendesk.com/api-reference/help_center/help-center-api/articles/),
+	//    you must include at least id, title, updated_at, and draft.
+	//
 	// Make sure to include additional fields. These fields are indexed and used
 	// to source recommendations.
-	//
-	// ObjectFields is a required field
-	ObjectFields []*string `locationName:"objectFields" min:"1" type:"list" required:"true"`
+	ObjectFields []*string `locationName:"objectFields" min:"1" type:"list"`
 }
 
 // String returns the string representation.
@@ -3336,9 +3274,6 @@ func (s *AppIntegrationsConfiguration) Validate() error {
 	}
 	if s.AppIntegrationArn != nil && len(*s.AppIntegrationArn) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AppIntegrationArn", 1))
-	}
-	if s.ObjectFields == nil {
-		invalidParams.Add(request.NewErrParamRequired("ObjectFields"))
 	}
 	if s.ObjectFields != nil && len(s.ObjectFields) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ObjectFields", 1))
@@ -4303,7 +4238,9 @@ type CreateAssistantAssociationInput struct {
 	AssociationType *string `locationName:"associationType" type:"string" required:"true" enum:"AssociationType"`
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request.
+	// of the request. If not provided, the Amazon Web Services SDK populates this
+	// field. For more information about idempotency, see Making retries safe with
+	// idempotent APIs (https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
 	// The tags used to organize, track, or control access for this resource.
@@ -4418,7 +4355,9 @@ type CreateAssistantInput struct {
 	_ struct{} `type:"structure"`
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request.
+	// of the request. If not provided, the Amazon Web Services SDK populates this
+	// field. For more information about idempotency, see Making retries safe with
+	// idempotent APIs (https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
 	// The description of the assistant.
@@ -4560,7 +4499,9 @@ type CreateContentInput struct {
 	_ struct{} `type:"structure"`
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request.
+	// of the request. If not provided, the Amazon Web Services SDK populates this
+	// field. For more information about idempotency, see Making retries safe with
+	// idempotent APIs (https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
 	// The identifier of the knowledge base. Can be either the ID or the ARN. URLs
@@ -4738,7 +4679,9 @@ type CreateKnowledgeBaseInput struct {
 	_ struct{} `type:"structure"`
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request.
+	// of the request. If not provided, the Amazon Web Services SDK populates this
+	// field. For more information about idempotency, see Making retries safe with
+	// idempotent APIs (https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
 	// The description.
@@ -4917,7 +4860,9 @@ type CreateSessionInput struct {
 	AssistantId *string `location:"uri" locationName:"assistantId" type:"string" required:"true"`
 
 	// A unique, case-sensitive identifier that you provide to ensure the idempotency
-	// of the request.
+	// of the request. If not provided, the Amazon Web Services SDK populates this
+	// field. For more information about idempotency, see Making retries safe with
+	// idempotent APIs (https://aws.amazon.com/builders-library/making-retries-safe-with-idempotent-APIs/).
 	ClientToken *string `locationName:"clientToken" min:"1" type:"string" idempotencyToken:"true"`
 
 	// The description.
@@ -5457,53 +5402,6 @@ func (s *DocumentText) SetHighlights(v []*Highlight) *DocumentText {
 // SetText sets the Text field's value.
 func (s *DocumentText) SetText(v string) *DocumentText {
 	s.Text = &v
-	return s
-}
-
-// The feedback to submit to Wisdom.
-type FeedbackData struct {
-	_ struct{} `type:"structure"`
-
-	// The relevance of the target this feedback is for.
-	//
-	// Relevance is a required field
-	Relevance *string `locationName:"relevance" type:"string" required:"true" enum:"Relevance"`
-}
-
-// String returns the string representation.
-//
-// API parameter values that are decorated as "sensitive" in the API will not
-// be included in the string output. The member name will be present, but the
-// value will be replaced with "sensitive".
-func (s FeedbackData) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation.
-//
-// API parameter values that are decorated as "sensitive" in the API will not
-// be included in the string output. The member name will be present, but the
-// value will be replaced with "sensitive".
-func (s FeedbackData) GoString() string {
-	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *FeedbackData) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "FeedbackData"}
-	if s.Relevance == nil {
-		invalidParams.Add(request.NewErrParamRequired("Relevance"))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
-// SetRelevance sets the Relevance field's value.
-func (s *FeedbackData) SetRelevance(v string) *FeedbackData {
-	s.Relevance = &v
 	return s
 }
 
@@ -7357,180 +7255,6 @@ func (s *PreconditionFailedException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
-type PutFeedbackInput struct {
-	_ struct{} `type:"structure"`
-
-	// The identifier of the Wisdom assistant. Can be either the ID or the ARN.
-	// URLs cannot contain the ARN.
-	//
-	// AssistantId is a required field
-	AssistantId *string `location:"uri" locationName:"assistantId" type:"string" required:"true"`
-
-	// The feedback.
-	//
-	// Feedback is a required field
-	Feedback *FeedbackData `locationName:"feedback" type:"structure" required:"true"`
-
-	// The identifier of a recommendation. or The identifier of the result data.
-	//
-	// TargetId is a required field
-	TargetId *string `locationName:"targetId" type:"string" required:"true"`
-
-	// The type of the targetId for which The feedback. is targeted.
-	//
-	// TargetType is a required field
-	TargetType *string `locationName:"targetType" type:"string" required:"true" enum:"TargetType"`
-}
-
-// String returns the string representation.
-//
-// API parameter values that are decorated as "sensitive" in the API will not
-// be included in the string output. The member name will be present, but the
-// value will be replaced with "sensitive".
-func (s PutFeedbackInput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation.
-//
-// API parameter values that are decorated as "sensitive" in the API will not
-// be included in the string output. The member name will be present, but the
-// value will be replaced with "sensitive".
-func (s PutFeedbackInput) GoString() string {
-	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *PutFeedbackInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "PutFeedbackInput"}
-	if s.AssistantId == nil {
-		invalidParams.Add(request.NewErrParamRequired("AssistantId"))
-	}
-	if s.AssistantId != nil && len(*s.AssistantId) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("AssistantId", 1))
-	}
-	if s.Feedback == nil {
-		invalidParams.Add(request.NewErrParamRequired("Feedback"))
-	}
-	if s.TargetId == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetId"))
-	}
-	if s.TargetType == nil {
-		invalidParams.Add(request.NewErrParamRequired("TargetType"))
-	}
-	if s.Feedback != nil {
-		if err := s.Feedback.Validate(); err != nil {
-			invalidParams.AddNested("Feedback", err.(request.ErrInvalidParams))
-		}
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
-// SetAssistantId sets the AssistantId field's value.
-func (s *PutFeedbackInput) SetAssistantId(v string) *PutFeedbackInput {
-	s.AssistantId = &v
-	return s
-}
-
-// SetFeedback sets the Feedback field's value.
-func (s *PutFeedbackInput) SetFeedback(v *FeedbackData) *PutFeedbackInput {
-	s.Feedback = v
-	return s
-}
-
-// SetTargetId sets the TargetId field's value.
-func (s *PutFeedbackInput) SetTargetId(v string) *PutFeedbackInput {
-	s.TargetId = &v
-	return s
-}
-
-// SetTargetType sets the TargetType field's value.
-func (s *PutFeedbackInput) SetTargetType(v string) *PutFeedbackInput {
-	s.TargetType = &v
-	return s
-}
-
-type PutFeedbackOutput struct {
-	_ struct{} `type:"structure"`
-
-	// The Amazon Resource Name (ARN) of the Wisdom assistant.
-	//
-	// AssistantArn is a required field
-	AssistantArn *string `locationName:"assistantArn" type:"string" required:"true"`
-
-	// The identifier of the Wisdom assistant.
-	//
-	// AssistantId is a required field
-	AssistantId *string `locationName:"assistantId" type:"string" required:"true"`
-
-	// The feedback.
-	//
-	// Feedback is a required field
-	Feedback *FeedbackData `locationName:"feedback" type:"structure" required:"true"`
-
-	// The identifier of a recommendation. or The identifier of the result data.
-	//
-	// TargetId is a required field
-	TargetId *string `locationName:"targetId" type:"string" required:"true"`
-
-	// The type of the targetId for which The feedback. is targeted.
-	//
-	// TargetType is a required field
-	TargetType *string `locationName:"targetType" type:"string" required:"true" enum:"TargetType"`
-}
-
-// String returns the string representation.
-//
-// API parameter values that are decorated as "sensitive" in the API will not
-// be included in the string output. The member name will be present, but the
-// value will be replaced with "sensitive".
-func (s PutFeedbackOutput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation.
-//
-// API parameter values that are decorated as "sensitive" in the API will not
-// be included in the string output. The member name will be present, but the
-// value will be replaced with "sensitive".
-func (s PutFeedbackOutput) GoString() string {
-	return s.String()
-}
-
-// SetAssistantArn sets the AssistantArn field's value.
-func (s *PutFeedbackOutput) SetAssistantArn(v string) *PutFeedbackOutput {
-	s.AssistantArn = &v
-	return s
-}
-
-// SetAssistantId sets the AssistantId field's value.
-func (s *PutFeedbackOutput) SetAssistantId(v string) *PutFeedbackOutput {
-	s.AssistantId = &v
-	return s
-}
-
-// SetFeedback sets the Feedback field's value.
-func (s *PutFeedbackOutput) SetFeedback(v *FeedbackData) *PutFeedbackOutput {
-	s.Feedback = v
-	return s
-}
-
-// SetTargetId sets the TargetId field's value.
-func (s *PutFeedbackOutput) SetTargetId(v string) *PutFeedbackOutput {
-	s.TargetId = &v
-	return s
-}
-
-// SetTargetType sets the TargetType field's value.
-func (s *PutFeedbackOutput) SetTargetType(v string) *PutFeedbackOutput {
-	s.TargetType = &v
-	return s
-}
-
 type QueryAssistantInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7969,8 +7693,8 @@ type RenderingConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// A URI template containing exactly one variable in ${variableName} format.
-	// This can only be set for EXTERNAL knowledge bases. For Salesforce and ServiceNow,
-	// the variable must be one of the following:
+	// This can only be set for EXTERNAL knowledge bases. For Salesforce, ServiceNow,
+	// and Zendesk, the variable must be one of the following:
 	//
 	//    * Salesforce: Id, ArticleNumber, VersionNumber, Title, PublishStatus,
 	//    or IsDeleted
@@ -7978,9 +7702,10 @@ type RenderingConfiguration struct {
 	//    * ServiceNow: number, short_description, sys_mod_count, workflow_state,
 	//    or active
 	//
-	//    <p>The variable is replaced with the actual value for a piece of content
-	//    when calling <a href="https://docs.aws.amazon.com/wisdom/latest/APIReference/API_GetContent.html">GetContent</a>.
-	//    </p>
+	//    * Zendesk: id, title, updated_at, or draft
+	//
+	// The variable is replaced with the actual value for a piece of content when
+	// calling GetContent (https://docs.aws.amazon.com/wisdom/latest/APIReference/API_GetContent.html).
 	TemplateUri *string `locationName:"templateUri" min:"1" type:"string"`
 }
 
@@ -9692,22 +9417,6 @@ func RecommendationType_Values() []string {
 }
 
 const (
-	// RelevanceHelpful is a Relevance enum value
-	RelevanceHelpful = "HELPFUL"
-
-	// RelevanceNotHelpful is a Relevance enum value
-	RelevanceNotHelpful = "NOT_HELPFUL"
-)
-
-// Relevance_Values returns all elements of the Relevance enum
-func Relevance_Values() []string {
-	return []string{
-		RelevanceHelpful,
-		RelevanceNotHelpful,
-	}
-}
-
-const (
 	// RelevanceLevelHigh is a RelevanceLevel enum value
 	RelevanceLevelHigh = "HIGH"
 
@@ -9724,21 +9433,5 @@ func RelevanceLevel_Values() []string {
 		RelevanceLevelHigh,
 		RelevanceLevelMedium,
 		RelevanceLevelLow,
-	}
-}
-
-const (
-	// TargetTypeRecommendation is a TargetType enum value
-	TargetTypeRecommendation = "RECOMMENDATION"
-
-	// TargetTypeResult is a TargetType enum value
-	TargetTypeResult = "RESULT"
-)
-
-// TargetType_Values returns all elements of the TargetType enum
-func TargetType_Values() []string {
-	return []string{
-		TargetTypeRecommendation,
-		TargetTypeResult,
 	}
 }

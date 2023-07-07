@@ -11,10 +11,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Disables a profile. When disabled, CreateSession
-// (https://docs.aws.amazon.com/rolesanywhere/latest/APIReference/API_CreateSession.html)
-// requests with this profile fail. Required permissions:
-// rolesanywhere:DisableProfile.
+// Disables a profile. When disabled, temporary credential requests with this
+// profile fail. Required permissions: rolesanywhere:DisableProfile .
 func (c *Client) DisableProfile(ctx context.Context, params *DisableProfileInput, optFns ...func(*Options)) (*DisableProfileOutput, error) {
 	if params == nil {
 		params = &DisableProfileInput{}
@@ -100,6 +98,9 @@ func (c *Client) addOperationDisableProfileMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDisableProfile(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

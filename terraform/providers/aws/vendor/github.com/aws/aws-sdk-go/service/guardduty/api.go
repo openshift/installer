@@ -324,6 +324,10 @@ func (c *GuardDuty) CreateDetectorRequest(input *CreateDetectorInput) (req *requ
 // one detector per account per Region. All data sources are enabled in a new
 // detector by default.
 //
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -404,7 +408,9 @@ func (c *GuardDuty) CreateFilterRequest(input *CreateFilterInput) (req *request.
 
 // CreateFilter API operation for Amazon GuardDuty.
 //
-// Creates a filter using the specified finding criteria.
+// Creates a filter using the specified finding criteria. The maximum number
+// of saved filters per Amazon Web Services account per Region is 100. For more
+// information, see Quotas for GuardDuty (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_limits.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -577,14 +583,22 @@ func (c *GuardDuty) CreateMembersRequest(input *CreateMembersInput) (req *reques
 // managing the associated member accounts either by invitation or through an
 // organization.
 //
-// When using Create Members as an organizations delegated administrator this
-// action will enable GuardDuty in the added member accounts, with the exception
-// of the organization delegated administrator account, which must enable GuardDuty
-// prior to being added as a member.
+// As a delegated administrator, using CreateMembers will enable GuardDuty in
+// the added member accounts, with the exception of the organization delegated
+// administrator account. A delegated administrator must enable GuardDuty prior
+// to being added as a member.
 //
-// If you are adding accounts by invitation use this action after GuardDuty
-// has been enabled in potential member accounts and before using Invite Members
-// (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_InviteMembers.html).
+// If you are adding accounts by invitation, before using InviteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_InviteMembers.html),
+// use CreateMembers after GuardDuty has been enabled in potential member accounts.
+//
+// If you disassociate a member from a GuardDuty delegated administrator, the
+// member account details obtained from this API, including the associated email
+// addresses, will be retained. This is done so that the delegated administrator
+// can invoke the InviteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_InviteMembers.html)
+// API without the need to invoke the CreateMembers API again. To remove the
+// details associated with a member account, the delegated administrator must
+// invoke the DeleteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteMembers.html)
+// API.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -750,8 +764,8 @@ func (c *GuardDuty) CreateSampleFindingsRequest(input *CreateSampleFindingsInput
 
 // CreateSampleFindings API operation for Amazon GuardDuty.
 //
-// Generates example findings of types specified by the list of finding types.
-// If 'NULL' is specified for findingTypes, the API generates example findings
+// Generates sample findings of types specified by the list of finding types.
+// If 'NULL' is specified for findingTypes, the API generates sample findings
 // of all supported finding types.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1337,6 +1351,10 @@ func (c *GuardDuty) DeleteMembersRequest(input *DeleteMembersInput) (req *reques
 // Deletes GuardDuty member accounts (to the current GuardDuty administrator
 // account) specified by the account IDs.
 //
+// With autoEnableOrganizationMembers configuration for your organization set
+// to ALL, you'll receive an error if you attempt to disable GuardDuty for a
+// member account in your organization.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -1589,7 +1607,13 @@ func (c *GuardDuty) DescribeMalwareScansRequest(input *DescribeMalwareScansInput
 
 // DescribeMalwareScans API operation for Amazon GuardDuty.
 //
-// Returns a list of malware scans.
+// Returns a list of malware scans. Each member account can view the malware
+// scans for their own accounts. An administrator can view the malware scans
+// for all the member accounts.
+//
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1709,6 +1733,12 @@ func (c *GuardDuty) DescribeOrganizationConfigurationRequest(input *DescribeOrga
 		Name:       opDescribeOrganizationConfiguration,
 		HTTPMethod: "GET",
 		HTTPPath:   "/detector/{detectorId}/admin",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -1724,6 +1754,10 @@ func (c *GuardDuty) DescribeOrganizationConfigurationRequest(input *DescribeOrga
 //
 // Returns information about the account selected as the delegated administrator
 // for GuardDuty.
+//
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1760,6 +1794,57 @@ func (c *GuardDuty) DescribeOrganizationConfigurationWithContext(ctx aws.Context
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+// DescribeOrganizationConfigurationPages iterates over the pages of a DescribeOrganizationConfiguration operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See DescribeOrganizationConfiguration method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a DescribeOrganizationConfiguration operation.
+//	pageNum := 0
+//	err := client.DescribeOrganizationConfigurationPages(params,
+//	    func(page *guardduty.DescribeOrganizationConfigurationOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *GuardDuty) DescribeOrganizationConfigurationPages(input *DescribeOrganizationConfigurationInput, fn func(*DescribeOrganizationConfigurationOutput, bool) bool) error {
+	return c.DescribeOrganizationConfigurationPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// DescribeOrganizationConfigurationPagesWithContext same as DescribeOrganizationConfigurationPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) DescribeOrganizationConfigurationPagesWithContext(ctx aws.Context, input *DescribeOrganizationConfigurationInput, fn func(*DescribeOrganizationConfigurationOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *DescribeOrganizationConfigurationInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeOrganizationConfigurationRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*DescribeOrganizationConfigurationOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opDescribePublishingDestination = "DescribePublishingDestination"
@@ -1976,6 +2061,19 @@ func (c *GuardDuty) DisassociateFromAdministratorAccountRequest(input *Disassoci
 // Disassociates the current GuardDuty member account from its administrator
 // account.
 //
+// When you disassociate an invited member from a GuardDuty delegated administrator,
+// the member account details obtained from the CreateMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_CreateMembers.html)
+// API, including the associated email addresses, are retained. This is done
+// so that the delegated administrator can invoke the InviteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_InviteMembers.html)
+// API without the need to invoke the CreateMembers API again. To remove the
+// details associated with a member account, the delegated administrator must
+// invoke the DeleteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteMembers.html)
+// API.
+//
+// With autoEnableOrganizationMembers configuration for your organization set
+// to ALL, you'll receive an error if you attempt to disable GuardDuty in a
+// member account.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -2065,6 +2163,15 @@ func (c *GuardDuty) DisassociateFromMasterAccountRequest(input *DisassociateFrom
 // Disassociates the current GuardDuty member account from its administrator
 // account.
 //
+// When you disassociate an invited member from a GuardDuty delegated administrator,
+// the member account details obtained from the CreateMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_CreateMembers.html)
+// API, including the associated email addresses, are retained. This is done
+// so that the delegated administrator can invoke the InviteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_InviteMembers.html)
+// API without the need to invoke the CreateMembers API again. To remove the
+// details associated with a member account, the delegated administrator must
+// invoke the DeleteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteMembers.html)
+// API.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -2149,8 +2256,21 @@ func (c *GuardDuty) DisassociateMembersRequest(input *DisassociateMembersInput) 
 
 // DisassociateMembers API operation for Amazon GuardDuty.
 //
-// Disassociates GuardDuty member accounts (to the current GuardDuty administrator
-// account) specified by the account IDs.
+// Disassociates GuardDuty member accounts (from the current administrator account)
+// specified by the account IDs.
+//
+// When you disassociate an invited member from a GuardDuty delegated administrator,
+// the member account details obtained from the CreateMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_CreateMembers.html)
+// API, including the associated email addresses, are retained. This is done
+// so that the delegated administrator can invoke the InviteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_InviteMembers.html)
+// API without the need to invoke the CreateMembers API again. To remove the
+// details associated with a member account, the delegated administrator must
+// invoke the DeleteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteMembers.html)
+// API.
+//
+// With autoEnableOrganizationMembers configuration for your organization set
+// to ALL, you'll receive an error if you attempt to disassociate a member account
+// before removing them from your Amazon Web Services organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2356,6 +2476,91 @@ func (c *GuardDuty) GetAdministratorAccountWithContext(ctx aws.Context, input *G
 	return out, req.Send()
 }
 
+const opGetCoverageStatistics = "GetCoverageStatistics"
+
+// GetCoverageStatisticsRequest generates a "aws/request.Request" representing the
+// client's request for the GetCoverageStatistics operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetCoverageStatistics for more information on using the GetCoverageStatistics
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetCoverageStatisticsRequest method.
+//	req, resp := client.GetCoverageStatisticsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/GetCoverageStatistics
+func (c *GuardDuty) GetCoverageStatisticsRequest(input *GetCoverageStatisticsInput) (req *request.Request, output *GetCoverageStatisticsOutput) {
+	op := &request.Operation{
+		Name:       opGetCoverageStatistics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/detector/{detectorId}/coverage/statistics",
+	}
+
+	if input == nil {
+		input = &GetCoverageStatisticsInput{}
+	}
+
+	output = &GetCoverageStatisticsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetCoverageStatistics API operation for Amazon GuardDuty.
+//
+// Retrieves aggregated statistics for your account. If you are a GuardDuty
+// administrator, you can retrieve the statistics for all the resources associated
+// with the active member accounts in your organization who have enabled EKS
+// Runtime Monitoring and have the GuardDuty agent running on their EKS nodes.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation GetCoverageStatistics for usage and error information.
+//
+// Returned Error Types:
+//
+//   - BadRequestException
+//     A bad request exception object.
+//
+//   - InternalServerErrorException
+//     An internal server error exception object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/GetCoverageStatistics
+func (c *GuardDuty) GetCoverageStatistics(input *GetCoverageStatisticsInput) (*GetCoverageStatisticsOutput, error) {
+	req, out := c.GetCoverageStatisticsRequest(input)
+	return out, req.Send()
+}
+
+// GetCoverageStatisticsWithContext is the same as GetCoverageStatistics with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetCoverageStatistics for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) GetCoverageStatisticsWithContext(ctx aws.Context, input *GetCoverageStatisticsInput, opts ...request.Option) (*GetCoverageStatisticsOutput, error) {
+	req, out := c.GetCoverageStatisticsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetDetector = "GetDetector"
 
 // GetDetectorRequest generates a "aws/request.Request" representing the
@@ -2400,6 +2605,10 @@ func (c *GuardDuty) GetDetectorRequest(input *GetDetectorInput) (req *request.Re
 // GetDetector API operation for Amazon GuardDuty.
 //
 // Retrieves an Amazon GuardDuty detector specified by the detectorId.
+//
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -2894,6 +3103,10 @@ func (c *GuardDuty) GetMalwareScanSettingsRequest(input *GetMalwareScanSettingsI
 //
 // Returns the details of the malware scan settings.
 //
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -3067,6 +3280,10 @@ func (c *GuardDuty) GetMemberDetectorsRequest(input *GetMemberDetectorsInput) (r
 // GetMemberDetectors API operation for Amazon GuardDuty.
 //
 // Describes which data sources are enabled for the member account's detector.
+//
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3540,10 +3757,29 @@ func (c *GuardDuty) InviteMembersRequest(input *InviteMembersInput) (req *reques
 
 // InviteMembers API operation for Amazon GuardDuty.
 //
-// Invites other Amazon Web Services accounts (created as members of the current
-// Amazon Web Services account by CreateMembers) to enable GuardDuty, and allow
-// the current Amazon Web Services account to view and manage these accounts'
-// findings on their behalf as the GuardDuty administrator account.
+// Invites Amazon Web Services accounts to become members of an organization
+// administered by the Amazon Web Services account that invokes this API. If
+// you are using Amazon Web Services Organizations to manager your GuardDuty
+// environment, this step is not needed. For more information, see Managing
+// accounts with Amazon Web Services Organizations (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_organizations.html).
+//
+// To invite Amazon Web Services accounts, the first step is to ensure that
+// GuardDuty has been enabled in the potential member accounts. You can now
+// invoke this API to add accounts by invitation. The invited accounts can either
+// accept or decline the invitation from their GuardDuty accounts. Each invited
+// Amazon Web Services account can choose to accept the invitation from only
+// one Amazon Web Services account. For more information, see Managing GuardDuty
+// accounts by invitation (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_invitations.html).
+//
+// After the invite has been accepted and you choose to disassociate a member
+// account (by using DisassociateMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DisassociateMembers.html))
+// from your account, the details of the member account obtained by invoking
+// CreateMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_CreateMembers.html),
+// including the associated email addresses, will be retained. This is done
+// so that you can invoke InviteMembers without the need to invoke CreateMembers
+// (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_CreateMembers.html)
+// again. To remove the details associated with a member account, you must also
+// invoke DeleteMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_DeleteMembers.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3580,6 +3816,150 @@ func (c *GuardDuty) InviteMembersWithContext(ctx aws.Context, input *InviteMembe
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
+}
+
+const opListCoverage = "ListCoverage"
+
+// ListCoverageRequest generates a "aws/request.Request" representing the
+// client's request for the ListCoverage operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListCoverage for more information on using the ListCoverage
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListCoverageRequest method.
+//	req, resp := client.ListCoverageRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/ListCoverage
+func (c *GuardDuty) ListCoverageRequest(input *ListCoverageInput) (req *request.Request, output *ListCoverageOutput) {
+	op := &request.Operation{
+		Name:       opListCoverage,
+		HTTPMethod: "POST",
+		HTTPPath:   "/detector/{detectorId}/coverage",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListCoverageInput{}
+	}
+
+	output = &ListCoverageOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListCoverage API operation for Amazon GuardDuty.
+//
+// Lists coverage details for your GuardDuty account. If you're a GuardDuty
+// administrator, you can retrieve all resources associated with the active
+// member accounts in your organization.
+//
+// Make sure the accounts have EKS Runtime Monitoring enabled and GuardDuty
+// agent running on their EKS nodes.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation ListCoverage for usage and error information.
+//
+// Returned Error Types:
+//
+//   - BadRequestException
+//     A bad request exception object.
+//
+//   - InternalServerErrorException
+//     An internal server error exception object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/ListCoverage
+func (c *GuardDuty) ListCoverage(input *ListCoverageInput) (*ListCoverageOutput, error) {
+	req, out := c.ListCoverageRequest(input)
+	return out, req.Send()
+}
+
+// ListCoverageWithContext is the same as ListCoverage with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListCoverage for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) ListCoverageWithContext(ctx aws.Context, input *ListCoverageInput, opts ...request.Option) (*ListCoverageOutput, error) {
+	req, out := c.ListCoverageRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListCoveragePages iterates over the pages of a ListCoverage operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListCoverage method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListCoverage operation.
+//	pageNum := 0
+//	err := client.ListCoveragePages(params,
+//	    func(page *guardduty.ListCoverageOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *GuardDuty) ListCoveragePages(input *ListCoverageInput, fn func(*ListCoverageOutput, bool) bool) error {
+	return c.ListCoveragePagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListCoveragePagesWithContext same as ListCoveragePages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) ListCoveragePagesWithContext(ctx aws.Context, input *ListCoverageInput, fn func(*ListCoverageOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListCoverageInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListCoverageRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListCoverageOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
 }
 
 const opListDetectors = "ListDetectors"
@@ -4758,6 +5138,9 @@ func (c *GuardDuty) ListTagsForResourceRequest(input *ListTagsForResourceInput) 
 //   - BadRequestException
 //     A bad request exception object.
 //
+//   - AccessDeniedException
+//     An access denied exception object.
+//
 //   - InternalServerErrorException
 //     An internal server error exception object.
 //
@@ -4924,6 +5307,93 @@ func (c *GuardDuty) ListThreatIntelSetsPagesWithContext(ctx aws.Context, input *
 	return p.Err()
 }
 
+const opStartMalwareScan = "StartMalwareScan"
+
+// StartMalwareScanRequest generates a "aws/request.Request" representing the
+// client's request for the StartMalwareScan operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartMalwareScan for more information on using the StartMalwareScan
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the StartMalwareScanRequest method.
+//	req, resp := client.StartMalwareScanRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/StartMalwareScan
+func (c *GuardDuty) StartMalwareScanRequest(input *StartMalwareScanInput) (req *request.Request, output *StartMalwareScanOutput) {
+	op := &request.Operation{
+		Name:       opStartMalwareScan,
+		HTTPMethod: "POST",
+		HTTPPath:   "/malware-scan/start",
+	}
+
+	if input == nil {
+		input = &StartMalwareScanInput{}
+	}
+
+	output = &StartMalwareScanOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StartMalwareScan API operation for Amazon GuardDuty.
+//
+// Initiates the malware scan. Invoking this API will automatically create the
+// Service-linked role (https://docs.aws.amazon.com/guardduty/latest/ug/slr-permissions-malware-protection.html)
+// in the corresponding account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon GuardDuty's
+// API operation StartMalwareScan for usage and error information.
+//
+// Returned Error Types:
+//
+//   - BadRequestException
+//     A bad request exception object.
+//
+//   - ConflictException
+//     A request conflict exception object.
+//
+//   - InternalServerErrorException
+//     An internal server error exception object.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/guardduty-2017-11-28/StartMalwareScan
+func (c *GuardDuty) StartMalwareScan(input *StartMalwareScanInput) (*StartMalwareScanOutput, error) {
+	req, out := c.StartMalwareScanRequest(input)
+	return out, req.Send()
+}
+
+// StartMalwareScanWithContext is the same as StartMalwareScan with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartMalwareScan for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *GuardDuty) StartMalwareScanWithContext(ctx aws.Context, input *StartMalwareScanInput, opts ...request.Option) (*StartMalwareScanOutput, error) {
+	req, out := c.StartMalwareScanRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opStartMonitoringMembers = "StartMonitoringMembers"
 
 // StartMonitoringMembersRequest generates a "aws/request.Request" representing the
@@ -4969,7 +5439,8 @@ func (c *GuardDuty) StartMonitoringMembersRequest(input *StartMonitoringMembersI
 //
 // Turns on GuardDuty monitoring of the specified member accounts. Use this
 // operation to restart monitoring of accounts that you stopped monitoring with
-// the StopMonitoringMembers operation.
+// the StopMonitoringMembers (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_StopMonitoringMembers.html)
+// operation.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5053,6 +5524,10 @@ func (c *GuardDuty) StopMonitoringMembersRequest(input *StopMonitoringMembersInp
 //
 // Stops GuardDuty monitoring for the specified member accounts. Use the StartMonitoringMembers
 // operation to restart monitoring for those accounts.
+//
+// With autoEnableOrganizationMembers configuration for your organization set
+// to ALL, you'll receive an error if you attempt to stop monitoring the member
+// accounts in your organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5148,6 +5623,9 @@ func (c *GuardDuty) TagResourceRequest(input *TagResourceInput) (req *request.Re
 //
 //   - BadRequestException
 //     A bad request exception object.
+//
+//   - AccessDeniedException
+//     An access denied exception object.
 //
 //   - InternalServerErrorException
 //     An internal server error exception object.
@@ -5315,6 +5793,9 @@ func (c *GuardDuty) UntagResourceRequest(input *UntagResourceInput) (req *reques
 //   - BadRequestException
 //     A bad request exception object.
 //
+//   - AccessDeniedException
+//     An access denied exception object.
+//
 //   - InternalServerErrorException
 //     An internal server error exception object.
 //
@@ -5385,6 +5866,10 @@ func (c *GuardDuty) UpdateDetectorRequest(input *UpdateDetectorInput) (req *requ
 // UpdateDetector API operation for Amazon GuardDuty.
 //
 // Updates the Amazon GuardDuty detector specified by the detectorId.
+//
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5717,6 +6202,10 @@ func (c *GuardDuty) UpdateMalwareScanSettingsRequest(input *UpdateMalwareScanSet
 //
 // Updates the malware scan settings.
 //
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -5799,6 +6288,10 @@ func (c *GuardDuty) UpdateMemberDetectorsRequest(input *UpdateMemberDetectorsInp
 //
 // Contains information on member accounts to be updated.
 //
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -5880,7 +6373,12 @@ func (c *GuardDuty) UpdateOrganizationConfigurationRequest(input *UpdateOrganiza
 
 // UpdateOrganizationConfiguration API operation for Amazon GuardDuty.
 //
-// Updates the delegated administrator account with the values provided.
+// Configures the delegated administrator account with the provided values.
+// You must provide the value for either autoEnableOrganizationMembers or autoEnable.
+//
+// There might be regional differences because some data sources might not be
+// available in all the Amazon Web Services Regions where GuardDuty is presently
+// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -6332,6 +6830,74 @@ func (s *AccessControlList) SetAllowsPublicWriteAccess(v bool) *AccessControlLis
 	return s
 }
 
+// An access denied exception object.
+type AccessDeniedException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	// The error message.
+	Message_ *string `locationName:"message" type:"string"`
+
+	// The error type.
+	Type *string `locationName:"__type" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AccessDeniedException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AccessDeniedException) GoString() string {
+	return s.String()
+}
+
+func newErrorAccessDeniedException(v protocol.ResponseMetadata) error {
+	return &AccessDeniedException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *AccessDeniedException) Code() string {
+	return "AccessDeniedException"
+}
+
+// Message returns the exception's message.
+func (s *AccessDeniedException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *AccessDeniedException) OrigErr() error {
+	return nil
+}
+
+func (s *AccessDeniedException) Error() string {
+	return fmt.Sprintf("%s: %s\n%s", s.Code(), s.Message(), s.String())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *AccessDeniedException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *AccessDeniedException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
 // Contains information about the access keys.
 type AccessKeyDetails struct {
 	_ struct{} `type:"structure"`
@@ -6466,7 +7032,12 @@ type AccountFreeTrialInfo struct {
 	AccountId *string `locationName:"accountId" type:"string"`
 
 	// Describes the data source enabled for the GuardDuty member account.
-	DataSources *DataSourcesFreeTrial `locationName:"dataSources" type:"structure"`
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *DataSourcesFreeTrial `locationName:"dataSources" deprecated:"true" type:"structure"`
+
+	// A list of features enabled for the GuardDuty account.
+	Features []*FreeTrialFeatureConfigurationResult `locationName:"features" type:"list"`
 }
 
 // String returns the string representation.
@@ -6496,6 +7067,12 @@ func (s *AccountFreeTrialInfo) SetAccountId(v string) *AccountFreeTrialInfo {
 // SetDataSources sets the DataSources field's value.
 func (s *AccountFreeTrialInfo) SetDataSources(v *DataSourcesFreeTrial) *AccountFreeTrialInfo {
 	s.DataSources = v
+	return s
+}
+
+// SetFeatures sets the Features field's value.
+func (s *AccountFreeTrialInfo) SetFeatures(v []*FreeTrialFeatureConfigurationResult) *AccountFreeTrialInfo {
+	s.Features = v
 	return s
 }
 
@@ -6552,6 +7129,9 @@ type Action struct {
 
 	// Information about the PORT_PROBE action described in this finding.
 	PortProbeAction *PortProbeAction `locationName:"portProbeAction" type:"structure"`
+
+	// Information about RDS_LOGIN_ATTEMPT action described in this finding.
+	RdsLoginAttemptAction *RdsLoginAttemptAction `locationName:"rdsLoginAttemptAction" type:"structure"`
 }
 
 // String returns the string representation.
@@ -6605,6 +7185,53 @@ func (s *Action) SetNetworkConnectionAction(v *NetworkConnectionAction) *Action 
 // SetPortProbeAction sets the PortProbeAction field's value.
 func (s *Action) SetPortProbeAction(v *PortProbeAction) *Action {
 	s.PortProbeAction = v
+	return s
+}
+
+// SetRdsLoginAttemptAction sets the RdsLoginAttemptAction field's value.
+func (s *Action) SetRdsLoginAttemptAction(v *RdsLoginAttemptAction) *Action {
+	s.RdsLoginAttemptAction = v
+	return s
+}
+
+// Information about the installed EKS add-on (GuardDuty security agent).
+type AddonDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Status of the installed EKS add-on.
+	AddonStatus *string `locationName:"addonStatus" type:"string"`
+
+	// Version of the installed EKS add-on.
+	AddonVersion *string `locationName:"addonVersion" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AddonDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AddonDetails) GoString() string {
+	return s.String()
+}
+
+// SetAddonStatus sets the AddonStatus field's value.
+func (s *AddonDetails) SetAddonStatus(v string) *AddonDetails {
+	s.AddonStatus = &v
+	return s
+}
+
+// SetAddonVersion sets the AddonVersion field's value.
+func (s *AddonDetails) SetAddonVersion(v string) *AddonDetails {
+	s.AddonVersion = &v
 	return s
 }
 
@@ -7348,6 +7975,74 @@ func (s *Condition) SetNotEquals(v []*string) *Condition {
 	return s
 }
 
+// A request conflict exception object.
+type ConflictException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	// The error message.
+	Message_ *string `locationName:"message" type:"string"`
+
+	// The error type.
+	Type *string `locationName:"__type" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ConflictException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ConflictException) GoString() string {
+	return s.String()
+}
+
+func newErrorConflictException(v protocol.ResponseMetadata) error {
+	return &ConflictException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *ConflictException) Code() string {
+	return "ConflictException"
+}
+
+// Message returns the exception's message.
+func (s *ConflictException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *ConflictException) OrigErr() error {
+	return nil
+}
+
+func (s *ConflictException) Error() string {
+	return fmt.Sprintf("%s: %s\n%s", s.Code(), s.Message(), s.String())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *ConflictException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *ConflictException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
 // Details of a container.
 type Container struct {
 	_ struct{} `type:"structure"`
@@ -7477,6 +8172,395 @@ func (s *Country) SetCountryName(v string) *Country {
 	return s
 }
 
+// Information about the EKS cluster that has a coverage status.
+type CoverageEksClusterDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Information about the installed EKS add-on.
+	AddonDetails *AddonDetails `locationName:"addonDetails" type:"structure"`
+
+	// Name of the EKS cluster.
+	ClusterName *string `locationName:"clusterName" type:"string"`
+
+	// Represents all the nodes within the EKS cluster in your account.
+	CompatibleNodes *int64 `locationName:"compatibleNodes" type:"long"`
+
+	// Represents the nodes within the EKS cluster that have a HEALTHY coverage
+	// status.
+	CoveredNodes *int64 `locationName:"coveredNodes" type:"long"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageEksClusterDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageEksClusterDetails) GoString() string {
+	return s.String()
+}
+
+// SetAddonDetails sets the AddonDetails field's value.
+func (s *CoverageEksClusterDetails) SetAddonDetails(v *AddonDetails) *CoverageEksClusterDetails {
+	s.AddonDetails = v
+	return s
+}
+
+// SetClusterName sets the ClusterName field's value.
+func (s *CoverageEksClusterDetails) SetClusterName(v string) *CoverageEksClusterDetails {
+	s.ClusterName = &v
+	return s
+}
+
+// SetCompatibleNodes sets the CompatibleNodes field's value.
+func (s *CoverageEksClusterDetails) SetCompatibleNodes(v int64) *CoverageEksClusterDetails {
+	s.CompatibleNodes = &v
+	return s
+}
+
+// SetCoveredNodes sets the CoveredNodes field's value.
+func (s *CoverageEksClusterDetails) SetCoveredNodes(v int64) *CoverageEksClusterDetails {
+	s.CoveredNodes = &v
+	return s
+}
+
+// Represents a condition that when matched will be added to the response of
+// the operation.
+type CoverageFilterCondition struct {
+	_ struct{} `type:"structure"`
+
+	// Represents an equal condition that is applied to a single field while retrieving
+	// the coverage details.
+	Equals []*string `locationName:"equals" type:"list"`
+
+	// Represents a not equal condition that is applied to a single field while
+	// retrieving the coverage details.
+	NotEquals []*string `locationName:"notEquals" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageFilterCondition) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageFilterCondition) GoString() string {
+	return s.String()
+}
+
+// SetEquals sets the Equals field's value.
+func (s *CoverageFilterCondition) SetEquals(v []*string) *CoverageFilterCondition {
+	s.Equals = v
+	return s
+}
+
+// SetNotEquals sets the NotEquals field's value.
+func (s *CoverageFilterCondition) SetNotEquals(v []*string) *CoverageFilterCondition {
+	s.NotEquals = v
+	return s
+}
+
+// Represents the criteria used in the filter.
+type CoverageFilterCriteria struct {
+	_ struct{} `type:"structure"`
+
+	// Represents a condition that when matched will be added to the response of
+	// the operation.
+	FilterCriterion []*CoverageFilterCriterion `locationName:"filterCriterion" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageFilterCriteria) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageFilterCriteria) GoString() string {
+	return s.String()
+}
+
+// SetFilterCriterion sets the FilterCriterion field's value.
+func (s *CoverageFilterCriteria) SetFilterCriterion(v []*CoverageFilterCriterion) *CoverageFilterCriteria {
+	s.FilterCriterion = v
+	return s
+}
+
+// Represents a condition that when matched will be added to the response of
+// the operation.
+type CoverageFilterCriterion struct {
+	_ struct{} `type:"structure"`
+
+	// An enum value representing possible filter fields.
+	CriterionKey *string `locationName:"criterionKey" type:"string" enum:"CoverageFilterCriterionKey"`
+
+	// Contains information about the condition.
+	FilterCondition *CoverageFilterCondition `locationName:"filterCondition" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageFilterCriterion) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageFilterCriterion) GoString() string {
+	return s.String()
+}
+
+// SetCriterionKey sets the CriterionKey field's value.
+func (s *CoverageFilterCriterion) SetCriterionKey(v string) *CoverageFilterCriterion {
+	s.CriterionKey = &v
+	return s
+}
+
+// SetFilterCondition sets the FilterCondition field's value.
+func (s *CoverageFilterCriterion) SetFilterCondition(v *CoverageFilterCondition) *CoverageFilterCriterion {
+	s.FilterCondition = v
+	return s
+}
+
+// Information about the resource of the GuardDuty account.
+type CoverageResource struct {
+	_ struct{} `type:"structure"`
+
+	// The unique ID of the Amazon Web Services account.
+	AccountId *string `locationName:"accountId" min:"12" type:"string"`
+
+	// Represents the status of the EKS cluster coverage.
+	CoverageStatus *string `locationName:"coverageStatus" type:"string" enum:"CoverageStatus"`
+
+	// The unique ID of the GuardDuty detector associated with the resource.
+	DetectorId *string `locationName:"detectorId" min:"1" type:"string"`
+
+	// Represents the reason why a coverage status was UNHEALTHY for the EKS cluster.
+	Issue *string `locationName:"issue" type:"string"`
+
+	// Information about the resource for which the coverage statistics are retrieved.
+	ResourceDetails *CoverageResourceDetails `locationName:"resourceDetails" type:"structure"`
+
+	// The unique ID of the resource.
+	ResourceId *string `locationName:"resourceId" type:"string"`
+
+	// The timestamp at which the coverage details for the resource were last updated.
+	// This is in UTC format.
+	UpdatedAt *time.Time `locationName:"updatedAt" type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageResource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageResource) GoString() string {
+	return s.String()
+}
+
+// SetAccountId sets the AccountId field's value.
+func (s *CoverageResource) SetAccountId(v string) *CoverageResource {
+	s.AccountId = &v
+	return s
+}
+
+// SetCoverageStatus sets the CoverageStatus field's value.
+func (s *CoverageResource) SetCoverageStatus(v string) *CoverageResource {
+	s.CoverageStatus = &v
+	return s
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *CoverageResource) SetDetectorId(v string) *CoverageResource {
+	s.DetectorId = &v
+	return s
+}
+
+// SetIssue sets the Issue field's value.
+func (s *CoverageResource) SetIssue(v string) *CoverageResource {
+	s.Issue = &v
+	return s
+}
+
+// SetResourceDetails sets the ResourceDetails field's value.
+func (s *CoverageResource) SetResourceDetails(v *CoverageResourceDetails) *CoverageResource {
+	s.ResourceDetails = v
+	return s
+}
+
+// SetResourceId sets the ResourceId field's value.
+func (s *CoverageResource) SetResourceId(v string) *CoverageResource {
+	s.ResourceId = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *CoverageResource) SetUpdatedAt(v time.Time) *CoverageResource {
+	s.UpdatedAt = &v
+	return s
+}
+
+// Information about the resource for each individual EKS cluster.
+type CoverageResourceDetails struct {
+	_ struct{} `type:"structure"`
+
+	// EKS cluster details involved in the coverage statistics.
+	EksClusterDetails *CoverageEksClusterDetails `locationName:"eksClusterDetails" type:"structure"`
+
+	// The type of Amazon Web Services resource.
+	ResourceType *string `locationName:"resourceType" type:"string" enum:"ResourceType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageResourceDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageResourceDetails) GoString() string {
+	return s.String()
+}
+
+// SetEksClusterDetails sets the EksClusterDetails field's value.
+func (s *CoverageResourceDetails) SetEksClusterDetails(v *CoverageEksClusterDetails) *CoverageResourceDetails {
+	s.EksClusterDetails = v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *CoverageResourceDetails) SetResourceType(v string) *CoverageResourceDetails {
+	s.ResourceType = &v
+	return s
+}
+
+// Information about the sorting criteria used in the coverage statistics.
+type CoverageSortCriteria struct {
+	_ struct{} `type:"structure"`
+
+	// Represents the field name used to sort the coverage details.
+	AttributeName *string `locationName:"attributeName" type:"string" enum:"CoverageSortKey"`
+
+	// The order in which the sorted findings are to be displayed.
+	OrderBy *string `locationName:"orderBy" type:"string" enum:"OrderBy"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageSortCriteria) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageSortCriteria) GoString() string {
+	return s.String()
+}
+
+// SetAttributeName sets the AttributeName field's value.
+func (s *CoverageSortCriteria) SetAttributeName(v string) *CoverageSortCriteria {
+	s.AttributeName = &v
+	return s
+}
+
+// SetOrderBy sets the OrderBy field's value.
+func (s *CoverageSortCriteria) SetOrderBy(v string) *CoverageSortCriteria {
+	s.OrderBy = &v
+	return s
+}
+
+// Information about the coverage statistics for a resource.
+type CoverageStatistics struct {
+	_ struct{} `type:"structure"`
+
+	// Represents coverage statistics for EKS clusters aggregated by coverage status.
+	CountByCoverageStatus map[string]*int64 `locationName:"countByCoverageStatus" type:"map"`
+
+	// Represents coverage statistics for EKS clusters aggregated by resource type.
+	CountByResourceType map[string]*int64 `locationName:"countByResourceType" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageStatistics) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CoverageStatistics) GoString() string {
+	return s.String()
+}
+
+// SetCountByCoverageStatus sets the CountByCoverageStatus field's value.
+func (s *CoverageStatistics) SetCountByCoverageStatus(v map[string]*int64) *CoverageStatistics {
+	s.CountByCoverageStatus = v
+	return s
+}
+
+// SetCountByResourceType sets the CountByResourceType field's value.
+func (s *CoverageStatistics) SetCountByResourceType(v map[string]*int64) *CoverageStatistics {
+	s.CountByResourceType = v
+	return s
+}
+
 type CreateDetectorInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7484,12 +8568,21 @@ type CreateDetectorInput struct {
 	ClientToken *string `locationName:"clientToken" type:"string" idempotencyToken:"true"`
 
 	// Describes which data sources will be enabled for the detector.
-	DataSources *DataSourceConfigurations `locationName:"dataSources" type:"structure"`
+	//
+	// There might be regional differences because some data sources might not be
+	// available in all the Amazon Web Services Regions where GuardDuty is presently
+	// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *DataSourceConfigurations `locationName:"dataSources" deprecated:"true" type:"structure"`
 
 	// A Boolean value that specifies whether the detector is to be enabled.
 	//
 	// Enable is a required field
 	Enable *bool `locationName:"enable" type:"boolean" required:"true"`
+
+	// A list of features that will be configured for the detector.
+	Features []*DetectorFeatureConfiguration `locationName:"features" type:"list"`
 
 	// A value that specifies how frequently updated findings are exported.
 	FindingPublishingFrequency *string `locationName:"findingPublishingFrequency" type:"string" enum:"FindingPublishingFrequency"`
@@ -7555,6 +8648,12 @@ func (s *CreateDetectorInput) SetEnable(v bool) *CreateDetectorInput {
 	return s
 }
 
+// SetFeatures sets the Features field's value.
+func (s *CreateDetectorInput) SetFeatures(v []*DetectorFeatureConfiguration) *CreateDetectorInput {
+	s.Features = v
+	return s
+}
+
 // SetFindingPublishingFrequency sets the FindingPublishingFrequency field's value.
 func (s *CreateDetectorInput) SetFindingPublishingFrequency(v string) *CreateDetectorInput {
 	s.FindingPublishingFrequency = &v
@@ -7572,6 +8671,10 @@ type CreateDetectorOutput struct {
 
 	// The unique ID of the created detector.
 	DetectorId *string `locationName:"detectorId" min:"1" type:"string"`
+
+	// Specifies the data sources that couldn't be enabled when GuardDuty was enabled
+	// for the first time.
+	UnprocessedDataSources *UnprocessedDataSourcesResult `locationName:"unprocessedDataSources" type:"structure"`
 }
 
 // String returns the string representation.
@@ -7598,6 +8701,12 @@ func (s *CreateDetectorOutput) SetDetectorId(v string) *CreateDetectorOutput {
 	return s
 }
 
+// SetUnprocessedDataSources sets the UnprocessedDataSources field's value.
+func (s *CreateDetectorOutput) SetUnprocessedDataSources(v *UnprocessedDataSourcesResult) *CreateDetectorOutput {
+	s.UnprocessedDataSources = v
+	return s
+}
+
 type CreateFilterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7608,7 +8717,10 @@ type CreateFilterInput struct {
 	// The idempotency token for the create request.
 	ClientToken *string `locationName:"clientToken" type:"string" idempotencyToken:"true"`
 
-	// The description of the filter.
+	// The description of the filter. Valid characters include alphanumeric characters,
+	// and special characters such as hyphen, period, colon, underscore, parentheses
+	// ({ }, [ ], and ( )), forward slash, horizontal tab, vertical tab, newline,
+	// form feed, return, and whitespace.
 	Description *string `locationName:"description" type:"string"`
 
 	// The ID of the detector belonging to the GuardDuty account that you want to
@@ -7624,8 +8736,6 @@ type CreateFilterInput struct {
 	//    * accountId
 	//
 	//    * region
-	//
-	//    * confidence
 	//
 	//    * id
 	//
@@ -7725,10 +8835,6 @@ type CreateFilterInput struct {
 	//
 	//    * resource.s3BucketDetails.type
 	//
-	//    * service.archived When this attribute is set to TRUE, only archived findings
-	//    are listed. When it's set to FALSE, only unarchived findings are listed.
-	//    When this attribute is not set, all existing findings are listed.
-	//
 	//    * service.resourceRole
 	//
 	//    * severity
@@ -7741,9 +8847,9 @@ type CreateFilterInput struct {
 	// FindingCriteria is a required field
 	FindingCriteria *FindingCriteria `locationName:"findingCriteria" type:"structure" required:"true"`
 
-	// The name of the filter. Minimum length of 3. Maximum length of 64. Valid
-	// characters include alphanumeric characters, dot (.), underscore (_), and
-	// dash (-). Spaces are not allowed.
+	// The name of the filter. Valid characters include period (.), underscore (_),
+	// dash (-), and alphanumeric characters. A whitespace is considered to be an
+	// invalid character.
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"3" type:"string" required:"true"`
@@ -7919,7 +9025,7 @@ type CreateIPSetInput struct {
 
 	// The user-friendly name to identify the IPSet.
 	//
-	// Allowed characters are alphanumerics, spaces, hyphens (-), and underscores
+	// Allowed characters are alphanumeric, whitespace, dash (-), and underscores
 	// (_).
 	//
 	// Name is a required field
@@ -8780,8 +9886,8 @@ func (s *DataSourceFreeTrial) SetFreeTrialDaysRemaining(v int64) *DataSourceFree
 type DataSourcesFreeTrial struct {
 	_ struct{} `type:"structure"`
 
-	// Describes whether any AWS CloudTrail management event logs are enabled as
-	// data sources.
+	// Describes whether any Amazon Web Services CloudTrail management event logs
+	// are enabled as data sources.
 	CloudTrail *DataSourceFreeTrial `locationName:"cloudTrail" type:"structure"`
 
 	// Describes whether any DNS logs are enabled as data sources.
@@ -9611,7 +10717,9 @@ type DescribeMalwareScansInput struct {
 	// from the previous response to continue listing data.
 	NextToken *string `locationName:"nextToken" type:"string"`
 
-	// Represents the criteria used for sorting scan entries.
+	// Represents the criteria used for sorting scan entries. The attributeName
+	// (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_SortCriteria.html#guardduty-Type-SortCriteria-attributeName)
+	// is required and it must be scanStartTime.
 	SortCriteria *SortCriteria `locationName:"sortCriteria" type:"structure"`
 }
 
@@ -9738,6 +10846,16 @@ type DescribeOrganizationConfigurationInput struct {
 	//
 	// DetectorId is a required field
 	DetectorId *string `location:"uri" locationName:"detectorId" min:"1" type:"string" required:"true"`
+
+	// You can use this parameter to indicate the maximum number of items that you
+	// want in the response.
+	MaxResults *int64 `location:"querystring" locationName:"maxResults" min:"1" type:"integer"`
+
+	// You can use this parameter when paginating results. Set the value of this
+	// parameter to null on your first call to the list action. For subsequent calls
+	// to the action, fill nextToken in the request with the value of NextToken
+	// from the previous response to continue listing data.
+	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
 }
 
 // String returns the string representation.
@@ -9767,6 +10885,9 @@ func (s *DescribeOrganizationConfigurationInput) Validate() error {
 	if s.DetectorId != nil && len(*s.DetectorId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DetectorId", 1))
 	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -9780,23 +10901,63 @@ func (s *DescribeOrganizationConfigurationInput) SetDetectorId(v string) *Descri
 	return s
 }
 
+// SetMaxResults sets the MaxResults field's value.
+func (s *DescribeOrganizationConfigurationInput) SetMaxResults(v int64) *DescribeOrganizationConfigurationInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeOrganizationConfigurationInput) SetNextToken(v string) *DescribeOrganizationConfigurationInput {
+	s.NextToken = &v
+	return s
+}
+
 type DescribeOrganizationConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
 	// Indicates whether GuardDuty is automatically enabled for accounts added to
 	// the organization.
 	//
-	// AutoEnable is a required field
-	AutoEnable *bool `locationName:"autoEnable" type:"boolean" required:"true"`
+	// Even though this is still supported, we recommend using AutoEnableOrganizationMembers
+	// to achieve the similar results.
+	//
+	// Deprecated: This field is deprecated, use AutoEnableOrganizationMembers instead
+	AutoEnable *bool `locationName:"autoEnable" deprecated:"true" type:"boolean"`
+
+	// Indicates the auto-enablement configuration of GuardDuty for the member accounts
+	// in the organization.
+	//
+	//    * NEW: Indicates that when a new account joins the organization, they
+	//    will have GuardDuty enabled automatically.
+	//
+	//    * ALL: Indicates that all accounts in the Amazon Web Services Organization
+	//    have GuardDuty enabled automatically. This includes NEW accounts that
+	//    join the organization and accounts that may have been suspended or removed
+	//    from the organization in GuardDuty.
+	//
+	//    * NONE: Indicates that GuardDuty will not be automatically enabled for
+	//    any accounts in the organization. GuardDuty must be managed for each account
+	//    individually by the administrator.
+	AutoEnableOrganizationMembers *string `locationName:"autoEnableOrganizationMembers" type:"string" enum:"AutoEnableMembers"`
 
 	// Describes which data sources are enabled automatically for member accounts.
-	DataSources *OrganizationDataSourceConfigurationsResult `locationName:"dataSources" type:"structure"`
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *OrganizationDataSourceConfigurationsResult `locationName:"dataSources" deprecated:"true" type:"structure"`
+
+	// A list of features that are configured for this organization.
+	Features []*OrganizationFeatureConfigurationResult `locationName:"features" type:"list"`
 
 	// Indicates whether the maximum number of allowed member accounts are already
 	// associated with the delegated administrator account for your organization.
 	//
 	// MemberAccountLimitReached is a required field
 	MemberAccountLimitReached *bool `locationName:"memberAccountLimitReached" type:"boolean" required:"true"`
+
+	// The pagination parameter to be used on the next list operation to retrieve
+	// more items.
+	NextToken *string `locationName:"nextToken" type:"string"`
 }
 
 // String returns the string representation.
@@ -9823,15 +10984,33 @@ func (s *DescribeOrganizationConfigurationOutput) SetAutoEnable(v bool) *Describ
 	return s
 }
 
+// SetAutoEnableOrganizationMembers sets the AutoEnableOrganizationMembers field's value.
+func (s *DescribeOrganizationConfigurationOutput) SetAutoEnableOrganizationMembers(v string) *DescribeOrganizationConfigurationOutput {
+	s.AutoEnableOrganizationMembers = &v
+	return s
+}
+
 // SetDataSources sets the DataSources field's value.
 func (s *DescribeOrganizationConfigurationOutput) SetDataSources(v *OrganizationDataSourceConfigurationsResult) *DescribeOrganizationConfigurationOutput {
 	s.DataSources = v
 	return s
 }
 
+// SetFeatures sets the Features field's value.
+func (s *DescribeOrganizationConfigurationOutput) SetFeatures(v []*OrganizationFeatureConfigurationResult) *DescribeOrganizationConfigurationOutput {
+	s.Features = v
+	return s
+}
+
 // SetMemberAccountLimitReached sets the MemberAccountLimitReached field's value.
 func (s *DescribeOrganizationConfigurationOutput) SetMemberAccountLimitReached(v bool) *DescribeOrganizationConfigurationOutput {
 	s.MemberAccountLimitReached = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeOrganizationConfigurationOutput) SetNextToken(v string) *DescribeOrganizationConfigurationOutput {
+	s.NextToken = &v
 	return s
 }
 
@@ -10081,6 +11260,208 @@ func (s *DestinationProperties) SetDestinationArn(v string) *DestinationProperti
 // SetKmsKeyArn sets the KmsKeyArn field's value.
 func (s *DestinationProperties) SetKmsKeyArn(v string) *DestinationProperties {
 	s.KmsKeyArn = &v
+	return s
+}
+
+// Information about the additional configuration for a feature in your GuardDuty
+// account.
+type DetectorAdditionalConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Name of the additional configuration.
+	Name *string `locationName:"name" type:"string" enum:"FeatureAdditionalConfiguration"`
+
+	// Status of the additional configuration.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorAdditionalConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorAdditionalConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *DetectorAdditionalConfiguration) SetName(v string) *DetectorAdditionalConfiguration {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DetectorAdditionalConfiguration) SetStatus(v string) *DetectorAdditionalConfiguration {
+	s.Status = &v
+	return s
+}
+
+// Information about the additional configuration.
+type DetectorAdditionalConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// Name of the additional configuration.
+	Name *string `locationName:"name" type:"string" enum:"FeatureAdditionalConfiguration"`
+
+	// Status of the additional configuration.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+
+	// The timestamp at which the additional configuration was last updated. This
+	// is in UTC format.
+	UpdatedAt *time.Time `locationName:"updatedAt" type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorAdditionalConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorAdditionalConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *DetectorAdditionalConfigurationResult) SetName(v string) *DetectorAdditionalConfigurationResult {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DetectorAdditionalConfigurationResult) SetStatus(v string) *DetectorAdditionalConfigurationResult {
+	s.Status = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *DetectorAdditionalConfigurationResult) SetUpdatedAt(v time.Time) *DetectorAdditionalConfigurationResult {
+	s.UpdatedAt = &v
+	return s
+}
+
+// Contains information about a GuardDuty feature.
+type DetectorFeatureConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Additional configuration for a resource.
+	AdditionalConfiguration []*DetectorAdditionalConfiguration `locationName:"additionalConfiguration" type:"list"`
+
+	// The name of the feature.
+	Name *string `locationName:"name" type:"string" enum:"DetectorFeature"`
+
+	// The status of the feature.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorFeatureConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorFeatureConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalConfiguration sets the AdditionalConfiguration field's value.
+func (s *DetectorFeatureConfiguration) SetAdditionalConfiguration(v []*DetectorAdditionalConfiguration) *DetectorFeatureConfiguration {
+	s.AdditionalConfiguration = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DetectorFeatureConfiguration) SetName(v string) *DetectorFeatureConfiguration {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DetectorFeatureConfiguration) SetStatus(v string) *DetectorFeatureConfiguration {
+	s.Status = &v
+	return s
+}
+
+// Contains information about a GuardDuty feature.
+type DetectorFeatureConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// Additional configuration for a resource.
+	AdditionalConfiguration []*DetectorAdditionalConfigurationResult `locationName:"additionalConfiguration" type:"list"`
+
+	// Indicates the name of the feature that can be enabled for the detector.
+	Name *string `locationName:"name" type:"string" enum:"DetectorFeatureResult"`
+
+	// Indicates the status of the feature that is enabled for the detector.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+
+	// The timestamp at which the feature object was updated.
+	UpdatedAt *time.Time `locationName:"updatedAt" type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorFeatureConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DetectorFeatureConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalConfiguration sets the AdditionalConfiguration field's value.
+func (s *DetectorFeatureConfigurationResult) SetAdditionalConfiguration(v []*DetectorAdditionalConfigurationResult) *DetectorFeatureConfigurationResult {
+	s.AdditionalConfiguration = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DetectorFeatureConfigurationResult) SetName(v string) *DetectorFeatureConfigurationResult {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DetectorFeatureConfigurationResult) SetStatus(v string) *DetectorFeatureConfigurationResult {
+	s.Status = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *DetectorFeatureConfigurationResult) SetUpdatedAt(v time.Time) *DetectorFeatureConfigurationResult {
+	s.UpdatedAt = &v
 	return s
 }
 
@@ -10406,7 +11787,7 @@ type DnsRequestAction struct {
 	// Indicates whether the targeted port is blocked.
 	Blocked *bool `locationName:"blocked" type:"boolean"`
 
-	// The domain information for the API request.
+	// The domain information for the DNS query.
 	Domain *string `locationName:"domain" type:"string"`
 
 	// The network connection protocol observed in the activity that prompted GuardDuty
@@ -10539,6 +11920,9 @@ type EbsVolumeScanDetails struct {
 	// Returns the start date and time of the malware scan.
 	ScanStartedAt *time.Time `locationName:"scanStartedAt" type:"timestamp"`
 
+	// Specifies the scan type that invoked the malware scan.
+	ScanType *string `locationName:"scanType" type:"string" enum:"ScanType"`
+
 	// Contains list of threat intelligence sources used to detect threats.
 	Sources []*string `locationName:"sources" type:"list"`
 
@@ -10588,6 +11972,12 @@ func (s *EbsVolumeScanDetails) SetScanStartedAt(v time.Time) *EbsVolumeScanDetai
 	return s
 }
 
+// SetScanType sets the ScanType field's value.
+func (s *EbsVolumeScanDetails) SetScanType(v string) *EbsVolumeScanDetails {
+	s.ScanType = &v
+	return s
+}
+
 // SetSources sets the Sources field's value.
 func (s *EbsVolumeScanDetails) SetSources(v []*string) *EbsVolumeScanDetails {
 	s.Sources = v
@@ -10603,6 +11993,10 @@ func (s *EbsVolumeScanDetails) SetTriggerFindingId(v string) *EbsVolumeScanDetai
 // Describes the configuration of scanning EBS volumes as a data source.
 type EbsVolumesResult struct {
 	_ struct{} `type:"structure"`
+
+	// Specifies the reason why scanning EBS volumes (Malware Protection) was not
+	// enabled as a data source.
+	Reason *string `locationName:"reason" type:"string"`
 
 	// Describes whether scanning EBS volumes is enabled as a data source.
 	Status *string `locationName:"status" min:"1" type:"string" enum:"DataSourceStatus"`
@@ -10624,6 +12018,12 @@ func (s EbsVolumesResult) String() string {
 // value will be replaced with "sensitive".
 func (s EbsVolumesResult) GoString() string {
 	return s.String()
+}
+
+// SetReason sets the Reason field's value.
+func (s *EbsVolumesResult) SetReason(v string) *EbsVolumesResult {
+	s.Reason = &v
+	return s
 }
 
 // SetStatus sets the Status field's value.
@@ -11138,7 +12538,9 @@ func (s *FilterCriteria) SetFilterCriterion(v []*FilterCriterion) *FilterCriteri
 }
 
 // Represents a condition that when matched will be added to the response of
-// the operation.
+// the operation. Irrespective of using any filter criteria, an administrator
+// account can view the scan entries for all of its member accounts. However,
+// each member account can view the scan entries only for their own account.
 type FilterCriterion struct {
 	_ struct{} `type:"structure"`
 
@@ -11474,6 +12876,47 @@ func (s *FlowLogsConfigurationResult) SetStatus(v string) *FlowLogsConfiguration
 	return s
 }
 
+// Contains information about the free trial period for a feature.
+type FreeTrialFeatureConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// The number of the remaining free trial days for the feature.
+	FreeTrialDaysRemaining *int64 `locationName:"freeTrialDaysRemaining" type:"integer"`
+
+	// The name of the feature for which the free trial is configured.
+	Name *string `locationName:"name" type:"string" enum:"FreeTrialFeatureResult"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FreeTrialFeatureConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FreeTrialFeatureConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetFreeTrialDaysRemaining sets the FreeTrialDaysRemaining field's value.
+func (s *FreeTrialFeatureConfigurationResult) SetFreeTrialDaysRemaining(v int64) *FreeTrialFeatureConfigurationResult {
+	s.FreeTrialDaysRemaining = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *FreeTrialFeatureConfigurationResult) SetName(v string) *FreeTrialFeatureConfigurationResult {
+	s.Name = &v
+	return s
+}
+
 // Contains information about the location of the remote IP address.
 type GeoLocation struct {
 	_ struct{} `type:"structure"`
@@ -11597,6 +13040,109 @@ func (s *GetAdministratorAccountOutput) SetAdministrator(v *Administrator) *GetA
 	return s
 }
 
+type GetCoverageStatisticsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique ID of the GuardDuty detector associated to the coverage statistics.
+	//
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" min:"1" type:"string" required:"true"`
+
+	// Represents the criteria used to filter the coverage statistics
+	FilterCriteria *CoverageFilterCriteria `locationName:"filterCriteria" type:"structure"`
+
+	// Represents the statistics type used to aggregate the coverage details.
+	//
+	// StatisticsType is a required field
+	StatisticsType []*string `locationName:"statisticsType" type:"list" required:"true" enum:"CoverageStatisticsType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetCoverageStatisticsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetCoverageStatisticsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetCoverageStatisticsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetCoverageStatisticsInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.DetectorId != nil && len(*s.DetectorId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DetectorId", 1))
+	}
+	if s.StatisticsType == nil {
+		invalidParams.Add(request.NewErrParamRequired("StatisticsType"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *GetCoverageStatisticsInput) SetDetectorId(v string) *GetCoverageStatisticsInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetFilterCriteria sets the FilterCriteria field's value.
+func (s *GetCoverageStatisticsInput) SetFilterCriteria(v *CoverageFilterCriteria) *GetCoverageStatisticsInput {
+	s.FilterCriteria = v
+	return s
+}
+
+// SetStatisticsType sets the StatisticsType field's value.
+func (s *GetCoverageStatisticsInput) SetStatisticsType(v []*string) *GetCoverageStatisticsInput {
+	s.StatisticsType = v
+	return s
+}
+
+type GetCoverageStatisticsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Represents the count aggregated by the statusCode and resourceType.
+	CoverageStatistics *CoverageStatistics `locationName:"coverageStatistics" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetCoverageStatisticsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetCoverageStatisticsOutput) GoString() string {
+	return s.String()
+}
+
+// SetCoverageStatistics sets the CoverageStatistics field's value.
+func (s *GetCoverageStatisticsOutput) SetCoverageStatistics(v *CoverageStatistics) *GetCoverageStatisticsOutput {
+	s.CoverageStatistics = v
+	return s
+}
+
 type GetDetectorInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -11653,7 +13199,12 @@ type GetDetectorOutput struct {
 	CreatedAt *string `locationName:"createdAt" type:"string"`
 
 	// Describes which data sources are enabled for the detector.
-	DataSources *DataSourceConfigurationsResult `locationName:"dataSources" type:"structure"`
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *DataSourceConfigurationsResult `locationName:"dataSources" deprecated:"true" type:"structure"`
+
+	// Describes the features that have been enabled for the detector.
+	Features []*DetectorFeatureConfigurationResult `locationName:"features" type:"list"`
 
 	// The publishing frequency of the finding.
 	FindingPublishingFrequency *string `locationName:"findingPublishingFrequency" type:"string" enum:"FindingPublishingFrequency"`
@@ -11702,6 +13253,12 @@ func (s *GetDetectorOutput) SetCreatedAt(v string) *GetDetectorOutput {
 // SetDataSources sets the DataSources field's value.
 func (s *GetDetectorOutput) SetDataSources(v *DataSourceConfigurationsResult) *GetDetectorOutput {
 	s.DataSources = v
+	return s
+}
+
+// SetFeatures sets the Features field's value.
+func (s *GetDetectorOutput) SetFeatures(v []*DetectorFeatureConfigurationResult) *GetDetectorOutput {
+	s.Features = v
 	return s
 }
 
@@ -12343,7 +13900,7 @@ func (s *GetMalwareScanSettingsInput) SetDetectorId(v string) *GetMalwareScanSet
 type GetMalwareScanSettingsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// An enum value representing possible snapshot preservations.
+	// An enum value representing possible snapshot preservation settings.
 	EbsSnapshotPreservation *string `locationName:"ebsSnapshotPreservation" type:"string" enum:"EbsSnapshotPreservation"`
 
 	// Represents the criteria to be used in the filter for scanning resources.
@@ -14073,6 +15630,352 @@ func (s *KubernetesWorkloadDetails) SetVolumes(v []*Volume) *KubernetesWorkloadD
 	return s
 }
 
+// Information about the Lambda function involved in the finding.
+type LambdaDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Description of the Lambda function.
+	Description *string `locationName:"description" type:"string"`
+
+	// Amazon Resource Name (ARN) of the Lambda function.
+	FunctionArn *string `locationName:"functionArn" type:"string"`
+
+	// Name of the Lambda function.
+	FunctionName *string `locationName:"functionName" type:"string"`
+
+	// The version of the Lambda function.
+	FunctionVersion *string `locationName:"functionVersion" type:"string"`
+
+	// The timestamp when the Lambda function was last modified. This field is in
+	// the UTC date string format (2023-03-22T19:37:20.168Z).
+	LastModifiedAt *time.Time `locationName:"lastModifiedAt" type:"timestamp"`
+
+	// The revision ID of the Lambda function version.
+	RevisionId *string `locationName:"revisionId" type:"string"`
+
+	// The execution role of the Lambda function.
+	Role *string `locationName:"role" type:"string"`
+
+	// A list of tags attached to this resource, listed in the format of key:value
+	// pair.
+	Tags []*Tag `locationName:"tags" type:"list"`
+
+	// Amazon Virtual Private Cloud configuration details associated with your Lambda
+	// function.
+	VpcConfig *VpcConfig `locationName:"vpcConfig" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LambdaDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LambdaDetails) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *LambdaDetails) SetDescription(v string) *LambdaDetails {
+	s.Description = &v
+	return s
+}
+
+// SetFunctionArn sets the FunctionArn field's value.
+func (s *LambdaDetails) SetFunctionArn(v string) *LambdaDetails {
+	s.FunctionArn = &v
+	return s
+}
+
+// SetFunctionName sets the FunctionName field's value.
+func (s *LambdaDetails) SetFunctionName(v string) *LambdaDetails {
+	s.FunctionName = &v
+	return s
+}
+
+// SetFunctionVersion sets the FunctionVersion field's value.
+func (s *LambdaDetails) SetFunctionVersion(v string) *LambdaDetails {
+	s.FunctionVersion = &v
+	return s
+}
+
+// SetLastModifiedAt sets the LastModifiedAt field's value.
+func (s *LambdaDetails) SetLastModifiedAt(v time.Time) *LambdaDetails {
+	s.LastModifiedAt = &v
+	return s
+}
+
+// SetRevisionId sets the RevisionId field's value.
+func (s *LambdaDetails) SetRevisionId(v string) *LambdaDetails {
+	s.RevisionId = &v
+	return s
+}
+
+// SetRole sets the Role field's value.
+func (s *LambdaDetails) SetRole(v string) *LambdaDetails {
+	s.Role = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *LambdaDetails) SetTags(v []*Tag) *LambdaDetails {
+	s.Tags = v
+	return s
+}
+
+// SetVpcConfig sets the VpcConfig field's value.
+func (s *LambdaDetails) SetVpcConfig(v *VpcConfig) *LambdaDetails {
+	s.VpcConfig = v
+	return s
+}
+
+// Information about the runtime process details.
+type LineageObject struct {
+	_ struct{} `type:"structure"`
+
+	// The effective user ID that was used to execute the process.
+	Euid *int64 `locationName:"euid" type:"integer"`
+
+	// The absolute path of the process executable file.
+	ExecutablePath *string `locationName:"executablePath" type:"string"`
+
+	// The name of the process.
+	Name *string `locationName:"name" type:"string"`
+
+	// The process ID of the child process.
+	NamespacePid *int64 `locationName:"namespacePid" type:"integer"`
+
+	// The unique ID of the parent process. This ID is assigned to the parent process
+	// by GuardDuty.
+	ParentUuid *string `locationName:"parentUuid" type:"string"`
+
+	// The ID of the process.
+	Pid *int64 `locationName:"pid" type:"integer"`
+
+	// The time when the process started. This is in UTC format.
+	StartTime *time.Time `locationName:"startTime" type:"timestamp"`
+
+	// The user ID of the user that executed the process.
+	UserId *int64 `locationName:"userId" type:"integer"`
+
+	// The unique ID assigned to the process by GuardDuty.
+	Uuid *string `locationName:"uuid" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LineageObject) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LineageObject) GoString() string {
+	return s.String()
+}
+
+// SetEuid sets the Euid field's value.
+func (s *LineageObject) SetEuid(v int64) *LineageObject {
+	s.Euid = &v
+	return s
+}
+
+// SetExecutablePath sets the ExecutablePath field's value.
+func (s *LineageObject) SetExecutablePath(v string) *LineageObject {
+	s.ExecutablePath = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *LineageObject) SetName(v string) *LineageObject {
+	s.Name = &v
+	return s
+}
+
+// SetNamespacePid sets the NamespacePid field's value.
+func (s *LineageObject) SetNamespacePid(v int64) *LineageObject {
+	s.NamespacePid = &v
+	return s
+}
+
+// SetParentUuid sets the ParentUuid field's value.
+func (s *LineageObject) SetParentUuid(v string) *LineageObject {
+	s.ParentUuid = &v
+	return s
+}
+
+// SetPid sets the Pid field's value.
+func (s *LineageObject) SetPid(v int64) *LineageObject {
+	s.Pid = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *LineageObject) SetStartTime(v time.Time) *LineageObject {
+	s.StartTime = &v
+	return s
+}
+
+// SetUserId sets the UserId field's value.
+func (s *LineageObject) SetUserId(v int64) *LineageObject {
+	s.UserId = &v
+	return s
+}
+
+// SetUuid sets the Uuid field's value.
+func (s *LineageObject) SetUuid(v string) *LineageObject {
+	s.Uuid = &v
+	return s
+}
+
+type ListCoverageInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique ID of the detector whose coverage details you want to retrieve.
+	//
+	// DetectorId is a required field
+	DetectorId *string `location:"uri" locationName:"detectorId" min:"1" type:"string" required:"true"`
+
+	// Represents the criteria used to filter the coverage details.
+	FilterCriteria *CoverageFilterCriteria `locationName:"filterCriteria" type:"structure"`
+
+	// The maximum number of results to return in the response.
+	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
+
+	// A token to use for paginating results that are returned in the response.
+	// Set the value of this parameter to null for the first request to a list action.
+	// For subsequent calls, use the NextToken value returned from the previous
+	// request to continue listing results after the first page.
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// Represents the criteria used to sort the coverage details.
+	SortCriteria *CoverageSortCriteria `locationName:"sortCriteria" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListCoverageInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListCoverageInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListCoverageInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListCoverageInput"}
+	if s.DetectorId == nil {
+		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
+	}
+	if s.DetectorId != nil && len(*s.DetectorId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DetectorId", 1))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDetectorId sets the DetectorId field's value.
+func (s *ListCoverageInput) SetDetectorId(v string) *ListCoverageInput {
+	s.DetectorId = &v
+	return s
+}
+
+// SetFilterCriteria sets the FilterCriteria field's value.
+func (s *ListCoverageInput) SetFilterCriteria(v *CoverageFilterCriteria) *ListCoverageInput {
+	s.FilterCriteria = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListCoverageInput) SetMaxResults(v int64) *ListCoverageInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListCoverageInput) SetNextToken(v string) *ListCoverageInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetSortCriteria sets the SortCriteria field's value.
+func (s *ListCoverageInput) SetSortCriteria(v *CoverageSortCriteria) *ListCoverageInput {
+	s.SortCriteria = v
+	return s
+}
+
+type ListCoverageOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination parameter to be used on the next list operation to retrieve
+	// more items.
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// A list of resources and their attributes providing cluster details.
+	//
+	// Resources is a required field
+	Resources []*CoverageResource `locationName:"resources" type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListCoverageOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListCoverageOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListCoverageOutput) SetNextToken(v string) *ListCoverageOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetResources sets the Resources field's value.
+func (s *ListCoverageOutput) SetResources(v []*CoverageResource) *ListCoverageOutput {
+	s.Resources = v
+	return s
+}
+
 type ListDetectorsInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -14760,6 +16663,8 @@ type ListMembersInput struct {
 
 	// Specifies whether to only return associated members or to return all members
 	// (including members who haven't been invited yet or have been disassociated).
+	// Member accounts must have been previously associated with the GuardDuty administrator
+	// account using Create Members (https://docs.aws.amazon.com/guardduty/latest/APIReference/API_CreateMembers.html).
 	OnlyAssociated *string `location:"querystring" locationName:"onlyAssociated" type:"string"`
 }
 
@@ -15351,6 +17256,67 @@ func (s *LocalPortDetails) SetPortName(v string) *LocalPortDetails {
 	return s
 }
 
+// Information about the login attempts.
+type LoginAttribute struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the application name used to attempt log in.
+	Application *string `locationName:"application" type:"string"`
+
+	// Represents the sum of failed (unsuccessful) login attempts made to establish
+	// a connection to the database instance.
+	FailedLoginAttempts *int64 `locationName:"failedLoginAttempts" type:"integer"`
+
+	// Represents the sum of successful connections (a correct combination of login
+	// attributes) made to the database instance by the actor.
+	SuccessfulLoginAttempts *int64 `locationName:"successfulLoginAttempts" type:"integer"`
+
+	// Indicates the user name which attempted to log in.
+	User *string `locationName:"user" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LoginAttribute) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s LoginAttribute) GoString() string {
+	return s.String()
+}
+
+// SetApplication sets the Application field's value.
+func (s *LoginAttribute) SetApplication(v string) *LoginAttribute {
+	s.Application = &v
+	return s
+}
+
+// SetFailedLoginAttempts sets the FailedLoginAttempts field's value.
+func (s *LoginAttribute) SetFailedLoginAttempts(v int64) *LoginAttribute {
+	s.FailedLoginAttempts = &v
+	return s
+}
+
+// SetSuccessfulLoginAttempts sets the SuccessfulLoginAttempts field's value.
+func (s *LoginAttribute) SetSuccessfulLoginAttempts(v int64) *LoginAttribute {
+	s.SuccessfulLoginAttempts = &v
+	return s
+}
+
+// SetUser sets the User field's value.
+func (s *LoginAttribute) SetUser(v string) *LoginAttribute {
+	s.User = &v
+	return s
+}
+
 // Describes whether Malware Protection will be enabled as a data source.
 type MalwareProtectionConfiguration struct {
 	_ struct{} `type:"structure"`
@@ -15624,6 +17590,100 @@ func (s *Member) SetUpdatedAt(v string) *Member {
 	return s
 }
 
+// Information about the additional configuration for the member account.
+type MemberAdditionalConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Name of the additional configuration.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeatureAdditionalConfiguration"`
+
+	// Status of the additional configuration.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberAdditionalConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberAdditionalConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *MemberAdditionalConfiguration) SetName(v string) *MemberAdditionalConfiguration {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MemberAdditionalConfiguration) SetStatus(v string) *MemberAdditionalConfiguration {
+	s.Status = &v
+	return s
+}
+
+// Information about the additional configuration for the member account.
+type MemberAdditionalConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the name of the additional configuration that is set for the member
+	// account.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeatureAdditionalConfiguration"`
+
+	// Indicates the status of the additional configuration that is set for the
+	// member account.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+
+	// The timestamp at which the additional configuration was set for the member
+	// account. This is in UTC format.
+	UpdatedAt *time.Time `locationName:"updatedAt" type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberAdditionalConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberAdditionalConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *MemberAdditionalConfigurationResult) SetName(v string) *MemberAdditionalConfigurationResult {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MemberAdditionalConfigurationResult) SetStatus(v string) *MemberAdditionalConfigurationResult {
+	s.Status = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *MemberAdditionalConfigurationResult) SetUpdatedAt(v time.Time) *MemberAdditionalConfigurationResult {
+	s.UpdatedAt = &v
+	return s
+}
+
 // Contains information on which data sources are enabled for a member account.
 type MemberDataSourceConfiguration struct {
 	_ struct{} `type:"structure"`
@@ -15635,8 +17695,11 @@ type MemberDataSourceConfiguration struct {
 
 	// Contains information on the status of data sources for the account.
 	//
-	// DataSources is a required field
-	DataSources *DataSourceConfigurationsResult `locationName:"dataSources" type:"structure" required:"true"`
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *DataSourceConfigurationsResult `locationName:"dataSources" deprecated:"true" type:"structure"`
+
+	// Contains information about the status of the features for the member account.
+	Features []*MemberFeaturesConfigurationResult `locationName:"features" type:"list"`
 }
 
 // String returns the string representation.
@@ -15666,6 +17729,122 @@ func (s *MemberDataSourceConfiguration) SetAccountId(v string) *MemberDataSource
 // SetDataSources sets the DataSources field's value.
 func (s *MemberDataSourceConfiguration) SetDataSources(v *DataSourceConfigurationsResult) *MemberDataSourceConfiguration {
 	s.DataSources = v
+	return s
+}
+
+// SetFeatures sets the Features field's value.
+func (s *MemberDataSourceConfiguration) SetFeatures(v []*MemberFeaturesConfigurationResult) *MemberDataSourceConfiguration {
+	s.Features = v
+	return s
+}
+
+// Contains information about the features for the member account.
+type MemberFeaturesConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Additional configuration of the feature for the member account.
+	AdditionalConfiguration []*MemberAdditionalConfiguration `locationName:"additionalConfiguration" type:"list"`
+
+	// The name of the feature.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeature"`
+
+	// The status of the feature.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberFeaturesConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberFeaturesConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalConfiguration sets the AdditionalConfiguration field's value.
+func (s *MemberFeaturesConfiguration) SetAdditionalConfiguration(v []*MemberAdditionalConfiguration) *MemberFeaturesConfiguration {
+	s.AdditionalConfiguration = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *MemberFeaturesConfiguration) SetName(v string) *MemberFeaturesConfiguration {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MemberFeaturesConfiguration) SetStatus(v string) *MemberFeaturesConfiguration {
+	s.Status = &v
+	return s
+}
+
+// Contains information about the features for the member account.
+type MemberFeaturesConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the additional configuration of the feature that is configured
+	// for the member account.
+	AdditionalConfiguration []*MemberAdditionalConfigurationResult `locationName:"additionalConfiguration" type:"list"`
+
+	// Indicates the name of the feature that is enabled for the detector.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeature"`
+
+	// Indicates the status of the feature that is enabled for the detector.
+	Status *string `locationName:"status" type:"string" enum:"FeatureStatus"`
+
+	// The timestamp at which the feature object was updated.
+	UpdatedAt *time.Time `locationName:"updatedAt" type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberFeaturesConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MemberFeaturesConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalConfiguration sets the AdditionalConfiguration field's value.
+func (s *MemberFeaturesConfigurationResult) SetAdditionalConfiguration(v []*MemberAdditionalConfigurationResult) *MemberFeaturesConfigurationResult {
+	s.AdditionalConfiguration = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *MemberFeaturesConfigurationResult) SetName(v string) *MemberFeaturesConfigurationResult {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MemberFeaturesConfigurationResult) SetStatus(v string) *MemberFeaturesConfigurationResult {
+	s.Status = &v
+	return s
+}
+
+// SetUpdatedAt sets the UpdatedAt field's value.
+func (s *MemberFeaturesConfigurationResult) SetUpdatedAt(v time.Time) *MemberFeaturesConfigurationResult {
+	s.UpdatedAt = &v
 	return s
 }
 
@@ -15929,6 +18108,98 @@ func (s *Organization) SetOrg(v string) *Organization {
 	return s
 }
 
+// A list of additional configurations which will be configured for the organization.
+type OrganizationAdditionalConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the additional configuration that will be configured for the
+	// organization.
+	AutoEnable *string `locationName:"autoEnable" type:"string" enum:"OrgFeatureStatus"`
+
+	// The name of the additional configuration that will be configured for the
+	// organization.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeatureAdditionalConfiguration"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationAdditionalConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationAdditionalConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetAutoEnable sets the AutoEnable field's value.
+func (s *OrganizationAdditionalConfiguration) SetAutoEnable(v string) *OrganizationAdditionalConfiguration {
+	s.AutoEnable = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *OrganizationAdditionalConfiguration) SetName(v string) *OrganizationAdditionalConfiguration {
+	s.Name = &v
+	return s
+}
+
+// A list of additional configuration which will be configured for the organization.
+type OrganizationAdditionalConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// Describes how The status of the additional configuration that are configured
+	// for the member accounts within the organization.
+	//
+	// If you set AutoEnable to NEW, a feature will be configured for only the new
+	// accounts when they join the organization.
+	//
+	// If you set AutoEnable to NONE, no feature will be configured for the accounts
+	// when they join the organization.
+	AutoEnable *string `locationName:"autoEnable" type:"string" enum:"OrgFeatureStatus"`
+
+	// The name of the additional configuration that is configured for the member
+	// accounts within the organization.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeatureAdditionalConfiguration"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationAdditionalConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationAdditionalConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetAutoEnable sets the AutoEnable field's value.
+func (s *OrganizationAdditionalConfigurationResult) SetAutoEnable(v string) *OrganizationAdditionalConfigurationResult {
+	s.AutoEnable = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *OrganizationAdditionalConfigurationResult) SetName(v string) *OrganizationAdditionalConfigurationResult {
+	s.Name = &v
+	return s
+}
+
 // An object that contains information on which data sources will be configured
 // to be automatically enabled for new members within the organization.
 type OrganizationDataSourceConfigurations struct {
@@ -16119,6 +18390,115 @@ func (s OrganizationEbsVolumesResult) GoString() string {
 // SetAutoEnable sets the AutoEnable field's value.
 func (s *OrganizationEbsVolumesResult) SetAutoEnable(v bool) *OrganizationEbsVolumesResult {
 	s.AutoEnable = &v
+	return s
+}
+
+// A list of features which will be configured for the organization.
+type OrganizationFeatureConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The additional information that will be configured for the organization.
+	AdditionalConfiguration []*OrganizationAdditionalConfiguration `locationName:"additionalConfiguration" type:"list"`
+
+	// The status of the feature that will be configured for the organization.
+	AutoEnable *string `locationName:"autoEnable" type:"string" enum:"OrgFeatureStatus"`
+
+	// The name of the feature that will be configured for the organization.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeature"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationFeatureConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationFeatureConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalConfiguration sets the AdditionalConfiguration field's value.
+func (s *OrganizationFeatureConfiguration) SetAdditionalConfiguration(v []*OrganizationAdditionalConfiguration) *OrganizationFeatureConfiguration {
+	s.AdditionalConfiguration = v
+	return s
+}
+
+// SetAutoEnable sets the AutoEnable field's value.
+func (s *OrganizationFeatureConfiguration) SetAutoEnable(v string) *OrganizationFeatureConfiguration {
+	s.AutoEnable = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *OrganizationFeatureConfiguration) SetName(v string) *OrganizationFeatureConfiguration {
+	s.Name = &v
+	return s
+}
+
+// A list of features which will be configured for the organization.
+type OrganizationFeatureConfigurationResult struct {
+	_ struct{} `type:"structure"`
+
+	// The additional configuration that is configured for the member accounts within
+	// the organization.
+	AdditionalConfiguration []*OrganizationAdditionalConfigurationResult `locationName:"additionalConfiguration" type:"list"`
+
+	// Describes how The status of the feature that are configured for the member
+	// accounts within the organization.
+	//
+	// If you set AutoEnable to NEW, a feature will be configured for only the new
+	// accounts when they join the organization.
+	//
+	// If you set AutoEnable to NONE, no feature will be configured for the accounts
+	// when they join the organization.
+	AutoEnable *string `locationName:"autoEnable" type:"string" enum:"OrgFeatureStatus"`
+
+	// The name of the feature that is configured for the member accounts within
+	// the organization.
+	Name *string `locationName:"name" type:"string" enum:"OrgFeature"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationFeatureConfigurationResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s OrganizationFeatureConfigurationResult) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalConfiguration sets the AdditionalConfiguration field's value.
+func (s *OrganizationFeatureConfigurationResult) SetAdditionalConfiguration(v []*OrganizationAdditionalConfigurationResult) *OrganizationFeatureConfigurationResult {
+	s.AdditionalConfiguration = v
+	return s
+}
+
+// SetAutoEnable sets the AutoEnable field's value.
+func (s *OrganizationFeatureConfigurationResult) SetAutoEnable(v string) *OrganizationFeatureConfigurationResult {
+	s.AutoEnable = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *OrganizationFeatureConfigurationResult) SetName(v string) *OrganizationFeatureConfigurationResult {
+	s.Name = &v
 	return s
 }
 
@@ -16719,6 +19099,147 @@ func (s *PrivateIpAddressDetails) SetPrivateIpAddress(v string) *PrivateIpAddres
 	return s
 }
 
+// Information about the observed process.
+type ProcessDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The effective user ID of the user that executed the process.
+	Euid *int64 `locationName:"euid" type:"integer"`
+
+	// The absolute path of the process executable file.
+	ExecutablePath *string `locationName:"executablePath" type:"string"`
+
+	// The SHA256 hash of the process executable.
+	ExecutableSha256 *string `locationName:"executableSha256" type:"string"`
+
+	// Information about the process's lineage.
+	Lineage []*LineageObject `locationName:"lineage" type:"list"`
+
+	// The name of the process.
+	Name *string `locationName:"name" type:"string"`
+
+	// The ID of the child process.
+	NamespacePid *int64 `locationName:"namespacePid" type:"integer"`
+
+	// The unique ID of the parent process. This ID is assigned to the parent process
+	// by GuardDuty.
+	ParentUuid *string `locationName:"parentUuid" type:"string"`
+
+	// The ID of the process.
+	Pid *int64 `locationName:"pid" type:"integer"`
+
+	// The present working directory of the process.
+	Pwd *string `locationName:"pwd" type:"string"`
+
+	// The time when the process started. This is in UTC format.
+	StartTime *time.Time `locationName:"startTime" type:"timestamp"`
+
+	// The user that executed the process.
+	User *string `locationName:"user" type:"string"`
+
+	// The unique ID of the user that executed the process.
+	UserId *int64 `locationName:"userId" type:"integer"`
+
+	// The unique ID assigned to the process by GuardDuty.
+	Uuid *string `locationName:"uuid" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ProcessDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ProcessDetails) GoString() string {
+	return s.String()
+}
+
+// SetEuid sets the Euid field's value.
+func (s *ProcessDetails) SetEuid(v int64) *ProcessDetails {
+	s.Euid = &v
+	return s
+}
+
+// SetExecutablePath sets the ExecutablePath field's value.
+func (s *ProcessDetails) SetExecutablePath(v string) *ProcessDetails {
+	s.ExecutablePath = &v
+	return s
+}
+
+// SetExecutableSha256 sets the ExecutableSha256 field's value.
+func (s *ProcessDetails) SetExecutableSha256(v string) *ProcessDetails {
+	s.ExecutableSha256 = &v
+	return s
+}
+
+// SetLineage sets the Lineage field's value.
+func (s *ProcessDetails) SetLineage(v []*LineageObject) *ProcessDetails {
+	s.Lineage = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *ProcessDetails) SetName(v string) *ProcessDetails {
+	s.Name = &v
+	return s
+}
+
+// SetNamespacePid sets the NamespacePid field's value.
+func (s *ProcessDetails) SetNamespacePid(v int64) *ProcessDetails {
+	s.NamespacePid = &v
+	return s
+}
+
+// SetParentUuid sets the ParentUuid field's value.
+func (s *ProcessDetails) SetParentUuid(v string) *ProcessDetails {
+	s.ParentUuid = &v
+	return s
+}
+
+// SetPid sets the Pid field's value.
+func (s *ProcessDetails) SetPid(v int64) *ProcessDetails {
+	s.Pid = &v
+	return s
+}
+
+// SetPwd sets the Pwd field's value.
+func (s *ProcessDetails) SetPwd(v string) *ProcessDetails {
+	s.Pwd = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *ProcessDetails) SetStartTime(v time.Time) *ProcessDetails {
+	s.StartTime = &v
+	return s
+}
+
+// SetUser sets the User field's value.
+func (s *ProcessDetails) SetUser(v string) *ProcessDetails {
+	s.User = &v
+	return s
+}
+
+// SetUserId sets the UserId field's value.
+func (s *ProcessDetails) SetUserId(v int64) *ProcessDetails {
+	s.UserId = &v
+	return s
+}
+
+// SetUuid sets the Uuid field's value.
+func (s *ProcessDetails) SetUuid(v string) *ProcessDetails {
+	s.Uuid = &v
+	return s
+}
+
 // Contains information about the product code for the EC2 instance.
 type ProductCode struct {
 	_ struct{} `type:"structure"`
@@ -16799,6 +19320,198 @@ func (s *PublicAccess) SetEffectivePermission(v string) *PublicAccess {
 // SetPermissionConfiguration sets the PermissionConfiguration field's value.
 func (s *PublicAccess) SetPermissionConfiguration(v *PermissionConfiguration) *PublicAccess {
 	s.PermissionConfiguration = v
+	return s
+}
+
+// Contains information about the resource type RDSDBInstance involved in a
+// GuardDuty finding.
+type RdsDbInstanceDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the database cluster that contains the database instance
+	// ID involved in the finding.
+	DbClusterIdentifier *string `locationName:"dbClusterIdentifier" type:"string"`
+
+	// The Amazon Resource Name (ARN) that identifies the database instance involved
+	// in the finding.
+	DbInstanceArn *string `locationName:"dbInstanceArn" type:"string"`
+
+	// The identifier associated to the database instance that was involved in the
+	// finding.
+	DbInstanceIdentifier *string `locationName:"dbInstanceIdentifier" type:"string"`
+
+	// The database engine of the database instance involved in the finding.
+	Engine *string `locationName:"engine" type:"string"`
+
+	// The version of the database engine that was involved in the finding.
+	EngineVersion *string `locationName:"engineVersion" type:"string"`
+
+	// Instance tag key-value pairs associated with the database instance ID.
+	Tags []*Tag `locationName:"tags" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RdsDbInstanceDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RdsDbInstanceDetails) GoString() string {
+	return s.String()
+}
+
+// SetDbClusterIdentifier sets the DbClusterIdentifier field's value.
+func (s *RdsDbInstanceDetails) SetDbClusterIdentifier(v string) *RdsDbInstanceDetails {
+	s.DbClusterIdentifier = &v
+	return s
+}
+
+// SetDbInstanceArn sets the DbInstanceArn field's value.
+func (s *RdsDbInstanceDetails) SetDbInstanceArn(v string) *RdsDbInstanceDetails {
+	s.DbInstanceArn = &v
+	return s
+}
+
+// SetDbInstanceIdentifier sets the DbInstanceIdentifier field's value.
+func (s *RdsDbInstanceDetails) SetDbInstanceIdentifier(v string) *RdsDbInstanceDetails {
+	s.DbInstanceIdentifier = &v
+	return s
+}
+
+// SetEngine sets the Engine field's value.
+func (s *RdsDbInstanceDetails) SetEngine(v string) *RdsDbInstanceDetails {
+	s.Engine = &v
+	return s
+}
+
+// SetEngineVersion sets the EngineVersion field's value.
+func (s *RdsDbInstanceDetails) SetEngineVersion(v string) *RdsDbInstanceDetails {
+	s.EngineVersion = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *RdsDbInstanceDetails) SetTags(v []*Tag) *RdsDbInstanceDetails {
+	s.Tags = v
+	return s
+}
+
+// Contains information about the user and authentication details for a database
+// instance involved in the finding.
+type RdsDbUserDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The application name used in the anomalous login attempt.
+	Application *string `locationName:"application" type:"string"`
+
+	// The authentication method used by the user involved in the finding.
+	AuthMethod *string `locationName:"authMethod" type:"string"`
+
+	// The name of the database instance involved in the anomalous login attempt.
+	Database *string `locationName:"database" type:"string"`
+
+	// The version of the Secure Socket Layer (SSL) used for the network.
+	Ssl *string `locationName:"ssl" type:"string"`
+
+	// The user name used in the anomalous login attempt.
+	User *string `locationName:"user" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RdsDbUserDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RdsDbUserDetails) GoString() string {
+	return s.String()
+}
+
+// SetApplication sets the Application field's value.
+func (s *RdsDbUserDetails) SetApplication(v string) *RdsDbUserDetails {
+	s.Application = &v
+	return s
+}
+
+// SetAuthMethod sets the AuthMethod field's value.
+func (s *RdsDbUserDetails) SetAuthMethod(v string) *RdsDbUserDetails {
+	s.AuthMethod = &v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *RdsDbUserDetails) SetDatabase(v string) *RdsDbUserDetails {
+	s.Database = &v
+	return s
+}
+
+// SetSsl sets the Ssl field's value.
+func (s *RdsDbUserDetails) SetSsl(v string) *RdsDbUserDetails {
+	s.Ssl = &v
+	return s
+}
+
+// SetUser sets the User field's value.
+func (s *RdsDbUserDetails) SetUser(v string) *RdsDbUserDetails {
+	s.User = &v
+	return s
+}
+
+// Indicates that a login attempt was made to the potentially compromised database
+// from a remote IP address.
+type RdsLoginAttemptAction struct {
+	_ struct{} `type:"structure"`
+
+	// Indicates the login attributes used in the login attempt.
+	LoginAttributes []*LoginAttribute `type:"list"`
+
+	// Contains information about the remote IP address of the connection.
+	RemoteIpDetails *RemoteIpDetails `locationName:"remoteIpDetails" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RdsLoginAttemptAction) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RdsLoginAttemptAction) GoString() string {
+	return s.String()
+}
+
+// SetLoginAttributes sets the LoginAttributes field's value.
+func (s *RdsLoginAttemptAction) SetLoginAttributes(v []*LoginAttribute) *RdsLoginAttemptAction {
+	s.LoginAttributes = v
+	return s
+}
+
+// SetRemoteIpDetails sets the RemoteIpDetails field's value.
+func (s *RdsLoginAttemptAction) SetRemoteIpDetails(v *RemoteIpDetails) *RdsLoginAttemptAction {
+	s.RemoteIpDetails = v
 	return s
 }
 
@@ -16961,8 +19674,8 @@ func (s *RemotePortDetails) SetPortName(v string) *RemotePortDetails {
 type Resource struct {
 	_ struct{} `type:"structure"`
 
-	// The IAM access key details (IAM user information) of a user that engaged
-	// in the activity that prompted GuardDuty to generate a finding.
+	// The IAM access key details (user information) of a user that engaged in the
+	// activity that prompted GuardDuty to generate a finding.
 	AccessKeyDetails *AccessKeyDetails `locationName:"accessKeyDetails" type:"structure"`
 
 	// Details of a container.
@@ -16983,6 +19696,17 @@ type Resource struct {
 
 	// Details about the Kubernetes user and workload involved in a Kubernetes finding.
 	KubernetesDetails *KubernetesDetails `locationName:"kubernetesDetails" type:"structure"`
+
+	// Contains information about the Lambda function that was involved in a finding.
+	LambdaDetails *LambdaDetails `locationName:"lambdaDetails" type:"structure"`
+
+	// Contains information about the database instance to which an anomalous login
+	// attempt was made.
+	RdsDbInstanceDetails *RdsDbInstanceDetails `locationName:"rdsDbInstanceDetails" type:"structure"`
+
+	// Contains information about the user details through which anomalous login
+	// attempt was made.
+	RdsDbUserDetails *RdsDbUserDetails `locationName:"rdsDbUserDetails" type:"structure"`
 
 	// The type of Amazon Web Services resource.
 	ResourceType *string `locationName:"resourceType" type:"string"`
@@ -17051,6 +19775,24 @@ func (s *Resource) SetKubernetesDetails(v *KubernetesDetails) *Resource {
 	return s
 }
 
+// SetLambdaDetails sets the LambdaDetails field's value.
+func (s *Resource) SetLambdaDetails(v *LambdaDetails) *Resource {
+	s.LambdaDetails = v
+	return s
+}
+
+// SetRdsDbInstanceDetails sets the RdsDbInstanceDetails field's value.
+func (s *Resource) SetRdsDbInstanceDetails(v *RdsDbInstanceDetails) *Resource {
+	s.RdsDbInstanceDetails = v
+	return s
+}
+
+// SetRdsDbUserDetails sets the RdsDbUserDetails field's value.
+func (s *Resource) SetRdsDbUserDetails(v *RdsDbUserDetails) *Resource {
+	s.RdsDbUserDetails = v
+	return s
+}
+
 // SetResourceType sets the ResourceType field's value.
 func (s *Resource) SetResourceType(v string) *Resource {
 	s.ResourceType = &v
@@ -17092,6 +19834,258 @@ func (s ResourceDetails) GoString() string {
 // SetInstanceArn sets the InstanceArn field's value.
 func (s *ResourceDetails) SetInstanceArn(v string) *ResourceDetails {
 	s.InstanceArn = &v
+	return s
+}
+
+// Additional information about the suspicious activity.
+type RuntimeContext struct {
+	_ struct{} `type:"structure"`
+
+	// Represents the communication protocol associated with the address. For example,
+	// the address family AF_INET is used for IP version of 4 protocol.
+	AddressFamily *string `locationName:"addressFamily" type:"string"`
+
+	// Represents the type of mounted fileSystem.
+	FileSystemType *string `locationName:"fileSystemType" type:"string"`
+
+	// Represents options that control the behavior of a runtime operation or action.
+	// For example, a filesystem mount operation may contain a read-only flag.
+	Flags []*string `locationName:"flags" type:"list"`
+
+	// Specifies a particular protocol within the address family. Usually there
+	// is a single protocol in address families. For example, the address family
+	// AF_INET only has the IP protocol.
+	IanaProtocolNumber *int64 `locationName:"ianaProtocolNumber" type:"integer"`
+
+	// The value of the LD_PRELOAD environment variable.
+	LdPreloadValue *string `locationName:"ldPreloadValue" type:"string"`
+
+	// The path to the new library that was loaded.
+	LibraryPath *string `locationName:"libraryPath" type:"string"`
+
+	// Specifies the Region of a process's address space such as stack and heap.
+	MemoryRegions []*string `locationName:"memoryRegions" type:"list"`
+
+	// The timestamp at which the process modified the current process. The timestamp
+	// is in UTC date string format.
+	ModifiedAt *time.Time `locationName:"modifiedAt" type:"timestamp"`
+
+	// Information about the process that modified the current process. This is
+	// available for multiple finding types.
+	ModifyingProcess *ProcessDetails `locationName:"modifyingProcess" type:"structure"`
+
+	// The path to the module loaded into the kernel.
+	ModuleFilePath *string `locationName:"moduleFilePath" type:"string"`
+
+	// The name of the module loaded into the kernel.
+	ModuleName *string `locationName:"moduleName" type:"string"`
+
+	// The SHA256 hash of the module.
+	ModuleSha256 *string `locationName:"moduleSha256" type:"string"`
+
+	// The path on the host that is mounted by the container.
+	MountSource *string `locationName:"mountSource" type:"string"`
+
+	// The path in the container that is mapped to the host directory.
+	MountTarget *string `locationName:"mountTarget" type:"string"`
+
+	// The path in the container that modified the release agent file.
+	ReleaseAgentPath *string `locationName:"releaseAgentPath" type:"string"`
+
+	// The path to the leveraged runc implementation.
+	RuncBinaryPath *string `locationName:"runcBinaryPath" type:"string"`
+
+	// The path to the script that was executed.
+	ScriptPath *string `locationName:"scriptPath" type:"string"`
+
+	// The path to the modified shell history file.
+	ShellHistoryFilePath *string `locationName:"shellHistoryFilePath" type:"string"`
+
+	// The path to the docket socket that was accessed.
+	SocketPath *string `locationName:"socketPath" type:"string"`
+
+	// Information about the process that had its memory overwritten by the current
+	// process.
+	TargetProcess *ProcessDetails `locationName:"targetProcess" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RuntimeContext) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RuntimeContext) GoString() string {
+	return s.String()
+}
+
+// SetAddressFamily sets the AddressFamily field's value.
+func (s *RuntimeContext) SetAddressFamily(v string) *RuntimeContext {
+	s.AddressFamily = &v
+	return s
+}
+
+// SetFileSystemType sets the FileSystemType field's value.
+func (s *RuntimeContext) SetFileSystemType(v string) *RuntimeContext {
+	s.FileSystemType = &v
+	return s
+}
+
+// SetFlags sets the Flags field's value.
+func (s *RuntimeContext) SetFlags(v []*string) *RuntimeContext {
+	s.Flags = v
+	return s
+}
+
+// SetIanaProtocolNumber sets the IanaProtocolNumber field's value.
+func (s *RuntimeContext) SetIanaProtocolNumber(v int64) *RuntimeContext {
+	s.IanaProtocolNumber = &v
+	return s
+}
+
+// SetLdPreloadValue sets the LdPreloadValue field's value.
+func (s *RuntimeContext) SetLdPreloadValue(v string) *RuntimeContext {
+	s.LdPreloadValue = &v
+	return s
+}
+
+// SetLibraryPath sets the LibraryPath field's value.
+func (s *RuntimeContext) SetLibraryPath(v string) *RuntimeContext {
+	s.LibraryPath = &v
+	return s
+}
+
+// SetMemoryRegions sets the MemoryRegions field's value.
+func (s *RuntimeContext) SetMemoryRegions(v []*string) *RuntimeContext {
+	s.MemoryRegions = v
+	return s
+}
+
+// SetModifiedAt sets the ModifiedAt field's value.
+func (s *RuntimeContext) SetModifiedAt(v time.Time) *RuntimeContext {
+	s.ModifiedAt = &v
+	return s
+}
+
+// SetModifyingProcess sets the ModifyingProcess field's value.
+func (s *RuntimeContext) SetModifyingProcess(v *ProcessDetails) *RuntimeContext {
+	s.ModifyingProcess = v
+	return s
+}
+
+// SetModuleFilePath sets the ModuleFilePath field's value.
+func (s *RuntimeContext) SetModuleFilePath(v string) *RuntimeContext {
+	s.ModuleFilePath = &v
+	return s
+}
+
+// SetModuleName sets the ModuleName field's value.
+func (s *RuntimeContext) SetModuleName(v string) *RuntimeContext {
+	s.ModuleName = &v
+	return s
+}
+
+// SetModuleSha256 sets the ModuleSha256 field's value.
+func (s *RuntimeContext) SetModuleSha256(v string) *RuntimeContext {
+	s.ModuleSha256 = &v
+	return s
+}
+
+// SetMountSource sets the MountSource field's value.
+func (s *RuntimeContext) SetMountSource(v string) *RuntimeContext {
+	s.MountSource = &v
+	return s
+}
+
+// SetMountTarget sets the MountTarget field's value.
+func (s *RuntimeContext) SetMountTarget(v string) *RuntimeContext {
+	s.MountTarget = &v
+	return s
+}
+
+// SetReleaseAgentPath sets the ReleaseAgentPath field's value.
+func (s *RuntimeContext) SetReleaseAgentPath(v string) *RuntimeContext {
+	s.ReleaseAgentPath = &v
+	return s
+}
+
+// SetRuncBinaryPath sets the RuncBinaryPath field's value.
+func (s *RuntimeContext) SetRuncBinaryPath(v string) *RuntimeContext {
+	s.RuncBinaryPath = &v
+	return s
+}
+
+// SetScriptPath sets the ScriptPath field's value.
+func (s *RuntimeContext) SetScriptPath(v string) *RuntimeContext {
+	s.ScriptPath = &v
+	return s
+}
+
+// SetShellHistoryFilePath sets the ShellHistoryFilePath field's value.
+func (s *RuntimeContext) SetShellHistoryFilePath(v string) *RuntimeContext {
+	s.ShellHistoryFilePath = &v
+	return s
+}
+
+// SetSocketPath sets the SocketPath field's value.
+func (s *RuntimeContext) SetSocketPath(v string) *RuntimeContext {
+	s.SocketPath = &v
+	return s
+}
+
+// SetTargetProcess sets the TargetProcess field's value.
+func (s *RuntimeContext) SetTargetProcess(v *ProcessDetails) *RuntimeContext {
+	s.TargetProcess = v
+	return s
+}
+
+// Information about the process and any required context values for a specific
+// finding.
+type RuntimeDetails struct {
+	_ struct{} `type:"structure"`
+
+	// Additional information about the suspicious activity.
+	Context *RuntimeContext `locationName:"context" type:"structure"`
+
+	// Information about the observed process.
+	Process *ProcessDetails `locationName:"process" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RuntimeDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s RuntimeDetails) GoString() string {
+	return s.String()
+}
+
+// SetContext sets the Context field's value.
+func (s *RuntimeDetails) SetContext(v *RuntimeContext) *RuntimeDetails {
+	s.Context = v
+	return s
+}
+
+// SetProcess sets the Process field's value.
+func (s *RuntimeDetails) SetProcess(v *ProcessDetails) *RuntimeDetails {
+	s.Process = v
 	return s
 }
 
@@ -17314,10 +20308,13 @@ type Scan struct {
 	// An enum value representing possible scan statuses.
 	ScanStatus *string `locationName:"scanStatus" type:"string" enum:"ScanStatus"`
 
+	// Specifies the scan type that invoked the malware scan.
+	ScanType *string `locationName:"scanType" type:"string" enum:"ScanType"`
+
 	// Represents total bytes that were scanned.
 	TotalBytes *int64 `locationName:"totalBytes" type:"long"`
 
-	// Represents the reason the scan was triggered.
+	// Specifies the reason why the scan was initiated.
 	TriggerDetails *TriggerDetails `locationName:"triggerDetails" type:"structure"`
 }
 
@@ -17408,6 +20405,12 @@ func (s *Scan) SetScanStartTime(v time.Time) *Scan {
 // SetScanStatus sets the ScanStatus field's value.
 func (s *Scan) SetScanStatus(v string) *Scan {
 	s.ScanStatus = &v
+	return s
+}
+
+// SetScanType sets the ScanType field's value.
+func (s *Scan) SetScanType(v string) *Scan {
+	s.ScanType = &v
 	return s
 }
 
@@ -18054,6 +21057,10 @@ type Service struct {
 	// The resource role information for this finding.
 	ResourceRole *string `locationName:"resourceRole" type:"string"`
 
+	// Information about the process and any required context values for a specific
+	// finding
+	RuntimeDetails *RuntimeDetails `locationName:"runtimeDetails" type:"structure"`
+
 	// The name of the Amazon Web Services service (GuardDuty) that generated a
 	// finding.
 	ServiceName *string `locationName:"serviceName" type:"string"`
@@ -18146,6 +21153,12 @@ func (s *Service) SetResourceRole(v string) *Service {
 	return s
 }
 
+// SetRuntimeDetails sets the RuntimeDetails field's value.
+func (s *Service) SetRuntimeDetails(v *RuntimeDetails) *Service {
+	s.RuntimeDetails = v
+	return s
+}
+
 // SetServiceName sets the ServiceName field's value.
 func (s *Service) SetServiceName(v string) *Service {
 	s.ServiceName = &v
@@ -18203,8 +21216,7 @@ func (s *ServiceAdditionalInfo) SetValue(v string) *ServiceAdditionalInfo {
 type SortCriteria struct {
 	_ struct{} `type:"structure"`
 
-	// Represents the finding attribute (for example, accountId) to sort findings
-	// by.
+	// Represents the finding attribute, such as accountId, that sorts the findings.
 	AttributeName *string `locationName:"attributeName" type:"string"`
 
 	// The order by which the sorted findings are to be displayed.
@@ -18238,6 +21250,85 @@ func (s *SortCriteria) SetAttributeName(v string) *SortCriteria {
 // SetOrderBy sets the OrderBy field's value.
 func (s *SortCriteria) SetOrderBy(v string) *SortCriteria {
 	s.OrderBy = &v
+	return s
+}
+
+type StartMalwareScanInput struct {
+	_ struct{} `type:"structure"`
+
+	// Amazon Resource Name (ARN) of the resource for which you invoked the API.
+	//
+	// ResourceArn is a required field
+	ResourceArn *string `locationName:"resourceArn" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartMalwareScanInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartMalwareScanInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartMalwareScanInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartMalwareScanInput"}
+	if s.ResourceArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceArn sets the ResourceArn field's value.
+func (s *StartMalwareScanInput) SetResourceArn(v string) *StartMalwareScanInput {
+	s.ResourceArn = &v
+	return s
+}
+
+type StartMalwareScanOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique identifier that gets generated when you invoke the API without any
+	// error. Each malware scan has a corresponding scan ID. Using this scan ID,
+	// you can monitor the status of your malware scan.
+	ScanId *string `locationName:"scanId" min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartMalwareScanOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartMalwareScanOutput) GoString() string {
+	return s.String()
+}
+
+// SetScanId sets the ScanId field's value.
+func (s *StartMalwareScanOutput) SetScanId(v string) *StartMalwareScanOutput {
+	s.ScanId = &v
 	return s
 }
 
@@ -18758,7 +21849,7 @@ type TriggerDetails struct {
 	// The description of the scan trigger.
 	Description *string `locationName:"description" min:"1" type:"string"`
 
-	// The ID of the GuardDuty finding that triggered the BirdDog scan.
+	// The ID of the GuardDuty finding that triggered the malware scan.
 	GuardDutyFindingId *string `locationName:"guardDutyFindingId" min:"1" type:"string"`
 }
 
@@ -18922,6 +22013,39 @@ func (s *UnprocessedAccount) SetResult(v string) *UnprocessedAccount {
 	return s
 }
 
+// Specifies the names of the data sources that couldn't be enabled.
+type UnprocessedDataSourcesResult struct {
+	_ struct{} `type:"structure"`
+
+	// An object that contains information on the status of all Malware Protection
+	// data sources.
+	MalwareProtection *MalwareProtectionConfigurationResult `locationName:"malwareProtection" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UnprocessedDataSourcesResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UnprocessedDataSourcesResult) GoString() string {
+	return s.String()
+}
+
+// SetMalwareProtection sets the MalwareProtection field's value.
+func (s *UnprocessedDataSourcesResult) SetMalwareProtection(v *MalwareProtectionConfigurationResult) *UnprocessedDataSourcesResult {
+	s.MalwareProtection = v
+	return s
+}
+
 type UntagResourceInput struct {
 	_ struct{} `type:"structure" nopayload:"true"`
 
@@ -19014,7 +22138,13 @@ type UpdateDetectorInput struct {
 	_ struct{} `type:"structure"`
 
 	// Describes which data sources will be updated.
-	DataSources *DataSourceConfigurations `locationName:"dataSources" type:"structure"`
+	//
+	// There might be regional differences because some data sources might not be
+	// available in all the Amazon Web Services Regions where GuardDuty is presently
+	// supported. For more information, see Regions and endpoints (https://docs.aws.amazon.com/guardduty/latest/ug/guardduty_regions.html).
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *DataSourceConfigurations `locationName:"dataSources" deprecated:"true" type:"structure"`
 
 	// The unique ID of the detector to update.
 	//
@@ -19023,6 +22153,9 @@ type UpdateDetectorInput struct {
 
 	// Specifies whether the detector is enabled or not enabled.
 	Enable *bool `locationName:"enable" type:"boolean"`
+
+	// Provides the features that will be updated for the detector.
+	Features []*DetectorFeatureConfiguration `locationName:"features" type:"list"`
 
 	// An enum value that specifies how frequently findings are exported, such as
 	// to CloudWatch Events.
@@ -19086,6 +22219,12 @@ func (s *UpdateDetectorInput) SetEnable(v bool) *UpdateDetectorInput {
 	return s
 }
 
+// SetFeatures sets the Features field's value.
+func (s *UpdateDetectorInput) SetFeatures(v []*DetectorFeatureConfiguration) *UpdateDetectorInput {
+	s.Features = v
+	return s
+}
+
 // SetFindingPublishingFrequency sets the FindingPublishingFrequency field's value.
 func (s *UpdateDetectorInput) SetFindingPublishingFrequency(v string) *UpdateDetectorInput {
 	s.FindingPublishingFrequency = &v
@@ -19121,7 +22260,10 @@ type UpdateFilterInput struct {
 	// filter.
 	Action *string `locationName:"action" min:"1" type:"string" enum:"FilterAction"`
 
-	// The description of the filter.
+	// The description of the filter. Valid characters include alphanumeric characters,
+	// and special characters such as hyphen, period, colon, underscore, parentheses
+	// ({ }, [ ], and ( )), forward slash, horizontal tab, vertical tab, newline,
+	// form feed, return, and whitespace.
 	Description *string `locationName:"description" type:"string"`
 
 	// The unique ID of the detector that specifies the GuardDuty service where
@@ -19497,7 +22639,7 @@ type UpdateMalwareScanSettingsInput struct {
 	// DetectorId is a required field
 	DetectorId *string `location:"uri" locationName:"detectorId" min:"1" type:"string" required:"true"`
 
-	// An enum value representing possible snapshot preservations.
+	// An enum value representing possible snapshot preservation settings.
 	EbsSnapshotPreservation *string `locationName:"ebsSnapshotPreservation" type:"string" enum:"EbsSnapshotPreservation"`
 
 	// Represents the criteria to be used in the filter for selecting resources
@@ -19593,12 +22735,17 @@ type UpdateMemberDetectorsInput struct {
 	AccountIds []*string `locationName:"accountIds" min:"1" type:"list" required:"true"`
 
 	// Describes which data sources will be updated.
-	DataSources *DataSourceConfigurations `locationName:"dataSources" type:"structure"`
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *DataSourceConfigurations `locationName:"dataSources" deprecated:"true" type:"structure"`
 
 	// The detector ID of the administrator account.
 	//
 	// DetectorId is a required field
 	DetectorId *string `location:"uri" locationName:"detectorId" min:"1" type:"string" required:"true"`
+
+	// A list of features that will be updated for the specified member accounts.
+	Features []*MemberFeaturesConfiguration `locationName:"features" type:"list"`
 }
 
 // String returns the string representation.
@@ -19664,6 +22811,12 @@ func (s *UpdateMemberDetectorsInput) SetDetectorId(v string) *UpdateMemberDetect
 	return s
 }
 
+// SetFeatures sets the Features field's value.
+func (s *UpdateMemberDetectorsInput) SetFeatures(v []*MemberFeaturesConfiguration) *UpdateMemberDetectorsInput {
+	s.Features = v
+	return s
+}
+
 type UpdateMemberDetectorsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -19703,16 +22856,40 @@ type UpdateOrganizationConfigurationInput struct {
 
 	// Indicates whether to automatically enable member accounts in the organization.
 	//
-	// AutoEnable is a required field
-	AutoEnable *bool `locationName:"autoEnable" type:"boolean" required:"true"`
+	// Even though this is still supported, we recommend using AutoEnableOrganizationMembers
+	// to achieve the similar results.
+	//
+	// Deprecated: This field is deprecated, use AutoEnableOrganizationMembers instead
+	AutoEnable *bool `locationName:"autoEnable" deprecated:"true" type:"boolean"`
+
+	// Indicates the auto-enablement configuration of GuardDuty for the member accounts
+	// in the organization.
+	//
+	//    * NEW: Indicates that when a new account joins the organization, they
+	//    will have GuardDuty enabled automatically.
+	//
+	//    * ALL: Indicates that all accounts in the Amazon Web Services Organization
+	//    have GuardDuty enabled automatically. This includes NEW accounts that
+	//    join the organization and accounts that may have been suspended or removed
+	//    from the organization in GuardDuty.
+	//
+	//    * NONE: Indicates that GuardDuty will not be automatically enabled for
+	//    any accounts in the organization. GuardDuty must be managed for each account
+	//    individually by the administrator.
+	AutoEnableOrganizationMembers *string `locationName:"autoEnableOrganizationMembers" type:"string" enum:"AutoEnableMembers"`
 
 	// Describes which data sources will be updated.
-	DataSources *OrganizationDataSourceConfigurations `locationName:"dataSources" type:"structure"`
+	//
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources *OrganizationDataSourceConfigurations `locationName:"dataSources" deprecated:"true" type:"structure"`
 
-	// The ID of the detector to update the delegated administrator for.
+	// The ID of the detector that configures the delegated administrator.
 	//
 	// DetectorId is a required field
 	DetectorId *string `location:"uri" locationName:"detectorId" min:"1" type:"string" required:"true"`
+
+	// A list of features that will be configured for the organization.
+	Features []*OrganizationFeatureConfiguration `locationName:"features" type:"list"`
 }
 
 // String returns the string representation.
@@ -19736,9 +22913,6 @@ func (s UpdateOrganizationConfigurationInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *UpdateOrganizationConfigurationInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "UpdateOrganizationConfigurationInput"}
-	if s.AutoEnable == nil {
-		invalidParams.Add(request.NewErrParamRequired("AutoEnable"))
-	}
 	if s.DetectorId == nil {
 		invalidParams.Add(request.NewErrParamRequired("DetectorId"))
 	}
@@ -19763,6 +22937,12 @@ func (s *UpdateOrganizationConfigurationInput) SetAutoEnable(v bool) *UpdateOrga
 	return s
 }
 
+// SetAutoEnableOrganizationMembers sets the AutoEnableOrganizationMembers field's value.
+func (s *UpdateOrganizationConfigurationInput) SetAutoEnableOrganizationMembers(v string) *UpdateOrganizationConfigurationInput {
+	s.AutoEnableOrganizationMembers = &v
+	return s
+}
+
 // SetDataSources sets the DataSources field's value.
 func (s *UpdateOrganizationConfigurationInput) SetDataSources(v *OrganizationDataSourceConfigurations) *UpdateOrganizationConfigurationInput {
 	s.DataSources = v
@@ -19772,6 +22952,12 @@ func (s *UpdateOrganizationConfigurationInput) SetDataSources(v *OrganizationDat
 // SetDetectorId sets the DetectorId field's value.
 func (s *UpdateOrganizationConfigurationInput) SetDetectorId(v string) *UpdateOrganizationConfigurationInput {
 	s.DetectorId = &v
+	return s
+}
+
+// SetFeatures sets the Features field's value.
+func (s *UpdateOrganizationConfigurationInput) SetFeatures(v []*OrganizationFeatureConfiguration) *UpdateOrganizationConfigurationInput {
+	s.Features = v
 	return s
 }
 
@@ -20068,8 +23254,11 @@ type UsageCriteria struct {
 
 	// The data sources to aggregate usage statistics from.
 	//
-	// DataSources is a required field
-	DataSources []*string `locationName:"dataSources" type:"list" required:"true" enum:"DataSource"`
+	// Deprecated: This parameter is deprecated, use Features instead
+	DataSources []*string `locationName:"dataSources" deprecated:"true" type:"list" enum:"DataSource"`
+
+	// The features to aggregate usage statistics from.
+	Features []*string `locationName:"features" type:"list" enum:"UsageFeature"`
 
 	// The resources to aggregate usage statistics from. Only accepts exact resource
 	// names.
@@ -20100,9 +23289,6 @@ func (s *UsageCriteria) Validate() error {
 	if s.AccountIds != nil && len(s.AccountIds) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("AccountIds", 1))
 	}
-	if s.DataSources == nil {
-		invalidParams.Add(request.NewErrParamRequired("DataSources"))
-	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -20119,6 +23305,12 @@ func (s *UsageCriteria) SetAccountIds(v []*string) *UsageCriteria {
 // SetDataSources sets the DataSources field's value.
 func (s *UsageCriteria) SetDataSources(v []*string) *UsageCriteria {
 	s.DataSources = v
+	return s
+}
+
+// SetFeatures sets the Features field's value.
+func (s *UsageCriteria) SetFeatures(v []*string) *UsageCriteria {
+	s.Features = v
 	return s
 }
 
@@ -20165,6 +23357,47 @@ func (s *UsageDataSourceResult) SetDataSource(v string) *UsageDataSourceResult {
 
 // SetTotal sets the Total field's value.
 func (s *UsageDataSourceResult) SetTotal(v *Total) *UsageDataSourceResult {
+	s.Total = v
+	return s
+}
+
+// Contains information about the result of the total usage based on the feature.
+type UsageFeatureResult struct {
+	_ struct{} `type:"structure"`
+
+	// The feature that generated the usage cost.
+	Feature *string `locationName:"feature" type:"string" enum:"UsageFeature"`
+
+	// Contains the total usage with the corresponding currency unit for that value.
+	Total *Total `locationName:"total" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UsageFeatureResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UsageFeatureResult) GoString() string {
+	return s.String()
+}
+
+// SetFeature sets the Feature field's value.
+func (s *UsageFeatureResult) SetFeature(v string) *UsageFeatureResult {
+	s.Feature = &v
+	return s
+}
+
+// SetTotal sets the Total field's value.
+func (s *UsageFeatureResult) SetTotal(v *Total) *UsageFeatureResult {
 	s.Total = v
 	return s
 }
@@ -20222,6 +23455,9 @@ type UsageStatistics struct {
 	// The usage statistic sum organized by on data source.
 	SumByDataSource []*UsageDataSourceResult `locationName:"sumByDataSource" type:"list"`
 
+	// The usage statistic sum organized by feature.
+	SumByFeature []*UsageFeatureResult `locationName:"sumByFeature" type:"list"`
+
 	// The usage statistic sum organized by resource.
 	SumByResource []*UsageResourceResult `locationName:"sumByResource" type:"list"`
 
@@ -20257,6 +23493,12 @@ func (s *UsageStatistics) SetSumByAccount(v []*UsageAccountResult) *UsageStatist
 // SetSumByDataSource sets the SumByDataSource field's value.
 func (s *UsageStatistics) SetSumByDataSource(v []*UsageDataSourceResult) *UsageStatistics {
 	s.SumByDataSource = v
+	return s
+}
+
+// SetSumByFeature sets the SumByFeature field's value.
+func (s *UsageStatistics) SetSumByFeature(v []*UsageFeatureResult) *UsageStatistics {
+	s.SumByFeature = v
 	return s
 }
 
@@ -20441,6 +23683,57 @@ func (s *VolumeMount) SetName(v string) *VolumeMount {
 	return s
 }
 
+// Amazon Virtual Private Cloud configuration details associated with your Lambda
+// function.
+type VpcConfig struct {
+	_ struct{} `type:"structure"`
+
+	// The identifier of the security group attached to the Lambda function.
+	SecurityGroups []*SecurityGroup `locationName:"securityGroups" type:"list"`
+
+	// The identifiers of the subnets that are associated with your Lambda function.
+	SubnetIds []*string `locationName:"subnetIds" type:"list"`
+
+	// The identifier of the Amazon Virtual Private Cloud.
+	VpcId *string `locationName:"vpcId" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s VpcConfig) GoString() string {
+	return s.String()
+}
+
+// SetSecurityGroups sets the SecurityGroups field's value.
+func (s *VpcConfig) SetSecurityGroups(v []*SecurityGroup) *VpcConfig {
+	s.SecurityGroups = v
+	return s
+}
+
+// SetSubnetIds sets the SubnetIds field's value.
+func (s *VpcConfig) SetSubnetIds(v []*string) *VpcConfig {
+	s.SubnetIds = v
+	return s
+}
+
+// SetVpcId sets the VpcId field's value.
+func (s *VpcConfig) SetVpcId(v string) *VpcConfig {
+	s.VpcId = &v
+	return s
+}
+
 const (
 	// AdminStatusEnabled is a AdminStatus enum value
 	AdminStatusEnabled = "ENABLED"
@@ -20454,6 +23747,118 @@ func AdminStatus_Values() []string {
 	return []string{
 		AdminStatusEnabled,
 		AdminStatusDisableInProgress,
+	}
+}
+
+const (
+	// AutoEnableMembersNew is a AutoEnableMembers enum value
+	AutoEnableMembersNew = "NEW"
+
+	// AutoEnableMembersAll is a AutoEnableMembers enum value
+	AutoEnableMembersAll = "ALL"
+
+	// AutoEnableMembersNone is a AutoEnableMembers enum value
+	AutoEnableMembersNone = "NONE"
+)
+
+// AutoEnableMembers_Values returns all elements of the AutoEnableMembers enum
+func AutoEnableMembers_Values() []string {
+	return []string{
+		AutoEnableMembersNew,
+		AutoEnableMembersAll,
+		AutoEnableMembersNone,
+	}
+}
+
+const (
+	// CoverageFilterCriterionKeyAccountId is a CoverageFilterCriterionKey enum value
+	CoverageFilterCriterionKeyAccountId = "ACCOUNT_ID"
+
+	// CoverageFilterCriterionKeyClusterName is a CoverageFilterCriterionKey enum value
+	CoverageFilterCriterionKeyClusterName = "CLUSTER_NAME"
+
+	// CoverageFilterCriterionKeyResourceType is a CoverageFilterCriterionKey enum value
+	CoverageFilterCriterionKeyResourceType = "RESOURCE_TYPE"
+
+	// CoverageFilterCriterionKeyCoverageStatus is a CoverageFilterCriterionKey enum value
+	CoverageFilterCriterionKeyCoverageStatus = "COVERAGE_STATUS"
+
+	// CoverageFilterCriterionKeyAddonVersion is a CoverageFilterCriterionKey enum value
+	CoverageFilterCriterionKeyAddonVersion = "ADDON_VERSION"
+)
+
+// CoverageFilterCriterionKey_Values returns all elements of the CoverageFilterCriterionKey enum
+func CoverageFilterCriterionKey_Values() []string {
+	return []string{
+		CoverageFilterCriterionKeyAccountId,
+		CoverageFilterCriterionKeyClusterName,
+		CoverageFilterCriterionKeyResourceType,
+		CoverageFilterCriterionKeyCoverageStatus,
+		CoverageFilterCriterionKeyAddonVersion,
+	}
+}
+
+const (
+	// CoverageSortKeyAccountId is a CoverageSortKey enum value
+	CoverageSortKeyAccountId = "ACCOUNT_ID"
+
+	// CoverageSortKeyClusterName is a CoverageSortKey enum value
+	CoverageSortKeyClusterName = "CLUSTER_NAME"
+
+	// CoverageSortKeyCoverageStatus is a CoverageSortKey enum value
+	CoverageSortKeyCoverageStatus = "COVERAGE_STATUS"
+
+	// CoverageSortKeyIssue is a CoverageSortKey enum value
+	CoverageSortKeyIssue = "ISSUE"
+
+	// CoverageSortKeyAddonVersion is a CoverageSortKey enum value
+	CoverageSortKeyAddonVersion = "ADDON_VERSION"
+
+	// CoverageSortKeyUpdatedAt is a CoverageSortKey enum value
+	CoverageSortKeyUpdatedAt = "UPDATED_AT"
+)
+
+// CoverageSortKey_Values returns all elements of the CoverageSortKey enum
+func CoverageSortKey_Values() []string {
+	return []string{
+		CoverageSortKeyAccountId,
+		CoverageSortKeyClusterName,
+		CoverageSortKeyCoverageStatus,
+		CoverageSortKeyIssue,
+		CoverageSortKeyAddonVersion,
+		CoverageSortKeyUpdatedAt,
+	}
+}
+
+const (
+	// CoverageStatisticsTypeCountByResourceType is a CoverageStatisticsType enum value
+	CoverageStatisticsTypeCountByResourceType = "COUNT_BY_RESOURCE_TYPE"
+
+	// CoverageStatisticsTypeCountByCoverageStatus is a CoverageStatisticsType enum value
+	CoverageStatisticsTypeCountByCoverageStatus = "COUNT_BY_COVERAGE_STATUS"
+)
+
+// CoverageStatisticsType_Values returns all elements of the CoverageStatisticsType enum
+func CoverageStatisticsType_Values() []string {
+	return []string{
+		CoverageStatisticsTypeCountByResourceType,
+		CoverageStatisticsTypeCountByCoverageStatus,
+	}
+}
+
+const (
+	// CoverageStatusHealthy is a CoverageStatus enum value
+	CoverageStatusHealthy = "HEALTHY"
+
+	// CoverageStatusUnhealthy is a CoverageStatus enum value
+	CoverageStatusUnhealthy = "UNHEALTHY"
+)
+
+// CoverageStatus_Values returns all elements of the CoverageStatus enum
+func CoverageStatus_Values() []string {
+	return []string{
+		CoverageStatusHealthy,
+		CoverageStatusUnhealthy,
 	}
 }
 
@@ -20475,6 +23880,9 @@ const (
 
 	// CriterionKeyScanStatus is a CriterionKey enum value
 	CriterionKeyScanStatus = "SCAN_STATUS"
+
+	// CriterionKeyScanType is a CriterionKey enum value
+	CriterionKeyScanType = "SCAN_TYPE"
 )
 
 // CriterionKey_Values returns all elements of the CriterionKey enum
@@ -20486,6 +23894,7 @@ func CriterionKey_Values() []string {
 		CriterionKeyGuarddutyFindingId,
 		CriterionKeyScanStartTime,
 		CriterionKeyScanStatus,
+		CriterionKeyScanType,
 	}
 }
 
@@ -20550,6 +23959,82 @@ func DestinationType_Values() []string {
 }
 
 const (
+	// DetectorFeatureS3DataEvents is a DetectorFeature enum value
+	DetectorFeatureS3DataEvents = "S3_DATA_EVENTS"
+
+	// DetectorFeatureEksAuditLogs is a DetectorFeature enum value
+	DetectorFeatureEksAuditLogs = "EKS_AUDIT_LOGS"
+
+	// DetectorFeatureEbsMalwareProtection is a DetectorFeature enum value
+	DetectorFeatureEbsMalwareProtection = "EBS_MALWARE_PROTECTION"
+
+	// DetectorFeatureRdsLoginEvents is a DetectorFeature enum value
+	DetectorFeatureRdsLoginEvents = "RDS_LOGIN_EVENTS"
+
+	// DetectorFeatureEksRuntimeMonitoring is a DetectorFeature enum value
+	DetectorFeatureEksRuntimeMonitoring = "EKS_RUNTIME_MONITORING"
+
+	// DetectorFeatureLambdaNetworkLogs is a DetectorFeature enum value
+	DetectorFeatureLambdaNetworkLogs = "LAMBDA_NETWORK_LOGS"
+)
+
+// DetectorFeature_Values returns all elements of the DetectorFeature enum
+func DetectorFeature_Values() []string {
+	return []string{
+		DetectorFeatureS3DataEvents,
+		DetectorFeatureEksAuditLogs,
+		DetectorFeatureEbsMalwareProtection,
+		DetectorFeatureRdsLoginEvents,
+		DetectorFeatureEksRuntimeMonitoring,
+		DetectorFeatureLambdaNetworkLogs,
+	}
+}
+
+const (
+	// DetectorFeatureResultFlowLogs is a DetectorFeatureResult enum value
+	DetectorFeatureResultFlowLogs = "FLOW_LOGS"
+
+	// DetectorFeatureResultCloudTrail is a DetectorFeatureResult enum value
+	DetectorFeatureResultCloudTrail = "CLOUD_TRAIL"
+
+	// DetectorFeatureResultDnsLogs is a DetectorFeatureResult enum value
+	DetectorFeatureResultDnsLogs = "DNS_LOGS"
+
+	// DetectorFeatureResultS3DataEvents is a DetectorFeatureResult enum value
+	DetectorFeatureResultS3DataEvents = "S3_DATA_EVENTS"
+
+	// DetectorFeatureResultEksAuditLogs is a DetectorFeatureResult enum value
+	DetectorFeatureResultEksAuditLogs = "EKS_AUDIT_LOGS"
+
+	// DetectorFeatureResultEbsMalwareProtection is a DetectorFeatureResult enum value
+	DetectorFeatureResultEbsMalwareProtection = "EBS_MALWARE_PROTECTION"
+
+	// DetectorFeatureResultRdsLoginEvents is a DetectorFeatureResult enum value
+	DetectorFeatureResultRdsLoginEvents = "RDS_LOGIN_EVENTS"
+
+	// DetectorFeatureResultEksRuntimeMonitoring is a DetectorFeatureResult enum value
+	DetectorFeatureResultEksRuntimeMonitoring = "EKS_RUNTIME_MONITORING"
+
+	// DetectorFeatureResultLambdaNetworkLogs is a DetectorFeatureResult enum value
+	DetectorFeatureResultLambdaNetworkLogs = "LAMBDA_NETWORK_LOGS"
+)
+
+// DetectorFeatureResult_Values returns all elements of the DetectorFeatureResult enum
+func DetectorFeatureResult_Values() []string {
+	return []string{
+		DetectorFeatureResultFlowLogs,
+		DetectorFeatureResultCloudTrail,
+		DetectorFeatureResultDnsLogs,
+		DetectorFeatureResultS3DataEvents,
+		DetectorFeatureResultEksAuditLogs,
+		DetectorFeatureResultEbsMalwareProtection,
+		DetectorFeatureResultRdsLoginEvents,
+		DetectorFeatureResultEksRuntimeMonitoring,
+		DetectorFeatureResultLambdaNetworkLogs,
+	}
+}
+
+const (
 	// DetectorStatusEnabled is a DetectorStatus enum value
 	DetectorStatusEnabled = "ENABLED"
 
@@ -20578,6 +24063,34 @@ func EbsSnapshotPreservation_Values() []string {
 	return []string{
 		EbsSnapshotPreservationNoRetention,
 		EbsSnapshotPreservationRetentionWithFinding,
+	}
+}
+
+const (
+	// FeatureAdditionalConfigurationEksAddonManagement is a FeatureAdditionalConfiguration enum value
+	FeatureAdditionalConfigurationEksAddonManagement = "EKS_ADDON_MANAGEMENT"
+)
+
+// FeatureAdditionalConfiguration_Values returns all elements of the FeatureAdditionalConfiguration enum
+func FeatureAdditionalConfiguration_Values() []string {
+	return []string{
+		FeatureAdditionalConfigurationEksAddonManagement,
+	}
+}
+
+const (
+	// FeatureStatusEnabled is a FeatureStatus enum value
+	FeatureStatusEnabled = "ENABLED"
+
+	// FeatureStatusDisabled is a FeatureStatus enum value
+	FeatureStatusDisabled = "DISABLED"
+)
+
+// FeatureStatus_Values returns all elements of the FeatureStatus enum
+func FeatureStatus_Values() []string {
+	return []string{
+		FeatureStatusEnabled,
+		FeatureStatusDisabled,
 	}
 }
 
@@ -20642,6 +24155,50 @@ const (
 func FindingStatisticType_Values() []string {
 	return []string{
 		FindingStatisticTypeCountBySeverity,
+	}
+}
+
+const (
+	// FreeTrialFeatureResultFlowLogs is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultFlowLogs = "FLOW_LOGS"
+
+	// FreeTrialFeatureResultCloudTrail is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultCloudTrail = "CLOUD_TRAIL"
+
+	// FreeTrialFeatureResultDnsLogs is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultDnsLogs = "DNS_LOGS"
+
+	// FreeTrialFeatureResultS3DataEvents is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultS3DataEvents = "S3_DATA_EVENTS"
+
+	// FreeTrialFeatureResultEksAuditLogs is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultEksAuditLogs = "EKS_AUDIT_LOGS"
+
+	// FreeTrialFeatureResultEbsMalwareProtection is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultEbsMalwareProtection = "EBS_MALWARE_PROTECTION"
+
+	// FreeTrialFeatureResultRdsLoginEvents is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultRdsLoginEvents = "RDS_LOGIN_EVENTS"
+
+	// FreeTrialFeatureResultEksRuntimeMonitoring is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultEksRuntimeMonitoring = "EKS_RUNTIME_MONITORING"
+
+	// FreeTrialFeatureResultLambdaNetworkLogs is a FreeTrialFeatureResult enum value
+	FreeTrialFeatureResultLambdaNetworkLogs = "LAMBDA_NETWORK_LOGS"
+)
+
+// FreeTrialFeatureResult_Values returns all elements of the FreeTrialFeatureResult enum
+func FreeTrialFeatureResult_Values() []string {
+	return []string{
+		FreeTrialFeatureResultFlowLogs,
+		FreeTrialFeatureResultCloudTrail,
+		FreeTrialFeatureResultDnsLogs,
+		FreeTrialFeatureResultS3DataEvents,
+		FreeTrialFeatureResultEksAuditLogs,
+		FreeTrialFeatureResultEbsMalwareProtection,
+		FreeTrialFeatureResultRdsLoginEvents,
+		FreeTrialFeatureResultEksRuntimeMonitoring,
+		FreeTrialFeatureResultLambdaNetworkLogs,
 	}
 }
 
@@ -20730,6 +24287,66 @@ func OrderBy_Values() []string {
 }
 
 const (
+	// OrgFeatureS3DataEvents is a OrgFeature enum value
+	OrgFeatureS3DataEvents = "S3_DATA_EVENTS"
+
+	// OrgFeatureEksAuditLogs is a OrgFeature enum value
+	OrgFeatureEksAuditLogs = "EKS_AUDIT_LOGS"
+
+	// OrgFeatureEbsMalwareProtection is a OrgFeature enum value
+	OrgFeatureEbsMalwareProtection = "EBS_MALWARE_PROTECTION"
+
+	// OrgFeatureRdsLoginEvents is a OrgFeature enum value
+	OrgFeatureRdsLoginEvents = "RDS_LOGIN_EVENTS"
+
+	// OrgFeatureEksRuntimeMonitoring is a OrgFeature enum value
+	OrgFeatureEksRuntimeMonitoring = "EKS_RUNTIME_MONITORING"
+
+	// OrgFeatureLambdaNetworkLogs is a OrgFeature enum value
+	OrgFeatureLambdaNetworkLogs = "LAMBDA_NETWORK_LOGS"
+)
+
+// OrgFeature_Values returns all elements of the OrgFeature enum
+func OrgFeature_Values() []string {
+	return []string{
+		OrgFeatureS3DataEvents,
+		OrgFeatureEksAuditLogs,
+		OrgFeatureEbsMalwareProtection,
+		OrgFeatureRdsLoginEvents,
+		OrgFeatureEksRuntimeMonitoring,
+		OrgFeatureLambdaNetworkLogs,
+	}
+}
+
+const (
+	// OrgFeatureAdditionalConfigurationEksAddonManagement is a OrgFeatureAdditionalConfiguration enum value
+	OrgFeatureAdditionalConfigurationEksAddonManagement = "EKS_ADDON_MANAGEMENT"
+)
+
+// OrgFeatureAdditionalConfiguration_Values returns all elements of the OrgFeatureAdditionalConfiguration enum
+func OrgFeatureAdditionalConfiguration_Values() []string {
+	return []string{
+		OrgFeatureAdditionalConfigurationEksAddonManagement,
+	}
+}
+
+const (
+	// OrgFeatureStatusNew is a OrgFeatureStatus enum value
+	OrgFeatureStatusNew = "NEW"
+
+	// OrgFeatureStatusNone is a OrgFeatureStatus enum value
+	OrgFeatureStatusNone = "NONE"
+)
+
+// OrgFeatureStatus_Values returns all elements of the OrgFeatureStatus enum
+func OrgFeatureStatus_Values() []string {
+	return []string{
+		OrgFeatureStatusNew,
+		OrgFeatureStatusNone,
+	}
+}
+
+const (
 	// PublishingStatusPendingVerification is a PublishingStatus enum value
 	PublishingStatusPendingVerification = "PENDING_VERIFICATION"
 
@@ -20750,6 +24367,18 @@ func PublishingStatus_Values() []string {
 		PublishingStatusPublishing,
 		PublishingStatusUnableToPublishFixDestinationProperty,
 		PublishingStatusStopped,
+	}
+}
+
+const (
+	// ResourceTypeEks is a ResourceType enum value
+	ResourceTypeEks = "EKS"
+)
+
+// ResourceType_Values returns all elements of the ResourceType enum
+func ResourceType_Values() []string {
+	return []string{
+		ResourceTypeEks,
 	}
 }
 
@@ -20792,6 +24421,9 @@ const (
 
 	// ScanStatusFailed is a ScanStatus enum value
 	ScanStatusFailed = "FAILED"
+
+	// ScanStatusSkipped is a ScanStatus enum value
+	ScanStatusSkipped = "SKIPPED"
 )
 
 // ScanStatus_Values returns all elements of the ScanStatus enum
@@ -20800,6 +24432,23 @@ func ScanStatus_Values() []string {
 		ScanStatusRunning,
 		ScanStatusCompleted,
 		ScanStatusFailed,
+		ScanStatusSkipped,
+	}
+}
+
+const (
+	// ScanTypeGuarddutyInitiated is a ScanType enum value
+	ScanTypeGuarddutyInitiated = "GUARDDUTY_INITIATED"
+
+	// ScanTypeOnDemand is a ScanType enum value
+	ScanTypeOnDemand = "ON_DEMAND"
+)
+
+// ScanType_Values returns all elements of the ScanType enum
+func ScanType_Values() []string {
+	return []string{
+		ScanTypeGuarddutyInitiated,
+		ScanTypeOnDemand,
 	}
 }
 
@@ -20872,6 +24521,50 @@ func ThreatIntelSetStatus_Values() []string {
 }
 
 const (
+	// UsageFeatureFlowLogs is a UsageFeature enum value
+	UsageFeatureFlowLogs = "FLOW_LOGS"
+
+	// UsageFeatureCloudTrail is a UsageFeature enum value
+	UsageFeatureCloudTrail = "CLOUD_TRAIL"
+
+	// UsageFeatureDnsLogs is a UsageFeature enum value
+	UsageFeatureDnsLogs = "DNS_LOGS"
+
+	// UsageFeatureS3DataEvents is a UsageFeature enum value
+	UsageFeatureS3DataEvents = "S3_DATA_EVENTS"
+
+	// UsageFeatureEksAuditLogs is a UsageFeature enum value
+	UsageFeatureEksAuditLogs = "EKS_AUDIT_LOGS"
+
+	// UsageFeatureEbsMalwareProtection is a UsageFeature enum value
+	UsageFeatureEbsMalwareProtection = "EBS_MALWARE_PROTECTION"
+
+	// UsageFeatureRdsLoginEvents is a UsageFeature enum value
+	UsageFeatureRdsLoginEvents = "RDS_LOGIN_EVENTS"
+
+	// UsageFeatureLambdaNetworkLogs is a UsageFeature enum value
+	UsageFeatureLambdaNetworkLogs = "LAMBDA_NETWORK_LOGS"
+
+	// UsageFeatureEksRuntimeMonitoring is a UsageFeature enum value
+	UsageFeatureEksRuntimeMonitoring = "EKS_RUNTIME_MONITORING"
+)
+
+// UsageFeature_Values returns all elements of the UsageFeature enum
+func UsageFeature_Values() []string {
+	return []string{
+		UsageFeatureFlowLogs,
+		UsageFeatureCloudTrail,
+		UsageFeatureDnsLogs,
+		UsageFeatureS3DataEvents,
+		UsageFeatureEksAuditLogs,
+		UsageFeatureEbsMalwareProtection,
+		UsageFeatureRdsLoginEvents,
+		UsageFeatureLambdaNetworkLogs,
+		UsageFeatureEksRuntimeMonitoring,
+	}
+}
+
+const (
 	// UsageStatisticTypeSumByAccount is a UsageStatisticType enum value
 	UsageStatisticTypeSumByAccount = "SUM_BY_ACCOUNT"
 
@@ -20883,6 +24576,9 @@ const (
 
 	// UsageStatisticTypeTopResources is a UsageStatisticType enum value
 	UsageStatisticTypeTopResources = "TOP_RESOURCES"
+
+	// UsageStatisticTypeSumByFeatures is a UsageStatisticType enum value
+	UsageStatisticTypeSumByFeatures = "SUM_BY_FEATURES"
 )
 
 // UsageStatisticType_Values returns all elements of the UsageStatisticType enum
@@ -20892,5 +24588,6 @@ func UsageStatisticType_Values() []string {
 		UsageStatisticTypeSumByDataSource,
 		UsageStatisticTypeSumByResource,
 		UsageStatisticTypeTopResources,
+		UsageStatisticTypeSumByFeatures,
 	}
 }

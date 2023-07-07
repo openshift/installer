@@ -33,7 +33,7 @@ func (c *Client) GetAccessKeyLastUsed(ctx context.Context, params *GetAccessKeyL
 type GetAccessKeyLastUsedInput struct {
 
 	// The identifier of an access key. This parameter allows (through its regex
-	// pattern (http://wikipedia.org/wiki/regex)) a string of characters that can
+	// pattern (http://wikipedia.org/wiki/regex) ) a string of characters that can
 	// consist of any upper or lowercased letter or digit.
 	//
 	// This member is required.
@@ -108,6 +108,9 @@ func (c *Client) addOperationGetAccessKeyLastUsedMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetAccessKeyLastUsed(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

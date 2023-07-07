@@ -7844,10 +7844,14 @@ func (c *NetworkManager) RegisterTransitGatewayRequest(input *RegisterTransitGat
 
 // RegisterTransitGateway API operation for AWS Network Manager.
 //
-// Registers a transit gateway in your global network. The transit gateway can
-// be in any Amazon Web Services Region, but it must be owned by the same Amazon
-// Web Services account that owns the global network. You cannot register a
-// transit gateway in more than one global network.
+// Registers a transit gateway in your global network. Not all Regions support
+// transit gateways for global networks. For a list of the supported Regions,
+// see Region Availability (https://docs.aws.amazon.com/network-manager/latest/tgwnm/what-are-global-networks.html#nm-available-regions)
+// in the Amazon Web Services Transit Gateways for Global Networks User Guide.
+// The transit gateway can be in any of the supported Amazon Web Services Regions,
+// but it must be owned by the same Amazon Web Services account that owns the
+// global network. You cannot register a transit gateway in more than one global
+// network.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -8134,7 +8138,7 @@ func (c *NetworkManager) StartOrganizationServiceAccessUpdateRequest(input *Star
 
 // StartOrganizationServiceAccessUpdate API operation for AWS Network Manager.
 //
-// Enables for the Network Manager service for an Amazon Web Services Organization.
+// Enables the Network Manager service for an Amazon Web Services Organization.
 // This can only be called by a management account within the organization.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -13109,7 +13113,8 @@ type CreateTransitGatewayRouteTableAttachmentInput struct {
 	// The list of key-value tags associated with the request.
 	Tags []*Tag `type:"list"`
 
-	// The ARN of the transit gateway route table for the attachment request.
+	// The ARN of the transit gateway route table for the attachment request. For
+	// example, "TransitGatewayRouteTableArn": "arn:aws:ec2:us-west-2:123456789012:transit-gateway-route-table/tgw-rtb-9876543210123456".
 	//
 	// TransitGatewayRouteTableArn is a required field
 	TransitGatewayRouteTableArn *string `type:"string" required:"true"`
@@ -22147,7 +22152,8 @@ type TransitGatewayRouteTableAttachment struct {
 	// The ID of the peering attachment.
 	PeeringId *string `type:"string"`
 
-	// The ARN of the transit gateway attachment route table.
+	// The ARN of the transit gateway attachment route table. For example, "TransitGatewayRouteTableArn":
+	// "arn:aws:ec2:us-west-2:123456789012:transit-gateway-route-table/tgw-rtb-9876543210123456".
 	TransitGatewayRouteTableArn *string `type:"string"`
 }
 
@@ -23422,6 +23428,11 @@ func (s *VpcAttachment) SetSubnetArns(v []*string) *VpcAttachment {
 type VpcOptions struct {
 	_ struct{} `type:"structure"`
 
+	// Indicates whether appliance mode is supported. If enabled, traffic flow between
+	// a source and destination use the same Availability Zone for the VPC attachment
+	// for the lifetime of that flow. The default value is false.
+	ApplianceModeSupport *bool `type:"boolean"`
+
 	// Indicates whether IPv6 is supported.
 	Ipv6Support *bool `type:"boolean"`
 }
@@ -23442,6 +23453,12 @@ func (s VpcOptions) String() string {
 // value will be replaced with "sensitive".
 func (s VpcOptions) GoString() string {
 	return s.String()
+}
+
+// SetApplianceModeSupport sets the ApplianceModeSupport field's value.
+func (s *VpcOptions) SetApplianceModeSupport(v bool) *VpcOptions {
+	s.ApplianceModeSupport = &v
+	return s
 }
 
 // SetIpv6Support sets the Ipv6Support field's value.

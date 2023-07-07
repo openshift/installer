@@ -29,8 +29,8 @@ func (c *Client) GetMember(ctx context.Context, params *GetMemberInput, optFns .
 
 type GetMemberInput struct {
 
-	// The Amazon Web Services account ID of the member account to retrieve information
-	// on.
+	// The Amazon Web Services account ID of the member account to retrieve
+	// information on.
 	//
 	// This member is required.
 	AccountId *string
@@ -98,6 +98,9 @@ func (c *Client) addOperationGetMemberMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetMember(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

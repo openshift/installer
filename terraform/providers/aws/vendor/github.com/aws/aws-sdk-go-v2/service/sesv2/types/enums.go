@@ -145,9 +145,9 @@ const (
 	DeliverabilityTestStatusCompleted  DeliverabilityTestStatus = "COMPLETED"
 )
 
-// Values returns all known values for DeliverabilityTestStatus. Note that this can
-// be expanded in the future, and so it is only as up to date as the client. The
-// ordering of this slice is not guaranteed to be stable across updates.
+// Values returns all known values for DeliverabilityTestStatus. Note that this
+// can be expanded in the future, and so it is only as up to date as the client.
+// The ordering of this slice is not guaranteed to be stable across updates.
 func (DeliverabilityTestStatus) Values() []DeliverabilityTestStatus {
 	return []DeliverabilityTestStatus{
 		"IN_PROGRESS",
@@ -251,9 +251,9 @@ const (
 	EventTypeSubscription     EventType = "SUBSCRIPTION"
 )
 
-// Values returns all known values for EventType. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for EventType. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (EventType) Values() []EventType {
 	return []EventType{
 		"SEND",
@@ -269,6 +269,24 @@ func (EventType) Values() []EventType {
 	}
 }
 
+type FeatureStatus string
+
+// Enum values for FeatureStatus
+const (
+	FeatureStatusEnabled  FeatureStatus = "ENABLED"
+	FeatureStatusDisabled FeatureStatus = "DISABLED"
+)
+
+// Values returns all known values for FeatureStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (FeatureStatus) Values() []FeatureStatus {
+	return []FeatureStatus{
+		"ENABLED",
+		"DISABLED",
+	}
+}
+
 type IdentityType string
 
 // Enum values for IdentityType
@@ -278,9 +296,9 @@ const (
 	IdentityTypeManagedDomain IdentityType = "MANAGED_DOMAIN"
 )
 
-// Values returns all known values for IdentityType. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for IdentityType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (IdentityType) Values() []IdentityType {
 	return []IdentityType{
 		"EMAIL_ADDRESS",
@@ -297,8 +315,8 @@ const (
 	ImportDestinationTypeContactList     ImportDestinationType = "CONTACT_LIST"
 )
 
-// Values returns all known values for ImportDestinationType. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
+// Values returns all known values for ImportDestinationType. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
 // ordering of this slice is not guaranteed to be stable across updates.
 func (ImportDestinationType) Values() []ImportDestinationType {
 	return []ImportDestinationType{
@@ -317,15 +335,38 @@ const (
 	JobStatusFailed     JobStatus = "FAILED"
 )
 
-// Values returns all known values for JobStatus. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for JobStatus. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (JobStatus) Values() []JobStatus {
 	return []JobStatus{
 		"CREATED",
 		"PROCESSING",
 		"COMPLETED",
 		"FAILED",
+	}
+}
+
+type ListRecommendationsFilterKey string
+
+// Enum values for ListRecommendationsFilterKey
+const (
+	ListRecommendationsFilterKeyType        ListRecommendationsFilterKey = "TYPE"
+	ListRecommendationsFilterKeyImpact      ListRecommendationsFilterKey = "IMPACT"
+	ListRecommendationsFilterKeyStatus      ListRecommendationsFilterKey = "STATUS"
+	ListRecommendationsFilterKeyResourceArn ListRecommendationsFilterKey = "RESOURCE_ARN"
+)
+
+// Values returns all known values for ListRecommendationsFilterKey. Note that
+// this can be expanded in the future, and so it is only as up to date as the
+// client. The ordering of this slice is not guaranteed to be stable across
+// updates.
+func (ListRecommendationsFilterKey) Values() []ListRecommendationsFilterKey {
+	return []ListRecommendationsFilterKey{
+		"TYPE",
+		"IMPACT",
+		"STATUS",
+		"RESOURCE_ARN",
 	}
 }
 
@@ -369,6 +410,152 @@ func (MailType) Values() []MailType {
 	}
 }
 
+type Metric string
+
+// Enum values for Metric
+const (
+	MetricSend              Metric = "SEND"
+	MetricComplaint         Metric = "COMPLAINT"
+	MetricPermanentBounce   Metric = "PERMANENT_BOUNCE"
+	MetricTransientBounce   Metric = "TRANSIENT_BOUNCE"
+	MetricOpen              Metric = "OPEN"
+	MetricClick             Metric = "CLICK"
+	MetricDelivery          Metric = "DELIVERY"
+	MetricDeliveryOpen      Metric = "DELIVERY_OPEN"
+	MetricDeliveryClick     Metric = "DELIVERY_CLICK"
+	MetricDeliveryComplaint Metric = "DELIVERY_COMPLAINT"
+)
+
+// Values returns all known values for Metric. Note that this can be expanded in
+// the future, and so it is only as up to date as the client. The ordering of this
+// slice is not guaranteed to be stable across updates.
+func (Metric) Values() []Metric {
+	return []Metric{
+		"SEND",
+		"COMPLAINT",
+		"PERMANENT_BOUNCE",
+		"TRANSIENT_BOUNCE",
+		"OPEN",
+		"CLICK",
+		"DELIVERY",
+		"DELIVERY_OPEN",
+		"DELIVERY_CLICK",
+		"DELIVERY_COMPLAINT",
+	}
+}
+
+type MetricDimensionName string
+
+// Enum values for MetricDimensionName
+const (
+	MetricDimensionNameEmailIdentity    MetricDimensionName = "EMAIL_IDENTITY"
+	MetricDimensionNameConfigurationSet MetricDimensionName = "CONFIGURATION_SET"
+	MetricDimensionNameIsp              MetricDimensionName = "ISP"
+)
+
+// Values returns all known values for MetricDimensionName. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (MetricDimensionName) Values() []MetricDimensionName {
+	return []MetricDimensionName{
+		"EMAIL_IDENTITY",
+		"CONFIGURATION_SET",
+		"ISP",
+	}
+}
+
+type MetricNamespace string
+
+// Enum values for MetricNamespace
+const (
+	MetricNamespaceVdm MetricNamespace = "VDM"
+)
+
+// Values returns all known values for MetricNamespace. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (MetricNamespace) Values() []MetricNamespace {
+	return []MetricNamespace{
+		"VDM",
+	}
+}
+
+type QueryErrorCode string
+
+// Enum values for QueryErrorCode
+const (
+	QueryErrorCodeInternalFailure QueryErrorCode = "INTERNAL_FAILURE"
+	QueryErrorCodeAccessDenied    QueryErrorCode = "ACCESS_DENIED"
+)
+
+// Values returns all known values for QueryErrorCode. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (QueryErrorCode) Values() []QueryErrorCode {
+	return []QueryErrorCode{
+		"INTERNAL_FAILURE",
+		"ACCESS_DENIED",
+	}
+}
+
+type RecommendationImpact string
+
+// Enum values for RecommendationImpact
+const (
+	RecommendationImpactLow  RecommendationImpact = "LOW"
+	RecommendationImpactHigh RecommendationImpact = "HIGH"
+)
+
+// Values returns all known values for RecommendationImpact. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (RecommendationImpact) Values() []RecommendationImpact {
+	return []RecommendationImpact{
+		"LOW",
+		"HIGH",
+	}
+}
+
+type RecommendationStatus string
+
+// Enum values for RecommendationStatus
+const (
+	RecommendationStatusOpen  RecommendationStatus = "OPEN"
+	RecommendationStatusFixed RecommendationStatus = "FIXED"
+)
+
+// Values returns all known values for RecommendationStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (RecommendationStatus) Values() []RecommendationStatus {
+	return []RecommendationStatus{
+		"OPEN",
+		"FIXED",
+	}
+}
+
+type RecommendationType string
+
+// Enum values for RecommendationType
+const (
+	RecommendationTypeDkim  RecommendationType = "DKIM"
+	RecommendationTypeDmarc RecommendationType = "DMARC"
+	RecommendationTypeSpf   RecommendationType = "SPF"
+	RecommendationTypeBimi  RecommendationType = "BIMI"
+)
+
+// Values returns all known values for RecommendationType. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (RecommendationType) Values() []RecommendationType {
+	return []RecommendationType{
+		"DKIM",
+		"DMARC",
+		"SPF",
+		"BIMI",
+	}
+}
+
 type ReviewStatus string
 
 // Enum values for ReviewStatus
@@ -379,15 +566,33 @@ const (
 	ReviewStatusDenied  ReviewStatus = "DENIED"
 )
 
-// Values returns all known values for ReviewStatus. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for ReviewStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (ReviewStatus) Values() []ReviewStatus {
 	return []ReviewStatus{
 		"PENDING",
 		"FAILED",
 		"GRANTED",
 		"DENIED",
+	}
+}
+
+type ScalingMode string
+
+// Enum values for ScalingMode
+const (
+	ScalingModeStandard ScalingMode = "STANDARD"
+	ScalingModeManaged  ScalingMode = "MANAGED"
+)
+
+// Values returns all known values for ScalingMode. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
+func (ScalingMode) Values() []ScalingMode {
+	return []ScalingMode{
+		"STANDARD",
+		"MANAGED",
 	}
 }
 
@@ -435,8 +640,8 @@ const (
 	SuppressionListReasonComplaint SuppressionListReason = "COMPLAINT"
 )
 
-// Values returns all known values for SuppressionListReason. Note that this can be
-// expanded in the future, and so it is only as up to date as the client. The
+// Values returns all known values for SuppressionListReason. Note that this can
+// be expanded in the future, and so it is only as up to date as the client. The
 // ordering of this slice is not guaranteed to be stable across updates.
 func (SuppressionListReason) Values() []SuppressionListReason {
 	return []SuppressionListReason{
@@ -453,13 +658,37 @@ const (
 	TlsPolicyOptional TlsPolicy = "OPTIONAL"
 )
 
-// Values returns all known values for TlsPolicy. Note that this can be expanded in
-// the future, and so it is only as up to date as the client. The ordering of this
-// slice is not guaranteed to be stable across updates.
+// Values returns all known values for TlsPolicy. Note that this can be expanded
+// in the future, and so it is only as up to date as the client. The ordering of
+// this slice is not guaranteed to be stable across updates.
 func (TlsPolicy) Values() []TlsPolicy {
 	return []TlsPolicy{
 		"REQUIRE",
 		"OPTIONAL",
+	}
+}
+
+type VerificationStatus string
+
+// Enum values for VerificationStatus
+const (
+	VerificationStatusPending          VerificationStatus = "PENDING"
+	VerificationStatusSuccess          VerificationStatus = "SUCCESS"
+	VerificationStatusFailed           VerificationStatus = "FAILED"
+	VerificationStatusTemporaryFailure VerificationStatus = "TEMPORARY_FAILURE"
+	VerificationStatusNotStarted       VerificationStatus = "NOT_STARTED"
+)
+
+// Values returns all known values for VerificationStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
+func (VerificationStatus) Values() []VerificationStatus {
+	return []VerificationStatus{
+		"PENDING",
+		"SUCCESS",
+		"FAILED",
+		"TEMPORARY_FAILURE",
+		"NOT_STARTED",
 	}
 }
 
@@ -471,9 +700,9 @@ const (
 	WarmupStatusDone       WarmupStatus = "DONE"
 )
 
-// Values returns all known values for WarmupStatus. Note that this can be expanded
-// in the future, and so it is only as up to date as the client. The ordering of
-// this slice is not guaranteed to be stable across updates.
+// Values returns all known values for WarmupStatus. Note that this can be
+// expanded in the future, and so it is only as up to date as the client. The
+// ordering of this slice is not guaranteed to be stable across updates.
 func (WarmupStatus) Values() []WarmupStatus {
 	return []WarmupStatus{
 		"IN_PROGRESS",

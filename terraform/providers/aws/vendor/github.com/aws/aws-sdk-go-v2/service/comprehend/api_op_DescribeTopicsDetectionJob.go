@@ -11,8 +11,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Gets the properties associated with a topic detection job. Use this operation to
-// get the status of a detection job.
+// Gets the properties associated with a topic detection job. Use this operation
+// to get the status of a detection job.
 func (c *Client) DescribeTopicsDetectionJob(ctx context.Context, params *DescribeTopicsDetectionJobInput, optFns ...func(*Options)) (*DescribeTopicsDetectionJobOutput, error) {
 	if params == nil {
 		params = &DescribeTopicsDetectionJobInput{}
@@ -98,6 +98,9 @@ func (c *Client) addOperationDescribeTopicsDetectionJobMiddlewares(stack *middle
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeTopicsDetectionJob(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

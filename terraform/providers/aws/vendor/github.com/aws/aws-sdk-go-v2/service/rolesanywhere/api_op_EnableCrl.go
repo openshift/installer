@@ -13,7 +13,7 @@ import (
 
 // Enables a certificate revocation list (CRL). When enabled, certificates stored
 // in the CRL are unauthorized to receive session credentials. Required
-// permissions: rolesanywhere:EnableCrl.
+// permissions: rolesanywhere:EnableCrl .
 func (c *Client) EnableCrl(ctx context.Context, params *EnableCrlInput, optFns ...func(*Options)) (*EnableCrlOutput, error) {
 	if params == nil {
 		params = &EnableCrlInput{}
@@ -102,6 +102,9 @@ func (c *Client) addOperationEnableCrlMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opEnableCrl(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

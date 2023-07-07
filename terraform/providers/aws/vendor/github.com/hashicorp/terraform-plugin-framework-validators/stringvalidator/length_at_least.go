@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 )
 
-var _ tfsdk.AttributeValidator = lengthAtLeastValidator{}
+var _ validator.String = lengthAtLeastValidator{}
 
 // stringLenAtLeastValidator validates that a string Attribute's length is at least a certain value.
 type lengthAtLeastValidator struct {
@@ -26,17 +27,17 @@ func (validator lengthAtLeastValidator) MarkdownDescription(ctx context.Context)
 }
 
 // Validate performs the validation.
-func (validator lengthAtLeastValidator) Validate(ctx context.Context, request tfsdk.ValidateAttributeRequest, response *tfsdk.ValidateAttributeResponse) {
-	s, ok := validateString(ctx, request, response)
-
-	if !ok {
+func (v lengthAtLeastValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
+	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
 		return
 	}
 
-	if l := len(s); l < validator.minLength {
+	value := request.ConfigValue.ValueString()
+
+	if l := len(value); l < v.minLength {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueLengthDiagnostic(
-			request.AttributePath,
-			validator.Description(ctx),
+			request.Path,
+			v.Description(ctx),
 			fmt.Sprintf("%d", l),
 		))
 
@@ -44,14 +45,13 @@ func (validator lengthAtLeastValidator) Validate(ctx context.Context, request tf
 	}
 }
 
-// LengthAtLeast returns an AttributeValidator which ensures that any configured
-// attribute value:
+// LengthAtLeast returns an validator which ensures that any configured
+// attribute value is of single-byte character length greater than or equal
+// to the given minimum. Null (unconfigured) and unknown (known after apply)
+// values are skipped.
 //
-//   - Is a string.
-//   - Is of length exclusively greater than the given minimum.
-//
-// Null (unconfigured) and unknown (known after apply) values are skipped.
-func LengthAtLeast(minLength int) tfsdk.AttributeValidator {
+// Use UTF8LengthAtLeast for checking multiple-byte characters.
+func LengthAtLeast(minLength int) validator.String {
 	if minLength < 0 {
 		return nil
 	}

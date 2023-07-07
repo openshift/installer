@@ -1,10 +1,12 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package awsbase
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
@@ -13,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/aws/smithy-go"
+	"github.com/hashicorp/aws-sdk-go-base/v2/logging"
 	multierror "github.com/hashicorp/go-multierror"
 )
 
@@ -48,8 +51,10 @@ func getAccountIDAndPartition(ctx context.Context, iamClient *iam.Client, stsCli
 
 // getAccountIDAndPartitionFromEC2Metadata gets the account ID and associated
 // partition from EC2 metadata.
-func getAccountIDAndPartitionFromEC2Metadata(ctx context.Context) (string, string, error) {
-	log.Println("[DEBUG] Trying to get account information via EC2 Metadata")
+func getAccountIDAndPartitionFromEC2Metadata(ctx context.Context) (accountID string, partition string, err error) {
+	logger := logging.RetrieveLogger(ctx)
+
+	logger.Debug(ctx, "Retrieving account information from EC2 Metadata")
 
 	cfg := aws.Config{}
 
@@ -59,18 +64,30 @@ func getAccountIDAndPartitionFromEC2Metadata(ctx context.Context) (string, strin
 		// We can end up here if there's an issue with the instance metadata service
 		// or if we're getting credentials from AdRoll's Hologram (in which case IAMInfo will
 		// error out).
-		err = fmt.Errorf("failed getting account information via EC2 Metadata IAM information: %w", err)
-		log.Printf("[DEBUG] %s", err)
-		return "", "", err
+		logger.Debug(ctx, "Unable to retrieve account information from EC2 Metadata", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving account information via EC2 Metadata IAM information: %w", err)
 	}
 
-	return parseAccountIDAndPartitionFromARN(info.InstanceProfileArn)
+	accountID, partition, err = parseAccountIDAndPartitionFromARN(info.InstanceProfileArn)
+	if err != nil {
+		logger.Debug(ctx, "Unable to retrieve account information from EC2 Metadata", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving account information from EC2 Metadata: %w", err)
+	} else {
+		logger.Info(ctx, "Retrieved account information from EC2 Metadata")
+	}
+	return
 }
 
 // getAccountIDAndPartitionFromIAMGetUser gets the account ID and associated
 // partition from IAM.
-func getAccountIDAndPartitionFromIAMGetUser(ctx context.Context, iamClient iam.GetUserAPIClient) (string, string, error) {
-	log.Println("[DEBUG] Trying to get account information via iam:GetUser")
+func getAccountIDAndPartitionFromIAMGetUser(ctx context.Context, iamClient iam.GetUserAPIClient) (accountID string, partition string, err error) {
+	logger := logging.RetrieveLogger(ctx)
+
+	logger.Debug(ctx, "Retrieving account information via iam:GetUser")
 
 	output, err := iamClient.GetUser(ctx, &iam.GetUserInput{})
 	if err != nil {
@@ -80,70 +97,111 @@ func getAccountIDAndPartitionFromIAMGetUser(ctx context.Context, iamClient iam.G
 		if errors.As(err, &apiErr) {
 			switch apiErr.ErrorCode() {
 			case "AccessDenied", "InvalidClientTokenId", "ValidationError":
-				log.Printf("[DEBUG] Ignoring iam:GetUser error: %s", err)
+				logger.Debug(ctx, "Retrieving account information via iam:GetUser: ignoring error", map[string]any{
+					"error": err,
+				})
 				return "", "", nil
 			}
 		}
-		err = fmt.Errorf("failed getting account information via iam:GetUser: %[1]w", err)
-		log.Printf("[DEBUG] %s", err)
-		return "", "", err
+		logger.Debug(ctx, "Unable to retrieve account information via iam:GetUser", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving account information via iam:GetUser: %w", err)
 	}
 
 	if output == nil || output.User == nil {
-		err = errors.New("empty iam:GetUser response")
-		log.Printf("[DEBUG] %s", err)
-		return "", "", err
+		logger.Debug(ctx, "Unable to retrieve account information via iam:GetUser", map[string]any{
+			"error": "empty response",
+		})
+		return "", "", errors.New("retrieving account information via iam:GetUser: empty response")
 	}
 
-	return parseAccountIDAndPartitionFromARN(aws.ToString(output.User.Arn))
+	accountID, partition, err = parseAccountIDAndPartitionFromARN(aws.ToString(output.User.Arn))
+	if err != nil {
+		logger.Debug(ctx, "Unable to retrieve account information via iam:GetUser", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving account information via iam:GetUser: %w", err)
+	} else {
+		logger.Info(ctx, "Retrieved account information via iam:GetUser")
+	}
+	return
 }
 
 // getAccountIDAndPartitionFromIAMListRoles gets the account ID and associated
 // partition from listing IAM roles.
-func getAccountIDAndPartitionFromIAMListRoles(ctx context.Context, iamClient iam.ListRolesAPIClient) (string, string, error) {
-	log.Println("[DEBUG] Trying to get account information via iam:ListRoles")
+func getAccountIDAndPartitionFromIAMListRoles(ctx context.Context, iamClient iam.ListRolesAPIClient) (accountID string, partition string, err error) {
+	logger := logging.RetrieveLogger(ctx)
+
+	logger.Debug(ctx, "Retrieving account information via iam:ListRoles")
 
 	output, err := iamClient.ListRoles(ctx, &iam.ListRolesInput{
 		MaxItems: aws.Int32(1),
 	})
 	if err != nil {
-		err = fmt.Errorf("failed getting account information via iam:ListRoles: %w", err)
-		log.Printf("[DEBUG] %s", err)
-		return "", "", err
+		logger.Debug(ctx, "Unable to retrieve account information via iam:ListRoles", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving account information via iam:ListRoles: %w", err)
 	}
 
 	if output == nil || len(output.Roles) < 1 {
-		err = fmt.Errorf("empty iam:ListRoles response")
-		log.Printf("[DEBUG] %s", err)
-		return "", "", err
+		logger.Debug(ctx, "Unable to retrieve account information via iam:ListRoles", map[string]any{
+			"error": "empty response",
+		})
+		return "", "", errors.New("retrieving account information via iam:ListRoles: empty response")
 	}
 
-	return parseAccountIDAndPartitionFromARN(aws.ToString(output.Roles[0].Arn))
+	accountID, partition, err = parseAccountIDAndPartitionFromARN(aws.ToString(output.Roles[0].Arn))
+	if err != nil {
+		logger.Debug(ctx, "Unable to retrieve account information via iam:ListRoles", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving account information via iam:ListRoles: %w", err)
+	} else {
+		logger.Info(ctx, "Retrieved account information via iam:ListRoles")
+	}
+	return
 }
 
 // getAccountIDAndPartitionFromSTSGetCallerIdentity gets the account ID and associated
 // partition from STS caller identity.
-func getAccountIDAndPartitionFromSTSGetCallerIdentity(ctx context.Context, stsClient *sts.Client) (string, string, error) {
-	log.Println("[DEBUG] Trying to get account information via sts:GetCallerIdentity")
+func getAccountIDAndPartitionFromSTSGetCallerIdentity(ctx context.Context, stsClient *sts.Client) (accountID string, partition string, err error) {
+	logger := logging.RetrieveLogger(ctx)
+
+	logger.Debug(ctx, "Retrieving caller identity from STS")
 
 	output, err := stsClient.GetCallerIdentity(ctx, &sts.GetCallerIdentityInput{})
 	if err != nil {
-		return "", "", fmt.Errorf("error calling sts:GetCallerIdentity: %[1]w", err)
+		logger.Debug(ctx, "Unable to retrieve caller identity from STS", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving caller identity from STS: %w", err)
 	}
 
 	if output == nil || output.Arn == nil {
-		err = errors.New("empty sts:GetCallerIdentity response")
-		log.Printf("[DEBUG] %s", err)
-		return "", "", err
+		logger.Debug(ctx, "Unable to retrieve caller identity from STS", map[string]any{
+			"error": "empty response",
+		})
+		return "", "", errors.New("retrieving caller identity from STS: empty response")
 	}
 
-	return parseAccountIDAndPartitionFromARN(aws.ToString(output.Arn))
+	accountID, partition, err = parseAccountIDAndPartitionFromARN(aws.ToString(output.Arn))
+	if err != nil {
+		logger.Debug(ctx, "Unable to retrieve caller identity from STS", map[string]any{
+			"error": err,
+		})
+		return "", "", fmt.Errorf("retrieving caller identity from STS: %w", err)
+	} else {
+		logger.Info(ctx, "Retrieved caller identity from STS")
+	}
+	return
 }
 
 func parseAccountIDAndPartitionFromARN(inputARN string) (string, string, error) {
 	arn, err := arn.Parse(inputARN)
 	if err != nil {
-		return "", "", fmt.Errorf("error parsing ARN (%s): %s", inputARN, err)
+		return "", "", fmt.Errorf("parsing ARN (%s): %s", inputARN, err)
 	}
 	return arn.AccountID, arn.Partition, nil
 }

@@ -35,7 +35,7 @@ type GetContactInput struct {
 	// This member is required.
 	ContactListName *string
 
-	// The contact's email addres.
+	// The contact's email address.
 	//
 	// This member is required.
 	EmailAddress *string
@@ -54,7 +54,7 @@ type GetContactOutput struct {
 	// A timestamp noting when the contact was created.
 	CreatedTimestamp *time.Time
 
-	// The contact's email addres.
+	// The contact's email address.
 	EmailAddress *string
 
 	// A timestamp noting the last time the contact's information was updated.
@@ -125,6 +125,9 @@ func (c *Client) addOperationGetContactMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetContact(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

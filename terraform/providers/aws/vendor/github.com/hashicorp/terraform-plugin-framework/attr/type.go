@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package attr
 
 import (
@@ -31,8 +34,15 @@ type Type interface {
 	// and improving error diagnostics.
 	ValueType(context.Context) Value
 
-	// Equal must return true if the Type is considered semantically equal
-	// to the Type passed as an argument.
+	// Equal should return true if the Type is considered equivalent to the
+	// Type passed as an argument.
+	//
+	// Most types should verify the associated Type is exactly equal to prevent
+	// potential data consistency issues. For example:
+	//
+	//  - basetypes.Number is inequal to basetypes.Int64 or basetypes.Float64
+	//  - basetypes.String is inequal to a custom Go type that embeds it
+	//
 	Equal(Type) bool
 
 	// String should return a human-friendly version of the Type.

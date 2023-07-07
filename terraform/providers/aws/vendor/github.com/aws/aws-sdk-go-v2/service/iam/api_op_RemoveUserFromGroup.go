@@ -29,17 +29,17 @@ func (c *Client) RemoveUserFromGroup(ctx context.Context, params *RemoveUserFrom
 type RemoveUserFromGroupInput struct {
 
 	// The name of the group to update. This parameter allows (through its regex
-	// pattern (http://wikipedia.org/wiki/regex)) a string of characters consisting of
+	// pattern (http://wikipedia.org/wiki/regex) ) a string of characters consisting of
 	// upper and lowercase alphanumeric characters with no spaces. You can also include
 	// any of the following characters: _+=,.@-
 	//
 	// This member is required.
 	GroupName *string
 
-	// The name of the user to remove. This parameter allows (through its regex pattern
-	// (http://wikipedia.org/wiki/regex)) a string of characters consisting of upper
-	// and lowercase alphanumeric characters with no spaces. You can also include any
-	// of the following characters: _+=,.@-
+	// The name of the user to remove. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
+	// ) a string of characters consisting of upper and lowercase alphanumeric
+	// characters with no spaces. You can also include any of the following characters:
+	// _+=,.@-
 	//
 	// This member is required.
 	UserName *string
@@ -103,6 +103,9 @@ func (c *Client) addOperationRemoveUserFromGroupMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opRemoveUserFromGroup(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -65,8 +65,21 @@ func (c *EFS) CreateAccessPointRequest(input *CreateAccessPointInput) (req *requ
 // data in the application's own directory and any subdirectories. To learn
 // more, see Mounting a file system using EFS access points (https://docs.aws.amazon.com/efs/latest/ug/efs-access-points.html).
 //
+// If multiple requests to create access points on the same file system are
+// sent in quick succession, and the file system is near the limit of 1,000
+// access points, you may experience a throttling response for these requests.
+// This is to ensure that the file system does not exceed the stated access
+// point limit.
+//
 // This operation requires permissions for the elasticfilesystem:CreateAccessPoint
 // action.
+//
+// Access points can be tagged on creation. If tags are specified in the creation
+// action, IAM performs additional authorization on the elasticfilesystem:TagResource
+// action to verify if users have permissions to create tags. Therefore, you
+// must grant explicit permissions to use the elasticfilesystem:TagResource
+// action. For more information, see Granting permissions to tag resources during
+// creation (https://docs.aws.amazon.com/efs/latest/ug/using-tags-efs.html#supported-iam-actions-tagging.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -103,7 +116,8 @@ func (c *EFS) CreateAccessPointRequest(input *CreateAccessPointInput) (req *requ
 //
 //   - ThrottlingException
 //     Returned when the CreateAccessPoint API action is called too quickly and
-//     the number of Access Points in the account is nearing the limit of 120.
+//     the number of Access Points on the file system is nearing the limit of 120
+//     (https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region).
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/elasticfilesystem-2015-02-01/CreateAccessPoint
 func (c *EFS) CreateAccessPoint(input *CreateAccessPointInput) (*CreateAccessPointOutput, error) {
@@ -223,6 +237,13 @@ func (c *EFS) CreateFileSystemRequest(input *CreateFileSystemInput) (req *reques
 //
 // This operation requires permissions for the elasticfilesystem:CreateFileSystem
 // action.
+//
+// File systems can be tagged on creation. If tags are specified in the creation
+// action, IAM performs additional authorization on the elasticfilesystem:TagResource
+// action to verify if users have permissions to create tags. Therefore, you
+// must grant explicit permissions to use the elasticfilesystem:TagResource
+// action. For more information, see Granting permissions to tag resources during
+// creation (https://docs.aws.amazon.com/efs/latest/ug/using-tags-efs.html#supported-iam-actions-tagging.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -593,9 +614,9 @@ func (c *EFS) CreateReplicationConfigurationRequest(input *CreateReplicationConf
 //     EFS One Zone storage. In that case, the General Purpose performance mode
 //     is used. The performance mode cannot be changed.
 //
-//   - Throughput mode - The destination file system uses the Bursting Throughput
-//     mode by default. After the file system is created, you can modify the
-//     throughput mode.
+//   - Throughput mode - The destination file system's throughput mode matches
+//     that of the source file system. After the file system is created, you
+//     can modify the throughput mode.
 //
 // The following properties are turned off by default:
 //
@@ -1891,7 +1912,7 @@ func (c *EFS) DescribeFileSystemsRequest(input *DescribeFileSystemsInput) (req *
 //
 // When retrieving all file system descriptions, you can optionally specify
 // the MaxItems parameter to limit the number of descriptions in a response.
-// Currently, this number is automatically set to 10. If more file system descriptions
+// This number is automatically set to 100. If more file system descriptions
 // remain, Amazon EFS returns a NextMarker, an opaque token, in the response.
 // In this case, you should send a subsequent request with the Marker request
 // parameter set to the value of NextMarker.
@@ -3166,19 +3187,19 @@ func (c *EFS) PutLifecycleConfigurationRequest(input *PutLifecycleConfigurationI
 
 // PutLifecycleConfiguration API operation for Amazon Elastic File System.
 //
-// Use this action to manage EFS lifecycle management and intelligent tiering.
+// Use this action to manage EFS lifecycle management and EFS Intelligent-Tiering.
 // A LifecycleConfiguration consists of one or more LifecyclePolicy objects
 // that define the following:
 //
 //   - EFS Lifecycle management - When Amazon EFS automatically transitions
-//     files in a file system into the lower-cost Infrequent Access (IA) storage
-//     class. To enable EFS Lifecycle management, set the value of TransitionToIA
+//     files in a file system into the lower-cost EFS Infrequent Access (IA)
+//     storage class. To enable EFS Lifecycle management, set the value of TransitionToIA
 //     to one of the available options.
 //
-//   - EFS Intelligent tiering - When Amazon EFS automatically transitions
-//     files from IA back into the file system's primary storage class (Standard
-//     or One Zone Standard. To enable EFS Intelligent Tiering, set the value
-//     of TransitionToPrimaryStorageClass to AFTER_1_ACCESS.
+//   - EFS Intelligent-Tiering - When Amazon EFS automatically transitions
+//     files from IA back into the file system's primary storage class (EFS Standard
+//     or EFS One Zone Standard). To enable EFS Intelligent-Tiering, set the
+//     value of TransitionToPrimaryStorageClass to AFTER_1_ACCESS.
 //
 // For more information, see EFS Lifecycle Management (https://docs.aws.amazon.com/efs/latest/ug/lifecycle-management-efs.html).
 //
@@ -3187,12 +3208,13 @@ func (c *EFS) PutLifecycleConfigurationRequest(input *PutLifecycleConfigurationI
 // exists for the specified file system, a PutLifecycleConfiguration call modifies
 // the existing configuration. A PutLifecycleConfiguration call with an empty
 // LifecyclePolicies array in the request body deletes any existing LifecycleConfiguration
-// and turns off lifecycle management and intelligent tiering for the file system.
+// and turns off lifecycle management and EFS Intelligent-Tiering for the file
+// system.
 //
 // In the request, specify the following:
 //
 //   - The ID for the file system for which you are enabling, disabling, or
-//     modifying lifecycle management and intelligent tiering.
+//     modifying lifecycle management and EFS Intelligent-Tiering.
 //
 //   - A LifecyclePolicies array of LifecyclePolicy objects that define when
 //     files are moved into IA storage, and when they are moved back to Standard
@@ -3655,7 +3677,7 @@ type AccessPointDescription struct {
 	// The name of the access point. This is the value of the Name tag.
 	Name *string `type:"string"`
 
-	// Identified the Amazon Web Services account that owns the access point resource.
+	// Identifies the Amazon Web Services account that owns the access point resource.
 	OwnerId *string `type:"string"`
 
 	// The full POSIX identity, including the user ID, group ID, and secondary group
@@ -4262,7 +4284,7 @@ type CreateAccessPointOutput struct {
 	// The name of the access point. This is the value of the Name tag.
 	Name *string `type:"string"`
 
-	// Identified the Amazon Web Services account that owns the access point resource.
+	// Identifies the Amazon Web Services account that owns the access point resource.
 	OwnerId *string `type:"string"`
 
 	// The full POSIX identity, including the user ID, group ID, and secondary group
@@ -4438,13 +4460,12 @@ type CreateFileSystemInput struct {
 	// in the Amazon Web Services General Reference Guide.
 	Tags []*Tag `type:"list"`
 
-	// Specifies the throughput mode for the file system, either bursting or provisioned.
-	// If you set ThroughputMode to provisioned, you must also set a value for ProvisionedThroughputInMibps.
-	// After you create the file system, you can decrease your file system's throughput
-	// in Provisioned Throughput mode or change between the throughput modes, as
-	// long as it’s been more than 24 hours since the last decrease or throughput
-	// mode change. For more information, see Specifying throughput with provisioned
-	// mode (https://docs.aws.amazon.com/efs/latest/ug/performance.html#provisioned-throughput)
+	// Specifies the throughput mode for the file system. The mode can be bursting,
+	// provisioned, or elastic. If you set ThroughputMode to provisioned, you must
+	// also set a value for ProvisionedThroughputInMibps. After you create the file
+	// system, you can decrease your file system's throughput in Provisioned Throughput
+	// mode or change between the throughput modes, with certain time restrictions.
+	// For more information, see Specifying throughput with provisioned mode (https://docs.aws.amazon.com/efs/latest/ug/performance.html#provisioned-throughput)
 	// in the Amazon EFS User Guide.
 	//
 	// Default is bursting.
@@ -6618,10 +6639,21 @@ type Destination struct {
 	// Region is a required field
 	Region *string `min:"1" type:"string" required:"true"`
 
-	// Describes the status of the destination Amazon EFS file system. If the status
-	// is ERROR, the destination file system in the replication configuration is
-	// in a failed state and is unrecoverable. To access the file system data, restore
-	// a backup of the failed file system to a new file system.
+	// Describes the status of the destination Amazon EFS file system.
+	//
+	//    * The Paused state occurs as a result of opting out of the source or destination
+	//    Region after the replication configuration was created. To resume replication
+	//    for the file system, you need to again opt in to the Amazon Web Services
+	//    Region. For more information, see Managing Amazon Web Services Regions
+	//    (https://docs.aws.amazon.com/general/latest/gr/rande-manage.html#rande-manage-enable)
+	//    in the Amazon Web Services General Reference Guide.
+	//
+	//    * The Error state occurs when either the source or the destination file
+	//    system (or both) is in a failed state and is unrecoverable. For more information,
+	//    see Monitoring replication status (https://docs.aws.amazon.com/efs/latest/ug/awsbackup.html#restoring-backup-efsmonitoring-replication-status.html)
+	//    in the Amazon EFS User Guide. You must delete the replication configuration,
+	//    and then restore the most recent backup of the failed file system (either
+	//    the source or the destination) to a new file system.
 	//
 	// Status is a required field
 	Status *string `type:"string" required:"true" enum:"ReplicationStatus"`
@@ -6887,9 +6919,7 @@ type FileSystemDescription struct {
 	// NumberOfMountTargets is a required field
 	NumberOfMountTargets *int64 `type:"integer" required:"true"`
 
-	// The Amazon Web Services account that created the file system. If the file
-	// system was created by an IAM user, the parent account to which the user belongs
-	// is the owner.
+	// The Amazon Web Services account that created the file system.
 	//
 	// OwnerId is a required field
 	OwnerId *string `type:"string" required:"true"`
@@ -9761,7 +9791,8 @@ func (s TagResourceOutput) GoString() string {
 }
 
 // Returned when the CreateAccessPoint API action is called too quickly and
-// the number of Access Points in the account is nearing the limit of 120.
+// the number of Access Points on the file system is nearing the limit of 120
+// (https://docs.aws.amazon.com/efs/latest/ug/limits.html#limits-efs-resources-per-account-per-region).
 type ThrottlingException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
@@ -10292,9 +10323,7 @@ type UpdateFileSystemOutput struct {
 	// NumberOfMountTargets is a required field
 	NumberOfMountTargets *int64 `type:"integer" required:"true"`
 
-	// The Amazon Web Services account that created the file system. If the file
-	// system was created by an IAM user, the parent account to which the user belongs
-	// is the owner.
+	// The Amazon Web Services account that created the file system.
 	//
 	// OwnerId is a required field
 	OwnerId *string `type:"string" required:"true"`
@@ -10590,6 +10619,12 @@ const (
 
 	// ReplicationStatusError is a ReplicationStatus enum value
 	ReplicationStatusError = "ERROR"
+
+	// ReplicationStatusPaused is a ReplicationStatus enum value
+	ReplicationStatusPaused = "PAUSED"
+
+	// ReplicationStatusPausing is a ReplicationStatus enum value
+	ReplicationStatusPausing = "PAUSING"
 )
 
 // ReplicationStatus_Values returns all elements of the ReplicationStatus enum
@@ -10599,6 +10634,8 @@ func ReplicationStatus_Values() []string {
 		ReplicationStatusEnabling,
 		ReplicationStatusDeleting,
 		ReplicationStatusError,
+		ReplicationStatusPaused,
+		ReplicationStatusPausing,
 	}
 }
 
@@ -10667,6 +10704,9 @@ const (
 
 	// ThroughputModeProvisioned is a ThroughputMode enum value
 	ThroughputModeProvisioned = "provisioned"
+
+	// ThroughputModeElastic is a ThroughputMode enum value
+	ThroughputModeElastic = "elastic"
 )
 
 // ThroughputMode_Values returns all elements of the ThroughputMode enum
@@ -10674,6 +10714,7 @@ func ThroughputMode_Values() []string {
 	return []string{
 		ThroughputModeBursting,
 		ThroughputModeProvisioned,
+		ThroughputModeElastic,
 	}
 }
 
@@ -10692,6 +10733,9 @@ const (
 
 	// TransitionToIARulesAfter90Days is a TransitionToIARules enum value
 	TransitionToIARulesAfter90Days = "AFTER_90_DAYS"
+
+	// TransitionToIARulesAfter1Day is a TransitionToIARules enum value
+	TransitionToIARulesAfter1Day = "AFTER_1_DAY"
 )
 
 // TransitionToIARules_Values returns all elements of the TransitionToIARules enum
@@ -10702,6 +10746,7 @@ func TransitionToIARules_Values() []string {
 		TransitionToIARulesAfter30Days,
 		TransitionToIARulesAfter60Days,
 		TransitionToIARulesAfter90Days,
+		TransitionToIARulesAfter1Day,
 	}
 }
 

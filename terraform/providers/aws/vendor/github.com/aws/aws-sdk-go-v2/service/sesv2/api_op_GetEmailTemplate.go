@@ -44,8 +44,8 @@ type GetEmailTemplateInput struct {
 // The following element is returned by the service.
 type GetEmailTemplateOutput struct {
 
-	// The content of the email template, composed of a subject line, an HTML part, and
-	// a text-only part.
+	// The content of the email template, composed of a subject line, an HTML part,
+	// and a text-only part.
 	//
 	// This member is required.
 	TemplateContent *types.EmailTemplateContent
@@ -110,6 +110,9 @@ func (c *Client) addOperationGetEmailTemplateMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetEmailTemplate(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

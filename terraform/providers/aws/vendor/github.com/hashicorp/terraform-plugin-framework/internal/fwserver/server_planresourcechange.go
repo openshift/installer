@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -8,8 +11,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwschemadata"
 	"github.com/hashicorp/terraform-plugin-framework/internal/logging"
 	"github.com/hashicorp/terraform-plugin-framework/internal/privatestate"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -44,7 +49,7 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 		return
 	}
 
-	if _, ok := req.Resource.(resource.ResourceWithConfigure); ok {
+	if resourceWithConfigure, ok := req.Resource.(resource.ResourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "Resource implements ResourceWithConfigure")
 
 		configureReq := resource.ConfigureRequest{
@@ -53,7 +58,7 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 		configureResp := resource.ConfigureResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
-		req.Resource.(resource.ResourceWithConfigure).Configure(ctx, configureReq, &configureResp)
+		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
 		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
@@ -70,21 +75,21 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 	if req.Config == nil {
 		req.Config = &tfsdk.Config{
 			Raw:    nullTfValue,
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 		}
 	}
 
 	if req.ProposedNewState == nil {
 		req.ProposedNewState = &tfsdk.Plan{
 			Raw:    nullTfValue,
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 		}
 	}
 
 	if req.PriorState == nil {
 		req.PriorState = &tfsdk.State{
 			Raw:    nullTfValue,
-			Schema: schema(req.ResourceSchema),
+			Schema: req.ResourceSchema,
 		}
 	}
 
@@ -103,6 +108,30 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 	}
 
 	resp.PlannedState = planToState(*req.ProposedNewState)
+
+	// Set Defaults.
+	//
+	// If the planned state is not null (i.e., not a destroy operation) we traverse the schema,
+	// identifying any attributes which are null within the configuration, and if the attribute
+	// has a default value specified by the `Default` field on the attribute then the default
+	// value is assigned.
+	if !resp.PlannedState.Raw.IsNull() {
+		data := fwschemadata.Data{
+			Description:    fwschemadata.DataDescriptionState,
+			Schema:         resp.PlannedState.Schema,
+			TerraformValue: resp.PlannedState.Raw,
+		}
+
+		diags := data.TransformDefaults(ctx, req.Config.Raw)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.PlannedState.Raw = data.TerraformValue
+	}
 
 	// Execute any AttributePlanModifiers.
 	//
@@ -155,7 +184,48 @@ func (s *Server) PlanResourceChange(ctx context.Context, req *PlanResourceChange
 	// We only do this if there's a plan to modify; otherwise, it
 	// represents a resource being deleted and there's no point.
 	if !resp.PlannedState.Raw.IsNull() && !resp.PlannedState.Raw.Equal(req.PriorState.Raw) {
-		logging.FrameworkTrace(ctx, "Marking Computed null Config values as unknown in Plan")
+		// Loop through top level attributes/blocks to individually emit logs
+		// for value changes. This is helpful for troubleshooting unexpected
+		// plan outputs and only needs to be done for resource update plans.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/627
+		if !req.PriorState.Raw.IsNull() {
+			var allPaths, changedPaths path.Paths
+
+			for attrName := range resp.PlannedState.Schema.GetAttributes() {
+				allPaths.Append(path.Root(attrName))
+			}
+
+			for blockName := range resp.PlannedState.Schema.GetBlocks() {
+				allPaths.Append(path.Root(blockName))
+			}
+
+			for _, p := range allPaths {
+				var plannedState, priorState attr.Value
+
+				// This logging is best effort and any errors should not be
+				// returned to practitioners.
+				_ = resp.PlannedState.GetAttribute(ctx, p, &plannedState)
+				_ = req.PriorState.GetAttribute(ctx, p, &priorState)
+
+				if plannedState.Equal(priorState) {
+					continue
+				}
+
+				changedPaths.Append(p)
+			}
+
+			// Colocate these log entries to not intermix with GetAttribute logging
+			for _, p := range changedPaths {
+				logging.FrameworkDebug(ctx,
+					"Detected value change between proposed new state and prior state",
+					map[string]any{
+						logging.KeyAttributePath: p.String(),
+					},
+				)
+			}
+		}
+
+		logging.FrameworkDebug(ctx, "Marking Computed attributes with null configuration values as unknown (known after apply) in the plan to prevent potential Terraform errors")
 
 		modifiedPlan, err := tftypes.Transform(resp.PlannedState.Raw, MarkComputedNilsAsUnknown(ctx, req.Config.Raw, req.ResourceSchema))
 
@@ -272,22 +342,40 @@ func MarkComputedNilsAsUnknown(ctx context.Context, config tftypes.Value, resour
 			return val, nil
 		}
 
-		configVal, _, err := tftypes.WalkAttributePath(config, path)
+		configValIface, _, err := tftypes.WalkAttributePath(config, path)
 
-		if err != tftypes.ErrInvalidStep && err != nil {
-			logging.FrameworkError(ctx, "error walking attribute path")
-			return val, err
-		} else if err != tftypes.ErrInvalidStep && !configVal.(tftypes.Value).IsNull() {
-			logging.FrameworkTrace(ctx, "attribute not null in config, not marking unknown")
+		if err != nil && err != tftypes.ErrInvalidStep {
+			logging.FrameworkError(ctx,
+				"Error walking attributes/block path during unknown marking",
+				map[string]any{
+					logging.KeyError: err.Error(),
+				},
+			)
+			return val, fmt.Errorf("error walking attribute/block path during unknown marking: %w", err)
+		}
+
+		configVal, ok := configValIface.(tftypes.Value)
+		if !ok {
+			return val, fmt.Errorf("unexpected type during unknown marking: %T", configValIface)
+		}
+
+		if !configVal.IsNull() {
+			logging.FrameworkTrace(ctx, "Attribute/block not null in configuration, not marking unknown")
 			return val, nil
 		}
 
 		attribute, err := resourceSchema.AttributeAtTerraformPath(ctx, path)
 
 		if err != nil {
-			if errors.Is(err, tfsdk.ErrPathInsideAtomicAttribute) {
+			if errors.Is(err, fwschema.ErrPathInsideAtomicAttribute) {
 				// ignore attributes/elements inside schema.Attributes, they have no schema of their own
 				logging.FrameworkTrace(ctx, "attribute is a non-schema attribute, not marking unknown")
+				return val, nil
+			}
+
+			if errors.Is(err, fwschema.ErrPathIsBlock) {
+				// ignore blocks, they do not have a computed field
+				logging.FrameworkTrace(ctx, "attribute is a block, not marking unknown")
 				return val, nil
 			}
 
@@ -295,10 +383,50 @@ func MarkComputedNilsAsUnknown(ctx context.Context, config tftypes.Value, resour
 
 			return tftypes.Value{}, fmt.Errorf("couldn't find attribute in resource schema: %w", err)
 		}
+
 		if !attribute.IsComputed() {
 			logging.FrameworkTrace(ctx, "attribute is not computed in schema, not marking unknown")
 
 			return val, nil
+		}
+
+		switch a := attribute.(type) {
+		case fwschema.AttributeWithBoolDefaultValue:
+			if a.BoolDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithFloat64DefaultValue:
+			if a.Float64DefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithInt64DefaultValue:
+			if a.Int64DefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithListDefaultValue:
+			if a.ListDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithMapDefaultValue:
+			if a.MapDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithNumberDefaultValue:
+			if a.NumberDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithObjectDefaultValue:
+			if a.ObjectDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithSetDefaultValue:
+			if a.SetDefaultValue() != nil {
+				return val, nil
+			}
+		case fwschema.AttributeWithStringDefaultValue:
+			if a.StringDefaultValue() != nil {
+				return val, nil
+			}
 		}
 
 		logging.FrameworkDebug(ctx, "marking computed attribute that is null in the config as unknown")

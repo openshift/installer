@@ -12,7 +12,7 @@ import (
 )
 
 // Inspects a batch of documents and returns an inference of the prevailing
-// sentiment, POSITIVE, NEUTRAL, MIXED, or NEGATIVE, in each one.
+// sentiment, POSITIVE , NEUTRAL , MIXED , or NEGATIVE , in each one.
 func (c *Client) BatchDetectSentiment(ctx context.Context, params *BatchDetectSentimentInput, optFns ...func(*Options)) (*BatchDetectSentimentOutput, error) {
 	if params == nil {
 		params = &BatchDetectSentimentInput{}
@@ -39,8 +39,6 @@ type BatchDetectSentimentInput struct {
 
 	// A list containing the UTF-8 encoded text of the input documents. The list can
 	// contain a maximum of 25 documents. The maximum size of each document is 5 KB.
-	// Amazon Comprehend performs real-time sentiment analysis on the first 500
-	// characters of the input text and ignores any additional text in the input.
 	//
 	// This member is required.
 	TextList []string
@@ -121,6 +119,9 @@ func (c *Client) addOperationBatchDetectSentimentMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opBatchDetectSentiment(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

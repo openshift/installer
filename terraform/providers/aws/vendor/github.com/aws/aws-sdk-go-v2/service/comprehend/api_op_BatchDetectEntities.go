@@ -12,9 +12,8 @@ import (
 )
 
 // Inspects the text of a batch of documents for named entities and returns
-// information about them. For more information about named entities, see Entities
-// (https://docs.aws.amazon.com/comprehend/latest/dg/how-entities.html) in the
-// Comprehend Developer Guide.
+// information about them. For more information about named entities, see Entities (https://docs.aws.amazon.com/comprehend/latest/dg/how-entities.html)
+// in the Comprehend Developer Guide.
 func (c *Client) BatchDetectEntities(ctx context.Context, params *BatchDetectEntitiesInput, optFns ...func(*Options)) (*BatchDetectEntitiesOutput, error) {
 	if params == nil {
 		params = &BatchDetectEntitiesInput{}
@@ -121,6 +120,9 @@ func (c *Client) addOperationBatchDetectEntitiesMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opBatchDetectEntities(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -255,6 +255,10 @@ func (c *Personalize) CreateCampaignRequest(input *CreateCampaignInput) (req *re
 //
 // # Minimum Provisioned TPS and Auto-Scaling
 //
+// A high minProvisionedTPS will increase your bill. We recommend starting with
+// 1 for minProvisionedTPS (the default). Track your usage using Amazon CloudWatch
+// metrics, and increase the minProvisionedTPS as necessary.
+//
 // A transaction is a single GetRecommendations or GetPersonalizedRanking call.
 // Transactions per second (TPS) is the throughput and unit of billing for Amazon
 // Personalize. The minimum provisioned TPS (minProvisionedTPS) specifies the
@@ -1057,6 +1061,100 @@ func (c *Personalize) CreateFilterWithContext(ctx aws.Context, input *CreateFilt
 	return out, req.Send()
 }
 
+const opCreateMetricAttribution = "CreateMetricAttribution"
+
+// CreateMetricAttributionRequest generates a "aws/request.Request" representing the
+// client's request for the CreateMetricAttribution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateMetricAttribution for more information on using the CreateMetricAttribution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateMetricAttributionRequest method.
+//	req, resp := client.CreateMetricAttributionRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/CreateMetricAttribution
+func (c *Personalize) CreateMetricAttributionRequest(input *CreateMetricAttributionInput) (req *request.Request, output *CreateMetricAttributionOutput) {
+	op := &request.Operation{
+		Name:       opCreateMetricAttribution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateMetricAttributionInput{}
+	}
+
+	output = &CreateMetricAttributionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateMetricAttribution API operation for Amazon Personalize.
+//
+// Creates a metric attribution. A metric attribution creates reports on the
+// data that you import into Amazon Personalize. Depending on how you imported
+// the data, you can view reports in Amazon CloudWatch or Amazon S3. For more
+// information, see Measuring impact of recommendations (https://docs.aws.amazon.com/personalize/latest/dg/measuring-recommendation-impact.html).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Personalize's
+// API operation CreateMetricAttribution for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     Provide a valid value for the field or parameter.
+//
+//   - ResourceNotFoundException
+//     Could not find the specified resource.
+//
+//   - ResourceAlreadyExistsException
+//     The specified resource already exists.
+//
+//   - ResourceInUseException
+//     The specified resource is in use.
+//
+//   - LimitExceededException
+//     The limit on the number of requests per second has been exceeded.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/CreateMetricAttribution
+func (c *Personalize) CreateMetricAttribution(input *CreateMetricAttributionInput) (*CreateMetricAttributionOutput, error) {
+	req, out := c.CreateMetricAttributionRequest(input)
+	return out, req.Send()
+}
+
+// CreateMetricAttributionWithContext is the same as CreateMetricAttribution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateMetricAttribution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) CreateMetricAttributionWithContext(ctx aws.Context, input *CreateMetricAttributionInput, opts ...request.Option) (*CreateMetricAttributionOutput, error) {
+	req, out := c.CreateMetricAttributionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateRecommender = "CreateRecommender"
 
 // CreateRecommenderRequest generates a "aws/request.Request" representing the
@@ -1107,6 +1205,11 @@ func (c *Personalize) CreateRecommenderRequest(input *CreateRecommenderInput) (r
 // request.
 //
 // # Minimum recommendation requests per second
+//
+// A high minRecommendationRequestsPerSecond will increase your bill. We recommend
+// starting with 1 for minRecommendationRequestsPerSecond (the default). Track
+// your usage using Amazon CloudWatch metrics, and increase the minRecommendationRequestsPerSecond
+// as necessary.
 //
 // When you create a recommender, you can configure the recommender's minimum
 // recommendation requests per second. The minimum recommendation requests per
@@ -1348,8 +1451,8 @@ func (c *Personalize) CreateSolutionRequest(input *CreateSolutionInput) (req *re
 // CreateSolution API operation for Amazon Personalize.
 //
 // Creates the configuration for training a model. A trained model is known
-// as a solution. After the configuration is created, you train the model (create
-// a solution) by calling the CreateSolutionVersion (https://docs.aws.amazon.com/personalize/latest/dg/API_CreateSolutionVersion.html)
+// as a solution version. After the configuration is created, you train the
+// model (create a solution version) by calling the CreateSolutionVersion (https://docs.aws.amazon.com/personalize/latest/dg/API_CreateSolutionVersion.html)
 // operation. Every time you call CreateSolutionVersion, a new version of the
 // solution is created.
 //
@@ -1365,9 +1468,6 @@ func (c *Personalize) CreateSolutionRequest(input *CreateSolutionInput) (req *re
 // The training data comes from the dataset group that you provide in the request.
 // A recipe specifies the training algorithm and a feature transformation. You
 // can specify one of the predefined recipes provided by Amazon Personalize.
-// Alternatively, you can specify performAutoML and Amazon Personalize will
-// analyze your data and select the optimum USER_PERSONALIZATION recipe for
-// you.
 //
 // Amazon Personalize doesn't support configuring the hpoObjective for solution
 // hyperparameter optimization at this time.
@@ -1553,6 +1653,9 @@ func (c *Personalize) CreateSolutionVersionRequest(input *CreateSolutionVersionI
 //
 //   - TooManyTagsException
 //     You have exceeded the maximum number of tags you can apply to this resource.
+//
+//   - ResourceAlreadyExistsException
+//     The specified resource already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/CreateSolutionVersion
 func (c *Personalize) CreateSolutionVersion(input *CreateSolutionVersionInput) (*CreateSolutionVersionOutput, error) {
@@ -2015,6 +2118,92 @@ func (c *Personalize) DeleteFilter(input *DeleteFilterInput) (*DeleteFilterOutpu
 // for more information on using Contexts.
 func (c *Personalize) DeleteFilterWithContext(ctx aws.Context, input *DeleteFilterInput, opts ...request.Option) (*DeleteFilterOutput, error) {
 	req, out := c.DeleteFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteMetricAttribution = "DeleteMetricAttribution"
+
+// DeleteMetricAttributionRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteMetricAttribution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteMetricAttribution for more information on using the DeleteMetricAttribution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteMetricAttributionRequest method.
+//	req, resp := client.DeleteMetricAttributionRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/DeleteMetricAttribution
+func (c *Personalize) DeleteMetricAttributionRequest(input *DeleteMetricAttributionInput) (req *request.Request, output *DeleteMetricAttributionOutput) {
+	op := &request.Operation{
+		Name:       opDeleteMetricAttribution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteMetricAttributionInput{}
+	}
+
+	output = &DeleteMetricAttributionOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteMetricAttribution API operation for Amazon Personalize.
+//
+// Deletes a metric attribution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Personalize's
+// API operation DeleteMetricAttribution for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     Provide a valid value for the field or parameter.
+//
+//   - ResourceNotFoundException
+//     Could not find the specified resource.
+//
+//   - ResourceInUseException
+//     The specified resource is in use.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/DeleteMetricAttribution
+func (c *Personalize) DeleteMetricAttribution(input *DeleteMetricAttributionInput) (*DeleteMetricAttributionOutput, error) {
+	req, out := c.DeleteMetricAttributionRequest(input)
+	return out, req.Send()
+}
+
+// DeleteMetricAttributionWithContext is the same as DeleteMetricAttribution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteMetricAttribution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) DeleteMetricAttributionWithContext(ctx aws.Context, input *DeleteMetricAttributionInput, opts ...request.Option) (*DeleteMetricAttributionOutput, error) {
+	req, out := c.DeleteMetricAttributionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -3205,6 +3394,88 @@ func (c *Personalize) DescribeFilter(input *DescribeFilterInput) (*DescribeFilte
 // for more information on using Contexts.
 func (c *Personalize) DescribeFilterWithContext(ctx aws.Context, input *DescribeFilterInput, opts ...request.Option) (*DescribeFilterOutput, error) {
 	req, out := c.DescribeFilterRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeMetricAttribution = "DescribeMetricAttribution"
+
+// DescribeMetricAttributionRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeMetricAttribution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeMetricAttribution for more information on using the DescribeMetricAttribution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DescribeMetricAttributionRequest method.
+//	req, resp := client.DescribeMetricAttributionRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/DescribeMetricAttribution
+func (c *Personalize) DescribeMetricAttributionRequest(input *DescribeMetricAttributionInput) (req *request.Request, output *DescribeMetricAttributionOutput) {
+	op := &request.Operation{
+		Name:       opDescribeMetricAttribution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeMetricAttributionInput{}
+	}
+
+	output = &DescribeMetricAttributionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeMetricAttribution API operation for Amazon Personalize.
+//
+// Describes a metric attribution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Personalize's
+// API operation DescribeMetricAttribution for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     Provide a valid value for the field or parameter.
+//
+//   - ResourceNotFoundException
+//     Could not find the specified resource.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/DescribeMetricAttribution
+func (c *Personalize) DescribeMetricAttribution(input *DescribeMetricAttributionInput) (*DescribeMetricAttributionOutput, error) {
+	req, out := c.DescribeMetricAttributionRequest(input)
+	return out, req.Send()
+}
+
+// DescribeMetricAttributionWithContext is the same as DescribeMetricAttribution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeMetricAttribution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) DescribeMetricAttributionWithContext(ctx aws.Context, input *DescribeMetricAttributionInput, opts ...request.Option) (*DescribeMetricAttributionOutput, error) {
+	req, out := c.DescribeMetricAttributionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -5009,6 +5280,284 @@ func (c *Personalize) ListFiltersPagesWithContext(ctx aws.Context, input *ListFi
 	return p.Err()
 }
 
+const opListMetricAttributionMetrics = "ListMetricAttributionMetrics"
+
+// ListMetricAttributionMetricsRequest generates a "aws/request.Request" representing the
+// client's request for the ListMetricAttributionMetrics operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListMetricAttributionMetrics for more information on using the ListMetricAttributionMetrics
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListMetricAttributionMetricsRequest method.
+//	req, resp := client.ListMetricAttributionMetricsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/ListMetricAttributionMetrics
+func (c *Personalize) ListMetricAttributionMetricsRequest(input *ListMetricAttributionMetricsInput) (req *request.Request, output *ListMetricAttributionMetricsOutput) {
+	op := &request.Operation{
+		Name:       opListMetricAttributionMetrics,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListMetricAttributionMetricsInput{}
+	}
+
+	output = &ListMetricAttributionMetricsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListMetricAttributionMetrics API operation for Amazon Personalize.
+//
+// Lists the metrics for the metric attribution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Personalize's
+// API operation ListMetricAttributionMetrics for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     Provide a valid value for the field or parameter.
+//
+//   - InvalidNextTokenException
+//     The token is not valid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/ListMetricAttributionMetrics
+func (c *Personalize) ListMetricAttributionMetrics(input *ListMetricAttributionMetricsInput) (*ListMetricAttributionMetricsOutput, error) {
+	req, out := c.ListMetricAttributionMetricsRequest(input)
+	return out, req.Send()
+}
+
+// ListMetricAttributionMetricsWithContext is the same as ListMetricAttributionMetrics with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListMetricAttributionMetrics for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) ListMetricAttributionMetricsWithContext(ctx aws.Context, input *ListMetricAttributionMetricsInput, opts ...request.Option) (*ListMetricAttributionMetricsOutput, error) {
+	req, out := c.ListMetricAttributionMetricsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListMetricAttributionMetricsPages iterates over the pages of a ListMetricAttributionMetrics operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListMetricAttributionMetrics method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListMetricAttributionMetrics operation.
+//	pageNum := 0
+//	err := client.ListMetricAttributionMetricsPages(params,
+//	    func(page *personalize.ListMetricAttributionMetricsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Personalize) ListMetricAttributionMetricsPages(input *ListMetricAttributionMetricsInput, fn func(*ListMetricAttributionMetricsOutput, bool) bool) error {
+	return c.ListMetricAttributionMetricsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListMetricAttributionMetricsPagesWithContext same as ListMetricAttributionMetricsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) ListMetricAttributionMetricsPagesWithContext(ctx aws.Context, input *ListMetricAttributionMetricsInput, fn func(*ListMetricAttributionMetricsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListMetricAttributionMetricsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListMetricAttributionMetricsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListMetricAttributionMetricsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListMetricAttributions = "ListMetricAttributions"
+
+// ListMetricAttributionsRequest generates a "aws/request.Request" representing the
+// client's request for the ListMetricAttributions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListMetricAttributions for more information on using the ListMetricAttributions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListMetricAttributionsRequest method.
+//	req, resp := client.ListMetricAttributionsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/ListMetricAttributions
+func (c *Personalize) ListMetricAttributionsRequest(input *ListMetricAttributionsInput) (req *request.Request, output *ListMetricAttributionsOutput) {
+	op := &request.Operation{
+		Name:       opListMetricAttributions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"nextToken"},
+			OutputTokens:    []string{"nextToken"},
+			LimitToken:      "maxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListMetricAttributionsInput{}
+	}
+
+	output = &ListMetricAttributionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListMetricAttributions API operation for Amazon Personalize.
+//
+// Lists metric attributions.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Personalize's
+// API operation ListMetricAttributions for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     Provide a valid value for the field or parameter.
+//
+//   - InvalidNextTokenException
+//     The token is not valid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/ListMetricAttributions
+func (c *Personalize) ListMetricAttributions(input *ListMetricAttributionsInput) (*ListMetricAttributionsOutput, error) {
+	req, out := c.ListMetricAttributionsRequest(input)
+	return out, req.Send()
+}
+
+// ListMetricAttributionsWithContext is the same as ListMetricAttributions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListMetricAttributions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) ListMetricAttributionsWithContext(ctx aws.Context, input *ListMetricAttributionsInput, opts ...request.Option) (*ListMetricAttributionsOutput, error) {
+	req, out := c.ListMetricAttributionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListMetricAttributionsPages iterates over the pages of a ListMetricAttributions operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListMetricAttributions method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListMetricAttributions operation.
+//	pageNum := 0
+//	err := client.ListMetricAttributionsPages(params,
+//	    func(page *personalize.ListMetricAttributionsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Personalize) ListMetricAttributionsPages(input *ListMetricAttributionsInput, fn func(*ListMetricAttributionsOutput, bool) bool) error {
+	return c.ListMetricAttributionsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListMetricAttributionsPagesWithContext same as ListMetricAttributionsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) ListMetricAttributionsPagesWithContext(ctx aws.Context, input *ListMetricAttributionsInput, fn func(*ListMetricAttributionsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListMetricAttributionsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListMetricAttributionsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListMetricAttributionsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
 const opListRecipes = "ListRecipes"
 
 // ListRecipesRequest generates a "aws/request.Request" representing the
@@ -5760,7 +6309,7 @@ func (c *Personalize) ListTagsForResourceRequest(input *ListTagsForResourceInput
 
 // ListTagsForResource API operation for Amazon Personalize.
 //
-// Get a list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+// Get a list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 // attached to a resource.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6209,7 +6758,7 @@ func (c *Personalize) UntagResourceRequest(input *UntagResourceInput) (req *requ
 
 // UntagResource API operation for Amazon Personalize.
 //
-// Remove tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+// Remove tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 // that are attached to a resource.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -6352,6 +6901,94 @@ func (c *Personalize) UpdateCampaignWithContext(ctx aws.Context, input *UpdateCa
 	return out, req.Send()
 }
 
+const opUpdateMetricAttribution = "UpdateMetricAttribution"
+
+// UpdateMetricAttributionRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateMetricAttribution operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateMetricAttribution for more information on using the UpdateMetricAttribution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateMetricAttributionRequest method.
+//	req, resp := client.UpdateMetricAttributionRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/UpdateMetricAttribution
+func (c *Personalize) UpdateMetricAttributionRequest(input *UpdateMetricAttributionInput) (req *request.Request, output *UpdateMetricAttributionOutput) {
+	op := &request.Operation{
+		Name:       opUpdateMetricAttribution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateMetricAttributionInput{}
+	}
+
+	output = &UpdateMetricAttributionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateMetricAttribution API operation for Amazon Personalize.
+//
+// Updates a metric attribution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Personalize's
+// API operation UpdateMetricAttribution for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     Provide a valid value for the field or parameter.
+//
+//   - ResourceNotFoundException
+//     Could not find the specified resource.
+//
+//   - ResourceInUseException
+//     The specified resource is in use.
+//
+//   - ResourceAlreadyExistsException
+//     The specified resource already exists.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/personalize-2018-05-22/UpdateMetricAttribution
+func (c *Personalize) UpdateMetricAttribution(input *UpdateMetricAttributionInput) (*UpdateMetricAttributionOutput, error) {
+	req, out := c.UpdateMetricAttributionRequest(input)
+	return out, req.Send()
+}
+
+// UpdateMetricAttributionWithContext is the same as UpdateMetricAttribution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateMetricAttribution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Personalize) UpdateMetricAttributionWithContext(ctx aws.Context, input *UpdateMetricAttributionInput, opts ...request.Option) (*UpdateMetricAttributionOutput, error) {
+	req, out := c.UpdateMetricAttributionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateRecommender = "UpdateRecommender"
 
 // UpdateRecommenderRequest generates a "aws/request.Request" representing the
@@ -6395,7 +7032,14 @@ func (c *Personalize) UpdateRecommenderRequest(input *UpdateRecommenderInput) (r
 
 // UpdateRecommender API operation for Amazon Personalize.
 //
-// Updates the recommender to modify the recommender configuration.
+// Updates the recommender to modify the recommender configuration. If you update
+// the recommender to modify the columns used in training, Amazon Personalize
+// automatically starts a full retraining of the models backing your recommender.
+// While the update completes, you can still get recommendations from the recommender.
+// The recommender uses the previous configuration until the update completes.
+// To track the status of this update, use the latestRecommenderUpdate returned
+// in the DescribeRecommender (https://docs.aws.amazon.com/personalize/latest/dg/API_DescribeRecommender.html)
+// operation.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -7098,7 +7742,7 @@ type BatchSegmentJob struct {
 	LastUpdatedDateTime *time.Time `locationName:"lastUpdatedDateTime" type:"timestamp"`
 
 	// The number of predicted users generated by the batch segment job for each
-	// line of input data.
+	// line of input data. The maximum number of users per segment is 5 million.
 	NumResults *int64 `locationName:"numResults" type:"integer"`
 
 	// The ARN of the Amazon Identity and Access Management (IAM) role that requested
@@ -7438,7 +8082,9 @@ type Campaign struct {
 	LatestCampaignUpdate *CampaignUpdateSummary `locationName:"latestCampaignUpdate" type:"structure"`
 
 	// Specifies the requested minimum provisioned transactions (recommendations)
-	// per second.
+	// per second. A high minProvisionedTPS will increase your bill. We recommend
+	// starting with 1 for minProvisionedTPS (the default). Track your usage using
+	// Amazon CloudWatch metrics, and increase the minProvisionedTPS as necessary.
 	MinProvisionedTPS *int64 `locationName:"minProvisionedTPS" min:"1" type:"integer"`
 
 	// The name of the campaign.
@@ -7900,7 +8546,7 @@ type CreateBatchInferenceJobInput struct {
 	// SolutionVersionArn is a required field
 	SolutionVersionArn *string `locationName:"solutionVersionArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the batch inference job.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -8080,7 +8726,7 @@ type CreateBatchSegmentJobInput struct {
 	JobOutput *BatchSegmentJobOutput_ `locationName:"jobOutput" type:"structure" required:"true"`
 
 	// The number of predicted users generated by the batch segment job for each
-	// line of input data.
+	// line of input data. The maximum number of users per segment is 5 million.
 	NumResults *int64 `locationName:"numResults" type:"integer"`
 
 	// The ARN of the Amazon Identity and Access Management role that has permissions
@@ -8095,7 +8741,7 @@ type CreateBatchSegmentJobInput struct {
 	// SolutionVersionArn is a required field
 	SolutionVersionArn *string `locationName:"solutionVersionArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the batch segment job.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -8252,7 +8898,10 @@ type CreateCampaignInput struct {
 	CampaignConfig *CampaignConfig `locationName:"campaignConfig" type:"structure"`
 
 	// Specifies the requested minimum provisioned transactions (recommendations)
-	// per second that Amazon Personalize will support.
+	// per second that Amazon Personalize will support. A high minProvisionedTPS
+	// will increase your bill. We recommend starting with 1 for minProvisionedTPS
+	// (the default). Track your usage using Amazon CloudWatch metrics, and increase
+	// the minProvisionedTPS as necessary.
 	MinProvisionedTPS *int64 `locationName:"minProvisionedTPS" min:"1" type:"integer"`
 
 	// A name for the new campaign. The campaign name must be unique within your
@@ -8266,7 +8915,7 @@ type CreateCampaignInput struct {
 	// SolutionVersionArn is a required field
 	SolutionVersionArn *string `locationName:"solutionVersionArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the campaign.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -8412,7 +9061,7 @@ type CreateDatasetExportJobInput struct {
 	// RoleArn is a required field
 	RoleArn *string `locationName:"roleArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the dataset export job.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -8566,7 +9215,7 @@ type CreateDatasetGroupInput struct {
 	// only valid when also specifying a KMS key.
 	RoleArn *string `locationName:"roleArn" type:"string"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the dataset group.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -8715,13 +9364,17 @@ type CreateDatasetImportJobInput struct {
 	// JobName is a required field
 	JobName *string `locationName:"jobName" min:"1" type:"string" required:"true"`
 
+	// If you created a metric attribution, specify whether to publish metrics for
+	// this import job to Amazon S3
+	PublishAttributionMetricsToS3 *bool `locationName:"publishAttributionMetricsToS3" type:"boolean"`
+
 	// The ARN of the IAM role that has permissions to read from the Amazon S3 data
 	// source.
 	//
 	// RoleArn is a required field
 	RoleArn *string `locationName:"roleArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the dataset import job.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -8803,6 +9456,12 @@ func (s *CreateDatasetImportJobInput) SetJobName(v string) *CreateDatasetImportJ
 	return s
 }
 
+// SetPublishAttributionMetricsToS3 sets the PublishAttributionMetricsToS3 field's value.
+func (s *CreateDatasetImportJobInput) SetPublishAttributionMetricsToS3(v bool) *CreateDatasetImportJobInput {
+	s.PublishAttributionMetricsToS3 = &v
+	return s
+}
+
 // SetRoleArn sets the RoleArn field's value.
 func (s *CreateDatasetImportJobInput) SetRoleArn(v string) *CreateDatasetImportJobInput {
 	s.RoleArn = &v
@@ -8878,7 +9537,7 @@ type CreateDatasetInput struct {
 	// SchemaArn is a required field
 	SchemaArn *string `locationName:"schemaArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the dataset.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -9011,7 +9670,7 @@ type CreateEventTrackerInput struct {
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the event tracker.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -9147,7 +9806,7 @@ type CreateFilterInput struct {
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the filter.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -9260,6 +9919,147 @@ func (s *CreateFilterOutput) SetFilterArn(v string) *CreateFilterOutput {
 	return s
 }
 
+type CreateMetricAttributionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the destination dataset group for the metric
+	// attribution.
+	//
+	// DatasetGroupArn is a required field
+	DatasetGroupArn *string `locationName:"datasetGroupArn" type:"string" required:"true"`
+
+	// A list of metric attributes for the metric attribution. Each metric attribute
+	// specifies an event type to track and a function. Available functions are
+	// SUM() or SAMPLECOUNT(). For SUM() functions, provide the dataset type (either
+	// Interactions or Items) and column to sum as a parameter. For example SUM(Items.PRICE).
+	//
+	// Metrics is a required field
+	Metrics []*MetricAttribute `locationName:"metrics" type:"list" required:"true"`
+
+	// The output configuration details for the metric attribution.
+	//
+	// MetricsOutputConfig is a required field
+	MetricsOutputConfig *MetricAttributionOutput_ `locationName:"metricsOutputConfig" type:"structure" required:"true"`
+
+	// A name for the metric attribution.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateMetricAttributionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateMetricAttributionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateMetricAttributionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateMetricAttributionInput"}
+	if s.DatasetGroupArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatasetGroupArn"))
+	}
+	if s.Metrics == nil {
+		invalidParams.Add(request.NewErrParamRequired("Metrics"))
+	}
+	if s.MetricsOutputConfig == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricsOutputConfig"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.Metrics != nil {
+		for i, v := range s.Metrics {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Metrics", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.MetricsOutputConfig != nil {
+		if err := s.MetricsOutputConfig.Validate(); err != nil {
+			invalidParams.AddNested("MetricsOutputConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDatasetGroupArn sets the DatasetGroupArn field's value.
+func (s *CreateMetricAttributionInput) SetDatasetGroupArn(v string) *CreateMetricAttributionInput {
+	s.DatasetGroupArn = &v
+	return s
+}
+
+// SetMetrics sets the Metrics field's value.
+func (s *CreateMetricAttributionInput) SetMetrics(v []*MetricAttribute) *CreateMetricAttributionInput {
+	s.Metrics = v
+	return s
+}
+
+// SetMetricsOutputConfig sets the MetricsOutputConfig field's value.
+func (s *CreateMetricAttributionInput) SetMetricsOutputConfig(v *MetricAttributionOutput_) *CreateMetricAttributionInput {
+	s.MetricsOutputConfig = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateMetricAttributionInput) SetName(v string) *CreateMetricAttributionInput {
+	s.Name = &v
+	return s
+}
+
+type CreateMetricAttributionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) for the new metric attribution.
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateMetricAttributionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateMetricAttributionOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *CreateMetricAttributionOutput) SetMetricAttributionArn(v string) *CreateMetricAttributionOutput {
+	s.MetricAttributionArn = &v
+	return s
+}
+
 type CreateRecommenderInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9285,7 +10085,7 @@ type CreateRecommenderInput struct {
 	// The configuration details of the recommender.
 	RecommenderConfig *RecommenderConfig `locationName:"recommenderConfig" type:"structure"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the recommender.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -9533,6 +10333,11 @@ type CreateSolutionInput struct {
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
+	//
+	// We don't recommend enabling automated machine learning. Instead, match your
+	// use case to the available Amazon Personalize recipes. For more information,
+	// see Determining your use case. (https://docs.aws.amazon.com/personalize/latest/dg/determining-use-case.html)
+	//
 	// Whether to perform automated machine learning (AutoML). The default is false.
 	// For this case, you must specify recipeArn.
 	//
@@ -9561,7 +10366,7 @@ type CreateSolutionInput struct {
 	// Amazon Personalize doesn't support configuring the hpoObjective at this time.
 	SolutionConfig *SolutionConfig `locationName:"solutionConfig" type:"structure"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the solution.
 	Tags []*Tag `locationName:"tags" type:"list"`
 }
@@ -9700,13 +10505,16 @@ func (s *CreateSolutionOutput) SetSolutionArn(v string) *CreateSolutionOutput {
 type CreateSolutionVersionInput struct {
 	_ struct{} `type:"structure"`
 
+	// The name of the solution version.
+	Name *string `locationName:"name" min:"1" type:"string"`
+
 	// The Amazon Resource Name (ARN) of the solution containing the training configuration
 	// information.
 	//
 	// SolutionArn is a required field
 	SolutionArn *string `locationName:"solutionArn" type:"string" required:"true"`
 
-	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html)
+	// A list of tags (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html)
 	// to apply to the solution version.
 	Tags []*Tag `locationName:"tags" type:"list"`
 
@@ -9746,6 +10554,9 @@ func (s CreateSolutionVersionInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *CreateSolutionVersionInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "CreateSolutionVersionInput"}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
 	if s.SolutionArn == nil {
 		invalidParams.Add(request.NewErrParamRequired("SolutionArn"))
 	}
@@ -9764,6 +10575,12 @@ func (s *CreateSolutionVersionInput) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *CreateSolutionVersionInput) SetName(v string) *CreateSolutionVersionInput {
+	s.Name = &v
+	return s
 }
 
 // SetSolutionArn sets the SolutionArn field's value.
@@ -10471,6 +11288,9 @@ type DatasetImportJob struct {
 	// The date and time (in Unix time) the dataset was last updated.
 	LastUpdatedDateTime *time.Time `locationName:"lastUpdatedDateTime" type:"timestamp"`
 
+	// Whether the job publishes metrics to Amazon S3 for a metric attribution.
+	PublishAttributionMetricsToS3 *bool `locationName:"publishAttributionMetricsToS3" type:"boolean"`
+
 	// The ARN of the IAM role that has permissions to read from the Amazon S3 data
 	// source.
 	RoleArn *string `locationName:"roleArn" type:"string"`
@@ -10546,6 +11366,12 @@ func (s *DatasetImportJob) SetJobName(v string) *DatasetImportJob {
 // SetLastUpdatedDateTime sets the LastUpdatedDateTime field's value.
 func (s *DatasetImportJob) SetLastUpdatedDateTime(v time.Time) *DatasetImportJob {
 	s.LastUpdatedDateTime = &v
+	return s
+}
+
+// SetPublishAttributionMetricsToS3 sets the PublishAttributionMetricsToS3 field's value.
+func (s *DatasetImportJob) SetPublishAttributionMetricsToS3(v bool) *DatasetImportJob {
+	s.PublishAttributionMetricsToS3 = &v
 	return s
 }
 
@@ -11460,6 +12286,74 @@ func (s DeleteFilterOutput) String() string {
 // be included in the string output. The member name will be present, but the
 // value will be replaced with "sensitive".
 func (s DeleteFilterOutput) GoString() string {
+	return s.String()
+}
+
+type DeleteMetricAttributionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The metric attribution's Amazon Resource Name (ARN).
+	//
+	// MetricAttributionArn is a required field
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteMetricAttributionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteMetricAttributionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteMetricAttributionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteMetricAttributionInput"}
+	if s.MetricAttributionArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricAttributionArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *DeleteMetricAttributionInput) SetMetricAttributionArn(v string) *DeleteMetricAttributionInput {
+	s.MetricAttributionArn = &v
+	return s
+}
+
+type DeleteMetricAttributionOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteMetricAttributionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteMetricAttributionOutput) GoString() string {
 	return s.String()
 }
 
@@ -12531,6 +13425,83 @@ func (s DescribeFilterOutput) GoString() string {
 // SetFilter sets the Filter field's value.
 func (s *DescribeFilterOutput) SetFilter(v *Filter) *DescribeFilterOutput {
 	s.Filter = v
+	return s
+}
+
+type DescribeMetricAttributionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The metric attribution's Amazon Resource Name (ARN).
+	//
+	// MetricAttributionArn is a required field
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeMetricAttributionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeMetricAttributionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeMetricAttributionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeMetricAttributionInput"}
+	if s.MetricAttributionArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricAttributionArn"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *DescribeMetricAttributionInput) SetMetricAttributionArn(v string) *DescribeMetricAttributionInput {
+	s.MetricAttributionArn = &v
+	return s
+}
+
+type DescribeMetricAttributionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The details of the metric attribution.
+	MetricAttribution *MetricAttribution `locationName:"metricAttribution" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeMetricAttributionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DescribeMetricAttributionOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetricAttribution sets the MetricAttribution field's value.
+func (s *DescribeMetricAttributionOutput) SetMetricAttribution(v *MetricAttribution) *DescribeMetricAttributionOutput {
+	s.MetricAttribution = v
 	return s
 }
 
@@ -14881,6 +15852,215 @@ func (s *ListFiltersOutput) SetNextToken(v string) *ListFiltersOutput {
 	return s
 }
 
+type ListMetricAttributionMetricsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of metrics to return in one page of results.
+	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
+
+	// The Amazon Resource Name (ARN) of the metric attribution to retrieve attributes
+	// for.
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string"`
+
+	// Specify the pagination token from a previous request to retrieve the next
+	// page of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionMetricsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionMetricsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListMetricAttributionMetricsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListMetricAttributionMetricsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListMetricAttributionMetricsInput) SetMaxResults(v int64) *ListMetricAttributionMetricsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *ListMetricAttributionMetricsInput) SetMetricAttributionArn(v string) *ListMetricAttributionMetricsInput {
+	s.MetricAttributionArn = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMetricAttributionMetricsInput) SetNextToken(v string) *ListMetricAttributionMetricsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListMetricAttributionMetricsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The metrics for the specified metric attribution.
+	Metrics []*MetricAttribute `locationName:"metrics" type:"list"`
+
+	// Specify the pagination token from a previous ListMetricAttributionMetricsResponse
+	// request to retrieve the next page of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionMetricsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionMetricsOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetrics sets the Metrics field's value.
+func (s *ListMetricAttributionMetricsOutput) SetMetrics(v []*MetricAttribute) *ListMetricAttributionMetricsOutput {
+	s.Metrics = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMetricAttributionMetricsOutput) SetNextToken(v string) *ListMetricAttributionMetricsOutput {
+	s.NextToken = &v
+	return s
+}
+
+type ListMetricAttributionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The metric attributions' dataset group Amazon Resource Name (ARN).
+	DatasetGroupArn *string `locationName:"datasetGroupArn" type:"string"`
+
+	// The maximum number of metric attributions to return in one page of results.
+	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
+
+	// Specify the pagination token from a previous request to retrieve the next
+	// page of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListMetricAttributionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListMetricAttributionsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDatasetGroupArn sets the DatasetGroupArn field's value.
+func (s *ListMetricAttributionsInput) SetDatasetGroupArn(v string) *ListMetricAttributionsInput {
+	s.DatasetGroupArn = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListMetricAttributionsInput) SetMaxResults(v int64) *ListMetricAttributionsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMetricAttributionsInput) SetNextToken(v string) *ListMetricAttributionsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListMetricAttributionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The list of metric attributions.
+	MetricAttributions []*MetricAttributionSummary `locationName:"metricAttributions" type:"list"`
+
+	// Specify the pagination token from a previous request to retrieve the next
+	// page of results.
+	NextToken *string `locationName:"nextToken" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListMetricAttributionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetricAttributions sets the MetricAttributions field's value.
+func (s *ListMetricAttributionsOutput) SetMetricAttributions(v []*MetricAttributionSummary) *ListMetricAttributionsOutput {
+	s.MetricAttributions = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMetricAttributionsOutput) SetNextToken(v string) *ListMetricAttributionsOutput {
+	s.NextToken = &v
+	return s
+}
+
 type ListRecipesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -15477,6 +16657,324 @@ func (s *ListTagsForResourceOutput) SetTags(v []*Tag) *ListTagsForResourceOutput
 	return s
 }
 
+// Contains information on a metric that a metric attribution reports on. For
+// more information, see Measuring impact of recommendations (https://docs.aws.amazon.com/personalize/latest/dg/measuring-recommendation-impact.html).
+type MetricAttribute struct {
+	_ struct{} `type:"structure"`
+
+	// The metric's event type.
+	//
+	// EventType is a required field
+	EventType *string `locationName:"eventType" type:"string" required:"true"`
+
+	// The attribute's expression. Available functions are SUM() or SAMPLECOUNT().
+	// For SUM() functions, provide the dataset type (either Interactions or Items)
+	// and column to sum as a parameter. For example SUM(Items.PRICE).
+	//
+	// Expression is a required field
+	Expression *string `locationName:"expression" type:"string" required:"true"`
+
+	// The metric's name. The name helps you identify the metric in Amazon CloudWatch
+	// or Amazon S3.
+	//
+	// MetricName is a required field
+	MetricName *string `locationName:"metricName" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttribute) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttribute) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricAttribute) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricAttribute"}
+	if s.EventType == nil {
+		invalidParams.Add(request.NewErrParamRequired("EventType"))
+	}
+	if s.Expression == nil {
+		invalidParams.Add(request.NewErrParamRequired("Expression"))
+	}
+	if s.MetricName == nil {
+		invalidParams.Add(request.NewErrParamRequired("MetricName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEventType sets the EventType field's value.
+func (s *MetricAttribute) SetEventType(v string) *MetricAttribute {
+	s.EventType = &v
+	return s
+}
+
+// SetExpression sets the Expression field's value.
+func (s *MetricAttribute) SetExpression(v string) *MetricAttribute {
+	s.Expression = &v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *MetricAttribute) SetMetricName(v string) *MetricAttribute {
+	s.MetricName = &v
+	return s
+}
+
+// Contains information on a metric attribution. A metric attribution creates
+// reports on the data that you import into Amazon Personalize. Depending on
+// how you import the data, you can view reports in Amazon CloudWatch or Amazon
+// S3. For more information, see Measuring impact of recommendations (https://docs.aws.amazon.com/personalize/latest/dg/measuring-recommendation-impact.html).
+type MetricAttribution struct {
+	_ struct{} `type:"structure"`
+
+	// The metric attribution's creation date time.
+	CreationDateTime *time.Time `locationName:"creationDateTime" type:"timestamp"`
+
+	// The metric attribution's dataset group Amazon Resource Name (ARN).
+	DatasetGroupArn *string `locationName:"datasetGroupArn" type:"string"`
+
+	// The metric attribution's failure reason.
+	FailureReason *string `locationName:"failureReason" type:"string"`
+
+	// The metric attribution's last updated date time.
+	LastUpdatedDateTime *time.Time `locationName:"lastUpdatedDateTime" type:"timestamp"`
+
+	// The metric attribution's Amazon Resource Name (ARN).
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string"`
+
+	// The metric attribution's output configuration.
+	MetricsOutputConfig *MetricAttributionOutput_ `locationName:"metricsOutputConfig" type:"structure"`
+
+	// The metric attribution's name.
+	Name *string `locationName:"name" min:"1" type:"string"`
+
+	// The metric attribution's status.
+	Status *string `locationName:"status" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttribution) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttribution) GoString() string {
+	return s.String()
+}
+
+// SetCreationDateTime sets the CreationDateTime field's value.
+func (s *MetricAttribution) SetCreationDateTime(v time.Time) *MetricAttribution {
+	s.CreationDateTime = &v
+	return s
+}
+
+// SetDatasetGroupArn sets the DatasetGroupArn field's value.
+func (s *MetricAttribution) SetDatasetGroupArn(v string) *MetricAttribution {
+	s.DatasetGroupArn = &v
+	return s
+}
+
+// SetFailureReason sets the FailureReason field's value.
+func (s *MetricAttribution) SetFailureReason(v string) *MetricAttribution {
+	s.FailureReason = &v
+	return s
+}
+
+// SetLastUpdatedDateTime sets the LastUpdatedDateTime field's value.
+func (s *MetricAttribution) SetLastUpdatedDateTime(v time.Time) *MetricAttribution {
+	s.LastUpdatedDateTime = &v
+	return s
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *MetricAttribution) SetMetricAttributionArn(v string) *MetricAttribution {
+	s.MetricAttributionArn = &v
+	return s
+}
+
+// SetMetricsOutputConfig sets the MetricsOutputConfig field's value.
+func (s *MetricAttribution) SetMetricsOutputConfig(v *MetricAttributionOutput_) *MetricAttribution {
+	s.MetricsOutputConfig = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *MetricAttribution) SetName(v string) *MetricAttribution {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MetricAttribution) SetStatus(v string) *MetricAttribution {
+	s.Status = &v
+	return s
+}
+
+// The output configuration details for a metric attribution.
+type MetricAttributionOutput_ struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the IAM service role that has permissions
+	// to add data to your output Amazon S3 bucket and add metrics to Amazon CloudWatch.
+	// For more information, see Measuring impact of recommendations (https://docs.aws.amazon.com/personalize/latest/dg/measuring-recommendation-impact.html).
+	//
+	// RoleArn is a required field
+	RoleArn *string `locationName:"roleArn" type:"string" required:"true"`
+
+	// The configuration details of an Amazon S3 input or output bucket.
+	S3DataDestination *S3DataConfig `locationName:"s3DataDestination" type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttributionOutput_) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttributionOutput_) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *MetricAttributionOutput_) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "MetricAttributionOutput_"}
+	if s.RoleArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("RoleArn"))
+	}
+	if s.S3DataDestination != nil {
+		if err := s.S3DataDestination.Validate(); err != nil {
+			invalidParams.AddNested("S3DataDestination", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *MetricAttributionOutput_) SetRoleArn(v string) *MetricAttributionOutput_ {
+	s.RoleArn = &v
+	return s
+}
+
+// SetS3DataDestination sets the S3DataDestination field's value.
+func (s *MetricAttributionOutput_) SetS3DataDestination(v *S3DataConfig) *MetricAttributionOutput_ {
+	s.S3DataDestination = v
+	return s
+}
+
+// Provides a summary of the properties of a metric attribution. For a complete
+// listing, call the DescribeMetricAttribution (https://docs.aws.amazon.com/personalize/latest/dg/API_DescribeMetricAttribution.html).
+type MetricAttributionSummary struct {
+	_ struct{} `type:"structure"`
+
+	// The metric attribution's creation date time.
+	CreationDateTime *time.Time `locationName:"creationDateTime" type:"timestamp"`
+
+	// The metric attribution's failure reason.
+	FailureReason *string `locationName:"failureReason" type:"string"`
+
+	// The metric attribution's last updated date time.
+	LastUpdatedDateTime *time.Time `locationName:"lastUpdatedDateTime" type:"timestamp"`
+
+	// The metric attribution's Amazon Resource Name (ARN).
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string"`
+
+	// The name of the metric attribution.
+	Name *string `locationName:"name" min:"1" type:"string"`
+
+	// The metric attribution's status.
+	Status *string `locationName:"status" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttributionSummary) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s MetricAttributionSummary) GoString() string {
+	return s.String()
+}
+
+// SetCreationDateTime sets the CreationDateTime field's value.
+func (s *MetricAttributionSummary) SetCreationDateTime(v time.Time) *MetricAttributionSummary {
+	s.CreationDateTime = &v
+	return s
+}
+
+// SetFailureReason sets the FailureReason field's value.
+func (s *MetricAttributionSummary) SetFailureReason(v string) *MetricAttributionSummary {
+	s.FailureReason = &v
+	return s
+}
+
+// SetLastUpdatedDateTime sets the LastUpdatedDateTime field's value.
+func (s *MetricAttributionSummary) SetLastUpdatedDateTime(v time.Time) *MetricAttributionSummary {
+	s.LastUpdatedDateTime = &v
+	return s
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *MetricAttributionSummary) SetMetricAttributionArn(v string) *MetricAttributionSummary {
+	s.MetricAttributionArn = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *MetricAttributionSummary) SetName(v string) *MetricAttributionSummary {
+	s.Name = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *MetricAttributionSummary) SetStatus(v string) *MetricAttributionSummary {
+	s.Status = &v
+	return s
+}
+
 // Describes the additional objective for the solution, such as maximizing streaming
 // minutes or increasing revenue. For more information see Optimizing a solution
 // (https://docs.aws.amazon.com/personalize/latest/dg/optimizing-solution-for-objective.html).
@@ -15878,8 +17376,14 @@ type RecommenderConfig struct {
 	ItemExplorationConfig map[string]*string `locationName:"itemExplorationConfig" type:"map"`
 
 	// Specifies the requested minimum provisioned recommendation requests per second
-	// that Amazon Personalize will support.
+	// that Amazon Personalize will support. A high minRecommendationRequestsPerSecond
+	// will increase your bill. We recommend starting with 1 for minRecommendationRequestsPerSecond
+	// (the default). Track your usage using Amazon CloudWatch metrics, and increase
+	// the minRecommendationRequestsPerSecond as necessary.
 	MinRecommendationRequestsPerSecond *int64 `locationName:"minRecommendationRequestsPerSecond" min:"1" type:"integer"`
+
+	// Specifies the training data configuration to use when creating a domain recommender.
+	TrainingDataConfig *TrainingDataConfig `locationName:"trainingDataConfig" type:"structure"`
 }
 
 // String returns the string representation.
@@ -15922,6 +17426,12 @@ func (s *RecommenderConfig) SetItemExplorationConfig(v map[string]*string) *Reco
 // SetMinRecommendationRequestsPerSecond sets the MinRecommendationRequestsPerSecond field's value.
 func (s *RecommenderConfig) SetMinRecommendationRequestsPerSecond(v int64) *RecommenderConfig {
 	s.MinRecommendationRequestsPerSecond = &v
+	return s
+}
+
+// SetTrainingDataConfig sets the TrainingDataConfig field's value.
+func (s *RecommenderConfig) SetTrainingDataConfig(v *TrainingDataConfig) *RecommenderConfig {
+	s.TrainingDataConfig = v
 	return s
 }
 
@@ -16388,6 +17898,11 @@ type Solution struct {
 	// The name of the solution.
 	Name *string `locationName:"name" min:"1" type:"string"`
 
+	//
+	// We don't recommend enabling automated machine learning. Instead, match your
+	// use case to the available Amazon Personalize recipes. For more information,
+	// see Determining your use case. (https://docs.aws.amazon.com/personalize/latest/dg/determining-use-case.html)
+	//
 	// When true, Amazon Personalize performs a search for the best USER_PERSONALIZATION
 	// recipe from the list specified in the solution configuration (recipeArn must
 	// not be specified). When false (the default), Amazon Personalize uses recipeArn
@@ -16538,6 +18053,10 @@ type SolutionConfig struct {
 	// minutes or increasing revenue. For more information see Optimizing a solution
 	// (https://docs.aws.amazon.com/personalize/latest/dg/optimizing-solution-for-objective.html).
 	OptimizationObjective *OptimizationObjective `locationName:"optimizationObjective" type:"structure"`
+
+	// Specifies the training data configuration to use when creating a custom solution
+	// version (trained model).
+	TrainingDataConfig *TrainingDataConfig `locationName:"trainingDataConfig" type:"structure"`
 }
 
 // String returns the string representation.
@@ -16614,6 +18133,12 @@ func (s *SolutionConfig) SetOptimizationObjective(v *OptimizationObjective) *Sol
 	return s
 }
 
+// SetTrainingDataConfig sets the TrainingDataConfig field's value.
+func (s *SolutionConfig) SetTrainingDataConfig(v *TrainingDataConfig) *SolutionConfig {
+	s.TrainingDataConfig = v
+	return s
+}
+
 // Provides a summary of the properties of a solution. For a complete listing,
 // call the DescribeSolution (https://docs.aws.amazon.com/personalize/latest/dg/API_DescribeSolution.html)
 // API.
@@ -16628,6 +18153,9 @@ type SolutionSummary struct {
 
 	// The name of the solution.
 	Name *string `locationName:"name" min:"1" type:"string"`
+
+	// The Amazon Resource Name (ARN) of the recipe used by the solution.
+	RecipeArn *string `locationName:"recipeArn" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the solution.
 	SolutionArn *string `locationName:"solutionArn" type:"string"`
@@ -16678,6 +18206,12 @@ func (s *SolutionSummary) SetName(v string) *SolutionSummary {
 	return s
 }
 
+// SetRecipeArn sets the RecipeArn field's value.
+func (s *SolutionSummary) SetRecipeArn(v string) *SolutionSummary {
+	s.RecipeArn = &v
+	return s
+}
+
 // SetSolutionArn sets the SolutionArn field's value.
 func (s *SolutionSummary) SetSolutionArn(v string) *SolutionSummary {
 	s.SolutionArn = &v
@@ -16712,6 +18246,9 @@ type SolutionVersion struct {
 
 	// The date and time (in Unix time) that the solution was last updated.
 	LastUpdatedDateTime *time.Time `locationName:"lastUpdatedDateTime" type:"timestamp"`
+
+	// The name of the solution version.
+	Name *string `locationName:"name" min:"1" type:"string"`
 
 	// When true, Amazon Personalize searches for the most optimal recipe according
 	// to the solution configuration. When false (the default), Amazon Personalize
@@ -16820,6 +18357,12 @@ func (s *SolutionVersion) SetFailureReason(v string) *SolutionVersion {
 // SetLastUpdatedDateTime sets the LastUpdatedDateTime field's value.
 func (s *SolutionVersion) SetLastUpdatedDateTime(v time.Time) *SolutionVersion {
 	s.LastUpdatedDateTime = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *SolutionVersion) SetName(v string) *SolutionVersion {
+	s.Name = &v
 	return s
 }
 
@@ -17181,8 +18724,8 @@ func (s StopSolutionVersionCreationOutput) GoString() string {
 
 // The optional metadata that you apply to resources to help you categorize
 // and organize them. Each tag consists of a key and an optional value, both
-// of which you define. For more information see Tagging Personalize resources
-// (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html).
+// of which you define. For more information see Tagging Amazon Personalize
+// recources (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html).
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -17256,8 +18799,8 @@ type TagResourceInput struct {
 	// ResourceArn is a required field
 	ResourceArn *string `locationName:"resourceArn" type:"string" required:"true"`
 
-	// Tags to apply to the resource. For more information see Tagging Personalize
-	// resources (https://docs.aws.amazon.com/personalize/latest/dev/tagging-resources.html).
+	// Tags to apply to the resource. For more information see Tagging Amazon Personalize
+	// recources (https://docs.aws.amazon.com/personalize/latest/dg/tagging-resources.html).
 	//
 	// Tags is a required field
 	Tags []*Tag `locationName:"tags" type:"list" required:"true"`
@@ -17470,6 +19013,44 @@ func (s *TooManyTagsException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// The training data configuration to use when creating a domain recommender
+// or custom solution version (trained model).
+type TrainingDataConfig struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the columns to exclude from training. Each key is a dataset type,
+	// and each value is a list of columns. Exclude columns to control what data
+	// Amazon Personalize uses to generate recommendations. For example, you might
+	// have a column that you want to use only to filter recommendations. You can
+	// exclude this column from training and Amazon Personalize considers it only
+	// when filtering.
+	ExcludedDatasetColumns map[string][]*string `locationName:"excludedDatasetColumns" type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TrainingDataConfig) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TrainingDataConfig) GoString() string {
+	return s.String()
+}
+
+// SetExcludedDatasetColumns sets the ExcludedDatasetColumns field's value.
+func (s *TrainingDataConfig) SetExcludedDatasetColumns(v map[string][]*string) *TrainingDataConfig {
+	s.ExcludedDatasetColumns = v
+	return s
+}
+
 // If hyperparameter optimization (HPO) was performed, contains the hyperparameter
 // values of the best performing model.
 type TunedHPOParams struct {
@@ -17597,7 +19178,10 @@ type UpdateCampaignInput struct {
 	CampaignConfig *CampaignConfig `locationName:"campaignConfig" type:"structure"`
 
 	// Specifies the requested minimum provisioned transactions (recommendations)
-	// per second that Amazon Personalize will support.
+	// per second that Amazon Personalize will support. A high minProvisionedTPS
+	// will increase your bill. We recommend starting with 1 for minProvisionedTPS
+	// (the default). Track your usage using Amazon CloudWatch metrics, and increase
+	// the minProvisionedTPS as necessary.
 	MinProvisionedTPS *int64 `locationName:"minProvisionedTPS" min:"1" type:"integer"`
 
 	// The ARN of a new solution version to deploy.
@@ -17690,6 +19274,120 @@ func (s UpdateCampaignOutput) GoString() string {
 // SetCampaignArn sets the CampaignArn field's value.
 func (s *UpdateCampaignOutput) SetCampaignArn(v string) *UpdateCampaignOutput {
 	s.CampaignArn = &v
+	return s
+}
+
+type UpdateMetricAttributionInput struct {
+	_ struct{} `type:"structure"`
+
+	// Add new metric attributes to the metric attribution.
+	AddMetrics []*MetricAttribute `locationName:"addMetrics" type:"list"`
+
+	// The Amazon Resource Name (ARN) for the metric attribution to update.
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string"`
+
+	// An output config for the metric attribution.
+	MetricsOutputConfig *MetricAttributionOutput_ `locationName:"metricsOutputConfig" type:"structure"`
+
+	// Remove metric attributes from the metric attribution.
+	RemoveMetrics []*string `locationName:"removeMetrics" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateMetricAttributionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateMetricAttributionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateMetricAttributionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateMetricAttributionInput"}
+	if s.AddMetrics != nil {
+		for i, v := range s.AddMetrics {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AddMetrics", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.MetricsOutputConfig != nil {
+		if err := s.MetricsOutputConfig.Validate(); err != nil {
+			invalidParams.AddNested("MetricsOutputConfig", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAddMetrics sets the AddMetrics field's value.
+func (s *UpdateMetricAttributionInput) SetAddMetrics(v []*MetricAttribute) *UpdateMetricAttributionInput {
+	s.AddMetrics = v
+	return s
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *UpdateMetricAttributionInput) SetMetricAttributionArn(v string) *UpdateMetricAttributionInput {
+	s.MetricAttributionArn = &v
+	return s
+}
+
+// SetMetricsOutputConfig sets the MetricsOutputConfig field's value.
+func (s *UpdateMetricAttributionInput) SetMetricsOutputConfig(v *MetricAttributionOutput_) *UpdateMetricAttributionInput {
+	s.MetricsOutputConfig = v
+	return s
+}
+
+// SetRemoveMetrics sets the RemoveMetrics field's value.
+func (s *UpdateMetricAttributionInput) SetRemoveMetrics(v []*string) *UpdateMetricAttributionInput {
+	s.RemoveMetrics = v
+	return s
+}
+
+type UpdateMetricAttributionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) for the metric attribution that you updated.
+	MetricAttributionArn *string `locationName:"metricAttributionArn" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateMetricAttributionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateMetricAttributionOutput) GoString() string {
+	return s.String()
+}
+
+// SetMetricAttributionArn sets the MetricAttributionArn field's value.
+func (s *UpdateMetricAttributionOutput) SetMetricAttributionArn(v string) *UpdateMetricAttributionOutput {
+	s.MetricAttributionArn = &v
 	return s
 }
 

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -230,17 +233,26 @@ func (s *Server) DataSourceSchemas(ctx context.Context) (map[string]fwschema.Sch
 	for dataSourceTypeName, dataSourceFunc := range dataSourceFuncs {
 		dataSource := dataSourceFunc()
 
-		logging.FrameworkDebug(ctx, "Calling provider defined DataSource GetSchema", map[string]interface{}{logging.KeyDataSourceType: dataSourceTypeName})
-		schema, diags := dataSource.GetSchema(ctx)
-		logging.FrameworkDebug(ctx, "Called provider defined DataSource GetSchema", map[string]interface{}{logging.KeyDataSourceType: dataSourceTypeName})
+		schemaReq := datasource.SchemaRequest{}
+		schemaResp := datasource.SchemaResponse{}
 
-		s.dataSourceSchemasDiags.Append(diags...)
+		logging.FrameworkDebug(ctx, "Calling provider defined DataSource Schema", map[string]interface{}{logging.KeyDataSourceType: dataSourceTypeName})
+		dataSource.Schema(ctx, schemaReq, &schemaResp)
+		logging.FrameworkDebug(ctx, "Called provider defined DataSource Schema", map[string]interface{}{logging.KeyDataSourceType: dataSourceTypeName})
+
+		s.dataSourceSchemasDiags.Append(schemaResp.Diagnostics...)
 
 		if s.dataSourceSchemasDiags.HasError() {
 			return s.dataSourceSchemas, s.dataSourceSchemasDiags
 		}
 
-		s.dataSourceSchemas[dataSourceTypeName] = schema
+		s.dataSourceSchemasDiags.Append(schemaResp.Schema.ValidateImplementation(ctx)...)
+
+		if s.dataSourceSchemasDiags.HasError() {
+			return s.dataSourceSchemas, s.dataSourceSchemasDiags
+		}
+
+		s.dataSourceSchemas[dataSourceTypeName] = schemaResp.Schema
 	}
 
 	return s.dataSourceSchemas, s.dataSourceSchemasDiags
@@ -257,12 +269,17 @@ func (s *Server) ProviderSchema(ctx context.Context) (fwschema.Schema, diag.Diag
 		return s.providerSchema, s.providerSchemaDiags
 	}
 
-	logging.FrameworkDebug(ctx, "Calling provider defined Provider GetSchema")
-	providerSchema, diags := s.Provider.GetSchema(ctx)
-	logging.FrameworkDebug(ctx, "Called provider defined Provider GetSchema")
+	schemaReq := provider.SchemaRequest{}
+	schemaResp := provider.SchemaResponse{}
 
-	s.providerSchema = &providerSchema
-	s.providerSchemaDiags = diags
+	logging.FrameworkDebug(ctx, "Calling provider defined Provider Schema")
+	s.Provider.Schema(ctx, schemaReq, &schemaResp)
+	logging.FrameworkDebug(ctx, "Called provider defined Provider Schema")
+
+	s.providerSchema = schemaResp.Schema
+	s.providerSchemaDiags = schemaResp.Diagnostics
+
+	s.providerSchemaDiags.Append(schemaResp.Schema.ValidateImplementation(ctx)...)
 
 	return s.providerSchema, s.providerSchemaDiags
 }
@@ -271,7 +288,7 @@ func (s *Server) ProviderSchema(ctx context.Context) (fwschema.Schema, diag.Diag
 // it implements the ProviderWithMetaSchema interface. The Schema and
 // Diagnostics are cached on first use.
 func (s *Server) ProviderMetaSchema(ctx context.Context) (fwschema.Schema, diag.Diagnostics) {
-	providerWithProviderMeta, ok := s.Provider.(provider.ProviderWithMetaSchema)
+	providerWithMetaSchema, ok := s.Provider.(provider.ProviderWithMetaSchema)
 
 	if !ok {
 		return nil, nil
@@ -286,12 +303,17 @@ func (s *Server) ProviderMetaSchema(ctx context.Context) (fwschema.Schema, diag.
 		return s.providerMetaSchema, s.providerMetaSchemaDiags
 	}
 
-	logging.FrameworkDebug(ctx, "Calling provider defined Provider GetMetaSchema")
-	providerMetaSchema, diags := providerWithProviderMeta.GetMetaSchema(ctx)
-	logging.FrameworkDebug(ctx, "Called provider defined Provider GetMetaSchema")
+	req := provider.MetaSchemaRequest{}
+	resp := &provider.MetaSchemaResponse{}
 
-	s.providerMetaSchema = &providerMetaSchema
-	s.providerMetaSchemaDiags = diags
+	logging.FrameworkDebug(ctx, "Calling provider defined Provider MetaSchema")
+	providerWithMetaSchema.MetaSchema(ctx, req, resp)
+	logging.FrameworkDebug(ctx, "Called provider defined Provider MetaSchema")
+
+	s.providerMetaSchema = resp.Schema
+	s.providerMetaSchemaDiags = resp.Diagnostics
+
+	s.providerMetaSchemaDiags.Append(resp.Schema.ValidateImplementation(ctx)...)
 
 	return s.providerMetaSchema, s.providerMetaSchemaDiags
 }
@@ -408,17 +430,26 @@ func (s *Server) ResourceSchemas(ctx context.Context) (map[string]fwschema.Schem
 	for resourceTypeName, resourceFunc := range resourceFuncs {
 		res := resourceFunc()
 
-		logging.FrameworkDebug(ctx, "Calling provider defined Resource GetSchema", map[string]interface{}{logging.KeyResourceType: resourceTypeName})
-		schema, diags := res.GetSchema(ctx)
-		logging.FrameworkDebug(ctx, "Called provider defined Resource GetSchema", map[string]interface{}{logging.KeyResourceType: resourceTypeName})
+		schemaReq := resource.SchemaRequest{}
+		schemaResp := resource.SchemaResponse{}
 
-		s.resourceSchemasDiags.Append(diags...)
+		logging.FrameworkDebug(ctx, "Calling provider defined Resource Schema", map[string]interface{}{logging.KeyResourceType: resourceTypeName})
+		res.Schema(ctx, schemaReq, &schemaResp)
+		logging.FrameworkDebug(ctx, "Called provider defined Resource Schema", map[string]interface{}{logging.KeyResourceType: resourceTypeName})
+
+		s.resourceSchemasDiags.Append(schemaResp.Diagnostics...)
 
 		if s.resourceSchemasDiags.HasError() {
 			return s.resourceSchemas, s.resourceSchemasDiags
 		}
 
-		s.resourceSchemas[resourceTypeName] = schema
+		s.resourceSchemasDiags.Append(schemaResp.Schema.ValidateImplementation(ctx)...)
+
+		if s.resourceSchemasDiags.HasError() {
+			return s.resourceSchemas, s.resourceSchemasDiags
+		}
+
+		s.resourceSchemas[resourceTypeName] = schemaResp.Schema
 	}
 
 	return s.resourceSchemas, s.resourceSchemasDiags

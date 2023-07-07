@@ -35,26 +35,24 @@ func (c *Client) ListSuppressedDestinations(ctx context.Context, params *ListSup
 type ListSuppressedDestinationsInput struct {
 
 	// Used to filter the list of suppressed email destinations so that it only
-	// includes addresses that were added to the list before a specific date. The date
-	// that you specify should be in Unix time format.
+	// includes addresses that were added to the list before a specific date.
 	EndDate *time.Time
 
 	// A token returned from a previous call to ListSuppressedDestinations to indicate
 	// the position in the list of suppressed email addresses.
 	NextToken *string
 
-	// The number of results to show in a single call to ListSuppressedDestinations. If
-	// the number of results is larger than the number you specified in this parameter,
-	// then the response includes a NextToken element, which you can use to obtain
-	// additional results.
+	// The number of results to show in a single call to ListSuppressedDestinations .
+	// If the number of results is larger than the number you specified in this
+	// parameter, then the response includes a NextToken element, which you can use to
+	// obtain additional results.
 	PageSize *int32
 
 	// The factors that caused the email address to be added to .
 	Reasons []types.SuppressionListReason
 
 	// Used to filter the list of suppressed email destinations so that it only
-	// includes addresses that were added to the list after a specific date. The date
-	// that you specify should be in Unix time format.
+	// includes addresses that were added to the list after a specific date.
 	StartDate *time.Time
 
 	noSmithyDocumentSerde
@@ -65,7 +63,7 @@ type ListSuppressedDestinationsOutput struct {
 
 	// A token that indicates that there are additional email addresses on the
 	// suppression list for your account. To view additional suppressed addresses,
-	// issue another request to ListSuppressedDestinations, and pass this token in the
+	// issue another request to ListSuppressedDestinations , and pass this token in the
 	// NextToken parameter.
 	NextToken *string
 
@@ -127,6 +125,9 @@ func (c *Client) addOperationListSuppressedDestinationsMiddlewares(stack *middle
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListSuppressedDestinations(options.Region), middleware.Before); err != nil {
 		return err
 	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+		return err
+	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
 		return err
 	}
@@ -150,10 +151,10 @@ var _ ListSuppressedDestinationsAPIClient = (*Client)(nil)
 // ListSuppressedDestinationsPaginatorOptions is the paginator options for
 // ListSuppressedDestinations
 type ListSuppressedDestinationsPaginatorOptions struct {
-	// The number of results to show in a single call to ListSuppressedDestinations. If
-	// the number of results is larger than the number you specified in this parameter,
-	// then the response includes a NextToken element, which you can use to obtain
-	// additional results.
+	// The number of results to show in a single call to ListSuppressedDestinations .
+	// If the number of results is larger than the number you specified in this
+	// parameter, then the response includes a NextToken element, which you can use to
+	// obtain additional results.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token

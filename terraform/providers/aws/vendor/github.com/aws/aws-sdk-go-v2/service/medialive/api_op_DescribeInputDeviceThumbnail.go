@@ -48,8 +48,8 @@ type DescribeInputDeviceThumbnailInput struct {
 // Placeholder documentation for DescribeInputDeviceThumbnailResponse
 type DescribeInputDeviceThumbnailOutput struct {
 
-	// The binary data for the thumbnail that the Link device has most recently sent to
-	// MediaLive.
+	// The binary data for the thumbnail that the Link device has most recently sent
+	// to MediaLive.
 	Body io.ReadCloser
 
 	// The length of the content.
@@ -116,6 +116,9 @@ func (c *Client) addOperationDescribeInputDeviceThumbnailMiddlewares(stack *midd
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeInputDeviceThumbnail(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

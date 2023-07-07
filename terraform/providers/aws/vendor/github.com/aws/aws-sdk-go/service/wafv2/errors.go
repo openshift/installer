@@ -85,8 +85,7 @@ const (
 	//
 	// The policy specifications must conform to the following:
 	//
-	//    * The policy must be composed using IAM Policy version 2012-10-17 or version
-	//    2015-01-01.
+	//    * The policy must be composed using IAM Policy version 2012-10-17.
 	//
 	//    * The policy must include specifications for Effect, Action, and Principal.
 	//
@@ -185,6 +184,14 @@ const (
 	// a number of minutes for changes to propagate. Verify the resources that you
 	// are specifying in your request parameters and then retry the operation.
 	ErrCodeWAFUnavailableEntityException = "WAFUnavailableEntityException"
+
+	// ErrCodeWAFUnsupportedAggregateKeyTypeException for service response error code
+	// "WAFUnsupportedAggregateKeyTypeException".
+	//
+	// The rule that you've named doesn't aggregate solely on the IP address or
+	// solely on the forwarded IP address. This call is only available for rate-based
+	// rules with an AggregateKeyType setting of IP or FORWARDED_IP.
+	ErrCodeWAFUnsupportedAggregateKeyTypeException = "WAFUnsupportedAggregateKeyTypeException"
 )
 
 var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
@@ -206,4 +213,5 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"WAFTagOperationException":                   newErrorWAFTagOperationException,
 	"WAFTagOperationInternalErrorException":      newErrorWAFTagOperationInternalErrorException,
 	"WAFUnavailableEntityException":              newErrorWAFUnavailableEntityException,
+	"WAFUnsupportedAggregateKeyTypeException":    newErrorWAFUnsupportedAggregateKeyTypeException,
 }

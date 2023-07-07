@@ -12,8 +12,8 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Lists specific permissions of users and groups with access to your Amazon Kendra
-// experience.
+// Lists specific permissions of users and groups with access to your Amazon
+// Kendra experience.
 func (c *Client) ListEntityPersonas(ctx context.Context, params *ListEntityPersonasInput, optFns ...func(*Options)) (*ListEntityPersonasOutput, error) {
 	if params == nil {
 		params = &ListEntityPersonasInput{}
@@ -116,6 +116,9 @@ func (c *Client) addOperationListEntityPersonasMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListEntityPersonas(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

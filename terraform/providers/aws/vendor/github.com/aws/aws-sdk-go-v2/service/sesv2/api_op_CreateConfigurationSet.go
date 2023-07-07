@@ -44,8 +44,8 @@ type CreateConfigurationSetInput struct {
 	// you send using the configuration set.
 	DeliveryOptions *types.DeliveryOptions
 
-	// An object that defines whether or not Amazon SES collects reputation metrics for
-	// the emails that you send that use the configuration set.
+	// An object that defines whether or not Amazon SES collects reputation metrics
+	// for the emails that you send that use the configuration set.
 	ReputationOptions *types.ReputationOptions
 
 	// An object that defines whether or not Amazon SES can send email that you send
@@ -56,19 +56,23 @@ type CreateConfigurationSetInput struct {
 	// your account.
 	SuppressionOptions *types.SuppressionOptions
 
-	// An array of objects that define the tags (keys and values) to associate with the
-	// configuration set.
+	// An array of objects that define the tags (keys and values) to associate with
+	// the configuration set.
 	Tags []types.Tag
 
 	// An object that defines the open and click tracking options for emails that you
 	// send using the configuration set.
 	TrackingOptions *types.TrackingOptions
 
+	// An object that defines the VDM options for emails that you send using the
+	// configuration set.
+	VdmOptions *types.VdmOptions
+
 	noSmithyDocumentSerde
 }
 
-// An HTTP 200 response if the request succeeds, or an error message if the request
-// fails.
+// An HTTP 200 response if the request succeeds, or an error message if the
+// request fails.
 type CreateConfigurationSetOutput struct {
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -125,6 +129,9 @@ func (c *Client) addOperationCreateConfigurationSetMiddlewares(stack *middleware
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateConfigurationSet(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

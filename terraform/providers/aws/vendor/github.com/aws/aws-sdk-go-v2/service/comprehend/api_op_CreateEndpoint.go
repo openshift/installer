@@ -13,8 +13,8 @@ import (
 )
 
 // Creates a model-specific endpoint for synchronous inference for a previously
-// trained custom model For information about endpoints, see Managing endpoints
-// (https://docs.aws.amazon.com/comprehend/latest/dg/manage-endpoints.html).
+// trained custom model For information about endpoints, see Managing endpoints (https://docs.aws.amazon.com/comprehend/latest/dg/manage-endpoints.html)
+// .
 func (c *Client) CreateEndpoint(ctx context.Context, params *CreateEndpointInput, optFns ...func(*Options)) (*CreateEndpointOutput, error) {
 	if params == nil {
 		params = &CreateEndpointInput{}
@@ -39,31 +39,33 @@ type CreateEndpointInput struct {
 	// This member is required.
 	DesiredInferenceUnits *int32
 
-	// This is the descriptive suffix that becomes part of the EndpointArn used for all
-	// subsequent requests to this resource.
+	// This is the descriptive suffix that becomes part of the EndpointArn used for
+	// all subsequent requests to this resource.
 	//
 	// This member is required.
 	EndpointName *string
 
-	// The Amazon Resource Number (ARN) of the model to which the endpoint will be
-	// attached.
-	//
-	// This member is required.
-	ModelArn *string
-
 	// An idempotency token provided by the customer. If this token matches a previous
 	// endpoint creation request, Amazon Comprehend will not return a
-	// ResourceInUseException.
+	// ResourceInUseException .
 	ClientRequestToken *string
 
-	// The Amazon Resource Name (ARN) of the AWS identity and Access Management (IAM)
-	// role that grants Amazon Comprehend read access to trained custom models
-	// encrypted with a customer managed key (ModelKmsKeyId).
+	// The Amazon Resource Name (ARN) of the IAM role that grants Amazon Comprehend
+	// read access to trained custom models encrypted with a customer managed key
+	// (ModelKmsKeyId).
 	DataAccessRoleArn *string
 
-	// Tags associated with the endpoint being created. A tag is a key-value pair that
-	// adds metadata to the endpoint. For example, a tag with "Sales" as the key might
-	// be added to an endpoint to indicate its use by the sales department.
+	// The Amazon Resource Number (ARN) of the flywheel to which the endpoint will be
+	// attached.
+	FlywheelArn *string
+
+	// The Amazon Resource Number (ARN) of the model to which the endpoint will be
+	// attached.
+	ModelArn *string
+
+	// Tags to associate with the endpoint. A tag is a key-value pair that adds
+	// metadata to the endpoint. For example, a tag with "Sales" as the key might be
+	// added to an endpoint to indicate its use by the sales department.
 	Tags []types.Tag
 
 	noSmithyDocumentSerde
@@ -73,6 +75,9 @@ type CreateEndpointOutput struct {
 
 	// The Amazon Resource Number (ARN) of the endpoint being created.
 	EndpointArn *string
+
+	// The Amazon Resource Number (ARN) of the model to which the endpoint is attached.
+	ModelArn *string
 
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
@@ -132,6 +137,9 @@ func (c *Client) addOperationCreateEndpointMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateEndpoint(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

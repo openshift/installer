@@ -52,8 +52,8 @@ type UpdateIndexInput struct {
 	// The name of the index you want to update.
 	Name *string
 
-	// An Identity and Access Management (IAM) role that gives Amazon Kendra permission
-	// to access Amazon CloudWatch logs and metrics.
+	// An Identity and Access Management (IAM) role that gives Amazon Kendra
+	// permission to access Amazon CloudWatch logs and metrics.
 	RoleArn *string
 
 	// The user context policy.
@@ -61,8 +61,8 @@ type UpdateIndexInput struct {
 
 	// Enables fetching access levels of groups and users from an IAM Identity Center
 	// (successor to Single Sign-On) identity source. To configure this, see
-	// UserGroupResolutionConfiguration
-	// (https://docs.aws.amazon.com/kendra/latest/dg/API_UserGroupResolutionConfiguration.html).
+	// UserGroupResolutionConfiguration (https://docs.aws.amazon.com/kendra/latest/dg/API_UserGroupResolutionConfiguration.html)
+	// .
 	UserGroupResolutionConfiguration *types.UserGroupResolutionConfiguration
 
 	// The user token configuration.
@@ -127,6 +127,9 @@ func (c *Client) addOperationUpdateIndexMiddlewares(stack *middleware.Stack, opt
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateIndex(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

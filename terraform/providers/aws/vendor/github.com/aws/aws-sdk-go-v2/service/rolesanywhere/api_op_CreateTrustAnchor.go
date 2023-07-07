@@ -11,13 +11,12 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Creates a trust anchor. You establish trust between IAM Roles Anywhere and your
-// certificate authority (CA) by configuring a trust anchor. A Trust Anchor is
-// defined either as a reference to a AWS Certificate Manager Private Certificate
-// Authority (ACM PCA), or by uploading a Certificate Authority (CA) certificate.
-// Your AWS workloads can authenticate with the trust anchor using certificates
-// issued by the trusted Certificate Authority (CA) in exchange for temporary AWS
-// credentials. Required permissions: rolesanywhere:CreateTrustAnchor.
+// Creates a trust anchor to establish trust between IAM Roles Anywhere and your
+// certificate authority (CA). You can define a trust anchor as a reference to an
+// Private Certificate Authority (Private CA) or by uploading a CA certificate.
+// Your Amazon Web Services workloads can authenticate with the trust anchor using
+// certificates issued by the CA in exchange for temporary Amazon Web Services
+// credentials. Required permissions: rolesanywhere:CreateTrustAnchor .
 func (c *Client) CreateTrustAnchor(ctx context.Context, params *CreateTrustAnchorInput, optFns ...func(*Options)) (*CreateTrustAnchorOutput, error) {
 	if params == nil {
 		params = &CreateTrustAnchorInput{}
@@ -47,6 +46,9 @@ type CreateTrustAnchorInput struct {
 
 	// Specifies whether the trust anchor is enabled.
 	Enabled *bool
+
+	// A list of notification settings to be associated to the trust anchor.
+	NotificationSettings []types.NotificationSetting
 
 	// The tags to attach to the trust anchor.
 	Tags []types.Tag
@@ -116,6 +118,9 @@ func (c *Client) addOperationCreateTrustAnchorMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opCreateTrustAnchor(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

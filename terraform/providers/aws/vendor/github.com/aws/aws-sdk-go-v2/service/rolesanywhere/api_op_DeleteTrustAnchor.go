@@ -11,7 +11,7 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Deletes a trust anchor. Required permissions: rolesanywhere:DeleteTrustAnchor.
+// Deletes a trust anchor. Required permissions: rolesanywhere:DeleteTrustAnchor .
 func (c *Client) DeleteTrustAnchor(ctx context.Context, params *DeleteTrustAnchorInput, optFns ...func(*Options)) (*DeleteTrustAnchorOutput, error) {
 	if params == nil {
 		params = &DeleteTrustAnchorInput{}
@@ -99,6 +99,9 @@ func (c *Client) addOperationDeleteTrustAnchorMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteTrustAnchor(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

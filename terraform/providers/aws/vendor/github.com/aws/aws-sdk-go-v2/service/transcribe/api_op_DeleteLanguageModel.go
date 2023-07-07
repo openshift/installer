@@ -11,8 +11,8 @@ import (
 )
 
 // Deletes a custom language model. To use this operation, specify the name of the
-// language model you want to delete using ModelName. Language model names are case
-// sensitive.
+// language model you want to delete using ModelName . custom language model names
+// are case sensitive.
 func (c *Client) DeleteLanguageModel(ctx context.Context, params *DeleteLanguageModelInput, optFns ...func(*Options)) (*DeleteLanguageModelOutput, error) {
 	if params == nil {
 		params = &DeleteLanguageModelInput{}
@@ -95,6 +95,9 @@ func (c *Client) addOperationDeleteLanguageModelMiddlewares(stack *middleware.St
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteLanguageModel(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

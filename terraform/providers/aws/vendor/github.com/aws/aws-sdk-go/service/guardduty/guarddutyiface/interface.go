@@ -143,6 +143,9 @@ type GuardDutyAPI interface {
 	DescribeOrganizationConfigurationWithContext(aws.Context, *guardduty.DescribeOrganizationConfigurationInput, ...request.Option) (*guardduty.DescribeOrganizationConfigurationOutput, error)
 	DescribeOrganizationConfigurationRequest(*guardduty.DescribeOrganizationConfigurationInput) (*request.Request, *guardduty.DescribeOrganizationConfigurationOutput)
 
+	DescribeOrganizationConfigurationPages(*guardduty.DescribeOrganizationConfigurationInput, func(*guardduty.DescribeOrganizationConfigurationOutput, bool) bool) error
+	DescribeOrganizationConfigurationPagesWithContext(aws.Context, *guardduty.DescribeOrganizationConfigurationInput, func(*guardduty.DescribeOrganizationConfigurationOutput, bool) bool, ...request.Option) error
+
 	DescribePublishingDestination(*guardduty.DescribePublishingDestinationInput) (*guardduty.DescribePublishingDestinationOutput, error)
 	DescribePublishingDestinationWithContext(aws.Context, *guardduty.DescribePublishingDestinationInput, ...request.Option) (*guardduty.DescribePublishingDestinationOutput, error)
 	DescribePublishingDestinationRequest(*guardduty.DescribePublishingDestinationInput) (*request.Request, *guardduty.DescribePublishingDestinationOutput)
@@ -170,6 +173,10 @@ type GuardDutyAPI interface {
 	GetAdministratorAccount(*guardduty.GetAdministratorAccountInput) (*guardduty.GetAdministratorAccountOutput, error)
 	GetAdministratorAccountWithContext(aws.Context, *guardduty.GetAdministratorAccountInput, ...request.Option) (*guardduty.GetAdministratorAccountOutput, error)
 	GetAdministratorAccountRequest(*guardduty.GetAdministratorAccountInput) (*request.Request, *guardduty.GetAdministratorAccountOutput)
+
+	GetCoverageStatistics(*guardduty.GetCoverageStatisticsInput) (*guardduty.GetCoverageStatisticsOutput, error)
+	GetCoverageStatisticsWithContext(aws.Context, *guardduty.GetCoverageStatisticsInput, ...request.Option) (*guardduty.GetCoverageStatisticsOutput, error)
+	GetCoverageStatisticsRequest(*guardduty.GetCoverageStatisticsInput) (*request.Request, *guardduty.GetCoverageStatisticsOutput)
 
 	GetDetector(*guardduty.GetDetectorInput) (*guardduty.GetDetectorOutput, error)
 	GetDetectorWithContext(aws.Context, *guardduty.GetDetectorInput, ...request.Option) (*guardduty.GetDetectorOutput, error)
@@ -229,6 +236,13 @@ type GuardDutyAPI interface {
 	InviteMembers(*guardduty.InviteMembersInput) (*guardduty.InviteMembersOutput, error)
 	InviteMembersWithContext(aws.Context, *guardduty.InviteMembersInput, ...request.Option) (*guardduty.InviteMembersOutput, error)
 	InviteMembersRequest(*guardduty.InviteMembersInput) (*request.Request, *guardduty.InviteMembersOutput)
+
+	ListCoverage(*guardduty.ListCoverageInput) (*guardduty.ListCoverageOutput, error)
+	ListCoverageWithContext(aws.Context, *guardduty.ListCoverageInput, ...request.Option) (*guardduty.ListCoverageOutput, error)
+	ListCoverageRequest(*guardduty.ListCoverageInput) (*request.Request, *guardduty.ListCoverageOutput)
+
+	ListCoveragePages(*guardduty.ListCoverageInput, func(*guardduty.ListCoverageOutput, bool) bool) error
+	ListCoveragePagesWithContext(aws.Context, *guardduty.ListCoverageInput, func(*guardduty.ListCoverageOutput, bool) bool, ...request.Option) error
 
 	ListDetectors(*guardduty.ListDetectorsInput) (*guardduty.ListDetectorsOutput, error)
 	ListDetectorsWithContext(aws.Context, *guardduty.ListDetectorsInput, ...request.Option) (*guardduty.ListDetectorsOutput, error)
@@ -296,6 +310,10 @@ type GuardDutyAPI interface {
 
 	ListThreatIntelSetsPages(*guardduty.ListThreatIntelSetsInput, func(*guardduty.ListThreatIntelSetsOutput, bool) bool) error
 	ListThreatIntelSetsPagesWithContext(aws.Context, *guardduty.ListThreatIntelSetsInput, func(*guardduty.ListThreatIntelSetsOutput, bool) bool, ...request.Option) error
+
+	StartMalwareScan(*guardduty.StartMalwareScanInput) (*guardduty.StartMalwareScanOutput, error)
+	StartMalwareScanWithContext(aws.Context, *guardduty.StartMalwareScanInput, ...request.Option) (*guardduty.StartMalwareScanOutput, error)
+	StartMalwareScanRequest(*guardduty.StartMalwareScanInput) (*request.Request, *guardduty.StartMalwareScanOutput)
 
 	StartMonitoringMembers(*guardduty.StartMonitoringMembersInput) (*guardduty.StartMonitoringMembersOutput, error)
 	StartMonitoringMembersWithContext(aws.Context, *guardduty.StartMonitoringMembersInput, ...request.Option) (*guardduty.StartMonitoringMembersOutput, error)

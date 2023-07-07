@@ -89,6 +89,12 @@ const (
 	// instance is a previous or custom version that doesn't use our version information.
 	ErrCodeMissingVersionException = "MissingVersionException"
 
+	// ErrCodeNamespaceNotFoundException for service response error code
+	// "NamespaceNotFoundException".
+	//
+	// The specified namespace wasn't found.
+	ErrCodeNamespaceNotFoundException = "NamespaceNotFoundException"
+
 	// ErrCodeNoUpdateAvailableException for service response error code
 	// "NoUpdateAvailableException".
 	//
@@ -153,7 +159,7 @@ const (
 	//    * The SSM agent is not installed or is not running
 	//
 	//    * There is an interface Amazon VPC endpoint for Amazon ECS, but there
-	//    is not one for for Systems Manager Session Manager
+	//    is not one for Systems Manager Session Manager
 	//
 	// For information about how to troubleshoot the issues, see Troubleshooting
 	// issues with ECS Exec (https://docs.aws.amazon.com/AmazonECS/latest/developerguide/ecs-exec.html)
@@ -205,6 +211,7 @@ var exceptionFromCode = map[string]func(protocol.ResponseMetadata) error{
 	"InvalidParameterException":                      newErrorInvalidParameterException,
 	"LimitExceededException":                         newErrorLimitExceededException,
 	"MissingVersionException":                        newErrorMissingVersionException,
+	"NamespaceNotFoundException":                     newErrorNamespaceNotFoundException,
 	"NoUpdateAvailableException":                     newErrorNoUpdateAvailableException,
 	"PlatformTaskDefinitionIncompatibilityException": newErrorPlatformTaskDefinitionIncompatibilityException,
 	"PlatformUnknownException":                       newErrorPlatformUnknownException,

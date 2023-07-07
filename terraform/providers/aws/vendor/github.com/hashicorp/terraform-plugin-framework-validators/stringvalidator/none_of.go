@@ -1,28 +1,62 @@
 package stringvalidator
 
 import (
-	"github.com/hashicorp/terraform-plugin-framework-validators/internal/primitivevalidator"
-	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"context"
+	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+
+	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 )
 
-// NoneOf checks that the string held in the attribute
-// is none of the given `unacceptableStrings`.
-func NoneOf(unacceptableStrings ...string) tfsdk.AttributeValidator {
-	unacceptableStringValues := make([]attr.Value, 0, len(unacceptableStrings))
-	for _, s := range unacceptableStrings {
-		unacceptableStringValues = append(unacceptableStringValues, types.String{Value: s})
-	}
+var _ validator.String = noneOfValidator{}
 
-	return primitivevalidator.NoneOf(unacceptableStringValues...)
+// noneOfValidator validates that the value does not match one of the values.
+type noneOfValidator struct {
+	values []types.String
 }
 
-// NoneOfCaseInsensitive checks that the string held in the attribute
-// is none of the given `unacceptableStrings`, irrespective of case sensitivity.
-func NoneOfCaseInsensitive(unacceptableStrings ...string) tfsdk.AttributeValidator {
-	return &acceptableStringsCaseInsensitiveAttributeValidator{
-		unacceptableStrings,
-		false,
+func (v noneOfValidator) Description(ctx context.Context) string {
+	return v.MarkdownDescription(ctx)
+}
+
+func (v noneOfValidator) MarkdownDescription(_ context.Context) string {
+	return fmt.Sprintf("value must be none of: %q", v.values)
+}
+
+func (v noneOfValidator) ValidateString(ctx context.Context, request validator.StringRequest, response *validator.StringResponse) {
+	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() {
+		return
+	}
+
+	value := request.ConfigValue
+
+	for _, otherValue := range v.values {
+		if !value.Equal(otherValue) {
+			continue
+		}
+
+		response.Diagnostics.Append(validatordiag.InvalidAttributeValueMatchDiagnostic(
+			request.Path,
+			v.Description(ctx),
+			value.String(),
+		))
+
+		break
+	}
+}
+
+// NoneOf checks that the String held in the attribute
+// is none of the given `values`.
+func NoneOf(values ...string) validator.String {
+	frameworkValues := make([]types.String, 0, len(values))
+
+	for _, value := range values {
+		frameworkValues = append(frameworkValues, types.StringValue(value))
+	}
+
+	return noneOfValidator{
+		values: frameworkValues,
 	}
 }

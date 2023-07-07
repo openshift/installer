@@ -34,8 +34,9 @@ func (c *Client) ListVocabularyFilters(ctx context.Context, params *ListVocabula
 type ListVocabularyFiltersInput struct {
 
 	// The maximum number of custom vocabulary filters to return in each page of
-	// results. If there are fewer results than the value you specify, only the actual
-	// results are returned. If you don't specify a value, a default of 5 is used.
+	// results. If there are fewer results than the value that you specify, only the
+	// actual results are returned. If you don't specify a value, a default of 5 is
+	// used.
 	MaxResults *int32
 
 	// Returns only the custom vocabulary filters that contain the specified string.
@@ -61,8 +62,8 @@ type ListVocabularyFiltersOutput struct {
 	// view all your results.
 	NextToken *string
 
-	// Provides information about the custom vocabulary filters that match the criteria
-	// specified in your request.
+	// Provides information about the custom vocabulary filters that match the
+	// criteria specified in your request.
 	VocabularyFilters []types.VocabularyFilterInfo
 
 	// Metadata pertaining to the operation's result.
@@ -119,6 +120,9 @@ func (c *Client) addOperationListVocabularyFiltersMiddlewares(stack *middleware.
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListVocabularyFilters(options.Region), middleware.Before); err != nil {
 		return err
 	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
+		return err
+	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {
 		return err
 	}
@@ -143,8 +147,9 @@ var _ ListVocabularyFiltersAPIClient = (*Client)(nil)
 // ListVocabularyFilters
 type ListVocabularyFiltersPaginatorOptions struct {
 	// The maximum number of custom vocabulary filters to return in each page of
-	// results. If there are fewer results than the value you specify, only the actual
-	// results are returned. If you don't specify a value, a default of 5 is used.
+	// results. If there are fewer results than the value that you specify, only the
+	// actual results are returned. If you don't specify a value, a default of 5 is
+	// used.
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token

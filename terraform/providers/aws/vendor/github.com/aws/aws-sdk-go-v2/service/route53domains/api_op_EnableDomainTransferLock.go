@@ -44,10 +44,8 @@ type EnableDomainTransferLockInput struct {
 // The EnableDomainTransferLock response includes the following elements.
 type EnableDomainTransferLockOutput struct {
 
-	// Identifier for tracking the progress of the request. To use this ID to query the
-	// operation status, use GetOperationDetail.
-	//
-	// This member is required.
+	// Identifier for tracking the progress of the request. To use this ID to query
+	// the operation status, use GetOperationDetail.
 	OperationId *string
 
 	// Metadata pertaining to the operation's result.
@@ -105,6 +103,9 @@ func (c *Client) addOperationEnableDomainTransferLockMiddlewares(stack *middlewa
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opEnableDomainTransferLock(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

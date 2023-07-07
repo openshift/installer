@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package toproto5
 
 import (
@@ -12,7 +15,7 @@ import (
 // Attribute. Errors will be tftypes.AttributePathErrors based on `path`.
 // `name` is the name of the attribute.
 func SchemaAttribute(ctx context.Context, name string, path *tftypes.AttributePath, a fwschema.Attribute) (*tfprotov5.SchemaAttribute, error) {
-	if a.GetAttributes() != nil && len(a.GetAttributes().GetAttributes()) > 0 {
+	if _, ok := a.(fwschema.NestedAttribute); ok {
 		return nil, path.NewErrorf("protocol version 5 cannot have Attributes set")
 	}
 

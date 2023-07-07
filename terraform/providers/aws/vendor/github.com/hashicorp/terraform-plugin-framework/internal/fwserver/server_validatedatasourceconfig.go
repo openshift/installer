@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -28,7 +31,7 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		return
 	}
 
-	if _, ok := req.DataSource.(datasource.DataSourceWithConfigure); ok {
+	if dataSourceWithConfigure, ok := req.DataSource.(datasource.DataSourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "DataSource implements DataSourceWithConfigure")
 
 		configureReq := datasource.ConfigureRequest{
@@ -37,7 +40,7 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		configureResp := datasource.ConfigureResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined DataSource Configure")
-		req.DataSource.(datasource.DataSourceWithConfigure).Configure(ctx, configureReq, &configureResp)
+		dataSourceWithConfigure.Configure(ctx, configureReq, &configureResp)
 		logging.FrameworkDebug(ctx, "Called provider defined DataSource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
@@ -55,9 +58,9 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		logging.FrameworkTrace(ctx, "DataSource implements DataSourceWithConfigValidators")
 
 		for _, configValidator := range dataSource.ConfigValidators(ctx) {
-			vdscResp := &datasource.ValidateConfigResponse{
-				Diagnostics: resp.Diagnostics,
-			}
+			// Instantiate a new response for each request to prevent validators
+			// from modifying or removing diagnostics.
+			vdscResp := &datasource.ValidateConfigResponse{}
 
 			logging.FrameworkDebug(
 				ctx,
@@ -75,32 +78,32 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 				},
 			)
 
-			resp.Diagnostics = vdscResp.Diagnostics
+			resp.Diagnostics.Append(vdscResp.Diagnostics...)
 		}
 	}
 
 	if dataSource, ok := req.DataSource.(datasource.DataSourceWithValidateConfig); ok {
 		logging.FrameworkTrace(ctx, "DataSource implements DataSourceWithValidateConfig")
 
-		vdscResp := &datasource.ValidateConfigResponse{
-			Diagnostics: resp.Diagnostics,
-		}
+		// Instantiate a new response for each request to prevent validators
+		// from modifying or removing diagnostics.
+		vdscResp := &datasource.ValidateConfigResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined DataSource ValidateConfig")
 		dataSource.ValidateConfig(ctx, vdscReq, vdscResp)
 		logging.FrameworkDebug(ctx, "Called provider defined DataSource ValidateConfig")
 
-		resp.Diagnostics = vdscResp.Diagnostics
+		resp.Diagnostics.Append(vdscResp.Diagnostics...)
 	}
 
 	validateSchemaReq := ValidateSchemaRequest{
 		Config: *req.Config,
 	}
-	validateSchemaResp := ValidateSchemaResponse{
-		Diagnostics: resp.Diagnostics,
-	}
+	// Instantiate a new response for each request to prevent validators
+	// from modifying or removing diagnostics.
+	validateSchemaResp := ValidateSchemaResponse{}
 
 	SchemaValidate(ctx, req.Config.Schema, validateSchemaReq, &validateSchemaResp)
 
-	resp.Diagnostics = validateSchemaResp.Diagnostics
+	resp.Diagnostics.Append(validateSchemaResp.Diagnostics...)
 }

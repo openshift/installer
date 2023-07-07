@@ -12,7 +12,7 @@ import (
 )
 
 // Disables a certificate revocation list (CRL). Required permissions:
-// rolesanywhere:DisableCrl.
+// rolesanywhere:DisableCrl .
 func (c *Client) DisableCrl(ctx context.Context, params *DisableCrlInput, optFns ...func(*Options)) (*DisableCrlOutput, error) {
 	if params == nil {
 		params = &DisableCrlInput{}
@@ -101,6 +101,9 @@ func (c *Client) addOperationDisableCrlMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDisableCrl(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

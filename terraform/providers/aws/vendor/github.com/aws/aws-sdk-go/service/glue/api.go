@@ -726,6 +726,91 @@ func (c *Glue) BatchGetCustomEntityTypesWithContext(ctx aws.Context, input *Batc
 	return out, req.Send()
 }
 
+const opBatchGetDataQualityResult = "BatchGetDataQualityResult"
+
+// BatchGetDataQualityResultRequest generates a "aws/request.Request" representing the
+// client's request for the BatchGetDataQualityResult operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See BatchGetDataQualityResult for more information on using the BatchGetDataQualityResult
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the BatchGetDataQualityResultRequest method.
+//	req, resp := client.BatchGetDataQualityResultRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchGetDataQualityResult
+func (c *Glue) BatchGetDataQualityResultRequest(input *BatchGetDataQualityResultInput) (req *request.Request, output *BatchGetDataQualityResultOutput) {
+	op := &request.Operation{
+		Name:       opBatchGetDataQualityResult,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &BatchGetDataQualityResultInput{}
+	}
+
+	output = &BatchGetDataQualityResultOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// BatchGetDataQualityResult API operation for AWS Glue.
+//
+// Retrieves a list of data quality results for the specified result IDs.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation BatchGetDataQualityResult for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchGetDataQualityResult
+func (c *Glue) BatchGetDataQualityResult(input *BatchGetDataQualityResultInput) (*BatchGetDataQualityResultOutput, error) {
+	req, out := c.BatchGetDataQualityResultRequest(input)
+	return out, req.Send()
+}
+
+// BatchGetDataQualityResultWithContext is the same as BatchGetDataQualityResult with the addition of
+// the ability to pass a context and additional request options.
+//
+// See BatchGetDataQualityResult for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) BatchGetDataQualityResultWithContext(ctx aws.Context, input *BatchGetDataQualityResultInput, opts ...request.Option) (*BatchGetDataQualityResultOutput, error) {
+	req, out := c.BatchGetDataQualityResultRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opBatchGetDevEndpoints = "BatchGetDevEndpoints"
 
 // BatchGetDevEndpointsRequest generates a "aws/request.Request" representing the
@@ -976,6 +1061,11 @@ func (c *Glue) BatchGetPartitionRequest(input *BatchGetPartitionInput) (req *req
 //
 //   - InvalidStateException
 //     An error that indicates your data is in an invalid state.
+//
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/BatchGetPartition
 func (c *Glue) BatchGetPartition(input *BatchGetPartitionInput) (*BatchGetPartitionOutput, error) {
@@ -1346,6 +1436,185 @@ func (c *Glue) BatchUpdatePartition(input *BatchUpdatePartitionInput) (*BatchUpd
 // for more information on using Contexts.
 func (c *Glue) BatchUpdatePartitionWithContext(ctx aws.Context, input *BatchUpdatePartitionInput, opts ...request.Option) (*BatchUpdatePartitionOutput, error) {
 	req, out := c.BatchUpdatePartitionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCancelDataQualityRuleRecommendationRun = "CancelDataQualityRuleRecommendationRun"
+
+// CancelDataQualityRuleRecommendationRunRequest generates a "aws/request.Request" representing the
+// client's request for the CancelDataQualityRuleRecommendationRun operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CancelDataQualityRuleRecommendationRun for more information on using the CancelDataQualityRuleRecommendationRun
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CancelDataQualityRuleRecommendationRunRequest method.
+//	req, resp := client.CancelDataQualityRuleRecommendationRunRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CancelDataQualityRuleRecommendationRun
+func (c *Glue) CancelDataQualityRuleRecommendationRunRequest(input *CancelDataQualityRuleRecommendationRunInput) (req *request.Request, output *CancelDataQualityRuleRecommendationRunOutput) {
+	op := &request.Operation{
+		Name:       opCancelDataQualityRuleRecommendationRun,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CancelDataQualityRuleRecommendationRunInput{}
+	}
+
+	output = &CancelDataQualityRuleRecommendationRunOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// CancelDataQualityRuleRecommendationRun API operation for AWS Glue.
+//
+// Cancels the specified recommendation run that was being used to generate
+// rules.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation CancelDataQualityRuleRecommendationRun for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CancelDataQualityRuleRecommendationRun
+func (c *Glue) CancelDataQualityRuleRecommendationRun(input *CancelDataQualityRuleRecommendationRunInput) (*CancelDataQualityRuleRecommendationRunOutput, error) {
+	req, out := c.CancelDataQualityRuleRecommendationRunRequest(input)
+	return out, req.Send()
+}
+
+// CancelDataQualityRuleRecommendationRunWithContext is the same as CancelDataQualityRuleRecommendationRun with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CancelDataQualityRuleRecommendationRun for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) CancelDataQualityRuleRecommendationRunWithContext(ctx aws.Context, input *CancelDataQualityRuleRecommendationRunInput, opts ...request.Option) (*CancelDataQualityRuleRecommendationRunOutput, error) {
+	req, out := c.CancelDataQualityRuleRecommendationRunRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opCancelDataQualityRulesetEvaluationRun = "CancelDataQualityRulesetEvaluationRun"
+
+// CancelDataQualityRulesetEvaluationRunRequest generates a "aws/request.Request" representing the
+// client's request for the CancelDataQualityRulesetEvaluationRun operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CancelDataQualityRulesetEvaluationRun for more information on using the CancelDataQualityRulesetEvaluationRun
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CancelDataQualityRulesetEvaluationRunRequest method.
+//	req, resp := client.CancelDataQualityRulesetEvaluationRunRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CancelDataQualityRulesetEvaluationRun
+func (c *Glue) CancelDataQualityRulesetEvaluationRunRequest(input *CancelDataQualityRulesetEvaluationRunInput) (req *request.Request, output *CancelDataQualityRulesetEvaluationRunOutput) {
+	op := &request.Operation{
+		Name:       opCancelDataQualityRulesetEvaluationRun,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CancelDataQualityRulesetEvaluationRunInput{}
+	}
+
+	output = &CancelDataQualityRulesetEvaluationRunOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// CancelDataQualityRulesetEvaluationRun API operation for AWS Glue.
+//
+// Cancels a run where a ruleset is being evaluated against a data source.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation CancelDataQualityRulesetEvaluationRun for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CancelDataQualityRulesetEvaluationRun
+func (c *Glue) CancelDataQualityRulesetEvaluationRun(input *CancelDataQualityRulesetEvaluationRunInput) (*CancelDataQualityRulesetEvaluationRunOutput, error) {
+	req, out := c.CancelDataQualityRulesetEvaluationRunRequest(input)
+	return out, req.Send()
+}
+
+// CancelDataQualityRulesetEvaluationRunWithContext is the same as CancelDataQualityRulesetEvaluationRun with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CancelDataQualityRulesetEvaluationRun for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) CancelDataQualityRulesetEvaluationRunWithContext(ctx aws.Context, input *CancelDataQualityRulesetEvaluationRunInput, opts ...request.Option) (*CancelDataQualityRulesetEvaluationRunOutput, error) {
+	req, out := c.CancelDataQualityRulesetEvaluationRunRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -2088,6 +2357,101 @@ func (c *Glue) CreateCustomEntityTypeWithContext(ctx aws.Context, input *CreateC
 	return out, req.Send()
 }
 
+const opCreateDataQualityRuleset = "CreateDataQualityRuleset"
+
+// CreateDataQualityRulesetRequest generates a "aws/request.Request" representing the
+// client's request for the CreateDataQualityRuleset operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateDataQualityRuleset for more information on using the CreateDataQualityRuleset
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the CreateDataQualityRulesetRequest method.
+//	req, resp := client.CreateDataQualityRulesetRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDataQualityRuleset
+func (c *Glue) CreateDataQualityRulesetRequest(input *CreateDataQualityRulesetInput) (req *request.Request, output *CreateDataQualityRulesetOutput) {
+	op := &request.Operation{
+		Name:       opCreateDataQualityRuleset,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CreateDataQualityRulesetInput{}
+	}
+
+	output = &CreateDataQualityRulesetOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateDataQualityRuleset API operation for AWS Glue.
+//
+// Creates a data quality ruleset with DQDL rules applied to a specified Glue
+// table.
+//
+// You create the ruleset using the Data Quality Definition Language (DQDL).
+// For more information, see the Glue developer guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation CreateDataQualityRuleset for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - AlreadyExistsException
+//     A resource to be created or added already exists.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - ResourceNumberLimitExceededException
+//     A resource numerical limit was exceeded.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDataQualityRuleset
+func (c *Glue) CreateDataQualityRuleset(input *CreateDataQualityRulesetInput) (*CreateDataQualityRulesetOutput, error) {
+	req, out := c.CreateDataQualityRulesetRequest(input)
+	return out, req.Send()
+}
+
+// CreateDataQualityRulesetWithContext is the same as CreateDataQualityRuleset with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateDataQualityRuleset for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) CreateDataQualityRulesetWithContext(ctx aws.Context, input *CreateDataQualityRulesetInput, opts ...request.Option) (*CreateDataQualityRulesetOutput, error) {
+	req, out := c.CreateDataQualityRulesetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateDatabase = "CreateDatabase"
 
 // CreateDatabaseRequest generates a "aws/request.Request" representing the
@@ -2163,6 +2527,9 @@ func (c *Glue) CreateDatabaseRequest(input *CreateDatabaseInput) (req *request.R
 //
 //   - ConcurrentModificationException
 //     Two processes are trying to modify a resource simultaneously.
+//
+//   - FederatedResourceAlreadyExistsException
+//     A federated resource already exists.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/CreateDatabase
 func (c *Glue) CreateDatabase(input *CreateDatabaseInput) (*CreateDatabaseOutput, error) {
@@ -4183,6 +4550,95 @@ func (c *Glue) DeleteCustomEntityType(input *DeleteCustomEntityTypeInput) (*Dele
 // for more information on using Contexts.
 func (c *Glue) DeleteCustomEntityTypeWithContext(ctx aws.Context, input *DeleteCustomEntityTypeInput, opts ...request.Option) (*DeleteCustomEntityTypeOutput, error) {
 	req, out := c.DeleteCustomEntityTypeRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteDataQualityRuleset = "DeleteDataQualityRuleset"
+
+// DeleteDataQualityRulesetRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteDataQualityRuleset operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteDataQualityRuleset for more information on using the DeleteDataQualityRuleset
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the DeleteDataQualityRulesetRequest method.
+//	req, resp := client.DeleteDataQualityRulesetRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteDataQualityRuleset
+func (c *Glue) DeleteDataQualityRulesetRequest(input *DeleteDataQualityRulesetInput) (req *request.Request, output *DeleteDataQualityRulesetOutput) {
+	op := &request.Operation{
+		Name:       opDeleteDataQualityRuleset,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteDataQualityRulesetInput{}
+	}
+
+	output = &DeleteDataQualityRulesetOutput{}
+	req = c.newRequest(op, input, output)
+	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	return
+}
+
+// DeleteDataQualityRuleset API operation for AWS Glue.
+//
+// Deletes a data quality ruleset.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation DeleteDataQualityRuleset for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/DeleteDataQualityRuleset
+func (c *Glue) DeleteDataQualityRuleset(input *DeleteDataQualityRulesetInput) (*DeleteDataQualityRulesetOutput, error) {
+	req, out := c.DeleteDataQualityRulesetRequest(input)
+	return out, req.Send()
+}
+
+// DeleteDataQualityRulesetWithContext is the same as DeleteDataQualityRuleset with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteDataQualityRuleset for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) DeleteDataQualityRulesetWithContext(ctx aws.Context, input *DeleteDataQualityRulesetInput, opts ...request.Option) (*DeleteDataQualityRulesetOutput, error) {
+	req, out := c.DeleteDataQualityRulesetRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -7329,6 +7785,358 @@ func (c *Glue) GetDataCatalogEncryptionSettingsWithContext(ctx aws.Context, inpu
 	return out, req.Send()
 }
 
+const opGetDataQualityResult = "GetDataQualityResult"
+
+// GetDataQualityResultRequest generates a "aws/request.Request" representing the
+// client's request for the GetDataQualityResult operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDataQualityResult for more information on using the GetDataQualityResult
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetDataQualityResultRequest method.
+//	req, resp := client.GetDataQualityResultRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityResult
+func (c *Glue) GetDataQualityResultRequest(input *GetDataQualityResultInput) (req *request.Request, output *GetDataQualityResultOutput) {
+	op := &request.Operation{
+		Name:       opGetDataQualityResult,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetDataQualityResultInput{}
+	}
+
+	output = &GetDataQualityResultOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDataQualityResult API operation for AWS Glue.
+//
+// Retrieves the result of a data quality rule evaluation.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation GetDataQualityResult for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityResult
+func (c *Glue) GetDataQualityResult(input *GetDataQualityResultInput) (*GetDataQualityResultOutput, error) {
+	req, out := c.GetDataQualityResultRequest(input)
+	return out, req.Send()
+}
+
+// GetDataQualityResultWithContext is the same as GetDataQualityResult with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDataQualityResult for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) GetDataQualityResultWithContext(ctx aws.Context, input *GetDataQualityResultInput, opts ...request.Option) (*GetDataQualityResultOutput, error) {
+	req, out := c.GetDataQualityResultRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetDataQualityRuleRecommendationRun = "GetDataQualityRuleRecommendationRun"
+
+// GetDataQualityRuleRecommendationRunRequest generates a "aws/request.Request" representing the
+// client's request for the GetDataQualityRuleRecommendationRun operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDataQualityRuleRecommendationRun for more information on using the GetDataQualityRuleRecommendationRun
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetDataQualityRuleRecommendationRunRequest method.
+//	req, resp := client.GetDataQualityRuleRecommendationRunRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityRuleRecommendationRun
+func (c *Glue) GetDataQualityRuleRecommendationRunRequest(input *GetDataQualityRuleRecommendationRunInput) (req *request.Request, output *GetDataQualityRuleRecommendationRunOutput) {
+	op := &request.Operation{
+		Name:       opGetDataQualityRuleRecommendationRun,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetDataQualityRuleRecommendationRunInput{}
+	}
+
+	output = &GetDataQualityRuleRecommendationRunOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDataQualityRuleRecommendationRun API operation for AWS Glue.
+//
+// Gets the specified recommendation run that was used to generate rules.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation GetDataQualityRuleRecommendationRun for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityRuleRecommendationRun
+func (c *Glue) GetDataQualityRuleRecommendationRun(input *GetDataQualityRuleRecommendationRunInput) (*GetDataQualityRuleRecommendationRunOutput, error) {
+	req, out := c.GetDataQualityRuleRecommendationRunRequest(input)
+	return out, req.Send()
+}
+
+// GetDataQualityRuleRecommendationRunWithContext is the same as GetDataQualityRuleRecommendationRun with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDataQualityRuleRecommendationRun for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) GetDataQualityRuleRecommendationRunWithContext(ctx aws.Context, input *GetDataQualityRuleRecommendationRunInput, opts ...request.Option) (*GetDataQualityRuleRecommendationRunOutput, error) {
+	req, out := c.GetDataQualityRuleRecommendationRunRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetDataQualityRuleset = "GetDataQualityRuleset"
+
+// GetDataQualityRulesetRequest generates a "aws/request.Request" representing the
+// client's request for the GetDataQualityRuleset operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDataQualityRuleset for more information on using the GetDataQualityRuleset
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetDataQualityRulesetRequest method.
+//	req, resp := client.GetDataQualityRulesetRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityRuleset
+func (c *Glue) GetDataQualityRulesetRequest(input *GetDataQualityRulesetInput) (req *request.Request, output *GetDataQualityRulesetOutput) {
+	op := &request.Operation{
+		Name:       opGetDataQualityRuleset,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetDataQualityRulesetInput{}
+	}
+
+	output = &GetDataQualityRulesetOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDataQualityRuleset API operation for AWS Glue.
+//
+// Returns an existing ruleset by identifier or name.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation GetDataQualityRuleset for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityRuleset
+func (c *Glue) GetDataQualityRuleset(input *GetDataQualityRulesetInput) (*GetDataQualityRulesetOutput, error) {
+	req, out := c.GetDataQualityRulesetRequest(input)
+	return out, req.Send()
+}
+
+// GetDataQualityRulesetWithContext is the same as GetDataQualityRuleset with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDataQualityRuleset for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) GetDataQualityRulesetWithContext(ctx aws.Context, input *GetDataQualityRulesetInput, opts ...request.Option) (*GetDataQualityRulesetOutput, error) {
+	req, out := c.GetDataQualityRulesetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetDataQualityRulesetEvaluationRun = "GetDataQualityRulesetEvaluationRun"
+
+// GetDataQualityRulesetEvaluationRunRequest generates a "aws/request.Request" representing the
+// client's request for the GetDataQualityRulesetEvaluationRun operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDataQualityRulesetEvaluationRun for more information on using the GetDataQualityRulesetEvaluationRun
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the GetDataQualityRulesetEvaluationRunRequest method.
+//	req, resp := client.GetDataQualityRulesetEvaluationRunRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityRulesetEvaluationRun
+func (c *Glue) GetDataQualityRulesetEvaluationRunRequest(input *GetDataQualityRulesetEvaluationRunInput) (req *request.Request, output *GetDataQualityRulesetEvaluationRunOutput) {
+	op := &request.Operation{
+		Name:       opGetDataQualityRulesetEvaluationRun,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetDataQualityRulesetEvaluationRunInput{}
+	}
+
+	output = &GetDataQualityRulesetEvaluationRunOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDataQualityRulesetEvaluationRun API operation for AWS Glue.
+//
+// Retrieves a specific run where a ruleset is evaluated against a data source.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation GetDataQualityRulesetEvaluationRun for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDataQualityRulesetEvaluationRun
+func (c *Glue) GetDataQualityRulesetEvaluationRun(input *GetDataQualityRulesetEvaluationRunInput) (*GetDataQualityRulesetEvaluationRunOutput, error) {
+	req, out := c.GetDataQualityRulesetEvaluationRunRequest(input)
+	return out, req.Send()
+}
+
+// GetDataQualityRulesetEvaluationRunWithContext is the same as GetDataQualityRulesetEvaluationRun with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDataQualityRulesetEvaluationRun for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) GetDataQualityRulesetEvaluationRunWithContext(ctx aws.Context, input *GetDataQualityRulesetEvaluationRunInput, opts ...request.Option) (*GetDataQualityRulesetEvaluationRunOutput, error) {
+	req, out := c.GetDataQualityRulesetEvaluationRunRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetDatabase = "GetDatabase"
 
 // GetDatabaseRequest generates a "aws/request.Request" representing the
@@ -7397,6 +8205,9 @@ func (c *Glue) GetDatabaseRequest(input *GetDatabaseInput) (req *request.Request
 //
 //   - EncryptionException
 //     An encryption operation failed.
+//
+//   - FederationSourceException
+//     A federation source failed.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetDatabase
 func (c *Glue) GetDatabase(input *GetDatabaseInput) (*GetDatabaseOutput, error) {
@@ -7792,7 +8603,7 @@ func (c *Glue) GetDevEndpointsRequest(input *GetDevEndpointsInput) (req *request
 
 // GetDevEndpoints API operation for AWS Glue.
 //
-// Retrieves all the development endpoints in this AWS account.
+// Retrieves all the development endpoints in this Amazon Web Services account.
 //
 // When you create a development endpoint in a virtual private cloud (VPC),
 // Glue returns only a private IP address and the public IP address field is
@@ -8025,6 +8836,14 @@ func (c *Glue) GetJobBookmarkRequest(input *GetJobBookmarkInput) (req *request.R
 // GetJobBookmark API operation for AWS Glue.
 //
 // Returns information on a job bookmark entry.
+//
+// For more information about enabling and using job bookmarks, see:
+//
+//   - Tracking processed data using job bookmarks (https://docs.aws.amazon.com/glue/latest/dg/monitor-continuations.html)
+//
+//   - Job parameters used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+//
+//   - Job structure (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-jobs-job.html#aws-glue-api-jobs-job-Job)
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -9091,6 +9910,11 @@ func (c *Glue) GetPartitionRequest(input *GetPartitionInput) (req *request.Reque
 //   - EncryptionException
 //     An encryption operation failed.
 //
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPartition
 func (c *Glue) GetPartition(input *GetPartitionInput) (*GetPartitionOutput, error) {
 	req, out := c.GetPartitionRequest(input)
@@ -9341,6 +10165,11 @@ func (c *Glue) GetPartitionsRequest(input *GetPartitionsInput) (req *request.Req
 //
 //   - ResourceNotReadyException
 //     A resource was not ready for a transaction.
+//
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetPartitions
 func (c *Glue) GetPartitions(input *GetPartitionsInput) (*GetPartitionsOutput, error) {
@@ -10680,6 +11509,11 @@ func (c *Glue) GetTableRequest(input *GetTableInput) (req *request.Request, outp
 //   - ResourceNotReadyException
 //     A resource was not ready for a transaction.
 //
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
+//
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTable
 func (c *Glue) GetTable(input *GetTableInput) (*GetTableOutput, error) {
 	req, out := c.GetTableRequest(input)
@@ -11016,6 +11850,11 @@ func (c *Glue) GetTablesRequest(input *GetTablesInput) (req *request.Request, ou
 //
 //   - EncryptionException
 //     An encryption operation failed.
+//
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetTables
 func (c *Glue) GetTables(input *GetTablesInput) (*GetTablesOutput, error) {
@@ -11454,6 +12293,12 @@ func (c *Glue) GetUnfilteredPartitionMetadataRequest(input *GetUnfilteredPartiti
 
 // GetUnfilteredPartitionMetadata API operation for AWS Glue.
 //
+// Retrieves partition metadata from the Data Catalog that contains unfiltered
+// metadata.
+//
+// For IAM authorization, the public IAM action associated with this API is
+// glue:GetPartition.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -11479,6 +12324,12 @@ func (c *Glue) GetUnfilteredPartitionMetadataRequest(input *GetUnfilteredPartiti
 //     An encryption operation failed.
 //
 //   - PermissionTypeMismatchException
+//     The operation timed out.
+//
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUnfilteredPartitionMetadata
 func (c *Glue) GetUnfilteredPartitionMetadata(input *GetUnfilteredPartitionMetadataInput) (*GetUnfilteredPartitionMetadataOutput, error) {
@@ -11551,6 +12402,12 @@ func (c *Glue) GetUnfilteredPartitionsMetadataRequest(input *GetUnfilteredPartit
 
 // GetUnfilteredPartitionsMetadata API operation for AWS Glue.
 //
+// Retrieves partition metadata from the Data Catalog that contains unfiltered
+// metadata.
+//
+// For IAM authorization, the public IAM action associated with this API is
+// glue:GetPartitions.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -11576,6 +12433,12 @@ func (c *Glue) GetUnfilteredPartitionsMetadataRequest(input *GetUnfilteredPartit
 //     An encryption operation failed.
 //
 //   - PermissionTypeMismatchException
+//     The operation timed out.
+//
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUnfilteredPartitionsMetadata
 func (c *Glue) GetUnfilteredPartitionsMetadata(input *GetUnfilteredPartitionsMetadataInput) (*GetUnfilteredPartitionsMetadataOutput, error) {
@@ -11693,6 +12556,11 @@ func (c *Glue) GetUnfilteredTableMetadataRequest(input *GetUnfilteredTableMetada
 
 // GetUnfilteredTableMetadata API operation for AWS Glue.
 //
+// Retrieves table metadata from the Data Catalog that contains unfiltered metadata.
+//
+// For IAM authorization, the public IAM action associated with this API is
+// glue:GetTable.
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -11718,6 +12586,12 @@ func (c *Glue) GetUnfilteredTableMetadataRequest(input *GetUnfilteredTableMetada
 //     An encryption operation failed.
 //
 //   - PermissionTypeMismatchException
+//     The operation timed out.
+//
+//   - FederationSourceException
+//     A federation source failed.
+//
+//   - FederationSourceRetryableException
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/GetUnfilteredTableMetadata
 func (c *Glue) GetUnfilteredTableMetadata(input *GetUnfilteredTableMetadataInput) (*GetUnfilteredTableMetadataOutput, error) {
@@ -12988,6 +13862,578 @@ func (c *Glue) ListCustomEntityTypesPagesWithContext(ctx aws.Context, input *Lis
 
 	for p.Next() {
 		if !fn(p.Page().(*ListCustomEntityTypesOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListDataQualityResults = "ListDataQualityResults"
+
+// ListDataQualityResultsRequest generates a "aws/request.Request" representing the
+// client's request for the ListDataQualityResults operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListDataQualityResults for more information on using the ListDataQualityResults
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListDataQualityResultsRequest method.
+//	req, resp := client.ListDataQualityResultsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityResults
+func (c *Glue) ListDataQualityResultsRequest(input *ListDataQualityResultsInput) (req *request.Request, output *ListDataQualityResultsOutput) {
+	op := &request.Operation{
+		Name:       opListDataQualityResults,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListDataQualityResultsInput{}
+	}
+
+	output = &ListDataQualityResultsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListDataQualityResults API operation for AWS Glue.
+//
+// Returns all data quality execution results for your account.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation ListDataQualityResults for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityResults
+func (c *Glue) ListDataQualityResults(input *ListDataQualityResultsInput) (*ListDataQualityResultsOutput, error) {
+	req, out := c.ListDataQualityResultsRequest(input)
+	return out, req.Send()
+}
+
+// ListDataQualityResultsWithContext is the same as ListDataQualityResults with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListDataQualityResults for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityResultsWithContext(ctx aws.Context, input *ListDataQualityResultsInput, opts ...request.Option) (*ListDataQualityResultsOutput, error) {
+	req, out := c.ListDataQualityResultsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListDataQualityResultsPages iterates over the pages of a ListDataQualityResults operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListDataQualityResults method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListDataQualityResults operation.
+//	pageNum := 0
+//	err := client.ListDataQualityResultsPages(params,
+//	    func(page *glue.ListDataQualityResultsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Glue) ListDataQualityResultsPages(input *ListDataQualityResultsInput, fn func(*ListDataQualityResultsOutput, bool) bool) error {
+	return c.ListDataQualityResultsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListDataQualityResultsPagesWithContext same as ListDataQualityResultsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityResultsPagesWithContext(ctx aws.Context, input *ListDataQualityResultsInput, fn func(*ListDataQualityResultsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListDataQualityResultsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListDataQualityResultsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListDataQualityResultsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListDataQualityRuleRecommendationRuns = "ListDataQualityRuleRecommendationRuns"
+
+// ListDataQualityRuleRecommendationRunsRequest generates a "aws/request.Request" representing the
+// client's request for the ListDataQualityRuleRecommendationRuns operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListDataQualityRuleRecommendationRuns for more information on using the ListDataQualityRuleRecommendationRuns
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListDataQualityRuleRecommendationRunsRequest method.
+//	req, resp := client.ListDataQualityRuleRecommendationRunsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityRuleRecommendationRuns
+func (c *Glue) ListDataQualityRuleRecommendationRunsRequest(input *ListDataQualityRuleRecommendationRunsInput) (req *request.Request, output *ListDataQualityRuleRecommendationRunsOutput) {
+	op := &request.Operation{
+		Name:       opListDataQualityRuleRecommendationRuns,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListDataQualityRuleRecommendationRunsInput{}
+	}
+
+	output = &ListDataQualityRuleRecommendationRunsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListDataQualityRuleRecommendationRuns API operation for AWS Glue.
+//
+// Lists the recommendation runs meeting the filter criteria.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation ListDataQualityRuleRecommendationRuns for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityRuleRecommendationRuns
+func (c *Glue) ListDataQualityRuleRecommendationRuns(input *ListDataQualityRuleRecommendationRunsInput) (*ListDataQualityRuleRecommendationRunsOutput, error) {
+	req, out := c.ListDataQualityRuleRecommendationRunsRequest(input)
+	return out, req.Send()
+}
+
+// ListDataQualityRuleRecommendationRunsWithContext is the same as ListDataQualityRuleRecommendationRuns with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListDataQualityRuleRecommendationRuns for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityRuleRecommendationRunsWithContext(ctx aws.Context, input *ListDataQualityRuleRecommendationRunsInput, opts ...request.Option) (*ListDataQualityRuleRecommendationRunsOutput, error) {
+	req, out := c.ListDataQualityRuleRecommendationRunsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListDataQualityRuleRecommendationRunsPages iterates over the pages of a ListDataQualityRuleRecommendationRuns operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListDataQualityRuleRecommendationRuns method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListDataQualityRuleRecommendationRuns operation.
+//	pageNum := 0
+//	err := client.ListDataQualityRuleRecommendationRunsPages(params,
+//	    func(page *glue.ListDataQualityRuleRecommendationRunsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Glue) ListDataQualityRuleRecommendationRunsPages(input *ListDataQualityRuleRecommendationRunsInput, fn func(*ListDataQualityRuleRecommendationRunsOutput, bool) bool) error {
+	return c.ListDataQualityRuleRecommendationRunsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListDataQualityRuleRecommendationRunsPagesWithContext same as ListDataQualityRuleRecommendationRunsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityRuleRecommendationRunsPagesWithContext(ctx aws.Context, input *ListDataQualityRuleRecommendationRunsInput, fn func(*ListDataQualityRuleRecommendationRunsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListDataQualityRuleRecommendationRunsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListDataQualityRuleRecommendationRunsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListDataQualityRuleRecommendationRunsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListDataQualityRulesetEvaluationRuns = "ListDataQualityRulesetEvaluationRuns"
+
+// ListDataQualityRulesetEvaluationRunsRequest generates a "aws/request.Request" representing the
+// client's request for the ListDataQualityRulesetEvaluationRuns operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListDataQualityRulesetEvaluationRuns for more information on using the ListDataQualityRulesetEvaluationRuns
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListDataQualityRulesetEvaluationRunsRequest method.
+//	req, resp := client.ListDataQualityRulesetEvaluationRunsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityRulesetEvaluationRuns
+func (c *Glue) ListDataQualityRulesetEvaluationRunsRequest(input *ListDataQualityRulesetEvaluationRunsInput) (req *request.Request, output *ListDataQualityRulesetEvaluationRunsOutput) {
+	op := &request.Operation{
+		Name:       opListDataQualityRulesetEvaluationRuns,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListDataQualityRulesetEvaluationRunsInput{}
+	}
+
+	output = &ListDataQualityRulesetEvaluationRunsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListDataQualityRulesetEvaluationRuns API operation for AWS Glue.
+//
+// Lists all the runs meeting the filter criteria, where a ruleset is evaluated
+// against a data source.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation ListDataQualityRulesetEvaluationRuns for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityRulesetEvaluationRuns
+func (c *Glue) ListDataQualityRulesetEvaluationRuns(input *ListDataQualityRulesetEvaluationRunsInput) (*ListDataQualityRulesetEvaluationRunsOutput, error) {
+	req, out := c.ListDataQualityRulesetEvaluationRunsRequest(input)
+	return out, req.Send()
+}
+
+// ListDataQualityRulesetEvaluationRunsWithContext is the same as ListDataQualityRulesetEvaluationRuns with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListDataQualityRulesetEvaluationRuns for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityRulesetEvaluationRunsWithContext(ctx aws.Context, input *ListDataQualityRulesetEvaluationRunsInput, opts ...request.Option) (*ListDataQualityRulesetEvaluationRunsOutput, error) {
+	req, out := c.ListDataQualityRulesetEvaluationRunsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListDataQualityRulesetEvaluationRunsPages iterates over the pages of a ListDataQualityRulesetEvaluationRuns operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListDataQualityRulesetEvaluationRuns method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListDataQualityRulesetEvaluationRuns operation.
+//	pageNum := 0
+//	err := client.ListDataQualityRulesetEvaluationRunsPages(params,
+//	    func(page *glue.ListDataQualityRulesetEvaluationRunsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Glue) ListDataQualityRulesetEvaluationRunsPages(input *ListDataQualityRulesetEvaluationRunsInput, fn func(*ListDataQualityRulesetEvaluationRunsOutput, bool) bool) error {
+	return c.ListDataQualityRulesetEvaluationRunsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListDataQualityRulesetEvaluationRunsPagesWithContext same as ListDataQualityRulesetEvaluationRunsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityRulesetEvaluationRunsPagesWithContext(ctx aws.Context, input *ListDataQualityRulesetEvaluationRunsInput, fn func(*ListDataQualityRulesetEvaluationRunsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListDataQualityRulesetEvaluationRunsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListDataQualityRulesetEvaluationRunsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListDataQualityRulesetEvaluationRunsOutput), !p.HasNextPage()) {
+			break
+		}
+	}
+
+	return p.Err()
+}
+
+const opListDataQualityRulesets = "ListDataQualityRulesets"
+
+// ListDataQualityRulesetsRequest generates a "aws/request.Request" representing the
+// client's request for the ListDataQualityRulesets operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListDataQualityRulesets for more information on using the ListDataQualityRulesets
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListDataQualityRulesetsRequest method.
+//	req, resp := client.ListDataQualityRulesetsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityRulesets
+func (c *Glue) ListDataQualityRulesetsRequest(input *ListDataQualityRulesetsInput) (req *request.Request, output *ListDataQualityRulesetsOutput) {
+	op := &request.Operation{
+		Name:       opListDataQualityRulesets,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
+	}
+
+	if input == nil {
+		input = &ListDataQualityRulesetsInput{}
+	}
+
+	output = &ListDataQualityRulesetsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListDataQualityRulesets API operation for AWS Glue.
+//
+// Returns a paginated list of rulesets for the specified list of Glue tables.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation ListDataQualityRulesets for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/ListDataQualityRulesets
+func (c *Glue) ListDataQualityRulesets(input *ListDataQualityRulesetsInput) (*ListDataQualityRulesetsOutput, error) {
+	req, out := c.ListDataQualityRulesetsRequest(input)
+	return out, req.Send()
+}
+
+// ListDataQualityRulesetsWithContext is the same as ListDataQualityRulesets with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListDataQualityRulesets for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityRulesetsWithContext(ctx aws.Context, input *ListDataQualityRulesetsInput, opts ...request.Option) (*ListDataQualityRulesetsOutput, error) {
+	req, out := c.ListDataQualityRulesetsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// ListDataQualityRulesetsPages iterates over the pages of a ListDataQualityRulesets operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListDataQualityRulesets method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//	// Example iterating over at most 3 pages of a ListDataQualityRulesets operation.
+//	pageNum := 0
+//	err := client.ListDataQualityRulesetsPages(params,
+//	    func(page *glue.ListDataQualityRulesetsOutput, lastPage bool) bool {
+//	        pageNum++
+//	        fmt.Println(page)
+//	        return pageNum <= 3
+//	    })
+func (c *Glue) ListDataQualityRulesetsPages(input *ListDataQualityRulesetsInput, fn func(*ListDataQualityRulesetsOutput, bool) bool) error {
+	return c.ListDataQualityRulesetsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListDataQualityRulesetsPagesWithContext same as ListDataQualityRulesetsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) ListDataQualityRulesetsPagesWithContext(ctx aws.Context, input *ListDataQualityRulesetsInput, fn func(*ListDataQualityRulesetsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListDataQualityRulesetsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListDataQualityRulesetsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	for p.Next() {
+		if !fn(p.Page().(*ListDataQualityRulesetsOutput), !p.HasNextPage()) {
 			break
 		}
 	}
@@ -15113,6 +16559,14 @@ func (c *Glue) ResetJobBookmarkRequest(input *ResetJobBookmarkInput) (req *reque
 //
 // Resets a bookmark entry.
 //
+// For more information about enabling and using job bookmarks, see:
+//
+//   - Tracking processed data using job bookmarks (https://docs.aws.amazon.com/glue/latest/dg/monitor-continuations.html)
+//
+//   - Job parameters used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+//
+//   - Job structure (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-api-jobs-job.html#aws-glue-api-jobs-job-Job)
+//
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
 // the error.
@@ -15772,6 +17226,191 @@ func (c *Glue) StartCrawlerSchedule(input *StartCrawlerScheduleInput) (*StartCra
 // for more information on using Contexts.
 func (c *Glue) StartCrawlerScheduleWithContext(ctx aws.Context, input *StartCrawlerScheduleInput, opts ...request.Option) (*StartCrawlerScheduleOutput, error) {
 	req, out := c.StartCrawlerScheduleRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opStartDataQualityRuleRecommendationRun = "StartDataQualityRuleRecommendationRun"
+
+// StartDataQualityRuleRecommendationRunRequest generates a "aws/request.Request" representing the
+// client's request for the StartDataQualityRuleRecommendationRun operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartDataQualityRuleRecommendationRun for more information on using the StartDataQualityRuleRecommendationRun
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the StartDataQualityRuleRecommendationRunRequest method.
+//	req, resp := client.StartDataQualityRuleRecommendationRunRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartDataQualityRuleRecommendationRun
+func (c *Glue) StartDataQualityRuleRecommendationRunRequest(input *StartDataQualityRuleRecommendationRunInput) (req *request.Request, output *StartDataQualityRuleRecommendationRunOutput) {
+	op := &request.Operation{
+		Name:       opStartDataQualityRuleRecommendationRun,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartDataQualityRuleRecommendationRunInput{}
+	}
+
+	output = &StartDataQualityRuleRecommendationRunOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StartDataQualityRuleRecommendationRun API operation for AWS Glue.
+//
+// Starts a recommendation run that is used to generate rules when you don't
+// know what rules to write. Glue Data Quality analyzes the data and comes up
+// with recommendations for a potential ruleset. You can then triage the ruleset
+// and modify the generated ruleset to your liking.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation StartDataQualityRuleRecommendationRun for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - ConflictException
+//     The CreatePartitions API was called on a table that has indexes enabled.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartDataQualityRuleRecommendationRun
+func (c *Glue) StartDataQualityRuleRecommendationRun(input *StartDataQualityRuleRecommendationRunInput) (*StartDataQualityRuleRecommendationRunOutput, error) {
+	req, out := c.StartDataQualityRuleRecommendationRunRequest(input)
+	return out, req.Send()
+}
+
+// StartDataQualityRuleRecommendationRunWithContext is the same as StartDataQualityRuleRecommendationRun with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartDataQualityRuleRecommendationRun for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) StartDataQualityRuleRecommendationRunWithContext(ctx aws.Context, input *StartDataQualityRuleRecommendationRunInput, opts ...request.Option) (*StartDataQualityRuleRecommendationRunOutput, error) {
+	req, out := c.StartDataQualityRuleRecommendationRunRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opStartDataQualityRulesetEvaluationRun = "StartDataQualityRulesetEvaluationRun"
+
+// StartDataQualityRulesetEvaluationRunRequest generates a "aws/request.Request" representing the
+// client's request for the StartDataQualityRulesetEvaluationRun operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See StartDataQualityRulesetEvaluationRun for more information on using the StartDataQualityRulesetEvaluationRun
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the StartDataQualityRulesetEvaluationRunRequest method.
+//	req, resp := client.StartDataQualityRulesetEvaluationRunRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartDataQualityRulesetEvaluationRun
+func (c *Glue) StartDataQualityRulesetEvaluationRunRequest(input *StartDataQualityRulesetEvaluationRunInput) (req *request.Request, output *StartDataQualityRulesetEvaluationRunOutput) {
+	op := &request.Operation{
+		Name:       opStartDataQualityRulesetEvaluationRun,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &StartDataQualityRulesetEvaluationRunInput{}
+	}
+
+	output = &StartDataQualityRulesetEvaluationRunOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// StartDataQualityRulesetEvaluationRun API operation for AWS Glue.
+//
+// Once you have a ruleset definition (either recommended or your own), you
+// call this operation to evaluate the ruleset against a data source (Glue table).
+// The evaluation computes results which you can retrieve with the GetDataQualityResult
+// API.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation StartDataQualityRulesetEvaluationRun for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - ConflictException
+//     The CreatePartitions API was called on a table that has indexes enabled.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/StartDataQualityRulesetEvaluationRun
+func (c *Glue) StartDataQualityRulesetEvaluationRun(input *StartDataQualityRulesetEvaluationRunInput) (*StartDataQualityRulesetEvaluationRunOutput, error) {
+	req, out := c.StartDataQualityRulesetEvaluationRunRequest(input)
+	return out, req.Send()
+}
+
+// StartDataQualityRulesetEvaluationRunWithContext is the same as StartDataQualityRulesetEvaluationRun with the addition of
+// the ability to pass a context and additional request options.
+//
+// See StartDataQualityRulesetEvaluationRun for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) StartDataQualityRulesetEvaluationRunWithContext(ctx aws.Context, input *StartDataQualityRulesetEvaluationRunInput, opts ...request.Option) (*StartDataQualityRulesetEvaluationRunOutput, error) {
+	req, out := c.StartDataQualityRulesetEvaluationRunRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -17762,6 +19401,103 @@ func (c *Glue) UpdateCrawlerScheduleWithContext(ctx aws.Context, input *UpdateCr
 	return out, req.Send()
 }
 
+const opUpdateDataQualityRuleset = "UpdateDataQualityRuleset"
+
+// UpdateDataQualityRulesetRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateDataQualityRuleset operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateDataQualityRuleset for more information on using the UpdateDataQualityRuleset
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the UpdateDataQualityRulesetRequest method.
+//	req, resp := client.UpdateDataQualityRulesetRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateDataQualityRuleset
+func (c *Glue) UpdateDataQualityRulesetRequest(input *UpdateDataQualityRulesetInput) (req *request.Request, output *UpdateDataQualityRulesetOutput) {
+	op := &request.Operation{
+		Name:       opUpdateDataQualityRuleset,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateDataQualityRulesetInput{}
+	}
+
+	output = &UpdateDataQualityRulesetOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateDataQualityRuleset API operation for AWS Glue.
+//
+// Updates the specified data quality ruleset.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Glue's
+// API operation UpdateDataQualityRuleset for usage and error information.
+//
+// Returned Error Types:
+//
+//   - EntityNotFoundException
+//     A specified entity does not exist
+//
+//   - AlreadyExistsException
+//     A resource to be created or added already exists.
+//
+//   - IdempotentParameterMismatchException
+//     The same unique identifier was associated with two different records.
+//
+//   - InvalidInputException
+//     The input provided was not valid.
+//
+//   - OperationTimeoutException
+//     The operation timed out.
+//
+//   - InternalServiceException
+//     An internal service error occurred.
+//
+//   - ResourceNumberLimitExceededException
+//     A resource numerical limit was exceeded.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/glue-2017-03-31/UpdateDataQualityRuleset
+func (c *Glue) UpdateDataQualityRuleset(input *UpdateDataQualityRulesetInput) (*UpdateDataQualityRulesetOutput, error) {
+	req, out := c.UpdateDataQualityRulesetRequest(input)
+	return out, req.Send()
+}
+
+// UpdateDataQualityRulesetWithContext is the same as UpdateDataQualityRuleset with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateDataQualityRuleset for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Glue) UpdateDataQualityRulesetWithContext(ctx aws.Context, input *UpdateDataQualityRulesetInput, opts ...request.Option) (*UpdateDataQualityRulesetOutput, error) {
+	req, out := c.UpdateDataQualityRulesetRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateDatabase = "UpdateDatabase"
 
 // UpdateDatabaseRequest generates a "aws/request.Request" representing the
@@ -19424,6 +21160,418 @@ func (s *AlreadyExistsException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Specifies an optional value when connecting to the Redshift cluster.
+type AmazonRedshiftAdvancedOption struct {
+	_ struct{} `type:"structure"`
+
+	// The key for the additional connection option.
+	Key *string `type:"string"`
+
+	// The value for the additional connection option.
+	Value *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftAdvancedOption) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftAdvancedOption) GoString() string {
+	return s.String()
+}
+
+// SetKey sets the Key field's value.
+func (s *AmazonRedshiftAdvancedOption) SetKey(v string) *AmazonRedshiftAdvancedOption {
+	s.Key = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *AmazonRedshiftAdvancedOption) SetValue(v string) *AmazonRedshiftAdvancedOption {
+	s.Value = &v
+	return s
+}
+
+// Specifies an Amazon Redshift node.
+type AmazonRedshiftNodeData struct {
+	_ struct{} `type:"structure"`
+
+	// The access type for the Redshift connection. Can be a direct connection or
+	// catalog connections.
+	AccessType *string `type:"string"`
+
+	// Specifies how writing to a Redshift cluser will occur.
+	Action *string `type:"string"`
+
+	// Optional values when connecting to the Redshift cluster.
+	AdvancedOptions []*AmazonRedshiftAdvancedOption `type:"list"`
+
+	// The name of the Glue Data Catalog database when working with a data catalog.
+	CatalogDatabase *Option `type:"structure"`
+
+	// The Redshift schema name when working with a data catalog.
+	CatalogRedshiftSchema *string `type:"string"`
+
+	// The database table to read from.
+	CatalogRedshiftTable *string `type:"string"`
+
+	// The Glue Data Catalog table name when working with a data catalog.
+	CatalogTable *Option `type:"structure"`
+
+	// The Glue connection to the Redshift cluster.
+	Connection *Option `type:"structure"`
+
+	// Specifies the name of the connection that is associated with the catalog
+	// table used.
+	CrawlerConnection *string `type:"string"`
+
+	// Optional. The role name use when connection to S3. The IAM role ill default
+	// to the role on the job when left blank.
+	IamRole *Option `type:"structure"`
+
+	// The action used when to detemine how a MERGE in a Redshift sink will be handled.
+	MergeAction *string `type:"string"`
+
+	// The SQL used in a custom merge to deal with matching records.
+	MergeClause *string `type:"string"`
+
+	// The action used when to detemine how a MERGE in a Redshift sink will be handled
+	// when an existing record matches a new record.
+	MergeWhenMatched *string `type:"string"`
+
+	// The action used when to detemine how a MERGE in a Redshift sink will be handled
+	// when an existing record doesn't match a new record.
+	MergeWhenNotMatched *string `type:"string"`
+
+	// The SQL used before a MERGE or APPEND with upsert is run.
+	PostAction *string `type:"string"`
+
+	// The SQL used before a MERGE or APPEND with upsert is run.
+	PreAction *string `type:"string"`
+
+	// The SQL used to fetch the data from a Redshift sources when the SourceType
+	// is 'query'.
+	SampleQuery *string `type:"string"`
+
+	// The Redshift schema name when working with a direct connection.
+	Schema *Option `type:"structure"`
+
+	// The list of column names used to determine a matching record when doing a
+	// MERGE or APPEND with upsert.
+	SelectedColumns []*Option `type:"list"`
+
+	// The source type to specify whether a specific table is the source or a custom
+	// query.
+	SourceType *string `type:"string"`
+
+	// The name of the temporary staging table that is used when doing a MERGE or
+	// APPEND with upsert.
+	StagingTable *string `type:"string"`
+
+	// The Redshift table name when working with a direct connection.
+	Table *Option `type:"structure"`
+
+	// Specifies the prefix to a table.
+	TablePrefix *string `type:"string"`
+
+	// The array of schema output for a given node.
+	TableSchema []*Option `type:"list"`
+
+	// The Amazon S3 path where temporary data can be staged when copying out of
+	// the database.
+	TempDir *string `type:"string"`
+
+	// The action used on Redshift sinks when doing an APPEND.
+	Upsert *bool `type:"boolean"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftNodeData) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftNodeData) GoString() string {
+	return s.String()
+}
+
+// SetAccessType sets the AccessType field's value.
+func (s *AmazonRedshiftNodeData) SetAccessType(v string) *AmazonRedshiftNodeData {
+	s.AccessType = &v
+	return s
+}
+
+// SetAction sets the Action field's value.
+func (s *AmazonRedshiftNodeData) SetAction(v string) *AmazonRedshiftNodeData {
+	s.Action = &v
+	return s
+}
+
+// SetAdvancedOptions sets the AdvancedOptions field's value.
+func (s *AmazonRedshiftNodeData) SetAdvancedOptions(v []*AmazonRedshiftAdvancedOption) *AmazonRedshiftNodeData {
+	s.AdvancedOptions = v
+	return s
+}
+
+// SetCatalogDatabase sets the CatalogDatabase field's value.
+func (s *AmazonRedshiftNodeData) SetCatalogDatabase(v *Option) *AmazonRedshiftNodeData {
+	s.CatalogDatabase = v
+	return s
+}
+
+// SetCatalogRedshiftSchema sets the CatalogRedshiftSchema field's value.
+func (s *AmazonRedshiftNodeData) SetCatalogRedshiftSchema(v string) *AmazonRedshiftNodeData {
+	s.CatalogRedshiftSchema = &v
+	return s
+}
+
+// SetCatalogRedshiftTable sets the CatalogRedshiftTable field's value.
+func (s *AmazonRedshiftNodeData) SetCatalogRedshiftTable(v string) *AmazonRedshiftNodeData {
+	s.CatalogRedshiftTable = &v
+	return s
+}
+
+// SetCatalogTable sets the CatalogTable field's value.
+func (s *AmazonRedshiftNodeData) SetCatalogTable(v *Option) *AmazonRedshiftNodeData {
+	s.CatalogTable = v
+	return s
+}
+
+// SetConnection sets the Connection field's value.
+func (s *AmazonRedshiftNodeData) SetConnection(v *Option) *AmazonRedshiftNodeData {
+	s.Connection = v
+	return s
+}
+
+// SetCrawlerConnection sets the CrawlerConnection field's value.
+func (s *AmazonRedshiftNodeData) SetCrawlerConnection(v string) *AmazonRedshiftNodeData {
+	s.CrawlerConnection = &v
+	return s
+}
+
+// SetIamRole sets the IamRole field's value.
+func (s *AmazonRedshiftNodeData) SetIamRole(v *Option) *AmazonRedshiftNodeData {
+	s.IamRole = v
+	return s
+}
+
+// SetMergeAction sets the MergeAction field's value.
+func (s *AmazonRedshiftNodeData) SetMergeAction(v string) *AmazonRedshiftNodeData {
+	s.MergeAction = &v
+	return s
+}
+
+// SetMergeClause sets the MergeClause field's value.
+func (s *AmazonRedshiftNodeData) SetMergeClause(v string) *AmazonRedshiftNodeData {
+	s.MergeClause = &v
+	return s
+}
+
+// SetMergeWhenMatched sets the MergeWhenMatched field's value.
+func (s *AmazonRedshiftNodeData) SetMergeWhenMatched(v string) *AmazonRedshiftNodeData {
+	s.MergeWhenMatched = &v
+	return s
+}
+
+// SetMergeWhenNotMatched sets the MergeWhenNotMatched field's value.
+func (s *AmazonRedshiftNodeData) SetMergeWhenNotMatched(v string) *AmazonRedshiftNodeData {
+	s.MergeWhenNotMatched = &v
+	return s
+}
+
+// SetPostAction sets the PostAction field's value.
+func (s *AmazonRedshiftNodeData) SetPostAction(v string) *AmazonRedshiftNodeData {
+	s.PostAction = &v
+	return s
+}
+
+// SetPreAction sets the PreAction field's value.
+func (s *AmazonRedshiftNodeData) SetPreAction(v string) *AmazonRedshiftNodeData {
+	s.PreAction = &v
+	return s
+}
+
+// SetSampleQuery sets the SampleQuery field's value.
+func (s *AmazonRedshiftNodeData) SetSampleQuery(v string) *AmazonRedshiftNodeData {
+	s.SampleQuery = &v
+	return s
+}
+
+// SetSchema sets the Schema field's value.
+func (s *AmazonRedshiftNodeData) SetSchema(v *Option) *AmazonRedshiftNodeData {
+	s.Schema = v
+	return s
+}
+
+// SetSelectedColumns sets the SelectedColumns field's value.
+func (s *AmazonRedshiftNodeData) SetSelectedColumns(v []*Option) *AmazonRedshiftNodeData {
+	s.SelectedColumns = v
+	return s
+}
+
+// SetSourceType sets the SourceType field's value.
+func (s *AmazonRedshiftNodeData) SetSourceType(v string) *AmazonRedshiftNodeData {
+	s.SourceType = &v
+	return s
+}
+
+// SetStagingTable sets the StagingTable field's value.
+func (s *AmazonRedshiftNodeData) SetStagingTable(v string) *AmazonRedshiftNodeData {
+	s.StagingTable = &v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *AmazonRedshiftNodeData) SetTable(v *Option) *AmazonRedshiftNodeData {
+	s.Table = v
+	return s
+}
+
+// SetTablePrefix sets the TablePrefix field's value.
+func (s *AmazonRedshiftNodeData) SetTablePrefix(v string) *AmazonRedshiftNodeData {
+	s.TablePrefix = &v
+	return s
+}
+
+// SetTableSchema sets the TableSchema field's value.
+func (s *AmazonRedshiftNodeData) SetTableSchema(v []*Option) *AmazonRedshiftNodeData {
+	s.TableSchema = v
+	return s
+}
+
+// SetTempDir sets the TempDir field's value.
+func (s *AmazonRedshiftNodeData) SetTempDir(v string) *AmazonRedshiftNodeData {
+	s.TempDir = &v
+	return s
+}
+
+// SetUpsert sets the Upsert field's value.
+func (s *AmazonRedshiftNodeData) SetUpsert(v bool) *AmazonRedshiftNodeData {
+	s.Upsert = &v
+	return s
+}
+
+// Specifies an Amazon Redshift source.
+type AmazonRedshiftSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the data of the Amazon Reshift source node.
+	Data *AmazonRedshiftNodeData `type:"structure"`
+
+	// The name of the Amazon Redshift source.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftSource) GoString() string {
+	return s.String()
+}
+
+// SetData sets the Data field's value.
+func (s *AmazonRedshiftSource) SetData(v *AmazonRedshiftNodeData) *AmazonRedshiftSource {
+	s.Data = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AmazonRedshiftSource) SetName(v string) *AmazonRedshiftSource {
+	s.Name = &v
+	return s
+}
+
+// Specifies an Amazon Redshift target.
+type AmazonRedshiftTarget struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the data of the Amazon Reshift target node.
+	Data *AmazonRedshiftNodeData `type:"structure"`
+
+	// The nodes that are inputs to the data target.
+	Inputs []*string `min:"1" type:"list"`
+
+	// The name of the Amazon Redshift target.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s AmazonRedshiftTarget) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AmazonRedshiftTarget) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AmazonRedshiftTarget"}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetData sets the Data field's value.
+func (s *AmazonRedshiftTarget) SetData(v *AmazonRedshiftNodeData) *AmazonRedshiftTarget {
+	s.Data = v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *AmazonRedshiftTarget) SetInputs(v []*string) *AmazonRedshiftTarget {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *AmazonRedshiftTarget) SetName(v string) *AmazonRedshiftTarget {
+	s.Name = &v
+	return s
+}
+
 // Specifies a transform that maps data property keys in the data source to
 // data property keys in the data target. You can rename keys, modify the data
 // types for keys, and choose which keys to drop from the dataset.
@@ -19638,11 +21786,11 @@ func (s *AthenaConnectorSource) SetSchemaName(v string) *AthenaConnectorSource {
 	return s
 }
 
-// A structure containing information for audit.
+// A structure containing the Lake Formation audit context.
 type AuditContext struct {
 	_ struct{} `type:"structure"`
 
-	// The context for the audit..
+	// A string containing the additional audit context information.
 	AdditionalAuditContext *string `type:"string"`
 
 	// All columns request for audit.
@@ -20738,6 +22886,97 @@ func (s *BatchGetCustomEntityTypesOutput) SetCustomEntityTypes(v []*CustomEntity
 // SetCustomEntityTypesNotFound sets the CustomEntityTypesNotFound field's value.
 func (s *BatchGetCustomEntityTypesOutput) SetCustomEntityTypesNotFound(v []*string) *BatchGetCustomEntityTypesOutput {
 	s.CustomEntityTypesNotFound = v
+	return s
+}
+
+type BatchGetDataQualityResultInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of unique result IDs for the data quality results.
+	//
+	// ResultIds is a required field
+	ResultIds []*string `min:"1" type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetDataQualityResultInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetDataQualityResultInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchGetDataQualityResultInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchGetDataQualityResultInput"}
+	if s.ResultIds == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResultIds"))
+	}
+	if s.ResultIds != nil && len(s.ResultIds) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResultIds", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResultIds sets the ResultIds field's value.
+func (s *BatchGetDataQualityResultInput) SetResultIds(v []*string) *BatchGetDataQualityResultInput {
+	s.ResultIds = v
+	return s
+}
+
+type BatchGetDataQualityResultOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of DataQualityResult objects representing the data quality results.
+	//
+	// Results is a required field
+	Results []*DataQualityResult `type:"list" required:"true"`
+
+	// A list of result IDs for which results were not found.
+	ResultsNotFound []*string `min:"1" type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetDataQualityResultOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s BatchGetDataQualityResultOutput) GoString() string {
+	return s.String()
+}
+
+// SetResults sets the Results field's value.
+func (s *BatchGetDataQualityResultOutput) SetResults(v []*DataQualityResult) *BatchGetDataQualityResultOutput {
+	s.Results = v
+	return s
+}
+
+// SetResultsNotFound sets the ResultsNotFound field's value.
+func (s *BatchGetDataQualityResultOutput) SetResultsNotFound(v []*string) *BatchGetDataQualityResultOutput {
+	s.ResultsNotFound = v
 	return s
 }
 
@@ -22136,6 +24375,148 @@ func (s *BooleanColumnStatisticsData) SetNumberOfTrues(v int64) *BooleanColumnSt
 	return s
 }
 
+type CancelDataQualityRuleRecommendationRunInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	//
+	// RunId is a required field
+	RunId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRuleRecommendationRunInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRuleRecommendationRunInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CancelDataQualityRuleRecommendationRunInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CancelDataQualityRuleRecommendationRunInput"}
+	if s.RunId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RunId"))
+	}
+	if s.RunId != nil && len(*s.RunId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RunId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRunId sets the RunId field's value.
+func (s *CancelDataQualityRuleRecommendationRunInput) SetRunId(v string) *CancelDataQualityRuleRecommendationRunInput {
+	s.RunId = &v
+	return s
+}
+
+type CancelDataQualityRuleRecommendationRunOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRuleRecommendationRunOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRuleRecommendationRunOutput) GoString() string {
+	return s.String()
+}
+
+type CancelDataQualityRulesetEvaluationRunInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	//
+	// RunId is a required field
+	RunId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRulesetEvaluationRunInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRulesetEvaluationRunInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CancelDataQualityRulesetEvaluationRunInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CancelDataQualityRulesetEvaluationRunInput"}
+	if s.RunId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RunId"))
+	}
+	if s.RunId != nil && len(*s.RunId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RunId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRunId sets the RunId field's value.
+func (s *CancelDataQualityRulesetEvaluationRunInput) SetRunId(v string) *CancelDataQualityRulesetEvaluationRunInput {
+	s.RunId = &v
+	return s
+}
+
+type CancelDataQualityRulesetEvaluationRunOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRulesetEvaluationRunOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CancelDataQualityRulesetEvaluationRunOutput) GoString() string {
+	return s.String()
+}
+
 type CancelMLTaskRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -22348,6 +24729,109 @@ func (s CancelStatementOutput) GoString() string {
 	return s.String()
 }
 
+// Specifies a Delta Lake data source that is registered in the Glue Data Catalog.
+type CatalogDeltaSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options.
+	AdditionalDeltaOptions map[string]*string `type:"map"`
+
+	// The name of the database to read from.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The name of the Delta Lake data source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the Delta Lake source.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// The name of the table in the database to read from.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CatalogDeltaSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CatalogDeltaSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CatalogDeltaSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CatalogDeltaSource"}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalDeltaOptions sets the AdditionalDeltaOptions field's value.
+func (s *CatalogDeltaSource) SetAdditionalDeltaOptions(v map[string]*string) *CatalogDeltaSource {
+	s.AdditionalDeltaOptions = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *CatalogDeltaSource) SetDatabase(v string) *CatalogDeltaSource {
+	s.Database = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CatalogDeltaSource) SetName(v string) *CatalogDeltaSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *CatalogDeltaSource) SetOutputSchemas(v []*GlueSchema) *CatalogDeltaSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *CatalogDeltaSource) SetTable(v string) *CatalogDeltaSource {
+	s.Table = &v
+	return s
+}
+
 // Specifies a table definition in the Glue Data Catalog.
 type CatalogEntry struct {
 	_ struct{} `type:"structure"`
@@ -22412,6 +24896,109 @@ func (s *CatalogEntry) SetDatabaseName(v string) *CatalogEntry {
 // SetTableName sets the TableName field's value.
 func (s *CatalogEntry) SetTableName(v string) *CatalogEntry {
 	s.TableName = &v
+	return s
+}
+
+// Specifies a Hudi data source that is registered in the Glue Data Catalog.
+type CatalogHudiSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options.
+	AdditionalHudiOptions map[string]*string `type:"map"`
+
+	// The name of the database to read from.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The name of the Hudi data source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the Hudi source.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// The name of the table in the database to read from.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CatalogHudiSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CatalogHudiSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CatalogHudiSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CatalogHudiSource"}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalHudiOptions sets the AdditionalHudiOptions field's value.
+func (s *CatalogHudiSource) SetAdditionalHudiOptions(v map[string]*string) *CatalogHudiSource {
+	s.AdditionalHudiOptions = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *CatalogHudiSource) SetDatabase(v string) *CatalogHudiSource {
+	s.Database = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CatalogHudiSource) SetName(v string) *CatalogHudiSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *CatalogHudiSource) SetOutputSchemas(v []*GlueSchema) *CatalogHudiSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *CatalogHudiSource) SetTable(v string) *CatalogHudiSource {
+	s.Table = &v
 	return s
 }
 
@@ -23131,6 +25718,12 @@ type CodeGenConfigurationNode struct {
 	// aggregated value by specified function.
 	Aggregate *Aggregate `type:"structure"`
 
+	// Specifies a target that writes to a data source in Amazon Redshift.
+	AmazonRedshiftSource *AmazonRedshiftSource `type:"structure"`
+
+	// Specifies a target that writes to a data target in Amazon Redshift.
+	AmazonRedshiftTarget *AmazonRedshiftTarget `type:"structure"`
+
 	// Specifies a transform that maps data property keys in the data source to
 	// data property keys in the data target. You can rename keys, modify the data
 	// types for keys, and choose which keys to drop from the dataset.
@@ -23138,6 +25731,12 @@ type CodeGenConfigurationNode struct {
 
 	// Specifies a connector to an Amazon Athena data source.
 	AthenaConnectorSource *AthenaConnectorSource `type:"structure"`
+
+	// Specifies a Delta Lake data source that is registered in the Glue Data Catalog.
+	CatalogDeltaSource *CatalogDeltaSource `type:"structure"`
+
+	// Specifies a Hudi data source that is registered in the Glue Data Catalog.
+	CatalogHudiSource *CatalogHudiSource `type:"structure"`
 
 	// Specifies an Apache Kafka data store in the Data Catalog.
 	CatalogKafkaSource *CatalogKafkaSource `type:"structure"`
@@ -23154,6 +25753,9 @@ type CodeGenConfigurationNode struct {
 	// Specifies a transform that uses custom code you provide to perform the data
 	// transformation. The output is a collection of DynamicFrames.
 	CustomCode *CustomCode `type:"structure"`
+
+	// Specifies the direct JDBC source connection.
+	DirectJDBCSource *DirectJDBCSource `type:"structure"`
 
 	// Specifies an Apache Kafka data store.
 	DirectKafkaSource *DirectKafkaSource `type:"structure"`
@@ -23175,8 +25777,18 @@ type CodeGenConfigurationNode struct {
 	// nulls.
 	DropNullFields *DropNullFields `type:"structure"`
 
-	// Specifies a DynamoDB data source in the Glue Data Catalog.
+	// Specifies a custom visual transform created by a user.
+	DynamicTransform *DynamicTransform `type:"structure"`
+
+	// Specifies a DynamoDBC Catalog data store in the Glue Data Catalog.
 	DynamoDBCatalogSource *DynamoDBCatalogSource `type:"structure"`
+
+	// Specifies your data quality evaluation criteria.
+	EvaluateDataQuality *EvaluateDataQuality `type:"structure"`
+
+	// Specifies your data quality evaluation criteria. Allows multiple input data
+	// and returns a collection of Dynamic Frames.
+	EvaluateDataQualityMultiFrame *EvaluateDataQualityMultiFrame `type:"structure"`
 
 	// Specifies a transform that locates records in the dataset that have missing
 	// values and adds a new field with a value determined by imputation. The input
@@ -23243,11 +25855,19 @@ type CodeGenConfigurationNode struct {
 	// Specifies a target that uses Amazon Redshift.
 	RedshiftTarget *RedshiftTarget `type:"structure"`
 
-	// Specifies a Relational database data source in the Glue Data Catalog.
+	// Specifies a relational catalog data store in the Glue Data Catalog.
 	RelationalCatalogSource *RelationalCatalogSource `type:"structure"`
 
 	// Specifies a transform that renames a single data property key.
 	RenameField *RenameField `type:"structure"`
+
+	// Specifies a Delta Lake data source that is registered in the Glue Data Catalog.
+	// The data source must be stored in Amazon S3.
+	S3CatalogDeltaSource *S3CatalogDeltaSource `type:"structure"`
+
+	// Specifies a Hudi data source that is registered in the Glue Data Catalog.
+	// The data source must be stored in Amazon S3.
+	S3CatalogHudiSource *S3CatalogHudiSource `type:"structure"`
 
 	// Specifies an Amazon S3 data store in the Glue Data Catalog.
 	S3CatalogSource *S3CatalogSource `type:"structure"`
@@ -23258,12 +25878,31 @@ type CodeGenConfigurationNode struct {
 	// Specifies a command-separated value (CSV) data store stored in Amazon S3.
 	S3CsvSource *S3CsvSource `type:"structure"`
 
+	// Specifies a target that writes to a Delta Lake data source in the Glue Data
+	// Catalog.
+	S3DeltaCatalogTarget *S3DeltaCatalogTarget `type:"structure"`
+
+	// Specifies a target that writes to a Delta Lake data source in Amazon S3.
+	S3DeltaDirectTarget *S3DeltaDirectTarget `type:"structure"`
+
+	// Specifies a Delta Lake data source stored in Amazon S3.
+	S3DeltaSource *S3DeltaSource `type:"structure"`
+
 	// Specifies a data target that writes to Amazon S3.
 	S3DirectTarget *S3DirectTarget `type:"structure"`
 
 	// Specifies a data target that writes to Amazon S3 in Apache Parquet columnar
 	// storage.
 	S3GlueParquetTarget *S3GlueParquetTarget `type:"structure"`
+
+	// Specifies a target that writes to a Hudi data source in the Glue Data Catalog.
+	S3HudiCatalogTarget *S3HudiCatalogTarget `type:"structure"`
+
+	// Specifies a target that writes to a Hudi data source in Amazon S3.
+	S3HudiDirectTarget *S3HudiDirectTarget `type:"structure"`
+
+	// Specifies a Hudi data source stored in Amazon S3.
+	S3HudiSource *S3HudiSource `type:"structure"`
 
 	// Specifies a JSON data store stored in Amazon S3.
 	S3JsonSource *S3JsonSource `type:"structure"`
@@ -23328,6 +25967,11 @@ func (s *CodeGenConfigurationNode) Validate() error {
 			invalidParams.AddNested("Aggregate", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.AmazonRedshiftTarget != nil {
+		if err := s.AmazonRedshiftTarget.Validate(); err != nil {
+			invalidParams.AddNested("AmazonRedshiftTarget", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.ApplyMapping != nil {
 		if err := s.ApplyMapping.Validate(); err != nil {
 			invalidParams.AddNested("ApplyMapping", err.(request.ErrInvalidParams))
@@ -23336,6 +25980,16 @@ func (s *CodeGenConfigurationNode) Validate() error {
 	if s.AthenaConnectorSource != nil {
 		if err := s.AthenaConnectorSource.Validate(); err != nil {
 			invalidParams.AddNested("AthenaConnectorSource", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.CatalogDeltaSource != nil {
+		if err := s.CatalogDeltaSource.Validate(); err != nil {
+			invalidParams.AddNested("CatalogDeltaSource", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.CatalogHudiSource != nil {
+		if err := s.CatalogHudiSource.Validate(); err != nil {
+			invalidParams.AddNested("CatalogHudiSource", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.CatalogKafkaSource != nil {
@@ -23363,6 +26017,11 @@ func (s *CodeGenConfigurationNode) Validate() error {
 			invalidParams.AddNested("CustomCode", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.DirectJDBCSource != nil {
+		if err := s.DirectJDBCSource.Validate(); err != nil {
+			invalidParams.AddNested("DirectJDBCSource", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.DirectKafkaSource != nil {
 		if err := s.DirectKafkaSource.Validate(); err != nil {
 			invalidParams.AddNested("DirectKafkaSource", err.(request.ErrInvalidParams))
@@ -23388,9 +26047,24 @@ func (s *CodeGenConfigurationNode) Validate() error {
 			invalidParams.AddNested("DropNullFields", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.DynamicTransform != nil {
+		if err := s.DynamicTransform.Validate(); err != nil {
+			invalidParams.AddNested("DynamicTransform", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.DynamoDBCatalogSource != nil {
 		if err := s.DynamoDBCatalogSource.Validate(); err != nil {
 			invalidParams.AddNested("DynamoDBCatalogSource", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.EvaluateDataQuality != nil {
+		if err := s.EvaluateDataQuality.Validate(); err != nil {
+			invalidParams.AddNested("EvaluateDataQuality", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.EvaluateDataQualityMultiFrame != nil {
+		if err := s.EvaluateDataQualityMultiFrame.Validate(); err != nil {
+			invalidParams.AddNested("EvaluateDataQualityMultiFrame", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.FillMissingValues != nil {
@@ -23498,6 +26172,16 @@ func (s *CodeGenConfigurationNode) Validate() error {
 			invalidParams.AddNested("RenameField", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.S3CatalogDeltaSource != nil {
+		if err := s.S3CatalogDeltaSource.Validate(); err != nil {
+			invalidParams.AddNested("S3CatalogDeltaSource", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3CatalogHudiSource != nil {
+		if err := s.S3CatalogHudiSource.Validate(); err != nil {
+			invalidParams.AddNested("S3CatalogHudiSource", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.S3CatalogSource != nil {
 		if err := s.S3CatalogSource.Validate(); err != nil {
 			invalidParams.AddNested("S3CatalogSource", err.(request.ErrInvalidParams))
@@ -23513,6 +26197,21 @@ func (s *CodeGenConfigurationNode) Validate() error {
 			invalidParams.AddNested("S3CsvSource", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.S3DeltaCatalogTarget != nil {
+		if err := s.S3DeltaCatalogTarget.Validate(); err != nil {
+			invalidParams.AddNested("S3DeltaCatalogTarget", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3DeltaDirectTarget != nil {
+		if err := s.S3DeltaDirectTarget.Validate(); err != nil {
+			invalidParams.AddNested("S3DeltaDirectTarget", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3DeltaSource != nil {
+		if err := s.S3DeltaSource.Validate(); err != nil {
+			invalidParams.AddNested("S3DeltaSource", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.S3DirectTarget != nil {
 		if err := s.S3DirectTarget.Validate(); err != nil {
 			invalidParams.AddNested("S3DirectTarget", err.(request.ErrInvalidParams))
@@ -23521,6 +26220,21 @@ func (s *CodeGenConfigurationNode) Validate() error {
 	if s.S3GlueParquetTarget != nil {
 		if err := s.S3GlueParquetTarget.Validate(); err != nil {
 			invalidParams.AddNested("S3GlueParquetTarget", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3HudiCatalogTarget != nil {
+		if err := s.S3HudiCatalogTarget.Validate(); err != nil {
+			invalidParams.AddNested("S3HudiCatalogTarget", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3HudiDirectTarget != nil {
+		if err := s.S3HudiDirectTarget.Validate(); err != nil {
+			invalidParams.AddNested("S3HudiDirectTarget", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3HudiSource != nil {
+		if err := s.S3HudiSource.Validate(); err != nil {
+			invalidParams.AddNested("S3HudiSource", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.S3JsonSource != nil {
@@ -23586,6 +26300,18 @@ func (s *CodeGenConfigurationNode) SetAggregate(v *Aggregate) *CodeGenConfigurat
 	return s
 }
 
+// SetAmazonRedshiftSource sets the AmazonRedshiftSource field's value.
+func (s *CodeGenConfigurationNode) SetAmazonRedshiftSource(v *AmazonRedshiftSource) *CodeGenConfigurationNode {
+	s.AmazonRedshiftSource = v
+	return s
+}
+
+// SetAmazonRedshiftTarget sets the AmazonRedshiftTarget field's value.
+func (s *CodeGenConfigurationNode) SetAmazonRedshiftTarget(v *AmazonRedshiftTarget) *CodeGenConfigurationNode {
+	s.AmazonRedshiftTarget = v
+	return s
+}
+
 // SetApplyMapping sets the ApplyMapping field's value.
 func (s *CodeGenConfigurationNode) SetApplyMapping(v *ApplyMapping) *CodeGenConfigurationNode {
 	s.ApplyMapping = v
@@ -23595,6 +26321,18 @@ func (s *CodeGenConfigurationNode) SetApplyMapping(v *ApplyMapping) *CodeGenConf
 // SetAthenaConnectorSource sets the AthenaConnectorSource field's value.
 func (s *CodeGenConfigurationNode) SetAthenaConnectorSource(v *AthenaConnectorSource) *CodeGenConfigurationNode {
 	s.AthenaConnectorSource = v
+	return s
+}
+
+// SetCatalogDeltaSource sets the CatalogDeltaSource field's value.
+func (s *CodeGenConfigurationNode) SetCatalogDeltaSource(v *CatalogDeltaSource) *CodeGenConfigurationNode {
+	s.CatalogDeltaSource = v
+	return s
+}
+
+// SetCatalogHudiSource sets the CatalogHudiSource field's value.
+func (s *CodeGenConfigurationNode) SetCatalogHudiSource(v *CatalogHudiSource) *CodeGenConfigurationNode {
+	s.CatalogHudiSource = v
 	return s
 }
 
@@ -23628,6 +26366,12 @@ func (s *CodeGenConfigurationNode) SetCustomCode(v *CustomCode) *CodeGenConfigur
 	return s
 }
 
+// SetDirectJDBCSource sets the DirectJDBCSource field's value.
+func (s *CodeGenConfigurationNode) SetDirectJDBCSource(v *DirectJDBCSource) *CodeGenConfigurationNode {
+	s.DirectJDBCSource = v
+	return s
+}
+
 // SetDirectKafkaSource sets the DirectKafkaSource field's value.
 func (s *CodeGenConfigurationNode) SetDirectKafkaSource(v *DirectKafkaSource) *CodeGenConfigurationNode {
 	s.DirectKafkaSource = v
@@ -23658,9 +26402,27 @@ func (s *CodeGenConfigurationNode) SetDropNullFields(v *DropNullFields) *CodeGen
 	return s
 }
 
+// SetDynamicTransform sets the DynamicTransform field's value.
+func (s *CodeGenConfigurationNode) SetDynamicTransform(v *DynamicTransform) *CodeGenConfigurationNode {
+	s.DynamicTransform = v
+	return s
+}
+
 // SetDynamoDBCatalogSource sets the DynamoDBCatalogSource field's value.
 func (s *CodeGenConfigurationNode) SetDynamoDBCatalogSource(v *DynamoDBCatalogSource) *CodeGenConfigurationNode {
 	s.DynamoDBCatalogSource = v
+	return s
+}
+
+// SetEvaluateDataQuality sets the EvaluateDataQuality field's value.
+func (s *CodeGenConfigurationNode) SetEvaluateDataQuality(v *EvaluateDataQuality) *CodeGenConfigurationNode {
+	s.EvaluateDataQuality = v
+	return s
+}
+
+// SetEvaluateDataQualityMultiFrame sets the EvaluateDataQualityMultiFrame field's value.
+func (s *CodeGenConfigurationNode) SetEvaluateDataQualityMultiFrame(v *EvaluateDataQualityMultiFrame) *CodeGenConfigurationNode {
+	s.EvaluateDataQualityMultiFrame = v
 	return s
 }
 
@@ -23790,6 +26552,18 @@ func (s *CodeGenConfigurationNode) SetRenameField(v *RenameField) *CodeGenConfig
 	return s
 }
 
+// SetS3CatalogDeltaSource sets the S3CatalogDeltaSource field's value.
+func (s *CodeGenConfigurationNode) SetS3CatalogDeltaSource(v *S3CatalogDeltaSource) *CodeGenConfigurationNode {
+	s.S3CatalogDeltaSource = v
+	return s
+}
+
+// SetS3CatalogHudiSource sets the S3CatalogHudiSource field's value.
+func (s *CodeGenConfigurationNode) SetS3CatalogHudiSource(v *S3CatalogHudiSource) *CodeGenConfigurationNode {
+	s.S3CatalogHudiSource = v
+	return s
+}
+
 // SetS3CatalogSource sets the S3CatalogSource field's value.
 func (s *CodeGenConfigurationNode) SetS3CatalogSource(v *S3CatalogSource) *CodeGenConfigurationNode {
 	s.S3CatalogSource = v
@@ -23808,6 +26582,24 @@ func (s *CodeGenConfigurationNode) SetS3CsvSource(v *S3CsvSource) *CodeGenConfig
 	return s
 }
 
+// SetS3DeltaCatalogTarget sets the S3DeltaCatalogTarget field's value.
+func (s *CodeGenConfigurationNode) SetS3DeltaCatalogTarget(v *S3DeltaCatalogTarget) *CodeGenConfigurationNode {
+	s.S3DeltaCatalogTarget = v
+	return s
+}
+
+// SetS3DeltaDirectTarget sets the S3DeltaDirectTarget field's value.
+func (s *CodeGenConfigurationNode) SetS3DeltaDirectTarget(v *S3DeltaDirectTarget) *CodeGenConfigurationNode {
+	s.S3DeltaDirectTarget = v
+	return s
+}
+
+// SetS3DeltaSource sets the S3DeltaSource field's value.
+func (s *CodeGenConfigurationNode) SetS3DeltaSource(v *S3DeltaSource) *CodeGenConfigurationNode {
+	s.S3DeltaSource = v
+	return s
+}
+
 // SetS3DirectTarget sets the S3DirectTarget field's value.
 func (s *CodeGenConfigurationNode) SetS3DirectTarget(v *S3DirectTarget) *CodeGenConfigurationNode {
 	s.S3DirectTarget = v
@@ -23817,6 +26609,24 @@ func (s *CodeGenConfigurationNode) SetS3DirectTarget(v *S3DirectTarget) *CodeGen
 // SetS3GlueParquetTarget sets the S3GlueParquetTarget field's value.
 func (s *CodeGenConfigurationNode) SetS3GlueParquetTarget(v *S3GlueParquetTarget) *CodeGenConfigurationNode {
 	s.S3GlueParquetTarget = v
+	return s
+}
+
+// SetS3HudiCatalogTarget sets the S3HudiCatalogTarget field's value.
+func (s *CodeGenConfigurationNode) SetS3HudiCatalogTarget(v *S3HudiCatalogTarget) *CodeGenConfigurationNode {
+	s.S3HudiCatalogTarget = v
+	return s
+}
+
+// SetS3HudiDirectTarget sets the S3HudiDirectTarget field's value.
+func (s *CodeGenConfigurationNode) SetS3HudiDirectTarget(v *S3HudiDirectTarget) *CodeGenConfigurationNode {
+	s.S3HudiDirectTarget = v
+	return s
+}
+
+// SetS3HudiSource sets the S3HudiSource field's value.
+func (s *CodeGenConfigurationNode) SetS3HudiSource(v *S3HudiSource) *CodeGenConfigurationNode {
+	s.S3HudiSource = v
 	return s
 }
 
@@ -24286,11 +27096,14 @@ func (s *ColumnImportance) SetImportance(v float64) *ColumnImportance {
 	return s
 }
 
+// A filter that uses both column-level and row-level filtering.
 type ColumnRowFilter struct {
 	_ struct{} `type:"structure"`
 
+	// A string containing the name of the column.
 	ColumnName *string `min:"1" type:"string"`
 
+	// A string containing the row-level filter expression.
 	RowFilterExpression *string `type:"string"`
 }
 
@@ -24435,7 +27248,9 @@ type ColumnStatisticsData struct {
 	// Date column statistics data.
 	DateColumnStatisticsData *DateColumnStatisticsData `type:"structure"`
 
-	// Decimal column statistics data.
+	// Decimal column statistics data. UnscaledValues within are Base64-encoded
+	// binary objects storing big-endian, two's complement representations of the
+	// decimal's unscaled value.
 	DecimalColumnStatisticsData *DecimalColumnStatisticsData `type:"structure"`
 
 	// Double column statistics data.
@@ -25124,8 +27939,8 @@ type Connection struct {
 	//    client key password (if the user has the Glue encrypt passwords setting
 	//    selected).
 	//
-	//    * KAFKA_SASL_MECHANISM - "SCRAM-SHA-512" or "GSSAPI". These are the two
-	//    supported SASL Mechanisms (https://www.iana.org/assignments/sasl-mechanisms/sasl-mechanisms.xhtml).
+	//    * KAFKA_SASL_MECHANISM - "SCRAM-SHA-512", "GSSAPI", or "AWS_MSK_IAM".
+	//    These are the supported SASL Mechanisms (https://www.iana.org/assignments/sasl-mechanisms/sasl-mechanisms.xhtml).
 	//
 	//    * KAFKA_SASL_SCRAM_USERNAME - A plaintext username used to authenticate
 	//    with the "SCRAM-SHA-512" mechanism.
@@ -25264,24 +28079,53 @@ type ConnectionInput struct {
 	// The type of the connection. Currently, these types are supported:
 	//
 	//    * JDBC - Designates a connection to a database through Java Database Connectivity
-	//    (JDBC).
+	//    (JDBC). JDBC Connections use the following ConnectionParameters. Required:
+	//    All of (HOST, PORT, JDBC_ENGINE) or JDBC_CONNECTION_URL. Required: All
+	//    of (USERNAME, PASSWORD) or SECRET_ID. Optional: JDBC_ENFORCE_SSL, CUSTOM_JDBC_CERT,
+	//    CUSTOM_JDBC_CERT_STRING, SKIP_CUSTOM_JDBC_CERT_VALIDATION. These parameters
+	//    are used to configure SSL with JDBC.
 	//
 	//    * KAFKA - Designates a connection to an Apache Kafka streaming platform.
+	//    KAFKA Connections use the following ConnectionParameters. Required: KAFKA_BOOTSTRAP_SERVERS.
+	//    Optional: KAFKA_SSL_ENABLED, KAFKA_CUSTOM_CERT, KAFKA_SKIP_CUSTOM_CERT_VALIDATION.
+	//    These parameters are used to configure SSL with KAFKA. Optional: KAFKA_CLIENT_KEYSTORE,
+	//    KAFKA_CLIENT_KEYSTORE_PASSWORD, KAFKA_CLIENT_KEY_PASSWORD, ENCRYPTED_KAFKA_CLIENT_KEYSTORE_PASSWORD,
+	//    ENCRYPTED_KAFKA_CLIENT_KEY_PASSWORD. These parameters are used to configure
+	//    TLS client configuration with SSL in KAFKA. Optional: KAFKA_SASL_MECHANISM.
+	//    Can be specified as SCRAM-SHA-512, GSSAPI, or AWS_MSK_IAM. Optional: KAFKA_SASL_SCRAM_USERNAME,
+	//    KAFKA_SASL_SCRAM_PASSWORD, ENCRYPTED_KAFKA_SASL_SCRAM_PASSWORD. These
+	//    parameters are used to configure SASL/SCRAM-SHA-512 authentication with
+	//    KAFKA. Optional: KAFKA_SASL_GSSAPI_KEYTAB, KAFKA_SASL_GSSAPI_KRB5_CONF,
+	//    KAFKA_SASL_GSSAPI_SERVICE, KAFKA_SASL_GSSAPI_PRINCIPAL. These parameters
+	//    are used to configure SASL/GSSAPI authentication with KAFKA.
 	//
-	//    * MONGODB - Designates a connection to a MongoDB document database.
+	//    * MONGODB - Designates a connection to a MongoDB document database. MONGODB
+	//    Connections use the following ConnectionParameters. Required: CONNECTION_URL.
+	//    Required: All of (USERNAME, PASSWORD) or SECRET_ID.
 	//
 	//    * NETWORK - Designates a network connection to a data source within an
-	//    Amazon Virtual Private Cloud environment (Amazon VPC).
+	//    Amazon Virtual Private Cloud environment (Amazon VPC). NETWORK Connections
+	//    do not require ConnectionParameters. Instead, provide a PhysicalConnectionRequirements.
 	//
 	//    * MARKETPLACE - Uses configuration settings contained in a connector purchased
 	//    from Amazon Web Services Marketplace to read from and write to data stores
-	//    that are not natively supported by Glue.
+	//    that are not natively supported by Glue. MARKETPLACE Connections use the
+	//    following ConnectionParameters. Required: CONNECTOR_TYPE, CONNECTOR_URL,
+	//    CONNECTOR_CLASS_NAME, CONNECTION_URL. Required for JDBC CONNECTOR_TYPE
+	//    connections: All of (USERNAME, PASSWORD) or SECRET_ID.
 	//
 	//    * CUSTOM - Uses configuration settings contained in a custom connector
 	//    to read from and write to data stores that are not natively supported
 	//    by Glue.
 	//
 	// SFTP is not supported.
+	//
+	// For more information about how optional ConnectionProperties are used to
+	// configure features in Glue, consult Glue connection properties (https://docs.aws.amazon.com/glue/latest/dg/connection-defining.html).
+	//
+	// For more information about how optional ConnectionProperties are used to
+	// configure features in Glue Studio, consult Using connectors and connections
+	// (https://docs.aws.amazon.com/glue/latest/ug/connectors-chapter.html).
 	//
 	// ConnectionType is a required field
 	ConnectionType *string `type:"string" required:"true" enum:"ConnectionType"`
@@ -25292,7 +28136,8 @@ type ConnectionInput struct {
 	// A list of criteria that can be used in selecting this connection.
 	MatchCriteria []*string `type:"list"`
 
-	// The name of the connection.
+	// The name of the connection. Connection will not function as expected without
+	// a name.
 	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
@@ -25583,8 +28428,8 @@ type Crawler struct {
 	Classifiers []*string `type:"list"`
 
 	// Crawler configuration information. This versioned JSON string allows users
-	// to specify aspects of a crawler's behavior. For more information, see Include
-	// and Exclude Patterns (https://docs.aws.amazon.com/glue/latest/dg/define-crawler.html#crawler-data-stores-exclude).
+	// to specify aspects of a crawler's behavior. For more information, see Setting
+	// crawler configuration options (https://docs.aws.amazon.com/glue/latest/dg/crawler-configuration.html).
 	Configuration *string `type:"string"`
 
 	// If the crawler is running, contains the total time elapsed since the last
@@ -26725,8 +29570,8 @@ type CreateCrawlerInput struct {
 	Classifiers []*string `type:"list"`
 
 	// Crawler configuration information. This versioned JSON string allows users
-	// to specify aspects of a crawler's behavior. For more information, see Configuring
-	// a Crawler (https://docs.aws.amazon.com/glue/latest/dg/crawler-configuration.html).
+	// to specify aspects of a crawler's behavior. For more information, see Setting
+	// crawler configuration options (https://docs.aws.amazon.com/glue/latest/dg/crawler-configuration.html).
 	Configuration *string `type:"string"`
 
 	// The name of the SecurityConfiguration structure to be used by this crawler.
@@ -26950,6 +29795,12 @@ type CreateCsvClassifierRequest struct {
 	// Indicates whether the CSV file contains a header.
 	ContainsHeader *string `type:"string" enum:"CsvHeaderOption"`
 
+	// Enables the configuration of custom datatypes.
+	CustomDatatypeConfigured *bool `type:"boolean"`
+
+	// Creates a list of supported custom datatypes.
+	CustomDatatypes []*string `type:"list"`
+
 	// A custom symbol to denote what separates each column entry in the row.
 	Delimiter *string `min:"1" type:"string"`
 
@@ -27022,6 +29873,18 @@ func (s *CreateCsvClassifierRequest) SetContainsHeader(v string) *CreateCsvClass
 	return s
 }
 
+// SetCustomDatatypeConfigured sets the CustomDatatypeConfigured field's value.
+func (s *CreateCsvClassifierRequest) SetCustomDatatypeConfigured(v bool) *CreateCsvClassifierRequest {
+	s.CustomDatatypeConfigured = &v
+	return s
+}
+
+// SetCustomDatatypes sets the CustomDatatypes field's value.
+func (s *CreateCsvClassifierRequest) SetCustomDatatypes(v []*string) *CreateCsvClassifierRequest {
+	s.CustomDatatypes = v
+	return s
+}
+
 // SetDelimiter sets the Delimiter field's value.
 func (s *CreateCsvClassifierRequest) SetDelimiter(v string) *CreateCsvClassifierRequest {
 	s.Delimiter = &v
@@ -27073,6 +29936,9 @@ type CreateCustomEntityTypeInput struct {
 	//
 	// RegexString is a required field
 	RegexString *string `min:"1" type:"string" required:"true"`
+
+	// A list of tags applied to the custom entity type.
+	Tags map[string]*string `type:"map"`
 }
 
 // String returns the string representation.
@@ -27136,6 +30002,12 @@ func (s *CreateCustomEntityTypeInput) SetRegexString(v string) *CreateCustomEnti
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *CreateCustomEntityTypeInput) SetTags(v map[string]*string) *CreateCustomEntityTypeInput {
+	s.Tags = v
+	return s
+}
+
 type CreateCustomEntityTypeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -27163,6 +30035,149 @@ func (s CreateCustomEntityTypeOutput) GoString() string {
 
 // SetName sets the Name field's value.
 func (s *CreateCustomEntityTypeOutput) SetName(v string) *CreateCustomEntityTypeOutput {
+	s.Name = &v
+	return s
+}
+
+type CreateDataQualityRulesetInput struct {
+	_ struct{} `type:"structure"`
+
+	// Used for idempotency and is recommended to be set to a random ID (such as
+	// a UUID) to avoid creating or starting multiple instances of the same resource.
+	ClientToken *string `min:"1" type:"string"`
+
+	// A description of the data quality ruleset.
+	Description *string `type:"string"`
+
+	// A unique name for the data quality ruleset.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// A Data Quality Definition Language (DQDL) ruleset. For more information,
+	// see the Glue developer guide.
+	//
+	// Ruleset is a required field
+	Ruleset *string `min:"1" type:"string" required:"true"`
+
+	// A list of tags applied to the data quality ruleset.
+	Tags map[string]*string `type:"map"`
+
+	// A target table associated with the data quality ruleset.
+	TargetTable *DataQualityTargetTable `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateDataQualityRulesetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateDataQualityRulesetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateDataQualityRulesetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateDataQualityRulesetInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.Ruleset == nil {
+		invalidParams.Add(request.NewErrParamRequired("Ruleset"))
+	}
+	if s.Ruleset != nil && len(*s.Ruleset) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Ruleset", 1))
+	}
+	if s.TargetTable != nil {
+		if err := s.TargetTable.Validate(); err != nil {
+			invalidParams.AddNested("TargetTable", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *CreateDataQualityRulesetInput) SetClientToken(v string) *CreateDataQualityRulesetInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *CreateDataQualityRulesetInput) SetDescription(v string) *CreateDataQualityRulesetInput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *CreateDataQualityRulesetInput) SetName(v string) *CreateDataQualityRulesetInput {
+	s.Name = &v
+	return s
+}
+
+// SetRuleset sets the Ruleset field's value.
+func (s *CreateDataQualityRulesetInput) SetRuleset(v string) *CreateDataQualityRulesetInput {
+	s.Ruleset = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *CreateDataQualityRulesetInput) SetTags(v map[string]*string) *CreateDataQualityRulesetInput {
+	s.Tags = v
+	return s
+}
+
+// SetTargetTable sets the TargetTable field's value.
+func (s *CreateDataQualityRulesetInput) SetTargetTable(v *DataQualityTargetTable) *CreateDataQualityRulesetInput {
+	s.TargetTable = v
+	return s
+}
+
+type CreateDataQualityRulesetOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique name for the data quality ruleset.
+	Name *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateDataQualityRulesetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s CreateDataQualityRulesetOutput) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *CreateDataQualityRulesetOutput) SetName(v string) *CreateDataQualityRulesetOutput {
 	s.Name = &v
 	return s
 }
@@ -27511,7 +30526,7 @@ type CreateDevEndpointOutput struct {
 	// APIs. If no arguments are provided, the version defaults to Python 2.
 	Arguments map[string]*string `type:"map"`
 
-	// The AWS Availability Zone where this DevEndpoint is located.
+	// The Amazon Web Services Availability Zone where this DevEndpoint is located.
 	AvailabilityZone *string `type:"string"`
 
 	// The point in time at which this DevEndpoint was created.
@@ -27828,7 +30843,8 @@ type CreateJobInput struct {
 	// The connections used for this job.
 	Connections *ConnectionsList `type:"structure"`
 
-	// The default arguments for this job.
+	// The default arguments for every run of this job, specified as name-value
+	// pairs.
 	//
 	// You can specify arguments here that your own job-execution script consumes,
 	// as well as arguments that Glue itself consumes.
@@ -27841,9 +30857,13 @@ type CreateJobInput struct {
 	// see the Calling Glue APIs in Python (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html)
 	// topic in the developer guide.
 	//
-	// For information about the key-value pairs that Glue consumes to set up your
-	// job, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+	// For information about the arguments you can provide to this field when configuring
+	// Spark jobs, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
 	// topic in the developer guide.
+	//
+	// For information about the arguments you can provide to this field when configuring
+	// Ray jobs, see Using job parameters in Ray jobs (https://docs.aws.amazon.com/glue/latest/dg/author-job-ray-job-parameters.html)
+	// in the developer guide.
 	DefaultArguments map[string]*string `type:"map"`
 
 	// Description of the job being defined.
@@ -27865,9 +30885,13 @@ type CreateJobInput struct {
 	// for this job.
 	ExecutionProperty *ExecutionProperty `type:"structure"`
 
-	// Glue version determines the versions of Apache Spark and Python that Glue
-	// supports. The Python version indicates the version supported for jobs of
-	// type Spark.
+	// In Spark jobs, GlueVersion determines the versions of Apache Spark and Python
+	// that Glue available in a job. The Python version indicates the version supported
+	// for jobs of type Spark.
+	//
+	// Ray jobs should set GlueVersion to 4.0 or greater. However, the versions
+	// of Ray, Python and additional libraries available in your Ray job are determined
+	// by the Runtime parameter of the Job command.
 	//
 	// For more information about the available Glue versions and corresponding
 	// Spark and Python versions, see Glue version (https://docs.aws.amazon.com/glue/latest/dg/add-job.html)
@@ -27885,21 +30909,22 @@ type CreateJobInput struct {
 	// 4 vCPUs of compute capacity and 16 GB of memory. For more information, see
 	// the Glue pricing page (https://aws.amazon.com/glue/pricing/).
 	//
-	// Do not set Max Capacity if using WorkerType and NumberOfWorkers.
+	// For Glue version 2.0+ jobs, you cannot specify a Maximum capacity. Instead,
+	// you should specify a Worker type and the Number of workers.
+	//
+	// Do not set MaxCapacity if using WorkerType and NumberOfWorkers.
 	//
 	// The value that can be allocated for MaxCapacity depends on whether you are
-	// running a Python shell job or an Apache Spark ETL job:
+	// running a Python shell job, an Apache Spark ETL job, or an Apache Spark streaming
+	// ETL job:
 	//
 	//    * When you specify a Python shell job (JobCommand.Name="pythonshell"),
 	//    you can allocate either 0.0625 or 1 DPU. The default is 0.0625 DPU.
 	//
 	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl")
 	//    or Apache Spark streaming ETL job (JobCommand.Name="gluestreaming"), you
-	//    can allocate a minimum of 2 DPUs. The default is 10 DPUs. This job type
+	//    can allocate from 2 to 100 DPUs. The default is 10 DPUs. This job type
 	//    cannot have a fractional DPU allocation.
-	//
-	// For Glue version 2.0 jobs, you cannot instead specify a Maximum capacity.
-	// Instead, you should specify a Worker type and the Number of workers.
 	MaxCapacity *float64 `type:"double"`
 
 	// The maximum number of times to retry this job if it fails.
@@ -27910,7 +30935,8 @@ type CreateJobInput struct {
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
-	// Non-overridable arguments for this job, specified as name-value pairs.
+	// Arguments for this job that are not overridden when providing job arguments
+	// in a job run, specified as name-value pairs.
 	NonOverridableArguments map[string]*string `type:"map"`
 
 	// Specifies configuration properties of a job notification.
@@ -27945,7 +30971,8 @@ type CreateJobInput struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X.
+	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// Z.2X for Ray jobs.
 	//
 	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
 	//    memory and a 50GB disk, and 2 executors per worker.
@@ -27962,6 +30989,10 @@ type CreateJobInput struct {
 	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
 	//    this worker type for low volume streaming jobs. This worker type is only
 	//    available for Glue version 3.0 streaming jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
+	//    of m emory, 128 GB disk), and provides up to 8 Ray workers based on the
+	//    autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -29493,7 +32524,8 @@ type CreateSessionInput struct {
 	// Id is a required field
 	Id *string `min:"1" type:"string" required:"true"`
 
-	// The number of seconds when idle before request times out.
+	// The number of minutes when idle before session times out. Default for Spark
+	// ETL jobs is value of Timeout. Consult the documentation for other job types.
 	IdleTimeout *int64 `min:"1" type:"integer"`
 
 	// The number of Glue data processing units (DPUs) that can be allocated when
@@ -29518,7 +32550,9 @@ type CreateSessionInput struct {
 	// The map of key value pairs (tags) belonging to the session.
 	Tags map[string]*string `type:"map"`
 
-	// The number of seconds before request times out.
+	// The number of minutes before session times out. Default for Spark ETL jobs
+	// is 48 hours (2880 minutes), the maximum session lifetime for this job type.
+	// Consult the documentation for other job types.
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated to use for the session. Accepts
@@ -30381,6 +33415,13 @@ type CsvClassifier struct {
 	// The time that this classifier was registered.
 	CreationTime *time.Time `type:"timestamp"`
 
+	// Enables the custom datatype to be configured.
+	CustomDatatypeConfigured *bool `type:"boolean"`
+
+	// A list of custom datatypes including "BINARY", "BOOLEAN", "DATE", "DECIMAL",
+	// "DOUBLE", "FLOAT", "INT", "LONG", "SHORT", "STRING", "TIMESTAMP".
+	CustomDatatypes []*string `type:"list"`
+
 	// A custom symbol to denote what separates each column entry in the row.
 	Delimiter *string `min:"1" type:"string"`
 
@@ -30440,6 +33481,18 @@ func (s *CsvClassifier) SetContainsHeader(v string) *CsvClassifier {
 // SetCreationTime sets the CreationTime field's value.
 func (s *CsvClassifier) SetCreationTime(v time.Time) *CsvClassifier {
 	s.CreationTime = &v
+	return s
+}
+
+// SetCustomDatatypeConfigured sets the CustomDatatypeConfigured field's value.
+func (s *CsvClassifier) SetCustomDatatypeConfigured(v bool) *CsvClassifier {
+	s.CustomDatatypeConfigured = &v
+	return s
+}
+
+// SetCustomDatatypes sets the CustomDatatypes field's value.
+func (s *CsvClassifier) SetCustomDatatypes(v []*string) *CsvClassifier {
+	s.CustomDatatypes = v
 	return s
 }
 
@@ -30658,6 +33711,99 @@ func (s *CustomEntityType) SetRegexString(v string) *CustomEntityType {
 	return s
 }
 
+// Options to configure how your data quality evaluation results are published.
+type DQResultsPublishingOptions struct {
+	_ struct{} `type:"structure"`
+
+	// Enable metrics for your data quality results.
+	CloudWatchMetricsEnabled *bool `type:"boolean"`
+
+	// The context of the evaluation.
+	EvaluationContext *string `type:"string"`
+
+	// Enable publishing for your data quality results.
+	ResultsPublishingEnabled *bool `type:"boolean"`
+
+	// The Amazon S3 prefix prepended to the results.
+	ResultsS3Prefix *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DQResultsPublishingOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DQResultsPublishingOptions) GoString() string {
+	return s.String()
+}
+
+// SetCloudWatchMetricsEnabled sets the CloudWatchMetricsEnabled field's value.
+func (s *DQResultsPublishingOptions) SetCloudWatchMetricsEnabled(v bool) *DQResultsPublishingOptions {
+	s.CloudWatchMetricsEnabled = &v
+	return s
+}
+
+// SetEvaluationContext sets the EvaluationContext field's value.
+func (s *DQResultsPublishingOptions) SetEvaluationContext(v string) *DQResultsPublishingOptions {
+	s.EvaluationContext = &v
+	return s
+}
+
+// SetResultsPublishingEnabled sets the ResultsPublishingEnabled field's value.
+func (s *DQResultsPublishingOptions) SetResultsPublishingEnabled(v bool) *DQResultsPublishingOptions {
+	s.ResultsPublishingEnabled = &v
+	return s
+}
+
+// SetResultsS3Prefix sets the ResultsS3Prefix field's value.
+func (s *DQResultsPublishingOptions) SetResultsS3Prefix(v string) *DQResultsPublishingOptions {
+	s.ResultsS3Prefix = &v
+	return s
+}
+
+// Options to configure how your job will stop if your data quality evaluation
+// fails.
+type DQStopJobOnFailureOptions struct {
+	_ struct{} `type:"structure"`
+
+	// When to stop job if your data quality evaluation fails. Options are Immediate
+	// or AfterDataLoad.
+	StopJobOnFailureTiming *string `type:"string" enum:"DQStopJobOnFailureTiming"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DQStopJobOnFailureOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DQStopJobOnFailureOptions) GoString() string {
+	return s.String()
+}
+
+// SetStopJobOnFailureTiming sets the StopJobOnFailureTiming field's value.
+func (s *DQStopJobOnFailureOptions) SetStopJobOnFailureTiming(v string) *DQStopJobOnFailureOptions {
+	s.StopJobOnFailureTiming = &v
+	return s
+}
+
 // Contains configuration information for maintaining Data Catalog security.
 type DataCatalogEncryptionSettings struct {
 	_ struct{} `type:"structure"`
@@ -30767,6 +33913,979 @@ func (s *DataLakePrincipal) SetDataLakePrincipalIdentifier(v string) *DataLakePr
 	return s
 }
 
+// Additional run options you can specify for an evaluation run.
+type DataQualityEvaluationRunAdditionalRunOptions struct {
+	_ struct{} `type:"structure"`
+
+	// Whether or not to enable CloudWatch metrics.
+	CloudWatchMetricsEnabled *bool `type:"boolean"`
+
+	// Prefix for Amazon S3 to store results.
+	ResultsS3Prefix *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityEvaluationRunAdditionalRunOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityEvaluationRunAdditionalRunOptions) GoString() string {
+	return s.String()
+}
+
+// SetCloudWatchMetricsEnabled sets the CloudWatchMetricsEnabled field's value.
+func (s *DataQualityEvaluationRunAdditionalRunOptions) SetCloudWatchMetricsEnabled(v bool) *DataQualityEvaluationRunAdditionalRunOptions {
+	s.CloudWatchMetricsEnabled = &v
+	return s
+}
+
+// SetResultsS3Prefix sets the ResultsS3Prefix field's value.
+func (s *DataQualityEvaluationRunAdditionalRunOptions) SetResultsS3Prefix(v string) *DataQualityEvaluationRunAdditionalRunOptions {
+	s.ResultsS3Prefix = &v
+	return s
+}
+
+// Describes a data quality result.
+type DataQualityResult struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time when this data quality run completed.
+	CompletedOn *time.Time `type:"timestamp"`
+
+	// The table associated with the data quality result, if any.
+	DataSource *DataSource `type:"structure"`
+
+	// In the context of a job in Glue Studio, each node in the canvas is typically
+	// assigned some sort of name and data quality nodes will have names. In the
+	// case of multiple nodes, the evaluationContext can differentiate the nodes.
+	EvaluationContext *string `type:"string"`
+
+	// The job name associated with the data quality result, if any.
+	JobName *string `min:"1" type:"string"`
+
+	// The job run ID associated with the data quality result, if any.
+	JobRunId *string `min:"1" type:"string"`
+
+	// A unique result ID for the data quality result.
+	ResultId *string `min:"1" type:"string"`
+
+	// A list of DataQualityRuleResult objects representing the results for each
+	// rule.
+	RuleResults []*DataQualityRuleResult `min:"1" type:"list"`
+
+	// The unique run ID for the ruleset evaluation for this data quality result.
+	RulesetEvaluationRunId *string `min:"1" type:"string"`
+
+	// The name of the ruleset associated with the data quality result.
+	RulesetName *string `min:"1" type:"string"`
+
+	// An aggregate data quality score. Represents the ratio of rules that passed
+	// to the total number of rules.
+	Score *float64 `type:"double"`
+
+	// The date and time when this data quality run started.
+	StartedOn *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityResult) GoString() string {
+	return s.String()
+}
+
+// SetCompletedOn sets the CompletedOn field's value.
+func (s *DataQualityResult) SetCompletedOn(v time.Time) *DataQualityResult {
+	s.CompletedOn = &v
+	return s
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityResult) SetDataSource(v *DataSource) *DataQualityResult {
+	s.DataSource = v
+	return s
+}
+
+// SetEvaluationContext sets the EvaluationContext field's value.
+func (s *DataQualityResult) SetEvaluationContext(v string) *DataQualityResult {
+	s.EvaluationContext = &v
+	return s
+}
+
+// SetJobName sets the JobName field's value.
+func (s *DataQualityResult) SetJobName(v string) *DataQualityResult {
+	s.JobName = &v
+	return s
+}
+
+// SetJobRunId sets the JobRunId field's value.
+func (s *DataQualityResult) SetJobRunId(v string) *DataQualityResult {
+	s.JobRunId = &v
+	return s
+}
+
+// SetResultId sets the ResultId field's value.
+func (s *DataQualityResult) SetResultId(v string) *DataQualityResult {
+	s.ResultId = &v
+	return s
+}
+
+// SetRuleResults sets the RuleResults field's value.
+func (s *DataQualityResult) SetRuleResults(v []*DataQualityRuleResult) *DataQualityResult {
+	s.RuleResults = v
+	return s
+}
+
+// SetRulesetEvaluationRunId sets the RulesetEvaluationRunId field's value.
+func (s *DataQualityResult) SetRulesetEvaluationRunId(v string) *DataQualityResult {
+	s.RulesetEvaluationRunId = &v
+	return s
+}
+
+// SetRulesetName sets the RulesetName field's value.
+func (s *DataQualityResult) SetRulesetName(v string) *DataQualityResult {
+	s.RulesetName = &v
+	return s
+}
+
+// SetScore sets the Score field's value.
+func (s *DataQualityResult) SetScore(v float64) *DataQualityResult {
+	s.Score = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *DataQualityResult) SetStartedOn(v time.Time) *DataQualityResult {
+	s.StartedOn = &v
+	return s
+}
+
+// Describes a data quality result.
+type DataQualityResultDescription struct {
+	_ struct{} `type:"structure"`
+
+	// The table name associated with the data quality result.
+	DataSource *DataSource `type:"structure"`
+
+	// The job name associated with the data quality result.
+	JobName *string `min:"1" type:"string"`
+
+	// The job run ID associated with the data quality result.
+	JobRunId *string `min:"1" type:"string"`
+
+	// The unique result ID for this data quality result.
+	ResultId *string `min:"1" type:"string"`
+
+	// The time that the run started for this data quality result.
+	StartedOn *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityResultDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityResultDescription) GoString() string {
+	return s.String()
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityResultDescription) SetDataSource(v *DataSource) *DataQualityResultDescription {
+	s.DataSource = v
+	return s
+}
+
+// SetJobName sets the JobName field's value.
+func (s *DataQualityResultDescription) SetJobName(v string) *DataQualityResultDescription {
+	s.JobName = &v
+	return s
+}
+
+// SetJobRunId sets the JobRunId field's value.
+func (s *DataQualityResultDescription) SetJobRunId(v string) *DataQualityResultDescription {
+	s.JobRunId = &v
+	return s
+}
+
+// SetResultId sets the ResultId field's value.
+func (s *DataQualityResultDescription) SetResultId(v string) *DataQualityResultDescription {
+	s.ResultId = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *DataQualityResultDescription) SetStartedOn(v time.Time) *DataQualityResultDescription {
+	s.StartedOn = &v
+	return s
+}
+
+// Criteria used to return data quality results.
+type DataQualityResultFilterCriteria struct {
+	_ struct{} `type:"structure"`
+
+	// Filter results by the specified data source. For example, retrieving all
+	// results for an Glue table.
+	DataSource *DataSource `type:"structure"`
+
+	// Filter results by the specified job name.
+	JobName *string `min:"1" type:"string"`
+
+	// Filter results by the specified job run ID.
+	JobRunId *string `min:"1" type:"string"`
+
+	// Filter results by runs that started after this time.
+	StartedAfter *time.Time `type:"timestamp"`
+
+	// Filter results by runs that started before this time.
+	StartedBefore *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityResultFilterCriteria) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityResultFilterCriteria) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataQualityResultFilterCriteria) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataQualityResultFilterCriteria"}
+	if s.JobName != nil && len(*s.JobName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("JobName", 1))
+	}
+	if s.JobRunId != nil && len(*s.JobRunId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("JobRunId", 1))
+	}
+	if s.DataSource != nil {
+		if err := s.DataSource.Validate(); err != nil {
+			invalidParams.AddNested("DataSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityResultFilterCriteria) SetDataSource(v *DataSource) *DataQualityResultFilterCriteria {
+	s.DataSource = v
+	return s
+}
+
+// SetJobName sets the JobName field's value.
+func (s *DataQualityResultFilterCriteria) SetJobName(v string) *DataQualityResultFilterCriteria {
+	s.JobName = &v
+	return s
+}
+
+// SetJobRunId sets the JobRunId field's value.
+func (s *DataQualityResultFilterCriteria) SetJobRunId(v string) *DataQualityResultFilterCriteria {
+	s.JobRunId = &v
+	return s
+}
+
+// SetStartedAfter sets the StartedAfter field's value.
+func (s *DataQualityResultFilterCriteria) SetStartedAfter(v time.Time) *DataQualityResultFilterCriteria {
+	s.StartedAfter = &v
+	return s
+}
+
+// SetStartedBefore sets the StartedBefore field's value.
+func (s *DataQualityResultFilterCriteria) SetStartedBefore(v time.Time) *DataQualityResultFilterCriteria {
+	s.StartedBefore = &v
+	return s
+}
+
+// Describes the result of a data quality rule recommendation run.
+type DataQualityRuleRecommendationRunDescription struct {
+	_ struct{} `type:"structure"`
+
+	// The data source (Glue table) associated with the recommendation run.
+	DataSource *DataSource `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	RunId *string `min:"1" type:"string"`
+
+	// The date and time when this run started.
+	StartedOn *time.Time `type:"timestamp"`
+
+	// The status for this run.
+	Status *string `type:"string" enum:"TaskStatusType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRuleRecommendationRunDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRuleRecommendationRunDescription) GoString() string {
+	return s.String()
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityRuleRecommendationRunDescription) SetDataSource(v *DataSource) *DataQualityRuleRecommendationRunDescription {
+	s.DataSource = v
+	return s
+}
+
+// SetRunId sets the RunId field's value.
+func (s *DataQualityRuleRecommendationRunDescription) SetRunId(v string) *DataQualityRuleRecommendationRunDescription {
+	s.RunId = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *DataQualityRuleRecommendationRunDescription) SetStartedOn(v time.Time) *DataQualityRuleRecommendationRunDescription {
+	s.StartedOn = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DataQualityRuleRecommendationRunDescription) SetStatus(v string) *DataQualityRuleRecommendationRunDescription {
+	s.Status = &v
+	return s
+}
+
+// A filter for listing data quality recommendation runs.
+type DataQualityRuleRecommendationRunFilter struct {
+	_ struct{} `type:"structure"`
+
+	// Filter based on a specified data source (Glue table).
+	//
+	// DataSource is a required field
+	DataSource *DataSource `type:"structure" required:"true"`
+
+	// Filter based on time for results started after provided time.
+	StartedAfter *time.Time `type:"timestamp"`
+
+	// Filter based on time for results started before provided time.
+	StartedBefore *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRuleRecommendationRunFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRuleRecommendationRunFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataQualityRuleRecommendationRunFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataQualityRuleRecommendationRunFilter"}
+	if s.DataSource == nil {
+		invalidParams.Add(request.NewErrParamRequired("DataSource"))
+	}
+	if s.DataSource != nil {
+		if err := s.DataSource.Validate(); err != nil {
+			invalidParams.AddNested("DataSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityRuleRecommendationRunFilter) SetDataSource(v *DataSource) *DataQualityRuleRecommendationRunFilter {
+	s.DataSource = v
+	return s
+}
+
+// SetStartedAfter sets the StartedAfter field's value.
+func (s *DataQualityRuleRecommendationRunFilter) SetStartedAfter(v time.Time) *DataQualityRuleRecommendationRunFilter {
+	s.StartedAfter = &v
+	return s
+}
+
+// SetStartedBefore sets the StartedBefore field's value.
+func (s *DataQualityRuleRecommendationRunFilter) SetStartedBefore(v time.Time) *DataQualityRuleRecommendationRunFilter {
+	s.StartedBefore = &v
+	return s
+}
+
+// Describes the result of the evaluation of a data quality rule.
+type DataQualityRuleResult struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the data quality rule.
+	Description *string `type:"string"`
+
+	// A map of metrics associated with the evaluation of the rule.
+	EvaluatedMetrics map[string]*float64 `type:"map"`
+
+	// An evaluation message.
+	EvaluationMessage *string `type:"string"`
+
+	// The name of the data quality rule.
+	Name *string `min:"1" type:"string"`
+
+	// A pass or fail status for the rule.
+	Result *string `type:"string" enum:"DataQualityRuleResultStatus"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRuleResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRuleResult) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *DataQualityRuleResult) SetDescription(v string) *DataQualityRuleResult {
+	s.Description = &v
+	return s
+}
+
+// SetEvaluatedMetrics sets the EvaluatedMetrics field's value.
+func (s *DataQualityRuleResult) SetEvaluatedMetrics(v map[string]*float64) *DataQualityRuleResult {
+	s.EvaluatedMetrics = v
+	return s
+}
+
+// SetEvaluationMessage sets the EvaluationMessage field's value.
+func (s *DataQualityRuleResult) SetEvaluationMessage(v string) *DataQualityRuleResult {
+	s.EvaluationMessage = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DataQualityRuleResult) SetName(v string) *DataQualityRuleResult {
+	s.Name = &v
+	return s
+}
+
+// SetResult sets the Result field's value.
+func (s *DataQualityRuleResult) SetResult(v string) *DataQualityRuleResult {
+	s.Result = &v
+	return s
+}
+
+// Describes the result of a data quality ruleset evaluation run.
+type DataQualityRulesetEvaluationRunDescription struct {
+	_ struct{} `type:"structure"`
+
+	// The data source (an Glue table) associated with the run.
+	DataSource *DataSource `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	RunId *string `min:"1" type:"string"`
+
+	// The date and time when the run started.
+	StartedOn *time.Time `type:"timestamp"`
+
+	// The status for this run.
+	Status *string `type:"string" enum:"TaskStatusType"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetEvaluationRunDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetEvaluationRunDescription) GoString() string {
+	return s.String()
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityRulesetEvaluationRunDescription) SetDataSource(v *DataSource) *DataQualityRulesetEvaluationRunDescription {
+	s.DataSource = v
+	return s
+}
+
+// SetRunId sets the RunId field's value.
+func (s *DataQualityRulesetEvaluationRunDescription) SetRunId(v string) *DataQualityRulesetEvaluationRunDescription {
+	s.RunId = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *DataQualityRulesetEvaluationRunDescription) SetStartedOn(v time.Time) *DataQualityRulesetEvaluationRunDescription {
+	s.StartedOn = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *DataQualityRulesetEvaluationRunDescription) SetStatus(v string) *DataQualityRulesetEvaluationRunDescription {
+	s.Status = &v
+	return s
+}
+
+// The filter criteria.
+type DataQualityRulesetEvaluationRunFilter struct {
+	_ struct{} `type:"structure"`
+
+	// Filter based on a data source (an Glue table) associated with the run.
+	//
+	// DataSource is a required field
+	DataSource *DataSource `type:"structure" required:"true"`
+
+	// Filter results by runs that started after this time.
+	StartedAfter *time.Time `type:"timestamp"`
+
+	// Filter results by runs that started before this time.
+	StartedBefore *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetEvaluationRunFilter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetEvaluationRunFilter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataQualityRulesetEvaluationRunFilter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataQualityRulesetEvaluationRunFilter"}
+	if s.DataSource == nil {
+		invalidParams.Add(request.NewErrParamRequired("DataSource"))
+	}
+	if s.DataSource != nil {
+		if err := s.DataSource.Validate(); err != nil {
+			invalidParams.AddNested("DataSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *DataQualityRulesetEvaluationRunFilter) SetDataSource(v *DataSource) *DataQualityRulesetEvaluationRunFilter {
+	s.DataSource = v
+	return s
+}
+
+// SetStartedAfter sets the StartedAfter field's value.
+func (s *DataQualityRulesetEvaluationRunFilter) SetStartedAfter(v time.Time) *DataQualityRulesetEvaluationRunFilter {
+	s.StartedAfter = &v
+	return s
+}
+
+// SetStartedBefore sets the StartedBefore field's value.
+func (s *DataQualityRulesetEvaluationRunFilter) SetStartedBefore(v time.Time) *DataQualityRulesetEvaluationRunFilter {
+	s.StartedBefore = &v
+	return s
+}
+
+// The criteria used to filter data quality rulesets.
+type DataQualityRulesetFilterCriteria struct {
+	_ struct{} `type:"structure"`
+
+	// Filter on rulesets created after this date.
+	CreatedAfter *time.Time `type:"timestamp"`
+
+	// Filter on rulesets created before this date.
+	CreatedBefore *time.Time `type:"timestamp"`
+
+	// The description of the ruleset filter criteria.
+	Description *string `type:"string"`
+
+	// Filter on rulesets last modified after this date.
+	LastModifiedAfter *time.Time `type:"timestamp"`
+
+	// Filter on rulesets last modified before this date.
+	LastModifiedBefore *time.Time `type:"timestamp"`
+
+	// The name of the ruleset filter criteria.
+	Name *string `min:"1" type:"string"`
+
+	// The name and database name of the target table.
+	TargetTable *DataQualityTargetTable `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetFilterCriteria) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetFilterCriteria) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataQualityRulesetFilterCriteria) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataQualityRulesetFilterCriteria"}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.TargetTable != nil {
+		if err := s.TargetTable.Validate(); err != nil {
+			invalidParams.AddNested("TargetTable", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCreatedAfter sets the CreatedAfter field's value.
+func (s *DataQualityRulesetFilterCriteria) SetCreatedAfter(v time.Time) *DataQualityRulesetFilterCriteria {
+	s.CreatedAfter = &v
+	return s
+}
+
+// SetCreatedBefore sets the CreatedBefore field's value.
+func (s *DataQualityRulesetFilterCriteria) SetCreatedBefore(v time.Time) *DataQualityRulesetFilterCriteria {
+	s.CreatedBefore = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *DataQualityRulesetFilterCriteria) SetDescription(v string) *DataQualityRulesetFilterCriteria {
+	s.Description = &v
+	return s
+}
+
+// SetLastModifiedAfter sets the LastModifiedAfter field's value.
+func (s *DataQualityRulesetFilterCriteria) SetLastModifiedAfter(v time.Time) *DataQualityRulesetFilterCriteria {
+	s.LastModifiedAfter = &v
+	return s
+}
+
+// SetLastModifiedBefore sets the LastModifiedBefore field's value.
+func (s *DataQualityRulesetFilterCriteria) SetLastModifiedBefore(v time.Time) *DataQualityRulesetFilterCriteria {
+	s.LastModifiedBefore = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DataQualityRulesetFilterCriteria) SetName(v string) *DataQualityRulesetFilterCriteria {
+	s.Name = &v
+	return s
+}
+
+// SetTargetTable sets the TargetTable field's value.
+func (s *DataQualityRulesetFilterCriteria) SetTargetTable(v *DataQualityTargetTable) *DataQualityRulesetFilterCriteria {
+	s.TargetTable = v
+	return s
+}
+
+// Describes a data quality ruleset returned by GetDataQualityRuleset.
+type DataQualityRulesetListDetails struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time the data quality ruleset was created.
+	CreatedOn *time.Time `type:"timestamp"`
+
+	// A description of the data quality ruleset.
+	Description *string `type:"string"`
+
+	// The date and time the data quality ruleset was last modified.
+	LastModifiedOn *time.Time `type:"timestamp"`
+
+	// The name of the data quality ruleset.
+	Name *string `min:"1" type:"string"`
+
+	// When a ruleset was created from a recommendation run, this run ID is generated
+	// to link the two together.
+	RecommendationRunId *string `min:"1" type:"string"`
+
+	// The number of rules in the ruleset.
+	RuleCount *int64 `type:"integer"`
+
+	// An object representing an Glue table.
+	TargetTable *DataQualityTargetTable `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetListDetails) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityRulesetListDetails) GoString() string {
+	return s.String()
+}
+
+// SetCreatedOn sets the CreatedOn field's value.
+func (s *DataQualityRulesetListDetails) SetCreatedOn(v time.Time) *DataQualityRulesetListDetails {
+	s.CreatedOn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *DataQualityRulesetListDetails) SetDescription(v string) *DataQualityRulesetListDetails {
+	s.Description = &v
+	return s
+}
+
+// SetLastModifiedOn sets the LastModifiedOn field's value.
+func (s *DataQualityRulesetListDetails) SetLastModifiedOn(v time.Time) *DataQualityRulesetListDetails {
+	s.LastModifiedOn = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DataQualityRulesetListDetails) SetName(v string) *DataQualityRulesetListDetails {
+	s.Name = &v
+	return s
+}
+
+// SetRecommendationRunId sets the RecommendationRunId field's value.
+func (s *DataQualityRulesetListDetails) SetRecommendationRunId(v string) *DataQualityRulesetListDetails {
+	s.RecommendationRunId = &v
+	return s
+}
+
+// SetRuleCount sets the RuleCount field's value.
+func (s *DataQualityRulesetListDetails) SetRuleCount(v int64) *DataQualityRulesetListDetails {
+	s.RuleCount = &v
+	return s
+}
+
+// SetTargetTable sets the TargetTable field's value.
+func (s *DataQualityRulesetListDetails) SetTargetTable(v *DataQualityTargetTable) *DataQualityRulesetListDetails {
+	s.TargetTable = v
+	return s
+}
+
+// An object representing an Glue table.
+type DataQualityTargetTable struct {
+	_ struct{} `type:"structure"`
+
+	// The catalog id where the Glue table exists.
+	CatalogId *string `min:"1" type:"string"`
+
+	// The name of the database where the Glue table exists.
+	//
+	// DatabaseName is a required field
+	DatabaseName *string `min:"1" type:"string" required:"true"`
+
+	// The name of the Glue table.
+	//
+	// TableName is a required field
+	TableName *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityTargetTable) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataQualityTargetTable) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataQualityTargetTable) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataQualityTargetTable"}
+	if s.CatalogId != nil && len(*s.CatalogId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CatalogId", 1))
+	}
+	if s.DatabaseName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DatabaseName"))
+	}
+	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
+	}
+	if s.TableName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TableName"))
+	}
+	if s.TableName != nil && len(*s.TableName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TableName", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCatalogId sets the CatalogId field's value.
+func (s *DataQualityTargetTable) SetCatalogId(v string) *DataQualityTargetTable {
+	s.CatalogId = &v
+	return s
+}
+
+// SetDatabaseName sets the DatabaseName field's value.
+func (s *DataQualityTargetTable) SetDatabaseName(v string) *DataQualityTargetTable {
+	s.DatabaseName = &v
+	return s
+}
+
+// SetTableName sets the TableName field's value.
+func (s *DataQualityTargetTable) SetTableName(v string) *DataQualityTargetTable {
+	s.TableName = &v
+	return s
+}
+
+// A data source (an Glue table) for which you want data quality results.
+type DataSource struct {
+	_ struct{} `type:"structure"`
+
+	// An Glue table.
+	//
+	// GlueTable is a required field
+	GlueTable *Table `type:"structure" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DataSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DataSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DataSource"}
+	if s.GlueTable == nil {
+		invalidParams.Add(request.NewErrParamRequired("GlueTable"))
+	}
+	if s.GlueTable != nil {
+		if err := s.GlueTable.Validate(); err != nil {
+			invalidParams.AddNested("GlueTable", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetGlueTable sets the GlueTable field's value.
+func (s *DataSource) SetGlueTable(v *Table) *DataSource {
+	s.GlueTable = v
+	return s
+}
+
 // The Database object represents a logical grouping of tables that might reside
 // in a Hive metastore or an RDBMS.
 type Database struct {
@@ -30775,7 +34894,8 @@ type Database struct {
 	// The ID of the Data Catalog in which the database resides.
 	CatalogId *string `min:"1" type:"string"`
 
-	// Creates a set of default permissions on the table for principals.
+	// Creates a set of default permissions on the table for principals. Used by
+	// Lake Formation. Not used in the normal course of Glue operations.
 	CreateTableDefaultPermissions []*PrincipalPermissions `type:"list"`
 
 	// The time at which the metadata database was created in the catalog.
@@ -30783,6 +34903,10 @@ type Database struct {
 
 	// A description of the database.
 	Description *string `type:"string"`
+
+	// A FederatedDatabase structure that references an entity outside the Glue
+	// Data Catalog.
+	FederatedDatabase *FederatedDatabase `type:"structure"`
 
 	// The location of the database (for example, an HDFS path).
 	LocationUri *string `min:"1" type:"string"`
@@ -30843,6 +34967,12 @@ func (s *Database) SetDescription(v string) *Database {
 	return s
 }
 
+// SetFederatedDatabase sets the FederatedDatabase field's value.
+func (s *Database) SetFederatedDatabase(v *FederatedDatabase) *Database {
+	s.FederatedDatabase = v
+	return s
+}
+
 // SetLocationUri sets the LocationUri field's value.
 func (s *Database) SetLocationUri(v string) *Database {
 	s.LocationUri = &v
@@ -30876,6 +35006,9 @@ type DatabaseIdentifier struct {
 
 	// The name of the catalog database.
 	DatabaseName *string `min:"1" type:"string"`
+
+	// Region of the target database.
+	Region *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -30905,6 +35038,9 @@ func (s *DatabaseIdentifier) Validate() error {
 	if s.DatabaseName != nil && len(*s.DatabaseName) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("DatabaseName", 1))
 	}
+	if s.Region != nil && len(*s.Region) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Region", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -30924,15 +35060,26 @@ func (s *DatabaseIdentifier) SetDatabaseName(v string) *DatabaseIdentifier {
 	return s
 }
 
+// SetRegion sets the Region field's value.
+func (s *DatabaseIdentifier) SetRegion(v string) *DatabaseIdentifier {
+	s.Region = &v
+	return s
+}
+
 // The structure used to create or update a database.
 type DatabaseInput struct {
 	_ struct{} `type:"structure"`
 
-	// Creates a set of default permissions on the table for principals.
+	// Creates a set of default permissions on the table for principals. Used by
+	// Lake Formation. Not used in the normal course of Glue operations.
 	CreateTableDefaultPermissions []*PrincipalPermissions `type:"list"`
 
 	// A description of the database.
 	Description *string `type:"string"`
+
+	// A FederatedDatabase structure that references an entity outside the Glue
+	// Data Catalog.
+	FederatedDatabase *FederatedDatabase `type:"structure"`
 
 	// The location of the database (for example, an HDFS path).
 	LocationUri *string `min:"1" type:"string"`
@@ -30993,6 +35140,11 @@ func (s *DatabaseInput) Validate() error {
 			}
 		}
 	}
+	if s.FederatedDatabase != nil {
+		if err := s.FederatedDatabase.Validate(); err != nil {
+			invalidParams.AddNested("FederatedDatabase", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.TargetDatabase != nil {
 		if err := s.TargetDatabase.Validate(); err != nil {
 			invalidParams.AddNested("TargetDatabase", err.(request.ErrInvalidParams))
@@ -31014,6 +35166,12 @@ func (s *DatabaseInput) SetCreateTableDefaultPermissions(v []*PrincipalPermissio
 // SetDescription sets the Description field's value.
 func (s *DatabaseInput) SetDescription(v string) *DatabaseInput {
 	s.Description = &v
+	return s
+}
+
+// SetFederatedDatabase sets the FederatedDatabase field's value.
+func (s *DatabaseInput) SetFederatedDatabase(v *FederatedDatabase) *DatabaseInput {
+	s.FederatedDatabase = v
 	return s
 }
 
@@ -31966,6 +36124,77 @@ func (s DeleteCustomEntityTypeOutput) GoString() string {
 func (s *DeleteCustomEntityTypeOutput) SetName(v string) *DeleteCustomEntityTypeOutput {
 	s.Name = &v
 	return s
+}
+
+type DeleteDataQualityRulesetInput struct {
+	_ struct{} `type:"structure"`
+
+	// A name for the data quality ruleset.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteDataQualityRulesetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteDataQualityRulesetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteDataQualityRulesetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteDataQualityRulesetInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *DeleteDataQualityRulesetInput) SetName(v string) *DeleteDataQualityRulesetInput {
+	s.Name = &v
+	return s
+}
+
+type DeleteDataQualityRulesetOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteDataQualityRulesetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DeleteDataQualityRulesetOutput) GoString() string {
+	return s.String()
 }
 
 type DeleteDatabaseInput struct {
@@ -33566,6 +37795,10 @@ type DeltaTarget struct {
 	// The name of the connection to use to connect to the Delta table target.
 	ConnectionName *string `type:"string"`
 
+	// Specifies whether the crawler will create native tables, to allow integration
+	// with query engines that support querying of the Delta transaction log directly.
+	CreateNativeDeltaTable *bool `type:"boolean"`
+
 	// A list of the Amazon S3 paths to the Delta tables.
 	DeltaTables []*string `type:"list"`
 
@@ -33597,6 +37830,12 @@ func (s *DeltaTarget) SetConnectionName(v string) *DeltaTarget {
 	return s
 }
 
+// SetCreateNativeDeltaTable sets the CreateNativeDeltaTable field's value.
+func (s *DeltaTarget) SetCreateNativeDeltaTable(v bool) *DeltaTarget {
+	s.CreateNativeDeltaTable = &v
+	return s
+}
+
 // SetDeltaTables sets the DeltaTables field's value.
 func (s *DeltaTarget) SetDeltaTables(v []*string) *DeltaTarget {
 	s.DeltaTables = v
@@ -33625,7 +37864,7 @@ type DevEndpoint struct {
 	// APIs. If no arguments are provided, the version defaults to Python 2.
 	Arguments map[string]*string `type:"map"`
 
-	// The AWS Availability Zone where this DevEndpoint is located.
+	// The Amazon Web Services Availability Zone where this DevEndpoint is located.
 	AvailabilityZone *string `type:"string"`
 
 	// The point in time at which this DevEndpoint was created.
@@ -33967,6 +38206,118 @@ func (s *DevEndpointCustomLibraries) SetExtraJarsS3Path(v string) *DevEndpointCu
 // SetExtraPythonLibsS3Path sets the ExtraPythonLibsS3Path field's value.
 func (s *DevEndpointCustomLibraries) SetExtraPythonLibsS3Path(v string) *DevEndpointCustomLibraries {
 	s.ExtraPythonLibsS3Path = &v
+	return s
+}
+
+// Specifies the direct JDBC source connection.
+type DirectJDBCSource struct {
+	_ struct{} `type:"structure"`
+
+	// The connection name of the JDBC source.
+	//
+	// ConnectionName is a required field
+	ConnectionName *string `type:"string" required:"true"`
+
+	// The connection type of the JDBC source.
+	//
+	// ConnectionType is a required field
+	ConnectionType *string `type:"string" required:"true" enum:"JDBCConnectionType"`
+
+	// The database of the JDBC source connection.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The name of the JDBC source connection.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// The temp directory of the JDBC Redshift source.
+	RedshiftTmpDir *string `type:"string"`
+
+	// The table of the JDBC source connection.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DirectJDBCSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DirectJDBCSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DirectJDBCSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DirectJDBCSource"}
+	if s.ConnectionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ConnectionName"))
+	}
+	if s.ConnectionType == nil {
+		invalidParams.Add(request.NewErrParamRequired("ConnectionType"))
+	}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConnectionName sets the ConnectionName field's value.
+func (s *DirectJDBCSource) SetConnectionName(v string) *DirectJDBCSource {
+	s.ConnectionName = &v
+	return s
+}
+
+// SetConnectionType sets the ConnectionType field's value.
+func (s *DirectJDBCSource) SetConnectionType(v string) *DirectJDBCSource {
+	s.ConnectionType = &v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *DirectJDBCSource) SetDatabase(v string) *DirectJDBCSource {
+	s.Database = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DirectJDBCSource) SetName(v string) *DirectJDBCSource {
+	s.Name = &v
+	return s
+}
+
+// SetRedshiftTmpDir sets the RedshiftTmpDir field's value.
+func (s *DirectJDBCSource) SetRedshiftTmpDir(v string) *DirectJDBCSource {
+	s.RedshiftTmpDir = &v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *DirectJDBCSource) SetTable(v string) *DirectJDBCSource {
+	s.Table = &v
 	return s
 }
 
@@ -34540,6 +38891,160 @@ func (s *DropNullFields) SetNullTextList(v []*NullValueField) *DropNullFields {
 	return s
 }
 
+// Specifies the set of parameters needed to perform the dynamic transform.
+type DynamicTransform struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the name of the function of the dynamic transform.
+	//
+	// FunctionName is a required field
+	FunctionName *string `type:"string" required:"true"`
+
+	// Specifies the inputs for the dynamic transform that are required.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// Specifies the name of the dynamic transform.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the dynamic transform.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// Specifies the parameters of the dynamic transform.
+	Parameters []*TransformConfigParameter `type:"list"`
+
+	// Specifies the path of the dynamic transform source and config files.
+	//
+	// Path is a required field
+	Path *string `type:"string" required:"true"`
+
+	// Specifies the name of the dynamic transform as it appears in the Glue Studio
+	// visual editor.
+	//
+	// TransformName is a required field
+	TransformName *string `type:"string" required:"true"`
+
+	// This field is not used and will be deprecated in future release.
+	Version *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DynamicTransform) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DynamicTransform) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DynamicTransform) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DynamicTransform"}
+	if s.FunctionName == nil {
+		invalidParams.Add(request.NewErrParamRequired("FunctionName"))
+	}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Path == nil {
+		invalidParams.Add(request.NewErrParamRequired("Path"))
+	}
+	if s.TransformName == nil {
+		invalidParams.Add(request.NewErrParamRequired("TransformName"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.Parameters != nil {
+		for i, v := range s.Parameters {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Parameters", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFunctionName sets the FunctionName field's value.
+func (s *DynamicTransform) SetFunctionName(v string) *DynamicTransform {
+	s.FunctionName = &v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *DynamicTransform) SetInputs(v []*string) *DynamicTransform {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DynamicTransform) SetName(v string) *DynamicTransform {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *DynamicTransform) SetOutputSchemas(v []*GlueSchema) *DynamicTransform {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetParameters sets the Parameters field's value.
+func (s *DynamicTransform) SetParameters(v []*TransformConfigParameter) *DynamicTransform {
+	s.Parameters = v
+	return s
+}
+
+// SetPath sets the Path field's value.
+func (s *DynamicTransform) SetPath(v string) *DynamicTransform {
+	s.Path = &v
+	return s
+}
+
+// SetTransformName sets the TransformName field's value.
+func (s *DynamicTransform) SetTransformName(v string) *DynamicTransform {
+	s.TransformName = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *DynamicTransform) SetVersion(v string) *DynamicTransform {
+	s.Version = &v
+	return s
+}
+
 // Specifies a DynamoDB data source in the Glue Data Catalog.
 type DynamoDBCatalogSource struct {
 	_ struct{} `type:"structure"`
@@ -34900,6 +39405,9 @@ type EntityNotFoundException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
 
+	// Indicates whether or not the exception relates to a federated source.
+	FromFederationSource *bool `type:"boolean"`
+
 	// A message describing the problem.
 	Message_ *string `locationName:"Message" type:"string"`
 }
@@ -34947,7 +39455,7 @@ func (s *EntityNotFoundException) OrigErr() error {
 }
 
 func (s *EntityNotFoundException) Error() string {
-	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+	return fmt.Sprintf("%s: %s\n%s", s.Code(), s.Message(), s.String())
 }
 
 // Status code returns the HTTP status code for the request's response error.
@@ -35039,6 +39547,234 @@ func (s *ErrorDetails) SetErrorCode(v string) *ErrorDetails {
 // SetErrorMessage sets the ErrorMessage field's value.
 func (s *ErrorDetails) SetErrorMessage(v string) *ErrorDetails {
 	s.ErrorMessage = &v
+	return s
+}
+
+// Specifies your data quality evaluation criteria.
+type EvaluateDataQuality struct {
+	_ struct{} `type:"structure"`
+
+	// The inputs of your data quality evaluation.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the data quality evaluation.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// The output of your data quality evaluation.
+	Output *string `type:"string" enum:"DQTransformOutput_"`
+
+	// Options to configure how your results are published.
+	PublishingOptions *DQResultsPublishingOptions `type:"structure"`
+
+	// The ruleset for your data quality evaluation.
+	//
+	// Ruleset is a required field
+	Ruleset *string `min:"1" type:"string" required:"true"`
+
+	// Options to configure how your job will stop if your data quality evaluation
+	// fails.
+	StopJobOnFailureOptions *DQStopJobOnFailureOptions `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateDataQuality) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateDataQuality) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EvaluateDataQuality) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EvaluateDataQuality"}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Ruleset == nil {
+		invalidParams.Add(request.NewErrParamRequired("Ruleset"))
+	}
+	if s.Ruleset != nil && len(*s.Ruleset) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Ruleset", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *EvaluateDataQuality) SetInputs(v []*string) *EvaluateDataQuality {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *EvaluateDataQuality) SetName(v string) *EvaluateDataQuality {
+	s.Name = &v
+	return s
+}
+
+// SetOutput sets the Output field's value.
+func (s *EvaluateDataQuality) SetOutput(v string) *EvaluateDataQuality {
+	s.Output = &v
+	return s
+}
+
+// SetPublishingOptions sets the PublishingOptions field's value.
+func (s *EvaluateDataQuality) SetPublishingOptions(v *DQResultsPublishingOptions) *EvaluateDataQuality {
+	s.PublishingOptions = v
+	return s
+}
+
+// SetRuleset sets the Ruleset field's value.
+func (s *EvaluateDataQuality) SetRuleset(v string) *EvaluateDataQuality {
+	s.Ruleset = &v
+	return s
+}
+
+// SetStopJobOnFailureOptions sets the StopJobOnFailureOptions field's value.
+func (s *EvaluateDataQuality) SetStopJobOnFailureOptions(v *DQStopJobOnFailureOptions) *EvaluateDataQuality {
+	s.StopJobOnFailureOptions = v
+	return s
+}
+
+// Specifies your data quality evaluation criteria.
+type EvaluateDataQualityMultiFrame struct {
+	_ struct{} `type:"structure"`
+
+	// The aliases of all data sources except primary.
+	AdditionalDataSources map[string]*string `type:"map"`
+
+	// Options to configure runtime behavior of the transform.
+	AdditionalOptions map[string]*string `type:"map"`
+
+	// The inputs of your data quality evaluation. The first input in this list
+	// is the primary data source.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the data quality evaluation.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Options to configure how your results are published.
+	PublishingOptions *DQResultsPublishingOptions `type:"structure"`
+
+	// The ruleset for your data quality evaluation.
+	//
+	// Ruleset is a required field
+	Ruleset *string `min:"1" type:"string" required:"true"`
+
+	// Options to configure how your job will stop if your data quality evaluation
+	// fails.
+	StopJobOnFailureOptions *DQStopJobOnFailureOptions `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateDataQualityMultiFrame) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EvaluateDataQualityMultiFrame) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EvaluateDataQualityMultiFrame) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EvaluateDataQualityMultiFrame"}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Ruleset == nil {
+		invalidParams.Add(request.NewErrParamRequired("Ruleset"))
+	}
+	if s.Ruleset != nil && len(*s.Ruleset) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Ruleset", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalDataSources sets the AdditionalDataSources field's value.
+func (s *EvaluateDataQualityMultiFrame) SetAdditionalDataSources(v map[string]*string) *EvaluateDataQualityMultiFrame {
+	s.AdditionalDataSources = v
+	return s
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *EvaluateDataQualityMultiFrame) SetAdditionalOptions(v map[string]*string) *EvaluateDataQualityMultiFrame {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *EvaluateDataQualityMultiFrame) SetInputs(v []*string) *EvaluateDataQualityMultiFrame {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *EvaluateDataQualityMultiFrame) SetName(v string) *EvaluateDataQualityMultiFrame {
+	s.Name = &v
+	return s
+}
+
+// SetPublishingOptions sets the PublishingOptions field's value.
+func (s *EvaluateDataQualityMultiFrame) SetPublishingOptions(v *DQResultsPublishingOptions) *EvaluateDataQualityMultiFrame {
+	s.PublishingOptions = v
+	return s
+}
+
+// SetRuleset sets the Ruleset field's value.
+func (s *EvaluateDataQualityMultiFrame) SetRuleset(v string) *EvaluateDataQualityMultiFrame {
+	s.Ruleset = &v
+	return s
+}
+
+// SetStopJobOnFailureOptions sets the StopJobOnFailureOptions field's value.
+func (s *EvaluateDataQualityMultiFrame) SetStopJobOnFailureOptions(v *DQStopJobOnFailureOptions) *EvaluateDataQualityMultiFrame {
+	s.StopJobOnFailureOptions = v
 	return s
 }
 
@@ -35216,6 +39952,312 @@ func (s ExportLabelsTaskRunProperties) GoString() string {
 func (s *ExportLabelsTaskRunProperties) SetOutputS3Path(v string) *ExportLabelsTaskRunProperties {
 	s.OutputS3Path = &v
 	return s
+}
+
+// A database that points to an entity outside the Glue Data Catalog.
+type FederatedDatabase struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the connection to the external metastore.
+	ConnectionName *string `min:"1" type:"string"`
+
+	// A unique identifier for the federated database.
+	Identifier *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederatedDatabase) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederatedDatabase) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *FederatedDatabase) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "FederatedDatabase"}
+	if s.ConnectionName != nil && len(*s.ConnectionName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ConnectionName", 1))
+	}
+	if s.Identifier != nil && len(*s.Identifier) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Identifier", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetConnectionName sets the ConnectionName field's value.
+func (s *FederatedDatabase) SetConnectionName(v string) *FederatedDatabase {
+	s.ConnectionName = &v
+	return s
+}
+
+// SetIdentifier sets the Identifier field's value.
+func (s *FederatedDatabase) SetIdentifier(v string) *FederatedDatabase {
+	s.Identifier = &v
+	return s
+}
+
+// A federated resource already exists.
+type FederatedResourceAlreadyExistsException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	// The associated Glue resource already exists.
+	AssociatedGlueResource *string `min:"1" type:"string"`
+
+	// The message describing the problem.
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederatedResourceAlreadyExistsException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederatedResourceAlreadyExistsException) GoString() string {
+	return s.String()
+}
+
+func newErrorFederatedResourceAlreadyExistsException(v protocol.ResponseMetadata) error {
+	return &FederatedResourceAlreadyExistsException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *FederatedResourceAlreadyExistsException) Code() string {
+	return "FederatedResourceAlreadyExistsException"
+}
+
+// Message returns the exception's message.
+func (s *FederatedResourceAlreadyExistsException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *FederatedResourceAlreadyExistsException) OrigErr() error {
+	return nil
+}
+
+func (s *FederatedResourceAlreadyExistsException) Error() string {
+	return fmt.Sprintf("%s: %s\n%s", s.Code(), s.Message(), s.String())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *FederatedResourceAlreadyExistsException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *FederatedResourceAlreadyExistsException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
+// A table that points to an entity outside the Glue Data Catalog.
+type FederatedTable struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the connection to the external metastore.
+	ConnectionName *string `min:"1" type:"string"`
+
+	// A unique identifier for the federated database.
+	DatabaseIdentifier *string `min:"1" type:"string"`
+
+	// A unique identifier for the federated table.
+	Identifier *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederatedTable) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederatedTable) GoString() string {
+	return s.String()
+}
+
+// SetConnectionName sets the ConnectionName field's value.
+func (s *FederatedTable) SetConnectionName(v string) *FederatedTable {
+	s.ConnectionName = &v
+	return s
+}
+
+// SetDatabaseIdentifier sets the DatabaseIdentifier field's value.
+func (s *FederatedTable) SetDatabaseIdentifier(v string) *FederatedTable {
+	s.DatabaseIdentifier = &v
+	return s
+}
+
+// SetIdentifier sets the Identifier field's value.
+func (s *FederatedTable) SetIdentifier(v string) *FederatedTable {
+	s.Identifier = &v
+	return s
+}
+
+// A federation source failed.
+type FederationSourceException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	// The error code of the problem.
+	FederationSourceErrorCode *string `type:"string" enum:"FederationSourceErrorCode"`
+
+	// The message describing the problem.
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederationSourceException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederationSourceException) GoString() string {
+	return s.String()
+}
+
+func newErrorFederationSourceException(v protocol.ResponseMetadata) error {
+	return &FederationSourceException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *FederationSourceException) Code() string {
+	return "FederationSourceException"
+}
+
+// Message returns the exception's message.
+func (s *FederationSourceException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *FederationSourceException) OrigErr() error {
+	return nil
+}
+
+func (s *FederationSourceException) Error() string {
+	return fmt.Sprintf("%s: %s\n%s", s.Code(), s.Message(), s.String())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *FederationSourceException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *FederationSourceException) RequestID() string {
+	return s.RespMetadata.RequestID
+}
+
+type FederationSourceRetryableException struct {
+	_            struct{}                  `type:"structure"`
+	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
+
+	Message_ *string `locationName:"Message" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederationSourceRetryableException) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s FederationSourceRetryableException) GoString() string {
+	return s.String()
+}
+
+func newErrorFederationSourceRetryableException(v protocol.ResponseMetadata) error {
+	return &FederationSourceRetryableException{
+		RespMetadata: v,
+	}
+}
+
+// Code returns the exception type name.
+func (s *FederationSourceRetryableException) Code() string {
+	return "FederationSourceRetryableException"
+}
+
+// Message returns the exception's message.
+func (s *FederationSourceRetryableException) Message() string {
+	if s.Message_ != nil {
+		return *s.Message_
+	}
+	return ""
+}
+
+// OrigErr always returns nil, satisfies awserr.Error interface.
+func (s *FederationSourceRetryableException) OrigErr() error {
+	return nil
+}
+
+func (s *FederationSourceRetryableException) Error() string {
+	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+}
+
+// Status code returns the HTTP status code for the request's response error.
+func (s *FederationSourceRetryableException) StatusCode() int {
+	return s.RespMetadata.StatusCode
+}
+
+// RequestID returns the service's response RequestID for request.
+func (s *FederationSourceRetryableException) RequestID() string {
+	return s.RespMetadata.RequestID
 }
 
 // Specifies a transform that locates records in the dataset that have missing
@@ -36607,7 +41649,7 @@ func (s *GetColumnStatisticsForTableInput) SetTableName(v string) *GetColumnStat
 type GetColumnStatisticsForTableOutput struct {
 	_ struct{} `type:"structure"`
 
-	// List of ColumnStatistics that failed to be retrieved.
+	// List of ColumnStatistics.
 	ColumnStatisticsList []*ColumnStatistics `type:"list"`
 
 	// List of ColumnStatistics that failed to be retrieved.
@@ -37376,6 +42418,719 @@ func (s *GetDataCatalogEncryptionSettingsOutput) SetDataCatalogEncryptionSetting
 	return s
 }
 
+type GetDataQualityResultInput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique result ID for the data quality result.
+	//
+	// ResultId is a required field
+	ResultId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityResultInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityResultInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDataQualityResultInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDataQualityResultInput"}
+	if s.ResultId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResultId"))
+	}
+	if s.ResultId != nil && len(*s.ResultId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResultId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResultId sets the ResultId field's value.
+func (s *GetDataQualityResultInput) SetResultId(v string) *GetDataQualityResultInput {
+	s.ResultId = &v
+	return s
+}
+
+type GetDataQualityResultOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time when the run for this data quality result was completed.
+	CompletedOn *time.Time `type:"timestamp"`
+
+	// The table associated with the data quality result, if any.
+	DataSource *DataSource `type:"structure"`
+
+	// In the context of a job in Glue Studio, each node in the canvas is typically
+	// assigned some sort of name and data quality nodes will have names. In the
+	// case of multiple nodes, the evaluationContext can differentiate the nodes.
+	EvaluationContext *string `type:"string"`
+
+	// The job name associated with the data quality result, if any.
+	JobName *string `min:"1" type:"string"`
+
+	// The job run ID associated with the data quality result, if any.
+	JobRunId *string `min:"1" type:"string"`
+
+	// A unique result ID for the data quality result.
+	ResultId *string `min:"1" type:"string"`
+
+	// A list of DataQualityRuleResult objects representing the results for each
+	// rule.
+	RuleResults []*DataQualityRuleResult `min:"1" type:"list"`
+
+	// The unique run ID associated with the ruleset evaluation.
+	RulesetEvaluationRunId *string `min:"1" type:"string"`
+
+	// The name of the ruleset associated with the data quality result.
+	RulesetName *string `min:"1" type:"string"`
+
+	// An aggregate data quality score. Represents the ratio of rules that passed
+	// to the total number of rules.
+	Score *float64 `type:"double"`
+
+	// The date and time when the run for this data quality result started.
+	StartedOn *time.Time `type:"timestamp"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityResultOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityResultOutput) GoString() string {
+	return s.String()
+}
+
+// SetCompletedOn sets the CompletedOn field's value.
+func (s *GetDataQualityResultOutput) SetCompletedOn(v time.Time) *GetDataQualityResultOutput {
+	s.CompletedOn = &v
+	return s
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *GetDataQualityResultOutput) SetDataSource(v *DataSource) *GetDataQualityResultOutput {
+	s.DataSource = v
+	return s
+}
+
+// SetEvaluationContext sets the EvaluationContext field's value.
+func (s *GetDataQualityResultOutput) SetEvaluationContext(v string) *GetDataQualityResultOutput {
+	s.EvaluationContext = &v
+	return s
+}
+
+// SetJobName sets the JobName field's value.
+func (s *GetDataQualityResultOutput) SetJobName(v string) *GetDataQualityResultOutput {
+	s.JobName = &v
+	return s
+}
+
+// SetJobRunId sets the JobRunId field's value.
+func (s *GetDataQualityResultOutput) SetJobRunId(v string) *GetDataQualityResultOutput {
+	s.JobRunId = &v
+	return s
+}
+
+// SetResultId sets the ResultId field's value.
+func (s *GetDataQualityResultOutput) SetResultId(v string) *GetDataQualityResultOutput {
+	s.ResultId = &v
+	return s
+}
+
+// SetRuleResults sets the RuleResults field's value.
+func (s *GetDataQualityResultOutput) SetRuleResults(v []*DataQualityRuleResult) *GetDataQualityResultOutput {
+	s.RuleResults = v
+	return s
+}
+
+// SetRulesetEvaluationRunId sets the RulesetEvaluationRunId field's value.
+func (s *GetDataQualityResultOutput) SetRulesetEvaluationRunId(v string) *GetDataQualityResultOutput {
+	s.RulesetEvaluationRunId = &v
+	return s
+}
+
+// SetRulesetName sets the RulesetName field's value.
+func (s *GetDataQualityResultOutput) SetRulesetName(v string) *GetDataQualityResultOutput {
+	s.RulesetName = &v
+	return s
+}
+
+// SetScore sets the Score field's value.
+func (s *GetDataQualityResultOutput) SetScore(v float64) *GetDataQualityResultOutput {
+	s.Score = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *GetDataQualityResultOutput) SetStartedOn(v time.Time) *GetDataQualityResultOutput {
+	s.StartedOn = &v
+	return s
+}
+
+type GetDataQualityRuleRecommendationRunInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	//
+	// RunId is a required field
+	RunId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRuleRecommendationRunInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRuleRecommendationRunInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDataQualityRuleRecommendationRunInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDataQualityRuleRecommendationRunInput"}
+	if s.RunId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RunId"))
+	}
+	if s.RunId != nil && len(*s.RunId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RunId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRunId sets the RunId field's value.
+func (s *GetDataQualityRuleRecommendationRunInput) SetRunId(v string) *GetDataQualityRuleRecommendationRunInput {
+	s.RunId = &v
+	return s
+}
+
+type GetDataQualityRuleRecommendationRunOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time when this run was completed.
+	CompletedOn *time.Time `type:"timestamp"`
+
+	// The name of the ruleset that was created by the run.
+	CreatedRulesetName *string `min:"1" type:"string"`
+
+	// The data source (an Glue table) associated with this run.
+	DataSource *DataSource `type:"structure"`
+
+	// The error strings that are associated with the run.
+	ErrorString *string `type:"string"`
+
+	// The amount of time (in seconds) that the run consumed resources.
+	ExecutionTime *int64 `type:"integer"`
+
+	// A timestamp. The last point in time when this data quality rule recommendation
+	// run was modified.
+	LastModifiedOn *time.Time `type:"timestamp"`
+
+	// The number of G.1X workers to be used in the run. The default is 5.
+	NumberOfWorkers *int64 `type:"integer"`
+
+	// When a start rule recommendation run completes, it creates a recommended
+	// ruleset (a set of rules). This member has those rules in Data Quality Definition
+	// Language (DQDL) format.
+	RecommendedRuleset *string `min:"1" type:"string"`
+
+	// An IAM role supplied to encrypt the results of the run.
+	Role *string `type:"string"`
+
+	// The unique run identifier associated with this run.
+	RunId *string `min:"1" type:"string"`
+
+	// The date and time when this run started.
+	StartedOn *time.Time `type:"timestamp"`
+
+	// The status for this run.
+	Status *string `type:"string" enum:"TaskStatusType"`
+
+	// The timeout for a run in minutes. This is the maximum time that a run can
+	// consume resources before it is terminated and enters TIMEOUT status. The
+	// default is 2,880 minutes (48 hours).
+	Timeout *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRuleRecommendationRunOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRuleRecommendationRunOutput) GoString() string {
+	return s.String()
+}
+
+// SetCompletedOn sets the CompletedOn field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetCompletedOn(v time.Time) *GetDataQualityRuleRecommendationRunOutput {
+	s.CompletedOn = &v
+	return s
+}
+
+// SetCreatedRulesetName sets the CreatedRulesetName field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetCreatedRulesetName(v string) *GetDataQualityRuleRecommendationRunOutput {
+	s.CreatedRulesetName = &v
+	return s
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetDataSource(v *DataSource) *GetDataQualityRuleRecommendationRunOutput {
+	s.DataSource = v
+	return s
+}
+
+// SetErrorString sets the ErrorString field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetErrorString(v string) *GetDataQualityRuleRecommendationRunOutput {
+	s.ErrorString = &v
+	return s
+}
+
+// SetExecutionTime sets the ExecutionTime field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetExecutionTime(v int64) *GetDataQualityRuleRecommendationRunOutput {
+	s.ExecutionTime = &v
+	return s
+}
+
+// SetLastModifiedOn sets the LastModifiedOn field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetLastModifiedOn(v time.Time) *GetDataQualityRuleRecommendationRunOutput {
+	s.LastModifiedOn = &v
+	return s
+}
+
+// SetNumberOfWorkers sets the NumberOfWorkers field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetNumberOfWorkers(v int64) *GetDataQualityRuleRecommendationRunOutput {
+	s.NumberOfWorkers = &v
+	return s
+}
+
+// SetRecommendedRuleset sets the RecommendedRuleset field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetRecommendedRuleset(v string) *GetDataQualityRuleRecommendationRunOutput {
+	s.RecommendedRuleset = &v
+	return s
+}
+
+// SetRole sets the Role field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetRole(v string) *GetDataQualityRuleRecommendationRunOutput {
+	s.Role = &v
+	return s
+}
+
+// SetRunId sets the RunId field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetRunId(v string) *GetDataQualityRuleRecommendationRunOutput {
+	s.RunId = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetStartedOn(v time.Time) *GetDataQualityRuleRecommendationRunOutput {
+	s.StartedOn = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetStatus(v string) *GetDataQualityRuleRecommendationRunOutput {
+	s.Status = &v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *GetDataQualityRuleRecommendationRunOutput) SetTimeout(v int64) *GetDataQualityRuleRecommendationRunOutput {
+	s.Timeout = &v
+	return s
+}
+
+type GetDataQualityRulesetEvaluationRunInput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	//
+	// RunId is a required field
+	RunId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetEvaluationRunInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetEvaluationRunInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDataQualityRulesetEvaluationRunInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDataQualityRulesetEvaluationRunInput"}
+	if s.RunId == nil {
+		invalidParams.Add(request.NewErrParamRequired("RunId"))
+	}
+	if s.RunId != nil && len(*s.RunId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RunId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetRunId sets the RunId field's value.
+func (s *GetDataQualityRulesetEvaluationRunInput) SetRunId(v string) *GetDataQualityRulesetEvaluationRunInput {
+	s.RunId = &v
+	return s
+}
+
+type GetDataQualityRulesetEvaluationRunOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A map of reference strings to additional data sources you can specify for
+	// an evaluation run.
+	AdditionalDataSources map[string]*DataSource `type:"map"`
+
+	// Additional run options you can specify for an evaluation run.
+	AdditionalRunOptions *DataQualityEvaluationRunAdditionalRunOptions `type:"structure"`
+
+	// The date and time when this run was completed.
+	CompletedOn *time.Time `type:"timestamp"`
+
+	// The data source (an Glue table) associated with this evaluation run.
+	DataSource *DataSource `type:"structure"`
+
+	// The error strings that are associated with the run.
+	ErrorString *string `type:"string"`
+
+	// The amount of time (in seconds) that the run consumed resources.
+	ExecutionTime *int64 `type:"integer"`
+
+	// A timestamp. The last point in time when this data quality rule recommendation
+	// run was modified.
+	LastModifiedOn *time.Time `type:"timestamp"`
+
+	// The number of G.1X workers to be used in the run. The default is 5.
+	NumberOfWorkers *int64 `type:"integer"`
+
+	// A list of result IDs for the data quality results for the run.
+	ResultIds []*string `min:"1" type:"list"`
+
+	// An IAM role supplied to encrypt the results of the run.
+	Role *string `type:"string"`
+
+	// A list of ruleset names for the run.
+	RulesetNames []*string `min:"1" type:"list"`
+
+	// The unique run identifier associated with this run.
+	RunId *string `min:"1" type:"string"`
+
+	// The date and time when this run started.
+	StartedOn *time.Time `type:"timestamp"`
+
+	// The status for this run.
+	Status *string `type:"string" enum:"TaskStatusType"`
+
+	// The timeout for a run in minutes. This is the maximum time that a run can
+	// consume resources before it is terminated and enters TIMEOUT status. The
+	// default is 2,880 minutes (48 hours).
+	Timeout *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetEvaluationRunOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetEvaluationRunOutput) GoString() string {
+	return s.String()
+}
+
+// SetAdditionalDataSources sets the AdditionalDataSources field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetAdditionalDataSources(v map[string]*DataSource) *GetDataQualityRulesetEvaluationRunOutput {
+	s.AdditionalDataSources = v
+	return s
+}
+
+// SetAdditionalRunOptions sets the AdditionalRunOptions field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetAdditionalRunOptions(v *DataQualityEvaluationRunAdditionalRunOptions) *GetDataQualityRulesetEvaluationRunOutput {
+	s.AdditionalRunOptions = v
+	return s
+}
+
+// SetCompletedOn sets the CompletedOn field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetCompletedOn(v time.Time) *GetDataQualityRulesetEvaluationRunOutput {
+	s.CompletedOn = &v
+	return s
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetDataSource(v *DataSource) *GetDataQualityRulesetEvaluationRunOutput {
+	s.DataSource = v
+	return s
+}
+
+// SetErrorString sets the ErrorString field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetErrorString(v string) *GetDataQualityRulesetEvaluationRunOutput {
+	s.ErrorString = &v
+	return s
+}
+
+// SetExecutionTime sets the ExecutionTime field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetExecutionTime(v int64) *GetDataQualityRulesetEvaluationRunOutput {
+	s.ExecutionTime = &v
+	return s
+}
+
+// SetLastModifiedOn sets the LastModifiedOn field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetLastModifiedOn(v time.Time) *GetDataQualityRulesetEvaluationRunOutput {
+	s.LastModifiedOn = &v
+	return s
+}
+
+// SetNumberOfWorkers sets the NumberOfWorkers field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetNumberOfWorkers(v int64) *GetDataQualityRulesetEvaluationRunOutput {
+	s.NumberOfWorkers = &v
+	return s
+}
+
+// SetResultIds sets the ResultIds field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetResultIds(v []*string) *GetDataQualityRulesetEvaluationRunOutput {
+	s.ResultIds = v
+	return s
+}
+
+// SetRole sets the Role field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetRole(v string) *GetDataQualityRulesetEvaluationRunOutput {
+	s.Role = &v
+	return s
+}
+
+// SetRulesetNames sets the RulesetNames field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetRulesetNames(v []*string) *GetDataQualityRulesetEvaluationRunOutput {
+	s.RulesetNames = v
+	return s
+}
+
+// SetRunId sets the RunId field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetRunId(v string) *GetDataQualityRulesetEvaluationRunOutput {
+	s.RunId = &v
+	return s
+}
+
+// SetStartedOn sets the StartedOn field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetStartedOn(v time.Time) *GetDataQualityRulesetEvaluationRunOutput {
+	s.StartedOn = &v
+	return s
+}
+
+// SetStatus sets the Status field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetStatus(v string) *GetDataQualityRulesetEvaluationRunOutput {
+	s.Status = &v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *GetDataQualityRulesetEvaluationRunOutput) SetTimeout(v int64) *GetDataQualityRulesetEvaluationRunOutput {
+	s.Timeout = &v
+	return s
+}
+
+type GetDataQualityRulesetInput struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the ruleset.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDataQualityRulesetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDataQualityRulesetInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetName sets the Name field's value.
+func (s *GetDataQualityRulesetInput) SetName(v string) *GetDataQualityRulesetInput {
+	s.Name = &v
+	return s
+}
+
+type GetDataQualityRulesetOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A timestamp. The time and date that this data quality ruleset was created.
+	CreatedOn *time.Time `type:"timestamp"`
+
+	// A description of the ruleset.
+	Description *string `type:"string"`
+
+	// A timestamp. The last point in time when this data quality ruleset was modified.
+	LastModifiedOn *time.Time `type:"timestamp"`
+
+	// The name of the ruleset.
+	Name *string `min:"1" type:"string"`
+
+	// When a ruleset was created from a recommendation run, this run ID is generated
+	// to link the two together.
+	RecommendationRunId *string `min:"1" type:"string"`
+
+	// A Data Quality Definition Language (DQDL) ruleset. For more information,
+	// see the Glue developer guide.
+	Ruleset *string `min:"1" type:"string"`
+
+	// The name and database name of the target table.
+	TargetTable *DataQualityTargetTable `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s GetDataQualityRulesetOutput) GoString() string {
+	return s.String()
+}
+
+// SetCreatedOn sets the CreatedOn field's value.
+func (s *GetDataQualityRulesetOutput) SetCreatedOn(v time.Time) *GetDataQualityRulesetOutput {
+	s.CreatedOn = &v
+	return s
+}
+
+// SetDescription sets the Description field's value.
+func (s *GetDataQualityRulesetOutput) SetDescription(v string) *GetDataQualityRulesetOutput {
+	s.Description = &v
+	return s
+}
+
+// SetLastModifiedOn sets the LastModifiedOn field's value.
+func (s *GetDataQualityRulesetOutput) SetLastModifiedOn(v time.Time) *GetDataQualityRulesetOutput {
+	s.LastModifiedOn = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *GetDataQualityRulesetOutput) SetName(v string) *GetDataQualityRulesetOutput {
+	s.Name = &v
+	return s
+}
+
+// SetRecommendationRunId sets the RecommendationRunId field's value.
+func (s *GetDataQualityRulesetOutput) SetRecommendationRunId(v string) *GetDataQualityRulesetOutput {
+	s.RecommendationRunId = &v
+	return s
+}
+
+// SetRuleset sets the Ruleset field's value.
+func (s *GetDataQualityRulesetOutput) SetRuleset(v string) *GetDataQualityRulesetOutput {
+	s.Ruleset = &v
+	return s
+}
+
+// SetTargetTable sets the TargetTable field's value.
+func (s *GetDataQualityRulesetOutput) SetTargetTable(v *DataQualityTargetTable) *GetDataQualityRulesetOutput {
+	s.TargetTable = v
+	return s
+}
+
 type GetDatabaseInput struct {
 	_ struct{} `type:"structure"`
 
@@ -37484,7 +43239,10 @@ type GetDatabasesInput struct {
 	NextToken *string `type:"string"`
 
 	// Allows you to specify that you want to list the databases shared with your
-	// account. The allowable values are FOREIGN or ALL.
+	// account. The allowable values are FEDERATED, FOREIGN or ALL.
+	//
+	//    * If set to FEDERATED, will list the federated databases (referencing
+	//    an external entity) shared with your account.
 	//
 	//    * If set to FOREIGN, will list the databases shared with your account.
 	//
@@ -42009,21 +47767,31 @@ func (s *GetTriggersOutput) SetTriggers(v []*Trigger) *GetTriggersOutput {
 type GetUnfilteredPartitionMetadataInput struct {
 	_ struct{} `type:"structure"`
 
-	// A structure containing information for audit.
+	// A structure containing Lake Formation audit context information.
 	AuditContext *AuditContext `type:"structure"`
 
+	// The catalog ID where the partition resides.
+	//
 	// CatalogId is a required field
 	CatalogId *string `min:"1" type:"string" required:"true"`
 
+	// (Required) Specifies the name of a database that contains the partition.
+	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
 
+	// (Required) A list of partition key values.
+	//
 	// PartitionValues is a required field
 	PartitionValues []*string `type:"list" required:"true"`
 
+	// (Required) A list of supported permission types.
+	//
 	// SupportedPermissionTypes is a required field
 	SupportedPermissionTypes []*string `min:"1" type:"list" required:"true" enum:"PermissionType"`
 
+	// (Required) Specifies the name of a table that contains the partition.
+	//
 	// TableName is a required field
 	TableName *string `min:"1" type:"string" required:"true"`
 }
@@ -42122,11 +47890,14 @@ func (s *GetUnfilteredPartitionMetadataInput) SetTableName(v string) *GetUnfilte
 type GetUnfilteredPartitionMetadataOutput struct {
 	_ struct{} `type:"structure"`
 
+	// A list of column names that the user has been granted access to.
 	AuthorizedColumns []*string `type:"list"`
 
+	// A Boolean value that indicates whether the partition location is registered
+	// with Lake Formation.
 	IsRegisteredWithLakeFormation *bool `type:"boolean"`
 
-	// Represents a slice of table data.
+	// A Partition object containing the partition metadata.
 	Partition *Partition `type:"structure"`
 }
 
@@ -42169,28 +47940,117 @@ func (s *GetUnfilteredPartitionMetadataOutput) SetPartition(v *Partition) *GetUn
 type GetUnfilteredPartitionsMetadataInput struct {
 	_ struct{} `type:"structure"`
 
-	// A structure containing information for audit.
+	// A structure containing Lake Formation audit context information.
 	AuditContext *AuditContext `type:"structure"`
 
+	// The ID of the Data Catalog where the partitions in question reside. If none
+	// is provided, the AWS account ID is used by default.
+	//
 	// CatalogId is a required field
 	CatalogId *string `min:"1" type:"string" required:"true"`
 
+	// The name of the catalog database where the partitions reside.
+	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
 
+	// An expression that filters the partitions to be returned.
+	//
+	// The expression uses SQL syntax similar to the SQL WHERE filter clause. The
+	// SQL statement parser JSQLParser (http://jsqlparser.sourceforge.net/home.php)
+	// parses the expression.
+	//
+	// Operators: The following are the operators that you can use in the Expression
+	// API call:
+	//
+	// =
+	//
+	// Checks whether the values of the two operands are equal; if yes, then the
+	// condition becomes true.
+	//
+	// Example: Assume 'variable a' holds 10 and 'variable b' holds 20.
+	//
+	// (a = b) is not true.
+	//
+	// < >
+	//
+	// Checks whether the values of two operands are equal; if the values are not
+	// equal, then the condition becomes true.
+	//
+	// Example: (a < > b) is true.
+	//
+	// >
+	//
+	// Checks whether the value of the left operand is greater than the value of
+	// the right operand; if yes, then the condition becomes true.
+	//
+	// Example: (a > b) is not true.
+	//
+	// <
+	//
+	// Checks whether the value of the left operand is less than the value of the
+	// right operand; if yes, then the condition becomes true.
+	//
+	// Example: (a < b) is true.
+	//
+	// >=
+	//
+	// Checks whether the value of the left operand is greater than or equal to
+	// the value of the right operand; if yes, then the condition becomes true.
+	//
+	// Example: (a >= b) is not true.
+	//
+	// <=
+	//
+	// Checks whether the value of the left operand is less than or equal to the
+	// value of the right operand; if yes, then the condition becomes true.
+	//
+	// Example: (a <= b) is true.
+	//
+	// AND, OR, IN, BETWEEN, LIKE, NOT, IS NULL
+	//
+	// Logical operators.
+	//
+	// Supported Partition Key Types: The following are the supported partition
+	// keys.
+	//
+	//    * string
+	//
+	//    * date
+	//
+	//    * timestamp
+	//
+	//    * int
+	//
+	//    * bigint
+	//
+	//    * long
+	//
+	//    * tinyint
+	//
+	//    * smallint
+	//
+	//    * decimal
+	//
+	// If an type is encountered that is not valid, an exception is thrown.
 	Expression *string `type:"string"`
 
+	// The maximum number of partitions to return in a single response.
 	MaxResults *int64 `min:"1" type:"integer"`
 
+	// A continuation token, if this is not the first call to retrieve these partitions.
 	NextToken *string `type:"string"`
 
-	// Defines a non-overlapping region of a table's partitions, allowing multiple
-	// requests to be run in parallel.
+	// The segment of the table's partitions to scan in this request.
 	Segment *Segment `type:"structure"`
 
+	// A list of supported permission types.
+	//
 	// SupportedPermissionTypes is a required field
 	SupportedPermissionTypes []*string `min:"1" type:"list" required:"true" enum:"PermissionType"`
 
+	// The name of the table that contains the partition.
+	//
 	// TableName is a required field
 	TableName *string `min:"1" type:"string" required:"true"`
 }
@@ -42312,8 +48172,11 @@ func (s *GetUnfilteredPartitionsMetadataInput) SetTableName(v string) *GetUnfilt
 type GetUnfilteredPartitionsMetadataOutput struct {
 	_ struct{} `type:"structure"`
 
+	// A continuation token, if the returned list of partitions does not include
+	// the last one.
 	NextToken *string `type:"string"`
 
+	// A list of requested partitions.
 	UnfilteredPartitions []*UnfilteredPartition `type:"list"`
 }
 
@@ -42350,18 +48213,26 @@ func (s *GetUnfilteredPartitionsMetadataOutput) SetUnfilteredPartitions(v []*Unf
 type GetUnfilteredTableMetadataInput struct {
 	_ struct{} `type:"structure"`
 
-	// A structure containing information for audit.
+	// A structure containing Lake Formation audit context information.
 	AuditContext *AuditContext `type:"structure"`
 
+	// The catalog ID where the table resides.
+	//
 	// CatalogId is a required field
 	CatalogId *string `min:"1" type:"string" required:"true"`
 
+	// (Required) Specifies the name of a database that contains the table.
+	//
 	// DatabaseName is a required field
 	DatabaseName *string `min:"1" type:"string" required:"true"`
 
+	// (Required) Specifies the name of a table for which you are requesting metadata.
+	//
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
+	// (Required) A list of supported permission types.
+	//
 	// SupportedPermissionTypes is a required field
 	SupportedPermissionTypes []*string `min:"1" type:"list" required:"true" enum:"PermissionType"`
 }
@@ -42451,13 +48322,17 @@ func (s *GetUnfilteredTableMetadataInput) SetSupportedPermissionTypes(v []*strin
 type GetUnfilteredTableMetadataOutput struct {
 	_ struct{} `type:"structure"`
 
+	// A list of column names that the user has been granted access to.
 	AuthorizedColumns []*string `type:"list"`
 
+	// A list of column row filters.
 	CellFilters []*ColumnRowFilter `type:"list"`
 
+	// A Boolean value that indicates whether the partition location is registered
+	// with Lake Formation.
 	IsRegisteredWithLakeFormation *bool `type:"boolean"`
 
-	// Represents a collection of related data organized in columns and rows.
+	// A Table object containing the table metadata.
 	Table *TableData `type:"structure"`
 }
 
@@ -43223,8 +49098,7 @@ func (s *GluePolicy) SetUpdateTime(v time.Time) *GluePolicy {
 	return s
 }
 
-// Specifies a user-defined schema when a schema cannot be determined by AWS
-// Glue.
+// Specifies a user-defined schema when a schema cannot be determined by Glue.
 type GlueSchema struct {
 	_ struct{} `type:"structure"`
 
@@ -44070,6 +49944,9 @@ type InvalidInputException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
 
+	// Indicates whether or not the exception relates to a federated source.
+	FromFederationSource *bool `type:"boolean"`
+
 	// A message describing the problem.
 	Message_ *string `locationName:"Message" type:"string"`
 }
@@ -44117,7 +49994,7 @@ func (s *InvalidInputException) OrigErr() error {
 }
 
 func (s *InvalidInputException) Error() string {
-	return fmt.Sprintf("%s: %s", s.Code(), s.Message())
+	return fmt.Sprintf("%s: %s\n%s", s.Code(), s.Message(), s.String())
 }
 
 // Status code returns the HTTP status code for the request's response error.
@@ -44600,6 +50477,13 @@ type JdbcTarget struct {
 	// The name of the connection to use to connect to the JDBC target.
 	ConnectionName *string `type:"string"`
 
+	// Specify a value of RAWTYPES or COMMENTS to enable additional metadata in
+	// table responses. RAWTYPES provides the native-level datatype. COMMENTS provides
+	// comments associated with a column or table in the database.
+	//
+	// If you do not need additional metadata, keep the field empty.
+	EnableAdditionalMetadata []*string `type:"list" enum:"JdbcMetadataEntry"`
+
 	// A list of glob patterns used to exclude from the crawl. For more information,
 	// see Catalog Tables with a Crawler (https://docs.aws.amazon.com/glue/latest/dg/add-crawler.html).
 	Exclusions []*string `type:"list"`
@@ -44629,6 +50513,12 @@ func (s JdbcTarget) GoString() string {
 // SetConnectionName sets the ConnectionName field's value.
 func (s *JdbcTarget) SetConnectionName(v string) *JdbcTarget {
 	s.ConnectionName = &v
+	return s
+}
+
+// SetEnableAdditionalMetadata sets the EnableAdditionalMetadata field's value.
+func (s *JdbcTarget) SetEnableAdditionalMetadata(v []*string) *JdbcTarget {
+	s.EnableAdditionalMetadata = v
 	return s
 }
 
@@ -44676,18 +50566,27 @@ type Job struct {
 	// The time and date that this job definition was created.
 	CreatedOn *time.Time `type:"timestamp"`
 
-	// The default arguments for this job, specified as name-value pairs.
+	// The default arguments for every run of this job, specified as name-value
+	// pairs.
 	//
 	// You can specify arguments here that your own job-execution script consumes,
 	// as well as arguments that Glue itself consumes.
+	//
+	// Job arguments may be logged. Do not pass plaintext secrets as arguments.
+	// Retrieve secrets from a Glue Connection, Secrets Manager or other secret
+	// management mechanism if you intend to keep them within the Job.
 	//
 	// For information about how to specify and consume your own Job arguments,
 	// see the Calling Glue APIs in Python (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html)
 	// topic in the developer guide.
 	//
-	// For information about the key-value pairs that Glue consumes to set up your
-	// job, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+	// For information about the arguments you can provide to this field when configuring
+	// Spark jobs, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
 	// topic in the developer guide.
+	//
+	// For information about the arguments you can provide to this field when configuring
+	// Ray jobs, see Using job parameters in Ray jobs (https://docs.aws.amazon.com/glue/latest/dg/author-job-ray-job-parameters.html)
+	// in the developer guide.
 	DefaultArguments map[string]*string `type:"map"`
 
 	// A description of the job.
@@ -44709,9 +50608,13 @@ type Job struct {
 	// for this job.
 	ExecutionProperty *ExecutionProperty `type:"structure"`
 
-	// Glue version determines the versions of Apache Spark and Python that Glue
-	// supports. The Python version indicates the version supported for jobs of
-	// type Spark.
+	// In Spark jobs, GlueVersion determines the versions of Apache Spark and Python
+	// that Glue available in a job. The Python version indicates the version supported
+	// for jobs of type Spark.
+	//
+	// Ray jobs should set GlueVersion to 4.0 or greater. However, the versions
+	// of Ray, Python and additional libraries available in your Ray job are determined
+	// by the Runtime parameter of the Job command.
 	//
 	// For more information about the available Glue versions and corresponding
 	// Spark and Python versions, see Glue version (https://docs.aws.amazon.com/glue/latest/dg/add-job.html)
@@ -44732,7 +50635,10 @@ type Job struct {
 	// 4 vCPUs of compute capacity and 16 GB of memory. For more information, see
 	// the Glue pricing page (https://aws.amazon.com/glue/pricing/).
 	//
-	// Do not set Max Capacity if using WorkerType and NumberOfWorkers.
+	// For Glue version 2.0 or later jobs, you cannot specify a Maximum capacity.
+	// Instead, you should specify a Worker type and the Number of workers.
+	//
+	// Do not set MaxCapacity if using WorkerType and NumberOfWorkers.
 	//
 	// The value that can be allocated for MaxCapacity depends on whether you are
 	// running a Python shell job, an Apache Spark ETL job, or an Apache Spark streaming
@@ -44743,11 +50649,8 @@ type Job struct {
 	//
 	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl")
 	//    or Apache Spark streaming ETL job (JobCommand.Name="gluestreaming"), you
-	//    can allocate a minimum of 2 DPUs. The default is 10 DPUs. This job type
+	//    can allocate from 2 to 100 DPUs. The default is 10 DPUs. This job type
 	//    cannot have a fractional DPU allocation.
-	//
-	// For Glue version 2.0 jobs, you cannot instead specify a Maximum capacity.
-	// Instead, you should specify a Worker type and the Number of workers.
 	MaxCapacity *float64 `type:"double"`
 
 	// The maximum number of times to retry this job after a JobRun fails.
@@ -44756,7 +50659,8 @@ type Job struct {
 	// The name you assign to this job definition.
 	Name *string `min:"1" type:"string"`
 
-	// Non-overridable arguments for this job, specified as name-value pairs.
+	// Arguments for this job that are not overridden when providing job arguments
+	// in a job run, specified as name-value pairs.
 	NonOverridableArguments map[string]*string `type:"map"`
 
 	// Specifies configuration properties of a job notification.
@@ -44783,23 +50687,46 @@ type Job struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X.
+	// a value of Standard, G.1X, G.2X, G.4X, G.8X, or G.025X for Spark jobs. Accepts
+	// the value Z.2X for Ray jobs.
 	//
 	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
 	//    memory and a 50GB disk, and 2 executors per worker.
 	//
 	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
 	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    this worker type for workloads such as data transforms, joins, and queries,
+	//    to offers a scalable and cost effective way to run most jobs.
 	//
 	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
 	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
-	//    this worker type for memory-intensive jobs.
+	//    this worker type for workloads such as data transforms, joins, and queries,
+	//    to offers a scalable and cost effective way to run most jobs.
+	//
+	//    * For the G.4X worker type, each worker maps to 4 DPU (16 vCPU, 64 GB
+	//    of memory, 256 GB disk), and provides 1 executor per worker. We recommend
+	//    this worker type for jobs whose workloads contain your most demanding
+	//    transforms, aggregations, joins, and queries. This worker type is available
+	//    only for Glue version 3.0 or later Spark ETL jobs in the following Amazon
+	//    Web Services Regions: US East (Ohio), US East (N. Virginia), US West (Oregon),
+	//    Asia Pacific (Singapore), Asia Pacific (Sydney), Asia Pacific (Tokyo),
+	//    Canada (Central), Europe (Frankfurt), Europe (Ireland), and Europe (Stockholm).
+	//
+	//    * For the G.8X worker type, each worker maps to 8 DPU (32 vCPU, 128 GB
+	//    of memory, 512 GB disk), and provides 1 executor per worker. We recommend
+	//    this worker type for jobs whose workloads contain your most demanding
+	//    transforms, aggregations, joins, and queries. This worker type is available
+	//    only for Glue version 3.0 or later Spark ETL jobs, in the same Amazon
+	//    Web Services Regions as supported for the G.4X worker type.
 	//
 	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
 	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
 	//    this worker type for low volume streaming jobs. This worker type is only
 	//    available for Glue version 3.0 streaming jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
+	//    of m emory, 128 GB disk), and provides a default of 8 Ray workers (1 per
+	//    vCPU).
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -45092,12 +51019,19 @@ type JobCommand struct {
 
 	// The name of the job command. For an Apache Spark ETL job, this must be glueetl.
 	// For a Python shell job, it must be pythonshell. For an Apache Spark streaming
-	// ETL job, this must be gluestreaming.
+	// ETL job, this must be gluestreaming. For a Ray job, this must be glueray.
 	Name *string `type:"string"`
 
 	// The Python version being used to run a Python shell job. Allowed values are
 	// 2 or 3.
 	PythonVersion *string `type:"string"`
+
+	// In Ray jobs, Runtime is used to specify the versions of Ray, Python and additional
+	// libraries available in your environment. This field is not used in other
+	// job types. For supported runtime environment values, see Working with Ray
+	// jobs (https://docs.aws.amazon.com/glue/latest/dg/author-job-ray-runtimes.html)
+	// in the Glue Developer Guide.
+	Runtime *string `type:"string"`
 
 	// Specifies the Amazon Simple Storage Service (Amazon S3) path to a script
 	// that runs a job.
@@ -45131,6 +51065,12 @@ func (s *JobCommand) SetName(v string) *JobCommand {
 // SetPythonVersion sets the PythonVersion field's value.
 func (s *JobCommand) SetPythonVersion(v string) *JobCommand {
 	s.PythonVersion = &v
+	return s
+}
+
+// SetRuntime sets the Runtime field's value.
+func (s *JobCommand) SetRuntime(v string) *JobCommand {
+	s.Runtime = &v
 	return s
 }
 
@@ -45192,13 +51132,21 @@ type JobRun struct {
 	// You can specify arguments here that your own job-execution script consumes,
 	// as well as arguments that Glue itself consumes.
 	//
-	// For information about how to specify and consume your own job arguments,
+	// Job arguments may be logged. Do not pass plaintext secrets as arguments.
+	// Retrieve secrets from a Glue Connection, Secrets Manager or other secret
+	// management mechanism if you intend to keep them within the Job.
+	//
+	// For information about how to specify and consume your own Job arguments,
 	// see the Calling Glue APIs in Python (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html)
 	// topic in the developer guide.
 	//
-	// For information about the key-value pairs that Glue consumes to set up your
-	// job, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+	// For information about the arguments you can provide to this field when configuring
+	// Spark jobs, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
 	// topic in the developer guide.
+	//
+	// For information about the arguments you can provide to this field when configuring
+	// Ray jobs, see Using job parameters in Ray jobs (https://docs.aws.amazon.com/glue/latest/dg/author-job-ray-job-parameters.html)
+	// in the developer guide.
 	Arguments map[string]*string `type:"map"`
 
 	// The number of the attempt to run this job.
@@ -45234,9 +51182,13 @@ type JobRun struct {
 	// The amount of time (in seconds) that the job run consumed resources.
 	ExecutionTime *int64 `type:"integer"`
 
-	// Glue version determines the versions of Apache Spark and Python that Glue
-	// supports. The Python version indicates the version supported for jobs of
-	// type Spark.
+	// In Spark jobs, GlueVersion determines the versions of Apache Spark and Python
+	// that Glue available in a job. The Python version indicates the version supported
+	// for jobs of type Spark.
+	//
+	// Ray jobs should set GlueVersion to 4.0 or greater. However, the versions
+	// of Ray, Python and additional libraries available in your Ray job are determined
+	// by the Runtime parameter of the Job command.
 	//
 	// For more information about the available Glue versions and corresponding
 	// Spark and Python versions, see Glue version (https://docs.aws.amazon.com/glue/latest/dg/add-job.html)
@@ -45265,22 +51217,28 @@ type JobRun struct {
 	// then that security configuration is used to encrypt the log group.
 	LogGroupName *string `type:"string"`
 
-	// The number of Glue data processing units (DPUs) that can be allocated when
-	// this job runs. A DPU is a relative measure of processing power that consists
-	// of 4 vCPUs of compute capacity and 16 GB of memory. For more information,
-	// see the Glue pricing page (https://aws.amazon.com/glue/pricing/).
+	// For Glue version 1.0 or earlier jobs, using the standard worker type, the
+	// number of Glue data processing units (DPUs) that can be allocated when this
+	// job runs. A DPU is a relative measure of processing power that consists of
+	// 4 vCPUs of compute capacity and 16 GB of memory. For more information, see
+	// the Glue pricing page (https://aws.amazon.com/glue/pricing/).
 	//
-	// Do not set Max Capacity if using WorkerType and NumberOfWorkers.
+	// For Glue version 2.0+ jobs, you cannot specify a Maximum capacity. Instead,
+	// you should specify a Worker type and the Number of workers.
+	//
+	// Do not set MaxCapacity if using WorkerType and NumberOfWorkers.
 	//
 	// The value that can be allocated for MaxCapacity depends on whether you are
-	// running a Python shell job or an Apache Spark ETL job:
+	// running a Python shell job, an Apache Spark ETL job, or an Apache Spark streaming
+	// ETL job:
 	//
 	//    * When you specify a Python shell job (JobCommand.Name="pythonshell"),
 	//    you can allocate either 0.0625 or 1 DPU. The default is 0.0625 DPU.
 	//
-	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl"),
-	//    you can allocate a minimum of 2 DPUs. The default is 10 DPUs. This job
-	//    type cannot have a fractional DPU allocation.
+	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl")
+	//    or Apache Spark streaming ETL job (JobCommand.Name="gluestreaming"), you
+	//    can allocate from 2 to 100 DPUs. The default is 10 DPUs. This job type
+	//    cannot have a fractional DPU allocation.
 	MaxCapacity *float64 `type:"double"`
 
 	// Specifies configuration properties of a job run notification.
@@ -45316,21 +51274,28 @@ type JobRun struct {
 	TriggerName *string `min:"1" type:"string"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X.
+	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// Z.2X for Ray jobs.
 	//
 	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
 	//    memory and a 50GB disk, and 2 executors per worker.
 	//
-	//    * For the G.1X worker type, each worker provides 4 vCPU, 16 GB of memory
-	//    and a 64GB disk, and 1 executor per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
+	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
+	//    this worker type for memory-intensive jobs.
 	//
-	//    * For the G.2X worker type, each worker provides 8 vCPU, 32 GB of memory
-	//    and a 128GB disk, and 1 executor per worker.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
+	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
+	//    this worker type for memory-intensive jobs.
 	//
 	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
 	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
 	//    this worker type for low volume streaming jobs. This worker type is only
 	//    available for Glue version 3.0 streaming jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
+	//    of m emory, 128 GB disk), and provides up to 8 Ray workers (one per vCPU)
+	//    based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -45525,18 +51490,27 @@ type JobUpdate struct {
 	// The connections used for this job.
 	Connections *ConnectionsList `type:"structure"`
 
-	// The default arguments for this job.
+	// The default arguments for every run of this job, specified as name-value
+	// pairs.
 	//
 	// You can specify arguments here that your own job-execution script consumes,
 	// as well as arguments that Glue itself consumes.
+	//
+	// Job arguments may be logged. Do not pass plaintext secrets as arguments.
+	// Retrieve secrets from a Glue Connection, Secrets Manager or other secret
+	// management mechanism if you intend to keep them within the Job.
 	//
 	// For information about how to specify and consume your own Job arguments,
 	// see the Calling Glue APIs in Python (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html)
 	// topic in the developer guide.
 	//
-	// For information about the key-value pairs that Glue consumes to set up your
-	// job, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+	// For information about the arguments you can provide to this field when configuring
+	// Spark jobs, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
 	// topic in the developer guide.
+	//
+	// For information about the arguments you can provide to this field when configuring
+	// Ray jobs, see Using job parameters in Ray jobs (https://docs.aws.amazon.com/glue/latest/dg/author-job-ray-job-parameters.html)
+	// in the developer guide.
 	DefaultArguments map[string]*string `type:"map"`
 
 	// Description of the job being defined.
@@ -45558,13 +51532,19 @@ type JobUpdate struct {
 	// for this job.
 	ExecutionProperty *ExecutionProperty `type:"structure"`
 
-	// Glue version determines the versions of Apache Spark and Python that Glue
-	// supports. The Python version indicates the version supported for jobs of
-	// type Spark.
+	// In Spark jobs, GlueVersion determines the versions of Apache Spark and Python
+	// that Glue available in a job. The Python version indicates the version supported
+	// for jobs of type Spark.
+	//
+	// Ray jobs should set GlueVersion to 4.0 or greater. However, the versions
+	// of Ray, Python and additional libraries available in your Ray job are determined
+	// by the Runtime parameter of the Job command.
 	//
 	// For more information about the available Glue versions and corresponding
 	// Spark and Python versions, see Glue version (https://docs.aws.amazon.com/glue/latest/dg/add-job.html)
 	// in the developer guide.
+	//
+	// Jobs that are created without specifying a Glue version default to Glue 0.9.
 	GlueVersion *string `min:"1" type:"string"`
 
 	// This field is reserved for future use.
@@ -45576,27 +51556,29 @@ type JobUpdate struct {
 	// 4 vCPUs of compute capacity and 16 GB of memory. For more information, see
 	// the Glue pricing page (https://aws.amazon.com/glue/pricing/).
 	//
-	// Do not set Max Capacity if using WorkerType and NumberOfWorkers.
+	// For Glue version 2.0+ jobs, you cannot specify a Maximum capacity. Instead,
+	// you should specify a Worker type and the Number of workers.
+	//
+	// Do not set MaxCapacity if using WorkerType and NumberOfWorkers.
 	//
 	// The value that can be allocated for MaxCapacity depends on whether you are
-	// running a Python shell job or an Apache Spark ETL job:
+	// running a Python shell job, an Apache Spark ETL job, or an Apache Spark streaming
+	// ETL job:
 	//
 	//    * When you specify a Python shell job (JobCommand.Name="pythonshell"),
 	//    you can allocate either 0.0625 or 1 DPU. The default is 0.0625 DPU.
 	//
 	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl")
 	//    or Apache Spark streaming ETL job (JobCommand.Name="gluestreaming"), you
-	//    can allocate a minimum of 2 DPUs. The default is 10 DPUs. This job type
+	//    can allocate from 2 to 100 DPUs. The default is 10 DPUs. This job type
 	//    cannot have a fractional DPU allocation.
-	//
-	// For Glue version 2.0 jobs, you cannot instead specify a Maximum capacity.
-	// Instead, you should specify a Worker type and the Number of workers.
 	MaxCapacity *float64 `type:"double"`
 
 	// The maximum number of times to retry this job if it fails.
 	MaxRetries *int64 `type:"integer"`
 
-	// Non-overridable arguments for this job, specified as name-value pairs.
+	// Arguments for this job that are not overridden when providing job arguments
+	// in a job run, specified as name-value pairs.
 	NonOverridableArguments map[string]*string `type:"map"`
 
 	// Specifies the configuration properties of a job notification.
@@ -45623,7 +51605,8 @@ type JobUpdate struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X.
+	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// Z.2X for Ray jobs.
 	//
 	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
 	//    memory and a 50GB disk, and 2 executors per worker.
@@ -45640,6 +51623,10 @@ type JobUpdate struct {
 	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
 	//    this worker type for low volume streaming jobs. This worker type is only
 	//    available for Glue version 3.0 streaming jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 M-DPU (8vCPU, 64 GB
+	//    of m emory, 128 GB disk), and provides up to 8 Ray workers based on the
+	//    autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -46066,6 +52053,12 @@ func (s *JsonClassifier) SetVersion(v int64) *JsonClassifier {
 type KafkaStreamingSourceOptions struct {
 	_ struct{} `type:"structure"`
 
+	// When this option is set to 'true', the data output will contain an additional
+	// column named "__src_timestamp" that indicates the time when the corresponding
+	// record received by the topic. The default value is 'false'. This option is
+	// supported in Glue version 4.0 or later.
+	AddRecordTimestamp *string `type:"string"`
+
 	// The specific TopicPartitions to consume. You must specify at least one of
 	// "topicName", "assign" or "subscribePattern".
 	Assign *string `type:"string"`
@@ -46084,9 +52077,22 @@ type KafkaStreamingSourceOptions struct {
 	// Specifies the delimiter character.
 	Delimiter *string `type:"string"`
 
+	// When this option is set to 'true', for each batch, it will emit the metrics
+	// for the duration between the oldest record received by the topic and the
+	// time it arrives in Glue to CloudWatch. The metric's name is "glue.driver.streaming.maxConsumerLagInMs".
+	// The default value is 'false'. This option is supported in Glue version 4.0
+	// or later.
+	EmitConsumerLagMetrics *string `type:"string"`
+
 	// The end point when a batch query is ended. Possible values are either "latest"
 	// or a JSON string that specifies an ending offset for each TopicPartition.
 	EndingOffsets *string `type:"string"`
+
+	// Whether to include the Kafka headers. When the option is set to "true", the
+	// data output will contain an additional column named "glue_streaming_kafka_headers"
+	// with type Array[Struct(key: String, value: String)]. The default value is
+	// "false". This option is available in Glue version 3.0 or later only.
+	IncludeHeaders *bool `type:"boolean"`
 
 	// The rate limit on the maximum number of offsets that are processed per trigger
 	// interval. The specified total number of offsets is proportionally split across
@@ -46146,6 +52152,12 @@ func (s KafkaStreamingSourceOptions) GoString() string {
 	return s.String()
 }
 
+// SetAddRecordTimestamp sets the AddRecordTimestamp field's value.
+func (s *KafkaStreamingSourceOptions) SetAddRecordTimestamp(v string) *KafkaStreamingSourceOptions {
+	s.AddRecordTimestamp = &v
+	return s
+}
+
 // SetAssign sets the Assign field's value.
 func (s *KafkaStreamingSourceOptions) SetAssign(v string) *KafkaStreamingSourceOptions {
 	s.Assign = &v
@@ -46176,9 +52188,21 @@ func (s *KafkaStreamingSourceOptions) SetDelimiter(v string) *KafkaStreamingSour
 	return s
 }
 
+// SetEmitConsumerLagMetrics sets the EmitConsumerLagMetrics field's value.
+func (s *KafkaStreamingSourceOptions) SetEmitConsumerLagMetrics(v string) *KafkaStreamingSourceOptions {
+	s.EmitConsumerLagMetrics = &v
+	return s
+}
+
 // SetEndingOffsets sets the EndingOffsets field's value.
 func (s *KafkaStreamingSourceOptions) SetEndingOffsets(v string) *KafkaStreamingSourceOptions {
 	s.EndingOffsets = &v
+	return s
+}
+
+// SetIncludeHeaders sets the IncludeHeaders field's value.
+func (s *KafkaStreamingSourceOptions) SetIncludeHeaders(v bool) *KafkaStreamingSourceOptions {
+	s.IncludeHeaders = &v
 	return s
 }
 
@@ -46290,6 +52314,12 @@ type KinesisStreamingSourceOptions struct {
 	// above.
 	AddIdleTimeBetweenReads *bool `type:"boolean"`
 
+	// When this option is set to 'true', the data output will contain an additional
+	// column named "__src_timestamp" that indicates the time when the corresponding
+	// record received by the stream. The default value is 'false'. This option
+	// is supported in Glue version 4.0 or later.
+	AddRecordTimestamp *string `type:"string"`
+
 	// Avoids creating an empty microbatch job by checking for unread data in the
 	// Kinesis data stream before the batch is started. The default value is "False".
 	AvoidEmptyBatches *bool `type:"boolean"`
@@ -46303,6 +52333,13 @@ type KinesisStreamingSourceOptions struct {
 	// The minimum time interval between two ListShards API calls for your script
 	// to consider resharding. The default value is 1s.
 	DescribeShardInterval *int64 `type:"long"`
+
+	// When this option is set to 'true', for each batch, it will emit the metrics
+	// for the duration between the oldest record received by the stream and the
+	// time it arrives in Glue to CloudWatch. The metric's name is "glue.driver.streaming.maxConsumerLagInMs".
+	// The default value is 'false'. This option is supported in Glue version 4.0
+	// or later.
+	EmitConsumerLagMetrics *string `type:"string"`
 
 	// The URL of the Kinesis endpoint.
 	EndpointUrl *string `type:"string"`
@@ -46385,6 +52422,12 @@ func (s *KinesisStreamingSourceOptions) SetAddIdleTimeBetweenReads(v bool) *Kine
 	return s
 }
 
+// SetAddRecordTimestamp sets the AddRecordTimestamp field's value.
+func (s *KinesisStreamingSourceOptions) SetAddRecordTimestamp(v string) *KinesisStreamingSourceOptions {
+	s.AddRecordTimestamp = &v
+	return s
+}
+
 // SetAvoidEmptyBatches sets the AvoidEmptyBatches field's value.
 func (s *KinesisStreamingSourceOptions) SetAvoidEmptyBatches(v bool) *KinesisStreamingSourceOptions {
 	s.AvoidEmptyBatches = &v
@@ -46406,6 +52449,12 @@ func (s *KinesisStreamingSourceOptions) SetDelimiter(v string) *KinesisStreaming
 // SetDescribeShardInterval sets the DescribeShardInterval field's value.
 func (s *KinesisStreamingSourceOptions) SetDescribeShardInterval(v int64) *KinesisStreamingSourceOptions {
 	s.DescribeShardInterval = &v
+	return s
+}
+
+// SetEmitConsumerLagMetrics sets the EmitConsumerLagMetrics field's value.
+func (s *KinesisStreamingSourceOptions) SetEmitConsumerLagMetrics(v string) *KinesisStreamingSourceOptions {
+	s.EmitConsumerLagMetrics = &v
 	return s
 }
 
@@ -47085,6 +53134,9 @@ type ListCustomEntityTypesInput struct {
 
 	// A paginated token to offset the results.
 	NextToken *string `type:"string"`
+
+	// A list of key-value pair tags.
+	Tags map[string]*string `type:"map"`
 }
 
 // String returns the string representation.
@@ -47130,6 +53182,12 @@ func (s *ListCustomEntityTypesInput) SetNextToken(v string) *ListCustomEntityTyp
 	return s
 }
 
+// SetTags sets the Tags field's value.
+func (s *ListCustomEntityTypesInput) SetTags(v map[string]*string) *ListCustomEntityTypesInput {
+	s.Tags = v
+	return s
+}
+
 type ListCustomEntityTypesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -47167,6 +53225,446 @@ func (s *ListCustomEntityTypesOutput) SetCustomEntityTypes(v []*CustomEntityType
 // SetNextToken sets the NextToken field's value.
 func (s *ListCustomEntityTypesOutput) SetNextToken(v string) *ListCustomEntityTypesOutput {
 	s.NextToken = &v
+	return s
+}
+
+type ListDataQualityResultsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The filter criteria.
+	Filter *DataQualityResultFilterCriteria `type:"structure"`
+
+	// The maximum number of results to return.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A paginated token to offset the results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityResultsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityResultsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDataQualityResultsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDataQualityResultsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *ListDataQualityResultsInput) SetFilter(v *DataQualityResultFilterCriteria) *ListDataQualityResultsInput {
+	s.Filter = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListDataQualityResultsInput) SetMaxResults(v int64) *ListDataQualityResultsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityResultsInput) SetNextToken(v string) *ListDataQualityResultsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListDataQualityResultsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A pagination token, if more results are available.
+	NextToken *string `type:"string"`
+
+	// A list of DataQualityResultDescription objects.
+	//
+	// Results is a required field
+	Results []*DataQualityResultDescription `type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityResultsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityResultsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityResultsOutput) SetNextToken(v string) *ListDataQualityResultsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetResults sets the Results field's value.
+func (s *ListDataQualityResultsOutput) SetResults(v []*DataQualityResultDescription) *ListDataQualityResultsOutput {
+	s.Results = v
+	return s
+}
+
+type ListDataQualityRuleRecommendationRunsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The filter criteria.
+	Filter *DataQualityRuleRecommendationRunFilter `type:"structure"`
+
+	// The maximum number of results to return.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A paginated token to offset the results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRuleRecommendationRunsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRuleRecommendationRunsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDataQualityRuleRecommendationRunsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDataQualityRuleRecommendationRunsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *ListDataQualityRuleRecommendationRunsInput) SetFilter(v *DataQualityRuleRecommendationRunFilter) *ListDataQualityRuleRecommendationRunsInput {
+	s.Filter = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListDataQualityRuleRecommendationRunsInput) SetMaxResults(v int64) *ListDataQualityRuleRecommendationRunsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityRuleRecommendationRunsInput) SetNextToken(v string) *ListDataQualityRuleRecommendationRunsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListDataQualityRuleRecommendationRunsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A pagination token, if more results are available.
+	NextToken *string `type:"string"`
+
+	// A list of DataQualityRuleRecommendationRunDescription objects.
+	Runs []*DataQualityRuleRecommendationRunDescription `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRuleRecommendationRunsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRuleRecommendationRunsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityRuleRecommendationRunsOutput) SetNextToken(v string) *ListDataQualityRuleRecommendationRunsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetRuns sets the Runs field's value.
+func (s *ListDataQualityRuleRecommendationRunsOutput) SetRuns(v []*DataQualityRuleRecommendationRunDescription) *ListDataQualityRuleRecommendationRunsOutput {
+	s.Runs = v
+	return s
+}
+
+type ListDataQualityRulesetEvaluationRunsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The filter criteria.
+	Filter *DataQualityRulesetEvaluationRunFilter `type:"structure"`
+
+	// The maximum number of results to return.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A paginated token to offset the results.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetEvaluationRunsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetEvaluationRunsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDataQualityRulesetEvaluationRunsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDataQualityRulesetEvaluationRunsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *ListDataQualityRulesetEvaluationRunsInput) SetFilter(v *DataQualityRulesetEvaluationRunFilter) *ListDataQualityRulesetEvaluationRunsInput {
+	s.Filter = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListDataQualityRulesetEvaluationRunsInput) SetMaxResults(v int64) *ListDataQualityRulesetEvaluationRunsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityRulesetEvaluationRunsInput) SetNextToken(v string) *ListDataQualityRulesetEvaluationRunsInput {
+	s.NextToken = &v
+	return s
+}
+
+type ListDataQualityRulesetEvaluationRunsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A pagination token, if more results are available.
+	NextToken *string `type:"string"`
+
+	// A list of DataQualityRulesetEvaluationRunDescription objects representing
+	// data quality ruleset runs.
+	Runs []*DataQualityRulesetEvaluationRunDescription `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetEvaluationRunsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetEvaluationRunsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityRulesetEvaluationRunsOutput) SetNextToken(v string) *ListDataQualityRulesetEvaluationRunsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetRuns sets the Runs field's value.
+func (s *ListDataQualityRulesetEvaluationRunsOutput) SetRuns(v []*DataQualityRulesetEvaluationRunDescription) *ListDataQualityRulesetEvaluationRunsOutput {
+	s.Runs = v
+	return s
+}
+
+type ListDataQualityRulesetsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The filter criteria.
+	Filter *DataQualityRulesetFilterCriteria `type:"structure"`
+
+	// The maximum number of results to return.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// A paginated token to offset the results.
+	NextToken *string `type:"string"`
+
+	// A list of key-value pair tags.
+	Tags map[string]*string `type:"map"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListDataQualityRulesetsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListDataQualityRulesetsInput"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.Filter != nil {
+		if err := s.Filter.Validate(); err != nil {
+			invalidParams.AddNested("Filter", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilter sets the Filter field's value.
+func (s *ListDataQualityRulesetsInput) SetFilter(v *DataQualityRulesetFilterCriteria) *ListDataQualityRulesetsInput {
+	s.Filter = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListDataQualityRulesetsInput) SetMaxResults(v int64) *ListDataQualityRulesetsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityRulesetsInput) SetNextToken(v string) *ListDataQualityRulesetsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ListDataQualityRulesetsInput) SetTags(v map[string]*string) *ListDataQualityRulesetsInput {
+	s.Tags = v
+	return s
+}
+
+type ListDataQualityRulesetsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A pagination token, if more results are available.
+	NextToken *string `type:"string"`
+
+	// A paginated list of rulesets for the specified list of Glue tables.
+	Rulesets []*DataQualityRulesetListDetails `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListDataQualityRulesetsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListDataQualityRulesetsOutput) SetNextToken(v string) *ListDataQualityRulesetsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetRulesets sets the Rulesets field's value.
+func (s *ListDataQualityRulesetsOutput) SetRulesets(v []*DataQualityRulesetListDetails) *ListDataQualityRulesetsOutput {
+	s.Rulesets = v
 	return s
 }
 
@@ -49980,6 +56478,56 @@ func (s *OperationTimeoutException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Specifies an option value.
+type Option struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies the description of the option.
+	Description *string `type:"string"`
+
+	// Specifies the label of the option.
+	Label *string `type:"string"`
+
+	// Specifies the value of the option.
+	Value *string `type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Option) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s Option) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *Option) SetDescription(v string) *Option {
+	s.Description = &v
+	return s
+}
+
+// SetLabel sets the Label field's value.
+func (s *Option) SetLabel(v string) *Option {
+	s.Label = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *Option) SetValue(v string) *Option {
+	s.Value = &v
+	return s
+}
+
 // Specifies an Oracle data source in the Glue Data Catalog.
 type OracleSQLCatalogSource struct {
 	_ struct{} `type:"structure"`
@@ -50816,10 +57364,13 @@ func (s *PartitionValueList) SetValues(v []*string) *PartitionValueList {
 	return s
 }
 
+// The operation timed out.
 type PermissionTypeMismatchException struct {
 	_            struct{}                  `type:"structure"`
 	RespMetadata protocol.ResponseMetadata `json:"-" xml:"-"`
 
+	// There is a mismatch between the SupportedPermissionType used in the query
+	// request and the permissions defined on the target table.
 	Message_ *string `locationName:"Message" type:"string"`
 }
 
@@ -53371,6 +59922,214 @@ func (s *RunStatementOutput) SetId(v int64) *RunStatementOutput {
 	return s
 }
 
+// Specifies a Delta Lake data source that is registered in the Glue Data Catalog.
+// The data source must be stored in Amazon S3.
+type S3CatalogDeltaSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options.
+	AdditionalDeltaOptions map[string]*string `type:"map"`
+
+	// The name of the database to read from.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The name of the Delta Lake data source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the Delta Lake source.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// The name of the table in the database to read from.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3CatalogDeltaSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3CatalogDeltaSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3CatalogDeltaSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3CatalogDeltaSource"}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalDeltaOptions sets the AdditionalDeltaOptions field's value.
+func (s *S3CatalogDeltaSource) SetAdditionalDeltaOptions(v map[string]*string) *S3CatalogDeltaSource {
+	s.AdditionalDeltaOptions = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *S3CatalogDeltaSource) SetDatabase(v string) *S3CatalogDeltaSource {
+	s.Database = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3CatalogDeltaSource) SetName(v string) *S3CatalogDeltaSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *S3CatalogDeltaSource) SetOutputSchemas(v []*GlueSchema) *S3CatalogDeltaSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *S3CatalogDeltaSource) SetTable(v string) *S3CatalogDeltaSource {
+	s.Table = &v
+	return s
+}
+
+// Specifies a Hudi data source that is registered in the Glue Data Catalog.
+// The Hudi data source must be stored in Amazon S3.
+type S3CatalogHudiSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options.
+	AdditionalHudiOptions map[string]*string `type:"map"`
+
+	// The name of the database to read from.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The name of the Hudi data source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the Hudi source.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// The name of the table in the database to read from.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3CatalogHudiSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3CatalogHudiSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3CatalogHudiSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3CatalogHudiSource"}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalHudiOptions sets the AdditionalHudiOptions field's value.
+func (s *S3CatalogHudiSource) SetAdditionalHudiOptions(v map[string]*string) *S3CatalogHudiSource {
+	s.AdditionalHudiOptions = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *S3CatalogHudiSource) SetDatabase(v string) *S3CatalogHudiSource {
+	s.Database = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3CatalogHudiSource) SetName(v string) *S3CatalogHudiSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *S3CatalogHudiSource) SetOutputSchemas(v []*GlueSchema) *S3CatalogHudiSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *S3CatalogHudiSource) SetTable(v string) *S3CatalogHudiSource {
+	s.Table = &v
+	return s
+}
+
 // Specifies an Amazon S3 data store in the Glue Data Catalog.
 type S3CatalogSource struct {
 	_ struct{} `type:"structure"`
@@ -53837,6 +60596,358 @@ func (s *S3CsvSource) SetWriteHeader(v bool) *S3CsvSource {
 	return s
 }
 
+// Specifies a target that writes to a Delta Lake data source in the Glue Data
+// Catalog.
+type S3DeltaCatalogTarget struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options for the connector.
+	AdditionalOptions map[string]*string `type:"map"`
+
+	// The name of the database to write to.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The nodes that are inputs to the data target.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the data target.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies native partitioning using a sequence of keys.
+	PartitionKeys [][]*string `type:"list"`
+
+	// A policy that specifies update behavior for the crawler.
+	SchemaChangePolicy *CatalogSchemaChangePolicy `type:"structure"`
+
+	// The name of the table in the database to write to.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3DeltaCatalogTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3DeltaCatalogTarget) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3DeltaCatalogTarget) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3DeltaCatalogTarget"}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *S3DeltaCatalogTarget) SetAdditionalOptions(v map[string]*string) *S3DeltaCatalogTarget {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *S3DeltaCatalogTarget) SetDatabase(v string) *S3DeltaCatalogTarget {
+	s.Database = &v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *S3DeltaCatalogTarget) SetInputs(v []*string) *S3DeltaCatalogTarget {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3DeltaCatalogTarget) SetName(v string) *S3DeltaCatalogTarget {
+	s.Name = &v
+	return s
+}
+
+// SetPartitionKeys sets the PartitionKeys field's value.
+func (s *S3DeltaCatalogTarget) SetPartitionKeys(v [][]*string) *S3DeltaCatalogTarget {
+	s.PartitionKeys = v
+	return s
+}
+
+// SetSchemaChangePolicy sets the SchemaChangePolicy field's value.
+func (s *S3DeltaCatalogTarget) SetSchemaChangePolicy(v *CatalogSchemaChangePolicy) *S3DeltaCatalogTarget {
+	s.SchemaChangePolicy = v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *S3DeltaCatalogTarget) SetTable(v string) *S3DeltaCatalogTarget {
+	s.Table = &v
+	return s
+}
+
+// Specifies a target that writes to a Delta Lake data source in Amazon S3.
+type S3DeltaDirectTarget struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options for the connector.
+	AdditionalOptions map[string]*string `type:"map"`
+
+	// Specifies how the data is compressed. This is generally not necessary if
+	// the data has a standard file extension. Possible values are "gzip" and "bzip").
+	//
+	// Compression is a required field
+	Compression *string `type:"string" required:"true" enum:"DeltaTargetCompressionType"`
+
+	// Specifies the data output format for the target.
+	//
+	// Format is a required field
+	Format *string `type:"string" required:"true" enum:"TargetFormat"`
+
+	// The nodes that are inputs to the data target.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the data target.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies native partitioning using a sequence of keys.
+	PartitionKeys [][]*string `type:"list"`
+
+	// The Amazon S3 path of your Delta Lake data source to write to.
+	//
+	// Path is a required field
+	Path *string `type:"string" required:"true"`
+
+	// A policy that specifies update behavior for the crawler.
+	SchemaChangePolicy *DirectSchemaChangePolicy `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3DeltaDirectTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3DeltaDirectTarget) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3DeltaDirectTarget) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3DeltaDirectTarget"}
+	if s.Compression == nil {
+		invalidParams.Add(request.NewErrParamRequired("Compression"))
+	}
+	if s.Format == nil {
+		invalidParams.Add(request.NewErrParamRequired("Format"))
+	}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Path == nil {
+		invalidParams.Add(request.NewErrParamRequired("Path"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *S3DeltaDirectTarget) SetAdditionalOptions(v map[string]*string) *S3DeltaDirectTarget {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetCompression sets the Compression field's value.
+func (s *S3DeltaDirectTarget) SetCompression(v string) *S3DeltaDirectTarget {
+	s.Compression = &v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *S3DeltaDirectTarget) SetFormat(v string) *S3DeltaDirectTarget {
+	s.Format = &v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *S3DeltaDirectTarget) SetInputs(v []*string) *S3DeltaDirectTarget {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3DeltaDirectTarget) SetName(v string) *S3DeltaDirectTarget {
+	s.Name = &v
+	return s
+}
+
+// SetPartitionKeys sets the PartitionKeys field's value.
+func (s *S3DeltaDirectTarget) SetPartitionKeys(v [][]*string) *S3DeltaDirectTarget {
+	s.PartitionKeys = v
+	return s
+}
+
+// SetPath sets the Path field's value.
+func (s *S3DeltaDirectTarget) SetPath(v string) *S3DeltaDirectTarget {
+	s.Path = &v
+	return s
+}
+
+// SetSchemaChangePolicy sets the SchemaChangePolicy field's value.
+func (s *S3DeltaDirectTarget) SetSchemaChangePolicy(v *DirectSchemaChangePolicy) *S3DeltaDirectTarget {
+	s.SchemaChangePolicy = v
+	return s
+}
+
+// Specifies a Delta Lake data source stored in Amazon S3.
+type S3DeltaSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options.
+	AdditionalDeltaOptions map[string]*string `type:"map"`
+
+	// Specifies additional options for the connector.
+	AdditionalOptions *S3DirectSourceAdditionalOptions `type:"structure"`
+
+	// The name of the Delta Lake source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the Delta Lake source.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// A list of the Amazon S3 paths to read from.
+	//
+	// Paths is a required field
+	Paths []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3DeltaSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3DeltaSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3DeltaSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3DeltaSource"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Paths == nil {
+		invalidParams.Add(request.NewErrParamRequired("Paths"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalDeltaOptions sets the AdditionalDeltaOptions field's value.
+func (s *S3DeltaSource) SetAdditionalDeltaOptions(v map[string]*string) *S3DeltaSource {
+	s.AdditionalDeltaOptions = v
+	return s
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *S3DeltaSource) SetAdditionalOptions(v *S3DirectSourceAdditionalOptions) *S3DeltaSource {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3DeltaSource) SetName(v string) *S3DeltaSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *S3DeltaSource) SetOutputSchemas(v []*GlueSchema) *S3DeltaSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetPaths sets the Paths field's value.
+func (s *S3DeltaSource) SetPaths(v []*string) *S3DeltaSource {
+	s.Paths = v
+	return s
+}
+
 // Specifies additional connection options for the Amazon S3 data store.
 type S3DirectSourceAdditionalOptions struct {
 	_ struct{} `type:"structure"`
@@ -54162,6 +61273,367 @@ func (s *S3GlueParquetTarget) SetPath(v string) *S3GlueParquetTarget {
 // SetSchemaChangePolicy sets the SchemaChangePolicy field's value.
 func (s *S3GlueParquetTarget) SetSchemaChangePolicy(v *DirectSchemaChangePolicy) *S3GlueParquetTarget {
 	s.SchemaChangePolicy = v
+	return s
+}
+
+// Specifies a target that writes to a Hudi data source in the Glue Data Catalog.
+type S3HudiCatalogTarget struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options for the connector.
+	//
+	// AdditionalOptions is a required field
+	AdditionalOptions map[string]*string `type:"map" required:"true"`
+
+	// The name of the database to write to.
+	//
+	// Database is a required field
+	Database *string `type:"string" required:"true"`
+
+	// The nodes that are inputs to the data target.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the data target.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies native partitioning using a sequence of keys.
+	PartitionKeys [][]*string `type:"list"`
+
+	// A policy that specifies update behavior for the crawler.
+	SchemaChangePolicy *CatalogSchemaChangePolicy `type:"structure"`
+
+	// The name of the table in the database to write to.
+	//
+	// Table is a required field
+	Table *string `type:"string" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3HudiCatalogTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3HudiCatalogTarget) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3HudiCatalogTarget) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3HudiCatalogTarget"}
+	if s.AdditionalOptions == nil {
+		invalidParams.Add(request.NewErrParamRequired("AdditionalOptions"))
+	}
+	if s.Database == nil {
+		invalidParams.Add(request.NewErrParamRequired("Database"))
+	}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Table == nil {
+		invalidParams.Add(request.NewErrParamRequired("Table"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *S3HudiCatalogTarget) SetAdditionalOptions(v map[string]*string) *S3HudiCatalogTarget {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetDatabase sets the Database field's value.
+func (s *S3HudiCatalogTarget) SetDatabase(v string) *S3HudiCatalogTarget {
+	s.Database = &v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *S3HudiCatalogTarget) SetInputs(v []*string) *S3HudiCatalogTarget {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3HudiCatalogTarget) SetName(v string) *S3HudiCatalogTarget {
+	s.Name = &v
+	return s
+}
+
+// SetPartitionKeys sets the PartitionKeys field's value.
+func (s *S3HudiCatalogTarget) SetPartitionKeys(v [][]*string) *S3HudiCatalogTarget {
+	s.PartitionKeys = v
+	return s
+}
+
+// SetSchemaChangePolicy sets the SchemaChangePolicy field's value.
+func (s *S3HudiCatalogTarget) SetSchemaChangePolicy(v *CatalogSchemaChangePolicy) *S3HudiCatalogTarget {
+	s.SchemaChangePolicy = v
+	return s
+}
+
+// SetTable sets the Table field's value.
+func (s *S3HudiCatalogTarget) SetTable(v string) *S3HudiCatalogTarget {
+	s.Table = &v
+	return s
+}
+
+// Specifies a target that writes to a Hudi data source in Amazon S3.
+type S3HudiDirectTarget struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options for the connector.
+	//
+	// AdditionalOptions is a required field
+	AdditionalOptions map[string]*string `type:"map" required:"true"`
+
+	// Specifies how the data is compressed. This is generally not necessary if
+	// the data has a standard file extension. Possible values are "gzip" and "bzip").
+	//
+	// Compression is a required field
+	Compression *string `type:"string" required:"true" enum:"HudiTargetCompressionType"`
+
+	// Specifies the data output format for the target.
+	//
+	// Format is a required field
+	Format *string `type:"string" required:"true" enum:"TargetFormat"`
+
+	// The nodes that are inputs to the data target.
+	//
+	// Inputs is a required field
+	Inputs []*string `min:"1" type:"list" required:"true"`
+
+	// The name of the data target.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies native partitioning using a sequence of keys.
+	PartitionKeys [][]*string `type:"list"`
+
+	// The Amazon S3 path of your Hudi data source to write to.
+	//
+	// Path is a required field
+	Path *string `type:"string" required:"true"`
+
+	// A policy that specifies update behavior for the crawler.
+	SchemaChangePolicy *DirectSchemaChangePolicy `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3HudiDirectTarget) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3HudiDirectTarget) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3HudiDirectTarget) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3HudiDirectTarget"}
+	if s.AdditionalOptions == nil {
+		invalidParams.Add(request.NewErrParamRequired("AdditionalOptions"))
+	}
+	if s.Compression == nil {
+		invalidParams.Add(request.NewErrParamRequired("Compression"))
+	}
+	if s.Format == nil {
+		invalidParams.Add(request.NewErrParamRequired("Format"))
+	}
+	if s.Inputs == nil {
+		invalidParams.Add(request.NewErrParamRequired("Inputs"))
+	}
+	if s.Inputs != nil && len(s.Inputs) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Inputs", 1))
+	}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Path == nil {
+		invalidParams.Add(request.NewErrParamRequired("Path"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *S3HudiDirectTarget) SetAdditionalOptions(v map[string]*string) *S3HudiDirectTarget {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetCompression sets the Compression field's value.
+func (s *S3HudiDirectTarget) SetCompression(v string) *S3HudiDirectTarget {
+	s.Compression = &v
+	return s
+}
+
+// SetFormat sets the Format field's value.
+func (s *S3HudiDirectTarget) SetFormat(v string) *S3HudiDirectTarget {
+	s.Format = &v
+	return s
+}
+
+// SetInputs sets the Inputs field's value.
+func (s *S3HudiDirectTarget) SetInputs(v []*string) *S3HudiDirectTarget {
+	s.Inputs = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3HudiDirectTarget) SetName(v string) *S3HudiDirectTarget {
+	s.Name = &v
+	return s
+}
+
+// SetPartitionKeys sets the PartitionKeys field's value.
+func (s *S3HudiDirectTarget) SetPartitionKeys(v [][]*string) *S3HudiDirectTarget {
+	s.PartitionKeys = v
+	return s
+}
+
+// SetPath sets the Path field's value.
+func (s *S3HudiDirectTarget) SetPath(v string) *S3HudiDirectTarget {
+	s.Path = &v
+	return s
+}
+
+// SetSchemaChangePolicy sets the SchemaChangePolicy field's value.
+func (s *S3HudiDirectTarget) SetSchemaChangePolicy(v *DirectSchemaChangePolicy) *S3HudiDirectTarget {
+	s.SchemaChangePolicy = v
+	return s
+}
+
+// Specifies a Hudi data source stored in Amazon S3.
+type S3HudiSource struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies additional connection options.
+	AdditionalHudiOptions map[string]*string `type:"map"`
+
+	// Specifies additional options for the connector.
+	AdditionalOptions *S3DirectSourceAdditionalOptions `type:"structure"`
+
+	// The name of the Hudi source.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the data schema for the Hudi source.
+	OutputSchemas []*GlueSchema `type:"list"`
+
+	// A list of the Amazon S3 paths to read from.
+	//
+	// Paths is a required field
+	Paths []*string `type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3HudiSource) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3HudiSource) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3HudiSource) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3HudiSource"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Paths == nil {
+		invalidParams.Add(request.NewErrParamRequired("Paths"))
+	}
+	if s.OutputSchemas != nil {
+		for i, v := range s.OutputSchemas {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OutputSchemas", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalHudiOptions sets the AdditionalHudiOptions field's value.
+func (s *S3HudiSource) SetAdditionalHudiOptions(v map[string]*string) *S3HudiSource {
+	s.AdditionalHudiOptions = v
+	return s
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *S3HudiSource) SetAdditionalOptions(v *S3DirectSourceAdditionalOptions) *S3HudiSource {
+	s.AdditionalOptions = v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *S3HudiSource) SetName(v string) *S3HudiSource {
+	s.Name = &v
+	return s
+}
+
+// SetOutputSchemas sets the OutputSchemas field's value.
+func (s *S3HudiSource) SetOutputSchemas(v []*GlueSchema) *S3HudiSource {
+	s.OutputSchemas = v
+	return s
+}
+
+// SetPaths sets the Paths field's value.
+func (s *S3HudiSource) SetPaths(v []*string) *S3HudiSource {
+	s.Paths = v
 	return s
 }
 
@@ -57165,6 +64637,328 @@ func (s StartCrawlerScheduleOutput) GoString() string {
 	return s.String()
 }
 
+type StartDataQualityRuleRecommendationRunInput struct {
+	_ struct{} `type:"structure"`
+
+	// Used for idempotency and is recommended to be set to a random ID (such as
+	// a UUID) to avoid creating or starting multiple instances of the same resource.
+	ClientToken *string `min:"1" type:"string"`
+
+	// A name for the ruleset.
+	CreatedRulesetName *string `min:"1" type:"string"`
+
+	// The data source (Glue table) associated with this run.
+	//
+	// DataSource is a required field
+	DataSource *DataSource `type:"structure" required:"true"`
+
+	// The number of G.1X workers to be used in the run. The default is 5.
+	NumberOfWorkers *int64 `type:"integer"`
+
+	// An IAM role supplied to encrypt the results of the run.
+	//
+	// Role is a required field
+	Role *string `type:"string" required:"true"`
+
+	// The timeout for a run in minutes. This is the maximum time that a run can
+	// consume resources before it is terminated and enters TIMEOUT status. The
+	// default is 2,880 minutes (48 hours).
+	Timeout *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRuleRecommendationRunInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRuleRecommendationRunInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartDataQualityRuleRecommendationRunInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartDataQualityRuleRecommendationRunInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.CreatedRulesetName != nil && len(*s.CreatedRulesetName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CreatedRulesetName", 1))
+	}
+	if s.DataSource == nil {
+		invalidParams.Add(request.NewErrParamRequired("DataSource"))
+	}
+	if s.Role == nil {
+		invalidParams.Add(request.NewErrParamRequired("Role"))
+	}
+	if s.Timeout != nil && *s.Timeout < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Timeout", 1))
+	}
+	if s.DataSource != nil {
+		if err := s.DataSource.Validate(); err != nil {
+			invalidParams.AddNested("DataSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *StartDataQualityRuleRecommendationRunInput) SetClientToken(v string) *StartDataQualityRuleRecommendationRunInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetCreatedRulesetName sets the CreatedRulesetName field's value.
+func (s *StartDataQualityRuleRecommendationRunInput) SetCreatedRulesetName(v string) *StartDataQualityRuleRecommendationRunInput {
+	s.CreatedRulesetName = &v
+	return s
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *StartDataQualityRuleRecommendationRunInput) SetDataSource(v *DataSource) *StartDataQualityRuleRecommendationRunInput {
+	s.DataSource = v
+	return s
+}
+
+// SetNumberOfWorkers sets the NumberOfWorkers field's value.
+func (s *StartDataQualityRuleRecommendationRunInput) SetNumberOfWorkers(v int64) *StartDataQualityRuleRecommendationRunInput {
+	s.NumberOfWorkers = &v
+	return s
+}
+
+// SetRole sets the Role field's value.
+func (s *StartDataQualityRuleRecommendationRunInput) SetRole(v string) *StartDataQualityRuleRecommendationRunInput {
+	s.Role = &v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *StartDataQualityRuleRecommendationRunInput) SetTimeout(v int64) *StartDataQualityRuleRecommendationRunInput {
+	s.Timeout = &v
+	return s
+}
+
+type StartDataQualityRuleRecommendationRunOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	RunId *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRuleRecommendationRunOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRuleRecommendationRunOutput) GoString() string {
+	return s.String()
+}
+
+// SetRunId sets the RunId field's value.
+func (s *StartDataQualityRuleRecommendationRunOutput) SetRunId(v string) *StartDataQualityRuleRecommendationRunOutput {
+	s.RunId = &v
+	return s
+}
+
+type StartDataQualityRulesetEvaluationRunInput struct {
+	_ struct{} `type:"structure"`
+
+	// A map of reference strings to additional data sources you can specify for
+	// an evaluation run.
+	AdditionalDataSources map[string]*DataSource `type:"map"`
+
+	// Additional run options you can specify for an evaluation run.
+	AdditionalRunOptions *DataQualityEvaluationRunAdditionalRunOptions `type:"structure"`
+
+	// Used for idempotency and is recommended to be set to a random ID (such as
+	// a UUID) to avoid creating or starting multiple instances of the same resource.
+	ClientToken *string `min:"1" type:"string"`
+
+	// The data source (Glue table) associated with this run.
+	//
+	// DataSource is a required field
+	DataSource *DataSource `type:"structure" required:"true"`
+
+	// The number of G.1X workers to be used in the run. The default is 5.
+	NumberOfWorkers *int64 `type:"integer"`
+
+	// An IAM role supplied to encrypt the results of the run.
+	//
+	// Role is a required field
+	Role *string `type:"string" required:"true"`
+
+	// A list of ruleset names.
+	//
+	// RulesetNames is a required field
+	RulesetNames []*string `min:"1" type:"list" required:"true"`
+
+	// The timeout for a run in minutes. This is the maximum time that a run can
+	// consume resources before it is terminated and enters TIMEOUT status. The
+	// default is 2,880 minutes (48 hours).
+	Timeout *int64 `min:"1" type:"integer"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRulesetEvaluationRunInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRulesetEvaluationRunInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *StartDataQualityRulesetEvaluationRunInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "StartDataQualityRulesetEvaluationRunInput"}
+	if s.ClientToken != nil && len(*s.ClientToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ClientToken", 1))
+	}
+	if s.DataSource == nil {
+		invalidParams.Add(request.NewErrParamRequired("DataSource"))
+	}
+	if s.Role == nil {
+		invalidParams.Add(request.NewErrParamRequired("Role"))
+	}
+	if s.RulesetNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("RulesetNames"))
+	}
+	if s.RulesetNames != nil && len(s.RulesetNames) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RulesetNames", 1))
+	}
+	if s.Timeout != nil && *s.Timeout < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("Timeout", 1))
+	}
+	if s.AdditionalDataSources != nil {
+		for i, v := range s.AdditionalDataSources {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "AdditionalDataSources", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.DataSource != nil {
+		if err := s.DataSource.Validate(); err != nil {
+			invalidParams.AddNested("DataSource", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAdditionalDataSources sets the AdditionalDataSources field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetAdditionalDataSources(v map[string]*DataSource) *StartDataQualityRulesetEvaluationRunInput {
+	s.AdditionalDataSources = v
+	return s
+}
+
+// SetAdditionalRunOptions sets the AdditionalRunOptions field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetAdditionalRunOptions(v *DataQualityEvaluationRunAdditionalRunOptions) *StartDataQualityRulesetEvaluationRunInput {
+	s.AdditionalRunOptions = v
+	return s
+}
+
+// SetClientToken sets the ClientToken field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetClientToken(v string) *StartDataQualityRulesetEvaluationRunInput {
+	s.ClientToken = &v
+	return s
+}
+
+// SetDataSource sets the DataSource field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetDataSource(v *DataSource) *StartDataQualityRulesetEvaluationRunInput {
+	s.DataSource = v
+	return s
+}
+
+// SetNumberOfWorkers sets the NumberOfWorkers field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetNumberOfWorkers(v int64) *StartDataQualityRulesetEvaluationRunInput {
+	s.NumberOfWorkers = &v
+	return s
+}
+
+// SetRole sets the Role field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetRole(v string) *StartDataQualityRulesetEvaluationRunInput {
+	s.Role = &v
+	return s
+}
+
+// SetRulesetNames sets the RulesetNames field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetRulesetNames(v []*string) *StartDataQualityRulesetEvaluationRunInput {
+	s.RulesetNames = v
+	return s
+}
+
+// SetTimeout sets the Timeout field's value.
+func (s *StartDataQualityRulesetEvaluationRunInput) SetTimeout(v int64) *StartDataQualityRulesetEvaluationRunInput {
+	s.Timeout = &v
+	return s
+}
+
+type StartDataQualityRulesetEvaluationRunOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The unique run identifier associated with this run.
+	RunId *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRulesetEvaluationRunOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s StartDataQualityRulesetEvaluationRunOutput) GoString() string {
+	return s.String()
+}
+
+// SetRunId sets the RunId field's value.
+func (s *StartDataQualityRulesetEvaluationRunOutput) SetRunId(v string) *StartDataQualityRulesetEvaluationRunOutput {
+	s.RunId = &v
+	return s
+}
+
 type StartExportLabelsTaskRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -57376,7 +65170,7 @@ type StartJobRunInput struct {
 	// Deprecated: This property is deprecated, use MaxCapacity instead.
 	AllocatedCapacity *int64 `deprecated:"true" type:"integer"`
 
-	// The job arguments specifically for this run. For this job run, they replace
+	// The job arguments associated with this run. For this job run, they replace
 	// the default arguments set in the job definition itself.
 	//
 	// You can specify arguments here that your own job-execution script consumes,
@@ -57390,9 +65184,13 @@ type StartJobRunInput struct {
 	// see the Calling Glue APIs in Python (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-python-calling.html)
 	// topic in the developer guide.
 	//
-	// For information about the key-value pairs that Glue consumes to set up your
-	// job, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
+	// For information about the arguments you can provide to this field when configuring
+	// Spark jobs, see the Special Parameters Used by Glue (https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html)
 	// topic in the developer guide.
+	//
+	// For information about the arguments you can provide to this field when configuring
+	// Ray jobs, see Using job parameters in Ray jobs (https://docs.aws.amazon.com/glue/latest/dg/author-job-ray-job-parameters.html)
+	// in the developer guide.
 	Arguments map[string]*string `type:"map"`
 
 	// Indicates whether the job is run with a standard or flexible execution class.
@@ -57415,22 +65213,28 @@ type StartJobRunInput struct {
 	// The ID of a previous JobRun to retry.
 	JobRunId *string `min:"1" type:"string"`
 
-	// The number of Glue data processing units (DPUs) that can be allocated when
-	// this job runs. A DPU is a relative measure of processing power that consists
-	// of 4 vCPUs of compute capacity and 16 GB of memory. For more information,
-	// see the Glue pricing page (https://aws.amazon.com/glue/pricing/).
+	// For Glue version 1.0 or earlier jobs, using the standard worker type, the
+	// number of Glue data processing units (DPUs) that can be allocated when this
+	// job runs. A DPU is a relative measure of processing power that consists of
+	// 4 vCPUs of compute capacity and 16 GB of memory. For more information, see
+	// the Glue pricing page (https://aws.amazon.com/glue/pricing/).
 	//
-	// Do not set Max Capacity if using WorkerType and NumberOfWorkers.
+	// For Glue version 2.0+ jobs, you cannot specify a Maximum capacity. Instead,
+	// you should specify a Worker type and the Number of workers.
+	//
+	// Do not set MaxCapacity if using WorkerType and NumberOfWorkers.
 	//
 	// The value that can be allocated for MaxCapacity depends on whether you are
-	// running a Python shell job, or an Apache Spark ETL job:
+	// running a Python shell job, an Apache Spark ETL job, or an Apache Spark streaming
+	// ETL job:
 	//
 	//    * When you specify a Python shell job (JobCommand.Name="pythonshell"),
 	//    you can allocate either 0.0625 or 1 DPU. The default is 0.0625 DPU.
 	//
-	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl"),
-	//    you can allocate a minimum of 2 DPUs. The default is 10 DPUs. This job
-	//    type cannot have a fractional DPU allocation.
+	//    * When you specify an Apache Spark ETL job (JobCommand.Name="glueetl")
+	//    or Apache Spark streaming ETL job (JobCommand.Name="gluestreaming"), you
+	//    can allocate from 2 to 100 DPUs. The default is 10 DPUs. This job type
+	//    cannot have a fractional DPU allocation.
 	MaxCapacity *float64 `type:"double"`
 
 	// Specifies configuration properties of a job run notification.
@@ -57453,21 +65257,28 @@ type StartJobRunInput struct {
 	Timeout *int64 `min:"1" type:"integer"`
 
 	// The type of predefined worker that is allocated when a job runs. Accepts
-	// a value of Standard, G.1X, G.2X, or G.025X.
+	// a value of Standard, G.1X, G.2X, or G.025X for Spark jobs. Accepts the value
+	// Z.2X for Ray jobs.
 	//
 	//    * For the Standard worker type, each worker provides 4 vCPU, 16 GB of
 	//    memory and a 50GB disk, and 2 executors per worker.
 	//
-	//    * For the G.1X worker type, each worker provides 4 vCPU, 16 GB of memory
-	//    and a 64GB disk, and 1 executor per worker.
+	//    * For the G.1X worker type, each worker maps to 1 DPU (4 vCPU, 16 GB of
+	//    memory, 64 GB disk), and provides 1 executor per worker. We recommend
+	//    this worker type for memory-intensive jobs.
 	//
-	//    * For the G.2X worker type, each worker provides 8 vCPU, 32 GB of memory
-	//    and a 128GB disk, and 1 executor per worker.
+	//    * For the G.2X worker type, each worker maps to 2 DPU (8 vCPU, 32 GB of
+	//    memory, 128 GB disk), and provides 1 executor per worker. We recommend
+	//    this worker type for memory-intensive jobs.
 	//
 	//    * For the G.025X worker type, each worker maps to 0.25 DPU (2 vCPU, 4
 	//    GB of memory, 64 GB disk), and provides 1 executor per worker. We recommend
 	//    this worker type for low volume streaming jobs. This worker type is only
 	//    available for Glue version 3.0 streaming jobs.
+	//
+	//    * For the Z.2X worker type, each worker maps to 2 DPU (8vCPU, 64 GB of
+	//    m emory, 128 GB disk), and provides up to 8 Ray workers (one per vCPU)
+	//    based on the autoscaler.
 	WorkerType *string `type:"string" enum:"WorkerType"`
 }
 
@@ -58948,6 +66759,15 @@ func (s *StringColumnStatisticsData) SetNumberOfNulls(v int64) *StringColumnStat
 type Table struct {
 	_ struct{} `type:"structure"`
 
+	// Additional options for the table. Currently there are two keys supported:
+	//
+	//    * pushDownPredicate: to filter on partitions without having to list and
+	//    read all the files in your dataset.
+	//
+	//    * catalogPartitionPredicate: to use server-side partition pruning using
+	//    partition indexes in the Glue Data Catalog.
+	AdditionalOptions map[string]*string `min:"1" type:"map"`
+
 	// A unique identifier for the Glue Data Catalog.
 	CatalogId *string `min:"1" type:"string"`
 
@@ -58986,6 +66806,9 @@ func (s Table) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *Table) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Table"}
+	if s.AdditionalOptions != nil && len(s.AdditionalOptions) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("AdditionalOptions", 1))
+	}
 	if s.CatalogId != nil && len(*s.CatalogId) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("CatalogId", 1))
 	}
@@ -59009,6 +66832,12 @@ func (s *Table) Validate() error {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetAdditionalOptions sets the AdditionalOptions field's value.
+func (s *Table) SetAdditionalOptions(v map[string]*string) *Table {
+	s.AdditionalOptions = v
+	return s
 }
 
 // SetCatalogId sets the CatalogId field's value.
@@ -59055,6 +66884,10 @@ type TableData struct {
 	// A description of the table.
 	Description *string `type:"string"`
 
+	// A FederatedTable structure that references an entity outside the Glue Data
+	// Catalog.
+	FederatedTable *FederatedTable `type:"structure"`
+
 	// Indicates whether the table has been registered with Lake Formation.
 	IsRegisteredWithLakeFormation *bool `type:"boolean"`
 
@@ -59093,7 +66926,18 @@ type TableData struct {
 	// this table.
 	StorageDescriptor *StorageDescriptor `type:"structure"`
 
-	// The type of this table (EXTERNAL_TABLE, VIRTUAL_VIEW, etc.).
+	// The type of this table. Glue will create tables with the EXTERNAL_TABLE type.
+	// Other services, such as Athena, may create tables with additional table types.
+	//
+	// Glue related table types:
+	//
+	// EXTERNAL_TABLE
+	//
+	// Hive compatible attribute - indicates a non-Hive managed table.
+	//
+	// GOVERNED
+	//
+	// Used by Lake Formation. The Glue Data Catalog understands GOVERNED.
 	TableType *string `type:"string"`
 
 	// A TableIdentifier structure that describes a target table for resource linking.
@@ -59105,10 +66949,13 @@ type TableData struct {
 	// The ID of the table version.
 	VersionId *string `min:"1" type:"string"`
 
-	// If the table is a view, the expanded text of the view; otherwise null.
+	// Included for Apache Hive compatibility. Not used in the normal course of
+	// Glue operations.
 	ViewExpandedText *string `type:"string"`
 
-	// If the table is a view, the original text of the view; otherwise null.
+	// Included for Apache Hive compatibility. Not used in the normal course of
+	// Glue operations. If the table is a VIRTUAL_VIEW, certain Athena configuration
+	// encoded in base64.
 	ViewOriginalText *string `type:"string"`
 }
 
@@ -59157,6 +67004,12 @@ func (s *TableData) SetDatabaseName(v string) *TableData {
 // SetDescription sets the Description field's value.
 func (s *TableData) SetDescription(v string) *TableData {
 	s.Description = &v
+	return s
+}
+
+// SetFederatedTable sets the FederatedTable field's value.
+func (s *TableData) SetFederatedTable(v *FederatedTable) *TableData {
+	s.FederatedTable = v
 	return s
 }
 
@@ -59303,6 +67156,9 @@ type TableIdentifier struct {
 
 	// The name of the target table.
 	Name *string `min:"1" type:"string"`
+
+	// Region of the target table.
+	Region *string `min:"1" type:"string"`
 }
 
 // String returns the string representation.
@@ -59335,6 +67191,9 @@ func (s *TableIdentifier) Validate() error {
 	if s.Name != nil && len(*s.Name) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
 	}
+	if s.Region != nil && len(*s.Region) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Region", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -59360,6 +67219,12 @@ func (s *TableIdentifier) SetName(v string) *TableIdentifier {
 	return s
 }
 
+// SetRegion sets the Region field's value.
+func (s *TableIdentifier) SetRegion(v string) *TableIdentifier {
+	s.Region = &v
+	return s
+}
+
 // A structure used to define a table.
 type TableInput struct {
 	_ struct{} `type:"structure"`
@@ -59379,7 +67244,8 @@ type TableInput struct {
 	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
-	// The table owner.
+	// The table owner. Included for Apache Hive compatibility. Not used in the
+	// normal course of Glue operations.
 	Owner *string `min:"1" type:"string"`
 
 	// These key-value pairs define properties associated with the table.
@@ -59402,16 +67268,30 @@ type TableInput struct {
 	// this table.
 	StorageDescriptor *StorageDescriptor `type:"structure"`
 
-	// The type of this table (EXTERNAL_TABLE, VIRTUAL_VIEW, etc.).
+	// The type of this table. Glue will create tables with the EXTERNAL_TABLE type.
+	// Other services, such as Athena, may create tables with additional table types.
+	//
+	// Glue related table types:
+	//
+	// EXTERNAL_TABLE
+	//
+	// Hive compatible attribute - indicates a non-Hive managed table.
+	//
+	// GOVERNED
+	//
+	// Used by Lake Formation. The Glue Data Catalog understands GOVERNED.
 	TableType *string `type:"string"`
 
 	// A TableIdentifier structure that describes a target table for resource linking.
 	TargetTable *TableIdentifier `type:"structure"`
 
-	// If the table is a view, the expanded text of the view; otherwise null.
+	// Included for Apache Hive compatibility. Not used in the normal course of
+	// Glue operations.
 	ViewExpandedText *string `type:"string"`
 
-	// If the table is a view, the original text of the view; otherwise null.
+	// Included for Apache Hive compatibility. Not used in the normal course of
+	// Glue operations. If the table is a VIRTUAL_VIEW, certain Athena configuration
+	// encoded in base64.
 	ViewOriginalText *string `type:"string"`
 }
 
@@ -60035,6 +67915,114 @@ func (s *TaskRunSortCriteria) SetSortDirection(v string) *TaskRunSortCriteria {
 	return s
 }
 
+// Specifies the parameters in the config file of the dynamic transform.
+type TransformConfigParameter struct {
+	_ struct{} `type:"structure"`
+
+	// Specifies whether the parameter is optional or not in the config file of
+	// the dynamic transform.
+	IsOptional *bool `type:"boolean"`
+
+	// Specifies the list type of the parameter in the config file of the dynamic
+	// transform.
+	ListType *string `type:"string" enum:"ParamType"`
+
+	// Specifies the name of the parameter in the config file of the dynamic transform.
+	//
+	// Name is a required field
+	Name *string `type:"string" required:"true"`
+
+	// Specifies the parameter type in the config file of the dynamic transform.
+	//
+	// Type is a required field
+	Type *string `type:"string" required:"true" enum:"ParamType"`
+
+	// Specifies the validation message in the config file of the dynamic transform.
+	ValidationMessage *string `type:"string"`
+
+	// Specifies the validation rule in the config file of the dynamic transform.
+	ValidationRule *string `type:"string"`
+
+	// Specifies the value of the parameter in the config file of the dynamic transform.
+	Value []*string `type:"list"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TransformConfigParameter) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s TransformConfigParameter) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TransformConfigParameter) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TransformConfigParameter"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Type == nil {
+		invalidParams.Add(request.NewErrParamRequired("Type"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIsOptional sets the IsOptional field's value.
+func (s *TransformConfigParameter) SetIsOptional(v bool) *TransformConfigParameter {
+	s.IsOptional = &v
+	return s
+}
+
+// SetListType sets the ListType field's value.
+func (s *TransformConfigParameter) SetListType(v string) *TransformConfigParameter {
+	s.ListType = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *TransformConfigParameter) SetName(v string) *TransformConfigParameter {
+	s.Name = &v
+	return s
+}
+
+// SetType sets the Type field's value.
+func (s *TransformConfigParameter) SetType(v string) *TransformConfigParameter {
+	s.Type = &v
+	return s
+}
+
+// SetValidationMessage sets the ValidationMessage field's value.
+func (s *TransformConfigParameter) SetValidationMessage(v string) *TransformConfigParameter {
+	s.ValidationMessage = &v
+	return s
+}
+
+// SetValidationRule sets the ValidationRule field's value.
+func (s *TransformConfigParameter) SetValidationRule(v string) *TransformConfigParameter {
+	s.ValidationRule = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *TransformConfigParameter) SetValue(v []*string) *TransformConfigParameter {
+	s.Value = v
+	return s
+}
+
 // The encryption-at-rest settings of the transform that apply to accessing
 // user data. Machine learning transforms can access user data encrypted in
 // Amazon S3 using KMS.
@@ -60632,14 +68620,18 @@ func (s *TriggerUpdate) SetSchedule(v string) *TriggerUpdate {
 	return s
 }
 
+// A partition that contains unfiltered metadata.
 type UnfilteredPartition struct {
 	_ struct{} `type:"structure"`
 
+	// The list of columns the user has permissions to access.
 	AuthorizedColumns []*string `type:"list"`
 
+	// A Boolean value indicating that the partition location is registered with
+	// Lake Formation.
 	IsRegisteredWithLakeFormation *bool `type:"boolean"`
 
-	// Represents a slice of table data.
+	// The partition object.
 	Partition *Partition `type:"structure"`
 }
 
@@ -61461,8 +69453,8 @@ type UpdateCrawlerInput struct {
 	Classifiers []*string `type:"list"`
 
 	// Crawler configuration information. This versioned JSON string allows users
-	// to specify aspects of a crawler's behavior. For more information, see Configuring
-	// a Crawler (https://docs.aws.amazon.com/glue/latest/dg/crawler-configuration.html).
+	// to specify aspects of a crawler's behavior. For more information, see Setting
+	// crawler configuration options (https://docs.aws.amazon.com/glue/latest/dg/crawler-configuration.html).
 	Configuration *string `type:"string"`
 
 	// The name of the SecurityConfiguration structure to be used by this crawler.
@@ -61747,6 +69739,12 @@ type UpdateCsvClassifierRequest struct {
 	// Indicates whether the CSV file contains a header.
 	ContainsHeader *string `type:"string" enum:"CsvHeaderOption"`
 
+	// Specifies the configuration of custom datatypes.
+	CustomDatatypeConfigured *bool `type:"boolean"`
+
+	// Specifies a list of supported custom datatypes.
+	CustomDatatypes []*string `type:"list"`
+
 	// A custom symbol to denote what separates each column entry in the row.
 	Delimiter *string `min:"1" type:"string"`
 
@@ -61819,6 +69817,18 @@ func (s *UpdateCsvClassifierRequest) SetContainsHeader(v string) *UpdateCsvClass
 	return s
 }
 
+// SetCustomDatatypeConfigured sets the CustomDatatypeConfigured field's value.
+func (s *UpdateCsvClassifierRequest) SetCustomDatatypeConfigured(v bool) *UpdateCsvClassifierRequest {
+	s.CustomDatatypeConfigured = &v
+	return s
+}
+
+// SetCustomDatatypes sets the CustomDatatypes field's value.
+func (s *UpdateCsvClassifierRequest) SetCustomDatatypes(v []*string) *UpdateCsvClassifierRequest {
+	s.CustomDatatypes = v
+	return s
+}
+
 // SetDelimiter sets the Delimiter field's value.
 func (s *UpdateCsvClassifierRequest) SetDelimiter(v string) *UpdateCsvClassifierRequest {
 	s.Delimiter = &v
@@ -61846,6 +69856,127 @@ func (s *UpdateCsvClassifierRequest) SetName(v string) *UpdateCsvClassifierReque
 // SetQuoteSymbol sets the QuoteSymbol field's value.
 func (s *UpdateCsvClassifierRequest) SetQuoteSymbol(v string) *UpdateCsvClassifierRequest {
 	s.QuoteSymbol = &v
+	return s
+}
+
+type UpdateDataQualityRulesetInput struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the ruleset.
+	Description *string `type:"string"`
+
+	// The name of the data quality ruleset.
+	//
+	// Name is a required field
+	Name *string `min:"1" type:"string" required:"true"`
+
+	// A Data Quality Definition Language (DQDL) ruleset. For more information,
+	// see the Glue developer guide.
+	Ruleset *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataQualityRulesetInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataQualityRulesetInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateDataQualityRulesetInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateDataQualityRulesetInput"}
+	if s.Name == nil {
+		invalidParams.Add(request.NewErrParamRequired("Name"))
+	}
+	if s.Name != nil && len(*s.Name) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Name", 1))
+	}
+	if s.Ruleset != nil && len(*s.Ruleset) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Ruleset", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateDataQualityRulesetInput) SetDescription(v string) *UpdateDataQualityRulesetInput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateDataQualityRulesetInput) SetName(v string) *UpdateDataQualityRulesetInput {
+	s.Name = &v
+	return s
+}
+
+// SetRuleset sets the Ruleset field's value.
+func (s *UpdateDataQualityRulesetInput) SetRuleset(v string) *UpdateDataQualityRulesetInput {
+	s.Ruleset = &v
+	return s
+}
+
+type UpdateDataQualityRulesetOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A description of the ruleset.
+	Description *string `type:"string"`
+
+	// The name of the data quality ruleset.
+	Name *string `min:"1" type:"string"`
+
+	// A Data Quality Definition Language (DQDL) ruleset. For more information,
+	// see the Glue developer guide.
+	Ruleset *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataQualityRulesetOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s UpdateDataQualityRulesetOutput) GoString() string {
+	return s.String()
+}
+
+// SetDescription sets the Description field's value.
+func (s *UpdateDataQualityRulesetOutput) SetDescription(v string) *UpdateDataQualityRulesetOutput {
+	s.Description = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *UpdateDataQualityRulesetOutput) SetName(v string) *UpdateDataQualityRulesetOutput {
+	s.Name = &v
+	return s
+}
+
+// SetRuleset sets the Ruleset field's value.
+func (s *UpdateDataQualityRulesetOutput) SetRuleset(v string) *UpdateDataQualityRulesetOutput {
+	s.Ruleset = &v
 	return s
 }
 
@@ -64639,6 +72770,18 @@ func (s *XMLClassifier) SetVersion(v int64) *XMLClassifier {
 }
 
 const (
+	// AdditionalOptionKeysPerformanceTuningCaching is a AdditionalOptionKeys enum value
+	AdditionalOptionKeysPerformanceTuningCaching = "performanceTuning.caching"
+)
+
+// AdditionalOptionKeys_Values returns all elements of the AdditionalOptionKeys enum
+func AdditionalOptionKeys_Values() []string {
+	return []string{
+		AdditionalOptionKeysPerformanceTuningCaching,
+	}
+}
+
+const (
 	// AggFunctionAvg is a AggFunction enum value
 	AggFunctionAvg = "avg"
 
@@ -65211,6 +73354,38 @@ func CsvHeaderOption_Values() []string {
 }
 
 const (
+	// DQStopJobOnFailureTimingImmediate is a DQStopJobOnFailureTiming enum value
+	DQStopJobOnFailureTimingImmediate = "Immediate"
+
+	// DQStopJobOnFailureTimingAfterDataLoad is a DQStopJobOnFailureTiming enum value
+	DQStopJobOnFailureTimingAfterDataLoad = "AfterDataLoad"
+)
+
+// DQStopJobOnFailureTiming_Values returns all elements of the DQStopJobOnFailureTiming enum
+func DQStopJobOnFailureTiming_Values() []string {
+	return []string{
+		DQStopJobOnFailureTimingImmediate,
+		DQStopJobOnFailureTimingAfterDataLoad,
+	}
+}
+
+const (
+	// DQTransformOutputPrimaryInput is a DQTransformOutput_ enum value
+	DQTransformOutputPrimaryInput = "PrimaryInput"
+
+	// DQTransformOutputEvaluationResults is a DQTransformOutput_ enum value
+	DQTransformOutputEvaluationResults = "EvaluationResults"
+)
+
+// DQTransformOutput__Values returns all elements of the DQTransformOutput_ enum
+func DQTransformOutput__Values() []string {
+	return []string{
+		DQTransformOutputPrimaryInput,
+		DQTransformOutputEvaluationResults,
+	}
+}
+
+const (
 	// DataFormatAvro is a DataFormat enum value
 	DataFormatAvro = "AVRO"
 
@@ -65231,6 +73406,26 @@ func DataFormat_Values() []string {
 }
 
 const (
+	// DataQualityRuleResultStatusPass is a DataQualityRuleResultStatus enum value
+	DataQualityRuleResultStatusPass = "PASS"
+
+	// DataQualityRuleResultStatusFail is a DataQualityRuleResultStatus enum value
+	DataQualityRuleResultStatusFail = "FAIL"
+
+	// DataQualityRuleResultStatusError is a DataQualityRuleResultStatus enum value
+	DataQualityRuleResultStatusError = "ERROR"
+)
+
+// DataQualityRuleResultStatus_Values returns all elements of the DataQualityRuleResultStatus enum
+func DataQualityRuleResultStatus_Values() []string {
+	return []string{
+		DataQualityRuleResultStatusPass,
+		DataQualityRuleResultStatusFail,
+		DataQualityRuleResultStatusError,
+	}
+}
+
+const (
 	// DeleteBehaviorLog is a DeleteBehavior enum value
 	DeleteBehaviorLog = "LOG"
 
@@ -65247,6 +73442,22 @@ func DeleteBehavior_Values() []string {
 		DeleteBehaviorLog,
 		DeleteBehaviorDeleteFromDatabase,
 		DeleteBehaviorDeprecateInDatabase,
+	}
+}
+
+const (
+	// DeltaTargetCompressionTypeUncompressed is a DeltaTargetCompressionType enum value
+	DeltaTargetCompressionTypeUncompressed = "uncompressed"
+
+	// DeltaTargetCompressionTypeSnappy is a DeltaTargetCompressionType enum value
+	DeltaTargetCompressionTypeSnappy = "snappy"
+)
+
+// DeltaTargetCompressionType_Values returns all elements of the DeltaTargetCompressionType enum
+func DeltaTargetCompressionType_Values() []string {
+	return []string{
+		DeltaTargetCompressionTypeUncompressed,
+		DeltaTargetCompressionTypeSnappy,
 	}
 }
 
@@ -65299,6 +73510,34 @@ func ExistCondition_Values() []string {
 		ExistConditionMustExist,
 		ExistConditionNotExist,
 		ExistConditionNone,
+	}
+}
+
+const (
+	// FederationSourceErrorCodeInvalidResponseException is a FederationSourceErrorCode enum value
+	FederationSourceErrorCodeInvalidResponseException = "InvalidResponseException"
+
+	// FederationSourceErrorCodeOperationTimeoutException is a FederationSourceErrorCode enum value
+	FederationSourceErrorCodeOperationTimeoutException = "OperationTimeoutException"
+
+	// FederationSourceErrorCodeOperationNotSupportedException is a FederationSourceErrorCode enum value
+	FederationSourceErrorCodeOperationNotSupportedException = "OperationNotSupportedException"
+
+	// FederationSourceErrorCodeInternalServiceException is a FederationSourceErrorCode enum value
+	FederationSourceErrorCodeInternalServiceException = "InternalServiceException"
+
+	// FederationSourceErrorCodeThrottlingException is a FederationSourceErrorCode enum value
+	FederationSourceErrorCodeThrottlingException = "ThrottlingException"
+)
+
+// FederationSourceErrorCode_Values returns all elements of the FederationSourceErrorCode enum
+func FederationSourceErrorCode_Values() []string {
+	return []string{
+		FederationSourceErrorCodeInvalidResponseException,
+		FederationSourceErrorCodeOperationTimeoutException,
+		FederationSourceErrorCodeOperationNotSupportedException,
+		FederationSourceErrorCodeInternalServiceException,
+		FederationSourceErrorCodeThrottlingException,
 	}
 }
 
@@ -65479,6 +73718,58 @@ func GlueRecordType_Values() []string {
 }
 
 const (
+	// HudiTargetCompressionTypeGzip is a HudiTargetCompressionType enum value
+	HudiTargetCompressionTypeGzip = "gzip"
+
+	// HudiTargetCompressionTypeLzo is a HudiTargetCompressionType enum value
+	HudiTargetCompressionTypeLzo = "lzo"
+
+	// HudiTargetCompressionTypeUncompressed is a HudiTargetCompressionType enum value
+	HudiTargetCompressionTypeUncompressed = "uncompressed"
+
+	// HudiTargetCompressionTypeSnappy is a HudiTargetCompressionType enum value
+	HudiTargetCompressionTypeSnappy = "snappy"
+)
+
+// HudiTargetCompressionType_Values returns all elements of the HudiTargetCompressionType enum
+func HudiTargetCompressionType_Values() []string {
+	return []string{
+		HudiTargetCompressionTypeGzip,
+		HudiTargetCompressionTypeLzo,
+		HudiTargetCompressionTypeUncompressed,
+		HudiTargetCompressionTypeSnappy,
+	}
+}
+
+const (
+	// JDBCConnectionTypeSqlserver is a JDBCConnectionType enum value
+	JDBCConnectionTypeSqlserver = "sqlserver"
+
+	// JDBCConnectionTypeMysql is a JDBCConnectionType enum value
+	JDBCConnectionTypeMysql = "mysql"
+
+	// JDBCConnectionTypeOracle is a JDBCConnectionType enum value
+	JDBCConnectionTypeOracle = "oracle"
+
+	// JDBCConnectionTypePostgresql is a JDBCConnectionType enum value
+	JDBCConnectionTypePostgresql = "postgresql"
+
+	// JDBCConnectionTypeRedshift is a JDBCConnectionType enum value
+	JDBCConnectionTypeRedshift = "redshift"
+)
+
+// JDBCConnectionType_Values returns all elements of the JDBCConnectionType enum
+func JDBCConnectionType_Values() []string {
+	return []string{
+		JDBCConnectionTypeSqlserver,
+		JDBCConnectionTypeMysql,
+		JDBCConnectionTypeOracle,
+		JDBCConnectionTypePostgresql,
+		JDBCConnectionTypeRedshift,
+	}
+}
+
+const (
 	// JDBCDataTypeArray is a JDBCDataType enum value
 	JDBCDataTypeArray = "ARRAY"
 
@@ -65639,6 +73930,22 @@ func JDBCDataType_Values() []string {
 		JDBCDataTypeTinyint,
 		JDBCDataTypeVarbinary,
 		JDBCDataTypeVarchar,
+	}
+}
+
+const (
+	// JdbcMetadataEntryComments is a JdbcMetadataEntry enum value
+	JdbcMetadataEntryComments = "COMMENTS"
+
+	// JdbcMetadataEntryRawtypes is a JdbcMetadataEntry enum value
+	JdbcMetadataEntryRawtypes = "RAWTYPES"
+)
+
+// JdbcMetadataEntry_Values returns all elements of the JdbcMetadataEntry enum
+func JdbcMetadataEntry_Values() []string {
+	return []string{
+		JdbcMetadataEntryComments,
+		JdbcMetadataEntryRawtypes,
 	}
 }
 
@@ -65831,6 +74138,42 @@ func NodeType_Values() []string {
 		NodeTypeCrawler,
 		NodeTypeJob,
 		NodeTypeTrigger,
+	}
+}
+
+const (
+	// ParamTypeStr is a ParamType enum value
+	ParamTypeStr = "str"
+
+	// ParamTypeInt is a ParamType enum value
+	ParamTypeInt = "int"
+
+	// ParamTypeFloat is a ParamType enum value
+	ParamTypeFloat = "float"
+
+	// ParamTypeComplex is a ParamType enum value
+	ParamTypeComplex = "complex"
+
+	// ParamTypeBool is a ParamType enum value
+	ParamTypeBool = "bool"
+
+	// ParamTypeList is a ParamType enum value
+	ParamTypeList = "list"
+
+	// ParamTypeNull is a ParamType enum value
+	ParamTypeNull = "null"
+)
+
+// ParamType_Values returns all elements of the ParamType enum
+func ParamType_Values() []string {
+	return []string{
+		ParamTypeStr,
+		ParamTypeInt,
+		ParamTypeFloat,
+		ParamTypeComplex,
+		ParamTypeBool,
+		ParamTypeList,
+		ParamTypeNull,
 	}
 }
 
@@ -66056,6 +74399,9 @@ const (
 
 	// ResourceShareTypeAll is a ResourceShareType enum value
 	ResourceShareTypeAll = "ALL"
+
+	// ResourceShareTypeFederated is a ResourceShareType enum value
+	ResourceShareTypeFederated = "FEDERATED"
 )
 
 // ResourceShareType_Values returns all elements of the ResourceShareType enum
@@ -66063,6 +74409,7 @@ func ResourceShareType_Values() []string {
 	return []string{
 		ResourceShareTypeForeign,
 		ResourceShareTypeAll,
+		ResourceShareTypeFederated,
 	}
 }
 
@@ -66373,6 +74720,12 @@ const (
 
 	// TargetFormatParquet is a TargetFormat enum value
 	TargetFormatParquet = "parquet"
+
+	// TargetFormatHudi is a TargetFormat enum value
+	TargetFormatHudi = "hudi"
+
+	// TargetFormatDelta is a TargetFormat enum value
+	TargetFormatDelta = "delta"
 )
 
 // TargetFormat_Values returns all elements of the TargetFormat enum
@@ -66383,6 +74736,8 @@ func TargetFormat_Values() []string {
 		TargetFormatAvro,
 		TargetFormatOrc,
 		TargetFormatParquet,
+		TargetFormatHudi,
+		TargetFormatDelta,
 	}
 }
 
@@ -66654,6 +75009,15 @@ const (
 
 	// WorkerTypeG025x is a WorkerType enum value
 	WorkerTypeG025x = "G.025X"
+
+	// WorkerTypeG4x is a WorkerType enum value
+	WorkerTypeG4x = "G.4X"
+
+	// WorkerTypeG8x is a WorkerType enum value
+	WorkerTypeG8x = "G.8X"
+
+	// WorkerTypeZ2x is a WorkerType enum value
+	WorkerTypeZ2x = "Z.2X"
 )
 
 // WorkerType_Values returns all elements of the WorkerType enum
@@ -66663,6 +75027,9 @@ func WorkerType_Values() []string {
 		WorkerTypeG1x,
 		WorkerTypeG2x,
 		WorkerTypeG025x,
+		WorkerTypeG4x,
+		WorkerTypeG8x,
+		WorkerTypeZ2x,
 	}
 }
 

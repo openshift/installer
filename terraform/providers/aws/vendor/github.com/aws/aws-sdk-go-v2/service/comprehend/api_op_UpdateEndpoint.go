@@ -11,8 +11,8 @@ import (
 )
 
 // Updates information about the specified endpoint. For information about
-// endpoints, see Managing endpoints
-// (https://docs.aws.amazon.com/comprehend/latest/dg/manage-endpoints.html).
+// endpoints, see Managing endpoints (https://docs.aws.amazon.com/comprehend/latest/dg/manage-endpoints.html)
+// .
 func (c *Client) UpdateEndpoint(ctx context.Context, params *UpdateEndpointInput, optFns ...func(*Options)) (*UpdateEndpointOutput, error) {
 	if params == nil {
 		params = &UpdateEndpointInput{}
@@ -47,10 +47,17 @@ type UpdateEndpointInput struct {
 	// The ARN of the new model to use when updating an existing endpoint.
 	DesiredModelArn *string
 
+	// The Amazon Resource Number (ARN) of the flywheel
+	FlywheelArn *string
+
 	noSmithyDocumentSerde
 }
 
 type UpdateEndpointOutput struct {
+
+	// The Amazon Resource Number (ARN) of the new model.
+	DesiredModelArn *string
+
 	// Metadata pertaining to the operation's result.
 	ResultMetadata middleware.Metadata
 
@@ -106,6 +113,9 @@ func (c *Client) addOperationUpdateEndpointMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opUpdateEndpoint(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

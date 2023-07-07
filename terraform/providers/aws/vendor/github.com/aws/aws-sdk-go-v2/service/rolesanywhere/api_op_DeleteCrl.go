@@ -12,7 +12,7 @@ import (
 )
 
 // Deletes a certificate revocation list (CRL). Required permissions:
-// rolesanywhere:DeleteCrl.
+// rolesanywhere:DeleteCrl .
 func (c *Client) DeleteCrl(ctx context.Context, params *DeleteCrlInput, optFns ...func(*Options)) (*DeleteCrlOutput, error) {
 	if params == nil {
 		params = &DeleteCrlInput{}
@@ -101,6 +101,9 @@ func (c *Client) addOperationDeleteCrlMiddlewares(stack *middleware.Stack, optio
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDeleteCrl(options.Region), middleware.Before); err != nil {
+		return err
+	}
+	if err = awsmiddleware.AddRecursionDetection(stack); err != nil {
 		return err
 	}
 	if err = addRequestIDRetrieverMiddleware(stack); err != nil {

@@ -353,7 +353,7 @@ func (c *Snowball) CreateClusterRequest(input *CreateClusterInput) (req *request
 //     and try again.
 //
 //   - Ec2RequestFailedException
-//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     Your user lacks the necessary Amazon EC2 permissions to perform the attempted
 //     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateCluster
@@ -438,9 +438,9 @@ func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request
 //
 // Snow Family devices and their capacities.
 //
-//   - Snow Family device type: SNC1_SSD Capacity: T14 Description: Snowcone
+//   - Device type: SNC1_SSD Capacity: T14 Description: Snowcone
 //
-//   - Snow Family device type: SNC1_HDD Capacity: T8 Description: Snowcone
+//   - Device type: SNC1_HDD Capacity: T8 Description: Snowcone
 //
 //   - Device type: EDGE_S Capacity: T98 Description: Snowball Edge Storage
 //     Optimized for data transfer only
@@ -454,9 +454,6 @@ func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request
 //   - Device type: EDGE Capacity: T100 Description: Snowball Edge Storage
 //     Optimized with EC2 Compute
 //
-//   - Device type: V3_5C Capacity: T32 Description: Snowball Edge Compute
-//     Optimized without GPU
-//
 //   - Device type: STANDARD Capacity: T50 Description: Original Snowball device
 //     This device is only available in the Ningxia, Beijing, and Singapore Amazon
 //     Web Services Region
@@ -464,6 +461,12 @@ func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request
 //   - Device type: STANDARD Capacity: T80 Description: Original Snowball device
 //     This device is only available in the Ningxia, Beijing, and Singapore Amazon
 //     Web Services Region.
+//
+//   - Device type: V3_5C Capacity: T32 Description: Snowball Edge Compute
+//     Optimized without GPU
+//
+//   - Device type: V3_5S Capacity: T240 Description: Snowball Edge Storage
+//     Optimized 210TB
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -494,7 +497,7 @@ func (c *Snowball) CreateJobRequest(input *CreateJobInput) (req *request.Request
 //     five nodes.
 //
 //   - Ec2RequestFailedException
-//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     Your user lacks the necessary Amazon EC2 permissions to perform the attempted
 //     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/CreateJob
@@ -1869,9 +1872,11 @@ func (c *Snowball) ListCompatibleImagesRequest(input *ListCompatibleImagesInput)
 //
 // This action returns a list of the different Amazon EC2 Amazon Machine Images
 // (AMIs) that are owned by your Amazon Web Services accountthat would be supported
-// for use on a Snow device. Currently, supported AMIs are based on the CentOS
-// 7 (x86_64) - with Updates HVM, Ubuntu Server 14.04 LTS (HVM), and Ubuntu
-// 16.04 LTS - Xenial (HVM) images, available on the Amazon Web Services Marketplace.
+// for use on a Snow device. Currently, supported AMIs are based on the Amazon
+// Linux-2, Ubuntu 20.04 LTS - Focal, or Ubuntu 22.04 LTS - Jammy images, available
+// on the Amazon Web Services Marketplace. Ubuntu 16.04 LTS - Xenial (HVM) images
+// are no longer supported in the Market, but still supported for use on devices
+// through Amazon EC2 VM Import/Export and running locally in AMIs.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1887,7 +1892,7 @@ func (c *Snowball) ListCompatibleImagesRequest(input *ListCompatibleImagesInput)
 //     Run the operation without changing the NextToken string, and try again.
 //
 //   - Ec2RequestFailedException
-//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     Your user lacks the necessary Amazon EC2 permissions to perform the attempted
 //     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListCompatibleImages
@@ -2244,6 +2249,92 @@ func (c *Snowball) ListLongTermPricingPagesWithContext(ctx aws.Context, input *L
 	return p.Err()
 }
 
+const opListServiceVersions = "ListServiceVersions"
+
+// ListServiceVersionsRequest generates a "aws/request.Request" representing the
+// client's request for the ListServiceVersions operation. The "output" return
+// value will be populated with the request's response once the request completes
+// successfully.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListServiceVersions for more information on using the ListServiceVersions
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//	// Example sending a request using the ListServiceVersionsRequest method.
+//	req, resp := client.ListServiceVersionsRequest(params)
+//
+//	err := req.Send()
+//	if err == nil { // resp is now filled
+//	    fmt.Println(resp)
+//	}
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListServiceVersions
+func (c *Snowball) ListServiceVersionsRequest(input *ListServiceVersionsInput) (req *request.Request, output *ListServiceVersionsOutput) {
+	op := &request.Operation{
+		Name:       opListServiceVersions,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListServiceVersionsInput{}
+	}
+
+	output = &ListServiceVersionsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListServiceVersions API operation for Amazon Import/Export Snowball.
+//
+// Lists all supported versions for Snow on-device services. Returns an array
+// of ServiceVersion object containing the supported versions for a particular
+// service.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Import/Export Snowball's
+// API operation ListServiceVersions for usage and error information.
+//
+// Returned Error Types:
+//
+//   - InvalidNextTokenException
+//     The NextToken string was altered unexpectedly, and the operation has stopped.
+//     Run the operation without changing the NextToken string, and try again.
+//
+//   - InvalidResourceException
+//     The specified resource can't be found. Check the information you provided
+//     in your last request, and try again.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/ListServiceVersions
+func (c *Snowball) ListServiceVersions(input *ListServiceVersionsInput) (*ListServiceVersionsOutput, error) {
+	req, out := c.ListServiceVersionsRequest(input)
+	return out, req.Send()
+}
+
+// ListServiceVersionsWithContext is the same as ListServiceVersions with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListServiceVersions for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Snowball) ListServiceVersionsWithContext(ctx aws.Context, input *ListServiceVersionsInput, opts ...request.Option) (*ListServiceVersionsOutput, error) {
+	req, out := c.ListServiceVersionsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateCluster = "UpdateCluster"
 
 // UpdateClusterRequest generates a "aws/request.Request" representing the
@@ -2320,7 +2411,7 @@ func (c *Snowball) UpdateClusterRequest(input *UpdateClusterInput) (req *request
 //     and try again.
 //
 //   - Ec2RequestFailedException
-//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     Your user lacks the necessary Amazon EC2 permissions to perform the attempted
 //     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateCluster
@@ -2426,7 +2517,7 @@ func (c *Snowball) UpdateJobRequest(input *UpdateJobInput) (req *request.Request
 //     five nodes.
 //
 //   - Ec2RequestFailedException
-//     Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+//     Your user lacks the necessary Amazon EC2 permissions to perform the attempted
 //     action.
 //
 // See also, https://docs.aws.amazon.com/goto/WebAPI/snowball-2016-06-30/UpdateJob
@@ -3490,9 +3581,19 @@ type CreateClusterInput struct {
 	// Data Cluster-01.
 	Description *string `min:"1" type:"string"`
 
+	// Force to create cluster when user attempts to overprovision or underprovision
+	// a cluster. A cluster is overprovisioned or underprovisioned if the initial
+	// size of the cluster is more (overprovisioned) or less (underprovisioned)
+	// than what needed to meet capacity requirement specified with OnDeviceServiceConfiguration.
+	ForceCreateJobs *bool `type:"boolean"`
+
 	// The forwarding address ID for a cluster. This field is not supported in most
 	// regions.
 	ForwardingAddressId *string `min:"40" type:"string"`
+
+	// If provided, each job will be automatically created and associated with the
+	// new cluster. If not provided, will be treated as 0.
+	InitialClusterSize *int64 `type:"integer"`
 
 	// The type of job for this cluster. Currently, the only job type supported
 	// for clusters is LOCAL_USE.
@@ -3508,6 +3609,10 @@ type CreateClusterInput struct {
 	// values are created by using the CreateKey (https://docs.aws.amazon.com/kms/latest/APIReference/API_CreateKey.html)
 	// API action in Key Management Service (KMS).
 	KmsKeyARN *string `type:"string"`
+
+	// Lists long-term pricing id that will be used to associate with jobs automatically
+	// created for the new cluster.
+	LongTermPricingIds []*string `type:"list"`
 
 	// The Amazon Simple Notification Service (Amazon SNS) notification settings
 	// for this cluster.
@@ -3526,16 +3631,12 @@ type CreateClusterInput struct {
 
 	// The resources associated with the cluster job. These resources include Amazon
 	// S3 buckets and optional Lambda functions written in the Python language.
-	//
-	// Resources is a required field
-	Resources *JobResource `type:"structure" required:"true"`
+	Resources *JobResource `type:"structure"`
 
 	// The RoleARN that you want to associate with this cluster. RoleArn values
 	// are created by using the CreateRole (https://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateRole.html)
 	// API action in Identity and Access Management (IAM).
-	//
-	// RoleARN is a required field
-	RoleARN *string `type:"string" required:"true"`
+	RoleARN *string `type:"string"`
 
 	// The shipping speed for each node in this cluster. This speed doesn't dictate
 	// how soon you'll get each Snowball Edge device, rather it represents how quickly
@@ -3569,6 +3670,15 @@ type CreateClusterInput struct {
 	//
 	// ShippingOption is a required field
 	ShippingOption *string `type:"string" required:"true" enum:"ShippingOption"`
+
+	// If your job is being created in one of the US regions, you have the option
+	// of specifying what size Snow device you'd like for this job. In all other
+	// regions, Snowballs come with 80 TB in storage capacity.
+	//
+	// For more information, see "https://docs.aws.amazon.com/snowball/latest/snowcone-guide/snow-device-types.html"
+	// (Snow Family Devices and Capacity) in the Snowcone User Guide or "https://docs.aws.amazon.com/snowball/latest/developer-guide/snow-device-types.html"
+	// (Snow Family Devices and Capacity) in the Snowcone User Guide.
+	SnowballCapacityPreference *string `type:"string" enum:"Capacity"`
 
 	// The type of Snow Family devices to use for this cluster.
 	//
@@ -3622,17 +3732,16 @@ func (s *CreateClusterInput) Validate() error {
 	if s.JobType == nil {
 		invalidParams.Add(request.NewErrParamRequired("JobType"))
 	}
-	if s.Resources == nil {
-		invalidParams.Add(request.NewErrParamRequired("Resources"))
-	}
-	if s.RoleARN == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleARN"))
-	}
 	if s.ShippingOption == nil {
 		invalidParams.Add(request.NewErrParamRequired("ShippingOption"))
 	}
 	if s.SnowballType == nil {
 		invalidParams.Add(request.NewErrParamRequired("SnowballType"))
+	}
+	if s.OnDeviceServiceConfiguration != nil {
+		if err := s.OnDeviceServiceConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("OnDeviceServiceConfiguration", err.(request.ErrInvalidParams))
+		}
 	}
 	if s.Resources != nil {
 		if err := s.Resources.Validate(); err != nil {
@@ -3663,9 +3772,21 @@ func (s *CreateClusterInput) SetDescription(v string) *CreateClusterInput {
 	return s
 }
 
+// SetForceCreateJobs sets the ForceCreateJobs field's value.
+func (s *CreateClusterInput) SetForceCreateJobs(v bool) *CreateClusterInput {
+	s.ForceCreateJobs = &v
+	return s
+}
+
 // SetForwardingAddressId sets the ForwardingAddressId field's value.
 func (s *CreateClusterInput) SetForwardingAddressId(v string) *CreateClusterInput {
 	s.ForwardingAddressId = &v
+	return s
+}
+
+// SetInitialClusterSize sets the InitialClusterSize field's value.
+func (s *CreateClusterInput) SetInitialClusterSize(v int64) *CreateClusterInput {
+	s.InitialClusterSize = &v
 	return s
 }
 
@@ -3678,6 +3799,12 @@ func (s *CreateClusterInput) SetJobType(v string) *CreateClusterInput {
 // SetKmsKeyARN sets the KmsKeyARN field's value.
 func (s *CreateClusterInput) SetKmsKeyARN(v string) *CreateClusterInput {
 	s.KmsKeyARN = &v
+	return s
+}
+
+// SetLongTermPricingIds sets the LongTermPricingIds field's value.
+func (s *CreateClusterInput) SetLongTermPricingIds(v []*string) *CreateClusterInput {
+	s.LongTermPricingIds = v
 	return s
 }
 
@@ -3717,6 +3844,12 @@ func (s *CreateClusterInput) SetShippingOption(v string) *CreateClusterInput {
 	return s
 }
 
+// SetSnowballCapacityPreference sets the SnowballCapacityPreference field's value.
+func (s *CreateClusterInput) SetSnowballCapacityPreference(v string) *CreateClusterInput {
+	s.SnowballCapacityPreference = &v
+	return s
+}
+
 // SetSnowballType sets the SnowballType field's value.
 func (s *CreateClusterInput) SetSnowballType(v string) *CreateClusterInput {
 	s.SnowballType = &v
@@ -3734,6 +3867,11 @@ type CreateClusterOutput struct {
 
 	// The automatically generated ID for a cluster.
 	ClusterId *string `min:"39" type:"string"`
+
+	// List of jobs created for this cluster. For syntax, see ListJobsResult$JobListEntries
+	// (https://docs.aws.amazon.com/snowball/latest/api-reference/API_ListJobs.html#API_ListJobs_ResponseSyntax)
+	// in this guide.
+	JobListEntries []*JobListEntry `type:"list"`
 }
 
 // String returns the string representation.
@@ -3757,6 +3895,12 @@ func (s CreateClusterOutput) GoString() string {
 // SetClusterId sets the ClusterId field's value.
 func (s *CreateClusterOutput) SetClusterId(v string) *CreateClusterOutput {
 	s.ClusterId = &v
+	return s
+}
+
+// SetJobListEntries sets the JobListEntries field's value.
+func (s *CreateClusterOutput) SetJobListEntries(v []*JobListEntry) *CreateClusterOutput {
+	s.JobListEntries = v
 	return s
 }
 
@@ -3912,6 +4056,11 @@ func (s *CreateJobInput) Validate() error {
 	if s.LongTermPricingId != nil && len(*s.LongTermPricingId) < 41 {
 		invalidParams.Add(request.NewErrParamMinLen("LongTermPricingId", 41))
 	}
+	if s.OnDeviceServiceConfiguration != nil {
+		if err := s.OnDeviceServiceConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("OnDeviceServiceConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Resources != nil {
 		if err := s.Resources.Validate(); err != nil {
 			invalidParams.AddNested("Resources", err.(request.ErrInvalidParams))
@@ -4065,8 +4214,6 @@ func (s *CreateJobOutput) SetJobId(v string) *CreateJobOutput {
 type CreateLongTermPricingInput struct {
 	_ struct{} `type:"structure"`
 
-	// snowballty
-	//
 	// Specifies whether the current long-term pricing type for the device should
 	// be renewed.
 	IsLongTermPricingAutoRenew *bool `type:"boolean"`
@@ -4317,6 +4464,62 @@ func (s *DataTransfer) SetTotalBytes(v int64) *DataTransfer {
 // SetTotalObjects sets the TotalObjects field's value.
 func (s *DataTransfer) SetTotalObjects(v int64) *DataTransfer {
 	s.TotalObjects = &v
+	return s
+}
+
+// The name and version of the service dependant on the requested service.
+type DependentService struct {
+	_ struct{} `type:"structure"`
+
+	// The name of the dependent service.
+	ServiceName *string `type:"string" enum:"ServiceName"`
+
+	// The version of the dependent service.
+	ServiceVersion *ServiceVersion `type:"structure"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DependentService) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s DependentService) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DependentService) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DependentService"}
+	if s.ServiceVersion != nil {
+		if err := s.ServiceVersion.Validate(); err != nil {
+			invalidParams.AddNested("ServiceVersion", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetServiceName sets the ServiceName field's value.
+func (s *DependentService) SetServiceName(v string) *DependentService {
+	s.ServiceName = &v
+	return s
+}
+
+// SetServiceVersion sets the ServiceVersion field's value.
+func (s *DependentService) SetServiceVersion(v *ServiceVersion) *DependentService {
+	s.ServiceVersion = v
 	return s
 }
 
@@ -4801,6 +5004,64 @@ func (s *DeviceConfiguration) SetSnowconeDeviceConfiguration(v *SnowconeDeviceCo
 	return s
 }
 
+// An object representing the metadata and configuration settings of EKS Anywhere
+// on the Snow Family device.
+type EKSOnDeviceServiceConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The version of EKS Anywhere on the Snow Family device.
+	EKSAnywhereVersion *string `min:"1" type:"string"`
+
+	// The Kubernetes version for EKS Anywhere on the Snow Family device.
+	KubernetesVersion *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EKSOnDeviceServiceConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s EKSOnDeviceServiceConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *EKSOnDeviceServiceConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "EKSOnDeviceServiceConfiguration"}
+	if s.EKSAnywhereVersion != nil && len(*s.EKSAnywhereVersion) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("EKSAnywhereVersion", 1))
+	}
+	if s.KubernetesVersion != nil && len(*s.KubernetesVersion) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KubernetesVersion", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEKSAnywhereVersion sets the EKSAnywhereVersion field's value.
+func (s *EKSOnDeviceServiceConfiguration) SetEKSAnywhereVersion(v string) *EKSOnDeviceServiceConfiguration {
+	s.EKSAnywhereVersion = &v
+	return s
+}
+
+// SetKubernetesVersion sets the KubernetesVersion field's value.
+func (s *EKSOnDeviceServiceConfiguration) SetKubernetesVersion(v string) *EKSOnDeviceServiceConfiguration {
+	s.KubernetesVersion = &v
+	return s
+}
+
 // A JSON-formatted object that contains the IDs for an Amazon Machine Image
 // (AMI), including the Amazon EC2 AMI ID and the Snow device AMI ID. Each AMI
 // has these two IDs to simplify identifying the AMI in both the Amazon Web
@@ -4866,7 +5127,7 @@ func (s *Ec2AmiResource) SetSnowballAmiId(v string) *Ec2AmiResource {
 	return s
 }
 
-// Your IAM user lacks the necessary Amazon EC2 permissions to perform the attempted
+// Your user lacks the necessary Amazon EC2 permissions to perform the attempted
 // action.
 type Ec2RequestFailedException struct {
 	_            struct{}                  `type:"structure"`
@@ -6818,6 +7079,157 @@ func (s *ListLongTermPricingOutput) SetNextToken(v string) *ListLongTermPricingO
 	return s
 }
 
+type ListServiceVersionsInput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of names and versions of dependant services of the requested service.
+	DependentServices []*DependentService `type:"list"`
+
+	// The maximum number of ListServiceVersions objects to return.
+	MaxResults *int64 `type:"integer"`
+
+	// Because HTTP requests are stateless, this is the starting point for the next
+	// list of returned ListServiceVersionsRequest versions.
+	NextToken *string `min:"1" type:"string"`
+
+	// The name of the service for which you're requesting supported versions.
+	//
+	// ServiceName is a required field
+	ServiceName *string `type:"string" required:"true" enum:"ServiceName"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListServiceVersionsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListServiceVersionsInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListServiceVersionsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListServiceVersionsInput"}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+	if s.ServiceName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ServiceName"))
+	}
+	if s.DependentServices != nil {
+		for i, v := range s.DependentServices {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "DependentServices", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDependentServices sets the DependentServices field's value.
+func (s *ListServiceVersionsInput) SetDependentServices(v []*DependentService) *ListServiceVersionsInput {
+	s.DependentServices = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListServiceVersionsInput) SetMaxResults(v int64) *ListServiceVersionsInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListServiceVersionsInput) SetNextToken(v string) *ListServiceVersionsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetServiceName sets the ServiceName field's value.
+func (s *ListServiceVersionsInput) SetServiceName(v string) *ListServiceVersionsInput {
+	s.ServiceName = &v
+	return s
+}
+
+type ListServiceVersionsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A list of names and versions of dependant services of the service for which
+	// the system provided supported versions.
+	DependentServices []*DependentService `type:"list"`
+
+	// Because HTTP requests are stateless, this is the starting point of the next
+	// list of returned ListServiceVersionsResult results.
+	NextToken *string `min:"1" type:"string"`
+
+	// The name of the service for which the system provided supported versions.
+	//
+	// ServiceName is a required field
+	ServiceName *string `type:"string" required:"true" enum:"ServiceName"`
+
+	// A list of supported versions.
+	//
+	// ServiceVersions is a required field
+	ServiceVersions []*ServiceVersion `type:"list" required:"true"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListServiceVersionsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ListServiceVersionsOutput) GoString() string {
+	return s.String()
+}
+
+// SetDependentServices sets the DependentServices field's value.
+func (s *ListServiceVersionsOutput) SetDependentServices(v []*DependentService) *ListServiceVersionsOutput {
+	s.DependentServices = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListServiceVersionsOutput) SetNextToken(v string) *ListServiceVersionsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetServiceName sets the ServiceName field's value.
+func (s *ListServiceVersionsOutput) SetServiceName(v string) *ListServiceVersionsOutput {
+	s.ServiceName = &v
+	return s
+}
+
+// SetServiceVersions sets the ServiceVersions field's value.
+func (s *ListServiceVersionsOutput) SetServiceVersions(v []*ServiceVersion) *ListServiceVersionsOutput {
+	s.ServiceVersions = v
+	return s
+}
+
 // Each LongTermPricingListEntry object contains information about a long-term
 // pricing type.
 type LongTermPricingListEntry struct {
@@ -7047,8 +7459,14 @@ func (s *Notification) SetSnsTopicARN(v string) *Notification {
 type OnDeviceServiceConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The configuration of EKS Anywhere on the Snow Family device.
+	EKSOnDeviceService *EKSOnDeviceServiceConfiguration `type:"structure"`
+
 	// Represents the NFS (Network File System) service on a Snow Family device.
 	NFSOnDeviceService *NFSOnDeviceServiceConfiguration `type:"structure"`
+
+	// Configuration for Amazon S3 compatible storage on Snow family devices.
+	S3OnDeviceService *S3OnDeviceServiceConfiguration `type:"structure"`
 
 	// Represents the Storage Gateway service Tape Gateway type on a Snow Family
 	// device.
@@ -7073,9 +7491,41 @@ func (s OnDeviceServiceConfiguration) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *OnDeviceServiceConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "OnDeviceServiceConfiguration"}
+	if s.EKSOnDeviceService != nil {
+		if err := s.EKSOnDeviceService.Validate(); err != nil {
+			invalidParams.AddNested("EKSOnDeviceService", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3OnDeviceService != nil {
+		if err := s.S3OnDeviceService.Validate(); err != nil {
+			invalidParams.AddNested("S3OnDeviceService", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetEKSOnDeviceService sets the EKSOnDeviceService field's value.
+func (s *OnDeviceServiceConfiguration) SetEKSOnDeviceService(v *EKSOnDeviceServiceConfiguration) *OnDeviceServiceConfiguration {
+	s.EKSOnDeviceService = v
+	return s
+}
+
 // SetNFSOnDeviceService sets the NFSOnDeviceService field's value.
 func (s *OnDeviceServiceConfiguration) SetNFSOnDeviceService(v *NFSOnDeviceServiceConfiguration) *OnDeviceServiceConfiguration {
 	s.NFSOnDeviceService = v
+	return s
+}
+
+// SetS3OnDeviceService sets the S3OnDeviceService field's value.
+func (s *OnDeviceServiceConfiguration) SetS3OnDeviceService(v *S3OnDeviceServiceConfiguration) *OnDeviceServiceConfiguration {
+	s.S3OnDeviceService = v
 	return s
 }
 
@@ -7151,6 +7601,90 @@ func (s *ReturnShippingLabelAlreadyExistsException) RequestID() string {
 	return s.RespMetadata.RequestID
 }
 
+// Amazon S3 compatible storage on Snow family devices configuration items.
+type S3OnDeviceServiceConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// >Fault tolerance level of the cluster. This indicates the number of nodes
+	// that can go down without degrading the performance of the cluster. This additional
+	// input helps when the specified StorageLimit matches more than one Amazon
+	// S3 compatible storage on Snow family devices service configuration.
+	FaultTolerance *int64 `min:"1" type:"integer"`
+
+	// Applicable when creating a cluster. Specifies how many nodes are needed for
+	// Amazon S3 compatible storage on Snow family devices. If specified, the other
+	// input can be omitted.
+	ServiceSize *int64 `min:"3" type:"integer"`
+
+	// If the specified storage limit value matches storage limit of one of the
+	// defined configurations, that configuration will be used. If the specified
+	// storage limit value does not match any defined configuration, the request
+	// will fail. If more than one configuration has the same storage limit as specified,
+	// the other input need to be provided.
+	StorageLimit *float64 `type:"double"`
+
+	// Storage unit. Currently the only supported unit is TB.
+	StorageUnit *string `type:"string" enum:"StorageUnit"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3OnDeviceServiceConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s S3OnDeviceServiceConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3OnDeviceServiceConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3OnDeviceServiceConfiguration"}
+	if s.FaultTolerance != nil && *s.FaultTolerance < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("FaultTolerance", 1))
+	}
+	if s.ServiceSize != nil && *s.ServiceSize < 3 {
+		invalidParams.Add(request.NewErrParamMinValue("ServiceSize", 3))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFaultTolerance sets the FaultTolerance field's value.
+func (s *S3OnDeviceServiceConfiguration) SetFaultTolerance(v int64) *S3OnDeviceServiceConfiguration {
+	s.FaultTolerance = &v
+	return s
+}
+
+// SetServiceSize sets the ServiceSize field's value.
+func (s *S3OnDeviceServiceConfiguration) SetServiceSize(v int64) *S3OnDeviceServiceConfiguration {
+	s.ServiceSize = &v
+	return s
+}
+
+// SetStorageLimit sets the StorageLimit field's value.
+func (s *S3OnDeviceServiceConfiguration) SetStorageLimit(v float64) *S3OnDeviceServiceConfiguration {
+	s.StorageLimit = &v
+	return s
+}
+
+// SetStorageUnit sets the StorageUnit field's value.
+func (s *S3OnDeviceServiceConfiguration) SetStorageUnit(v string) *S3OnDeviceServiceConfiguration {
+	s.StorageUnit = &v
+	return s
+}
+
 // Each S3Resource object represents an Amazon S3 bucket that your transferred
 // data will be exported from or imported into. For export jobs, this object
 // can have an optional KeyRange value. The length of the range is defined at
@@ -7222,6 +7756,51 @@ func (s *S3Resource) SetKeyRange(v *KeyRange) *S3Resource {
 // SetTargetOnDeviceServices sets the TargetOnDeviceServices field's value.
 func (s *S3Resource) SetTargetOnDeviceServices(v []*TargetOnDeviceService) *S3Resource {
 	s.TargetOnDeviceServices = v
+	return s
+}
+
+// The version of the requested service.
+type ServiceVersion struct {
+	_ struct{} `type:"structure"`
+
+	// The version number of the requested service.
+	Version *string `min:"1" type:"string"`
+}
+
+// String returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ServiceVersion) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation.
+//
+// API parameter values that are decorated as "sensitive" in the API will not
+// be included in the string output. The member name will be present, but the
+// value will be replaced with "sensitive".
+func (s ServiceVersion) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ServiceVersion) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ServiceVersion"}
+	if s.Version != nil && len(*s.Version) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Version", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetVersion sets the Version field's value.
+func (s *ServiceVersion) SetVersion(v string) *ServiceVersion {
+	s.Version = &v
 	return s
 }
 
@@ -7650,6 +8229,11 @@ func (s *UpdateClusterInput) Validate() error {
 	if s.ForwardingAddressId != nil && len(*s.ForwardingAddressId) < 40 {
 		invalidParams.Add(request.NewErrParamMinLen("ForwardingAddressId", 40))
 	}
+	if s.OnDeviceServiceConfiguration != nil {
+		if err := s.OnDeviceServiceConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("OnDeviceServiceConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.Resources != nil {
 		if err := s.Resources.Validate(); err != nil {
 			invalidParams.AddNested("Resources", err.(request.ErrInvalidParams))
@@ -7820,6 +8404,11 @@ func (s *UpdateJobInput) Validate() error {
 	}
 	if s.JobId != nil && len(*s.JobId) < 39 {
 		invalidParams.Add(request.NewErrParamMinLen("JobId", 39))
+	}
+	if s.OnDeviceServiceConfiguration != nil {
+		if err := s.OnDeviceServiceConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("OnDeviceServiceConfiguration", err.(request.ErrInvalidParams))
+		}
 	}
 	if s.Resources != nil {
 		if err := s.Resources.Validate(); err != nil {
@@ -8154,11 +8743,14 @@ const (
 	// CapacityT14 is a Capacity enum value
 	CapacityT14 = "T14"
 
+	// CapacityT32 is a Capacity enum value
+	CapacityT32 = "T32"
+
 	// CapacityNoPreference is a Capacity enum value
 	CapacityNoPreference = "NoPreference"
 
-	// CapacityT32 is a Capacity enum value
-	CapacityT32 = "T32"
+	// CapacityT240 is a Capacity enum value
+	CapacityT240 = "T240"
 )
 
 // Capacity_Values returns all elements of the Capacity enum
@@ -8171,8 +8763,9 @@ func Capacity_Values() []string {
 		CapacityT98,
 		CapacityT8,
 		CapacityT14,
-		CapacityNoPreference,
 		CapacityT32,
+		CapacityNoPreference,
+		CapacityT240,
 	}
 }
 
@@ -8306,6 +8899,9 @@ const (
 
 	// LongTermPricingTypeThreeYear is a LongTermPricingType enum value
 	LongTermPricingTypeThreeYear = "ThreeYear"
+
+	// LongTermPricingTypeOneMonth is a LongTermPricingType enum value
+	LongTermPricingTypeOneMonth = "OneMonth"
 )
 
 // LongTermPricingType_Values returns all elements of the LongTermPricingType enum
@@ -8313,6 +8909,7 @@ func LongTermPricingType_Values() []string {
 	return []string{
 		LongTermPricingTypeOneYear,
 		LongTermPricingTypeThreeYear,
+		LongTermPricingTypeOneMonth,
 	}
 }
 
@@ -8329,6 +8926,22 @@ func RemoteManagement_Values() []string {
 	return []string{
 		RemoteManagementInstalledOnly,
 		RemoteManagementInstalledAutostart,
+	}
+}
+
+const (
+	// ServiceNameKubernetes is a ServiceName enum value
+	ServiceNameKubernetes = "KUBERNETES"
+
+	// ServiceNameEksAnywhere is a ServiceName enum value
+	ServiceNameEksAnywhere = "EKS_ANYWHERE"
+)
+
+// ServiceName_Values returns all elements of the ServiceName enum
+func ServiceName_Values() []string {
+	return []string{
+		ServiceNameKubernetes,
+		ServiceNameEksAnywhere,
 	}
 }
 
@@ -8452,6 +9065,9 @@ const (
 
 	// TypeV35c is a Type enum value
 	TypeV35c = "V3_5C"
+
+	// TypeV35s is a Type enum value
+	TypeV35s = "V3_5S"
 )
 
 // Type_Values returns all elements of the Type enum
@@ -8465,5 +9081,6 @@ func Type_Values() []string {
 		TypeSnc1Hdd,
 		TypeSnc1Ssd,
 		TypeV35c,
+		TypeV35s,
 	}
 }

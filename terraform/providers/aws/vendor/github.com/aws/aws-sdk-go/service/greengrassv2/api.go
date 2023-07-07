@@ -4959,13 +4959,18 @@ type CreateDeploymentInput struct {
 	// configuration.
 	IotJobConfiguration *DeploymentIoTJobConfiguration `locationName:"iotJobConfiguration" type:"structure"`
 
+	// The parent deployment's target ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// within a subdeployment.
+	ParentTargetArn *string `locationName:"parentTargetArn" type:"string"`
+
 	// A list of key-value pairs that contain metadata for the resource. For more
 	// information, see Tag your resources (https://docs.aws.amazon.com/greengrass/v2/developerguide/tag-resources.html)
 	// in the IoT Greengrass V2 Developer Guide.
 	Tags map[string]*string `locationName:"tags" min:"1" type:"map"`
 
 	// The ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
-	// of the target IoT thing or thing group.
+	// of the target IoT thing or thing group. When creating a subdeployment, the
+	// targetARN can only be a thing group.
 	//
 	// TargetArn is a required field
 	TargetArn *string `locationName:"targetArn" type:"string" required:"true"`
@@ -5053,6 +5058,12 @@ func (s *CreateDeploymentInput) SetDeploymentPolicies(v *DeploymentPolicies) *Cr
 // SetIotJobConfiguration sets the IotJobConfiguration field's value.
 func (s *CreateDeploymentInput) SetIotJobConfiguration(v *DeploymentIoTJobConfiguration) *CreateDeploymentInput {
 	s.IotJobConfiguration = v
+	return s
+}
+
+// SetParentTargetArn sets the ParentTargetArn field's value.
+func (s *CreateDeploymentInput) SetParentTargetArn(v string) *CreateDeploymentInput {
+	s.ParentTargetArn = &v
 	return s
 }
 
@@ -5351,11 +5362,16 @@ type Deployment struct {
 	// Whether or not the deployment is the latest revision for its target.
 	IsLatestForTarget *bool `locationName:"isLatestForTarget" type:"boolean"`
 
+	// The parent deployment's target ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// within a subdeployment.
+	ParentTargetArn *string `locationName:"parentTargetArn" type:"string"`
+
 	// The revision number of the deployment.
 	RevisionId *string `locationName:"revisionId" min:"1" type:"string"`
 
 	// The ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
-	// of the target IoT thing or thing group.
+	// of the target IoT thing or thing group. When creating a subdeployment, the
+	// targetARN can only be a thing group.
 	TargetArn *string `locationName:"targetArn" type:"string"`
 }
 
@@ -5404,6 +5420,12 @@ func (s *Deployment) SetDeploymentStatus(v string) *Deployment {
 // SetIsLatestForTarget sets the IsLatestForTarget field's value.
 func (s *Deployment) SetIsLatestForTarget(v bool) *Deployment {
 	s.IsLatestForTarget = &v
+	return s
+}
+
+// SetParentTargetArn sets the ParentTargetArn field's value.
+func (s *Deployment) SetParentTargetArn(v string) *Deployment {
+	s.ParentTargetArn = &v
 	return s
 }
 
@@ -5978,6 +6000,24 @@ type EffectiveDeployment struct {
 	_ struct{} `type:"structure"`
 
 	// The status of the deployment job on the Greengrass core device.
+	//
+	//    * IN_PROGRESS – The deployment job is running.
+	//
+	//    * QUEUED – The deployment job is in the job queue and waiting to run.
+	//
+	//    * FAILED – The deployment failed. For more information, see the statusDetails
+	//    field.
+	//
+	//    * COMPLETED – The deployment to an IoT thing was completed successfully.
+	//
+	//    * TIMED_OUT – The deployment didn't complete in the allotted time.
+	//
+	//    * CANCELED – The deployment was canceled by the user.
+	//
+	//    * REJECTED – The deployment was rejected. For more information, see
+	//    the statusDetails field.
+	//
+	//    * SUCCEEDED – The deployment to an IoT thing group was completed successfully.
 	//
 	// CoreDeviceExecutionStatus is a required field
 	CoreDeviceExecutionStatus *string `locationName:"coreDeviceExecutionStatus" type:"string" required:"true" enum:"EffectiveDeploymentExecutionStatus"`
@@ -6708,6 +6748,10 @@ type GetDeploymentOutput struct {
 	// Whether or not the deployment is the latest revision for its target.
 	IsLatestForTarget *bool `locationName:"isLatestForTarget" type:"boolean"`
 
+	// The parent deployment's target ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// within a subdeployment.
+	ParentTargetArn *string `locationName:"parentTargetArn" type:"string"`
+
 	// The revision number of the deployment.
 	RevisionId *string `locationName:"revisionId" min:"1" type:"string"`
 
@@ -6796,6 +6840,12 @@ func (s *GetDeploymentOutput) SetIotJobId(v string) *GetDeploymentOutput {
 // SetIsLatestForTarget sets the IsLatestForTarget field's value.
 func (s *GetDeploymentOutput) SetIsLatestForTarget(v bool) *GetDeploymentOutput {
 	s.IsLatestForTarget = &v
+	return s
+}
+
+// SetParentTargetArn sets the ParentTargetArn field's value.
+func (s *GetDeploymentOutput) SetParentTargetArn(v string) *GetDeploymentOutput {
+	s.ParentTargetArn = &v
 	return s
 }
 
@@ -6898,10 +6948,13 @@ type InstalledComponent struct {
 	// core device. For a thing group deployment or thing deployment, the source
 	// will be the The ID of the deployment. and for local deployments it will be
 	// LOCAL.
+	//
+	// Any deployment will attempt to reinstall currently broken components on the
+	// device, which will update the last installation source.
 	LastInstallationSource *string `locationName:"lastInstallationSource" min:"1" type:"string"`
 
-	// The last time the Greengrass core device sent a message containing a certain
-	// component to the Amazon Web Services Cloud.
+	// The last time the Greengrass core device sent a message containing a component's
+	// state to the Amazon Web Services Cloud.
 	//
 	// A component does not need to see a state change for this field to update.
 	LastReportedTimestamp *time.Time `locationName:"lastReportedTimestamp" type:"timestamp"`
@@ -8639,6 +8692,10 @@ type ListDeploymentsInput struct {
 	// The token to be used for the next set of paginated results.
 	NextToken *string `location:"querystring" locationName:"nextToken" type:"string"`
 
+	// The parent deployment's target ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
+	// within a subdeployment.
+	ParentTargetArn *string `location:"querystring" locationName:"parentTargetArn" type:"string"`
+
 	// The ARN (https://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html)
 	// of the target IoT thing or thing group.
 	TargetArn *string `location:"querystring" locationName:"targetArn" type:"string"`
@@ -8690,6 +8747,12 @@ func (s *ListDeploymentsInput) SetMaxResults(v int64) *ListDeploymentsInput {
 // SetNextToken sets the NextToken field's value.
 func (s *ListDeploymentsInput) SetNextToken(v string) *ListDeploymentsInput {
 	s.NextToken = &v
+	return s
+}
+
+// SetParentTargetArn sets the ParentTargetArn field's value.
+func (s *ListDeploymentsInput) SetParentTargetArn(v string) *ListDeploymentsInput {
+	s.ParentTargetArn = &v
 	return s
 }
 
@@ -10181,6 +10244,9 @@ const (
 
 	// EffectiveDeploymentExecutionStatusRejected is a EffectiveDeploymentExecutionStatus enum value
 	EffectiveDeploymentExecutionStatusRejected = "REJECTED"
+
+	// EffectiveDeploymentExecutionStatusSucceeded is a EffectiveDeploymentExecutionStatus enum value
+	EffectiveDeploymentExecutionStatusSucceeded = "SUCCEEDED"
 )
 
 // EffectiveDeploymentExecutionStatus_Values returns all elements of the EffectiveDeploymentExecutionStatus enum
@@ -10193,6 +10259,7 @@ func EffectiveDeploymentExecutionStatus_Values() []string {
 		EffectiveDeploymentExecutionStatusTimedOut,
 		EffectiveDeploymentExecutionStatusCanceled,
 		EffectiveDeploymentExecutionStatusRejected,
+		EffectiveDeploymentExecutionStatusSucceeded,
 	}
 }
 
