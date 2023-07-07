@@ -119,12 +119,12 @@ variable "use_ipv6" {
   description = "This value determines if this is cluster should use IPv6 networking."
 }
 
-variable "outbound_udr" {
-  type = bool
-  default = false
+variable "outbound_type" {
+  type = string
+  default = "Loadbalancer"
 
   description = <<EOF
-This determined whether User defined routing will be used for egress to Internet.
+This determined the routing type that will be used for egress to Internet.
 When false, Standard LB will be used for egress to the Internet.
 
 This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`

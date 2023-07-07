@@ -72,12 +72,12 @@ variable "identity" {
   description = "The user assigned identity id for the vm."
 }
 
-variable "outbound_udr" {
-  type    = bool
-  default = false
+variable "outbound_type" {
+  type    = string
+  default = "Loadbalancer"
 
   description = <<EOF
-This determined whether User defined routing will be used for egress to
+This determined the routing type that will be used for egress to
 Internet.
 When false, Standard LB will be used for egress to the Internet.
 

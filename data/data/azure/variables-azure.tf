@@ -175,13 +175,13 @@ variable "azure_private" {
   description = "This determines if this is a private cluster or not."
 }
 
-variable "azure_outbound_user_defined_routing" {
-  type    = bool
-  default = false
+variable "azure_outbound_routing_type" {
+  type    = string
+  default = "Loadbalancer"
 
   description = <<EOF
-This determined whether User defined routing will be used for egress to Internet.
-When false, Standard LB will be used for egress to the Internet.
+This determined the routing that will be used for egress to Internet.
+When not set, Standard LB will be used for egress to the Internet.
 EOF
 }
 

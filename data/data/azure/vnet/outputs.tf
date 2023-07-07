@@ -66,6 +66,6 @@ output "storage_account_name" {
   value = azurerm_storage_account.cluster.name
 }
 
-output "outbound_udr" {
-  value = var.azure_outbound_user_defined_routing
+output "outbound_type" {
+  value = var.azure_outbound_routing_type
 }

@@ -48,7 +48,7 @@ type config struct {
 	ComputeSubnet                   string            `json:"azure_compute_subnet"`
 	PreexistingNetwork              bool              `json:"azure_preexisting_network"`
 	Private                         bool              `json:"azure_private"`
-	OutboundUDR                     bool              `json:"azure_outbound_user_defined_routing"`
+	OutboundType                    string            `json:"azure_outbound_routing_type"`
 	BootstrapIgnitionStub           string            `json:"azure_bootstrap_ignition_stub"`
 	BootstrapIgnitionURLPlaceholder string            `json:"azure_bootstrap_ignition_url_placeholder"`
 	HyperVGeneration                string            `json:"azure_hypervgeneration_version"`
@@ -131,7 +131,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		ImageURL:                        sources.ImageURL,
 		ImageRelease:                    sources.ImageRelease,
 		Private:                         sources.Publish == types.InternalPublishingStrategy,
-		OutboundUDR:                     sources.OutboundType == azure.UserDefinedRoutingOutboundType,
+		OutboundType:                    string(sources.OutboundType),
 		ResourceGroupName:               sources.ResourceGroupName,
 		BaseDomainResourceGroupName:     sources.BaseDomainResourceGroupName,
 		NetworkResourceGroupName:        masterConfig.NetworkResourceGroup,

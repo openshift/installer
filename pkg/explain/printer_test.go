@@ -215,7 +215,7 @@ func Test_PrintFields(t *testing.T) {
 
     outboundType <string>
       Default: "Loadbalancer"
-      Valid Values: "","Loadbalancer","UserDefinedRouting"
+      Valid Values: "","Loadbalancer","NatGateway","UserDefinedRouting"
       OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
 
     region <string> -required-

@@ -158,7 +158,7 @@ resource "azurerm_network_interface" "bootstrap" {
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v4" {
   // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
   // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
-  count = (! var.azure_private || ! var.azure_outbound_user_defined_routing) ? 1 : 0
+  count = (! var.azure_private || var.azure_outbound_routing_type != "UserDefinedRouting") ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
   backend_address_pool_id = var.elb_backend_pool_v4_id
@@ -168,7 +168,7 @@ resource "azurerm_network_interface_backend_address_pool_association" "public_lb
 resource "azurerm_network_interface_backend_address_pool_association" "public_lb_bootstrap_v6" {
   // This is required because terraform cannot calculate counts during plan phase completely and therefore the `vnet/public-lb.tf`
   // conditional need to be recreated. See https://github.com/hashicorp/terraform/issues/12570
-  count = var.use_ipv6 && (! var.azure_private || ! var.azure_outbound_user_defined_routing) ? 1 : 0
+  count = var.use_ipv6 && (! var.azure_private || var.azure_outbound_routing_type != "UserDefinedRouting") ? 1 : 0
 
   network_interface_id    = azurerm_network_interface.bootstrap.id
   backend_address_pool_id = var.elb_backend_pool_v6_id
