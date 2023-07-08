@@ -113,6 +113,22 @@ func (mr *MockAPIMockRecorder) GetMachineType(ctx, project, zone, machineType in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineType", reflect.TypeOf((*MockAPI)(nil).GetMachineType), ctx, project, zone, machineType)
 }
 
+// GetMachineTypeWithZones mocks base method.
+func (m *MockAPI) GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMachineTypeWithZones", ctx, project, region, machineType)
+	ret0, _ := ret[0].(*compute.MachineType)
+	ret1, _ := ret[1].(sets.Set[string])
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetMachineTypeWithZones indicates an expected call of GetMachineTypeWithZones.
+func (mr *MockAPIMockRecorder) GetMachineTypeWithZones(ctx, project, region, machineType interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMachineTypeWithZones", reflect.TypeOf((*MockAPI)(nil).GetMachineTypeWithZones), ctx, project, region, machineType)
+}
+
 // GetNetwork mocks base method.
 func (m *MockAPI) GetNetwork(ctx context.Context, network, project string) (*compute.Network, error) {
 	m.ctrl.T.Helper()
