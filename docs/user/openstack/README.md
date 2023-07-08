@@ -55,6 +55,7 @@ In addition, it covers the installation with the default CNI (OVNKubernetes), as
 ## Reference Documents
 
 - [Privileges](privileges.md)
+- [Control plane machine set](control-plane-machine-set.md)
 - [Known Issues and Workarounds](known-issues.md)
 - [Using the OSP 4 installer with Kuryr](kuryr.md)
 - [Troubleshooting your cluster](troubleshooting.md)
