@@ -368,6 +368,7 @@ func commonFiles() []string {
 		"/usr/local/bin/set-node-zero.sh",
 		"/usr/local/share/assisted-service/assisted-db.env",
 		"/usr/local/share/assisted-service/assisted-service.env",
+		"/usr/local/share/start-cluster/start-cluster.env",
 		"/usr/local/share/assisted-service/images.env",
 		"/usr/local/bin/bootstrap-service-record.sh",
 		"/usr/local/bin/release-image.sh",
@@ -377,6 +378,8 @@ func commonFiles() []string {
 		"/etc/systemd/system.conf.d/10-default-env.conf",
 		"/usr/local/bin/install-status.sh",
 		"/usr/local/bin/issue_status.sh",
+		"/usr/local/bin/load-config-iso.sh",
+		"/etc/udev/rules.d/80-agent-config-image.rules",
 	}
 }
 

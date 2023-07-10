@@ -3,6 +3,7 @@ package image
 import (
 	"os"
 	"path/filepath"
+	"strings"
 
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
@@ -21,6 +22,37 @@ import (
 const (
 	unconfiguredIgnitionFilename = "unconfigured-agent.ign"
 )
+
+// GetConfigImageFiles returns the list of files or file paths to be included in the config-image.
+func GetConfigImageFiles() []string {
+	return []string{
+		"/etc/assisted/manifests/pull-secret.yaml", //nolint:gosec // not hardcoded credentials
+		"/etc/assisted/manifests/nmstateconfig.yaml",
+		"/etc/assisted/manifests/cluster-deployment.yaml",
+		"/etc/assisted/manifests/cluster-image-set.yaml",
+		"/etc/assisted/manifests/agent-cluster-install.yaml",
+		"/etc/assisted/manifests/infraenv.yaml",
+		"/etc/assisted/extra-manifests", // all files in directory
+		"/etc/assisted/hostconfig",      // all files in directory
+		"/etc/assisted/hostnames",       // all files in directory
+		"/etc/assisted/network",         // all files in directory
+		"/etc/issue",
+		"/etc/systemd/system.conf.d/10-default-env.conf",
+		"/root/.docker/config.json",
+		"/usr/local/share/start-cluster/start-cluster.env",
+		"/usr/local/share/assisted-service/assisted-service.env",
+		"/opt/agent/tls/kubeadmin-password.hash", //nolint:gosec // not hardcoded credentials
+		"/opt/agent/tls/admin-kubeconfig-signer.key",
+		"/opt/agent/tls/admin-kubeconfig-signer.crt",
+		"/opt/agent/tls/kube-apiserver-lb-signer.key",
+		"/opt/agent/tls/kube-apiserver-lb-signer.crt",
+		"/opt/agent/tls/kube-apiserver-localhost-signer.key",
+		"/opt/agent/tls/kube-apiserver-localhost-signer.crt",
+		"/opt/agent/tls/kube-apiserver-service-network-signer.key",
+		"/opt/agent/tls/kube-apiserver-service-network-signer.crt",
+		rendezvousHostEnvPath, // This file must be last in the list
+	}
+}
 
 // UnconfiguredIgnition is an asset that generates the agent installer unconfigured
 // ignition file which excludes any cluster configuration.
@@ -98,6 +130,8 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 	}
 	a.CPUArch = *osImage.CPUArchitecture
 
+	configImageFiles := strings.Join(GetConfigImageFiles(), ",")
+
 	agentTemplateData := &agentTemplateData{
 		PullSecret:                pullSecretAsset.GetPullSecretData(),
 		ReleaseImages:             releaseImageList,
@@ -108,6 +142,7 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
+		ConfigImageFiles:          configImageFiles,
 	}
 
 	err = bootstrap.AddStorageFiles(&config, "/", "agent/files", agentTemplateData)
@@ -128,6 +163,11 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 		}
 
 		enabledServices = append(enabledServices, "pre-network-manager-config.service")
+	} else {
+		// Include the script in case it is needed in config step
+		nmStateScriptFilePath := "/usr/local/bin/pre-network-manager-config.sh"
+		nmStateScript := ignition.FileFromBytes(nmStateScriptFilePath, "root", 0755, []byte(manifests.PreNetworkConfigScript))
+		config.Storage.Files = append(config.Storage.Files, nmStateScript)
 	}
 
 	ztpManifestsToInclude := [...]asset.File{
