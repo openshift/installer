@@ -73,6 +73,7 @@ fi
 if (echo "${TAGS}" | grep -q 'libvirt')
 then
 	export CGO_ENABLED=1
+	TAGS="${TAGS} libvirt_dlopen"
 fi
 
 # shellcheck disable=SC2086
