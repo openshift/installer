@@ -8,7 +8,7 @@ set_issue() {
     local outfile
     outfile="$(issue_file "$1")"
     local tmp
-    tmp="$(mktemp)"
+    tmp="$(mktemp -p /etc/issue.d/)"
     {
         printf '\n'
         cat -
