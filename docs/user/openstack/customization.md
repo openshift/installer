@@ -49,6 +49,9 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
   * `size` (required integer): Size of the root volume in GB. Must be set to at least 25.
   * `type` (required string): The volume pool to create the volume from.
   * `zones` (optional list of strings): The names of the availability zones you want to install your root volumes on. If unset, the installer will use your default volume zone.
+    If compute `zones` contains at least one value, `rootVolume.zones` must also contain at least one value.
+    Indeed, when a machine is created with a compute availability zone and a storage root volume with no specified rootVolume.availabilityZone, [CAPO](https://github.com/kubernetes-sigs/cluster-api-provider-openstack/blob/9d183bd479fe9aed4f6e7ac3d5eee46681c518e7/pkg/cloud/services/compute/instance.go#L439-L442) will use the compute AZ for the volume AZ.
+    This can be problematic if the AZ doesn't exist in Cinder, therefore we enforce that `rootVolume.zones` to be set if `zones` is set.
 * `zones` (optional list of strings): The names of the availability zones you want to install your nodes on. If unset, the installer will use your default compute zone.
 
 > **Note**

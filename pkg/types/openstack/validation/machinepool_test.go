@@ -13,6 +13,14 @@ func withServerGroupPolicy(serverGroupPolicy string) func(*openstack.MachinePool
 	return func(mp *openstack.MachinePool) { mp.ServerGroupPolicy = openstack.ServerGroupPolicy(serverGroupPolicy) }
 }
 
+func withRootVolume(rootVolume openstack.RootVolume) func(*openstack.MachinePool) {
+	return func(mp *openstack.MachinePool) { mp.RootVolume = &rootVolume }
+}
+
+func withAvailabilityZones(zones []string) func(*openstack.MachinePool) {
+	return func(mp *openstack.MachinePool) { mp.Zones = zones }
+}
+
 func testMachinePool(options ...func(*openstack.MachinePool)) *openstack.MachinePool {
 	var mp openstack.MachinePool
 	for _, apply := range options {
@@ -68,6 +76,21 @@ func TestValidateMachinePool(t *testing.T) {
 			"default",
 			check(
 				someErrorType(field.ErrorTypeNotSupported),
+				exactlyNErrors(1),
+			),
+		},
+		{
+			"with availability zone and valid root volume",
+			testMachinePool(withAvailabilityZones([]string{"az0", "az1", "az2"}), withRootVolume(openstack.RootVolume{Zones: []string{"az0", "az1", "az2"}, Size: 100})),
+			"default",
+			check(noError),
+		},
+		{
+			"with availability zone and invalid root volume missing zones",
+			testMachinePool(withAvailabilityZones([]string{"az0", "az1", "az2"}), withRootVolume(openstack.RootVolume{Size: 100})),
+			"default",
+			check(
+				someErrorType(field.ErrorTypeRequired),
 				exactlyNErrors(1),
 			),
 		},
