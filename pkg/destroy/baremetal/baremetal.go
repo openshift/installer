@@ -4,9 +4,9 @@
 package baremetal
 
 import (
-	"github.com/libvirt/libvirt-go"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"libvirt.org/go/libvirt"
 
 	"github.com/openshift/installer/pkg/destroy/providers"
 	"github.com/openshift/installer/pkg/types"

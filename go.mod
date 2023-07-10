@@ -48,7 +48,6 @@ require (
 	github.com/hashicorp/terraform-exec v0.17.3
 	github.com/jongio/azidext/go/azidext v0.4.0
 	github.com/kdomanski/iso9660 v0.2.1
-	github.com/libvirt/libvirt-go v5.10.0+incompatible
 	github.com/metal3-io/baremetal-operator/apis v0.2.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.2.0
 	github.com/microsoft/kiota-authentication-azure-go v0.5.0
@@ -103,6 +102,7 @@ require (
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.90.1
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491
+	libvirt.org/go/libvirt v1.8010.0
 	sigs.k8s.io/controller-tools v0.10.0
 	sigs.k8s.io/yaml v1.3.0
 )

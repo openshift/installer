@@ -1,0 +1,136 @@
+
+stages:
+  - containers
+  - builds
+  - sanity_checks
+
+.git_build_vars: &git_build_vars |
+  export MAKEFLAGS="-j$(getconf _NPROCESSORS_ONLN)"
+  export SCRATCH_DIR="$PWD/scratch"
+  export VROOT="$SCRATCH_DIR/vroot"
+  export LIBDIR="$VROOT/lib"
+  export LD_LIBRARY_PATH="$LIBDIR"
+  export PATH="$VROOT/bin:$PATH"
+  export PKG_CONFIG_PATH="$LIBDIR/pkgconfig"
+
+.native_git_build_job:
+  script:
+    - *git_build_vars
+    - pushd "$PWD"
+    - mkdir -p "$SCRATCH_DIR"
+    - cd "$SCRATCH_DIR"
+    - git clone --depth 1 https://gitlab.com/libvirt/libvirt.git
+    - cd libvirt
+    - meson build -Ddriver_libvirtd=disabled "--prefix=$VROOT" "--libdir=$LIBDIR"
+    - ninja -C build install
+    - popd
+    - go build
+    - go test
+    - go test -tags libvirt_without_qemu
+    - go test -tags libvirt_without_lxc
+
+.native_git_build_job_prebuilt_env:
+  extends:
+    - .native_git_build_job
+    - .gitlab_native_build_job_prebuilt_env
+
+.native_git_build_job_local_env:
+  extends:
+    - .native_git_build_job
+    - .gitlab_native_build_job_local_env
+
+.native_build_job:
+  script:
+    - go build -x
+    - go test
+    - go build -x -tags libvirt_without_qemu
+    - go test -tags libvirt_without_qemu
+    - go build -x -tags libvirt_without_lxc
+    - go test -tags libvirt_without_lxc
+
+.native_build_job_prebuilt_env:
+  extends:
+    - .native_build_job
+    - .gitlab_native_build_job_prebuilt_env
+
+.native_build_job_local_env:
+  extends:
+    - .native_build_job
+    - .gitlab_native_build_job_local_env
+
+include: '/ci/gitlab.yml'
+
+.api_coverage_job:
+  stage: sanity_checks
+  script:
+    - *git_build_vars
+    - go test -tags api
+  allow_failure: true
+
+api_coverage_prebuilt_env:
+  extends:
+    - .gitlab_native_build_job_prebuilt_env
+    - .api_coverage_job
+  needs:
+    - job: x86_64-almalinux-8-git-prebuilt-env
+      artifacts: true
+  variables:
+    NAME: almalinux-8
+
+api_coverage_local_env:
+  extends:
+    - .gitlab_native_build_job_local_env
+    - .api_coverage_job
+  needs:
+    - job: x86_64-almalinux-8-git-local-env
+      artifacts: true
+  variables:
+    IMAGE: docker.io/library/almalinux:8
+    NAME: almalinux-8
+
+.go_build: &go_build
+  stage: builds
+  script:
+    - go build -v -tags libvirt_dlopen
+    - go build -v -tags "libvirt_dlopen libvirt_without_qemu"
+    - go build -v -tags "libvirt_dlopen libvirt_without_lxc"
+    - apt-get update
+    - apt-get install -y libvirt0
+    - go test -timeout 10m -v -tags libvirt_dlopen
+    - go test -timeout 10m -v -tags "libvirt_dlopen libvirt_without_qemu"
+    - go test -timeout 10m -v -tags "libvirt_dlopen libvirt_without_lxc"
+  rules:
+    # upstream: pushes to a branch
+    - if: '$CI_PROJECT_NAMESPACE == $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push"'
+      when: on_success
+
+    # forks: pushes to a branch
+    - if: '$CI_PROJECT_NAMESPACE != $RUN_UPSTREAM_NAMESPACE && $CI_PIPELINE_SOURCE == "push" && $RUN_PIPELINE'
+      when: on_success
+
+    # upstream+forks: other web/api/scheduled pipelines
+    - if: '$CI_PIPELINE_SOURCE =~ /(web|api|schedule|merge_request_event)/'
+      when: on_success
+
+    # upstream+forks: that's all folks
+    - when: never
+
+# an old version without modules
+go_1_9:
+  <<: *go_build
+  image: golang:1.9
+
+# first version declared in go.mod
+go_1_11:
+  <<: *go_build
+  image: golang:1.11
+
+# very fussy about +go:build tags having a blank line
+go_1_16:
+  <<: *go_build
+  image: golang:1.16
+
+# a quite new version
+go_1_19:
+  <<: *go_build
+  image: golang:1.19

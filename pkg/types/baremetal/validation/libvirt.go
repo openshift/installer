@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/libvirt/libvirt-go"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"libvirt.org/go/libvirt"
 
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/validate"
