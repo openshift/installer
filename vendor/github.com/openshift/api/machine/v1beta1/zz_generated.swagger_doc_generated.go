@@ -676,9 +676,24 @@ func (ProviderSpec) SwaggerDoc() map[string]string {
 	return map_ProviderSpec
 }
 
+var map_AddressesFromPool = map[string]string{
+	"":         "AddressesFromPool is an IPAddressPool that will be used to create IPAddressClaims for fulfillment by an external controller.",
+	"group":    "group of the IP address pool type known to an external IPAM controller. This should be a fully qualified domain name, for example, externalipam.controller.io.",
+	"resource": "resource of the IP address pool type known to an external IPAM controller. It is normally the plural form of the resource kind in lowercase, for example, ippools.",
+	"name":     "name of an IP address pool, for example, pool-config-1.",
+}
+
+func (AddressesFromPool) SwaggerDoc() map[string]string {
+	return map_AddressesFromPool
+}
+
 var map_NetworkDeviceSpec = map[string]string{
-	"":            "NetworkDeviceSpec defines the network configuration for a virtual machine's network device.",
-	"networkName": "NetworkName is the name of the vSphere network to which the device will be connected.",
+	"":                   "NetworkDeviceSpec defines the network configuration for a virtual machine's network device.",
+	"networkName":        "networkName is the name of the vSphere network or port group to which the network device will be connected, for example, port-group-1. When not provided, the vCenter API will attempt to select a default network. The available networks (port groups) can be listed using `govc ls 'network/*'`",
+	"gateway":            "gateway is an IPv4 or IPv6 address which represents the subnet gateway, for example, 192.168.1.1.",
+	"ipAddrs":            "ipAddrs is a list of one or more IPv4 and/or IPv6 addresses and CIDR to assign to this device, for example, 192.168.1.100/24. IP addresses provided via ipAddrs are intended to allow explicit assignment of a machine's IP address. IP pool configurations provided via addressesFromPool, however, defer IP address assignment to an external controller. If both addressesFromPool and ipAddrs are empty or not defined, DHCP will be used to assign an IP address. If both ipAddrs and addressesFromPools are defined, the IP addresses associated with ipAddrs will be applied first followed by IP addresses from addressesFromPools.",
+	"nameservers":        "nameservers is a list of IPv4 and/or IPv6 addresses used as DNS nameservers, for example, 8.8.8.8. a nameserver is not provided by a fulfilled IPAddressClaim. If DHCP is not the source of IP addresses for this network device, nameservers should include a valid nameserver.",
+	"addressesFromPools": "addressesFromPools is a list of references to IP pool types and instances which are handled by an external controller. addressesFromPool configurations provided via addressesFromPools defer IP address assignment to an external controller. IP addresses provided via ipAddrs, however, are intended to allow explicit assignment of a machine's IP address. If both addressesFromPool and ipAddrs are empty or not defined, DHCP will assign an IP address. If both ipAddrs and addressesFromPools are defined, the IP addresses associated with ipAddrs will be applied first followed by IP addresses from addressesFromPools.",
 }
 
 func (NetworkDeviceSpec) SwaggerDoc() map[string]string {

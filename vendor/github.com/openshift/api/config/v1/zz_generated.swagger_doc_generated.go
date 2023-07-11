@@ -1183,6 +1183,15 @@ func (BareMetalPlatformStatus) SwaggerDoc() map[string]string {
 	return map_BareMetalPlatformStatus
 }
 
+var map_CloudControllerManagerStatus = map[string]string{
+	"":      "CloudControllerManagerStatus holds the state of Cloud Controller Manager (a.k.a. CCM or CPI) related settings",
+	"state": "state determines whether or not an external Cloud Controller Manager is expected to be installed within the cluster. https://kubernetes.io/docs/tasks/administer-cluster/running-cloud-controller/#running-cloud-controller-manager\n\nValid values are \"External\", \"None\" and omitted. When set to \"External\", new nodes will be tainted as uninitialized when created, preventing them from running workloads until they are initialized by the cloud controller manager. When omitted or set to \"None\", new nodes will be not tainted and no extra initialization from the cloud controller manager is expected.",
+}
+
+func (CloudControllerManagerStatus) SwaggerDoc() map[string]string {
+	return map_CloudControllerManagerStatus
+}
+
 var map_EquinixMetalPlatformSpec = map[string]string{
 	"": "EquinixMetalPlatformSpec holds the desired state of the Equinix Metal infrastructure provider. This only includes fields that can be modified in the cluster.",
 }
@@ -1211,7 +1220,8 @@ func (ExternalPlatformSpec) SwaggerDoc() map[string]string {
 }
 
 var map_ExternalPlatformStatus = map[string]string{
-	"": "ExternalPlatformStatus holds the current status of the generic External infrastructure provider.",
+	"":                       "ExternalPlatformStatus holds the current status of the generic External infrastructure provider.",
+	"cloudControllerManager": "cloudControllerManager contains settings specific to the external Cloud Controller Manager (a.k.a. CCM or CPI). When omitted, new nodes will be not tainted and no extra initialization from the cloud controller manager is expected.",
 }
 
 func (ExternalPlatformStatus) SwaggerDoc() map[string]string {

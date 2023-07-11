@@ -1,11 +1,13 @@
 package validation
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/pointer"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
@@ -52,6 +54,117 @@ func validPlatform() *vsphere.Platform {
 					Networks:       []string{"test-portgroup"},
 					Folder:         "/test-datacenter/vm/test-folder",
 				},
+			},
+		},
+	}
+}
+
+func validHosts() []*vsphere.Host {
+	return []*vsphere.Host{
+		{
+			Role: "bootstrap",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.240/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "control-plane",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.241/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "control-plane",
+			FailureDomain: "test-east-2a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.242/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "control-plane",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.243/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "compute",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.244/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "compute",
+			FailureDomain: "test-east-2a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.245/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+		{
+			Role:          "compute",
+			FailureDomain: "test-east-1a",
+			NetworkDevice: &vsphere.NetworkDeviceSpec{
+				IPAddrs: []string{
+					"192.168.101.246/24",
+				},
+				Gateway: "192.168.101.1",
+				Nameservers: []string{
+					"192.168.101.2",
+				},
+			},
+		},
+	}
+}
+
+func validStaticIPInstallConfig() *types.InstallConfig {
+	return &types.InstallConfig{
+		FeatureSet: configv1.TechPreviewNoUpgrade,
+		ControlPlane: &types.MachinePool{
+			Name:     "master",
+			Replicas: pointer.Int64(3),
+		},
+		Compute: []types.MachinePool{
+			{
+				Name:     "worker",
+				Replicas: pointer.Int64(3),
 			},
 		},
 	}
@@ -280,6 +393,367 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			expectedError: `^test-path\.loadBalancer.type: Invalid value: "FooBar": invalid load balancer type`,
 		},
+		{
+			name: "Static IP - valid",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - no hosts configured",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - invalid Role",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].Role = "crazy-uncle"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `test-path.hosts.role: Unsupported value: "crazy-uncle": supported values: "bootstrap", "compute", "control-plane"`,
+		},
+		{
+			name: "Static IP - invalid FailureDomain",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].FailureDomain = "north-pole"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.failureDomain: Invalid value: "north-pole": failure domain not found$`,
+		},
+		{
+			name: "Static IP - missing NetworkDevice",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice = nil
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.networkDevice: Required value: must specify networkDevice configuration$`,
+		},
+		{
+			name: "Static IP - missing IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs = nil
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.ipAddrs: Required value: must specify a IP$`,
+		},
+		{
+			name: "Static IP - invalid IP",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309/24"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309/24": invalid CIDR address: 86.7.5.309/24$`,
+		},
+		{
+			name: "Static IP - invalid IP blank",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = ""
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.ipAddrs: Required value: must specify a IP address with CIDR$`,
+		},
+		{
+			name: "Static IP - invalid IP CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309/55"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309/55": invalid CIDR address: 86.7.5.309/55$`,
+		},
+		{
+			name: "Static IP - invalid IP missing CIDR",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.IPAddrs[0] = "86.7.5.309"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.ipAddrs: Invalid value: "86.7.5.309": invalid CIDR address: 86.7.5.309$`,
+		},
+		{
+			name: "Static IP - valid Gateway IPv4",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway = "192.168.100.125"
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - invalid Gateway IPv4",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway = "86.7.5.309"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.gateway: Invalid value: "86.7.5.309": "86.7.5.309" is not a valid IP$`,
+		},
+		{
+			name: "Static IP - valid Gateway IPv6",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway = "2001:db8:3333:4444:5555:6666:7777:8888"
+				return p
+			}(),
+			config: validStaticIPInstallConfig(),
+		},
+		{
+			name: "Static IP - invalid Gateway IPv6",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Gateway = "8888:666:7777:5555:3333:0000:9999:JENNY"
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.gateway: Invalid value: "8888:666:7777:5555:3333:0000:9999:JENNY": "8888:666:7777:5555:3333:0000:9999:JENNY" is not a valid IP$`,
+		},
+		{
+			name: "Static IP - More than 3 nameservers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				p.Hosts[1].NetworkDevice.Nameservers = []string{"86.75.30.9", "86.75.30.8", "86.75.30.7", "86.75.30.6"}
+				return p
+			}(),
+			config:        validStaticIPInstallConfig(),
+			expectedError: `^test-path.hosts.nameservers: Too many: 4: must have at most 3 items$`,
+		},
+		{
+			name: "Static IP - No bootstrap host",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()[1:]
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(3),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "bootstrap": a single host with the bootstrap role must be defined$`,
+		},
+		{
+			name: "Static IP - Multiple bootstrap hosts",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = append(validHosts(), validHosts()[0])
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(3),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "bootstrap": a single host with the bootstrap role must be defined$`,
+		},
+		{
+			name: "Static IP - Not enough control-planes",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(4),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(3),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured control plane replicas \(4\)$`,
+		},
+		{
+			name: "Static IP - Too many control-planes",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(2),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(3),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "control-plane": too many hosts found \(3\) for the configured control plane replicas \(2\)$`,
+		},
+		{
+			name: "Static IP - Not enough workers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(4),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "compute": not enough hosts found \(3\) to support all the configured compute replicas \(4\)$`,
+		},
+		{
+			name: "Static IP - Too many workers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(2),
+					},
+				},
+			},
+			expectedError: `^test-path.hosts: Invalid value: "compute": too many hosts found \(3\) for the configured compute replicas \(2\)$`,
+		},
+		{
+			name: "Static IP - Not enough control-plane and workers",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.Hosts = validHosts()
+				return p
+			}(),
+			config: &types.InstallConfig{
+				FeatureSet: configv1.TechPreviewNoUpgrade,
+				Platform: types.Platform{
+					VSphere: func() *vsphere.Platform {
+						p := validPlatform()
+						p.Hosts = validHosts()
+						return p
+					}(),
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64(4),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64(4),
+					},
+				},
+			},
+			expectedError: `^\[test-path.hosts: Invalid value: "control-plane": not enough hosts found \(3\) to support all the configured control plane replicas \(4\), test-path.hosts: Invalid value: "compute": not enough hosts found \(3\) to support all the configured compute replicas \(4\)]$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -288,7 +762,11 @@ func TestValidatePlatform(t *testing.T) {
 				tc.config = installConfig().build()
 				tc.config.VSphere = tc.platform
 			}
-			err := ValidatePlatform(tc.platform, false, field.NewPath("test-path"), tc.config).ToAggregate()
+			if tc.config.VSphere == nil {
+				fmt.Printf("Setting vsphere: %v", tc.platform)
+				tc.config.VSphere = tc.platform
+			}
+			err := ValidatePlatform(tc.config.VSphere, false, field.NewPath("test-path"), tc.config).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)
 			} else {

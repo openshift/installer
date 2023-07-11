@@ -268,6 +268,11 @@ spec:
                                         maxLength: 63
                                         minLength: 1
                                         pattern: ^[^ ]*$
+                                      volumeType:
+                                        description: volumeType specifies the type of the root volume that will be provisioned. If not specifified, the root volume will be created as the type in the machine template. The maximum length of a volume type name is 255 characters, as per the OpenStack limit.
+                                        type: string
+                                        maxLength: 255
+                                        minLength: 1
                             platform:
                               description: Platform identifies the platform for which the FailureDomain represents. Currently supported values are AWS, Azure, and GCP.
                               type: string

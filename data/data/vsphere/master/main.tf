@@ -67,10 +67,16 @@ resource "vsphere_virtual_machine" "vm_master" {
     template_uuid = data.vsphere_virtual_machine.template[count.index].uuid
   }
 
-  extra_config = {
-    "guestinfo.ignition.config.data"          = base64encode(var.ignition_master)
-    "guestinfo.ignition.config.data.encoding" = "base64"
-    "guestinfo.hostname"                      = "${var.cluster_id}-master-${count.index}"
-    "stealclock.enable"                       = "TRUE"
-  }
+  extra_config = merge(
+    {
+      "guestinfo.ignition.config.data"          = base64encode(var.ignition_master)
+      "guestinfo.ignition.config.data.encoding" = "base64"
+      "guestinfo.hostname"                      = "${var.cluster_id}-master-${count.index}"
+      "stealclock.enable"                       = "TRUE"
+    },
+    length(var.vsphere_control_plane_network_kargs) > 0 ?
+    {
+      "guestinfo.afterburn.initrd.network-kargs" = element(var.vsphere_control_plane_network_kargs, count.index)
+    } : {}
+  )
 }

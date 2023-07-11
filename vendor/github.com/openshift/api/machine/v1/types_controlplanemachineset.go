@@ -340,6 +340,14 @@ type RootVolume struct {
 	// +kubebuilder:validation:Pattern=`^[^ ]*$`
 	// +optional
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
+
+	// volumeType specifies the type of the root volume that will be provisioned.
+	// If not specifified, the root volume will be created as the type in the machine template.
+	// The maximum length of a volume type name is 255 characters, as per the OpenStack limit.
+	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:MaxLength=255
+	// +optional
+	VolumeType string `json:"volumeType,omitempty"`
 }
 
 // ControlPlaneMachineSetStatus represents the status of the ControlPlaneMachineSet CRD.
