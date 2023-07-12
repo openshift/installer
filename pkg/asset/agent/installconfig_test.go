@@ -51,12 +51,12 @@ metadata:
 baseDomain: test-domain
 networking:
   clusterNetwork:
-  - cidr: 10.128.0.0/14 
-    hostPrefix: 23 
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
   networkType: OpenShiftSDN
   machineNetwork:
   - cidr: 192.168.122.0/23
-  serviceNetwork: 
+  serviceNetwork:
   - 172.30.0.0/16
 compute:
   - architecture: amd64
@@ -74,7 +74,7 @@ platform:
   baremetal:
     externalMACAddress: "52:54:00:f6:b4:02"
     provisioningMACAddress: "52:54:00:6e:3b:02"
-    ingressVIPs: 
+    ingressVIPs:
       - 192.168.122.11
     hosts:
       - name: host1
@@ -105,34 +105,6 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedError: `invalid install-config configuration: platform.vsphere.ingressVIPs: Required value: must specify VIP for ingress, when VIP for API is set`,
 		},
 		{
-			name: "invalid configuration for none platform for sno",
-			data: `
-apiVersion: v1
-metadata:
-  name: test-cluster
-baseDomain: test-domain
-networking:
-  networkType: OVNKubernetes
-compute:
-  - architecture: amd64
-    hyperthreading: Enabled
-    name: worker
-    platform: {}
-    replicas: 2
-controlPlane:
-  architecture: amd64
-  hyperthreading: Enabled
-  name: master
-  platform: {}
-  replicas: 3
-platform:
-  none : {}
-pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-`,
-			expectedFound: false,
-			expectedError: "invalid install-config configuration: [ControlPlane.Replicas: Required value: ControlPlane.Replicas must be 1 for none platform. Found 3, Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 for none platform. Found 2]",
-		},
-		{
 			name: "no compute.replicas set for SNO",
 			data: `
 apiVersion: v1
@@ -152,7 +124,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 for none platform. Found 3",
+			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for none platform. Found 3",
 		},
 		{
 			name: "invalid networkType for SNO cluster",
@@ -209,7 +181,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", Platform: Invalid value: \"aws\": Platform should be set to none if the ControlPlane.Replicas is 1 and total number of Compute.Replicas is 0]",
+			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", Platform: Invalid value: \"aws\": Only platform none supports 1 ControlPlane and 0 Compute nodes]",
 		},
 		{
 			name: "invalid architecture for SNO cluster",
@@ -289,14 +261,81 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
-					Replicas:       pointer.Int64Ptr(1),
+					Replicas:       pointer.Int64(1),
 					Hyperthreading: types.HyperthreadingEnabled,
 					Architecture:   types.ArchitectureAMD64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
-						Replicas:       pointer.Int64Ptr(0),
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:   types.Platform{None: &none.Platform{}},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+				Publish:    types.ExternalPublishingStrategy,
+			},
+		},
+		{
+			name: "valid configuration for none platform for HA cluster",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+  - architecture: amd64
+    hyperthreading: Enabled
+    name: worker
+    platform: {}
+    replicas: 2
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 3
+platform:
+  none : {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(3),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(2),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
@@ -315,12 +354,12 @@ metadata:
 baseDomain: test-domain
 networking:
   clusterNetwork:
-  - cidr: 10.128.0.0/14 
-    hostPrefix: 23 
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
   networkType: OpenShiftSDN
   machineNetwork:
   - cidr: 192.168.122.0/23
-  serviceNetwork: 
+  serviceNetwork:
   - 172.30.0.0/16
 compute:
   - architecture: amd64
@@ -393,14 +432,14 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
-					Replicas:       pointer.Int64Ptr(3),
+					Replicas:       pointer.Int64(3),
 					Hyperthreading: types.HyperthreadingDisabled,
 					Architecture:   types.ArchitectureAMD64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
-						Replicas:       pointer.Int64Ptr(2),
+						Replicas:       pointer.Int64(2),
 						Hyperthreading: types.HyperthreadingDisabled,
 						Architecture:   types.ArchitectureAMD64,
 					},
@@ -479,8 +518,8 @@ metadata:
 baseDomain: test-domain
 networking:
   clusterNetwork:
-  - cidr: 10.128.0.0/14 
-    hostPrefix: 23 
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
   networkType: OpenShiftSDN
   machineNetwork:
   - cidr: 192.168.122.0/23
@@ -536,14 +575,14 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				ControlPlane: &types.MachinePool{
 					Name:           "master",
-					Replicas:       pointer.Int64Ptr(3),
+					Replicas:       pointer.Int64(3),
 					Hyperthreading: types.HyperthreadingEnabled,
 					Architecture:   types.ArchitectureAMD64,
 				},
 				Compute: []types.MachinePool{
 					{
 						Name:           "worker",
-						Replicas:       pointer.Int64Ptr(0),
+						Replicas:       pointer.Int64(0),
 						Hyperthreading: types.HyperthreadingEnabled,
 						Architecture:   types.ArchitectureAMD64,
 					},

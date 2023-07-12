@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/go-openapi/swag"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -155,6 +156,11 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
+		if installConfig.Config.Platform.Name() == none.Name {
+			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", none.Name)
+			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
+		}
+
 		icOverridden := false
 		icOverrides := agentClusterInstallInstallConfigOverrides{}
 		if installConfig.Config.FIPS {
@@ -272,6 +278,10 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 		agentClusterInstall.Spec.PlatformType = hiveext.BareMetalPlatformType
 	case none.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.NonePlatformType
+		if agentClusterInstall.Spec.Networking.UserManagedNetworking != swag.Bool(true) {
+			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", none.Name)
+			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
+		}
 	case vsphere.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.VSpherePlatformType
 	}

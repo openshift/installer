@@ -61,6 +61,7 @@ spec:
     networkType: OVNKubernetes
     serviceNetwork:
     - 172.30.0.0/16
+    userManagedNetworking: true
   platformType: None
   provisionRequirements:
     controlPlaneAgents: 1

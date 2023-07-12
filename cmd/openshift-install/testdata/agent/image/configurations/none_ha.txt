@@ -1,20 +1,22 @@
-! exec openshift-install agent create image --dir $WORK
+# Verify a default configuration for the HA topology
 
-stderr 'Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for none platform. Found 1'
+exec openshift-install agent create image --dir $WORK
 
-! exists $WORK/agent.x86_64.iso
-! exists $WORK/auth/kubeconfig
-! exists $WORK/auth/kubeadmin-password
+stderr 'The rendezvous host IP \(node0 IP\) is 192.168.111.20'
+
+exists $WORK/agent.x86_64.iso
+exists $WORK/auth/kubeconfig
+exists $WORK/auth/kubeadmin-password
 
 -- install-config.yaml --
 apiVersion: v1
 baseDomain: test.metalkube.org
 controlPlane: 
   name: master
-  replicas: 1
+  replicas: 3
 compute: 
 - name: worker
-  replicas: 1
+  replicas: 2
 metadata:
   namespace: cluster0
   name: ostest
