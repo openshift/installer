@@ -845,10 +845,10 @@ func wrapWithReplay(w watch.Interface, initialLastEvent *watch.Event) watch.Inte
 type replayingWatch struct {
 	incoming watch.Interface
 	result   chan watch.Event
-	closed   chan struct{}
 
 	lastLock sync.Mutex
 	last     watch.Event
+	closed   bool
 }
 
 func (r *replayingWatch) ResultChan() <-chan watch.Event {
@@ -860,8 +860,14 @@ func (r *replayingWatch) Stop() {
 }
 
 func (r *replayingWatch) watchIncoming() {
-	defer close(r.result)
-	defer close(r.closed)
+	defer func() {
+		r.lastLock.Lock()
+		defer r.lastLock.Unlock()
+
+		r.closed = true
+		close(r.result)
+	}()
+
 	for event := range r.incoming.ResultChan() {
 		func() {
 			r.lastLock.Lock()
@@ -882,19 +888,16 @@ func copyWatchEvent(event watch.Event) watch.Event {
 func (r *replayingWatch) resendLast() {
 	var emptyEvent watch.Event
 	err := wait.PollUntilContextCancel(context.TODO(), time.Second, false, func(ctx context.Context) (bool, error) {
-		select {
-		case <-r.closed:
-			return true, nil
-		default:
-		}
-		func() {
-			r.lastLock.Lock()
-			defer r.lastLock.Unlock()
+		r.lastLock.Lock()
+		defer r.lastLock.Unlock()
 
-			if r.last != emptyEvent {
-				r.result <- copyWatchEvent(r.last)
-			}
-		}()
+		if r.closed {
+			return true, nil
+		}
+
+		if r.last != emptyEvent {
+			r.result <- copyWatchEvent(r.last)
+		}
 		return false, nil
 	})
 	if err != nil {
