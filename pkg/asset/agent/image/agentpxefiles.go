@@ -149,6 +149,7 @@ func (a *AgentPXEFiles) PersistToFile(directory string) error {
 	}
 
 	logrus.Infof("PXE-files created in: %s", pxeAssetsFullPath)
+	logrus.Infof("Kernel parameters for PXE boot: %s", a.kernelArgs)
 
 	return nil
 }
