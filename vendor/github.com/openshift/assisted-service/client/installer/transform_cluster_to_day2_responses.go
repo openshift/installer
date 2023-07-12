@@ -75,7 +75,8 @@ func NewTransformClusterToDay2Accepted() *TransformClusterToDay2Accepted {
 	return &TransformClusterToDay2Accepted{}
 }
 
-/* TransformClusterToDay2Accepted describes a response with status code 202, with default header values.
+/*
+TransformClusterToDay2Accepted describes a response with status code 202, with default header values.
 
 Success.
 */
@@ -83,9 +84,39 @@ type TransformClusterToDay2Accepted struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this transform cluster to day2 accepted response has a 2xx status code
+func (o *TransformClusterToDay2Accepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this transform cluster to day2 accepted response has a 3xx status code
+func (o *TransformClusterToDay2Accepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 accepted response has a 4xx status code
+func (o *TransformClusterToDay2Accepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this transform cluster to day2 accepted response has a 5xx status code
+func (o *TransformClusterToDay2Accepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this transform cluster to day2 accepted response a status code equal to that given
+func (o *TransformClusterToDay2Accepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *TransformClusterToDay2Accepted) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Accepted  %+v", 202, o.Payload)
 }
+
+func (o *TransformClusterToDay2Accepted) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Accepted  %+v", 202, o.Payload)
+}
+
 func (o *TransformClusterToDay2Accepted) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewTransformClusterToDay2Unauthorized() *TransformClusterToDay2Unauthorized
 	return &TransformClusterToDay2Unauthorized{}
 }
 
-/* TransformClusterToDay2Unauthorized describes a response with status code 401, with default header values.
+/*
+TransformClusterToDay2Unauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -115,9 +147,39 @@ type TransformClusterToDay2Unauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this transform cluster to day2 unauthorized response has a 2xx status code
+func (o *TransformClusterToDay2Unauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this transform cluster to day2 unauthorized response has a 3xx status code
+func (o *TransformClusterToDay2Unauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 unauthorized response has a 4xx status code
+func (o *TransformClusterToDay2Unauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this transform cluster to day2 unauthorized response has a 5xx status code
+func (o *TransformClusterToDay2Unauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this transform cluster to day2 unauthorized response a status code equal to that given
+func (o *TransformClusterToDay2Unauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *TransformClusterToDay2Unauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Unauthorized  %+v", 401, o.Payload)
 }
+
+func (o *TransformClusterToDay2Unauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Unauthorized  %+v", 401, o.Payload)
+}
+
 func (o *TransformClusterToDay2Unauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewTransformClusterToDay2Forbidden() *TransformClusterToDay2Forbidden {
 	return &TransformClusterToDay2Forbidden{}
 }
 
-/* TransformClusterToDay2Forbidden describes a response with status code 403, with default header values.
+/*
+TransformClusterToDay2Forbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -147,9 +210,39 @@ type TransformClusterToDay2Forbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this transform cluster to day2 forbidden response has a 2xx status code
+func (o *TransformClusterToDay2Forbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this transform cluster to day2 forbidden response has a 3xx status code
+func (o *TransformClusterToDay2Forbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 forbidden response has a 4xx status code
+func (o *TransformClusterToDay2Forbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this transform cluster to day2 forbidden response has a 5xx status code
+func (o *TransformClusterToDay2Forbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this transform cluster to day2 forbidden response a status code equal to that given
+func (o *TransformClusterToDay2Forbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *TransformClusterToDay2Forbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Forbidden  %+v", 403, o.Payload)
 }
+
+func (o *TransformClusterToDay2Forbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Forbidden  %+v", 403, o.Payload)
+}
+
 func (o *TransformClusterToDay2Forbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewTransformClusterToDay2NotFound() *TransformClusterToDay2NotFound {
 	return &TransformClusterToDay2NotFound{}
 }
 
-/* TransformClusterToDay2NotFound describes a response with status code 404, with default header values.
+/*
+TransformClusterToDay2NotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -179,9 +273,39 @@ type TransformClusterToDay2NotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this transform cluster to day2 not found response has a 2xx status code
+func (o *TransformClusterToDay2NotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this transform cluster to day2 not found response has a 3xx status code
+func (o *TransformClusterToDay2NotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 not found response has a 4xx status code
+func (o *TransformClusterToDay2NotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this transform cluster to day2 not found response has a 5xx status code
+func (o *TransformClusterToDay2NotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this transform cluster to day2 not found response a status code equal to that given
+func (o *TransformClusterToDay2NotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *TransformClusterToDay2NotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2NotFound  %+v", 404, o.Payload)
 }
+
+func (o *TransformClusterToDay2NotFound) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2NotFound  %+v", 404, o.Payload)
+}
+
 func (o *TransformClusterToDay2NotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewTransformClusterToDay2MethodNotAllowed() *TransformClusterToDay2MethodNo
 	return &TransformClusterToDay2MethodNotAllowed{}
 }
 
-/* TransformClusterToDay2MethodNotAllowed describes a response with status code 405, with default header values.
+/*
+TransformClusterToDay2MethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -211,9 +336,39 @@ type TransformClusterToDay2MethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this transform cluster to day2 method not allowed response has a 2xx status code
+func (o *TransformClusterToDay2MethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this transform cluster to day2 method not allowed response has a 3xx status code
+func (o *TransformClusterToDay2MethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 method not allowed response has a 4xx status code
+func (o *TransformClusterToDay2MethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this transform cluster to day2 method not allowed response has a 5xx status code
+func (o *TransformClusterToDay2MethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this transform cluster to day2 method not allowed response a status code equal to that given
+func (o *TransformClusterToDay2MethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *TransformClusterToDay2MethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2MethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *TransformClusterToDay2MethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2MethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *TransformClusterToDay2MethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewTransformClusterToDay2Conflict() *TransformClusterToDay2Conflict {
 	return &TransformClusterToDay2Conflict{}
 }
 
-/* TransformClusterToDay2Conflict describes a response with status code 409, with default header values.
+/*
+TransformClusterToDay2Conflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -243,9 +399,39 @@ type TransformClusterToDay2Conflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this transform cluster to day2 conflict response has a 2xx status code
+func (o *TransformClusterToDay2Conflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this transform cluster to day2 conflict response has a 3xx status code
+func (o *TransformClusterToDay2Conflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 conflict response has a 4xx status code
+func (o *TransformClusterToDay2Conflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this transform cluster to day2 conflict response has a 5xx status code
+func (o *TransformClusterToDay2Conflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this transform cluster to day2 conflict response a status code equal to that given
+func (o *TransformClusterToDay2Conflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *TransformClusterToDay2Conflict) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Conflict  %+v", 409, o.Payload)
 }
+
+func (o *TransformClusterToDay2Conflict) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2Conflict  %+v", 409, o.Payload)
+}
+
 func (o *TransformClusterToDay2Conflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewTransformClusterToDay2InternalServerError() *TransformClusterToDay2Inter
 	return &TransformClusterToDay2InternalServerError{}
 }
 
-/* TransformClusterToDay2InternalServerError describes a response with status code 500, with default header values.
+/*
+TransformClusterToDay2InternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -275,9 +462,39 @@ type TransformClusterToDay2InternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this transform cluster to day2 internal server error response has a 2xx status code
+func (o *TransformClusterToDay2InternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this transform cluster to day2 internal server error response has a 3xx status code
+func (o *TransformClusterToDay2InternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this transform cluster to day2 internal server error response has a 4xx status code
+func (o *TransformClusterToDay2InternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this transform cluster to day2 internal server error response has a 5xx status code
+func (o *TransformClusterToDay2InternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this transform cluster to day2 internal server error response a status code equal to that given
+func (o *TransformClusterToDay2InternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *TransformClusterToDay2InternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2InternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *TransformClusterToDay2InternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/allow-add-workers][%d] transformClusterToDay2InternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *TransformClusterToDay2InternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

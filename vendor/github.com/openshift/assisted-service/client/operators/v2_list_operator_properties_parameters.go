@@ -52,10 +52,12 @@ func NewV2ListOperatorPropertiesParamsWithHTTPClient(client *http.Client) *V2Lis
 	}
 }
 
-/* V2ListOperatorPropertiesParams contains all the parameters to send to the API endpoint
-   for the v2 list operator properties operation.
+/*
+V2ListOperatorPropertiesParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 list operator properties operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ListOperatorPropertiesParams struct {
 

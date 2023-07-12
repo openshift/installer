@@ -52,10 +52,12 @@ func NewDownloadMinimalInitrdParamsWithHTTPClient(client *http.Client) *Download
 	}
 }
 
-/* DownloadMinimalInitrdParams contains all the parameters to send to the API endpoint
-   for the download minimal initrd operation.
+/*
+DownloadMinimalInitrdParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the download minimal initrd operation.
+
+	Typically these are written to a http.Request.
 */
 type DownloadMinimalInitrdParams struct {
 

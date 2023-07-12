@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"time"
@@ -55,6 +55,7 @@ type Config struct {
 	SlowThreshold             time.Duration
 	Colorful                  bool
 	IgnoreRecordNotFoundError bool
+	ParameterizedQueries      bool
 	LogLevel                  LogLevel
 }
 
@@ -68,8 +69,8 @@ type Interface interface {
 }
 
 var (
-	// Discard Discard logger will print any log to ioutil.Discard
-	Discard = New(log.New(ioutil.Discard, "", log.LstdFlags), Config{})
+	// Discard Discard logger will print any log to io.Discard
+	Discard = New(log.New(io.Discard, "", log.LstdFlags), Config{})
 	// Default Default logger
 	Default = New(log.New(os.Stdout, "\r\n", log.LstdFlags), Config{
 		SlowThreshold:             200 * time.Millisecond,
@@ -179,6 +180,14 @@ func (l logger) Trace(ctx context.Context, begin time.Time, fc func() (string, i
 			l.Printf(l.traceStr, utils.FileWithLineNum(), float64(elapsed.Nanoseconds())/1e6, rows, sql)
 		}
 	}
+}
+
+// Trace print sql message
+func (l logger) ParamsFilter(ctx context.Context, sql string, params ...interface{}) (string, []interface{}) {
+	if l.Config.ParameterizedQueries {
+		return sql, nil
+	}
+	return sql, params
 }
 
 type traceRecorder struct {

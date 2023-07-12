@@ -123,6 +123,16 @@ func (in *AgentClusterInstallSpec) DeepCopyInto(out *AgentClusterInstallSpec) {
 		*out = make([]AgentMachinePool, len(*in))
 		copy(*out, *in)
 	}
+	if in.APIVIPs != nil {
+		in, out := &in.APIVIPs, &out.APIVIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.IngressVIPs != nil {
+		in, out := &in.IngressVIPs, &out.IngressVIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.IgnitionEndpoint != nil {
 		in, out := &in.IgnitionEndpoint, &out.IgnitionEndpoint
 		*out = new(IgnitionEndpoint)
@@ -167,6 +177,16 @@ func (in *AgentClusterInstallStatus) DeepCopyInto(out *AgentClusterInstallStatus
 		copy(*out, *in)
 	}
 	out.DebugInfo = in.DebugInfo
+	if in.APIVIPs != nil {
+		in, out := &in.APIVIPs, &out.APIVIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.IngressVIPs != nil {
+		in, out := &in.IngressVIPs, &out.IngressVIPs
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
 	if in.UserManagedNetworking != nil {
 		in, out := &in.UserManagedNetworking, &out.UserManagedNetworking
 		*out = new(bool)

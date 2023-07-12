@@ -52,10 +52,12 @@ func NewV2DownloadClusterFilesParamsWithHTTPClient(client *http.Client) *V2Downl
 	}
 }
 
-/* V2DownloadClusterFilesParams contains all the parameters to send to the API endpoint
-   for the v2 download cluster files operation.
+/*
+V2DownloadClusterFilesParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 download cluster files operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DownloadClusterFilesParams struct {
 

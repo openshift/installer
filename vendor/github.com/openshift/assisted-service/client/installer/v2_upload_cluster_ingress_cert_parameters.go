@@ -54,10 +54,12 @@ func NewV2UploadClusterIngressCertParamsWithHTTPClient(client *http.Client) *V2U
 	}
 }
 
-/* V2UploadClusterIngressCertParams contains all the parameters to send to the API endpoint
-   for the v2 upload cluster ingress cert operation.
+/*
+V2UploadClusterIngressCertParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 upload cluster ingress cert operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UploadClusterIngressCertParams struct {
 

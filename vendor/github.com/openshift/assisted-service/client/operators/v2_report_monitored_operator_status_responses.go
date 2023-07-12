@@ -87,14 +87,44 @@ func NewV2ReportMonitoredOperatorStatusOK() *V2ReportMonitoredOperatorStatusOK {
 	return &V2ReportMonitoredOperatorStatusOK{}
 }
 
-/* V2ReportMonitoredOperatorStatusOK describes a response with status code 200, with default header values.
+/*
+V2ReportMonitoredOperatorStatusOK describes a response with status code 200, with default header values.
 
 Success.
 */
 type V2ReportMonitoredOperatorStatusOK struct {
 }
 
+// IsSuccess returns true when this v2 report monitored operator status o k response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 report monitored operator status o k response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status o k response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 report monitored operator status o k response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status o k response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ReportMonitoredOperatorStatusOK) Error() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusOK ", 200)
+}
+
+func (o *V2ReportMonitoredOperatorStatusOK) String() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusOK ", 200)
 }
 
@@ -108,7 +138,8 @@ func NewV2ReportMonitoredOperatorStatusBadRequest() *V2ReportMonitoredOperatorSt
 	return &V2ReportMonitoredOperatorStatusBadRequest{}
 }
 
-/* V2ReportMonitoredOperatorStatusBadRequest describes a response with status code 400, with default header values.
+/*
+V2ReportMonitoredOperatorStatusBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -116,9 +147,39 @@ type V2ReportMonitoredOperatorStatusBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 report monitored operator status bad request response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status bad request response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status bad request response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 report monitored operator status bad request response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status bad request response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2ReportMonitoredOperatorStatusBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusBadRequest) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -140,7 +201,8 @@ func NewV2ReportMonitoredOperatorStatusUnauthorized() *V2ReportMonitoredOperator
 	return &V2ReportMonitoredOperatorStatusUnauthorized{}
 }
 
-/* V2ReportMonitoredOperatorStatusUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ReportMonitoredOperatorStatusUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -148,9 +210,39 @@ type V2ReportMonitoredOperatorStatusUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 report monitored operator status unauthorized response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status unauthorized response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status unauthorized response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 report monitored operator status unauthorized response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status unauthorized response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ReportMonitoredOperatorStatusUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -172,7 +264,8 @@ func NewV2ReportMonitoredOperatorStatusForbidden() *V2ReportMonitoredOperatorSta
 	return &V2ReportMonitoredOperatorStatusForbidden{}
 }
 
-/* V2ReportMonitoredOperatorStatusForbidden describes a response with status code 403, with default header values.
+/*
+V2ReportMonitoredOperatorStatusForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -180,9 +273,39 @@ type V2ReportMonitoredOperatorStatusForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 report monitored operator status forbidden response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status forbidden response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status forbidden response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 report monitored operator status forbidden response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status forbidden response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ReportMonitoredOperatorStatusForbidden) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusForbidden) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -204,7 +327,8 @@ func NewV2ReportMonitoredOperatorStatusNotFound() *V2ReportMonitoredOperatorStat
 	return &V2ReportMonitoredOperatorStatusNotFound{}
 }
 
-/* V2ReportMonitoredOperatorStatusNotFound describes a response with status code 404, with default header values.
+/*
+V2ReportMonitoredOperatorStatusNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -212,9 +336,39 @@ type V2ReportMonitoredOperatorStatusNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 report monitored operator status not found response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status not found response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status not found response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 report monitored operator status not found response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status not found response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2ReportMonitoredOperatorStatusNotFound) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusNotFound) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -236,7 +390,8 @@ func NewV2ReportMonitoredOperatorStatusMethodNotAllowed() *V2ReportMonitoredOper
 	return &V2ReportMonitoredOperatorStatusMethodNotAllowed{}
 }
 
-/* V2ReportMonitoredOperatorStatusMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2ReportMonitoredOperatorStatusMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -244,9 +399,39 @@ type V2ReportMonitoredOperatorStatusMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 report monitored operator status method not allowed response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status method not allowed response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status method not allowed response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 report monitored operator status method not allowed response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status method not allowed response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -268,7 +453,8 @@ func NewV2ReportMonitoredOperatorStatusConflict() *V2ReportMonitoredOperatorStat
 	return &V2ReportMonitoredOperatorStatusConflict{}
 }
 
-/* V2ReportMonitoredOperatorStatusConflict describes a response with status code 409, with default header values.
+/*
+V2ReportMonitoredOperatorStatusConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -276,9 +462,39 @@ type V2ReportMonitoredOperatorStatusConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 report monitored operator status conflict response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status conflict response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status conflict response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 report monitored operator status conflict response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 report monitored operator status conflict response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2ReportMonitoredOperatorStatusConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusConflict) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -300,7 +516,8 @@ func NewV2ReportMonitoredOperatorStatusInternalServerError() *V2ReportMonitoredO
 	return &V2ReportMonitoredOperatorStatusInternalServerError{}
 }
 
-/* V2ReportMonitoredOperatorStatusInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ReportMonitoredOperatorStatusInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -308,9 +525,39 @@ type V2ReportMonitoredOperatorStatusInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 report monitored operator status internal server error response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status internal server error response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status internal server error response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 report monitored operator status internal server error response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 report monitored operator status internal server error response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ReportMonitoredOperatorStatusInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -332,7 +579,8 @@ func NewV2ReportMonitoredOperatorStatusServiceUnavailable() *V2ReportMonitoredOp
 	return &V2ReportMonitoredOperatorStatusServiceUnavailable{}
 }
 
-/* V2ReportMonitoredOperatorStatusServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2ReportMonitoredOperatorStatusServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -340,9 +588,39 @@ type V2ReportMonitoredOperatorStatusServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 report monitored operator status service unavailable response has a 2xx status code
+func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 report monitored operator status service unavailable response has a 3xx status code
+func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 report monitored operator status service unavailable response has a 4xx status code
+func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 report monitored operator status service unavailable response has a 5xx status code
+func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 report monitored operator status service unavailable response a status code equal to that given
+func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) Error() string {
 	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) String() string {
+	return fmt.Sprintf("[PUT /v2/clusters/{cluster_id}/monitored-operators][%d] v2ReportMonitoredOperatorStatusServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2ReportMonitoredOperatorStatusServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

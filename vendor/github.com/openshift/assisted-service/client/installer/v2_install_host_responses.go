@@ -69,7 +69,8 @@ func NewV2InstallHostAccepted() *V2InstallHostAccepted {
 	return &V2InstallHostAccepted{}
 }
 
-/* V2InstallHostAccepted describes a response with status code 202, with default header values.
+/*
+V2InstallHostAccepted describes a response with status code 202, with default header values.
 
 Success.
 */
@@ -77,9 +78,39 @@ type V2InstallHostAccepted struct {
 	Payload *models.Host
 }
 
+// IsSuccess returns true when this v2 install host accepted response has a 2xx status code
+func (o *V2InstallHostAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 install host accepted response has a 3xx status code
+func (o *V2InstallHostAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install host accepted response has a 4xx status code
+func (o *V2InstallHostAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 install host accepted response has a 5xx status code
+func (o *V2InstallHostAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install host accepted response a status code equal to that given
+func (o *V2InstallHostAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *V2InstallHostAccepted) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostAccepted  %+v", 202, o.Payload)
 }
+
+func (o *V2InstallHostAccepted) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostAccepted  %+v", 202, o.Payload)
+}
+
 func (o *V2InstallHostAccepted) GetPayload() *models.Host {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewV2InstallHostUnauthorized() *V2InstallHostUnauthorized {
 	return &V2InstallHostUnauthorized{}
 }
 
-/* V2InstallHostUnauthorized describes a response with status code 401, with default header values.
+/*
+V2InstallHostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -109,9 +141,39 @@ type V2InstallHostUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 install host unauthorized response has a 2xx status code
+func (o *V2InstallHostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install host unauthorized response has a 3xx status code
+func (o *V2InstallHostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install host unauthorized response has a 4xx status code
+func (o *V2InstallHostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install host unauthorized response has a 5xx status code
+func (o *V2InstallHostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install host unauthorized response a status code equal to that given
+func (o *V2InstallHostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2InstallHostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2InstallHostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2InstallHostUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewV2InstallHostForbidden() *V2InstallHostForbidden {
 	return &V2InstallHostForbidden{}
 }
 
-/* V2InstallHostForbidden describes a response with status code 403, with default header values.
+/*
+V2InstallHostForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -141,9 +204,39 @@ type V2InstallHostForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 install host forbidden response has a 2xx status code
+func (o *V2InstallHostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install host forbidden response has a 3xx status code
+func (o *V2InstallHostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install host forbidden response has a 4xx status code
+func (o *V2InstallHostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install host forbidden response has a 5xx status code
+func (o *V2InstallHostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install host forbidden response a status code equal to that given
+func (o *V2InstallHostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2InstallHostForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2InstallHostForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2InstallHostForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewV2InstallHostNotFound() *V2InstallHostNotFound {
 	return &V2InstallHostNotFound{}
 }
 
-/* V2InstallHostNotFound describes a response with status code 404, with default header values.
+/*
+V2InstallHostNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -173,9 +267,39 @@ type V2InstallHostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install host not found response has a 2xx status code
+func (o *V2InstallHostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install host not found response has a 3xx status code
+func (o *V2InstallHostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install host not found response has a 4xx status code
+func (o *V2InstallHostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install host not found response has a 5xx status code
+func (o *V2InstallHostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install host not found response a status code equal to that given
+func (o *V2InstallHostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2InstallHostNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2InstallHostNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2InstallHostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewV2InstallHostConflict() *V2InstallHostConflict {
 	return &V2InstallHostConflict{}
 }
 
-/* V2InstallHostConflict describes a response with status code 409, with default header values.
+/*
+V2InstallHostConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -205,9 +330,39 @@ type V2InstallHostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install host conflict response has a 2xx status code
+func (o *V2InstallHostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install host conflict response has a 3xx status code
+func (o *V2InstallHostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install host conflict response has a 4xx status code
+func (o *V2InstallHostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 install host conflict response has a 5xx status code
+func (o *V2InstallHostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 install host conflict response a status code equal to that given
+func (o *V2InstallHostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2InstallHostConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2InstallHostConflict) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2InstallHostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewV2InstallHostInternalServerError() *V2InstallHostInternalServerError {
 	return &V2InstallHostInternalServerError{}
 }
 
-/* V2InstallHostInternalServerError describes a response with status code 500, with default header values.
+/*
+V2InstallHostInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -237,9 +393,39 @@ type V2InstallHostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 install host internal server error response has a 2xx status code
+func (o *V2InstallHostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 install host internal server error response has a 3xx status code
+func (o *V2InstallHostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 install host internal server error response has a 4xx status code
+func (o *V2InstallHostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 install host internal server error response has a 5xx status code
+func (o *V2InstallHostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 install host internal server error response a status code equal to that given
+func (o *V2InstallHostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2InstallHostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2InstallHostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts/{host_id}/actions/install][%d] v2InstallHostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2InstallHostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

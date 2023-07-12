@@ -75,14 +75,44 @@ func NewV2UpdateHostInstallProgressOK() *V2UpdateHostInstallProgressOK {
 	return &V2UpdateHostInstallProgressOK{}
 }
 
-/* V2UpdateHostInstallProgressOK describes a response with status code 200, with default header values.
+/*
+V2UpdateHostInstallProgressOK describes a response with status code 200, with default header values.
 
 Update install progress.
 */
 type V2UpdateHostInstallProgressOK struct {
 }
 
+// IsSuccess returns true when this v2 update host install progress o k response has a 2xx status code
+func (o *V2UpdateHostInstallProgressOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update host install progress o k response has a 3xx status code
+func (o *V2UpdateHostInstallProgressOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress o k response has a 4xx status code
+func (o *V2UpdateHostInstallProgressOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host install progress o k response has a 5xx status code
+func (o *V2UpdateHostInstallProgressOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host install progress o k response a status code equal to that given
+func (o *V2UpdateHostInstallProgressOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2UpdateHostInstallProgressOK) Error() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressOK ", 200)
+}
+
+func (o *V2UpdateHostInstallProgressOK) String() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressOK ", 200)
 }
 
@@ -96,7 +126,8 @@ func NewV2UpdateHostInstallProgressUnauthorized() *V2UpdateHostInstallProgressUn
 	return &V2UpdateHostInstallProgressUnauthorized{}
 }
 
-/* V2UpdateHostInstallProgressUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateHostInstallProgressUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -104,9 +135,39 @@ type V2UpdateHostInstallProgressUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host install progress unauthorized response has a 2xx status code
+func (o *V2UpdateHostInstallProgressUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host install progress unauthorized response has a 3xx status code
+func (o *V2UpdateHostInstallProgressUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress unauthorized response has a 4xx status code
+func (o *V2UpdateHostInstallProgressUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host install progress unauthorized response has a 5xx status code
+func (o *V2UpdateHostInstallProgressUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host install progress unauthorized response a status code equal to that given
+func (o *V2UpdateHostInstallProgressUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateHostInstallProgressUnauthorized) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateHostInstallProgressUnauthorized) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateHostInstallProgressUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -128,7 +189,8 @@ func NewV2UpdateHostInstallProgressForbidden() *V2UpdateHostInstallProgressForbi
 	return &V2UpdateHostInstallProgressForbidden{}
 }
 
-/* V2UpdateHostInstallProgressForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateHostInstallProgressForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -136,9 +198,39 @@ type V2UpdateHostInstallProgressForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host install progress forbidden response has a 2xx status code
+func (o *V2UpdateHostInstallProgressForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host install progress forbidden response has a 3xx status code
+func (o *V2UpdateHostInstallProgressForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress forbidden response has a 4xx status code
+func (o *V2UpdateHostInstallProgressForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host install progress forbidden response has a 5xx status code
+func (o *V2UpdateHostInstallProgressForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host install progress forbidden response a status code equal to that given
+func (o *V2UpdateHostInstallProgressForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateHostInstallProgressForbidden) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateHostInstallProgressForbidden) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateHostInstallProgressForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -160,7 +252,8 @@ func NewV2UpdateHostInstallProgressNotFound() *V2UpdateHostInstallProgressNotFou
 	return &V2UpdateHostInstallProgressNotFound{}
 }
 
-/* V2UpdateHostInstallProgressNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateHostInstallProgressNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -168,9 +261,39 @@ type V2UpdateHostInstallProgressNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host install progress not found response has a 2xx status code
+func (o *V2UpdateHostInstallProgressNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host install progress not found response has a 3xx status code
+func (o *V2UpdateHostInstallProgressNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress not found response has a 4xx status code
+func (o *V2UpdateHostInstallProgressNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host install progress not found response has a 5xx status code
+func (o *V2UpdateHostInstallProgressNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host install progress not found response a status code equal to that given
+func (o *V2UpdateHostInstallProgressNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateHostInstallProgressNotFound) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateHostInstallProgressNotFound) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateHostInstallProgressNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -192,7 +315,8 @@ func NewV2UpdateHostInstallProgressMethodNotAllowed() *V2UpdateHostInstallProgre
 	return &V2UpdateHostInstallProgressMethodNotAllowed{}
 }
 
-/* V2UpdateHostInstallProgressMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateHostInstallProgressMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -200,9 +324,39 @@ type V2UpdateHostInstallProgressMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host install progress method not allowed response has a 2xx status code
+func (o *V2UpdateHostInstallProgressMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host install progress method not allowed response has a 3xx status code
+func (o *V2UpdateHostInstallProgressMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress method not allowed response has a 4xx status code
+func (o *V2UpdateHostInstallProgressMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host install progress method not allowed response has a 5xx status code
+func (o *V2UpdateHostInstallProgressMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host install progress method not allowed response a status code equal to that given
+func (o *V2UpdateHostInstallProgressMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateHostInstallProgressMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateHostInstallProgressMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateHostInstallProgressMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -224,7 +378,8 @@ func NewV2UpdateHostInstallProgressInternalServerError() *V2UpdateHostInstallPro
 	return &V2UpdateHostInstallProgressInternalServerError{}
 }
 
-/* V2UpdateHostInstallProgressInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateHostInstallProgressInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -232,9 +387,39 @@ type V2UpdateHostInstallProgressInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host install progress internal server error response has a 2xx status code
+func (o *V2UpdateHostInstallProgressInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host install progress internal server error response has a 3xx status code
+func (o *V2UpdateHostInstallProgressInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress internal server error response has a 4xx status code
+func (o *V2UpdateHostInstallProgressInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host install progress internal server error response has a 5xx status code
+func (o *V2UpdateHostInstallProgressInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host install progress internal server error response a status code equal to that given
+func (o *V2UpdateHostInstallProgressInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateHostInstallProgressInternalServerError) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateHostInstallProgressInternalServerError) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateHostInstallProgressInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -256,7 +441,8 @@ func NewV2UpdateHostInstallProgressServiceUnavailable() *V2UpdateHostInstallProg
 	return &V2UpdateHostInstallProgressServiceUnavailable{}
 }
 
-/* V2UpdateHostInstallProgressServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2UpdateHostInstallProgressServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -264,9 +450,39 @@ type V2UpdateHostInstallProgressServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host install progress service unavailable response has a 2xx status code
+func (o *V2UpdateHostInstallProgressServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host install progress service unavailable response has a 3xx status code
+func (o *V2UpdateHostInstallProgressServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host install progress service unavailable response has a 4xx status code
+func (o *V2UpdateHostInstallProgressServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host install progress service unavailable response has a 5xx status code
+func (o *V2UpdateHostInstallProgressServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host install progress service unavailable response a status code equal to that given
+func (o *V2UpdateHostInstallProgressServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2UpdateHostInstallProgressServiceUnavailable) Error() string {
 	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2UpdateHostInstallProgressServiceUnavailable) String() string {
+	return fmt.Sprintf("[PUT /v2/infra-envs/{infra_env_id}/hosts/{host_id}/progress][%d] v2UpdateHostInstallProgressServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2UpdateHostInstallProgressServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

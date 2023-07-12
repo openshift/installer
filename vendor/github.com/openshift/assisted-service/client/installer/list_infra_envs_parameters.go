@@ -52,10 +52,12 @@ func NewListInfraEnvsParamsWithHTTPClient(client *http.Client) *ListInfraEnvsPar
 	}
 }
 
-/* ListInfraEnvsParams contains all the parameters to send to the API endpoint
-   for the list infra envs operation.
+/*
+ListInfraEnvsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the list infra envs operation.
+
+	Typically these are written to a http.Request.
 */
 type ListInfraEnvsParams struct {
 

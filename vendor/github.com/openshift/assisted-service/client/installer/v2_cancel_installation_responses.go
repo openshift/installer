@@ -75,7 +75,8 @@ func NewV2CancelInstallationAccepted() *V2CancelInstallationAccepted {
 	return &V2CancelInstallationAccepted{}
 }
 
-/* V2CancelInstallationAccepted describes a response with status code 202, with default header values.
+/*
+V2CancelInstallationAccepted describes a response with status code 202, with default header values.
 
 Success.
 */
@@ -83,9 +84,39 @@ type V2CancelInstallationAccepted struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this v2 cancel installation accepted response has a 2xx status code
+func (o *V2CancelInstallationAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 cancel installation accepted response has a 3xx status code
+func (o *V2CancelInstallationAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation accepted response has a 4xx status code
+func (o *V2CancelInstallationAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 cancel installation accepted response has a 5xx status code
+func (o *V2CancelInstallationAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 cancel installation accepted response a status code equal to that given
+func (o *V2CancelInstallationAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *V2CancelInstallationAccepted) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationAccepted  %+v", 202, o.Payload)
 }
+
+func (o *V2CancelInstallationAccepted) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationAccepted  %+v", 202, o.Payload)
+}
+
 func (o *V2CancelInstallationAccepted) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewV2CancelInstallationUnauthorized() *V2CancelInstallationUnauthorized {
 	return &V2CancelInstallationUnauthorized{}
 }
 
-/* V2CancelInstallationUnauthorized describes a response with status code 401, with default header values.
+/*
+V2CancelInstallationUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -115,9 +147,39 @@ type V2CancelInstallationUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 cancel installation unauthorized response has a 2xx status code
+func (o *V2CancelInstallationUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 cancel installation unauthorized response has a 3xx status code
+func (o *V2CancelInstallationUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation unauthorized response has a 4xx status code
+func (o *V2CancelInstallationUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 cancel installation unauthorized response has a 5xx status code
+func (o *V2CancelInstallationUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 cancel installation unauthorized response a status code equal to that given
+func (o *V2CancelInstallationUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2CancelInstallationUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2CancelInstallationUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2CancelInstallationUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewV2CancelInstallationForbidden() *V2CancelInstallationForbidden {
 	return &V2CancelInstallationForbidden{}
 }
 
-/* V2CancelInstallationForbidden describes a response with status code 403, with default header values.
+/*
+V2CancelInstallationForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -147,9 +210,39 @@ type V2CancelInstallationForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 cancel installation forbidden response has a 2xx status code
+func (o *V2CancelInstallationForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 cancel installation forbidden response has a 3xx status code
+func (o *V2CancelInstallationForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation forbidden response has a 4xx status code
+func (o *V2CancelInstallationForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 cancel installation forbidden response has a 5xx status code
+func (o *V2CancelInstallationForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 cancel installation forbidden response a status code equal to that given
+func (o *V2CancelInstallationForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2CancelInstallationForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2CancelInstallationForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2CancelInstallationForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewV2CancelInstallationNotFound() *V2CancelInstallationNotFound {
 	return &V2CancelInstallationNotFound{}
 }
 
-/* V2CancelInstallationNotFound describes a response with status code 404, with default header values.
+/*
+V2CancelInstallationNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -179,9 +273,39 @@ type V2CancelInstallationNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 cancel installation not found response has a 2xx status code
+func (o *V2CancelInstallationNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 cancel installation not found response has a 3xx status code
+func (o *V2CancelInstallationNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation not found response has a 4xx status code
+func (o *V2CancelInstallationNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 cancel installation not found response has a 5xx status code
+func (o *V2CancelInstallationNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 cancel installation not found response a status code equal to that given
+func (o *V2CancelInstallationNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2CancelInstallationNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2CancelInstallationNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2CancelInstallationNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewV2CancelInstallationMethodNotAllowed() *V2CancelInstallationMethodNotAll
 	return &V2CancelInstallationMethodNotAllowed{}
 }
 
-/* V2CancelInstallationMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2CancelInstallationMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -211,9 +336,39 @@ type V2CancelInstallationMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 cancel installation method not allowed response has a 2xx status code
+func (o *V2CancelInstallationMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 cancel installation method not allowed response has a 3xx status code
+func (o *V2CancelInstallationMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation method not allowed response has a 4xx status code
+func (o *V2CancelInstallationMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 cancel installation method not allowed response has a 5xx status code
+func (o *V2CancelInstallationMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 cancel installation method not allowed response a status code equal to that given
+func (o *V2CancelInstallationMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2CancelInstallationMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2CancelInstallationMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2CancelInstallationMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewV2CancelInstallationConflict() *V2CancelInstallationConflict {
 	return &V2CancelInstallationConflict{}
 }
 
-/* V2CancelInstallationConflict describes a response with status code 409, with default header values.
+/*
+V2CancelInstallationConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -243,9 +399,39 @@ type V2CancelInstallationConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 cancel installation conflict response has a 2xx status code
+func (o *V2CancelInstallationConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 cancel installation conflict response has a 3xx status code
+func (o *V2CancelInstallationConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation conflict response has a 4xx status code
+func (o *V2CancelInstallationConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 cancel installation conflict response has a 5xx status code
+func (o *V2CancelInstallationConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 cancel installation conflict response a status code equal to that given
+func (o *V2CancelInstallationConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2CancelInstallationConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2CancelInstallationConflict) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2CancelInstallationConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewV2CancelInstallationInternalServerError() *V2CancelInstallationInternalS
 	return &V2CancelInstallationInternalServerError{}
 }
 
-/* V2CancelInstallationInternalServerError describes a response with status code 500, with default header values.
+/*
+V2CancelInstallationInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -275,9 +462,39 @@ type V2CancelInstallationInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 cancel installation internal server error response has a 2xx status code
+func (o *V2CancelInstallationInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 cancel installation internal server error response has a 3xx status code
+func (o *V2CancelInstallationInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 cancel installation internal server error response has a 4xx status code
+func (o *V2CancelInstallationInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 cancel installation internal server error response has a 5xx status code
+func (o *V2CancelInstallationInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 cancel installation internal server error response a status code equal to that given
+func (o *V2CancelInstallationInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2CancelInstallationInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2CancelInstallationInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/cancel][%d] v2CancelInstallationInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2CancelInstallationInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -28,6 +28,9 @@ type API interface {
 	   V2ListClusterManifests Lists manifests for customizing cluster installation.*/
 	V2ListClusterManifests(ctx context.Context, params *V2ListClusterManifestsParams) (*V2ListClusterManifestsOK, error)
 	/*
+	   V2UpdateClusterManifest Updates a manifest for customizing cluster installation.*/
+	V2UpdateClusterManifest(ctx context.Context, params *V2UpdateClusterManifestParams) (*V2UpdateClusterManifestOK, error)
+	/*
 	   V2DownloadClusterManifest Downloads cluster manifest.*/
 	V2DownloadClusterManifest(ctx context.Context, params *V2DownloadClusterManifestParams, writer io.Writer) (*V2DownloadClusterManifestOK, error)
 }
@@ -122,6 +125,31 @@ func (a *Client) V2ListClusterManifests(ctx context.Context, params *V2ListClust
 		return nil, err
 	}
 	return result.(*V2ListClusterManifestsOK), nil
+
+}
+
+/*
+V2UpdateClusterManifest Updates a manifest for customizing cluster installation.
+*/
+func (a *Client) V2UpdateClusterManifest(ctx context.Context, params *V2UpdateClusterManifestParams) (*V2UpdateClusterManifestOK, error) {
+
+	result, err := a.transport.Submit(&runtime.ClientOperation{
+		ID:                 "V2UpdateClusterManifest",
+		Method:             "PATCH",
+		PathPattern:        "/v2/clusters/{cluster_id}/manifests",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http", "https"},
+		Params:             params,
+		Reader:             &V2UpdateClusterManifestReader{formats: a.formats},
+		AuthInfo:           a.authInfo,
+		Context:            ctx,
+		Client:             params.HTTPClient,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return result.(*V2UpdateClusterManifestOK), nil
 
 }
 

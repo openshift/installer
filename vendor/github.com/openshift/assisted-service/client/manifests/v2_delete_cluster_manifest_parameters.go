@@ -52,10 +52,12 @@ func NewV2DeleteClusterManifestParamsWithHTTPClient(client *http.Client) *V2Dele
 	}
 }
 
-/* V2DeleteClusterManifestParams contains all the parameters to send to the API endpoint
-   for the v2 delete cluster manifest operation.
+/*
+V2DeleteClusterManifestParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 delete cluster manifest operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DeleteClusterManifestParams struct {
 

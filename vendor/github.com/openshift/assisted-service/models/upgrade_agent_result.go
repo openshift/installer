@@ -20,8 +20,12 @@ import (
 type UpgradeAgentResult string
 
 func NewUpgradeAgentResult(value UpgradeAgentResult) *UpgradeAgentResult {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated UpgradeAgentResult.
+func (m UpgradeAgentResult) Pointer() *UpgradeAgentResult {
+	return &m
 }
 
 const (

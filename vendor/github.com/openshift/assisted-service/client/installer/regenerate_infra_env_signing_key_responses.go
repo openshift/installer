@@ -69,14 +69,44 @@ func NewRegenerateInfraEnvSigningKeyNoContent() *RegenerateInfraEnvSigningKeyNoC
 	return &RegenerateInfraEnvSigningKeyNoContent{}
 }
 
-/* RegenerateInfraEnvSigningKeyNoContent describes a response with status code 204, with default header values.
+/*
+RegenerateInfraEnvSigningKeyNoContent describes a response with status code 204, with default header values.
 
 Success.
 */
 type RegenerateInfraEnvSigningKeyNoContent struct {
 }
 
+// IsSuccess returns true when this regenerate infra env signing key no content response has a 2xx status code
+func (o *RegenerateInfraEnvSigningKeyNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this regenerate infra env signing key no content response has a 3xx status code
+func (o *RegenerateInfraEnvSigningKeyNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this regenerate infra env signing key no content response has a 4xx status code
+func (o *RegenerateInfraEnvSigningKeyNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this regenerate infra env signing key no content response has a 5xx status code
+func (o *RegenerateInfraEnvSigningKeyNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this regenerate infra env signing key no content response a status code equal to that given
+func (o *RegenerateInfraEnvSigningKeyNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *RegenerateInfraEnvSigningKeyNoContent) Error() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyNoContent ", 204)
+}
+
+func (o *RegenerateInfraEnvSigningKeyNoContent) String() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyNoContent ", 204)
 }
 
@@ -90,7 +120,8 @@ func NewRegenerateInfraEnvSigningKeyUnauthorized() *RegenerateInfraEnvSigningKey
 	return &RegenerateInfraEnvSigningKeyUnauthorized{}
 }
 
-/* RegenerateInfraEnvSigningKeyUnauthorized describes a response with status code 401, with default header values.
+/*
+RegenerateInfraEnvSigningKeyUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -98,9 +129,39 @@ type RegenerateInfraEnvSigningKeyUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this regenerate infra env signing key unauthorized response has a 2xx status code
+func (o *RegenerateInfraEnvSigningKeyUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this regenerate infra env signing key unauthorized response has a 3xx status code
+func (o *RegenerateInfraEnvSigningKeyUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this regenerate infra env signing key unauthorized response has a 4xx status code
+func (o *RegenerateInfraEnvSigningKeyUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this regenerate infra env signing key unauthorized response has a 5xx status code
+func (o *RegenerateInfraEnvSigningKeyUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this regenerate infra env signing key unauthorized response a status code equal to that given
+func (o *RegenerateInfraEnvSigningKeyUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *RegenerateInfraEnvSigningKeyUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *RegenerateInfraEnvSigningKeyUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *RegenerateInfraEnvSigningKeyUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -122,7 +183,8 @@ func NewRegenerateInfraEnvSigningKeyForbidden() *RegenerateInfraEnvSigningKeyFor
 	return &RegenerateInfraEnvSigningKeyForbidden{}
 }
 
-/* RegenerateInfraEnvSigningKeyForbidden describes a response with status code 403, with default header values.
+/*
+RegenerateInfraEnvSigningKeyForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -130,9 +192,39 @@ type RegenerateInfraEnvSigningKeyForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this regenerate infra env signing key forbidden response has a 2xx status code
+func (o *RegenerateInfraEnvSigningKeyForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this regenerate infra env signing key forbidden response has a 3xx status code
+func (o *RegenerateInfraEnvSigningKeyForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this regenerate infra env signing key forbidden response has a 4xx status code
+func (o *RegenerateInfraEnvSigningKeyForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this regenerate infra env signing key forbidden response has a 5xx status code
+func (o *RegenerateInfraEnvSigningKeyForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this regenerate infra env signing key forbidden response a status code equal to that given
+func (o *RegenerateInfraEnvSigningKeyForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *RegenerateInfraEnvSigningKeyForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyForbidden  %+v", 403, o.Payload)
 }
+
+func (o *RegenerateInfraEnvSigningKeyForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyForbidden  %+v", 403, o.Payload)
+}
+
 func (o *RegenerateInfraEnvSigningKeyForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -154,7 +246,8 @@ func NewRegenerateInfraEnvSigningKeyNotFound() *RegenerateInfraEnvSigningKeyNotF
 	return &RegenerateInfraEnvSigningKeyNotFound{}
 }
 
-/* RegenerateInfraEnvSigningKeyNotFound describes a response with status code 404, with default header values.
+/*
+RegenerateInfraEnvSigningKeyNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -162,9 +255,39 @@ type RegenerateInfraEnvSigningKeyNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this regenerate infra env signing key not found response has a 2xx status code
+func (o *RegenerateInfraEnvSigningKeyNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this regenerate infra env signing key not found response has a 3xx status code
+func (o *RegenerateInfraEnvSigningKeyNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this regenerate infra env signing key not found response has a 4xx status code
+func (o *RegenerateInfraEnvSigningKeyNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this regenerate infra env signing key not found response has a 5xx status code
+func (o *RegenerateInfraEnvSigningKeyNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this regenerate infra env signing key not found response a status code equal to that given
+func (o *RegenerateInfraEnvSigningKeyNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *RegenerateInfraEnvSigningKeyNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyNotFound  %+v", 404, o.Payload)
 }
+
+func (o *RegenerateInfraEnvSigningKeyNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyNotFound  %+v", 404, o.Payload)
+}
+
 func (o *RegenerateInfraEnvSigningKeyNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -186,7 +309,8 @@ func NewRegenerateInfraEnvSigningKeyMethodNotAllowed() *RegenerateInfraEnvSignin
 	return &RegenerateInfraEnvSigningKeyMethodNotAllowed{}
 }
 
-/* RegenerateInfraEnvSigningKeyMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+RegenerateInfraEnvSigningKeyMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -194,9 +318,39 @@ type RegenerateInfraEnvSigningKeyMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this regenerate infra env signing key method not allowed response has a 2xx status code
+func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this regenerate infra env signing key method not allowed response has a 3xx status code
+func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this regenerate infra env signing key method not allowed response has a 4xx status code
+func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this regenerate infra env signing key method not allowed response has a 5xx status code
+func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this regenerate infra env signing key method not allowed response a status code equal to that given
+func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *RegenerateInfraEnvSigningKeyMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -218,7 +372,8 @@ func NewRegenerateInfraEnvSigningKeyInternalServerError() *RegenerateInfraEnvSig
 	return &RegenerateInfraEnvSigningKeyInternalServerError{}
 }
 
-/* RegenerateInfraEnvSigningKeyInternalServerError describes a response with status code 500, with default header values.
+/*
+RegenerateInfraEnvSigningKeyInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -226,9 +381,39 @@ type RegenerateInfraEnvSigningKeyInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this regenerate infra env signing key internal server error response has a 2xx status code
+func (o *RegenerateInfraEnvSigningKeyInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this regenerate infra env signing key internal server error response has a 3xx status code
+func (o *RegenerateInfraEnvSigningKeyInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this regenerate infra env signing key internal server error response has a 4xx status code
+func (o *RegenerateInfraEnvSigningKeyInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this regenerate infra env signing key internal server error response has a 5xx status code
+func (o *RegenerateInfraEnvSigningKeyInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this regenerate infra env signing key internal server error response a status code equal to that given
+func (o *RegenerateInfraEnvSigningKeyInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *RegenerateInfraEnvSigningKeyInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *RegenerateInfraEnvSigningKeyInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/regenerate-signing-key][%d] regenerateInfraEnvSigningKeyInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *RegenerateInfraEnvSigningKeyInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

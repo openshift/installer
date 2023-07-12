@@ -75,14 +75,44 @@ func NewV2UpdateClusterInstallConfigCreated() *V2UpdateClusterInstallConfigCreat
 	return &V2UpdateClusterInstallConfigCreated{}
 }
 
-/* V2UpdateClusterInstallConfigCreated describes a response with status code 201, with default header values.
+/*
+V2UpdateClusterInstallConfigCreated describes a response with status code 201, with default header values.
 
 Success.
 */
 type V2UpdateClusterInstallConfigCreated struct {
 }
 
+// IsSuccess returns true when this v2 update cluster install config created response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update cluster install config created response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config created response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster install config created response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster install config created response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2UpdateClusterInstallConfigCreated) Error() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigCreated ", 201)
+}
+
+func (o *V2UpdateClusterInstallConfigCreated) String() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigCreated ", 201)
 }
 
@@ -96,7 +126,8 @@ func NewV2UpdateClusterInstallConfigBadRequest() *V2UpdateClusterInstallConfigBa
 	return &V2UpdateClusterInstallConfigBadRequest{}
 }
 
-/* V2UpdateClusterInstallConfigBadRequest describes a response with status code 400, with default header values.
+/*
+V2UpdateClusterInstallConfigBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -104,9 +135,39 @@ type V2UpdateClusterInstallConfigBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster install config bad request response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster install config bad request response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config bad request response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster install config bad request response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster install config bad request response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2UpdateClusterInstallConfigBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2UpdateClusterInstallConfigBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2UpdateClusterInstallConfigBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -128,7 +189,8 @@ func NewV2UpdateClusterInstallConfigUnauthorized() *V2UpdateClusterInstallConfig
 	return &V2UpdateClusterInstallConfigUnauthorized{}
 }
 
-/* V2UpdateClusterInstallConfigUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateClusterInstallConfigUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -136,9 +198,39 @@ type V2UpdateClusterInstallConfigUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update cluster install config unauthorized response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster install config unauthorized response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config unauthorized response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster install config unauthorized response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster install config unauthorized response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateClusterInstallConfigUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateClusterInstallConfigUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateClusterInstallConfigUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -160,7 +252,8 @@ func NewV2UpdateClusterInstallConfigForbidden() *V2UpdateClusterInstallConfigFor
 	return &V2UpdateClusterInstallConfigForbidden{}
 }
 
-/* V2UpdateClusterInstallConfigForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateClusterInstallConfigForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -168,9 +261,39 @@ type V2UpdateClusterInstallConfigForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update cluster install config forbidden response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster install config forbidden response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config forbidden response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster install config forbidden response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster install config forbidden response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateClusterInstallConfigForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateClusterInstallConfigForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateClusterInstallConfigForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -192,7 +315,8 @@ func NewV2UpdateClusterInstallConfigNotFound() *V2UpdateClusterInstallConfigNotF
 	return &V2UpdateClusterInstallConfigNotFound{}
 }
 
-/* V2UpdateClusterInstallConfigNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateClusterInstallConfigNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -200,9 +324,39 @@ type V2UpdateClusterInstallConfigNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster install config not found response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster install config not found response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config not found response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster install config not found response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster install config not found response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateClusterInstallConfigNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateClusterInstallConfigNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateClusterInstallConfigNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -224,7 +378,8 @@ func NewV2UpdateClusterInstallConfigMethodNotAllowed() *V2UpdateClusterInstallCo
 	return &V2UpdateClusterInstallConfigMethodNotAllowed{}
 }
 
-/* V2UpdateClusterInstallConfigMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateClusterInstallConfigMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -232,9 +387,39 @@ type V2UpdateClusterInstallConfigMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster install config method not allowed response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster install config method not allowed response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config method not allowed response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster install config method not allowed response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster install config method not allowed response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateClusterInstallConfigMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateClusterInstallConfigMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateClusterInstallConfigMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -256,7 +441,8 @@ func NewV2UpdateClusterInstallConfigInternalServerError() *V2UpdateClusterInstal
 	return &V2UpdateClusterInstallConfigInternalServerError{}
 }
 
-/* V2UpdateClusterInstallConfigInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateClusterInstallConfigInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -264,9 +450,39 @@ type V2UpdateClusterInstallConfigInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster install config internal server error response has a 2xx status code
+func (o *V2UpdateClusterInstallConfigInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster install config internal server error response has a 3xx status code
+func (o *V2UpdateClusterInstallConfigInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster install config internal server error response has a 4xx status code
+func (o *V2UpdateClusterInstallConfigInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster install config internal server error response has a 5xx status code
+func (o *V2UpdateClusterInstallConfigInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update cluster install config internal server error response a status code equal to that given
+func (o *V2UpdateClusterInstallConfigInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateClusterInstallConfigInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateClusterInstallConfigInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}/install-config][%d] v2UpdateClusterInstallConfigInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateClusterInstallConfigInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

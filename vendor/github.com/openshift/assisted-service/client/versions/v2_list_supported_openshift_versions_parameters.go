@@ -52,10 +52,12 @@ func NewV2ListSupportedOpenshiftVersionsParamsWithHTTPClient(client *http.Client
 	}
 }
 
-/* V2ListSupportedOpenshiftVersionsParams contains all the parameters to send to the API endpoint
-   for the v2 list supported openshift versions operation.
+/*
+V2ListSupportedOpenshiftVersionsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 list supported openshift versions operation.
+
+	Typically these are written to a http.Request.
 */
 type V2ListSupportedOpenshiftVersionsParams struct {
 	timeout    time.Duration

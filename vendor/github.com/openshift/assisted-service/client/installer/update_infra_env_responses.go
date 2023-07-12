@@ -87,7 +87,8 @@ func NewUpdateInfraEnvCreated() *UpdateInfraEnvCreated {
 	return &UpdateInfraEnvCreated{}
 }
 
-/* UpdateInfraEnvCreated describes a response with status code 201, with default header values.
+/*
+UpdateInfraEnvCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -95,9 +96,39 @@ type UpdateInfraEnvCreated struct {
 	Payload *models.InfraEnv
 }
 
+// IsSuccess returns true when this update infra env created response has a 2xx status code
+func (o *UpdateInfraEnvCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this update infra env created response has a 3xx status code
+func (o *UpdateInfraEnvCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env created response has a 4xx status code
+func (o *UpdateInfraEnvCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this update infra env created response has a 5xx status code
+func (o *UpdateInfraEnvCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env created response a status code equal to that given
+func (o *UpdateInfraEnvCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *UpdateInfraEnvCreated) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvCreated  %+v", 201, o.Payload)
 }
+
+func (o *UpdateInfraEnvCreated) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvCreated  %+v", 201, o.Payload)
+}
+
 func (o *UpdateInfraEnvCreated) GetPayload() *models.InfraEnv {
 	return o.Payload
 }
@@ -119,7 +150,8 @@ func NewUpdateInfraEnvBadRequest() *UpdateInfraEnvBadRequest {
 	return &UpdateInfraEnvBadRequest{}
 }
 
-/* UpdateInfraEnvBadRequest describes a response with status code 400, with default header values.
+/*
+UpdateInfraEnvBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -127,9 +159,39 @@ type UpdateInfraEnvBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this update infra env bad request response has a 2xx status code
+func (o *UpdateInfraEnvBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env bad request response has a 3xx status code
+func (o *UpdateInfraEnvBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env bad request response has a 4xx status code
+func (o *UpdateInfraEnvBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this update infra env bad request response has a 5xx status code
+func (o *UpdateInfraEnvBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env bad request response a status code equal to that given
+func (o *UpdateInfraEnvBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *UpdateInfraEnvBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *UpdateInfraEnvBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *UpdateInfraEnvBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -151,7 +213,8 @@ func NewUpdateInfraEnvUnauthorized() *UpdateInfraEnvUnauthorized {
 	return &UpdateInfraEnvUnauthorized{}
 }
 
-/* UpdateInfraEnvUnauthorized describes a response with status code 401, with default header values.
+/*
+UpdateInfraEnvUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -159,9 +222,39 @@ type UpdateInfraEnvUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this update infra env unauthorized response has a 2xx status code
+func (o *UpdateInfraEnvUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env unauthorized response has a 3xx status code
+func (o *UpdateInfraEnvUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env unauthorized response has a 4xx status code
+func (o *UpdateInfraEnvUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this update infra env unauthorized response has a 5xx status code
+func (o *UpdateInfraEnvUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env unauthorized response a status code equal to that given
+func (o *UpdateInfraEnvUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *UpdateInfraEnvUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *UpdateInfraEnvUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *UpdateInfraEnvUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -183,7 +276,8 @@ func NewUpdateInfraEnvForbidden() *UpdateInfraEnvForbidden {
 	return &UpdateInfraEnvForbidden{}
 }
 
-/* UpdateInfraEnvForbidden describes a response with status code 403, with default header values.
+/*
+UpdateInfraEnvForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -191,9 +285,39 @@ type UpdateInfraEnvForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this update infra env forbidden response has a 2xx status code
+func (o *UpdateInfraEnvForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env forbidden response has a 3xx status code
+func (o *UpdateInfraEnvForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env forbidden response has a 4xx status code
+func (o *UpdateInfraEnvForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this update infra env forbidden response has a 5xx status code
+func (o *UpdateInfraEnvForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env forbidden response a status code equal to that given
+func (o *UpdateInfraEnvForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *UpdateInfraEnvForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvForbidden  %+v", 403, o.Payload)
 }
+
+func (o *UpdateInfraEnvForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvForbidden  %+v", 403, o.Payload)
+}
+
 func (o *UpdateInfraEnvForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -215,7 +339,8 @@ func NewUpdateInfraEnvNotFound() *UpdateInfraEnvNotFound {
 	return &UpdateInfraEnvNotFound{}
 }
 
-/* UpdateInfraEnvNotFound describes a response with status code 404, with default header values.
+/*
+UpdateInfraEnvNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -223,9 +348,39 @@ type UpdateInfraEnvNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this update infra env not found response has a 2xx status code
+func (o *UpdateInfraEnvNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env not found response has a 3xx status code
+func (o *UpdateInfraEnvNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env not found response has a 4xx status code
+func (o *UpdateInfraEnvNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this update infra env not found response has a 5xx status code
+func (o *UpdateInfraEnvNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env not found response a status code equal to that given
+func (o *UpdateInfraEnvNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *UpdateInfraEnvNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvNotFound  %+v", 404, o.Payload)
 }
+
+func (o *UpdateInfraEnvNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvNotFound  %+v", 404, o.Payload)
+}
+
 func (o *UpdateInfraEnvNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -247,7 +402,8 @@ func NewUpdateInfraEnvMethodNotAllowed() *UpdateInfraEnvMethodNotAllowed {
 	return &UpdateInfraEnvMethodNotAllowed{}
 }
 
-/* UpdateInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+UpdateInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -255,9 +411,39 @@ type UpdateInfraEnvMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this update infra env method not allowed response has a 2xx status code
+func (o *UpdateInfraEnvMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env method not allowed response has a 3xx status code
+func (o *UpdateInfraEnvMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env method not allowed response has a 4xx status code
+func (o *UpdateInfraEnvMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this update infra env method not allowed response has a 5xx status code
+func (o *UpdateInfraEnvMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env method not allowed response a status code equal to that given
+func (o *UpdateInfraEnvMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *UpdateInfraEnvMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *UpdateInfraEnvMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *UpdateInfraEnvMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -279,7 +465,8 @@ func NewUpdateInfraEnvConflict() *UpdateInfraEnvConflict {
 	return &UpdateInfraEnvConflict{}
 }
 
-/* UpdateInfraEnvConflict describes a response with status code 409, with default header values.
+/*
+UpdateInfraEnvConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -287,9 +474,39 @@ type UpdateInfraEnvConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this update infra env conflict response has a 2xx status code
+func (o *UpdateInfraEnvConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env conflict response has a 3xx status code
+func (o *UpdateInfraEnvConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env conflict response has a 4xx status code
+func (o *UpdateInfraEnvConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this update infra env conflict response has a 5xx status code
+func (o *UpdateInfraEnvConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this update infra env conflict response a status code equal to that given
+func (o *UpdateInfraEnvConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *UpdateInfraEnvConflict) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvConflict  %+v", 409, o.Payload)
 }
+
+func (o *UpdateInfraEnvConflict) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvConflict  %+v", 409, o.Payload)
+}
+
 func (o *UpdateInfraEnvConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -311,7 +528,8 @@ func NewUpdateInfraEnvInternalServerError() *UpdateInfraEnvInternalServerError {
 	return &UpdateInfraEnvInternalServerError{}
 }
 
-/* UpdateInfraEnvInternalServerError describes a response with status code 500, with default header values.
+/*
+UpdateInfraEnvInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -319,9 +537,39 @@ type UpdateInfraEnvInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this update infra env internal server error response has a 2xx status code
+func (o *UpdateInfraEnvInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env internal server error response has a 3xx status code
+func (o *UpdateInfraEnvInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env internal server error response has a 4xx status code
+func (o *UpdateInfraEnvInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this update infra env internal server error response has a 5xx status code
+func (o *UpdateInfraEnvInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this update infra env internal server error response a status code equal to that given
+func (o *UpdateInfraEnvInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *UpdateInfraEnvInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *UpdateInfraEnvInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *UpdateInfraEnvInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -343,7 +591,8 @@ func NewUpdateInfraEnvNotImplemented() *UpdateInfraEnvNotImplemented {
 	return &UpdateInfraEnvNotImplemented{}
 }
 
-/* UpdateInfraEnvNotImplemented describes a response with status code 501, with default header values.
+/*
+UpdateInfraEnvNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -351,9 +600,39 @@ type UpdateInfraEnvNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this update infra env not implemented response has a 2xx status code
+func (o *UpdateInfraEnvNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this update infra env not implemented response has a 3xx status code
+func (o *UpdateInfraEnvNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this update infra env not implemented response has a 4xx status code
+func (o *UpdateInfraEnvNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this update infra env not implemented response has a 5xx status code
+func (o *UpdateInfraEnvNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this update infra env not implemented response a status code equal to that given
+func (o *UpdateInfraEnvNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *UpdateInfraEnvNotImplemented) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *UpdateInfraEnvNotImplemented) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}][%d] updateInfraEnvNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *UpdateInfraEnvNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }

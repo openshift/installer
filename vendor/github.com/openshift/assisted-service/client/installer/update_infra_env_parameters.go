@@ -54,10 +54,12 @@ func NewUpdateInfraEnvParamsWithHTTPClient(client *http.Client) *UpdateInfraEnvP
 	}
 }
 
-/* UpdateInfraEnvParams contains all the parameters to send to the API endpoint
-   for the update infra env operation.
+/*
+UpdateInfraEnvParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the update infra env operation.
+
+	Typically these are written to a http.Request.
 */
 type UpdateInfraEnvParams struct {
 

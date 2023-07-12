@@ -20,8 +20,12 @@ import (
 type ContainerImageAvailabilityResult string
 
 func NewContainerImageAvailabilityResult(value ContainerImageAvailabilityResult) *ContainerImageAvailabilityResult {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated ContainerImageAvailabilityResult.
+func (m ContainerImageAvailabilityResult) Pointer() *ContainerImageAvailabilityResult {
+	return &m
 }
 
 const (

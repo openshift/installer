@@ -93,7 +93,8 @@ func NewV2RegisterHostCreated() *V2RegisterHostCreated {
 	return &V2RegisterHostCreated{}
 }
 
-/* V2RegisterHostCreated describes a response with status code 201, with default header values.
+/*
+V2RegisterHostCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -101,9 +102,39 @@ type V2RegisterHostCreated struct {
 	Payload *models.HostRegistrationResponse
 }
 
+// IsSuccess returns true when this v2 register host created response has a 2xx status code
+func (o *V2RegisterHostCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 register host created response has a 3xx status code
+func (o *V2RegisterHostCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host created response has a 4xx status code
+func (o *V2RegisterHostCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 register host created response has a 5xx status code
+func (o *V2RegisterHostCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host created response a status code equal to that given
+func (o *V2RegisterHostCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2RegisterHostCreated) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostCreated  %+v", 201, o.Payload)
 }
+
+func (o *V2RegisterHostCreated) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostCreated  %+v", 201, o.Payload)
+}
+
 func (o *V2RegisterHostCreated) GetPayload() *models.HostRegistrationResponse {
 	return o.Payload
 }
@@ -125,7 +156,8 @@ func NewV2RegisterHostBadRequest() *V2RegisterHostBadRequest {
 	return &V2RegisterHostBadRequest{}
 }
 
-/* V2RegisterHostBadRequest describes a response with status code 400, with default header values.
+/*
+V2RegisterHostBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -133,9 +165,39 @@ type V2RegisterHostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host bad request response has a 2xx status code
+func (o *V2RegisterHostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host bad request response has a 3xx status code
+func (o *V2RegisterHostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host bad request response has a 4xx status code
+func (o *V2RegisterHostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register host bad request response has a 5xx status code
+func (o *V2RegisterHostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host bad request response a status code equal to that given
+func (o *V2RegisterHostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2RegisterHostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2RegisterHostBadRequest) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2RegisterHostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -157,7 +219,8 @@ func NewV2RegisterHostUnauthorized() *V2RegisterHostUnauthorized {
 	return &V2RegisterHostUnauthorized{}
 }
 
-/* V2RegisterHostUnauthorized describes a response with status code 401, with default header values.
+/*
+V2RegisterHostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -165,9 +228,39 @@ type V2RegisterHostUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 register host unauthorized response has a 2xx status code
+func (o *V2RegisterHostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host unauthorized response has a 3xx status code
+func (o *V2RegisterHostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host unauthorized response has a 4xx status code
+func (o *V2RegisterHostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register host unauthorized response has a 5xx status code
+func (o *V2RegisterHostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host unauthorized response a status code equal to that given
+func (o *V2RegisterHostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2RegisterHostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2RegisterHostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2RegisterHostUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -189,7 +282,8 @@ func NewV2RegisterHostForbidden() *V2RegisterHostForbidden {
 	return &V2RegisterHostForbidden{}
 }
 
-/* V2RegisterHostForbidden describes a response with status code 403, with default header values.
+/*
+V2RegisterHostForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -197,9 +291,39 @@ type V2RegisterHostForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 register host forbidden response has a 2xx status code
+func (o *V2RegisterHostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host forbidden response has a 3xx status code
+func (o *V2RegisterHostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host forbidden response has a 4xx status code
+func (o *V2RegisterHostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register host forbidden response has a 5xx status code
+func (o *V2RegisterHostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host forbidden response a status code equal to that given
+func (o *V2RegisterHostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2RegisterHostForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2RegisterHostForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2RegisterHostForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -221,7 +345,8 @@ func NewV2RegisterHostNotFound() *V2RegisterHostNotFound {
 	return &V2RegisterHostNotFound{}
 }
 
-/* V2RegisterHostNotFound describes a response with status code 404, with default header values.
+/*
+V2RegisterHostNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -229,9 +354,39 @@ type V2RegisterHostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host not found response has a 2xx status code
+func (o *V2RegisterHostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host not found response has a 3xx status code
+func (o *V2RegisterHostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host not found response has a 4xx status code
+func (o *V2RegisterHostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register host not found response has a 5xx status code
+func (o *V2RegisterHostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host not found response a status code equal to that given
+func (o *V2RegisterHostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2RegisterHostNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2RegisterHostNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2RegisterHostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -253,7 +408,8 @@ func NewV2RegisterHostMethodNotAllowed() *V2RegisterHostMethodNotAllowed {
 	return &V2RegisterHostMethodNotAllowed{}
 }
 
-/* V2RegisterHostMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2RegisterHostMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -261,9 +417,39 @@ type V2RegisterHostMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host method not allowed response has a 2xx status code
+func (o *V2RegisterHostMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host method not allowed response has a 3xx status code
+func (o *V2RegisterHostMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host method not allowed response has a 4xx status code
+func (o *V2RegisterHostMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register host method not allowed response has a 5xx status code
+func (o *V2RegisterHostMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host method not allowed response a status code equal to that given
+func (o *V2RegisterHostMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2RegisterHostMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2RegisterHostMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2RegisterHostMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -285,7 +471,8 @@ func NewV2RegisterHostConflict() *V2RegisterHostConflict {
 	return &V2RegisterHostConflict{}
 }
 
-/* V2RegisterHostConflict describes a response with status code 409, with default header values.
+/*
+V2RegisterHostConflict describes a response with status code 409, with default header values.
 
 Cluster cannot accept new agents due to its current state.
 */
@@ -293,9 +480,39 @@ type V2RegisterHostConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host conflict response has a 2xx status code
+func (o *V2RegisterHostConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host conflict response has a 3xx status code
+func (o *V2RegisterHostConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host conflict response has a 4xx status code
+func (o *V2RegisterHostConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 register host conflict response has a 5xx status code
+func (o *V2RegisterHostConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 register host conflict response a status code equal to that given
+func (o *V2RegisterHostConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2RegisterHostConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2RegisterHostConflict) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2RegisterHostConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -317,7 +534,8 @@ func NewV2RegisterHostInternalServerError() *V2RegisterHostInternalServerError {
 	return &V2RegisterHostInternalServerError{}
 }
 
-/* V2RegisterHostInternalServerError describes a response with status code 500, with default header values.
+/*
+V2RegisterHostInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -325,9 +543,39 @@ type V2RegisterHostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host internal server error response has a 2xx status code
+func (o *V2RegisterHostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host internal server error response has a 3xx status code
+func (o *V2RegisterHostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host internal server error response has a 4xx status code
+func (o *V2RegisterHostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 register host internal server error response has a 5xx status code
+func (o *V2RegisterHostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 register host internal server error response a status code equal to that given
+func (o *V2RegisterHostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2RegisterHostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2RegisterHostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2RegisterHostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -349,7 +597,8 @@ func NewV2RegisterHostNotImplemented() *V2RegisterHostNotImplemented {
 	return &V2RegisterHostNotImplemented{}
 }
 
-/* V2RegisterHostNotImplemented describes a response with status code 501, with default header values.
+/*
+V2RegisterHostNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -357,9 +606,39 @@ type V2RegisterHostNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host not implemented response has a 2xx status code
+func (o *V2RegisterHostNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host not implemented response has a 3xx status code
+func (o *V2RegisterHostNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host not implemented response has a 4xx status code
+func (o *V2RegisterHostNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 register host not implemented response has a 5xx status code
+func (o *V2RegisterHostNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 register host not implemented response a status code equal to that given
+func (o *V2RegisterHostNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2RegisterHostNotImplemented) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2RegisterHostNotImplemented) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2RegisterHostNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -381,7 +660,8 @@ func NewV2RegisterHostServiceUnavailable() *V2RegisterHostServiceUnavailable {
 	return &V2RegisterHostServiceUnavailable{}
 }
 
-/* V2RegisterHostServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2RegisterHostServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -389,9 +669,39 @@ type V2RegisterHostServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 register host service unavailable response has a 2xx status code
+func (o *V2RegisterHostServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 register host service unavailable response has a 3xx status code
+func (o *V2RegisterHostServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 register host service unavailable response has a 4xx status code
+func (o *V2RegisterHostServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 register host service unavailable response has a 5xx status code
+func (o *V2RegisterHostServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 register host service unavailable response a status code equal to that given
+func (o *V2RegisterHostServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2RegisterHostServiceUnavailable) Error() string {
 	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2RegisterHostServiceUnavailable) String() string {
+	return fmt.Sprintf("[POST /v2/infra-envs/{infra_env_id}/hosts][%d] v2RegisterHostServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2RegisterHostServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

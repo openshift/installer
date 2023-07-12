@@ -75,14 +75,44 @@ func NewV2DeregisterHostNoContent() *V2DeregisterHostNoContent {
 	return &V2DeregisterHostNoContent{}
 }
 
-/* V2DeregisterHostNoContent describes a response with status code 204, with default header values.
+/*
+V2DeregisterHostNoContent describes a response with status code 204, with default header values.
 
 Success.
 */
 type V2DeregisterHostNoContent struct {
 }
 
+// IsSuccess returns true when this v2 deregister host no content response has a 2xx status code
+func (o *V2DeregisterHostNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 deregister host no content response has a 3xx status code
+func (o *V2DeregisterHostNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host no content response has a 4xx status code
+func (o *V2DeregisterHostNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 deregister host no content response has a 5xx status code
+func (o *V2DeregisterHostNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister host no content response a status code equal to that given
+func (o *V2DeregisterHostNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *V2DeregisterHostNoContent) Error() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostNoContent ", 204)
+}
+
+func (o *V2DeregisterHostNoContent) String() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostNoContent ", 204)
 }
 
@@ -96,7 +126,8 @@ func NewV2DeregisterHostBadRequest() *V2DeregisterHostBadRequest {
 	return &V2DeregisterHostBadRequest{}
 }
 
-/* V2DeregisterHostBadRequest describes a response with status code 400, with default header values.
+/*
+V2DeregisterHostBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -104,9 +135,39 @@ type V2DeregisterHostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister host bad request response has a 2xx status code
+func (o *V2DeregisterHostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister host bad request response has a 3xx status code
+func (o *V2DeregisterHostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host bad request response has a 4xx status code
+func (o *V2DeregisterHostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister host bad request response has a 5xx status code
+func (o *V2DeregisterHostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister host bad request response a status code equal to that given
+func (o *V2DeregisterHostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2DeregisterHostBadRequest) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2DeregisterHostBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2DeregisterHostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -128,7 +189,8 @@ func NewV2DeregisterHostUnauthorized() *V2DeregisterHostUnauthorized {
 	return &V2DeregisterHostUnauthorized{}
 }
 
-/* V2DeregisterHostUnauthorized describes a response with status code 401, with default header values.
+/*
+V2DeregisterHostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -136,9 +198,39 @@ type V2DeregisterHostUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 deregister host unauthorized response has a 2xx status code
+func (o *V2DeregisterHostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister host unauthorized response has a 3xx status code
+func (o *V2DeregisterHostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host unauthorized response has a 4xx status code
+func (o *V2DeregisterHostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister host unauthorized response has a 5xx status code
+func (o *V2DeregisterHostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister host unauthorized response a status code equal to that given
+func (o *V2DeregisterHostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2DeregisterHostUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2DeregisterHostUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2DeregisterHostUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -160,7 +252,8 @@ func NewV2DeregisterHostForbidden() *V2DeregisterHostForbidden {
 	return &V2DeregisterHostForbidden{}
 }
 
-/* V2DeregisterHostForbidden describes a response with status code 403, with default header values.
+/*
+V2DeregisterHostForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -168,9 +261,39 @@ type V2DeregisterHostForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 deregister host forbidden response has a 2xx status code
+func (o *V2DeregisterHostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister host forbidden response has a 3xx status code
+func (o *V2DeregisterHostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host forbidden response has a 4xx status code
+func (o *V2DeregisterHostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister host forbidden response has a 5xx status code
+func (o *V2DeregisterHostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister host forbidden response a status code equal to that given
+func (o *V2DeregisterHostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2DeregisterHostForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2DeregisterHostForbidden) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2DeregisterHostForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -192,7 +315,8 @@ func NewV2DeregisterHostNotFound() *V2DeregisterHostNotFound {
 	return &V2DeregisterHostNotFound{}
 }
 
-/* V2DeregisterHostNotFound describes a response with status code 404, with default header values.
+/*
+V2DeregisterHostNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -200,9 +324,39 @@ type V2DeregisterHostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister host not found response has a 2xx status code
+func (o *V2DeregisterHostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister host not found response has a 3xx status code
+func (o *V2DeregisterHostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host not found response has a 4xx status code
+func (o *V2DeregisterHostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister host not found response has a 5xx status code
+func (o *V2DeregisterHostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister host not found response a status code equal to that given
+func (o *V2DeregisterHostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2DeregisterHostNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2DeregisterHostNotFound) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2DeregisterHostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -224,7 +378,8 @@ func NewV2DeregisterHostMethodNotAllowed() *V2DeregisterHostMethodNotAllowed {
 	return &V2DeregisterHostMethodNotAllowed{}
 }
 
-/* V2DeregisterHostMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2DeregisterHostMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -232,9 +387,39 @@ type V2DeregisterHostMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister host method not allowed response has a 2xx status code
+func (o *V2DeregisterHostMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister host method not allowed response has a 3xx status code
+func (o *V2DeregisterHostMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host method not allowed response has a 4xx status code
+func (o *V2DeregisterHostMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 deregister host method not allowed response has a 5xx status code
+func (o *V2DeregisterHostMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 deregister host method not allowed response a status code equal to that given
+func (o *V2DeregisterHostMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2DeregisterHostMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2DeregisterHostMethodNotAllowed) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2DeregisterHostMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -256,7 +441,8 @@ func NewV2DeregisterHostInternalServerError() *V2DeregisterHostInternalServerErr
 	return &V2DeregisterHostInternalServerError{}
 }
 
-/* V2DeregisterHostInternalServerError describes a response with status code 500, with default header values.
+/*
+V2DeregisterHostInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -264,9 +450,39 @@ type V2DeregisterHostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 deregister host internal server error response has a 2xx status code
+func (o *V2DeregisterHostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 deregister host internal server error response has a 3xx status code
+func (o *V2DeregisterHostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 deregister host internal server error response has a 4xx status code
+func (o *V2DeregisterHostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 deregister host internal server error response has a 5xx status code
+func (o *V2DeregisterHostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 deregister host internal server error response a status code equal to that given
+func (o *V2DeregisterHostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2DeregisterHostInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2DeregisterHostInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}/hosts/{host_id}][%d] v2DeregisterHostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2DeregisterHostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

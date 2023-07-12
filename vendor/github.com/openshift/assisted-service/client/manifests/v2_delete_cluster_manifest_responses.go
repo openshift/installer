@@ -75,14 +75,44 @@ func NewV2DeleteClusterManifestOK() *V2DeleteClusterManifestOK {
 	return &V2DeleteClusterManifestOK{}
 }
 
-/* V2DeleteClusterManifestOK describes a response with status code 200, with default header values.
+/*
+V2DeleteClusterManifestOK describes a response with status code 200, with default header values.
 
 Success.
 */
 type V2DeleteClusterManifestOK struct {
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest o k response has a 2xx status code
+func (o *V2DeleteClusterManifestOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest o k response has a 3xx status code
+func (o *V2DeleteClusterManifestOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest o k response has a 4xx status code
+func (o *V2DeleteClusterManifestOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 delete cluster manifest o k response has a 5xx status code
+func (o *V2DeleteClusterManifestOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 delete cluster manifest o k response a status code equal to that given
+func (o *V2DeleteClusterManifestOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2DeleteClusterManifestOK) Error() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestOK ", 200)
+}
+
+func (o *V2DeleteClusterManifestOK) String() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestOK ", 200)
 }
 
@@ -96,7 +126,8 @@ func NewV2DeleteClusterManifestUnauthorized() *V2DeleteClusterManifestUnauthoriz
 	return &V2DeleteClusterManifestUnauthorized{}
 }
 
-/* V2DeleteClusterManifestUnauthorized describes a response with status code 401, with default header values.
+/*
+V2DeleteClusterManifestUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -104,9 +135,39 @@ type V2DeleteClusterManifestUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest unauthorized response has a 2xx status code
+func (o *V2DeleteClusterManifestUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest unauthorized response has a 3xx status code
+func (o *V2DeleteClusterManifestUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest unauthorized response has a 4xx status code
+func (o *V2DeleteClusterManifestUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 delete cluster manifest unauthorized response has a 5xx status code
+func (o *V2DeleteClusterManifestUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 delete cluster manifest unauthorized response a status code equal to that given
+func (o *V2DeleteClusterManifestUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2DeleteClusterManifestUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2DeleteClusterManifestUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2DeleteClusterManifestUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -128,7 +189,8 @@ func NewV2DeleteClusterManifestForbidden() *V2DeleteClusterManifestForbidden {
 	return &V2DeleteClusterManifestForbidden{}
 }
 
-/* V2DeleteClusterManifestForbidden describes a response with status code 403, with default header values.
+/*
+V2DeleteClusterManifestForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -136,9 +198,39 @@ type V2DeleteClusterManifestForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest forbidden response has a 2xx status code
+func (o *V2DeleteClusterManifestForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest forbidden response has a 3xx status code
+func (o *V2DeleteClusterManifestForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest forbidden response has a 4xx status code
+func (o *V2DeleteClusterManifestForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 delete cluster manifest forbidden response has a 5xx status code
+func (o *V2DeleteClusterManifestForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 delete cluster manifest forbidden response a status code equal to that given
+func (o *V2DeleteClusterManifestForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2DeleteClusterManifestForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2DeleteClusterManifestForbidden) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2DeleteClusterManifestForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -160,7 +252,8 @@ func NewV2DeleteClusterManifestNotFound() *V2DeleteClusterManifestNotFound {
 	return &V2DeleteClusterManifestNotFound{}
 }
 
-/* V2DeleteClusterManifestNotFound describes a response with status code 404, with default header values.
+/*
+V2DeleteClusterManifestNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -168,9 +261,39 @@ type V2DeleteClusterManifestNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest not found response has a 2xx status code
+func (o *V2DeleteClusterManifestNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest not found response has a 3xx status code
+func (o *V2DeleteClusterManifestNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest not found response has a 4xx status code
+func (o *V2DeleteClusterManifestNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 delete cluster manifest not found response has a 5xx status code
+func (o *V2DeleteClusterManifestNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 delete cluster manifest not found response a status code equal to that given
+func (o *V2DeleteClusterManifestNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2DeleteClusterManifestNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2DeleteClusterManifestNotFound) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2DeleteClusterManifestNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -192,7 +315,8 @@ func NewV2DeleteClusterManifestMethodNotAllowed() *V2DeleteClusterManifestMethod
 	return &V2DeleteClusterManifestMethodNotAllowed{}
 }
 
-/* V2DeleteClusterManifestMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2DeleteClusterManifestMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -200,9 +324,39 @@ type V2DeleteClusterManifestMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest method not allowed response has a 2xx status code
+func (o *V2DeleteClusterManifestMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest method not allowed response has a 3xx status code
+func (o *V2DeleteClusterManifestMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest method not allowed response has a 4xx status code
+func (o *V2DeleteClusterManifestMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 delete cluster manifest method not allowed response has a 5xx status code
+func (o *V2DeleteClusterManifestMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 delete cluster manifest method not allowed response a status code equal to that given
+func (o *V2DeleteClusterManifestMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2DeleteClusterManifestMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2DeleteClusterManifestMethodNotAllowed) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2DeleteClusterManifestMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -224,7 +378,8 @@ func NewV2DeleteClusterManifestConflict() *V2DeleteClusterManifestConflict {
 	return &V2DeleteClusterManifestConflict{}
 }
 
-/* V2DeleteClusterManifestConflict describes a response with status code 409, with default header values.
+/*
+V2DeleteClusterManifestConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -232,9 +387,39 @@ type V2DeleteClusterManifestConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest conflict response has a 2xx status code
+func (o *V2DeleteClusterManifestConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest conflict response has a 3xx status code
+func (o *V2DeleteClusterManifestConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest conflict response has a 4xx status code
+func (o *V2DeleteClusterManifestConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 delete cluster manifest conflict response has a 5xx status code
+func (o *V2DeleteClusterManifestConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 delete cluster manifest conflict response a status code equal to that given
+func (o *V2DeleteClusterManifestConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2DeleteClusterManifestConflict) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2DeleteClusterManifestConflict) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2DeleteClusterManifestConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -256,7 +441,8 @@ func NewV2DeleteClusterManifestInternalServerError() *V2DeleteClusterManifestInt
 	return &V2DeleteClusterManifestInternalServerError{}
 }
 
-/* V2DeleteClusterManifestInternalServerError describes a response with status code 500, with default header values.
+/*
+V2DeleteClusterManifestInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -264,9 +450,39 @@ type V2DeleteClusterManifestInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 delete cluster manifest internal server error response has a 2xx status code
+func (o *V2DeleteClusterManifestInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 delete cluster manifest internal server error response has a 3xx status code
+func (o *V2DeleteClusterManifestInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 delete cluster manifest internal server error response has a 4xx status code
+func (o *V2DeleteClusterManifestInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 delete cluster manifest internal server error response has a 5xx status code
+func (o *V2DeleteClusterManifestInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 delete cluster manifest internal server error response a status code equal to that given
+func (o *V2DeleteClusterManifestInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2DeleteClusterManifestInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2DeleteClusterManifestInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /v2/clusters/{cluster_id}/manifests][%d] v2DeleteClusterManifestInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2DeleteClusterManifestInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

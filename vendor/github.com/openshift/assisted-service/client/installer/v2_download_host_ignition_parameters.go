@@ -52,10 +52,12 @@ func NewV2DownloadHostIgnitionParamsWithHTTPClient(client *http.Client) *V2Downl
 	}
 }
 
-/* V2DownloadHostIgnitionParams contains all the parameters to send to the API endpoint
-   for the v2 download host ignition operation.
+/*
+V2DownloadHostIgnitionParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 download host ignition operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DownloadHostIgnitionParams struct {
 

@@ -81,7 +81,8 @@ func NewV2UpdateClusterCreated() *V2UpdateClusterCreated {
 	return &V2UpdateClusterCreated{}
 }
 
-/* V2UpdateClusterCreated describes a response with status code 201, with default header values.
+/*
+V2UpdateClusterCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type V2UpdateClusterCreated struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this v2 update cluster created response has a 2xx status code
+func (o *V2UpdateClusterCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update cluster created response has a 3xx status code
+func (o *V2UpdateClusterCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster created response has a 4xx status code
+func (o *V2UpdateClusterCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster created response has a 5xx status code
+func (o *V2UpdateClusterCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster created response a status code equal to that given
+func (o *V2UpdateClusterCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2UpdateClusterCreated) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterCreated  %+v", 201, o.Payload)
 }
+
+func (o *V2UpdateClusterCreated) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterCreated  %+v", 201, o.Payload)
+}
+
 func (o *V2UpdateClusterCreated) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewV2UpdateClusterBadRequest() *V2UpdateClusterBadRequest {
 	return &V2UpdateClusterBadRequest{}
 }
 
-/* V2UpdateClusterBadRequest describes a response with status code 400, with default header values.
+/*
+V2UpdateClusterBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -121,9 +153,39 @@ type V2UpdateClusterBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster bad request response has a 2xx status code
+func (o *V2UpdateClusterBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster bad request response has a 3xx status code
+func (o *V2UpdateClusterBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster bad request response has a 4xx status code
+func (o *V2UpdateClusterBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster bad request response has a 5xx status code
+func (o *V2UpdateClusterBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster bad request response a status code equal to that given
+func (o *V2UpdateClusterBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2UpdateClusterBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2UpdateClusterBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2UpdateClusterBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewV2UpdateClusterUnauthorized() *V2UpdateClusterUnauthorized {
 	return &V2UpdateClusterUnauthorized{}
 }
 
-/* V2UpdateClusterUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateClusterUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -153,9 +216,39 @@ type V2UpdateClusterUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update cluster unauthorized response has a 2xx status code
+func (o *V2UpdateClusterUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster unauthorized response has a 3xx status code
+func (o *V2UpdateClusterUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster unauthorized response has a 4xx status code
+func (o *V2UpdateClusterUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster unauthorized response has a 5xx status code
+func (o *V2UpdateClusterUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster unauthorized response a status code equal to that given
+func (o *V2UpdateClusterUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateClusterUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateClusterUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateClusterUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewV2UpdateClusterForbidden() *V2UpdateClusterForbidden {
 	return &V2UpdateClusterForbidden{}
 }
 
-/* V2UpdateClusterForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateClusterForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -185,9 +279,39 @@ type V2UpdateClusterForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update cluster forbidden response has a 2xx status code
+func (o *V2UpdateClusterForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster forbidden response has a 3xx status code
+func (o *V2UpdateClusterForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster forbidden response has a 4xx status code
+func (o *V2UpdateClusterForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster forbidden response has a 5xx status code
+func (o *V2UpdateClusterForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster forbidden response a status code equal to that given
+func (o *V2UpdateClusterForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateClusterForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateClusterForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateClusterForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewV2UpdateClusterNotFound() *V2UpdateClusterNotFound {
 	return &V2UpdateClusterNotFound{}
 }
 
-/* V2UpdateClusterNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateClusterNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -217,9 +342,39 @@ type V2UpdateClusterNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster not found response has a 2xx status code
+func (o *V2UpdateClusterNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster not found response has a 3xx status code
+func (o *V2UpdateClusterNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster not found response has a 4xx status code
+func (o *V2UpdateClusterNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster not found response has a 5xx status code
+func (o *V2UpdateClusterNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster not found response a status code equal to that given
+func (o *V2UpdateClusterNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateClusterNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateClusterNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateClusterNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewV2UpdateClusterMethodNotAllowed() *V2UpdateClusterMethodNotAllowed {
 	return &V2UpdateClusterMethodNotAllowed{}
 }
 
-/* V2UpdateClusterMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateClusterMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -249,9 +405,39 @@ type V2UpdateClusterMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster method not allowed response has a 2xx status code
+func (o *V2UpdateClusterMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster method not allowed response has a 3xx status code
+func (o *V2UpdateClusterMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster method not allowed response has a 4xx status code
+func (o *V2UpdateClusterMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster method not allowed response has a 5xx status code
+func (o *V2UpdateClusterMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster method not allowed response a status code equal to that given
+func (o *V2UpdateClusterMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateClusterMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateClusterMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateClusterMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewV2UpdateClusterConflict() *V2UpdateClusterConflict {
 	return &V2UpdateClusterConflict{}
 }
 
-/* V2UpdateClusterConflict describes a response with status code 409, with default header values.
+/*
+V2UpdateClusterConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -281,9 +468,39 @@ type V2UpdateClusterConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster conflict response has a 2xx status code
+func (o *V2UpdateClusterConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster conflict response has a 3xx status code
+func (o *V2UpdateClusterConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster conflict response has a 4xx status code
+func (o *V2UpdateClusterConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update cluster conflict response has a 5xx status code
+func (o *V2UpdateClusterConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update cluster conflict response a status code equal to that given
+func (o *V2UpdateClusterConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2UpdateClusterConflict) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2UpdateClusterConflict) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2UpdateClusterConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewV2UpdateClusterInternalServerError() *V2UpdateClusterInternalServerError
 	return &V2UpdateClusterInternalServerError{}
 }
 
-/* V2UpdateClusterInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateClusterInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -313,9 +531,39 @@ type V2UpdateClusterInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update cluster internal server error response has a 2xx status code
+func (o *V2UpdateClusterInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update cluster internal server error response has a 3xx status code
+func (o *V2UpdateClusterInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update cluster internal server error response has a 4xx status code
+func (o *V2UpdateClusterInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update cluster internal server error response has a 5xx status code
+func (o *V2UpdateClusterInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update cluster internal server error response a status code equal to that given
+func (o *V2UpdateClusterInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateClusterInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateClusterInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/clusters/{cluster_id}][%d] v2UpdateClusterInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateClusterInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

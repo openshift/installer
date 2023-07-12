@@ -52,16 +52,18 @@ func NewTransformClusterToDay2ParamsWithHTTPClient(client *http.Client) *Transfo
 	}
 }
 
-/* TransformClusterToDay2Params contains all the parameters to send to the API endpoint
-   for the transform cluster to day2 operation.
+/*
+TransformClusterToDay2Params contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the transform cluster to day2 operation.
+
+	Typically these are written to a http.Request.
 */
 type TransformClusterToDay2Params struct {
 
 	/* ClusterID.
 
-	   The cluster to transform to day2 and to allow adding hosts by this.
+	   The cluster to transform.
 
 	   Format: uuid
 	*/

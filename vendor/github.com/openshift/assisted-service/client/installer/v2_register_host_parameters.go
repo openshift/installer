@@ -54,10 +54,12 @@ func NewV2RegisterHostParamsWithHTTPClient(client *http.Client) *V2RegisterHostP
 	}
 }
 
-/* V2RegisterHostParams contains all the parameters to send to the API endpoint
-   for the v2 register host operation.
+/*
+V2RegisterHostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 register host operation.
+
+	Typically these are written to a http.Request.
 */
 type V2RegisterHostParams struct {
 

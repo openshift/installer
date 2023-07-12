@@ -53,10 +53,12 @@ func NewListClusterHostsParamsWithHTTPClient(client *http.Client) *ListClusterHo
 	}
 }
 
-/* ListClusterHostsParams contains all the parameters to send to the API endpoint
-   for the list cluster hosts operation.
+/*
+ListClusterHostsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the list cluster hosts operation.
+
+	Typically these are written to a http.Request.
 */
 type ListClusterHostsParams struct {
 

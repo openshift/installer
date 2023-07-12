@@ -54,10 +54,12 @@ func NewV2UpdateClusterLogsProgressParamsWithHTTPClient(client *http.Client) *V2
 	}
 }
 
-/* V2UpdateClusterLogsProgressParams contains all the parameters to send to the API endpoint
-   for the v2 update cluster logs progress operation.
+/*
+V2UpdateClusterLogsProgressParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update cluster logs progress operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateClusterLogsProgressParams struct {
 

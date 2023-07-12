@@ -81,7 +81,8 @@ func NewGetInfraEnvOK() *GetInfraEnvOK {
 	return &GetInfraEnvOK{}
 }
 
-/* GetInfraEnvOK describes a response with status code 200, with default header values.
+/*
+GetInfraEnvOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -89,9 +90,39 @@ type GetInfraEnvOK struct {
 	Payload *models.InfraEnv
 }
 
+// IsSuccess returns true when this get infra env o k response has a 2xx status code
+func (o *GetInfraEnvOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this get infra env o k response has a 3xx status code
+func (o *GetInfraEnvOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env o k response has a 4xx status code
+func (o *GetInfraEnvOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env o k response has a 5xx status code
+func (o *GetInfraEnvOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env o k response a status code equal to that given
+func (o *GetInfraEnvOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *GetInfraEnvOK) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvOK  %+v", 200, o.Payload)
 }
+
+func (o *GetInfraEnvOK) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvOK  %+v", 200, o.Payload)
+}
+
 func (o *GetInfraEnvOK) GetPayload() *models.InfraEnv {
 	return o.Payload
 }
@@ -113,7 +144,8 @@ func NewGetInfraEnvUnauthorized() *GetInfraEnvUnauthorized {
 	return &GetInfraEnvUnauthorized{}
 }
 
-/* GetInfraEnvUnauthorized describes a response with status code 401, with default header values.
+/*
+GetInfraEnvUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -121,9 +153,39 @@ type GetInfraEnvUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this get infra env unauthorized response has a 2xx status code
+func (o *GetInfraEnvUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env unauthorized response has a 3xx status code
+func (o *GetInfraEnvUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env unauthorized response has a 4xx status code
+func (o *GetInfraEnvUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env unauthorized response has a 5xx status code
+func (o *GetInfraEnvUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env unauthorized response a status code equal to that given
+func (o *GetInfraEnvUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *GetInfraEnvUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *GetInfraEnvUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *GetInfraEnvUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -145,7 +207,8 @@ func NewGetInfraEnvForbidden() *GetInfraEnvForbidden {
 	return &GetInfraEnvForbidden{}
 }
 
-/* GetInfraEnvForbidden describes a response with status code 403, with default header values.
+/*
+GetInfraEnvForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -153,9 +216,39 @@ type GetInfraEnvForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this get infra env forbidden response has a 2xx status code
+func (o *GetInfraEnvForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env forbidden response has a 3xx status code
+func (o *GetInfraEnvForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env forbidden response has a 4xx status code
+func (o *GetInfraEnvForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env forbidden response has a 5xx status code
+func (o *GetInfraEnvForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env forbidden response a status code equal to that given
+func (o *GetInfraEnvForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *GetInfraEnvForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvForbidden  %+v", 403, o.Payload)
 }
+
+func (o *GetInfraEnvForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvForbidden  %+v", 403, o.Payload)
+}
+
 func (o *GetInfraEnvForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -177,7 +270,8 @@ func NewGetInfraEnvNotFound() *GetInfraEnvNotFound {
 	return &GetInfraEnvNotFound{}
 }
 
-/* GetInfraEnvNotFound describes a response with status code 404, with default header values.
+/*
+GetInfraEnvNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -185,9 +279,39 @@ type GetInfraEnvNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env not found response has a 2xx status code
+func (o *GetInfraEnvNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env not found response has a 3xx status code
+func (o *GetInfraEnvNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env not found response has a 4xx status code
+func (o *GetInfraEnvNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env not found response has a 5xx status code
+func (o *GetInfraEnvNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env not found response a status code equal to that given
+func (o *GetInfraEnvNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *GetInfraEnvNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvNotFound  %+v", 404, o.Payload)
 }
+
+func (o *GetInfraEnvNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvNotFound  %+v", 404, o.Payload)
+}
+
 func (o *GetInfraEnvNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -209,7 +333,8 @@ func NewGetInfraEnvMethodNotAllowed() *GetInfraEnvMethodNotAllowed {
 	return &GetInfraEnvMethodNotAllowed{}
 }
 
-/* GetInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+GetInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -217,9 +342,39 @@ type GetInfraEnvMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env method not allowed response has a 2xx status code
+func (o *GetInfraEnvMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env method not allowed response has a 3xx status code
+func (o *GetInfraEnvMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env method not allowed response has a 4xx status code
+func (o *GetInfraEnvMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get infra env method not allowed response has a 5xx status code
+func (o *GetInfraEnvMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get infra env method not allowed response a status code equal to that given
+func (o *GetInfraEnvMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *GetInfraEnvMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *GetInfraEnvMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *GetInfraEnvMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -241,7 +396,8 @@ func NewGetInfraEnvInternalServerError() *GetInfraEnvInternalServerError {
 	return &GetInfraEnvInternalServerError{}
 }
 
-/* GetInfraEnvInternalServerError describes a response with status code 500, with default header values.
+/*
+GetInfraEnvInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -249,9 +405,39 @@ type GetInfraEnvInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env internal server error response has a 2xx status code
+func (o *GetInfraEnvInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env internal server error response has a 3xx status code
+func (o *GetInfraEnvInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env internal server error response has a 4xx status code
+func (o *GetInfraEnvInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env internal server error response has a 5xx status code
+func (o *GetInfraEnvInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get infra env internal server error response a status code equal to that given
+func (o *GetInfraEnvInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *GetInfraEnvInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *GetInfraEnvInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *GetInfraEnvInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -273,7 +459,8 @@ func NewGetInfraEnvNotImplemented() *GetInfraEnvNotImplemented {
 	return &GetInfraEnvNotImplemented{}
 }
 
-/* GetInfraEnvNotImplemented describes a response with status code 501, with default header values.
+/*
+GetInfraEnvNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -281,9 +468,39 @@ type GetInfraEnvNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env not implemented response has a 2xx status code
+func (o *GetInfraEnvNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env not implemented response has a 3xx status code
+func (o *GetInfraEnvNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env not implemented response has a 4xx status code
+func (o *GetInfraEnvNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env not implemented response has a 5xx status code
+func (o *GetInfraEnvNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get infra env not implemented response a status code equal to that given
+func (o *GetInfraEnvNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *GetInfraEnvNotImplemented) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *GetInfraEnvNotImplemented) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *GetInfraEnvNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -305,7 +522,8 @@ func NewGetInfraEnvServiceUnavailable() *GetInfraEnvServiceUnavailable {
 	return &GetInfraEnvServiceUnavailable{}
 }
 
-/* GetInfraEnvServiceUnavailable describes a response with status code 503, with default header values.
+/*
+GetInfraEnvServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -313,9 +531,39 @@ type GetInfraEnvServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this get infra env service unavailable response has a 2xx status code
+func (o *GetInfraEnvServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get infra env service unavailable response has a 3xx status code
+func (o *GetInfraEnvServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get infra env service unavailable response has a 4xx status code
+func (o *GetInfraEnvServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this get infra env service unavailable response has a 5xx status code
+func (o *GetInfraEnvServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this get infra env service unavailable response a status code equal to that given
+func (o *GetInfraEnvServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *GetInfraEnvServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *GetInfraEnvServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/infra-envs/{infra_env_id}][%d] getInfraEnvServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *GetInfraEnvServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

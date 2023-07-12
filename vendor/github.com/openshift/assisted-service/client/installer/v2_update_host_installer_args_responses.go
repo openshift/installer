@@ -87,7 +87,8 @@ func NewV2UpdateHostInstallerArgsCreated() *V2UpdateHostInstallerArgsCreated {
 	return &V2UpdateHostInstallerArgsCreated{}
 }
 
-/* V2UpdateHostInstallerArgsCreated describes a response with status code 201, with default header values.
+/*
+V2UpdateHostInstallerArgsCreated describes a response with status code 201, with default header values.
 
 Success.
 */
@@ -95,9 +96,39 @@ type V2UpdateHostInstallerArgsCreated struct {
 	Payload *models.Host
 }
 
+// IsSuccess returns true when this v2 update host installer args created response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update host installer args created response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args created response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host installer args created response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args created response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2UpdateHostInstallerArgsCreated) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsCreated  %+v", 201, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsCreated) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsCreated  %+v", 201, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsCreated) GetPayload() *models.Host {
 	return o.Payload
 }
@@ -119,7 +150,8 @@ func NewV2UpdateHostInstallerArgsBadRequest() *V2UpdateHostInstallerArgsBadReque
 	return &V2UpdateHostInstallerArgsBadRequest{}
 }
 
-/* V2UpdateHostInstallerArgsBadRequest describes a response with status code 400, with default header values.
+/*
+V2UpdateHostInstallerArgsBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -127,9 +159,39 @@ type V2UpdateHostInstallerArgsBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host installer args bad request response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args bad request response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args bad request response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host installer args bad request response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args bad request response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2UpdateHostInstallerArgsBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -151,7 +213,8 @@ func NewV2UpdateHostInstallerArgsUnauthorized() *V2UpdateHostInstallerArgsUnauth
 	return &V2UpdateHostInstallerArgsUnauthorized{}
 }
 
-/* V2UpdateHostInstallerArgsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateHostInstallerArgsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -159,9 +222,39 @@ type V2UpdateHostInstallerArgsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host installer args unauthorized response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args unauthorized response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args unauthorized response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host installer args unauthorized response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args unauthorized response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateHostInstallerArgsUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -183,7 +276,8 @@ func NewV2UpdateHostInstallerArgsForbidden() *V2UpdateHostInstallerArgsForbidden
 	return &V2UpdateHostInstallerArgsForbidden{}
 }
 
-/* V2UpdateHostInstallerArgsForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateHostInstallerArgsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -191,9 +285,39 @@ type V2UpdateHostInstallerArgsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host installer args forbidden response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args forbidden response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args forbidden response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host installer args forbidden response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args forbidden response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateHostInstallerArgsForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -215,7 +339,8 @@ func NewV2UpdateHostInstallerArgsNotFound() *V2UpdateHostInstallerArgsNotFound {
 	return &V2UpdateHostInstallerArgsNotFound{}
 }
 
-/* V2UpdateHostInstallerArgsNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateHostInstallerArgsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -223,9 +348,39 @@ type V2UpdateHostInstallerArgsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host installer args not found response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args not found response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args not found response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host installer args not found response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args not found response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateHostInstallerArgsNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -247,7 +402,8 @@ func NewV2UpdateHostInstallerArgsMethodNotAllowed() *V2UpdateHostInstallerArgsMe
 	return &V2UpdateHostInstallerArgsMethodNotAllowed{}
 }
 
-/* V2UpdateHostInstallerArgsMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateHostInstallerArgsMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -255,9 +411,39 @@ type V2UpdateHostInstallerArgsMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host installer args method not allowed response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args method not allowed response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args method not allowed response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host installer args method not allowed response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args method not allowed response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateHostInstallerArgsMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -279,7 +465,8 @@ func NewV2UpdateHostInstallerArgsConflict() *V2UpdateHostInstallerArgsConflict {
 	return &V2UpdateHostInstallerArgsConflict{}
 }
 
-/* V2UpdateHostInstallerArgsConflict describes a response with status code 409, with default header values.
+/*
+V2UpdateHostInstallerArgsConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -287,9 +474,39 @@ type V2UpdateHostInstallerArgsConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host installer args conflict response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args conflict response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args conflict response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host installer args conflict response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host installer args conflict response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2UpdateHostInstallerArgsConflict) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsConflict) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -311,7 +528,8 @@ func NewV2UpdateHostInstallerArgsInternalServerError() *V2UpdateHostInstallerArg
 	return &V2UpdateHostInstallerArgsInternalServerError{}
 }
 
-/* V2UpdateHostInstallerArgsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateHostInstallerArgsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -319,9 +537,39 @@ type V2UpdateHostInstallerArgsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host installer args internal server error response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args internal server error response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args internal server error response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host installer args internal server error response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host installer args internal server error response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateHostInstallerArgsInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -343,7 +591,8 @@ func NewV2UpdateHostInstallerArgsNotImplemented() *V2UpdateHostInstallerArgsNotI
 	return &V2UpdateHostInstallerArgsNotImplemented{}
 }
 
-/* V2UpdateHostInstallerArgsNotImplemented describes a response with status code 501, with default header values.
+/*
+V2UpdateHostInstallerArgsNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -351,9 +600,39 @@ type V2UpdateHostInstallerArgsNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host installer args not implemented response has a 2xx status code
+func (o *V2UpdateHostInstallerArgsNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host installer args not implemented response has a 3xx status code
+func (o *V2UpdateHostInstallerArgsNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host installer args not implemented response has a 4xx status code
+func (o *V2UpdateHostInstallerArgsNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host installer args not implemented response has a 5xx status code
+func (o *V2UpdateHostInstallerArgsNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host installer args not implemented response a status code equal to that given
+func (o *V2UpdateHostInstallerArgsNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2UpdateHostInstallerArgsNotImplemented) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2UpdateHostInstallerArgsNotImplemented) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/installer-args][%d] v2UpdateHostInstallerArgsNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2UpdateHostInstallerArgsNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }

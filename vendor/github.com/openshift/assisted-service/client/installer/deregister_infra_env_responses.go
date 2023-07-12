@@ -81,14 +81,44 @@ func NewDeregisterInfraEnvNoContent() *DeregisterInfraEnvNoContent {
 	return &DeregisterInfraEnvNoContent{}
 }
 
-/* DeregisterInfraEnvNoContent describes a response with status code 204, with default header values.
+/*
+DeregisterInfraEnvNoContent describes a response with status code 204, with default header values.
 
 Success.
 */
 type DeregisterInfraEnvNoContent struct {
 }
 
+// IsSuccess returns true when this deregister infra env no content response has a 2xx status code
+func (o *DeregisterInfraEnvNoContent) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this deregister infra env no content response has a 3xx status code
+func (o *DeregisterInfraEnvNoContent) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env no content response has a 4xx status code
+func (o *DeregisterInfraEnvNoContent) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this deregister infra env no content response has a 5xx status code
+func (o *DeregisterInfraEnvNoContent) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this deregister infra env no content response a status code equal to that given
+func (o *DeregisterInfraEnvNoContent) IsCode(code int) bool {
+	return code == 204
+}
+
 func (o *DeregisterInfraEnvNoContent) Error() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvNoContent ", 204)
+}
+
+func (o *DeregisterInfraEnvNoContent) String() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvNoContent ", 204)
 }
 
@@ -102,7 +132,8 @@ func NewDeregisterInfraEnvUnauthorized() *DeregisterInfraEnvUnauthorized {
 	return &DeregisterInfraEnvUnauthorized{}
 }
 
-/* DeregisterInfraEnvUnauthorized describes a response with status code 401, with default header values.
+/*
+DeregisterInfraEnvUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -110,9 +141,39 @@ type DeregisterInfraEnvUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this deregister infra env unauthorized response has a 2xx status code
+func (o *DeregisterInfraEnvUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env unauthorized response has a 3xx status code
+func (o *DeregisterInfraEnvUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env unauthorized response has a 4xx status code
+func (o *DeregisterInfraEnvUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this deregister infra env unauthorized response has a 5xx status code
+func (o *DeregisterInfraEnvUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this deregister infra env unauthorized response a status code equal to that given
+func (o *DeregisterInfraEnvUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *DeregisterInfraEnvUnauthorized) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *DeregisterInfraEnvUnauthorized) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *DeregisterInfraEnvUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -134,7 +195,8 @@ func NewDeregisterInfraEnvForbidden() *DeregisterInfraEnvForbidden {
 	return &DeregisterInfraEnvForbidden{}
 }
 
-/* DeregisterInfraEnvForbidden describes a response with status code 403, with default header values.
+/*
+DeregisterInfraEnvForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -142,9 +204,39 @@ type DeregisterInfraEnvForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this deregister infra env forbidden response has a 2xx status code
+func (o *DeregisterInfraEnvForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env forbidden response has a 3xx status code
+func (o *DeregisterInfraEnvForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env forbidden response has a 4xx status code
+func (o *DeregisterInfraEnvForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this deregister infra env forbidden response has a 5xx status code
+func (o *DeregisterInfraEnvForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this deregister infra env forbidden response a status code equal to that given
+func (o *DeregisterInfraEnvForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *DeregisterInfraEnvForbidden) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvForbidden  %+v", 403, o.Payload)
 }
+
+func (o *DeregisterInfraEnvForbidden) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvForbidden  %+v", 403, o.Payload)
+}
+
 func (o *DeregisterInfraEnvForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -166,7 +258,8 @@ func NewDeregisterInfraEnvNotFound() *DeregisterInfraEnvNotFound {
 	return &DeregisterInfraEnvNotFound{}
 }
 
-/* DeregisterInfraEnvNotFound describes a response with status code 404, with default header values.
+/*
+DeregisterInfraEnvNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -174,9 +267,39 @@ type DeregisterInfraEnvNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this deregister infra env not found response has a 2xx status code
+func (o *DeregisterInfraEnvNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env not found response has a 3xx status code
+func (o *DeregisterInfraEnvNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env not found response has a 4xx status code
+func (o *DeregisterInfraEnvNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this deregister infra env not found response has a 5xx status code
+func (o *DeregisterInfraEnvNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this deregister infra env not found response a status code equal to that given
+func (o *DeregisterInfraEnvNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *DeregisterInfraEnvNotFound) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvNotFound  %+v", 404, o.Payload)
 }
+
+func (o *DeregisterInfraEnvNotFound) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvNotFound  %+v", 404, o.Payload)
+}
+
 func (o *DeregisterInfraEnvNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -198,7 +321,8 @@ func NewDeregisterInfraEnvMethodNotAllowed() *DeregisterInfraEnvMethodNotAllowed
 	return &DeregisterInfraEnvMethodNotAllowed{}
 }
 
-/* DeregisterInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+DeregisterInfraEnvMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -206,9 +330,39 @@ type DeregisterInfraEnvMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this deregister infra env method not allowed response has a 2xx status code
+func (o *DeregisterInfraEnvMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env method not allowed response has a 3xx status code
+func (o *DeregisterInfraEnvMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env method not allowed response has a 4xx status code
+func (o *DeregisterInfraEnvMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this deregister infra env method not allowed response has a 5xx status code
+func (o *DeregisterInfraEnvMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this deregister infra env method not allowed response a status code equal to that given
+func (o *DeregisterInfraEnvMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *DeregisterInfraEnvMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *DeregisterInfraEnvMethodNotAllowed) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *DeregisterInfraEnvMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -230,7 +384,8 @@ func NewDeregisterInfraEnvConflict() *DeregisterInfraEnvConflict {
 	return &DeregisterInfraEnvConflict{}
 }
 
-/* DeregisterInfraEnvConflict describes a response with status code 409, with default header values.
+/*
+DeregisterInfraEnvConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -238,9 +393,39 @@ type DeregisterInfraEnvConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this deregister infra env conflict response has a 2xx status code
+func (o *DeregisterInfraEnvConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env conflict response has a 3xx status code
+func (o *DeregisterInfraEnvConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env conflict response has a 4xx status code
+func (o *DeregisterInfraEnvConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this deregister infra env conflict response has a 5xx status code
+func (o *DeregisterInfraEnvConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this deregister infra env conflict response a status code equal to that given
+func (o *DeregisterInfraEnvConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *DeregisterInfraEnvConflict) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvConflict  %+v", 409, o.Payload)
 }
+
+func (o *DeregisterInfraEnvConflict) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvConflict  %+v", 409, o.Payload)
+}
+
 func (o *DeregisterInfraEnvConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -262,7 +447,8 @@ func NewDeregisterInfraEnvInternalServerError() *DeregisterInfraEnvInternalServe
 	return &DeregisterInfraEnvInternalServerError{}
 }
 
-/* DeregisterInfraEnvInternalServerError describes a response with status code 500, with default header values.
+/*
+DeregisterInfraEnvInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -270,9 +456,39 @@ type DeregisterInfraEnvInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this deregister infra env internal server error response has a 2xx status code
+func (o *DeregisterInfraEnvInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env internal server error response has a 3xx status code
+func (o *DeregisterInfraEnvInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env internal server error response has a 4xx status code
+func (o *DeregisterInfraEnvInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this deregister infra env internal server error response has a 5xx status code
+func (o *DeregisterInfraEnvInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this deregister infra env internal server error response a status code equal to that given
+func (o *DeregisterInfraEnvInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *DeregisterInfraEnvInternalServerError) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *DeregisterInfraEnvInternalServerError) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *DeregisterInfraEnvInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -294,7 +510,8 @@ func NewDeregisterInfraEnvNotImplemented() *DeregisterInfraEnvNotImplemented {
 	return &DeregisterInfraEnvNotImplemented{}
 }
 
-/* DeregisterInfraEnvNotImplemented describes a response with status code 501, with default header values.
+/*
+DeregisterInfraEnvNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -302,9 +519,39 @@ type DeregisterInfraEnvNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this deregister infra env not implemented response has a 2xx status code
+func (o *DeregisterInfraEnvNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this deregister infra env not implemented response has a 3xx status code
+func (o *DeregisterInfraEnvNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this deregister infra env not implemented response has a 4xx status code
+func (o *DeregisterInfraEnvNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this deregister infra env not implemented response has a 5xx status code
+func (o *DeregisterInfraEnvNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this deregister infra env not implemented response a status code equal to that given
+func (o *DeregisterInfraEnvNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *DeregisterInfraEnvNotImplemented) Error() string {
 	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *DeregisterInfraEnvNotImplemented) String() string {
+	return fmt.Sprintf("[DELETE /v2/infra-envs/{infra_env_id}][%d] deregisterInfraEnvNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *DeregisterInfraEnvNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }

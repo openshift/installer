@@ -52,10 +52,12 @@ func NewGetInfraEnvDownloadURLParamsWithHTTPClient(client *http.Client) *GetInfr
 	}
 }
 
-/* GetInfraEnvDownloadURLParams contains all the parameters to send to the API endpoint
-   for the get infra env download URL operation.
+/*
+GetInfraEnvDownloadURLParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the get infra env download URL operation.
+
+	Typically these are written to a http.Request.
 */
 type GetInfraEnvDownloadURLParams struct {
 

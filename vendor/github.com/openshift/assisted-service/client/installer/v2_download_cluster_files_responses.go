@@ -85,7 +85,8 @@ func NewV2DownloadClusterFilesOK(writer io.Writer) *V2DownloadClusterFilesOK {
 	}
 }
 
-/* V2DownloadClusterFilesOK describes a response with status code 200, with default header values.
+/*
+V2DownloadClusterFilesOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -93,9 +94,39 @@ type V2DownloadClusterFilesOK struct {
 	Payload io.Writer
 }
 
+// IsSuccess returns true when this v2 download cluster files o k response has a 2xx status code
+func (o *V2DownloadClusterFilesOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 download cluster files o k response has a 3xx status code
+func (o *V2DownloadClusterFilesOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files o k response has a 4xx status code
+func (o *V2DownloadClusterFilesOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download cluster files o k response has a 5xx status code
+func (o *V2DownloadClusterFilesOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download cluster files o k response a status code equal to that given
+func (o *V2DownloadClusterFilesOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2DownloadClusterFilesOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesOK  %+v", 200, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesOK  %+v", 200, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesOK) GetPayload() io.Writer {
 	return o.Payload
 }
@@ -115,7 +146,8 @@ func NewV2DownloadClusterFilesUnauthorized() *V2DownloadClusterFilesUnauthorized
 	return &V2DownloadClusterFilesUnauthorized{}
 }
 
-/* V2DownloadClusterFilesUnauthorized describes a response with status code 401, with default header values.
+/*
+V2DownloadClusterFilesUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -123,9 +155,39 @@ type V2DownloadClusterFilesUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 download cluster files unauthorized response has a 2xx status code
+func (o *V2DownloadClusterFilesUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files unauthorized response has a 3xx status code
+func (o *V2DownloadClusterFilesUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files unauthorized response has a 4xx status code
+func (o *V2DownloadClusterFilesUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download cluster files unauthorized response has a 5xx status code
+func (o *V2DownloadClusterFilesUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download cluster files unauthorized response a status code equal to that given
+func (o *V2DownloadClusterFilesUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2DownloadClusterFilesUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -147,7 +209,8 @@ func NewV2DownloadClusterFilesForbidden() *V2DownloadClusterFilesForbidden {
 	return &V2DownloadClusterFilesForbidden{}
 }
 
-/* V2DownloadClusterFilesForbidden describes a response with status code 403, with default header values.
+/*
+V2DownloadClusterFilesForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -155,9 +218,39 @@ type V2DownloadClusterFilesForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 download cluster files forbidden response has a 2xx status code
+func (o *V2DownloadClusterFilesForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files forbidden response has a 3xx status code
+func (o *V2DownloadClusterFilesForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files forbidden response has a 4xx status code
+func (o *V2DownloadClusterFilesForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download cluster files forbidden response has a 5xx status code
+func (o *V2DownloadClusterFilesForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download cluster files forbidden response a status code equal to that given
+func (o *V2DownloadClusterFilesForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2DownloadClusterFilesForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -179,7 +272,8 @@ func NewV2DownloadClusterFilesNotFound() *V2DownloadClusterFilesNotFound {
 	return &V2DownloadClusterFilesNotFound{}
 }
 
-/* V2DownloadClusterFilesNotFound describes a response with status code 404, with default header values.
+/*
+V2DownloadClusterFilesNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -187,9 +281,39 @@ type V2DownloadClusterFilesNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download cluster files not found response has a 2xx status code
+func (o *V2DownloadClusterFilesNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files not found response has a 3xx status code
+func (o *V2DownloadClusterFilesNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files not found response has a 4xx status code
+func (o *V2DownloadClusterFilesNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download cluster files not found response has a 5xx status code
+func (o *V2DownloadClusterFilesNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download cluster files not found response a status code equal to that given
+func (o *V2DownloadClusterFilesNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2DownloadClusterFilesNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -211,7 +335,8 @@ func NewV2DownloadClusterFilesMethodNotAllowed() *V2DownloadClusterFilesMethodNo
 	return &V2DownloadClusterFilesMethodNotAllowed{}
 }
 
-/* V2DownloadClusterFilesMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2DownloadClusterFilesMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -219,9 +344,39 @@ type V2DownloadClusterFilesMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download cluster files method not allowed response has a 2xx status code
+func (o *V2DownloadClusterFilesMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files method not allowed response has a 3xx status code
+func (o *V2DownloadClusterFilesMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files method not allowed response has a 4xx status code
+func (o *V2DownloadClusterFilesMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download cluster files method not allowed response has a 5xx status code
+func (o *V2DownloadClusterFilesMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download cluster files method not allowed response a status code equal to that given
+func (o *V2DownloadClusterFilesMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2DownloadClusterFilesMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -243,7 +398,8 @@ func NewV2DownloadClusterFilesConflict() *V2DownloadClusterFilesConflict {
 	return &V2DownloadClusterFilesConflict{}
 }
 
-/* V2DownloadClusterFilesConflict describes a response with status code 409, with default header values.
+/*
+V2DownloadClusterFilesConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -251,9 +407,39 @@ type V2DownloadClusterFilesConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download cluster files conflict response has a 2xx status code
+func (o *V2DownloadClusterFilesConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files conflict response has a 3xx status code
+func (o *V2DownloadClusterFilesConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files conflict response has a 4xx status code
+func (o *V2DownloadClusterFilesConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 download cluster files conflict response has a 5xx status code
+func (o *V2DownloadClusterFilesConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 download cluster files conflict response a status code equal to that given
+func (o *V2DownloadClusterFilesConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2DownloadClusterFilesConflict) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesConflict) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -275,7 +461,8 @@ func NewV2DownloadClusterFilesInternalServerError() *V2DownloadClusterFilesInter
 	return &V2DownloadClusterFilesInternalServerError{}
 }
 
-/* V2DownloadClusterFilesInternalServerError describes a response with status code 500, with default header values.
+/*
+V2DownloadClusterFilesInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -283,9 +470,39 @@ type V2DownloadClusterFilesInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download cluster files internal server error response has a 2xx status code
+func (o *V2DownloadClusterFilesInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files internal server error response has a 3xx status code
+func (o *V2DownloadClusterFilesInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files internal server error response has a 4xx status code
+func (o *V2DownloadClusterFilesInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download cluster files internal server error response has a 5xx status code
+func (o *V2DownloadClusterFilesInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 download cluster files internal server error response a status code equal to that given
+func (o *V2DownloadClusterFilesInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2DownloadClusterFilesInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -307,7 +524,8 @@ func NewV2DownloadClusterFilesServiceUnavailable() *V2DownloadClusterFilesServic
 	return &V2DownloadClusterFilesServiceUnavailable{}
 }
 
-/* V2DownloadClusterFilesServiceUnavailable describes a response with status code 503, with default header values.
+/*
+V2DownloadClusterFilesServiceUnavailable describes a response with status code 503, with default header values.
 
 Unavailable.
 */
@@ -315,9 +533,39 @@ type V2DownloadClusterFilesServiceUnavailable struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 download cluster files service unavailable response has a 2xx status code
+func (o *V2DownloadClusterFilesServiceUnavailable) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 download cluster files service unavailable response has a 3xx status code
+func (o *V2DownloadClusterFilesServiceUnavailable) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 download cluster files service unavailable response has a 4xx status code
+func (o *V2DownloadClusterFilesServiceUnavailable) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 download cluster files service unavailable response has a 5xx status code
+func (o *V2DownloadClusterFilesServiceUnavailable) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 download cluster files service unavailable response a status code equal to that given
+func (o *V2DownloadClusterFilesServiceUnavailable) IsCode(code int) bool {
+	return code == 503
+}
+
 func (o *V2DownloadClusterFilesServiceUnavailable) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesServiceUnavailable  %+v", 503, o.Payload)
 }
+
+func (o *V2DownloadClusterFilesServiceUnavailable) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/downloads/files][%d] v2DownloadClusterFilesServiceUnavailable  %+v", 503, o.Payload)
+}
+
 func (o *V2DownloadClusterFilesServiceUnavailable) GetPayload() *models.Error {
 	return o.Payload
 }

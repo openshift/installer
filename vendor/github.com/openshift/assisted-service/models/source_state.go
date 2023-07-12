@@ -20,8 +20,12 @@ import (
 type SourceState string
 
 func NewSourceState(value SourceState) *SourceState {
-	v := value
-	return &v
+	return &value
+}
+
+// Pointer returns a pointer to a freshly-allocated SourceState.
+func (m SourceState) Pointer() *SourceState {
+	return &m
 }
 
 const (

@@ -75,7 +75,8 @@ func NewV2ResetClusterAccepted() *V2ResetClusterAccepted {
 	return &V2ResetClusterAccepted{}
 }
 
-/* V2ResetClusterAccepted describes a response with status code 202, with default header values.
+/*
+V2ResetClusterAccepted describes a response with status code 202, with default header values.
 
 Success.
 */
@@ -83,9 +84,39 @@ type V2ResetClusterAccepted struct {
 	Payload *models.Cluster
 }
 
+// IsSuccess returns true when this v2 reset cluster accepted response has a 2xx status code
+func (o *V2ResetClusterAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 reset cluster accepted response has a 3xx status code
+func (o *V2ResetClusterAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster accepted response has a 4xx status code
+func (o *V2ResetClusterAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 reset cluster accepted response has a 5xx status code
+func (o *V2ResetClusterAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset cluster accepted response a status code equal to that given
+func (o *V2ResetClusterAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *V2ResetClusterAccepted) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterAccepted  %+v", 202, o.Payload)
 }
+
+func (o *V2ResetClusterAccepted) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterAccepted  %+v", 202, o.Payload)
+}
+
 func (o *V2ResetClusterAccepted) GetPayload() *models.Cluster {
 	return o.Payload
 }
@@ -107,7 +138,8 @@ func NewV2ResetClusterUnauthorized() *V2ResetClusterUnauthorized {
 	return &V2ResetClusterUnauthorized{}
 }
 
-/* V2ResetClusterUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ResetClusterUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -115,9 +147,39 @@ type V2ResetClusterUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 reset cluster unauthorized response has a 2xx status code
+func (o *V2ResetClusterUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset cluster unauthorized response has a 3xx status code
+func (o *V2ResetClusterUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster unauthorized response has a 4xx status code
+func (o *V2ResetClusterUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset cluster unauthorized response has a 5xx status code
+func (o *V2ResetClusterUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset cluster unauthorized response a status code equal to that given
+func (o *V2ResetClusterUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ResetClusterUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ResetClusterUnauthorized) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ResetClusterUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -139,7 +201,8 @@ func NewV2ResetClusterForbidden() *V2ResetClusterForbidden {
 	return &V2ResetClusterForbidden{}
 }
 
-/* V2ResetClusterForbidden describes a response with status code 403, with default header values.
+/*
+V2ResetClusterForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -147,9 +210,39 @@ type V2ResetClusterForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 reset cluster forbidden response has a 2xx status code
+func (o *V2ResetClusterForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset cluster forbidden response has a 3xx status code
+func (o *V2ResetClusterForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster forbidden response has a 4xx status code
+func (o *V2ResetClusterForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset cluster forbidden response has a 5xx status code
+func (o *V2ResetClusterForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset cluster forbidden response a status code equal to that given
+func (o *V2ResetClusterForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ResetClusterForbidden) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ResetClusterForbidden) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ResetClusterForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -171,7 +264,8 @@ func NewV2ResetClusterNotFound() *V2ResetClusterNotFound {
 	return &V2ResetClusterNotFound{}
 }
 
-/* V2ResetClusterNotFound describes a response with status code 404, with default header values.
+/*
+V2ResetClusterNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -179,9 +273,39 @@ type V2ResetClusterNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset cluster not found response has a 2xx status code
+func (o *V2ResetClusterNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset cluster not found response has a 3xx status code
+func (o *V2ResetClusterNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster not found response has a 4xx status code
+func (o *V2ResetClusterNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset cluster not found response has a 5xx status code
+func (o *V2ResetClusterNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset cluster not found response a status code equal to that given
+func (o *V2ResetClusterNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2ResetClusterNotFound) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2ResetClusterNotFound) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2ResetClusterNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -203,7 +327,8 @@ func NewV2ResetClusterMethodNotAllowed() *V2ResetClusterMethodNotAllowed {
 	return &V2ResetClusterMethodNotAllowed{}
 }
 
-/* V2ResetClusterMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2ResetClusterMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -211,9 +336,39 @@ type V2ResetClusterMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset cluster method not allowed response has a 2xx status code
+func (o *V2ResetClusterMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset cluster method not allowed response has a 3xx status code
+func (o *V2ResetClusterMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster method not allowed response has a 4xx status code
+func (o *V2ResetClusterMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset cluster method not allowed response has a 5xx status code
+func (o *V2ResetClusterMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset cluster method not allowed response a status code equal to that given
+func (o *V2ResetClusterMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2ResetClusterMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2ResetClusterMethodNotAllowed) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2ResetClusterMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -235,7 +390,8 @@ func NewV2ResetClusterConflict() *V2ResetClusterConflict {
 	return &V2ResetClusterConflict{}
 }
 
-/* V2ResetClusterConflict describes a response with status code 409, with default header values.
+/*
+V2ResetClusterConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -243,9 +399,39 @@ type V2ResetClusterConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset cluster conflict response has a 2xx status code
+func (o *V2ResetClusterConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset cluster conflict response has a 3xx status code
+func (o *V2ResetClusterConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster conflict response has a 4xx status code
+func (o *V2ResetClusterConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 reset cluster conflict response has a 5xx status code
+func (o *V2ResetClusterConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 reset cluster conflict response a status code equal to that given
+func (o *V2ResetClusterConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2ResetClusterConflict) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2ResetClusterConflict) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2ResetClusterConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -267,7 +453,8 @@ func NewV2ResetClusterInternalServerError() *V2ResetClusterInternalServerError {
 	return &V2ResetClusterInternalServerError{}
 }
 
-/* V2ResetClusterInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ResetClusterInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -275,9 +462,39 @@ type V2ResetClusterInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 reset cluster internal server error response has a 2xx status code
+func (o *V2ResetClusterInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 reset cluster internal server error response has a 3xx status code
+func (o *V2ResetClusterInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 reset cluster internal server error response has a 4xx status code
+func (o *V2ResetClusterInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 reset cluster internal server error response has a 5xx status code
+func (o *V2ResetClusterInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 reset cluster internal server error response a status code equal to that given
+func (o *V2ResetClusterInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ResetClusterInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ResetClusterInternalServerError) String() string {
+	return fmt.Sprintf("[POST /v2/clusters/{cluster_id}/actions/reset][%d] v2ResetClusterInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ResetClusterInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -52,10 +52,12 @@ func NewV2DownloadClusterLogsParamsWithHTTPClient(client *http.Client) *V2Downlo
 	}
 }
 
-/* V2DownloadClusterLogsParams contains all the parameters to send to the API endpoint
-   for the v2 download cluster logs operation.
+/*
+V2DownloadClusterLogsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 download cluster logs operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DownloadClusterLogsParams struct {
 

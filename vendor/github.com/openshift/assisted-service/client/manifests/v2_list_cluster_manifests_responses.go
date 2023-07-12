@@ -75,7 +75,8 @@ func NewV2ListClusterManifestsOK() *V2ListClusterManifestsOK {
 	return &V2ListClusterManifestsOK{}
 }
 
-/* V2ListClusterManifestsOK describes a response with status code 200, with default header values.
+/*
+V2ListClusterManifestsOK describes a response with status code 200, with default header values.
 
 Success.
 */
@@ -83,9 +84,39 @@ type V2ListClusterManifestsOK struct {
 	Payload models.ListManifests
 }
 
+// IsSuccess returns true when this v2 list cluster manifests o k response has a 2xx status code
+func (o *V2ListClusterManifestsOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 list cluster manifests o k response has a 3xx status code
+func (o *V2ListClusterManifestsOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests o k response has a 4xx status code
+func (o *V2ListClusterManifestsOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list cluster manifests o k response has a 5xx status code
+func (o *V2ListClusterManifestsOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list cluster manifests o k response a status code equal to that given
+func (o *V2ListClusterManifestsOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *V2ListClusterManifestsOK) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsOK  %+v", 200, o.Payload)
 }
+
+func (o *V2ListClusterManifestsOK) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsOK  %+v", 200, o.Payload)
+}
+
 func (o *V2ListClusterManifestsOK) GetPayload() models.ListManifests {
 	return o.Payload
 }
@@ -105,7 +136,8 @@ func NewV2ListClusterManifestsUnauthorized() *V2ListClusterManifestsUnauthorized
 	return &V2ListClusterManifestsUnauthorized{}
 }
 
-/* V2ListClusterManifestsUnauthorized describes a response with status code 401, with default header values.
+/*
+V2ListClusterManifestsUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -113,9 +145,39 @@ type V2ListClusterManifestsUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list cluster manifests unauthorized response has a 2xx status code
+func (o *V2ListClusterManifestsUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list cluster manifests unauthorized response has a 3xx status code
+func (o *V2ListClusterManifestsUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests unauthorized response has a 4xx status code
+func (o *V2ListClusterManifestsUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list cluster manifests unauthorized response has a 5xx status code
+func (o *V2ListClusterManifestsUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list cluster manifests unauthorized response a status code equal to that given
+func (o *V2ListClusterManifestsUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2ListClusterManifestsUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2ListClusterManifestsUnauthorized) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2ListClusterManifestsUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -137,7 +199,8 @@ func NewV2ListClusterManifestsForbidden() *V2ListClusterManifestsForbidden {
 	return &V2ListClusterManifestsForbidden{}
 }
 
-/* V2ListClusterManifestsForbidden describes a response with status code 403, with default header values.
+/*
+V2ListClusterManifestsForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -145,9 +208,39 @@ type V2ListClusterManifestsForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 list cluster manifests forbidden response has a 2xx status code
+func (o *V2ListClusterManifestsForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list cluster manifests forbidden response has a 3xx status code
+func (o *V2ListClusterManifestsForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests forbidden response has a 4xx status code
+func (o *V2ListClusterManifestsForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list cluster manifests forbidden response has a 5xx status code
+func (o *V2ListClusterManifestsForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list cluster manifests forbidden response a status code equal to that given
+func (o *V2ListClusterManifestsForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2ListClusterManifestsForbidden) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2ListClusterManifestsForbidden) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2ListClusterManifestsForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -169,7 +262,8 @@ func NewV2ListClusterManifestsNotFound() *V2ListClusterManifestsNotFound {
 	return &V2ListClusterManifestsNotFound{}
 }
 
-/* V2ListClusterManifestsNotFound describes a response with status code 404, with default header values.
+/*
+V2ListClusterManifestsNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -177,9 +271,39 @@ type V2ListClusterManifestsNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list cluster manifests not found response has a 2xx status code
+func (o *V2ListClusterManifestsNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list cluster manifests not found response has a 3xx status code
+func (o *V2ListClusterManifestsNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests not found response has a 4xx status code
+func (o *V2ListClusterManifestsNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list cluster manifests not found response has a 5xx status code
+func (o *V2ListClusterManifestsNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list cluster manifests not found response a status code equal to that given
+func (o *V2ListClusterManifestsNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2ListClusterManifestsNotFound) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2ListClusterManifestsNotFound) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2ListClusterManifestsNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -201,7 +325,8 @@ func NewV2ListClusterManifestsMethodNotAllowed() *V2ListClusterManifestsMethodNo
 	return &V2ListClusterManifestsMethodNotAllowed{}
 }
 
-/* V2ListClusterManifestsMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2ListClusterManifestsMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -209,9 +334,39 @@ type V2ListClusterManifestsMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list cluster manifests method not allowed response has a 2xx status code
+func (o *V2ListClusterManifestsMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list cluster manifests method not allowed response has a 3xx status code
+func (o *V2ListClusterManifestsMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests method not allowed response has a 4xx status code
+func (o *V2ListClusterManifestsMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list cluster manifests method not allowed response has a 5xx status code
+func (o *V2ListClusterManifestsMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list cluster manifests method not allowed response a status code equal to that given
+func (o *V2ListClusterManifestsMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2ListClusterManifestsMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2ListClusterManifestsMethodNotAllowed) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2ListClusterManifestsMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -233,7 +388,8 @@ func NewV2ListClusterManifestsConflict() *V2ListClusterManifestsConflict {
 	return &V2ListClusterManifestsConflict{}
 }
 
-/* V2ListClusterManifestsConflict describes a response with status code 409, with default header values.
+/*
+V2ListClusterManifestsConflict describes a response with status code 409, with default header values.
 
 Error.
 */
@@ -241,9 +397,39 @@ type V2ListClusterManifestsConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list cluster manifests conflict response has a 2xx status code
+func (o *V2ListClusterManifestsConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list cluster manifests conflict response has a 3xx status code
+func (o *V2ListClusterManifestsConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests conflict response has a 4xx status code
+func (o *V2ListClusterManifestsConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 list cluster manifests conflict response has a 5xx status code
+func (o *V2ListClusterManifestsConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 list cluster manifests conflict response a status code equal to that given
+func (o *V2ListClusterManifestsConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *V2ListClusterManifestsConflict) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsConflict  %+v", 409, o.Payload)
 }
+
+func (o *V2ListClusterManifestsConflict) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsConflict  %+v", 409, o.Payload)
+}
+
 func (o *V2ListClusterManifestsConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -265,7 +451,8 @@ func NewV2ListClusterManifestsInternalServerError() *V2ListClusterManifestsInter
 	return &V2ListClusterManifestsInternalServerError{}
 }
 
-/* V2ListClusterManifestsInternalServerError describes a response with status code 500, with default header values.
+/*
+V2ListClusterManifestsInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -273,9 +460,39 @@ type V2ListClusterManifestsInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 list cluster manifests internal server error response has a 2xx status code
+func (o *V2ListClusterManifestsInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 list cluster manifests internal server error response has a 3xx status code
+func (o *V2ListClusterManifestsInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 list cluster manifests internal server error response has a 4xx status code
+func (o *V2ListClusterManifestsInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 list cluster manifests internal server error response has a 5xx status code
+func (o *V2ListClusterManifestsInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 list cluster manifests internal server error response a status code equal to that given
+func (o *V2ListClusterManifestsInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2ListClusterManifestsInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2ListClusterManifestsInternalServerError) String() string {
+	return fmt.Sprintf("[GET /v2/clusters/{cluster_id}/manifests][%d] v2ListClusterManifestsInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2ListClusterManifestsInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

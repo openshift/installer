@@ -52,10 +52,12 @@ func NewV2DownloadClusterCredentialsParamsWithHTTPClient(client *http.Client) *V
 	}
 }
 
-/* V2DownloadClusterCredentialsParams contains all the parameters to send to the API endpoint
-   for the v2 download cluster credentials operation.
+/*
+V2DownloadClusterCredentialsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 download cluster credentials operation.
+
+	Typically these are written to a http.Request.
 */
 type V2DownloadClusterCredentialsParams struct {
 

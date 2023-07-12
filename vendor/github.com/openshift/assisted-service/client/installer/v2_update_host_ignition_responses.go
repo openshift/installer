@@ -81,14 +81,44 @@ func NewV2UpdateHostIgnitionCreated() *V2UpdateHostIgnitionCreated {
 	return &V2UpdateHostIgnitionCreated{}
 }
 
-/* V2UpdateHostIgnitionCreated describes a response with status code 201, with default header values.
+/*
+V2UpdateHostIgnitionCreated describes a response with status code 201, with default header values.
 
 Success.
 */
 type V2UpdateHostIgnitionCreated struct {
 }
 
+// IsSuccess returns true when this v2 update host ignition created response has a 2xx status code
+func (o *V2UpdateHostIgnitionCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this v2 update host ignition created response has a 3xx status code
+func (o *V2UpdateHostIgnitionCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition created response has a 4xx status code
+func (o *V2UpdateHostIgnitionCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host ignition created response has a 5xx status code
+func (o *V2UpdateHostIgnitionCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host ignition created response a status code equal to that given
+func (o *V2UpdateHostIgnitionCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *V2UpdateHostIgnitionCreated) Error() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionCreated ", 201)
+}
+
+func (o *V2UpdateHostIgnitionCreated) String() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionCreated ", 201)
 }
 
@@ -102,7 +132,8 @@ func NewV2UpdateHostIgnitionBadRequest() *V2UpdateHostIgnitionBadRequest {
 	return &V2UpdateHostIgnitionBadRequest{}
 }
 
-/* V2UpdateHostIgnitionBadRequest describes a response with status code 400, with default header values.
+/*
+V2UpdateHostIgnitionBadRequest describes a response with status code 400, with default header values.
 
 Error.
 */
@@ -110,9 +141,39 @@ type V2UpdateHostIgnitionBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host ignition bad request response has a 2xx status code
+func (o *V2UpdateHostIgnitionBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition bad request response has a 3xx status code
+func (o *V2UpdateHostIgnitionBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition bad request response has a 4xx status code
+func (o *V2UpdateHostIgnitionBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host ignition bad request response has a 5xx status code
+func (o *V2UpdateHostIgnitionBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host ignition bad request response a status code equal to that given
+func (o *V2UpdateHostIgnitionBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *V2UpdateHostIgnitionBadRequest) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionBadRequest) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -134,7 +195,8 @@ func NewV2UpdateHostIgnitionUnauthorized() *V2UpdateHostIgnitionUnauthorized {
 	return &V2UpdateHostIgnitionUnauthorized{}
 }
 
-/* V2UpdateHostIgnitionUnauthorized describes a response with status code 401, with default header values.
+/*
+V2UpdateHostIgnitionUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized.
 */
@@ -142,9 +204,39 @@ type V2UpdateHostIgnitionUnauthorized struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host ignition unauthorized response has a 2xx status code
+func (o *V2UpdateHostIgnitionUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition unauthorized response has a 3xx status code
+func (o *V2UpdateHostIgnitionUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition unauthorized response has a 4xx status code
+func (o *V2UpdateHostIgnitionUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host ignition unauthorized response has a 5xx status code
+func (o *V2UpdateHostIgnitionUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host ignition unauthorized response a status code equal to that given
+func (o *V2UpdateHostIgnitionUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *V2UpdateHostIgnitionUnauthorized) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionUnauthorized) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionUnauthorized) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -166,7 +258,8 @@ func NewV2UpdateHostIgnitionForbidden() *V2UpdateHostIgnitionForbidden {
 	return &V2UpdateHostIgnitionForbidden{}
 }
 
-/* V2UpdateHostIgnitionForbidden describes a response with status code 403, with default header values.
+/*
+V2UpdateHostIgnitionForbidden describes a response with status code 403, with default header values.
 
 Forbidden.
 */
@@ -174,9 +267,39 @@ type V2UpdateHostIgnitionForbidden struct {
 	Payload *models.InfraError
 }
 
+// IsSuccess returns true when this v2 update host ignition forbidden response has a 2xx status code
+func (o *V2UpdateHostIgnitionForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition forbidden response has a 3xx status code
+func (o *V2UpdateHostIgnitionForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition forbidden response has a 4xx status code
+func (o *V2UpdateHostIgnitionForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host ignition forbidden response has a 5xx status code
+func (o *V2UpdateHostIgnitionForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host ignition forbidden response a status code equal to that given
+func (o *V2UpdateHostIgnitionForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *V2UpdateHostIgnitionForbidden) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionForbidden  %+v", 403, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionForbidden) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionForbidden  %+v", 403, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionForbidden) GetPayload() *models.InfraError {
 	return o.Payload
 }
@@ -198,7 +321,8 @@ func NewV2UpdateHostIgnitionNotFound() *V2UpdateHostIgnitionNotFound {
 	return &V2UpdateHostIgnitionNotFound{}
 }
 
-/* V2UpdateHostIgnitionNotFound describes a response with status code 404, with default header values.
+/*
+V2UpdateHostIgnitionNotFound describes a response with status code 404, with default header values.
 
 Error.
 */
@@ -206,9 +330,39 @@ type V2UpdateHostIgnitionNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host ignition not found response has a 2xx status code
+func (o *V2UpdateHostIgnitionNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition not found response has a 3xx status code
+func (o *V2UpdateHostIgnitionNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition not found response has a 4xx status code
+func (o *V2UpdateHostIgnitionNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host ignition not found response has a 5xx status code
+func (o *V2UpdateHostIgnitionNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host ignition not found response a status code equal to that given
+func (o *V2UpdateHostIgnitionNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *V2UpdateHostIgnitionNotFound) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionNotFound  %+v", 404, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionNotFound) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionNotFound  %+v", 404, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -230,7 +384,8 @@ func NewV2UpdateHostIgnitionMethodNotAllowed() *V2UpdateHostIgnitionMethodNotAll
 	return &V2UpdateHostIgnitionMethodNotAllowed{}
 }
 
-/* V2UpdateHostIgnitionMethodNotAllowed describes a response with status code 405, with default header values.
+/*
+V2UpdateHostIgnitionMethodNotAllowed describes a response with status code 405, with default header values.
 
 Method Not Allowed.
 */
@@ -238,9 +393,39 @@ type V2UpdateHostIgnitionMethodNotAllowed struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host ignition method not allowed response has a 2xx status code
+func (o *V2UpdateHostIgnitionMethodNotAllowed) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition method not allowed response has a 3xx status code
+func (o *V2UpdateHostIgnitionMethodNotAllowed) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition method not allowed response has a 4xx status code
+func (o *V2UpdateHostIgnitionMethodNotAllowed) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this v2 update host ignition method not allowed response has a 5xx status code
+func (o *V2UpdateHostIgnitionMethodNotAllowed) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this v2 update host ignition method not allowed response a status code equal to that given
+func (o *V2UpdateHostIgnitionMethodNotAllowed) IsCode(code int) bool {
+	return code == 405
+}
+
 func (o *V2UpdateHostIgnitionMethodNotAllowed) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionMethodNotAllowed  %+v", 405, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionMethodNotAllowed) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionMethodNotAllowed  %+v", 405, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionMethodNotAllowed) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -262,7 +447,8 @@ func NewV2UpdateHostIgnitionInternalServerError() *V2UpdateHostIgnitionInternalS
 	return &V2UpdateHostIgnitionInternalServerError{}
 }
 
-/* V2UpdateHostIgnitionInternalServerError describes a response with status code 500, with default header values.
+/*
+V2UpdateHostIgnitionInternalServerError describes a response with status code 500, with default header values.
 
 Error.
 */
@@ -270,9 +456,39 @@ type V2UpdateHostIgnitionInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host ignition internal server error response has a 2xx status code
+func (o *V2UpdateHostIgnitionInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition internal server error response has a 3xx status code
+func (o *V2UpdateHostIgnitionInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition internal server error response has a 4xx status code
+func (o *V2UpdateHostIgnitionInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host ignition internal server error response has a 5xx status code
+func (o *V2UpdateHostIgnitionInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host ignition internal server error response a status code equal to that given
+func (o *V2UpdateHostIgnitionInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *V2UpdateHostIgnitionInternalServerError) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionInternalServerError) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -294,7 +510,8 @@ func NewV2UpdateHostIgnitionNotImplemented() *V2UpdateHostIgnitionNotImplemented
 	return &V2UpdateHostIgnitionNotImplemented{}
 }
 
-/* V2UpdateHostIgnitionNotImplemented describes a response with status code 501, with default header values.
+/*
+V2UpdateHostIgnitionNotImplemented describes a response with status code 501, with default header values.
 
 Not implemented.
 */
@@ -302,9 +519,39 @@ type V2UpdateHostIgnitionNotImplemented struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this v2 update host ignition not implemented response has a 2xx status code
+func (o *V2UpdateHostIgnitionNotImplemented) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this v2 update host ignition not implemented response has a 3xx status code
+func (o *V2UpdateHostIgnitionNotImplemented) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this v2 update host ignition not implemented response has a 4xx status code
+func (o *V2UpdateHostIgnitionNotImplemented) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this v2 update host ignition not implemented response has a 5xx status code
+func (o *V2UpdateHostIgnitionNotImplemented) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this v2 update host ignition not implemented response a status code equal to that given
+func (o *V2UpdateHostIgnitionNotImplemented) IsCode(code int) bool {
+	return code == 501
+}
+
 func (o *V2UpdateHostIgnitionNotImplemented) Error() string {
 	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionNotImplemented  %+v", 501, o.Payload)
 }
+
+func (o *V2UpdateHostIgnitionNotImplemented) String() string {
+	return fmt.Sprintf("[PATCH /v2/infra-envs/{infra_env_id}/hosts/{host_id}/ignition][%d] v2UpdateHostIgnitionNotImplemented  %+v", 501, o.Payload)
+}
+
 func (o *V2UpdateHostIgnitionNotImplemented) GetPayload() *models.Error {
 	return o.Payload
 }

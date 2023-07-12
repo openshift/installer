@@ -54,10 +54,12 @@ func NewV2UpdateHostInstallerArgsParamsWithHTTPClient(client *http.Client) *V2Up
 	}
 }
 
-/* V2UpdateHostInstallerArgsParams contains all the parameters to send to the API endpoint
-   for the v2 update host installer args operation.
+/*
+V2UpdateHostInstallerArgsParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 update host installer args operation.
+
+	Typically these are written to a http.Request.
 */
 type V2UpdateHostInstallerArgsParams struct {
 

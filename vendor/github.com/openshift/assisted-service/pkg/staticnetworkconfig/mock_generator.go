@@ -66,15 +66,15 @@ func (mr *MockStaticNetworkConfigMockRecorder) GenerateStaticNetworkConfigData(c
 }
 
 // ValidateStaticConfigParams mocks base method.
-func (m *MockStaticNetworkConfig) ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error {
+func (m *MockStaticNetworkConfig) ValidateStaticConfigParams(staticNetworkConfig []*models.HostStaticNetworkConfig) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateStaticConfigParams", ctx, staticNetworkConfig)
+	ret := m.ctrl.Call(m, "ValidateStaticConfigParams", staticNetworkConfig)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ValidateStaticConfigParams indicates an expected call of ValidateStaticConfigParams.
-func (mr *MockStaticNetworkConfigMockRecorder) ValidateStaticConfigParams(ctx, staticNetworkConfig interface{}) *gomock.Call {
+func (mr *MockStaticNetworkConfigMockRecorder) ValidateStaticConfigParams(staticNetworkConfig interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateStaticConfigParams", reflect.TypeOf((*MockStaticNetworkConfig)(nil).ValidateStaticConfigParams), ctx, staticNetworkConfig)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateStaticConfigParams", reflect.TypeOf((*MockStaticNetworkConfig)(nil).ValidateStaticConfigParams), staticNetworkConfig)
 }

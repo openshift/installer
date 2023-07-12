@@ -54,10 +54,12 @@ func NewV2RegisterClusterParamsWithHTTPClient(client *http.Client) *V2RegisterCl
 	}
 }
 
-/* V2RegisterClusterParams contains all the parameters to send to the API endpoint
-   for the v2 register cluster operation.
+/*
+V2RegisterClusterParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the v2 register cluster operation.
+
+	Typically these are written to a http.Request.
 */
 type V2RegisterClusterParams struct {
 
