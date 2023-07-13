@@ -204,6 +204,9 @@ func Test_PrintFields(t *testing.T) {
     defaultMachinePlatform <object>
       DefaultMachinePlatform is the default configuration used when installing on Azure for machine pools which do not define their own platform configuration.
 
+    managedBy <string>
+      ManagedBy is a field that can be set to the azure resource group.
+
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 
