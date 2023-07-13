@@ -417,6 +417,28 @@ func (o *ClusterUninstaller) executeStageFunction(f struct {
 	return nil
 }
 
+func (o *ClusterUninstaller) newAuthenticator(apikey string) (core.Authenticator, error) {
+	var (
+		authenticator core.Authenticator
+		err           error
+	)
+
+	if apikey == "" {
+		return nil, errors.New("newAuthenticator: apikey is empty")
+	}
+
+	authenticator = &core.IamAuthenticator{
+		ApiKey: apikey,
+	}
+
+	err = authenticator.Validate()
+	if err != nil {
+		return nil, fmt.Errorf("newAuthenticator: authenticator.Validate: %w", err)
+	}
+
+	return authenticator, nil
+}
+
 func (o *ClusterUninstaller) loadSDKServices() error {
 	var (
 		bxSession             *bxsession.Session
@@ -426,6 +448,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		ctrlv2                controllerv2.ResourceControllerAPIV2
 		resourceClientV2      controllerv2.ResourceServiceInstanceRepository
 		serviceInstance       models.ServiceInstanceV2
+		authenticator         core.Authenticator
 	)
 
 	defer func() {
@@ -456,7 +479,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		Debug:                 false,
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: bxsession.New: %v", err)
+		return fmt.Errorf("loadSDKServices: bxsession.New: %w", err)
 	}
 
 	tokenRefresher, err = authentication.NewIAMAuthRepository(bxSession.Config, &rest.Client{
@@ -465,26 +488,26 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: authentication.NewIAMAuthRepository: %v", err)
+		return fmt.Errorf("loadSDKServices: authentication.NewIAMAuthRepository: %w", err)
 	}
 	err = tokenRefresher.AuthenticateAPIKey(bxSession.Config.BluemixAPIKey)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: tokenRefresher.AuthenticateAPIKey: %v", err)
+		return fmt.Errorf("loadSDKServices: tokenRefresher.AuthenticateAPIKey: %w", err)
 	}
 
 	user, err := fetchUserDetails(bxSession, 2)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: fetchUserDetails: %v", err)
+		return fmt.Errorf("loadSDKServices: fetchUserDetails: %w", err)
 	}
 
 	ctrlv2, err = controllerv2.New(bxSession)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: controllerv2.New: %v", err)
+		return fmt.Errorf("loadSDKServices: controllerv2.New: %w", err)
 	}
 
 	resourceClientV2 = ctrlv2.ResourceServiceInstanceV2()
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: ctrlv2.ResourceServiceInstanceV2: %v", err)
+		return fmt.Errorf("loadSDKServices: ctrlv2.ResourceServiceInstanceV2: %w", err)
 	}
 
 	if o.ServiceGUID == "" {
@@ -494,16 +517,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 
 	serviceInstance, err = resourceClientV2.GetInstance(o.ServiceGUID)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: resourceClientV2.GetInstance: %v", err)
+		return fmt.Errorf("loadSDKServices: resourceClientV2.GetInstance: %w", err)
 	}
 
-	var authenticator core.Authenticator = &core.IamAuthenticator{
-		ApiKey: o.APIKey,
-	}
-
-	err = authenticator.Validate()
+	authenticator, err = o.newAuthenticator(o.APIKey)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: authenticator.Validate: %v", err)
+		return err
 	}
 
 	var options *ibmpisession.IBMPIOptions = &ibmpisession.IBMPIOptions{
@@ -516,48 +535,44 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.piSession, err = ibmpisession.NewIBMPISession(options)
 	if (err != nil) || (o.piSession == nil) {
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: ibmpisession.New: %v", err)
+			return fmt.Errorf("loadSDKServices: ibmpisession.New: %w", err)
 		}
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.piSession is nil")
+		return fmt.Errorf("loadSDKServices: o.piSession is nil")
 	}
 
 	o.instanceClient = instance.NewIBMPIInstanceClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.instanceClient == nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.instanceClient is nil")
+		return fmt.Errorf("loadSDKServices: o.instanceClient is nil")
 	}
 
 	o.imageClient = instance.NewIBMPIImageClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.imageClient == nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.imageClient is nil")
+		return fmt.Errorf("loadSDKServices: o.imageClient is nil")
 	}
 
 	o.jobClient = instance.NewIBMPIJobClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.jobClient == nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.jobClient is nil")
+		return fmt.Errorf("loadSDKServices: o.jobClient is nil")
 	}
 
 	o.keyClient = instance.NewIBMPIKeyClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.keyClient == nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.keyClient is nil")
+		return fmt.Errorf("loadSDKServices: o.keyClient is nil")
 	}
 
 	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.cloudConnectionClient == nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.cloudConnectionClient is nil")
+		return fmt.Errorf("loadSDKServices: o.cloudConnectionClient is nil")
 	}
 
 	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
 	if o.dhcpClient == nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: o.dhcpClient is nil")
+		return fmt.Errorf("loadSDKServices: o.dhcpClient is nil")
 	}
 
-	authenticator = &core.IamAuthenticator{
-		ApiKey: o.APIKey,
-	}
-
-	err = authenticator.Validate()
+	authenticator, err = o.newAuthenticator(o.APIKey)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: authenticator.Validate: %v", err)
+		return err
 	}
 
 	// https://raw.githubusercontent.com/IBM/vpc-go-sdk/master/vpcv1/vpc_v1.go
@@ -566,18 +581,15 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		URL:           "https://" + o.VPCRegion + ".iaas.cloud.ibm.com/v1",
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: vpcv1.NewVpcV1: %v", err)
+		return fmt.Errorf("loadSDKServices: vpcv1.NewVpcV1: %w", err)
 	}
 
 	userAgentString := fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)
 	o.vpcSvc.Service.SetUserAgent(userAgentString)
 
-	authenticator = &core.IamAuthenticator{
-		ApiKey: o.APIKey,
-	}
-
-	err = authenticator.Validate()
+	authenticator, err = o.newAuthenticator(o.APIKey)
 	if err != nil {
+		return err
 	}
 
 	// Instantiate the service with an API key based IAM authenticator
@@ -585,15 +597,12 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		Authenticator: authenticator,
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: creating ResourceManagerV2 Service: %v", err)
+		return fmt.Errorf("loadSDKServices: creating ResourceManagerV2 Service: %w", err)
 	}
 
-	authenticator = &core.IamAuthenticator{
-		ApiKey: o.APIKey,
-	}
-
-	err = authenticator.Validate()
+	authenticator, err = o.newAuthenticator(o.APIKey)
 	if err != nil {
+		return err
 	}
 
 	// Instantiate the service with an API key based IAM authenticator
@@ -603,18 +612,15 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		URL:           "https://resource-controller.cloud.ibm.com",
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: loadSDKServices: creating ControllerV2 Service: %v", err)
+		return fmt.Errorf("loadSDKServices: creating ControllerV2 Service: %w", err)
 	}
 
 	// Either CISInstanceCRN is set or DNSInstanceCRN is set. Both should not be set at the same time,
 	// but check both just to be safe.
 	if len(o.CISInstanceCRN) > 0 {
-		authenticator = &core.IamAuthenticator{
-			ApiKey: o.APIKey,
-		}
-
-		err = authenticator.Validate()
+		authenticator, err = o.newAuthenticator(o.APIKey)
 		if err != nil {
+			return err
 		}
 
 		o.zonesSvc, err = zonesv1.NewZonesV1(&zonesv1.ZonesV1Options{
@@ -622,7 +628,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			Crn:           &o.CISInstanceCRN,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: loadSDKServices: creating zonesSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
 
 		ctx, cancel := o.contextWithTimeout()
@@ -632,7 +638,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		zoneOptions := o.zonesSvc.NewListZonesOptions()
 		zoneResources, detailedResponse, err := o.zonesSvc.ListZonesWithContext(ctx, zoneOptions)
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: loadSDKServices: Failed to list Zones: %v and the response is: %s", err, detailedResponse)
+			return fmt.Errorf("loadSDKServices: Failed to list Zones: %w and the response is: %s", err, detailedResponse)
 		}
 
 		for _, zone := range zoneResources.Result {
@@ -641,30 +647,33 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 				o.dnsZoneID = *zone.ID
 			}
 		}
+
+		authenticator, err = o.newAuthenticator(o.APIKey)
+		if err != nil {
+			return err
+		}
+
 		o.dnsRecordsSvc, err = dnsrecordsv1.NewDnsRecordsV1(&dnsrecordsv1.DnsRecordsV1Options{
 			Authenticator:  authenticator,
 			Crn:            &o.CISInstanceCRN,
 			ZoneIdentifier: &o.dnsZoneID,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: loadSDKServices: Failed to instantiate dnsRecordsSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: Failed to instantiate dnsRecordsSvc: %w", err)
 		}
 	}
 
 	if len(o.DNSInstanceCRN) > 0 {
-		authenticator = &core.IamAuthenticator{
-			ApiKey: o.APIKey,
-		}
-
-		err = authenticator.Validate()
+		authenticator, err = o.newAuthenticator(o.APIKey)
 		if err != nil {
+			return err
 		}
 
 		o.dnsZonesSvc, err = dnszonesv1.NewDnsZonesV1(&dnszonesv1.DnsZonesV1Options{
 			Authenticator: authenticator,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: loadSDKServices: creating zonesSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
 
 		// Get the Zone ID
@@ -675,7 +684,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		options := o.dnsZonesSvc.NewListDnszonesOptions(dnsCRN.ServiceInstance)
 		listZonesResponse, detailedResponse, err := o.dnsZonesSvc.ListDnszones(options)
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: loadSDKServices: Failed to list Zones: %v and the response is: %s", err, detailedResponse)
+			return fmt.Errorf("loadSDKServices: Failed to list Zones: %w and the response is: %s", err, detailedResponse)
 		}
 
 		for _, zone := range listZonesResponse.Dnszones {
@@ -685,11 +694,16 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			}
 		}
 
+		authenticator, err = o.newAuthenticator(o.APIKey)
+		if err != nil {
+			return err
+		}
+
 		o.resourceRecordsSvc, err = resourcerecordsv1.NewResourceRecordsV1(&resourcerecordsv1.ResourceRecordsV1Options{
 			Authenticator: authenticator,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: loadSDKServices: Failed to instantiate resourceRecordsSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: Failed to instantiate resourceRecordsSvc: %w", err)
 		}
 	}
 
