@@ -1054,12 +1054,6 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	if c.FeatureSet != configv1.TechPreviewNoUpgrade {
 		errMsg := "the TechPreviewNoUpgrade feature set must be enabled to use this field"
 
-		if c.AWS != nil {
-			if len(c.AWS.HostedZoneRole) > 0 {
-				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "aws", "hostedZoneRole"), errMsg))
-			}
-		}
-
 		if c.OpenStack != nil {
 			for _, f := range openstackvalidation.FilledInTechPreviewFields(c) {
 				allErrs = append(allErrs, field.Forbidden(f, errMsg))
