@@ -433,7 +433,7 @@ func (o *ClusterUninstaller) newAuthenticator(apikey string) (core.Authenticator
 
 	err = authenticator.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("newAuthenticator: authenticator.Validate: %v", err)
+		return nil, fmt.Errorf("newAuthenticator: authenticator.Validate: %w", err)
 	}
 
 	return authenticator, nil
@@ -479,7 +479,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		Debug:                 false,
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: bxsession.New: %v", err)
+		return fmt.Errorf("loadSDKServices: bxsession.New: %w", err)
 	}
 
 	tokenRefresher, err = authentication.NewIAMAuthRepository(bxSession.Config, &rest.Client{
@@ -488,26 +488,26 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: authentication.NewIAMAuthRepository: %v", err)
+		return fmt.Errorf("loadSDKServices: authentication.NewIAMAuthRepository: %w", err)
 	}
 	err = tokenRefresher.AuthenticateAPIKey(bxSession.Config.BluemixAPIKey)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: tokenRefresher.AuthenticateAPIKey: %v", err)
+		return fmt.Errorf("loadSDKServices: tokenRefresher.AuthenticateAPIKey: %w", err)
 	}
 
 	user, err := fetchUserDetails(bxSession, 2)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: fetchUserDetails: %v", err)
+		return fmt.Errorf("loadSDKServices: fetchUserDetails: %w", err)
 	}
 
 	ctrlv2, err = controllerv2.New(bxSession)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: controllerv2.New: %v", err)
+		return fmt.Errorf("loadSDKServices: controllerv2.New: %w", err)
 	}
 
 	resourceClientV2 = ctrlv2.ResourceServiceInstanceV2()
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: ctrlv2.ResourceServiceInstanceV2: %v", err)
+		return fmt.Errorf("loadSDKServices: ctrlv2.ResourceServiceInstanceV2: %w", err)
 	}
 
 	if o.ServiceGUID == "" {
@@ -517,7 +517,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 
 	serviceInstance, err = resourceClientV2.GetInstance(o.ServiceGUID)
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: resourceClientV2.GetInstance: %v", err)
+		return fmt.Errorf("loadSDKServices: resourceClientV2.GetInstance: %w", err)
 	}
 
 	authenticator, err = o.newAuthenticator(o.APIKey)
@@ -535,7 +535,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	o.piSession, err = ibmpisession.NewIBMPISession(options)
 	if (err != nil) || (o.piSession == nil) {
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: ibmpisession.New: %v", err)
+			return fmt.Errorf("loadSDKServices: ibmpisession.New: %w", err)
 		}
 		return fmt.Errorf("loadSDKServices: o.piSession is nil")
 	}
@@ -581,7 +581,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		URL:           "https://" + o.VPCRegion + ".iaas.cloud.ibm.com/v1",
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: vpcv1.NewVpcV1: %v", err)
+		return fmt.Errorf("loadSDKServices: vpcv1.NewVpcV1: %w", err)
 	}
 
 	userAgentString := fmt.Sprintf("OpenShift/4.x Destroyer/%s", version.Raw)
@@ -597,7 +597,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		Authenticator: authenticator,
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: creating ResourceManagerV2 Service: %v", err)
+		return fmt.Errorf("loadSDKServices: creating ResourceManagerV2 Service: %w", err)
 	}
 
 	authenticator, err = o.newAuthenticator(o.APIKey)
@@ -612,7 +612,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		URL:           "https://resource-controller.cloud.ibm.com",
 	})
 	if err != nil {
-		return fmt.Errorf("loadSDKServices: creating ControllerV2 Service: %v", err)
+		return fmt.Errorf("loadSDKServices: creating ControllerV2 Service: %w", err)
 	}
 
 	// Either CISInstanceCRN is set or DNSInstanceCRN is set. Both should not be set at the same time,
@@ -628,7 +628,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			Crn:           &o.CISInstanceCRN,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: creating zonesSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
 
 		ctx, cancel := o.contextWithTimeout()
@@ -638,7 +638,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		zoneOptions := o.zonesSvc.NewListZonesOptions()
 		zoneResources, detailedResponse, err := o.zonesSvc.ListZonesWithContext(ctx, zoneOptions)
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: Failed to list Zones: %v and the response is: %s", err, detailedResponse)
+			return fmt.Errorf("loadSDKServices: Failed to list Zones: %w and the response is: %s", err, detailedResponse)
 		}
 
 		for _, zone := range zoneResources.Result {
@@ -659,7 +659,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			ZoneIdentifier: &o.dnsZoneID,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: Failed to instantiate dnsRecordsSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: Failed to instantiate dnsRecordsSvc: %w", err)
 		}
 	}
 
@@ -673,7 +673,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			Authenticator: authenticator,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: creating zonesSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: creating zonesSvc: %w", err)
 		}
 
 		// Get the Zone ID
@@ -684,7 +684,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		options := o.dnsZonesSvc.NewListDnszonesOptions(dnsCRN.ServiceInstance)
 		listZonesResponse, detailedResponse, err := o.dnsZonesSvc.ListDnszones(options)
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: Failed to list Zones: %v and the response is: %s", err, detailedResponse)
+			return fmt.Errorf("loadSDKServices: Failed to list Zones: %w and the response is: %s", err, detailedResponse)
 		}
 
 		for _, zone := range listZonesResponse.Dnszones {
@@ -703,7 +703,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			Authenticator: authenticator,
 		})
 		if err != nil {
-			return fmt.Errorf("loadSDKServices: Failed to instantiate resourceRecordsSvc: %v", err)
+			return fmt.Errorf("loadSDKServices: Failed to instantiate resourceRecordsSvc: %w", err)
 		}
 	}
 
