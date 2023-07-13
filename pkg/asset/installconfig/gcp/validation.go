@@ -123,52 +123,84 @@ func DefaultInstanceTypeForArch(arch types.Architecture) string {
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	defaultInstanceType := ""
+	defaultZones := []string{}
+
 	// Default requirements need to be sufficient to support Control Plane instances.
 	defaultInstanceReq := controlPlaneReq
-
 	if ic.ControlPlane != nil && ic.ControlPlane.Platform.GCP != nil && ic.ControlPlane.Platform.GCP.InstanceType != "" {
 		// Default requirements can be relaxed when the controlPlane type is set explicitly.
 		defaultInstanceReq = computeReq
-
-		allErrs = append(allErrs,
-			ValidateInstanceType(
-				client,
-				field.NewPath("controlPlane", "platform", "gcp"),
-				ic.GCP.ProjectID,
-				ic.GCP.Region,
-				ic.ControlPlane.Platform.GCP.Zones,
-				ic.ControlPlane.Platform.GCP.InstanceType,
-				controlPlaneReq,
-			)...)
 	}
 
-	if ic.Platform.GCP.DefaultMachinePlatform != nil && ic.Platform.GCP.DefaultMachinePlatform.InstanceType != "" {
-		allErrs = append(allErrs,
-			ValidateInstanceType(
-				client,
-				field.NewPath("platform", "gcp", "defaultMachinePlatform"),
-				ic.GCP.ProjectID,
-				ic.GCP.Region,
-				ic.Platform.GCP.DefaultMachinePlatform.Zones,
-				ic.Platform.GCP.DefaultMachinePlatform.InstanceType,
-				defaultInstanceReq,
-			)...)
-	}
-
-	for idx, compute := range ic.Compute {
-		fieldPath := field.NewPath("compute").Index(idx)
-		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
+	if ic.GCP.DefaultMachinePlatform != nil {
+		defaultZones = ic.GCP.DefaultMachinePlatform.Zones
+		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
+		if ic.GCP.DefaultMachinePlatform.InstanceType != "" {
 			allErrs = append(allErrs,
 				ValidateInstanceType(
 					client,
-					fieldPath.Child("platform", "gcp"),
+					field.NewPath("platform", "gcp", "defaultMachinePlatform"),
 					ic.GCP.ProjectID,
 					ic.GCP.Region,
-					compute.Platform.GCP.Zones,
-					compute.Platform.GCP.InstanceType,
-					computeReq,
+					ic.GCP.DefaultMachinePlatform.Zones,
+					ic.GCP.DefaultMachinePlatform.InstanceType,
+					defaultInstanceReq,
 				)...)
 		}
+	}
+
+	zones := defaultZones
+	instanceType := defaultInstanceType
+	if ic.ControlPlane != nil {
+		if instanceType == "" {
+			instanceType = DefaultInstanceTypeForArch(ic.ControlPlane.Architecture)
+		}
+		if ic.ControlPlane.Platform.GCP != nil {
+			if ic.ControlPlane.Platform.GCP.InstanceType != "" {
+				instanceType = ic.ControlPlane.Platform.GCP.InstanceType
+			}
+			if len(ic.ControlPlane.Platform.GCP.Zones) > 0 {
+				zones = ic.ControlPlane.Platform.GCP.Zones
+			}
+		}
+	}
+	allErrs = append(allErrs,
+		ValidateInstanceType(
+			client,
+			field.NewPath("controlPlane", "platform", "gcp"),
+			ic.GCP.ProjectID,
+			ic.GCP.Region,
+			zones,
+			instanceType,
+			controlPlaneReq,
+		)...)
+
+	for idx, compute := range ic.Compute {
+		fieldPath := field.NewPath("compute").Index(idx)
+		zones := defaultZones
+		instanceType := defaultInstanceType
+		if instanceType == "" {
+			instanceType = DefaultInstanceTypeForArch(compute.Architecture)
+		}
+		if compute.Platform.GCP != nil {
+			if compute.Platform.GCP.InstanceType != "" {
+				instanceType = compute.Platform.GCP.InstanceType
+			}
+			if len(compute.Platform.GCP.Zones) > 0 {
+				zones = compute.Platform.GCP.Zones
+			}
+		}
+		allErrs = append(allErrs,
+			ValidateInstanceType(
+				client,
+				fieldPath.Child("platform", "gcp"),
+				ic.GCP.ProjectID,
+				ic.GCP.Region,
+				zones,
+				instanceType,
+				computeReq,
+			)...)
 	}
 
 	return allErrs

@@ -100,6 +100,9 @@ var (
 		"n1-standard-1": {GuestCpus: 1, MemoryMb: 3840},
 		"n1-standard-2": {GuestCpus: 2, MemoryMb: 7680},
 		"n1-standard-4": {GuestCpus: 4, MemoryMb: 15360},
+		"n2-standard-1": {GuestCpus: 1, MemoryMb: 8192},
+		"n2-standard-2": {GuestCpus: 2, MemoryMb: 16384},
+		"n2-standard-4": {GuestCpus: 4, MemoryMb: 32768},
 	}
 
 	subnetAPIResult = []*compute.Subnetwork{
@@ -213,7 +216,7 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 			name:           "Invalid default machine type",
 			edits:          editFunctions{invalidateDefaultMachineTypes},
 			expectedError:  true,
-			expectedErrMsg: `\[platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory\]`,
+			expectedErrMsg: `\[platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, platform.gcp.defaultMachinePlatform.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory, controlPlane.platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 4 vCPUs, controlPlane.platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 15360 MB Memory, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 2 vCPUs, compute\[0\].platform.gcp.type: Invalid value: "n1-standard-1": instance type does not meet minimum resource requirements of 7680 MB Memory\]`,
 		},
 		{
 			name:           "Invalid control plane machine types",
