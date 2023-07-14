@@ -182,6 +182,8 @@ func (a *UnconfiguredIgnition) Generate(dependencies asset.Parents) error {
 		config.Storage.Files = append(config.Storage.Files, manifestFile)
 	}
 
+	// the agent-check-config-image.service added only to the unconfigured ignition
+	enabledServices = append(enabledServices, "agent-check-config-image.service")
 	err = bootstrap.AddSystemdUnits(&config, "agent/systemd/units", agentTemplateData, enabledServices)
 	if err != nil {
 		return err
