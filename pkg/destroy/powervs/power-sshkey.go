@@ -17,6 +17,12 @@ const powerSSHKeyTypeName = "powerSshKey"
 func (o *ClusterUninstaller) listPowerSSHKeys() (cloudResources, error) {
 	o.Logger.Debugf("Listing Power SSHKeys")
 
+	if o.keyClient == nil {
+		o.Logger.Infof("Skipping deleting Power sshkeys because no service instance was found")
+		result := []cloudResource{}
+		return cloudResources{}.insert(result...), nil
+	}
+
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 

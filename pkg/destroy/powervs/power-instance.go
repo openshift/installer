@@ -18,6 +18,12 @@ const (
 func (o *ClusterUninstaller) listPowerInstances() (cloudResources, error) {
 	o.Logger.Debugf("Listing virtual Power service instances (%s)", o.InfraID)
 
+	if o.instanceClient == nil {
+		o.Logger.Infof("Skipping deleting Power service instances because no service instance was found")
+		result := []cloudResource{}
+		return cloudResources{}.insert(result...), nil
+	}
+
 	instances, err := o.instanceClient.GetAll()
 	if err != nil {
 		o.Logger.Warnf("Error instanceClient.GetAll: %v", err)

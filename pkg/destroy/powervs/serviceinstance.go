@@ -127,7 +127,7 @@ func (o *ClusterUninstaller) listServiceInstances() (cloudResources, error) {
 					result = append(result, cloudResource{
 						key:      *resource.ID,
 						name:     *resource.Name,
-						status:   "",
+						status:   *resource.GUID,
 						typeName: serviceInstanceTypeName,
 						id:       *resource.ID,
 					})

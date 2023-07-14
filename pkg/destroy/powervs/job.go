@@ -21,6 +21,11 @@ func (o *ClusterUninstaller) listJobs() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing jobs")
 
+	if o.jobClient == nil {
+		result := []cloudResource{}
+		return cloudResources{}.insert(result...), nil
+	}
+
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 
