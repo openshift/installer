@@ -8688,7 +8688,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.11
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20230621174358-ea40115b9fa6
+# github.com/openshift/api v0.0.0-20230707160225-81d582da354b
 ## explicit; go 1.20
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
@@ -8849,7 +8849,7 @@ github.com/rogpeppe/go-internal/testscript
 github.com/rogpeppe/go-internal/txtar
 # github.com/satori/go.uuid v1.2.0
 ## explicit
-# github.com/shurcooL/httpfs v0.0.0-20171119174359-809beceb2371
+# github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 ## explicit
 github.com/shurcooL/httpfs/vfsutil
 # github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd

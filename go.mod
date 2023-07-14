@@ -55,7 +55,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.27.4
-	github.com/openshift/api v0.0.0-20230621174358-ea40115b9fa6
+	github.com/openshift/api v0.0.0-20230707160225-81d582da354b
 	github.com/openshift/assisted-image-service v0.0.0-20230508133451-c15a62b72155
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
@@ -197,7 +197,7 @@ require (
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/procfs v0.11.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
-	github.com/shurcooL/httpfs v0.0.0-20171119174359-809beceb2371 // indirect
+	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749 // indirect
 	github.com/spf13/pflag v1.0.6-0.20210604193023-d5e0c0615ace // indirect
 	github.com/thoas/go-funk v0.9.3 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
