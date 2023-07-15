@@ -190,6 +190,48 @@ func TestValidateMachinePool(t *testing.T) {
 			}(),
 			valid: false,
 		},
+		{
+			name:     "valid GCP service account use",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1", NetworkProjectID: "ExampleNetworkProject"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{
+						ServiceAccount: "ExampleServiceAccount@ExampleServiceAccount.com",
+					},
+				}
+				return p
+			}(),
+			valid: true,
+		},
+		{
+			name:     "invalid GCP service account on machine pool type",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("worker")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{
+						ServiceAccount: "ExampleServiceAccount@ExampleServiceAccount.com",
+					},
+				}
+				return p
+			}(),
+			valid: false,
+		},
+		{
+			name:     "invalid GCP service account non xpn install",
+			platform: &types.Platform{GCP: &gcp.Platform{Region: "us-east-1"}},
+			pool: func() *types.MachinePool {
+				p := validMachinePool("master")
+				p.Platform = types.MachinePoolPlatform{
+					GCP: &gcp.MachinePool{
+						ServiceAccount: "ExampleServiceAccount@ExampleServiceAccount.com",
+					},
+				}
+				return p
+			}(),
+			valid: false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
