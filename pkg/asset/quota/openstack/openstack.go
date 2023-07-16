@@ -56,7 +56,7 @@ func Constraints(ci *validation.CloudInfo, controlPlanes []machineapi.Machine, c
 
 	// If the cluster is using pre-provisioned networks, then the quota constraints should be
 	// null because the installer doesn't need to create any resources.
-	if ci.MachinesSubnet == nil {
+	if len(ci.ControlPlanePortSubnets) == 0 {
 		constraints = append(constraints, networkConstraint(1), routerConstraint(1), subnetConstraint(1))
 	}
 

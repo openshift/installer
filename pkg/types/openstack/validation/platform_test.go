@@ -128,6 +128,21 @@ func TestValidatePlatform(t *testing.T) {
 			networking: validNetworking(),
 			valid:      true,
 		},
+		{
+			name: "invalid subnet ID",
+			platform: func() *openstack.Platform {
+				p := validPlatform()
+				fixedIP := openstack.FixedIP{
+					Subnet: openstack.SubnetFilter{ID: "fake"},
+				}
+				p.ControlPlanePort = &openstack.PortTarget{
+					FixedIPs: []openstack.FixedIP{fixedIP},
+				}
+				return p
+			}(),
+			networking:    validNetworking(),
+			expectedError: `^test-path\.controlPlanePort.fixedIPs: Invalid value: "fake": invalid subnet ID`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
