@@ -15,12 +15,12 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != powervs.Name {
-		return nil, fmt.Errorf("non-PowerVS configuration: %q", configPlatform)
+		return nil, nil, fmt.Errorf("non-PowerVS configuration: %q", configPlatform)
 	}
 	if poolPlatform := pool.Platform.Name(); poolPlatform != powervs.Name {
-		return nil, fmt.Errorf("non-PowerVS machine-pool: %q", poolPlatform)
+		return nil, nil, fmt.Errorf("non-PowerVS machine-pool: %q", poolPlatform)
 	}
 	platform := config.Platform.PowerVS
 	mpool := pool.Platform.PowerVS
@@ -41,11 +41,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		total = *pool.Replicas
 	}
 	var machines []machineapi.Machine
+	machineProvider, err := provider(clusterID, platform, mpool, userDataSecret, image, network)
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "failed to create provider")
+	}
 	for idx := int64(0); idx < total; idx++ {
-		provider, err := provider(clusterID, platform, mpool, userDataSecret, image, network)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
-		}
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -62,13 +62,55 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			Spec: machineapi.MachineSpec{
 				ProviderSpec: machineapi.ProviderSpec{
-					Value: &runtime.RawExtension{Object: provider},
+					Value: &runtime.RawExtension{Object: machineProvider},
 				},
 			},
 		}
 		machines = append(machines, machine)
 	}
-	return machines, nil
+	replicas := int32(total)
+	controlPlaneMachineSet := &machinev1.ControlPlaneMachineSet{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "machine.openshift.io/v1",
+			Kind:       "ControlPlaneMachineSet",
+		},
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-machine-api",
+			Name:      "cluster",
+			Labels: map[string]string{
+				"machine.openshift.io/cluster-api-cluster": clusterID,
+			},
+		},
+		Spec: machinev1.ControlPlaneMachineSetSpec{
+			Replicas: &replicas,
+			State:    machinev1.ControlPlaneMachineSetStateInactive,
+			Selector: metav1.LabelSelector{
+				MatchLabels: map[string]string{
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+				},
+			},
+			Template: machinev1.ControlPlaneMachineSetTemplate{
+				MachineType: machinev1.OpenShiftMachineV1Beta1MachineType,
+				OpenShiftMachineV1Beta1Machine: &machinev1.OpenShiftMachineV1Beta1MachineTemplate{
+					ObjectMeta: machinev1.ControlPlaneMachineSetTemplateObjectMeta{
+						Labels: map[string]string{
+							"machine.openshift.io/cluster-api-cluster":      clusterID,
+							"machine.openshift.io/cluster-api-machine-role": role,
+							"machine.openshift.io/cluster-api-machine-type": role,
+						},
+					},
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
+							Value: &runtime.RawExtension{Object: machineProvider},
+						},
+					},
+				},
+			},
+		},
+	}
+	return machines, controlPlaneMachineSet, nil
 }
 
 func provider(clusterID string, platform *powervs.Platform, mpool *powervs.MachinePool, userDataSecret string, image string, network string) (*machinev1.PowerVSMachineProviderConfig, error) {
@@ -120,7 +162,32 @@ func provider(clusterID string, platform *powervs.Platform, mpool *powervs.Machi
 	return config, nil
 }
 
-// ConfigMasters sets the network and boot image IDs
-func ConfigMasters(machines []machineapi.Machine, clusterID string) {
+// ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines.
+func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.ControlPlaneMachineSet, infraID string, publish types.PublishingStrategy) error {
+	lbrefs := []machinev1.LoadBalancerReference{{
+		Name: fmt.Sprintf("%s-loadbalancer-int", infraID),
+		Type: machinev1.ApplicationLoadBalancerType,
+	}}
 
+	if publish == types.ExternalPublishingStrategy {
+		lbrefs = append(lbrefs, machinev1.LoadBalancerReference{
+			Name: fmt.Sprintf("%s-loadbalancer", infraID),
+			Type: machinev1.ApplicationLoadBalancerType,
+		})
+	}
+
+	for _, machine := range machines {
+		providerSpec, ok := machine.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
+		if !ok {
+			return errors.New("Unable to set load balancers to control plane machine set")
+		}
+		providerSpec.LoadBalancers = lbrefs
+	}
+
+	providerSpec, ok := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machinev1.PowerVSMachineProviderConfig)
+	if !ok {
+		return errors.New("Unable to set load balancers to control plane machine set")
+	}
+	providerSpec.LoadBalancers = lbrefs
+	return nil
 }
