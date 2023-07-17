@@ -30,7 +30,7 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 	}
 
 	if p.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-standard", "pd-ssd")
+		diskTypes := sets.NewString("pd-standard", "pd-ssd", "pd-balanced")
 		if !diskTypes.Has(p.OSDisk.DiskType) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))
 		}
@@ -66,7 +66,7 @@ func ValidateDefaultDiskType(p *gcp.MachinePool, fldPath *field.Path) field.Erro
 	allErrs := field.ErrorList{}
 
 	if p != nil && p.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-ssd")
+		diskTypes := sets.NewString("pd-ssd", "pd-balanced")
 
 		if !diskTypes.Has(p.OSDisk.DiskType) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))

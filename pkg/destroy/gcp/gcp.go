@@ -215,7 +215,7 @@ func getRegionFromZone(zoneName string) string {
 // projects/project/zones/zone/diskTypes/pd-standard -> "ssd_total_storage"
 func getDiskLimit(typeURL string) string {
 	switch getNameFromURL("diskTypes", typeURL) {
-	case "pd-ssd":
+	case "pd-ssd", "pd-balanced":
 		return "ssd_total_storage"
 	case "pd-standard":
 		return "disks_total_storage"
