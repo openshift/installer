@@ -17,6 +17,12 @@ const imageTypeName = "image"
 func (o *ClusterUninstaller) listImages() (cloudResources, error) {
 	o.Logger.Debugf("Listing images")
 
+	if o.imageClient == nil {
+		o.Logger.Infof("Skipping deleting images because no service instance was found")
+		result := []cloudResource{}
+		return cloudResources{}.insert(result...), nil
+	}
+
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 

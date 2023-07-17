@@ -26,6 +26,12 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing Cloud Connections")
 
+	if o.cloudConnectionClient == nil {
+		o.Logger.Infof("Skipping deleting Cloud Connections because no service instance was found")
+		result := []cloudResource{}
+		return cloudResources{}.insert(result...), nil
+	}
+
 	ctx, cancel := o.contextWithTimeout()
 	defer cancel()
 

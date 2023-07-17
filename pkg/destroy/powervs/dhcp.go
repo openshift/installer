@@ -25,6 +25,12 @@ func (o *ClusterUninstaller) listDHCPNetworks() (cloudResources, error) {
 
 	o.Logger.Debugf("Listing DHCP networks")
 
+	if o.dhcpClient == nil {
+		o.Logger.Infof("Skipping deleting DHCP servers because no service instance was found")
+		result := []cloudResource{}
+		return cloudResources{}.insert(result...), nil
+	}
+
 	dhcpServers, err = o.dhcpClient.GetAll()
 	if err != nil {
 		o.Logger.Fatalf("Failed to list DHCP servers: %v", err)

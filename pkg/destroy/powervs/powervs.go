@@ -14,7 +14,6 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/authentication"
 	"github.com/IBM-Cloud/bluemix-go/crn"
 	"github.com/IBM-Cloud/bluemix-go/http"
-	"github.com/IBM-Cloud/bluemix-go/models"
 	"github.com/IBM-Cloud/bluemix-go/rest"
 	bxsession "github.com/IBM-Cloud/bluemix-go/session"
 	"github.com/IBM-Cloud/power-go-client/clients/instance"
@@ -447,8 +446,8 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		err                   error
 		ctrlv2                controllerv2.ResourceControllerAPIV2
 		resourceClientV2      controllerv2.ResourceServiceInstanceRepository
-		serviceInstance       models.ServiceInstanceV2
 		authenticator         core.Authenticator
+		serviceInstances      cloudResources
 	)
 
 	defer func() {
@@ -457,7 +456,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		o.Logger.Debugf("loadSDKServices: ctrlv2 = %v", ctrlv2)
 		o.Logger.Debugf("loadSDKServices: resourceClientV2 = %v", resourceClientV2)
 		o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
-		o.Logger.Debugf("loadSDKServices: serviceInstance = %v", serviceInstance)
 		o.Logger.Debugf("loadSDKServices: o.piSession = %v", o.piSession)
 		o.Logger.Debugf("loadSDKServices: o.instanceClient = %v", o.instanceClient)
 		o.Logger.Debugf("loadSDKServices: o.imageClient = %v", o.imageClient)
@@ -510,16 +508,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		return fmt.Errorf("loadSDKServices: ctrlv2.ResourceServiceInstanceV2: %w", err)
 	}
 
-	if o.ServiceGUID == "" {
-		return fmt.Errorf("loadSDKServices: ServiceGUID is empty")
-	}
-	o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
-
-	serviceInstance, err = resourceClientV2.GetInstance(o.ServiceGUID)
-	if err != nil {
-		return fmt.Errorf("loadSDKServices: resourceClientV2.GetInstance: %w", err)
-	}
-
 	authenticator, err = o.newAuthenticator(o.APIKey)
 	if err != nil {
 		return err
@@ -529,7 +517,7 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		Authenticator: authenticator,
 		Debug:         false,
 		UserAccount:   user.Account,
-		Zone:          serviceInstance.RegionID,
+		Zone:          o.Zone,
 	}
 
 	o.piSession, err = ibmpisession.NewIBMPISession(options)
@@ -538,36 +526,6 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 			return fmt.Errorf("loadSDKServices: ibmpisession.New: %w", err)
 		}
 		return fmt.Errorf("loadSDKServices: o.piSession is nil")
-	}
-
-	o.instanceClient = instance.NewIBMPIInstanceClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.instanceClient == nil {
-		return fmt.Errorf("loadSDKServices: o.instanceClient is nil")
-	}
-
-	o.imageClient = instance.NewIBMPIImageClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.imageClient == nil {
-		return fmt.Errorf("loadSDKServices: o.imageClient is nil")
-	}
-
-	o.jobClient = instance.NewIBMPIJobClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.jobClient == nil {
-		return fmt.Errorf("loadSDKServices: o.jobClient is nil")
-	}
-
-	o.keyClient = instance.NewIBMPIKeyClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.keyClient == nil {
-		return fmt.Errorf("loadSDKServices: o.keyClient is nil")
-	}
-
-	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.cloudConnectionClient == nil {
-		return fmt.Errorf("loadSDKServices: o.cloudConnectionClient is nil")
-	}
-
-	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
-	if o.dhcpClient == nil {
-		return fmt.Errorf("loadSDKServices: o.dhcpClient is nil")
 	}
 
 	authenticator, err = o.newAuthenticator(o.APIKey)
@@ -705,6 +663,56 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		if err != nil {
 			return fmt.Errorf("loadSDKServices: Failed to instantiate resourceRecordsSvc: %w", err)
 		}
+	}
+
+	o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
+	// Try and recover a service GUID if not present in the metadata
+	if o.ServiceGUID == "" {
+		// Find matching instances based on our cluster id
+		serviceInstances, err = o.listServiceInstances()
+		if err != nil {
+			return fmt.Errorf("loadSDKServices: listServiceInstances: %w", err)
+		}
+		if len(serviceInstances.list()) == 1 {
+			// The status field has been reused with the GUID
+			o.ServiceGUID = serviceInstances.list()[0].status
+			o.Logger.Debugf("loadSDKServices: o.ServiceGUID = %v", o.ServiceGUID)
+		}
+	}
+
+	if o.ServiceGUID == "" {
+		// The rest of this function relies on o.ServiceGUID, so finish now!
+		return nil
+	}
+
+	o.instanceClient = instance.NewIBMPIInstanceClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.instanceClient == nil {
+		return fmt.Errorf("loadSDKServices: o.instanceClient is nil")
+	}
+
+	o.imageClient = instance.NewIBMPIImageClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.imageClient == nil {
+		return fmt.Errorf("loadSDKServices: o.imageClient is nil")
+	}
+
+	o.jobClient = instance.NewIBMPIJobClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.jobClient == nil {
+		return fmt.Errorf("loadSDKServices: o.jobClient is nil")
+	}
+
+	o.keyClient = instance.NewIBMPIKeyClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.keyClient == nil {
+		return fmt.Errorf("loadSDKServices: o.keyClient is nil")
+	}
+
+	o.cloudConnectionClient = instance.NewIBMPICloudConnectionClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.cloudConnectionClient == nil {
+		return fmt.Errorf("loadSDKServices: o.cloudConnectionClient is nil")
+	}
+
+	o.dhcpClient = instance.NewIBMPIDhcpClient(context.Background(), o.piSession, o.ServiceGUID)
+	if o.dhcpClient == nil {
+		return fmt.Errorf("loadSDKServices: o.dhcpClient is nil")
 	}
 
 	return nil
