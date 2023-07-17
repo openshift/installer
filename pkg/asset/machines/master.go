@@ -470,11 +470,13 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		// The other two, we should standardize a name including the cluster id. At this point, all
 		// we have are names.
 		pool.Platform.PowerVS = &mpool
-		machines, err = powervs.Machines(clusterID.InfraID, ic, &pool, "master", "master-user-data")
+		machines, controlPlaneMachineSet, err = powervs.Machines(clusterID.InfraID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		powervs.ConfigMasters(machines, clusterID.InfraID)
+		if err := powervs.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish); err != nil {
+			return errors.Wrap(err, "failed to to configure master machine objects")
+		}
 	case nonetypes.Name:
 	case nutanixtypes.Name:
 		mpool := defaultNutanixMachinePoolPlatform()

@@ -434,6 +434,13 @@ spec:
                           - Enabled
                           - Disabled
                           type: string
+                        serviceAccount:
+                          description: ServiceAccount is the email of a gcp service
+                            account to be used for shared vpn installations. The provided
+                            service account will be attached to control-plane nodes
+                            in order to provide the permissions required by the cloud
+                            provider in the host project.
+                          type: string
                         tags:
                           description: Tags defines a set of network tags which will
                             be added to instances in the machineset
@@ -1181,6 +1188,13 @@ spec:
                         enum:
                         - Enabled
                         - Disabled
+                        type: string
+                      serviceAccount:
+                        description: ServiceAccount is the email of a gcp service
+                          account to be used for shared vpn installations. The provided
+                          service account will be attached to control-plane nodes
+                          in order to provide the permissions required by the cloud
+                          provider in the host project.
                         type: string
                       tags:
                         description: Tags defines a set of network tags which will
@@ -2596,6 +2610,13 @@ spec:
                         - Enabled
                         - Disabled
                         type: string
+                      serviceAccount:
+                        description: ServiceAccount is the email of a gcp service
+                          account to be used for shared vpn installations. The provided
+                          service account will be attached to control-plane nodes
+                          in order to provide the permissions required by the cloud
+                          provider in the host project.
+                        type: string
                       tags:
                         description: Tags defines a set of network tags which will
                           be added to instances in the machineset
@@ -3058,6 +3079,49 @@ spec:
                       use for instances in this cluster. Deprecated: use FlavorName
                       in DefaultMachinePlatform to define default flavor.'
                     type: string
+                  controlPlanePort:
+                    description: ControlPlanePort contains details of the network
+                      attached to the control plane port, with the network either
+                      containing one openstack subnet for IPv4 or two openstack subnets
+                      for dualstack clusters. Providing this configuration will prevent
+                      OpenShift from managing or updating this network and its subnets.
+                      The network and its subnets will be used during creation of
+                      all nodes. This is a TechPreview feature and requires setting
+                      featureSet to TechPreviewNoUpgrade.
+                    properties:
+                      fixedIPs:
+                        description: Specify subnets of the network where control
+                          plane port will be discovered.
+                        items:
+                          description: FixedIP identifies a subnet defined by a subnet
+                            filter.
+                          properties:
+                            subnet:
+                              description: SubnetFilter defines a subnet by ID and/or
+                                name.
+                              properties:
+                                id:
+                                  type: string
+                                name:
+                                  type: string
+                              type: object
+                          required:
+                          - subnet
+                          type: object
+                        type: array
+                      network:
+                        description: Network is a query for an openstack network that
+                          the port will be discovered on. This will fail if the query
+                          returns more than one network.
+                        properties:
+                          id:
+                            type: string
+                          name:
+                            type: string
+                        type: object
+                    required:
+                    - fixedIPs
+                    type: object
                   defaultMachinePlatform:
                     description: DefaultMachinePlatform is the default configuration
                       used when installing on OpenStack for machine pools which do
@@ -3191,11 +3255,12 @@ spec:
                         type: string
                     type: object
                   machinesSubnet:
-                    description: MachinesSubnet is the UUIDv4 of an openstack subnet.
-                      This subnet will be used by all nodes created by the installer.
-                      By setting this, the installer will no longer create a network
-                      and subnet. The subnet and network specified in MachinesSubnet
-                      will not be deleted or modified by the installer.
+                    description: 'DeprecatedMachinesSubnet is a string of the UUIDv4
+                      of an openstack subnet. This subnet will be used by all nodes
+                      created by the installer. By setting this, the installer will
+                      no longer create a network and subnet. The subnet and network
+                      specified in MachinesSubnet will not be deleted or modified
+                      by the installer. Deprecated: Use ControlPlanePort'
                     type: string
                   octaviaSupport:
                     description: 'OctaviaSupport holds a `0` or `1` value that indicates

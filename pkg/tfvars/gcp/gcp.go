@@ -107,22 +107,20 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		cfg.VolumeKMSKeyLink = generateDiskEncryptionKeyLink(masterConfig.Disks[0].EncryptionKey, masterConfig.ProjectID)
 	}
 
+	instanceServiceAccount := ""
+	// Service Account for masters set for xpn installs
+	if len(cfg.Auth.NetworkProjectID) > 0 {
+		if len(masterConfig.ServiceAccounts) > 0 {
+			instanceServiceAccount = masterConfig.ServiceAccounts[0].Email
+		}
+	}
+	cfg.InstanceServiceAccount = instanceServiceAccount
+
 	serviceAccount := make(map[string]interface{})
 
 	if err := json.Unmarshal([]byte(cfg.Auth.ServiceAccount), &serviceAccount); len(cfg.Auth.ServiceAccount) > 0 && err != nil {
 		return nil, errors.Wrapf(err, "unmarshaling service account")
 	}
-
-	instanceServiceAccount := ""
-	// Passthrough service accounts are only needed for GCP XPN.
-	if len(cfg.Auth.NetworkProjectID) > 0 {
-		var found bool
-		instanceServiceAccount, found = serviceAccount["client_email"].(string)
-		if !found {
-			return nil, errors.New("could not find google service account")
-		}
-	}
-	cfg.InstanceServiceAccount = instanceServiceAccount
 
 	// A private key is needed to sign the URL for bootstrap ignition.
 	// If there is no key in the credentials, we need to generate a new SA.

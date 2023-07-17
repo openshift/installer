@@ -358,6 +358,7 @@ func commonFiles() []string {
 		"/etc/containers/containers.conf",
 		"/root/.docker/config.json",
 		"/root/assisted.te",
+		"/usr/local/bin/agent-config-image-wait.sh",
 		"/usr/local/bin/agent-gather",
 		"/usr/local/bin/extract-agent.sh",
 		"/usr/local/bin/get-container-images.sh",
@@ -397,17 +398,18 @@ func TestIgnition_Generate(t *testing.T) {
 	assert.NoError(t, err)
 
 	cases := []struct {
-		name                                  string
-		overrideDeps                          []asset.Asset
-		expectedError                         string
-		expectedFiles                         []string
-		expectedFileContent                   map[string]string
-		preNetworkManagerConfigServiceEnabled bool
+		name                string
+		overrideDeps        []asset.Asset
+		expectedError       string
+		expectedFiles       []string
+		expectedFileContent map[string]string
+		serviceEnabledMap   map[string]bool
 	}{
 		{
-			name:                                  "no-extra-manifests",
-			preNetworkManagerConfigServiceEnabled: true,
-
+			name: "no-extra-manifests",
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": true,
+				"agent-check-config-image.service":   false},
 			expectedFiles: generatedFiles(),
 		},
 		{
@@ -445,7 +447,9 @@ metadata:
   name: agent-test-2
 `,
 			},
-			preNetworkManagerConfigServiceEnabled: true,
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": true,
+				"agent-check-config-image.service":   false},
 		},
 		{
 			name: "no nmstateconfigs defined, pre-network-manager-config.service should not be enabled",
@@ -483,7 +487,8 @@ metadata:
 					},
 				},
 			},
-			preNetworkManagerConfigServiceEnabled: false,
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false},
 		},
 	}
 	for _, tc := range cases {
@@ -508,7 +513,7 @@ metadata:
 
 				assertExpectedFiles(t, ignitionAsset.Config, tc.expectedFiles, tc.expectedFileContent)
 
-				assertPreNetworkConfigServiceEnabled(t, ignitionAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
+				assertServiceEnabled(t, ignitionAsset.Config, tc.serviceEnabledMap)
 			}
 		})
 	}
@@ -534,14 +539,16 @@ func overrideDeps(deps []asset.Asset, overrides []asset.Asset) {
 	}
 }
 
-func assertPreNetworkConfigServiceEnabled(t *testing.T, config *igntypes.Config, enabled bool) {
+func assertServiceEnabled(t *testing.T, config *igntypes.Config, serviceEnabledMap map[string]bool) {
 	t.Helper()
-	for _, unit := range config.Systemd.Units {
-		if unit.Name == "pre-network-manager-config.service" {
-			if unit.Enabled == nil {
-				assert.Equal(t, enabled, false)
-			} else {
-				assert.Equal(t, enabled, *unit.Enabled)
+	for serviceName, enabled := range serviceEnabledMap {
+		for _, unit := range config.Systemd.Units {
+			if unit.Name == serviceName {
+				if unit.Enabled == nil {
+					assert.Equal(t, enabled, false)
+				} else {
+					assert.Equal(t, enabled, *unit.Enabled)
+				}
 			}
 		}
 	}

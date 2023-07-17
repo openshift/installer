@@ -2087,18 +2087,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: "platform.vsphere.apiVIPs: Required value: must specify VIP for API, when VIP for ingress is set",
 		},
 		{
-			name: "platform.aws.hostedZoneRole should return error without TechPreviewNoUpgrade",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Platform = types.Platform{
-					AWS: validAWSPlatform(),
-				}
-				c.Platform.AWS.HostedZoneRole = "test-zone"
-				return c
-			}(),
-			expectedError: `platform.aws.hostedZoneRole: Forbidden: the TechPreviewNoUpgrade feature set must be enabled to use this field`,
-		},
-		{
 			name: "valid custom features",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()

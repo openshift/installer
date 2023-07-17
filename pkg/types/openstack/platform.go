@@ -113,11 +113,19 @@ type Platform struct {
 	// +optional
 	IngressVIPs []string `json:"ingressVIPs,omitempty"`
 
-	// MachinesSubnet is the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer.
+	// DeprecatedMachinesSubnet is a string of the UUIDv4 of an openstack subnet. This subnet will be used by all nodes created by the installer.
 	// By setting this, the installer will no longer create a network and subnet.
 	// The subnet and network specified in MachinesSubnet will not be deleted or modified by the installer.
+	// Deprecated: Use ControlPlanePort
 	// +optional
-	MachinesSubnet string `json:"machinesSubnet,omitempty"`
+	DeprecatedMachinesSubnet string `json:"machinesSubnet,omitempty"`
+
+	// ControlPlanePort contains details of the network attached to the control plane port, with the network either containing one openstack
+	// subnet for IPv4 or two openstack subnets for dualstack clusters. Providing this configuration will prevent OpenShift from managing
+	// or updating this network and its subnets. The network and its subnets will be used during creation of all nodes.
+	// This is a TechPreview feature and requires setting featureSet to TechPreviewNoUpgrade.
+	// +optional
+	ControlPlanePort *PortTarget `json:"controlPlanePort,omitempty"`
 
 	// LoadBalancer defines how the load balancer used by the cluster is configured.
 	// +optional

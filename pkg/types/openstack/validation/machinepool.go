@@ -25,5 +25,9 @@ func ValidateMachinePool(_ *openstack.Platform, machinePool *openstack.MachinePo
 		errs = append(errs, field.NotSupported(fldPath.Child("serverGroupPolicy"), machinePool.ServerGroupPolicy, validServerGroupPolicies))
 	}
 
+	if len(machinePool.Zones) > 0 && machinePool.RootVolume != nil && len(machinePool.RootVolume.Zones) == 0 {
+		errs = append(errs, field.Required(fldPath.Child("rootVolume").Child("zones"), "root volume availability zones must be specified when compute availability zones are specified"))
+	}
+
 	return errs
 }

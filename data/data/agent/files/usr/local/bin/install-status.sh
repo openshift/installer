@@ -17,10 +17,7 @@ check_services() {
     local not_started
     not_started="$(inactive_services)"
     if [ -z "${not_started}" ]; then
-        if [ -f "${services_issue}" ]; then
-            rm "${services_issue}"
-            agetty --reload
-        fi
+        clear_issue "${services_issue}"
     else
         read -ra show_services <<<"${not_started}"
         {

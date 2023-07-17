@@ -1,7 +1,5 @@
 package openstack
 
-import machinev1alpha1 "github.com/openshift/api/machine/v1alpha1"
-
 // MachinePool stores the configuration for a machine pool installed
 // on OpenStack.
 type MachinePool struct {
@@ -90,21 +88,26 @@ type RootVolume struct {
 
 // PortTarget defines, directly or indirectly, one or more subnets where to attach a port.
 type PortTarget struct {
-	// Network is a query for an openstack network that the port will be created or discovered on.
+	// Network is a query for an openstack network that the port will be discovered on.
 	// This will fail if the query returns more than one network.
 	Network NetworkFilter `json:"network,omitempty"`
-	// Specify pairs of subnet and/or IP address. These should be subnets of the network with the given NetworkID.
-	FixedIPs []FixedIP `json:"fixedIPs,omitempty"`
+	// Specify subnets of the network where control plane port will be discovered.
+	FixedIPs []FixedIP `json:"fixedIPs"`
 }
 
-// NetworkFilter defines a network either by name or by ID.
+// NetworkFilter defines a network by name and/or ID.
 type NetworkFilter struct {
 	Name string `json:"name,omitempty"`
 	ID   string `json:"id,omitempty"`
 }
 
-// FixedIP defines a subnet.
+// FixedIP identifies a subnet defined by a subnet filter.
 type FixedIP struct {
-	// subnetID specifies the ID of the subnet where the fixed IP will be allocated.
-	Subnet machinev1alpha1.SubnetFilter `json:"subnet"`
+	Subnet SubnetFilter `json:"subnet"`
+}
+
+// SubnetFilter defines a subnet by ID and/or name.
+type SubnetFilter struct {
+	ID   string `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }

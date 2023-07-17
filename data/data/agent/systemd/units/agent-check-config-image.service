@@ -1,0 +1,11 @@
+[Unit]
+Description=Displays message to console if config image has not been inserted or mounted in unconfigured-ignition environment
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=True
+ExecStart=/usr/local/bin/agent-config-image-wait.sh
+[Install]
+WantedBy=multi-user.target

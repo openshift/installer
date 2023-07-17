@@ -27,23 +27,25 @@ import (
 
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
 )
 
 // CloudInfo caches data fetched from the user's openstack cloud
 type CloudInfo struct {
-	APIFIP            *floatingips.FloatingIP
-	ExternalNetwork   *networks.Network
-	Flavors           map[string]Flavor
-	IngressFIP        *floatingips.FloatingIP
-	MachinesSubnet    *subnets.Subnet
-	OSImage           *images.Image
-	ComputeZones      []string
-	VolumeZones       []string
-	VolumeTypes       []string
-	NetworkExtensions []extensions.Extension
-	Quotas            []quota.Quota
+	APIFIP                  *floatingips.FloatingIP
+	ExternalNetwork         *networks.Network
+	Flavors                 map[string]Flavor
+	IngressFIP              *floatingips.FloatingIP
+	ControlPlanePortSubnets []*subnets.Subnet
+	ControlPlanePortNetwork *networks.Network
+	OSImage                 *images.Image
+	ComputeZones            []string
+	VolumeZones             []string
+	VolumeTypes             []string
+	NetworkExtensions       []extensions.Extension
+	Quotas                  []quota.Quota
 
 	clients *clients
 }
@@ -117,7 +119,7 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.ClientOpts) error {
 	var err error
 
-	ci.ExternalNetwork, err = ci.getNetwork(ic.OpenStack.ExternalNetwork)
+	ci.ExternalNetwork, err = ci.getNetworkByName(ic.OpenStack.ExternalNetwork)
 	if err != nil {
 		return fmt.Errorf("failed to fetch external network info: %w", err)
 	}
@@ -177,10 +179,16 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 			}
 		}
 	}
-
-	ci.MachinesSubnet, err = ci.getSubnet(ic.OpenStack.MachinesSubnet)
-	if err != nil {
-		return fmt.Errorf("failed to fetch machine subnet info: %w", err)
+	if ic.OpenStack.ControlPlanePort != nil {
+		controlPlanePort := ic.OpenStack.ControlPlanePort
+		ci.ControlPlanePortSubnets, err = ci.getSubnets(controlPlanePort)
+		if err != nil {
+			return err
+		}
+		ci.ControlPlanePortNetwork, err = ci.getNetwork(controlPlanePort.Network.Name, controlPlanePort.Network.ID)
+		if err != nil {
+			return err
+		}
 	}
 
 	ci.APIFIP, err = ci.getFloatingIP(ic.OpenStack.APIFloatingIP)
@@ -226,20 +234,24 @@ func (ci *CloudInfo) collectInfo(ic *types.InstallConfig, opts *clientconfig.Cli
 
 	return nil
 }
-
-func (ci *CloudInfo) getSubnet(subnetID string) (*subnets.Subnet, error) {
-	if subnetID == "" {
-		return nil, nil
-	}
-	subnet, err := subnets.Get(ci.clients.networkClient, subnetID).Extract()
-	if err != nil {
-		if isNotFoundError(err) {
-			return nil, nil
+func (ci *CloudInfo) getSubnets(controlPlanePort *openstack.PortTarget) ([]*subnets.Subnet, error) {
+	controlPlaneSubnets := make([]*subnets.Subnet, 0, len(controlPlanePort.FixedIPs))
+	for _, fixedIP := range controlPlanePort.FixedIPs {
+		page, err := subnets.List(ci.clients.networkClient, subnets.ListOpts{ID: fixedIP.Subnet.ID, Name: fixedIP.Subnet.Name}).AllPages()
+		if err != nil {
+			return controlPlaneSubnets, err
 		}
-		return nil, err
+		subnetList, err := subnets.ExtractSubnets(page)
+		if err != nil {
+			return controlPlaneSubnets, err
+		}
+		if len(subnetList) == 1 {
+			controlPlaneSubnets = append(controlPlaneSubnets, &subnetList[0])
+		} else if len(subnetList) > 1 {
+			return controlPlaneSubnets, fmt.Errorf("found multiple subnets")
+		}
 	}
-
-	return subnet, nil
+	return controlPlaneSubnets, nil
 }
 
 func isNotFoundError(err error) bool {
@@ -285,7 +297,7 @@ func (ci *CloudInfo) getFlavor(flavorName string) (Flavor, error) {
 	}, nil
 }
 
-func (ci *CloudInfo) getNetwork(networkName string) (*networks.Network, error) {
+func (ci *CloudInfo) getNetworkByName(networkName string) (*networks.Network, error) {
 	if networkName == "" {
 		return nil, nil
 	}
@@ -303,6 +315,30 @@ func (ci *CloudInfo) getNetwork(networkName string) (*networks.Network, error) {
 	}
 
 	return network, nil
+}
+
+func (ci *CloudInfo) getNetwork(networkName, networkID string) (*networks.Network, error) {
+	opts := networks.ListOpts{
+		ID:   networkID,
+		Name: networkName,
+	}
+	allPages, err := networks.List(ci.clients.networkClient, opts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allNetworks, err := networks.ExtractNetworks(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(allNetworks) == 0 {
+		return nil, nil
+	} else if len(allNetworks) > 1 {
+		return nil, fmt.Errorf("found multiple networks")
+	}
+
+	return &allNetworks[0], nil
 }
 
 func (ci *CloudInfo) getFloatingIP(fip string) (*floatingips.FloatingIP, error) {

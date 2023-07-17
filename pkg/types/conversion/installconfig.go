@@ -176,6 +176,19 @@ func convertOpenStack(config *types.InstallConfig) error {
 		return err
 	}
 
+	// machinesSubnet has been deprecated in favor of ControlPlanePort
+	controlPlanePort := config.Platform.OpenStack.ControlPlanePort
+	deprecatedMachinesSubnet := config.Platform.OpenStack.DeprecatedMachinesSubnet
+	if deprecatedMachinesSubnet != "" && controlPlanePort == nil {
+		fixedIPs := []openstack.FixedIP{{Subnet: openstack.SubnetFilter{ID: deprecatedMachinesSubnet}}}
+		config.Platform.OpenStack.ControlPlanePort = &openstack.PortTarget{FixedIPs: fixedIPs}
+	} else if deprecatedMachinesSubnet != "" &&
+		controlPlanePort != nil {
+		if !(len(controlPlanePort.FixedIPs) == 1 && controlPlanePort.FixedIPs[0].Subnet.ID == deprecatedMachinesSubnet) {
+			return field.Invalid(field.NewPath("platform").Child("openstack").Child("machinesSubnet"), deprecatedMachinesSubnet, fmt.Sprintf("%s is deprecated; only %s needs to be specified", "machinesSubnet", "controlPlanePort"))
+		}
+	}
+
 	return nil
 }
 

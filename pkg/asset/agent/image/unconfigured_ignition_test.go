@@ -21,16 +21,18 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	nmStateConfig := getTestNMStateConfig()
 
 	cases := []struct {
-		name                                  string
-		overrideDeps                          []asset.Asset
-		expectedError                         string
-		expectedFiles                         []string
-		preNetworkManagerConfigServiceEnabled bool
+		name              string
+		overrideDeps      []asset.Asset
+		expectedError     string
+		expectedFiles     []string
+		serviceEnabledMap map[string]bool
 	}{
 		{
-			name:                                  "default-configs-and-no-nmstateconfigs",
-			expectedFiles:                         generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh"),
-			preNetworkManagerConfigServiceEnabled: false,
+			name:          "default-configs-and-no-nmstateconfigs",
+			expectedFiles: generatedFilesUnconfiguredIgnition("/usr/local/bin/pre-network-manager-config.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"agent-check-config-image.service":   true},
 		},
 		{
 			name: "with-mirror-configs",
@@ -56,7 +58,9 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition(registriesConfPath,
 				registryCABundlePath, "/usr/local/bin/pre-network-manager-config.sh"),
-			preNetworkManagerConfigServiceEnabled: false,
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": false,
+				"agent-check-config-image.service":   true},
 		},
 		{
 			name: "with-nmstateconfigs",
@@ -65,7 +69,9 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
 				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh"),
-			preNetworkManagerConfigServiceEnabled: true,
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": true,
+				"agent-check-config-image.service":   true},
 		},
 	}
 	for _, tc := range cases {
@@ -87,7 +93,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 
 				assertExpectedFiles(t, unconfiguredIgnitionAsset.Config, tc.expectedFiles, nil)
 
-				assertPreNetworkConfigServiceEnabled(t, unconfiguredIgnitionAsset.Config, tc.preNetworkManagerConfigServiceEnabled)
+				assertServiceEnabled(t, unconfiguredIgnitionAsset.Config, tc.serviceEnabledMap)
 			}
 		})
 	}

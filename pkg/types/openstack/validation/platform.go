@@ -4,6 +4,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	configv1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/installer/pkg/asset/installconfig/openstack/validation"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/validate"
@@ -27,6 +28,10 @@ func ValidatePlatform(p *openstack.Platform, n *types.Networking, fldPath *field
 		}
 	}
 
+	if c.OpenStack.ControlPlanePort != nil {
+		allErrs = append(allErrs, validateControlPlanePort(c, fldPath)...)
+	}
+
 	return allErrs
 }
 
@@ -38,4 +43,23 @@ func validateLoadBalancer(lbType configv1.PlatformLoadBalancerType) bool {
 	default:
 		return false
 	}
+}
+
+// validateControlPlanePort returns all the errors found when the control plane port is not valid.
+func validateControlPlanePort(c *types.InstallConfig, fldPath *field.Path) field.ErrorList {
+	controlPlanePort := c.OpenStack.ControlPlanePort
+	var allErrs field.ErrorList
+	if len(controlPlanePort.FixedIPs) <= 2 {
+		for _, fixedIP := range controlPlanePort.FixedIPs {
+			if fixedIP.Subnet.ID != "" && !validation.ValidUUIDv4(fixedIP.Subnet.ID) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("controlPlanePort").Child("fixedIPs"), fixedIP.Subnet.ID, "invalid subnet ID"))
+			}
+		}
+		if controlPlanePort.Network.ID != "" && !validation.ValidUUIDv4(controlPlanePort.Network.ID) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("controlPlanePort").Child("network"), controlPlanePort.Network.ID, "invalid network ID"))
+		}
+	} else {
+		allErrs = append(allErrs, field.TooMany(fldPath.Child("fixedIPs"), len(controlPlanePort.FixedIPs), 2))
+	}
+	return allErrs
 }
