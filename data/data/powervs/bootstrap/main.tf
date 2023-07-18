@@ -20,7 +20,7 @@ module "vm" {
 
   resource_group        = var.powervs_resource_group
   cluster_id            = var.cluster_id
-  ssh_key_id            = var.cluster_key_id
+  ssh_key_name          = var.cluster_key_name
   cos_bucket_location   = var.powervs_vpc_region
   cos_instance_location = var.powervs_cos_instance_location
   cos_storage_class     = var.powervs_cos_storage_class

@@ -12,7 +12,7 @@ resource "ibm_pi_instance" "master" {
     network_id = var.dhcp_network_id
   }
   pi_user_data     = base64encode(var.ignition)
-  pi_key_pair_name = var.ssh_key_id
+  pi_key_pair_name = var.ssh_key_name
   pi_health_status = "WARNING"
 }
 

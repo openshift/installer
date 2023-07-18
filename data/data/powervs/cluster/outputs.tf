@@ -2,8 +2,8 @@ output "control_plane_ips" {
   value = module.master.master_ips
 }
 
-output "cluster_key_id" {
-  value = ibm_pi_key.cluster_key.key_id
+output "cluster_key_name" {
+  value = ibm_pi_key.cluster_key.name
 }
 
 output "boot_image_id" {

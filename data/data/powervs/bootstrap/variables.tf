@@ -1,4 +1,4 @@
-variable "cluster_key_id" { type = string }
+variable "cluster_key_name" { type = string }
 variable "dhcp_network_id" { type = string }
 variable "dhcp_id" { type = string }
 variable "vpc_id" { type = string }

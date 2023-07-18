@@ -28,7 +28,7 @@ module "vm" {
   cloud_instance_id = var.cloud_instance_id
   resource_group    = var.resource_group
   ignition          = var.ignition
-  ssh_key_id        = var.ssh_key_id
+  ssh_key_name      = var.ssh_key_name
   dhcp_id           = var.dhcp_id
   dhcp_network_id   = var.dhcp_network_id
 }

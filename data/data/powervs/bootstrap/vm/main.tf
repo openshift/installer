@@ -56,7 +56,7 @@ resource "ibm_pi_instance" "bootstrap" {
     OBJECT_NAME = ibm_cos_bucket_object.ignition.key
     IAM_TOKEN   = data.ibm_iam_auth_token.iam_token.iam_access_token
   }))
-  pi_key_pair_name = var.ssh_key_id
+  pi_key_pair_name = var.ssh_key_name
   pi_health_status = "WARNING"
 }
 
