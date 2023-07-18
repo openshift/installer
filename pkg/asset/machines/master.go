@@ -201,7 +201,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				return err
 			}
 			for id, subnet := range subnetMeta {
-				subnets[subnet.Zone] = id
+				if subnet.Zone == nil {
+					return errors.Wrapf(err, "failed to find zone attributes for subnet %s", subnet.ID)
+				}
+				subnets[subnet.Zone.Name] = id
 			}
 		}
 

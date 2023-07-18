@@ -191,10 +191,16 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 	privateZones := sets.NewString()
 	publicZones := sets.NewString()
 	for _, subnet := range privateSubnets {
-		privateZones.Insert(subnet.Zone)
+		if subnet.Zone == nil {
+			return append(allErrs, field.InternalError(fldPath, errors.New("unable to retrieve zone details for the private subnet")))
+		}
+		privateZones.Insert(subnet.Zone.Name)
 	}
 	for _, subnet := range publicSubnets {
-		publicZones.Insert(subnet.Zone)
+		if subnet.Zone == nil {
+			return append(allErrs, field.InternalError(fldPath, errors.New("unable to retrieve zone details for the public subnet")))
+		}
+		publicZones.Insert(subnet.Zone.Name)
 	}
 	if publish == types.ExternalPublishingStrategy && !publicZones.IsSuperset(privateZones) {
 		errMsg := fmt.Sprintf("No public subnet provided for zones %s", privateZones.Difference(publicZones).List())
@@ -221,7 +227,10 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 				return append(allErrs, field.InternalError(fldPath, err))
 			}
 			for _, subnet := range subnets {
-				availableZones.Insert(subnet.Zone)
+				if subnet.Zone == nil {
+					return append(allErrs, field.InternalError(fldPath, errors.New("unable to retrieve details for the subnet's zone")))
+				}
+				availableZones.Insert(subnet.Zone.Name)
 			}
 		} else {
 			allzones, err := meta.AvailabilityZones(ctx)
@@ -230,7 +239,6 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			}
 			availableZones.Insert(allzones...)
 		}
-
 		if diff := sets.NewString(pool.Zones...).Difference(availableZones); diff.Len() > 0 {
 			errMsg := fmt.Sprintf("No subnets provided for zones %s", diff.List())
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), pool.Zones, errMsg))
@@ -322,11 +330,15 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 	zones := map[string]string{}
 	for _, id := range keys {
 		subnet := subnets[id]
-		if conflictingSubnet, ok := zones[subnet.Zone]; ok {
-			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", typ, conflictingSubnet, subnet.Zone)
+		if subnet.Zone == nil {
+			return append(allErrs, field.InternalError(fldPath, errors.New("unable to retrieve zone details for the subnet's zone")))
+		}
+		zoneName := subnet.Zone.Name
+		if conflictingSubnet, ok := zones[zoneName]; ok {
+			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", typ, conflictingSubnet, zoneName)
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(idxMap[id]), id, errMsg))
 		} else {
-			zones[subnet.Zone] = id
+			zones[zoneName] = id
 		}
 	}
 	return allErrs

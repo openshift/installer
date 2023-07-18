@@ -121,15 +121,15 @@ func validAvailZonesOnlyEdge() []string {
 func validPrivateSubnets() map[string]Subnet {
 	return map[string]Subnet{
 		"valid-private-subnet-a": {
-			Zone: "a",
+			Zone: &aws.Zone{Name: "a"},
 			CIDR: "10.0.1.0/24",
 		},
 		"valid-private-subnet-b": {
-			Zone: "b",
+			Zone: &aws.Zone{Name: "b"},
 			CIDR: "10.0.2.0/24",
 		},
 		"valid-private-subnet-c": {
-			Zone: "c",
+			Zone: &aws.Zone{Name: "c"},
 			CIDR: "10.0.3.0/24",
 		},
 	}
@@ -138,15 +138,15 @@ func validPrivateSubnets() map[string]Subnet {
 func validPublicSubnets() map[string]Subnet {
 	return map[string]Subnet{
 		"valid-public-subnet-a": {
-			Zone: "a",
+			Zone: &aws.Zone{Name: "a"},
 			CIDR: "10.0.4.0/24",
 		},
 		"valid-public-subnet-b": {
-			Zone: "b",
+			Zone: &aws.Zone{Name: "b"},
 			CIDR: "10.0.5.0/24",
 		},
 		"valid-public-subnet-c": {
-			Zone: "c",
+			Zone: &aws.Zone{Name: "c"},
 			CIDR: "10.0.6.0/24",
 		},
 	}
@@ -155,15 +155,15 @@ func validPublicSubnets() map[string]Subnet {
 func validEdgeSubnets() map[string]Subnet {
 	return map[string]Subnet{
 		"valid-public-subnet-edge-a": {
-			Zone: "edge-a",
+			Zone: &aws.Zone{Name: "edge-a"},
 			CIDR: "10.0.7.0/24",
 		},
 		"valid-public-subnet-edge-b": {
-			Zone: "edge-b",
+			Zone: &aws.Zone{Name: "edge-b"},
 			CIDR: "10.0.8.0/24",
 		},
 		"valid-public-subnet-edge-c": {
-			Zone: "edge-c",
+			Zone: &aws.Zone{Name: "edge-c"},
 			CIDR: "10.0.9.0/24",
 		},
 	}
@@ -400,6 +400,7 @@ func TestValidate(t *testing.T) {
 			s := validPublicSubnets()
 			s["invalid-cidr-subnet"] = Subnet{
 				CIDR: "192.168.126.0/24",
+				Zone: &aws.Zone{Name: "test"},
 			}
 			return s
 		}(),
@@ -416,6 +417,7 @@ func TestValidate(t *testing.T) {
 			s := validPrivateSubnets()
 			s["invalid-private-cidr-subnet"] = Subnet{
 				CIDR: "192.168.126.0/24",
+				Zone: &aws.Zone{Name: "test"},
 			}
 			return s
 		}(),
@@ -423,10 +425,28 @@ func TestValidate(t *testing.T) {
 			s := validPublicSubnets()
 			s["invalid-public-cidr-subnet"] = Subnet{
 				CIDR: "192.168.127.0/24",
+				Zone: &aws.Zone{Name: "test"},
 			}
 			return s
 		}(),
 		expectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-private-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks, platform\.aws\.subnets\[7\]: Invalid value: \"invalid-public-cidr-subnet\": subnet's CIDR range start 192.168.127.0 is outside of the specified machine networks\]$`,
+	}, {
+		name: "invalid cidr does not belong to machine CIDR internal error",
+		installConfig: func() *types.InstallConfig {
+			c := validInstallConfig()
+			c.Platform.AWS.Subnets = append(c.Platform.AWS.Subnets, "invalid-cidr-subnet")
+			return c
+		}(),
+		availZones:     validAvailZones(),
+		privateSubnets: validPrivateSubnets(),
+		publicSubnets: func() map[string]Subnet {
+			s := validPublicSubnets()
+			s["invalid-cidr-subnet"] = Subnet{
+				CIDR: "192.168.126.0/24",
+			}
+			return s
+		}(),
+		expectErr: `^\[platform\.aws\.subnets\[6\]: Invalid value: \"invalid-cidr-subnet\": subnet's CIDR range start 192.168.126.0 is outside of the specified machine networks, platform\.aws\.subnets: Internal error: unable to retrieve zone details for the subnet's zone, platform\.aws\.subnets: Internal error: unable to retrieve zone details for the public subnet\]$`,
 	}, {
 		name: "invalid missing public subnet in a zone",
 		installConfig: func() *types.InstallConfig {
@@ -438,7 +458,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets: func() map[string]Subnet {
 			s := validPrivateSubnets()
 			s["no-matching-public-private-zone"] = Subnet{
-				Zone: "f",
+				Zone: &aws.Zone{Name: "f"},
 				CIDR: "10.0.7.0/24",
 			}
 			return s
@@ -456,7 +476,7 @@ func TestValidate(t *testing.T) {
 		privateSubnets: func() map[string]Subnet {
 			s := validPrivateSubnets()
 			s["valid-private-zone-c-2"] = Subnet{
-				Zone: "c",
+				Zone: &aws.Zone{Name: "c"},
 				CIDR: "10.0.7.0/24",
 			}
 			return s
@@ -475,7 +495,7 @@ func TestValidate(t *testing.T) {
 		publicSubnets: func() map[string]Subnet {
 			s := validPublicSubnets()
 			s["valid-public-zone-c-2"] = Subnet{
-				Zone: "c",
+				Zone: &aws.Zone{Name: "c"},
 				CIDR: "10.0.7.0/24",
 			}
 			return s
@@ -494,9 +514,8 @@ func TestValidate(t *testing.T) {
 		edgeSubnets: func() map[string]Subnet {
 			s := validEdgeSubnets()
 			s["valid-public-zone-edge-c-2"] = Subnet{
-				Zone:     "edge-c",
-				CIDR:     "10.0.9.0/24",
-				ZoneType: aws.LocalZoneType,
+				Zone: &aws.Zone{Name: "edge-c", Type: aws.LocalZoneType},
+				CIDR: "10.0.9.0/24",
 			}
 			return s
 		}(),

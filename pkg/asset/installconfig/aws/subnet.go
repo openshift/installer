@@ -24,27 +24,13 @@ type Subnet struct {
 	ARN string
 
 	// Zone is the subnet's availability zone.
-	Zone string
+	Zone *typesaws.Zone
 
 	// CIDR is the subnet's CIDR block.
 	CIDR string
 
-	// ZoneType is the type of subnet's availability zone.
-	// The valid values are availability-zone and local-zone.
-	ZoneType string
-
-	// ZoneGroupName is the AWS zone group name.
-	// For Availability Zones, this parameter has the same value as the Region name.
-	//
-	// For Local Zones, the name of the associated group, for example us-west-2-lax-1.
-	ZoneGroupName string
-
 	// Public is the flag to define the subnet public.
 	Public bool
-
-	// PreferredEdgeInstanceType is the preferred instance type on the subnet's zone.
-	// It's used for the edge pools which does not offer the same type across zone groups.
-	PreferredEdgeInstanceType string
 }
 
 // Subnets is the map for the Subnet metadata.
@@ -108,10 +94,10 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 				}
 
 				metas[*subnet.SubnetId] = Subnet{
-					ID:     *subnet.SubnetId,
-					ARN:    *subnet.SubnetArn,
-					Zone:   *subnet.AvailabilityZone,
-					CIDR:   *subnet.CidrBlock,
+					ID:     aws.StringValue(subnet.SubnetId),
+					ARN:    aws.StringValue(subnet.SubnetArn),
+					Zone:   &typesaws.Zone{Name: aws.StringValue(subnet.AvailabilityZone)},
+					CIDR:   aws.StringValue(subnet.CidrBlock),
 					Public: false,
 				}
 				zoneNames = append(zoneNames, subnet.AvailabilityZone)
@@ -149,7 +135,7 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 		return subnetGroups, errors.Wrap(err, "describing availability zones")
 	}
 	for _, az := range azs.AvailabilityZones {
-		availabilityZones[*az.ZoneName] = az
+		availabilityZones[aws.StringValue(az.ZoneName)] = az
 	}
 
 	publicOnlySubnets := os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
@@ -165,14 +151,17 @@ func subnets(ctx context.Context, session *session.Session, region string, ids [
 			return subnetGroups, err
 		}
 		meta.Public = isPublic
-		meta.ZoneType = *availabilityZones[meta.Zone].ZoneType
-		meta.ZoneGroupName = *availabilityZones[meta.Zone].GroupName
+		zoneName := meta.Zone.Name
+
+		meta.Zone.Type = *availabilityZones[zoneName].ZoneType
+		meta.Zone.GroupName = *availabilityZones[zoneName].GroupName
 
 		// AWS Local Zones are grouped as Edge subnets
-		if meta.ZoneType == typesaws.LocalZoneType {
+		if meta.Zone.Type == typesaws.LocalZoneType {
+			meta.Zone.ParentZoneName = *availabilityZones[zoneName].ParentZoneName
 			// Local Zones is supported only in Public subnets
 			if !meta.Public {
-				return subnetGroups, errors.Errorf("subnet tyoe local-zone must be associated with public route tables: subnet %s from availability zone %s[%s] is public[%v]", id, meta.Zone, meta.ZoneType, meta.Public)
+				return subnetGroups, errors.Errorf("only public subnets are allowed in zone %s type local-zone for subnet %s", id, meta.Zone)
 			}
 			subnetGroups.Edge[id] = meta
 			continue

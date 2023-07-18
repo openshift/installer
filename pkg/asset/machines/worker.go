@@ -199,21 +199,17 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 
 // awsDiscoveryPreferredEdgeInstanceByZone discover supported instanceType for each subnet's
 // zone using the preferred list of instances allowed for OCP.
-func awsDiscoveryPreferredEdgeInstanceByZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, subnets icaws.Subnets) (ok bool, err error) {
-	for zone := range subnets {
-		subnet, ok := subnets[zone]
-		if !ok {
-			return ok, errors.Wrap(err, fmt.Sprintf("failed to get subnet's zone[%v] to lookup preferred instance type.", zone))
-		}
-
+func awsDiscoveryPreferredEdgeInstanceByZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, mpool *awstypes.MachinePool, zones awstypes.Zones) (ok bool, err error) {
+	for _, zone := range mpool.Zones {
 		preferredType, err := aws.PreferredInstanceType(ctx, meta, defaultTypes, []string{zone})
 		if err != nil {
-			logrus.Warn(errors.Wrap(err, fmt.Sprintf("unable to select instanceType on the zone[%v] from the preferred list: %v. You must update the MachineSet manifest", zone, defaultTypes)))
+			logrus.Warn(errors.Wrapf(err, "unable to select instanceType on the zone[%s] from the preferred list: %v. You must update the MachineSet manifest", zone, defaultTypes))
 			continue
 		}
-
-		subnet.PreferredEdgeInstanceType = preferredType
-		subnets[zone] = subnet
+		if _, ok := zones[zone]; !ok {
+			zones[zone] = &awstypes.Zone{Name: zone}
+		}
+		zones[zone].PreferredInstanceType = preferredType
 	}
 	return true, nil
 }
@@ -343,31 +339,27 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 		case awstypes.Name:
 			subnets := icaws.Subnets{}
+			zones := awstypes.Zones{}
 			if len(ic.Platform.AWS.Subnets) > 0 {
-				var subnetsMeta icaws.Subnets
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
-					subnetsMeta, err = installConfig.AWS.EdgeSubnets(ctx)
+					subnets, err = installConfig.AWS.EdgeSubnets(ctx)
 					if err != nil {
 						return err
 					}
 					if *pool.Replicas == 0 {
-						sbCount := int64(len(subnetsMeta))
+						sbCount := int64(len(subnets))
 						pool.Replicas = &sbCount
 					}
 				default:
-					subnetsMeta, err = installConfig.AWS.PrivateSubnets(ctx)
+					subnets, err = installConfig.AWS.PrivateSubnets(ctx)
 					if err != nil {
 						return err
 					}
 				}
-				for _, subnet := range subnetsMeta {
-					subnets[subnet.Zone] = subnet
-				}
 			}
 
 			mpool := defaultAWSMachinePoolPlatform(pool.Name)
-
 			osImage := strings.SplitN(string(*rhcosImage), ",", 2)
 			osImageID := osImage[0]
 			if len(osImage) == 2 {
@@ -381,7 +373,11 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			if len(mpool.Zones) == 0 {
 				if len(subnets) > 0 {
 					for zone := range subnets {
+						if subnets[zone].Zone == nil {
+							return errors.Wrapf(err, "failed to find zone attributes for subnet %s", subnets[zone].ID)
+						}
 						mpool.Zones = append(mpool.Zones, zone)
+						zones[zone] = subnets[zone].Zone
 					}
 				} else {
 					mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
@@ -397,7 +393,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
-					ok, err := awsDiscoveryPreferredEdgeInstanceByZone(ctx, instanceTypes, installConfig.AWS, subnets)
+					ok, err := awsDiscoveryPreferredEdgeInstanceByZone(ctx, instanceTypes, installConfig.AWS, &mpool, zones)
 					if err != nil {
 						return errors.Wrap(err, "failed to find default instance type for edge pool, you must define on the compute pool")
 					}
@@ -422,15 +418,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(
-				clusterID.InfraID,
-				installConfig.Config.Platform.AWS.Region,
-				subnets,
-				&pool,
-				pool.Name,
-				workerUserDataSecretName,
-				installConfig.Config.Platform.AWS.UserTags,
-			)
+			sets, err := aws.MachineSets(&aws.MachineSetInput{
+				ClusterID:                clusterID.InfraID,
+				InstallConfigPlatformAWS: installConfig.Config.Platform.AWS,
+				Subnets:                  subnets,
+				Zones:                    zones,
+				Pool:                     &pool,
+				Role:                     pool.Name,
+				UserDataSecret:           workerUserDataSecretName,
+			})
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
