@@ -12,6 +12,7 @@ CLUSTER_IMAGE_SET="/etc/assisted/manifests/cluster-image-set.yaml"
 EXTRA_MANIFESTS="/etc/assisted/extra-manifests"
 ASSISTED_NETWORK_DIR="/etc/assisted/network"
 NM_CONNECTION_DIR="/etc/NetworkManager/system-connections"
+PASSWORD_HASH="/opt/agent/tls/kubeadmin-password.hash"
 
 copy_archive_contents() {
     tmpdir=$(mktemp --tmpdir -d "config-image--XXXXXXXXXX")
@@ -63,6 +64,11 @@ copy_archive_contents() {
     fi
 
     echo "Successfully copied contents of ${AGENT_CONFIG_ARCHIVE_FILE} on ${devname}"
+
+    # Update core password with one from config-image if not overridden by appliance
+    if [[ -z "${SKIP_CORE_PASSWORD_SET}" ]] || [[ "${SKIP_CORE_PASSWORD_SET}" == "false" ]]; then
+       usermod --password "$(cat ${PASSWORD_HASH})" core
+    fi
 
     # Enable any services which are not enabled by default
     declare -a servicelist=("start-cluster-installation.service")
