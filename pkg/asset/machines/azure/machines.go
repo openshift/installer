@@ -215,12 +215,20 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		}
 	}
 
-	var securityProfile *machineapi.SecurityProfile
-	if mpool.EncryptionAtHost {
-		securityProfile = &machineapi.SecurityProfile{
-			EncryptionAtHost: &mpool.EncryptionAtHost,
+	var diskSecurityProfile machineapi.VMDiskSecurityProfile
+	if mpool.OSDisk.SecurityProfile != nil && mpool.OSDisk.SecurityProfile.SecurityEncryptionType != "" {
+		diskSecurityProfile = machineapi.VMDiskSecurityProfile{
+			SecurityEncryptionType: machineapi.SecurityEncryptionTypes(mpool.OSDisk.SecurityProfile.SecurityEncryptionType),
+		}
+
+		if mpool.OSDisk.SecurityProfile.DiskEncryptionSet != nil {
+			diskSecurityProfile.DiskEncryptionSet = machineapi.DiskEncryptionSetParameters{
+				ID: mpool.OSDisk.SecurityProfile.DiskEncryptionSet.ToID(),
+			}
 		}
 	}
+
+	securityProfile := generateSecurityProfile(mpool)
 
 	ultraSSDCapability := machineapi.AzureUltraSSDCapabilityState(mpool.UltraSSDCapability)
 
@@ -240,6 +248,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 			ManagedDisk: machineapi.OSDiskManagedDiskParameters{
 				StorageAccountType: mpool.OSDisk.DiskType,
 				DiskEncryptionSet:  diskEncryptionSet,
+				SecurityProfile:    diskSecurityProfile,
 			},
 		},
 		SecurityProfile:       securityProfile,
@@ -296,4 +305,49 @@ func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, s
 // getVMNetworkingType should set the correct capability for instance type
 func getVMNetworkingType(value string) bool {
 	return value == string(azure.VMnetworkingTypeAccelerated)
+}
+
+func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfile {
+	securityProfile := &machineapi.SecurityProfile{}
+
+	if mpool.EncryptionAtHost {
+		securityProfile.EncryptionAtHost = &mpool.EncryptionAtHost
+	}
+
+	if mpool.Settings != nil && mpool.Settings.SecurityType != "" {
+		securityProfile.Settings = machineapi.SecuritySettings{
+			SecurityType: machineapi.SecurityTypes(mpool.Settings.SecurityType),
+		}
+
+		var uefiSettings machineapi.UEFISettings
+		if securityProfile.Settings.SecurityType == machineapi.SecurityTypesTrustedLaunch {
+			if mpool.Settings.TrustedLaunch != nil && mpool.Settings.TrustedLaunch.UEFISettings != nil {
+				if sb := mpool.Settings.TrustedLaunch.UEFISettings.SecureBoot; sb != nil {
+					uefiSettings.SecureBoot = machineapi.SecureBootPolicy(*sb)
+				}
+				if vtpm := mpool.Settings.TrustedLaunch.UEFISettings.VirtualizedTrustedPlatformModule; vtpm != nil {
+					uefiSettings.VirtualizedTrustedPlatformModule = machineapi.VirtualizedTrustedPlatformModulePolicy(*vtpm)
+				}
+
+				securityProfile.Settings.TrustedLaunch = &machineapi.TrustedLaunch{
+					UEFISettings: uefiSettings,
+				}
+			}
+		} else if securityProfile.Settings.SecurityType == machineapi.SecurityTypesConfidentialVM {
+			if mpool.Settings.ConfidentialVM != nil && mpool.Settings.ConfidentialVM.UEFISettings != nil {
+				if sb := mpool.Settings.ConfidentialVM.UEFISettings.SecureBoot; sb != nil {
+					uefiSettings.SecureBoot = machineapi.SecureBootPolicy(*sb)
+				}
+				if vtpm := mpool.Settings.ConfidentialVM.UEFISettings.VirtualizedTrustedPlatformModule; vtpm != nil {
+					uefiSettings.VirtualizedTrustedPlatformModule = machineapi.VirtualizedTrustedPlatformModulePolicy(*vtpm)
+				}
+
+				securityProfile.Settings.ConfidentialVM = &machineapi.ConfidentialVM{
+					UEFISettings: uefiSettings,
+				}
+			}
+		}
+	}
+
+	return securityProfile
 }

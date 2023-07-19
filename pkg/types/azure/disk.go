@@ -13,6 +13,18 @@ func (d *DiskEncryptionSet) ToID() string {
 		d.SubscriptionID, d.ResourceGroup, d.Name)
 }
 
+// SecurityEncryptionTypes represents the Encryption Type when the Azure Virtual Machine is a
+// Confidential VM.
+type SecurityEncryptionTypes string
+
+const (
+	// SecurityEncryptionTypesVMGuestStateOnly disables OS disk confidential encryption.
+	SecurityEncryptionTypesVMGuestStateOnly SecurityEncryptionTypes = "VMGuestStateOnly"
+	// SecurityEncryptionTypesDiskWithVMGuestState enables OS disk confidential encryption with
+	// a platform-managed key (PMK) or a customer-managed key (CMK).
+	SecurityEncryptionTypesDiskWithVMGuestState SecurityEncryptionTypes = "DiskWithVMGuestState"
+)
+
 // OSDisk defines the disk for machines on Azure.
 type OSDisk struct {
 	// DiskSizeGB defines the size of disk in GB.
@@ -25,11 +37,13 @@ type OSDisk struct {
 	// +optional
 	// +kubebuilder:validation:Enum=Standard_LRS;Premium_LRS;StandardSSD_LRS
 	DiskType string `json:"diskType"`
-
 	// DiskEncryptionSet defines a disk encryption set.
 	//
 	// +optional
 	*DiskEncryptionSet `json:"diskEncryptionSet,omitempty"`
+	// SecurityProfile specifies the security profile for the managed disk.
+	// +optional
+	SecurityProfile *VMDiskSecurityProfile `json:"securityProfile,omitempty"`
 }
 
 // DiskEncryptionSet defines the configuration for a disk encryption set.
@@ -42,6 +56,25 @@ type DiskEncryptionSet struct {
 	ResourceGroup string `json:"resourceGroup"`
 	// Name is the name of the disk encryption set.
 	Name string `json:"name"`
+}
+
+// VMDiskSecurityProfile specifies the security profile settings for the managed disk.
+// It can be set only for Confidential VMs.
+type VMDiskSecurityProfile struct {
+	// DiskEncryptionSet specifies the customer managed disk encryption set resource id for the
+	// managed disk that is used for Customer Managed Key encrypted ConfidentialVM OS Disk and
+	// VMGuestState blob.
+	// +optional
+	DiskEncryptionSet *DiskEncryptionSet `json:"diskEncryptionSet,omitempty"`
+	// SecurityEncryptionType specifies the encryption type of the managed disk.
+	// It is set to DiskWithVMGuestState to encrypt the managed disk along with the VMGuestState
+	// blob, and to VMGuestStateOnly to encrypt the VMGuestState blob only.
+	// When set to VMGuestStateOnly, the VTpmEnabled should be set to true.
+	// When set to DiskWithVMGuestState, both SecureBootEnabled and VTpmEnabled should be set to true.
+	// It can be set only for Confidential VMs.
+	// +kubebuilder:validation:Enum=VMGuestStateOnly;DiskWithVMGuestState
+	// +optional
+	SecurityEncryptionType SecurityEncryptionTypes `json:"securityEncryptionType,omitempty"`
 }
 
 // DefaultDiskType holds the default Azure disk type used by the VMs.

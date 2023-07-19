@@ -48,6 +48,11 @@ module "master" {
   vm_image_sku               = var.azure_marketplace_image_sku
   vm_image_version           = var.azure_marketplace_image_version
 
+  security_encryption_type            = var.azure_master_security_encryption_type
+  secure_vm_disk_encryption_set_id    = var.azure_master_secure_vm_disk_encryption_set_id
+  secure_boot                         = var.azure_master_secure_boot
+  virtualized_trusted_platform_module = var.azure_master_virtualized_trusted_platform_module
+
   use_ipv4 = var.use_ipv4
   use_ipv6 = var.use_ipv6
 }

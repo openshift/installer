@@ -250,3 +250,36 @@ variable "azure_marketplace_image_version" {
   description = "Version of the marketplace image"
   default     = ""
 }
+
+variable "azure_master_security_encryption_type" {
+  type    = string
+  default = null
+
+  description = <<EOF
+Defines the encryption type when the Virtual Machine is a Confidential VM. Possible values are VMGuestStateOnly and DiskWithVMGuestState.
+When set to "VMGuestStateOnly" azure_master_vtpm_enabled should be set to true.
+When set to "DiskWithVMGuestState" both azure_master_vtp_enabled and azure_master_secure_boot_enabled should be true.
+EOF
+}
+
+variable "azure_master_secure_vm_disk_encryption_set_id" {
+  type = string
+  default = null
+
+  description = <<EOF
+Defines the ID of the Disk Encryption Set which should be used to encrypt this OS Disk when the Virtual Machine is a Confidential VM.
+It can only be set when azure_master_security_encryption_type is set to "DiskWithVMGuestState".
+EOF
+}
+
+variable "azure_master_secure_boot" {
+  type        = string
+  description = "Defines whether the instance should have secure boot enabled."
+  default     = ""
+}
+
+variable "azure_master_virtualized_trusted_platform_module" {
+  type        = string
+  description = "Defines whether the instance should have vTPM enabled."
+  default     = ""
+}

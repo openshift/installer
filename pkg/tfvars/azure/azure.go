@@ -34,39 +34,42 @@ type OSImage struct {
 }
 
 type config struct {
-	Auth                            `json:",inline"`
-	Environment                     string            `json:"azure_environment"`
-	ARMEndpoint                     string            `json:"azure_arm_endpoint"`
-	ExtraTags                       map[string]string `json:"azure_extra_tags,omitempty"`
-	MasterInstanceType              string            `json:"azure_master_vm_type,omitempty"`
-	MasterAvailabilityZones         []string          `json:"azure_master_availability_zones"`
-	MasterEncryptionAtHostEnabled   bool              `json:"azure_master_encryption_at_host_enabled"`
-	MasterDiskEncryptionSetID       string            `json:"azure_master_disk_encryption_set_id,omitempty"`
-	ControlPlaneUltraSSDEnabled     bool              `json:"azure_control_plane_ultra_ssd_enabled"`
-	VolumeType                      string            `json:"azure_master_root_volume_type"`
-	VolumeSize                      int32             `json:"azure_master_root_volume_size"`
-	ImageURL                        string            `json:"azure_image_url,omitempty"`
-	ImageRelease                    string            `json:"azure_image_release,omitempty"`
-	Region                          string            `json:"azure_region,omitempty"`
-	BaseDomainResourceGroupName     string            `json:"azure_base_domain_resource_group_name,omitempty"`
-	ResourceGroupName               string            `json:"azure_resource_group_name"`
-	NetworkResourceGroupName        string            `json:"azure_network_resource_group_name"`
-	VirtualNetwork                  string            `json:"azure_virtual_network"`
-	ControlPlaneSubnet              string            `json:"azure_control_plane_subnet"`
-	ComputeSubnet                   string            `json:"azure_compute_subnet"`
-	PreexistingNetwork              bool              `json:"azure_preexisting_network"`
-	Private                         bool              `json:"azure_private"`
-	OutboundType                    string            `json:"azure_outbound_routing_type"`
-	BootstrapIgnitionStub           string            `json:"azure_bootstrap_ignition_stub"`
-	BootstrapIgnitionURLPlaceholder string            `json:"azure_bootstrap_ignition_url_placeholder"`
-	HyperVGeneration                string            `json:"azure_hypervgeneration_version"`
-	VMNetworkingType                bool              `json:"azure_control_plane_vm_networking_type"`
-	RandomStringPrefix              string            `json:"random_storage_account_suffix"`
-	VMArchitecture                  string            `json:"azure_vm_architecture"`
-	ManagedBy                       string            `json:"azure_managed_by"`
-	UseMarketplaceImage             bool              `json:"azure_use_marketplace_image"`
-	MarketplaceImageHasPlan         bool              `json:"azure_marketplace_image_has_plan"`
-	OSImage                         `json:",inline"`
+	Auth                                    `json:",inline"`
+	Environment                             string            `json:"azure_environment"`
+	ARMEndpoint                             string            `json:"azure_arm_endpoint"`
+	ExtraTags                               map[string]string `json:"azure_extra_tags,omitempty"`
+	MasterInstanceType                      string            `json:"azure_master_vm_type,omitempty"`
+	MasterAvailabilityZones                 []string          `json:"azure_master_availability_zones"`
+	MasterEncryptionAtHostEnabled           bool              `json:"azure_master_encryption_at_host_enabled"`
+	MasterDiskEncryptionSetID               string            `json:"azure_master_disk_encryption_set_id,omitempty"`
+	ControlPlaneUltraSSDEnabled             bool              `json:"azure_control_plane_ultra_ssd_enabled"`
+	VolumeType                              string            `json:"azure_master_root_volume_type"`
+	VolumeSize                              int32             `json:"azure_master_root_volume_size"`
+	ImageURL                                string            `json:"azure_image_url,omitempty"`
+	ImageRelease                            string            `json:"azure_image_release,omitempty"`
+	Region                                  string            `json:"azure_region,omitempty"`
+	BaseDomainResourceGroupName             string            `json:"azure_base_domain_resource_group_name,omitempty"`
+	ResourceGroupName                       string            `json:"azure_resource_group_name"`
+	NetworkResourceGroupName                string            `json:"azure_network_resource_group_name"`
+	VirtualNetwork                          string            `json:"azure_virtual_network"`
+	ControlPlaneSubnet                      string            `json:"azure_control_plane_subnet"`
+	ComputeSubnet                           string            `json:"azure_compute_subnet"`
+	PreexistingNetwork                      bool              `json:"azure_preexisting_network"`
+	Private                                 bool              `json:"azure_private"`
+	BootstrapIgnitionStub                   string            `json:"azure_bootstrap_ignition_stub"`
+	BootstrapIgnitionURLPlaceholder         string            `json:"azure_bootstrap_ignition_url_placeholder"`
+	HyperVGeneration                        string            `json:"azure_hypervgeneration_version"`
+	VMNetworkingType                        bool              `json:"azure_control_plane_vm_networking_type"`
+	RandomStringPrefix                      string            `json:"random_storage_account_suffix"`
+	VMArchitecture                          string            `json:"azure_vm_architecture"`
+	ManagedBy                               string            `json:"azure_managed_by"`
+	UseMarketplaceImage                     bool              `json:"azure_use_marketplace_image"`
+	MarketplaceImageHasPlan                 bool              `json:"azure_marketplace_image_has_plan"`
+	OSImage                                 `json:",inline"`
+	SecurityEncryptionType                  string `json:"azure_master_security_encryption_type,omitempty"`
+	SecureVirtualMachineDiskEncryptionSetID string `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
+	SecureBoot                              string `json:"azure_master_secure_boot,omitempty"`
+	VirtualizedTrustedPlatformModule        string `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -117,6 +120,19 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		masterDiskEncryptionSetID = masterConfig.OSDisk.ManagedDisk.DiskEncryptionSet.ID
 	}
 
+	var secureBoot string
+	var virtualizedTrustedPlatformModule string
+	if masterConfig.SecurityProfile != nil && masterConfig.SecurityProfile.Settings.SecurityType != "" {
+		switch masterConfig.SecurityProfile.Settings.SecurityType {
+		case machineapi.SecurityTypesConfidentialVM:
+			secureBoot = string(masterConfig.SecurityProfile.Settings.ConfidentialVM.UEFISettings.SecureBoot)
+			virtualizedTrustedPlatformModule = string(masterConfig.SecurityProfile.Settings.ConfidentialVM.UEFISettings.VirtualizedTrustedPlatformModule)
+		case machineapi.SecurityTypesTrustedLaunch:
+			secureBoot = string(masterConfig.SecurityProfile.Settings.TrustedLaunch.UEFISettings.SecureBoot)
+			virtualizedTrustedPlatformModule = string(masterConfig.SecurityProfile.Settings.TrustedLaunch.UEFISettings.VirtualizedTrustedPlatformModule)
+		}
+	}
+
 	vmarch := "x64"
 	if sources.VMArchitecture == types.ArchitectureARM64 {
 		vmarch = "Arm64"
@@ -137,39 +153,42 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		Auth:                            sources.Auth,
-		Environment:                     environment,
-		ARMEndpoint:                     sources.ARMEndpoint,
-		Region:                          region,
-		MasterInstanceType:              masterConfig.VMSize,
-		MasterAvailabilityZones:         masterAvailabilityZones,
-		MasterEncryptionAtHostEnabled:   masterEncryptionAtHostEnabled,
-		MasterDiskEncryptionSetID:       masterDiskEncryptionSetID,
-		ControlPlaneUltraSSDEnabled:     masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityEnabled,
-		VolumeType:                      masterConfig.OSDisk.ManagedDisk.StorageAccountType,
-		VolumeSize:                      masterConfig.OSDisk.DiskSizeGB,
-		ImageURL:                        sources.ImageURL,
-		ImageRelease:                    sources.ImageRelease,
-		Private:                         sources.Publish == types.InternalPublishingStrategy,
-		OutboundType:                    string(sources.OutboundType),
-		ResourceGroupName:               sources.ResourceGroupName,
-		BaseDomainResourceGroupName:     sources.BaseDomainResourceGroupName,
-		NetworkResourceGroupName:        masterConfig.NetworkResourceGroup,
-		VirtualNetwork:                  masterConfig.Vnet,
-		ControlPlaneSubnet:              masterConfig.Subnet,
-		ComputeSubnet:                   workerConfig.Subnet,
-		PreexistingNetwork:              sources.PreexistingNetwork,
-		BootstrapIgnitionStub:           sources.BootstrapIgnStub,
-		BootstrapIgnitionURLPlaceholder: sources.BootstrapIgnitionURLPlaceholder,
-		HyperVGeneration:                sources.HyperVGeneration,
-		VMNetworkingType:                masterConfig.AcceleratedNetworking,
-		RandomStringPrefix:              randomStringPrefixFunction(),
-		VMArchitecture:                  vmarch,
-		ExtraTags:                       tags,
-		ManagedBy:                       sources.ManagedBy,
-		UseMarketplaceImage:             osImage.Publisher != "",
-		MarketplaceImageHasPlan:         masterConfig.Image.Type != machineapi.AzureImageTypeMarketplaceNoPlan,
-		OSImage:                         osImage,
+		Auth:                                    sources.Auth,
+		Environment:                             environment,
+		ARMEndpoint:                             sources.ARMEndpoint,
+		Region:                                  region,
+		MasterInstanceType:                      masterConfig.VMSize,
+		MasterAvailabilityZones:                 masterAvailabilityZones,
+		MasterEncryptionAtHostEnabled:           masterEncryptionAtHostEnabled,
+		MasterDiskEncryptionSetID:               masterDiskEncryptionSetID,
+		ControlPlaneUltraSSDEnabled:             masterConfig.UltraSSDCapability == machineapi.AzureUltraSSDCapabilityEnabled,
+		VolumeType:                              masterConfig.OSDisk.ManagedDisk.StorageAccountType,
+		VolumeSize:                              masterConfig.OSDisk.DiskSizeGB,
+		ImageURL:                                sources.ImageURL,
+		ImageRelease:                            sources.ImageRelease,
+		Private:                                 sources.Publish == types.InternalPublishingStrategy,
+		ResourceGroupName:                       sources.ResourceGroupName,
+		BaseDomainResourceGroupName:             sources.BaseDomainResourceGroupName,
+		NetworkResourceGroupName:                masterConfig.NetworkResourceGroup,
+		VirtualNetwork:                          masterConfig.Vnet,
+		ControlPlaneSubnet:                      masterConfig.Subnet,
+		ComputeSubnet:                           workerConfig.Subnet,
+		PreexistingNetwork:                      sources.PreexistingNetwork,
+		BootstrapIgnitionStub:                   sources.BootstrapIgnStub,
+		BootstrapIgnitionURLPlaceholder:         sources.BootstrapIgnitionURLPlaceholder,
+		HyperVGeneration:                        sources.HyperVGeneration,
+		VMNetworkingType:                        masterConfig.AcceleratedNetworking,
+		RandomStringPrefix:                      randomStringPrefixFunction(),
+		VMArchitecture:                          vmarch,
+		ExtraTags:                               tags,
+		ManagedBy:                               sources.ManagedBy,
+		UseMarketplaceImage:                     osImage.Publisher != "",
+		MarketplaceImageHasPlan:                 masterConfig.Image.Type != machineapi.AzureImageTypeMarketplaceNoPlan,
+		OSImage:                                 osImage,
+		SecurityEncryptionType:                  string(masterConfig.OSDisk.ManagedDisk.SecurityProfile.SecurityEncryptionType),
+		SecureVirtualMachineDiskEncryptionSetID: masterConfig.OSDisk.ManagedDisk.SecurityProfile.DiskEncryptionSet.ID,
+		SecureBoot:                              secureBoot,
+		VirtualizedTrustedPlatformModule:        virtualizedTrustedPlatformModule,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
