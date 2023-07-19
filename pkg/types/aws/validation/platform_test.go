@@ -19,6 +19,7 @@ func TestValidatePlatform(t *testing.T) {
 		platform *aws.Platform
 		expected string
 		credMode types.CredentialsMode
+		publish  types.PublishingStrategy
 	}{
 		{
 			name: "minimal",
@@ -205,10 +206,84 @@ func TestValidatePlatform(t *testing.T) {
 			},
 			expected: `^test-path\.hostedZoneRole: Forbidden: when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified$`,
 		},
+		{
+			name: "valid userConfiguredDNSLB default",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS: "Disabled",
+				},
+			},
+		},
+		{
+			name: "UserDNS Enabled with valid LB Names",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS:      "Enabled",
+					APILBName:    "api-lb-name",
+					APIIntLBName: "api-int-lb-name",
+				},
+			},
+		},
+		{
+			name: "valid UserDNS but no LB Names",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS: "Enabled",
+				},
+			},
+			expected: `^test-path\.userConfiguredDNSLB: Invalid value: aws.UserConfiguredDNSLB{UserDNS:"Enabled", APILBName:"", APIIntLBName:""}: have to provide pre-created API and API-Int LB Names when user configured DNS is Enabled$`,
+		},
+		{
+			name: "invalid userDNS value",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS: "Test",
+				},
+			},
+			expected: `^test-path\.userConfiguredDNSLB: Invalid value: "Test": provided for userDNS$`,
+		},
+		{
+			name: "UserDNS Enabled with PublishingStrategy External",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS:      "Enabled",
+					APIIntLBName: "api-int-lb-name",
+				},
+			},
+			publish:  "External",
+			expected: `^test-path\.userConfiguredDNSLB: Required value: have to provide pre-created API LB Name when user configured DNS is Enabled and the publishing strategy is External$`,
+		},
+		{
+			name: "UserDNS Enabled with PublishingStrategy External",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS:      "Enabled",
+					APIIntLBName: "api-int-lb-name",
+				},
+			},
+			publish: "Internal",
+		},
+		{
+			name: "UserDNS Enabled with PublishingStrategy External",
+			platform: &aws.Platform{
+				Region: "us-east-1",
+				UserConfiguredDNSLB: aws.UserConfiguredDNSLB{
+					UserDNS:   "Enabled",
+					APILBName: "api-lb-name",
+				},
+			},
+			expected: `^test-path\.userConfiguredDNSLB: Required value: have to provide pre-created API-Int LB Name when user configured DNS is Enabled$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidatePlatform(tc.platform, tc.credMode, field.NewPath("test-path")).ToAggregate()
+			err := ValidatePlatform(tc.platform, tc.credMode, tc.publish, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
