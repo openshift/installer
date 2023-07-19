@@ -629,8 +629,16 @@ spec:
                                 gibibytes (GiB). Required
                               type: integer
                             type:
-                              description: Type defines the type of the volume. Required
+                              description: 'Type defines the type of the volume. Deprecated:
+                                Use Types instead.'
                               type: string
+                            types:
+                              description: Types is the list of the volume types of
+                                the root volumes. This is mutually exclusive with
+                                Type.
+                              items:
+                                type: string
+                              type: array
                             zones:
                               description: Zones is the list of availability zones
                                 where the root volumes should be deployed. If no zones
@@ -641,7 +649,7 @@ spec:
                               type: array
                           required:
                           - size
-                          - type
+                          - types
                           type: object
                         serverGroupPolicy:
                           description: ServerGroupPolicy will be used to create the
@@ -1381,8 +1389,15 @@ spec:
                               (GiB). Required
                             type: integer
                           type:
-                            description: Type defines the type of the volume. Required
+                            description: 'Type defines the type of the volume. Deprecated:
+                              Use Types instead.'
                             type: string
+                          types:
+                            description: Types is the list of the volume types of
+                              the root volumes. This is mutually exclusive with Type.
+                            items:
+                              type: string
+                            type: array
                           zones:
                             description: Zones is the list of availability zones where
                               the root volumes should be deployed. If no zones are
@@ -1393,7 +1408,7 @@ spec:
                             type: array
                         required:
                         - size
-                        - type
+                        - types
                         type: object
                       serverGroupPolicy:
                         description: ServerGroupPolicy will be used to create the
@@ -3152,8 +3167,15 @@ spec:
                               (GiB). Required
                             type: integer
                           type:
-                            description: Type defines the type of the volume. Required
+                            description: 'Type defines the type of the volume. Deprecated:
+                              Use Types instead.'
                             type: string
+                          types:
+                            description: Types is the list of the volume types of
+                              the root volumes. This is mutually exclusive with Type.
+                            items:
+                              type: string
+                            type: array
                           zones:
                             description: Zones is the list of availability zones where
                               the root volumes should be deployed. If no zones are
@@ -3164,7 +3186,7 @@ spec:
                             type: array
                         required:
                         - size
-                        - type
+                        - types
                         type: object
                       serverGroupPolicy:
                         description: ServerGroupPolicy will be used to create the

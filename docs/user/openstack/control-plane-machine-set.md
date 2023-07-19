@@ -322,3 +322,88 @@ spec:
 When reconciling the Machines, cluster-control-plane-machine-set-operator will match their spec against the template, after substituting `availabilityZone` and `rootVolume.availabilityZone` for each of them.
 
 The three Control plane Machines will all be provisioned on a different availability zone and have their `rootVolume` provisioned on a different availability zone.
+
+---
+
+## Example 5: three Compute availability zones, three Storage types
+
+The storage types apply to the root volume. The `providerSpec` must contain a `rootVolume` property.
+
+```yaml
+apiVersion: machine.openshift.io/v1
+kind: ControlPlaneMachineSet
+metadata:
+  creationTimestamp: null
+  labels:
+    machine.openshift.io/cluster-api-cluster: ocp1-2g2xs
+  name: cluster
+  namespace: openshift-machine-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-cluster: ocp1-2g2xs
+      machine.openshift.io/cluster-api-machine-role: master
+      machine.openshift.io/cluster-api-machine-type: master
+  state: Active
+  strategy: {}
+  template:
+    machineType: machines_v1beta1_machine_openshift_io
+    machines_v1beta1_machine_openshift_io:
+      failureDomains:
+        openstack:
+        - availabilityZone: nova-one
+          rootVolume:
+            volumeType: fastpool-1
+        - availabilityZone: nova-two
+          rootVolume:
+            volumeType: fastpool-2
+        - availabilityZone: nova-three
+          rootVolume:
+            volumeType: fastpool-3
+        platform: OpenStack
+      metadata:
+        labels:
+          machine.openshift.io/cluster-api-cluster: ocp1-2g2xs
+          machine.openshift.io/cluster-api-machine-role: master
+          machine.openshift.io/cluster-api-machine-type: master
+      spec:
+        lifecycleHooks: {}
+        metadata: {}
+        providerSpec:
+          value: # <-- The OpenStack providerSpec
+            apiVersion: machine.openshift.io/v1alpha1
+            cloudName: openstack
+            cloudsSecret:
+              name: openstack-cloud-credentials
+              namespace: openshift-machine-api
+            flavor: m1.xlarge
+            image: ocp1-2g2xs-rhcos
+            kind: OpenstackProviderSpec
+            metadata:
+              creationTimestamp: null
+            networks:
+            - filter: {}
+              subnets:
+              - filter:
+                  name: ocp1-2g2xs-nodes
+                  tags: openshiftClusterID=ocp1-2g2xs
+            rootVolume:
+              diskSize: 30
+            securityGroups:
+            - filter: {}
+              name: ocp1-2g2xs-master
+            serverGroupName: ocp1-2g2xs-master
+            serverMetadata:
+              Name: ocp1-2g2xs-master
+              openshiftClusterID: ocp1-2g2xs
+            tags:
+            - openshiftClusterID=ocp1-2g2xs
+            trunk: true
+            userDataSecret:
+              name: master-user-data
+```
+
+When reconciling the Machines, cluster-control-plane-machine-set-operator will match their spec against the template, after substituting `availabilityZone` and `rootVolume.volumeType` for each of them.
+
+The three Control plane Machines will all be provisioned on a different availability zone and have their `rootVolume` provisioned with a different volume type.

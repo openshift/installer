@@ -57,7 +57,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	for idx := int64(0); idx < total; idx++ {
 		failureDomain := failureDomains[uint(idx)%uint(len(failureDomains))]
 
-		provider, err := generateProvider(
+		providerSpec := generateProviderSpec(
 			clusterID,
 			platform,
 			mpool,
@@ -67,9 +67,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			trunkSupport,
 			failureDomain,
 		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to generate the Machine providerSpec for replica %d: %w", idx, err)
-		}
+
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
@@ -86,7 +84,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			Spec: machineapi.MachineSpec{
 				ProviderSpec: machineapi.ProviderSpec{
-					Value: &runtime.RawExtension{Object: provider},
+					Value: &runtime.RawExtension{Object: providerSpec},
 				},
 				// we don't need to set Versions, because we control those via operators.
 			},
@@ -94,7 +92,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		machines = append(machines, machine)
 	}
 
-	machineSetProvider, err := generateProvider(
+	machineSetProviderSpec := generateProviderSpec(
 		clusterID,
 		platform,
 		mpool,
@@ -104,9 +102,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		trunkSupport,
 		machinev1.OpenStackFailureDomain{RootVolume: &machinev1.RootVolume{}},
 	)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate the CPMS providerSpec: %w", err)
-	}
 
 	replicas := int32(total)
 
@@ -144,7 +139,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 					},
 					Spec: machineapi.MachineSpec{
 						ProviderSpec: machineapi.ProviderSpec{
-							Value: &runtime.RawExtension{Object: machineSetProvider},
+							Value: &runtime.RawExtension{Object: machineSetProviderSpec},
 						},
 					},
 				},
@@ -161,7 +156,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func generateProvider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) (*machinev1alpha1.OpenstackProviderSpec, error) {
+func generateProviderSpec(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, role, userDataSecret string, trunkSupport bool, failureDomain machinev1.OpenStackFailureDomain) *machinev1alpha1.OpenstackProviderSpec {
 	var controlPlaneNetwork machinev1alpha1.NetworkParam
 	additionalNetworks := make([]machinev1alpha1.NetworkParam, 0, len(mpool.AdditionalNetworkIDs))
 	primarySubnet := ""
@@ -253,13 +248,13 @@ func generateProvider(clusterID string, platform *openstack.Platform, mpool *ope
 		spec.RootVolume = &machinev1alpha1.RootVolume{
 			Size:       mpool.RootVolume.Size,
 			SourceUUID: osImage,
-			VolumeType: mpool.RootVolume.Type,
+			VolumeType: failureDomain.RootVolume.VolumeType,
 			Zone:       failureDomain.RootVolume.AvailabilityZone,
 		}
 	} else {
 		spec.Image = osImage
 	}
-	return &spec, nil
+	return &spec
 }
 
 // failureDomainIsEmpty returns true if the failure domain only contains nil or
@@ -269,7 +264,7 @@ func failureDomainIsEmpty(failureDomain machinev1.OpenStackFailureDomain) bool {
 		if failureDomain.RootVolume == nil {
 			return true
 		}
-		if failureDomain.RootVolume.AvailabilityZone == "" {
+		if failureDomain.RootVolume.AvailabilityZone == "" && failureDomain.RootVolume.VolumeType == "" {
 			return true
 		}
 	}
@@ -291,29 +286,32 @@ func pruneFailureDomains(failureDomains []machinev1.OpenStackFailureDomain) []ma
 // domain slice is guaranteed to have at least one element.
 func failureDomainsFromSpec(mpool openstack.MachinePool) []machinev1.OpenStackFailureDomain {
 	var numberOfFailureDomains int
-	{
-		numberOfFailureDomains = len(mpool.Zones)
-
-		if mpool.RootVolume != nil {
-			// At this point, after validation, there can't be a
-			// number of Compute zones different from the nunmber
-			// of Root volumes zones. However, we want to consider
-			// the case where one of them is left as its default
-			// (length zero), or is set to one value (length one).
-			//
-			// As a consequence, one of these is true:
-			//
-			// * there are as many Compute zones as Root volumes zones
-			// * there are zero or one Compute zones
-			// * there are zero or one Root volumes zones
-			if computes, volumes := len(mpool.Zones), len(mpool.RootVolume.Zones); computes > 1 && volumes > 1 && computes != volumes {
-				panic("Compute and Storage availability zones in the machine-pool should have been validated to have equal length")
-			}
-
-			if volumes := len(mpool.RootVolume.Zones); volumes > numberOfFailureDomains {
-				numberOfFailureDomains = volumes
+	if mpool.RootVolume != nil {
+		// At this point, after validation, compute availability zones,
+		// storage avalability zones and root volume types must all be
+		// equal in number. However, we want to accept case where any
+		// of them has zero or one value (which means: apply the same
+		// value to all failure domains).
+		var (
+			highestCardinality      int
+			highestCardinalityField string
+		)
+		for field, cardinality := range map[string]int{
+			"compute availability zones": len(mpool.Zones),
+			"storage availability zones": len(mpool.RootVolume.Zones),
+			"root volume types":          len(mpool.RootVolume.Types),
+		} {
+			if cardinality > 1 {
+				if highestCardinality > 1 && cardinality != highestCardinality {
+					panic(highestCardinalityField + " and " + field + " should have equal length")
+				}
+				highestCardinality = cardinality
+				highestCardinalityField = field
 			}
 		}
+		numberOfFailureDomains = highestCardinality
+	} else {
+		numberOfFailureDomains = len(mpool.Zones)
 	}
 
 	// No failure domain is exactly like one failure domain with the default values.
@@ -347,6 +345,15 @@ func failureDomainsFromSpec(mpool openstack.MachinePool) []machinev1.OpenStackFa
 				failureDomains[i].RootVolume = &machinev1.RootVolume{
 					AvailabilityZone: mpool.RootVolume.Zones[i],
 				}
+			}
+
+			switch len(mpool.RootVolume.Types) {
+			case 0:
+				panic("Root volume types should have been validated to have at least one element")
+			case 1:
+				failureDomains[i].RootVolume.VolumeType = mpool.RootVolume.Types[0]
+			default:
+				failureDomains[i].RootVolume.VolumeType = mpool.RootVolume.Types[i]
 			}
 		}
 	}

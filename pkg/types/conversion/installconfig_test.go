@@ -394,6 +394,39 @@ func TestConvertInstallConfig(t *testing.T) {
 			expectedError: "cannot specify computeFlavor and type in defaultMachinePlatform together",
 		},
 		{
+			name: "deprecated OpenStack controlPlane with type in rootVolume",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{OpenStack: &openstack.Platform{}},
+				ControlPlane: &types.MachinePool{
+					Platform: types.MachinePoolPlatform{
+						OpenStack: &openstack.MachinePool{
+							RootVolume: &openstack.RootVolume{
+								DeprecatedType: "fast",
+							},
+						},
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{OpenStack: &openstack.Platform{}},
+				ControlPlane: &types.MachinePool{
+					Platform: types.MachinePoolPlatform{
+						OpenStack: &openstack.MachinePool{
+							RootVolume: &openstack.RootVolume{
+								Types: []string{"fast"},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "openstack deprecated apiVIP",
 			config: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{

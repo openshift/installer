@@ -2,6 +2,7 @@ package openstack
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -16,7 +17,21 @@ func mpWithZones(zones ...string) func(*openstack.MachinePool) {
 
 func mpWithRootVolumeZones(zones ...string) func(*openstack.MachinePool) {
 	return func(mpool *openstack.MachinePool) {
-		mpool.RootVolume = &openstack.RootVolume{Zones: zones}
+		if mpool.RootVolume != nil {
+			mpool.RootVolume.Zones = zones
+		} else {
+			mpool.RootVolume = &openstack.RootVolume{Zones: zones}
+		}
+	}
+}
+
+func mpWithRootVolumeTypes(types ...string) func(*openstack.MachinePool) {
+	return func(mpool *openstack.MachinePool) {
+		if mpool.RootVolume != nil {
+			mpool.RootVolume.Types = types
+		} else {
+			mpool.RootVolume = &openstack.RootVolume{Types: types}
+		}
 	}
 }
 
@@ -31,6 +46,15 @@ func generateMachinePool(options ...func(*openstack.MachinePool)) openstack.Mach
 func TestFailureDomains(t *testing.T) {
 	type checkFunc func([]machinev1.OpenStackFailureDomain, error) error
 	check := func(fns ...checkFunc) []checkFunc { return fns }
+
+	hasNFailureDomains := func(want int) checkFunc {
+		return func(fds []machinev1.OpenStackFailureDomain, _ error) error {
+			if have := len(fds); want != have {
+				return fmt.Errorf("expected %d failure domains, got %d", want, have)
+			}
+			return nil
+		}
+	}
 
 	hasComputeZones := func(wantZones ...string) checkFunc {
 		return func(fds []machinev1.OpenStackFailureDomain, _ error) error {
@@ -86,6 +110,30 @@ func TestFailureDomains(t *testing.T) {
 		}
 	}
 
+	hasRootVolumeTypes := func(wantTypes ...string) checkFunc {
+		return func(fds []machinev1.OpenStackFailureDomain, _ error) error {
+			haveTypes := make([]string, len(fds))
+			for i := range fds {
+				if fds[i].RootVolume == nil {
+					return fmt.Errorf("failure domain %d has unexpectedly nil RootVolume", i)
+				}
+				haveTypes[i] = fds[i].RootVolume.VolumeType
+			}
+
+			if wantLen, haveLen := len(wantTypes), len(haveTypes); wantLen != haveLen {
+				return fmt.Errorf("expected root volume types %v, got %v", wantTypes, haveTypes)
+			}
+
+			for i := range fds {
+				if want, have := wantTypes[i], haveTypes[i]; want != have {
+					return fmt.Errorf("expected root volume types %v, got %v", wantTypes, haveTypes)
+				}
+			}
+
+			return nil
+		}
+	}
+
 	doesNotPanic := func(_ []machinev1.OpenStackFailureDomain, have error) error {
 		if have != nil {
 			return fmt.Errorf("unexpected panic: %w", have)
@@ -98,7 +146,7 @@ func TestFailureDomains(t *testing.T) {
 			if have == nil {
 				return fmt.Errorf("unexpectedly, didn't panic")
 			}
-			if have := fmt.Sprintf("%v", have); want != have {
+			if have := fmt.Sprintf("%v", have); !strings.Contains(have, want) {
 				return fmt.Errorf("expected panic with %q, got %q", want, have)
 			}
 			return nil
@@ -114,6 +162,7 @@ func TestFailureDomains(t *testing.T) {
 			"no_zones",
 			generateMachinePool(),
 			check(
+				hasNFailureDomains(1),
 				hasComputeZones(""),
 				hasNilRootVolume,
 				doesNotPanic,
@@ -125,6 +174,7 @@ func TestFailureDomains(t *testing.T) {
 				mpWithZones("one"),
 			),
 			check(
+				hasNFailureDomains(1),
 				hasComputeZones("one"),
 				hasNilRootVolume,
 				doesNotPanic,
@@ -136,6 +186,7 @@ func TestFailureDomains(t *testing.T) {
 				mpWithZones("one", "two", "three"),
 			),
 			check(
+				hasNFailureDomains(3),
 				hasComputeZones("one", "two", "three"),
 				hasNilRootVolume,
 				doesNotPanic,
@@ -146,10 +197,13 @@ func TestFailureDomains(t *testing.T) {
 			generateMachinePool(
 				mpWithZones("one", "two", "three"),
 				mpWithRootVolumeZones("volume_one"),
+				mpWithRootVolumeTypes("type-1"),
 			),
 			check(
+				hasNFailureDomains(3),
 				hasComputeZones("one", "two", "three"),
 				hasRootVolumeZones("volume_one", "volume_one", "volume_one"),
+				hasRootVolumeTypes("type-1", "type-1", "type-1"),
 				doesNotPanic,
 			),
 		},
@@ -158,22 +212,13 @@ func TestFailureDomains(t *testing.T) {
 			generateMachinePool(
 				mpWithZones("one"),
 				mpWithRootVolumeZones("volume_one", "volume_two", "volume_three"),
+				mpWithRootVolumeTypes("type-1"),
 			),
 			check(
+				hasNFailureDomains(3),
 				hasComputeZones("one", "one", "one"),
 				hasRootVolumeZones("volume_one", "volume_two", "volume_three"),
-				doesNotPanic,
-			),
-		},
-		{
-			"three_compute_zone_three_root_volume_zones",
-			generateMachinePool(
-				mpWithZones("one", "two", "three"),
-				mpWithRootVolumeZones("volume_one", "volume_two", "volume_three"),
-			),
-			check(
-				hasComputeZones("one", "two", "three"),
-				hasRootVolumeZones("volume_one", "volume_two", "volume_three"),
+				hasRootVolumeTypes("type-1", "type-1", "type-1"),
 				doesNotPanic,
 			),
 		},
@@ -184,7 +229,38 @@ func TestFailureDomains(t *testing.T) {
 				mpWithRootVolumeZones("volume_one", "volume_two"),
 			),
 			check(
-				panicsWith("Compute and Storage availability zones in the machine-pool should have been validated to have equal length"),
+				// We have to check for a partial result here, because the mapping
+				// of compute zones to root volume zones is handled in a map therefore
+				// the order is not deterministic.
+				panicsWith("availability zones should have equal length"),
+			),
+		},
+		{
+			"three_compute_zones_three_root_volume_types",
+			generateMachinePool(
+				mpWithZones("one", "two", "three"),
+				mpWithRootVolumeZones("volume_one", "volume_two", "volume_three"),
+				mpWithRootVolumeTypes("type-1", "type-2", "type-3"),
+			),
+			check(
+				hasNFailureDomains(3),
+				hasComputeZones("one", "two", "three"),
+				hasRootVolumeZones("volume_one", "volume_two", "volume_three"),
+				hasRootVolumeTypes("type-1", "type-2", "type-3"),
+				doesNotPanic,
+			),
+		},
+		{
+			"three_root_volume_types",
+			generateMachinePool(
+				mpWithRootVolumeTypes("type-1", "type-2", "type-3"),
+			),
+			check(
+				hasNFailureDomains(3),
+				hasComputeZones("", "", ""),
+				hasRootVolumeZones("", "", ""),
+				hasRootVolumeTypes("type-1", "type-2", "type-3"),
+				doesNotPanic,
 			),
 		},
 	} {

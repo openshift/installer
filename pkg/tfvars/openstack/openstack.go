@@ -120,6 +120,14 @@ func TFVars(
 		}
 	}
 
+	// storageVolumeTypes is a slice where each index targets a master.
+	storageVolumeTypes := make([]string, len(masterSpecs))
+	for i := range storageVolumeTypes {
+		if masterSpecs[i].RootVolume != nil {
+			storageVolumeTypes[i] = masterSpecs[i].RootVolume.VolumeType
+		}
+	}
+
 	// Normally baseImage contains a URL that we will use to create a new Glance image, but for testing
 	// purposes we also allow to set a custom Glance image name to skip the uploading. Here we check
 	// whether baseImage is a URL or not. If this is the first case, it means that the image should be
@@ -149,10 +157,8 @@ func TFVars(
 	}
 
 	var rootVolumeSize int
-	var rootVolumeType string
 	if rootVolume := masterSpecs[0].RootVolume; rootVolume != nil {
 		rootVolumeSize = rootVolume.Size
-		rootVolumeType = rootVolume.VolumeType
 	}
 
 	masterServerGroupPolicy := getServerGroupPolicy(mastermpool, defaultmpool, types_openstack.SGPolicySoftAntiAffinity)
@@ -237,7 +243,6 @@ func TFVars(
 		TrunkSupport                      bool                              `json:"openstack_trunk_support,omitempty"`
 		OctaviaSupport                    bool                              `json:"openstack_octavia_support,omitempty"`
 		RootVolumeSize                    int                               `json:"openstack_master_root_volume_size,omitempty"`
-		RootVolumeType                    string                            `json:"openstack_master_root_volume_type,omitempty"`
 		BootstrapShim                     string                            `json:"openstack_bootstrap_shim_ignition,omitempty"`
 		ExternalDNS                       []string                          `json:"openstack_external_dns,omitempty"`
 		MasterServerGroupName             string                            `json:"openstack_master_server_group_name,omitempty"`
@@ -251,6 +256,7 @@ func TFVars(
 		MachinesPorts                     []*terraformPort                  `json:"openstack_machines_ports"`
 		MasterAvailabilityZones           []string                          `json:"openstack_master_availability_zones,omitempty"`
 		MasterRootVolumeAvailabilityZones []string                          `json:"openstack_master_root_volume_availability_zones,omitempty"`
+		MasterRootVolumeTypes             []string                          `json:"openstack_master_root_volume_types,omitempty"`
 		UserManagedLoadBalancer           bool                              `json:"openstack_user_managed_load_balancer"`
 	}{
 		BaseImageName:                     imageName,
@@ -264,7 +270,6 @@ func TFVars(
 		TrunkSupport:                      masterSpecs[0].Trunk,
 		OctaviaSupport:                    octaviaSupport,
 		RootVolumeSize:                    rootVolumeSize,
-		RootVolumeType:                    rootVolumeType,
 		BootstrapShim:                     bootstrapShim,
 		ExternalDNS:                       installConfig.Config.Platform.OpenStack.ExternalDNS,
 		MasterServerGroupName:             masterServerGroupName,
@@ -278,6 +283,7 @@ func TFVars(
 		MachinesPorts:                     machinesPorts,
 		MasterAvailabilityZones:           computeAvailabilityZones,
 		MasterRootVolumeAvailabilityZones: storageAvailabilityZones,
+		MasterRootVolumeTypes:             storageVolumeTypes,
 		UserManagedLoadBalancer:           userManagedLoadBalancer,
 	}, "", "  ")
 }
