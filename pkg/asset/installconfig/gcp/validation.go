@@ -111,6 +111,14 @@ func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.Er
 	return allErrs
 }
 
+// DefaultInstanceTypeForArch returns the appropriate instance type based on the target architecture.
+func DefaultInstanceTypeForArch(arch types.Architecture) string {
+	if arch == types.ArchitectureARM64 {
+		return "t2a-standard-4"
+	}
+	return "n2-standard-4"
+}
+
 // validateInstanceTypes checks that the user-provided instance types are valid.
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
