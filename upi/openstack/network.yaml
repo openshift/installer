@@ -24,8 +24,8 @@
       name: "{{ os_subnet }}"
       network_name: "{{ os_network }}"
       cidr: "{{ os_subnet_range }}"
-      allocation_pool_start: "{{ os_subnet_range | next_nth_usable(10) }}"
-      allocation_pool_end: "{{ os_subnet_range | ipaddr('last_usable') }}"
+      allocation_pool_start: "{{ os_subnet_range | ansible.utils.next_nth_usable(10) }}"
+      allocation_pool_end: "{{ os_subnet_range | ansible.utils.ipaddr('last_usable') }}"
       dns_nameservers: "{{ os_external_dns }}"
 
   - name: 'Set tags on  primary cluster subnet'
@@ -45,9 +45,9 @@
   - name: 'Computing facts for service subnet'
     set_fact:
       first_ip_svc_subnet_range: "{{ svc_subnet_range | ipv4('network') }}"
-      last_ip_svc_subnet_range: "{{ svc_subnet_range | ipaddr('last_usable') |ipmath(1) }}"
+      last_ip_svc_subnet_range: "{{ svc_subnet_range | ansible.utils.ipaddr('last_usable') |ipmath(1) }}"
       first_ip_os_svc_network_range: "{{ os_svc_network_range | ipv4('network') }}"
-      last_ip_os_svc_network_range: "{{ os_svc_network_range | ipaddr('last_usable') |ipmath(1) }}"
+      last_ip_os_svc_network_range: "{{ os_svc_network_range | ansible.utils.ipaddr('last_usable') |ipmath(1) }}"
       allocation_pool: ""
     when: os_networking_type == "Kuryr"
 
