@@ -142,28 +142,55 @@ func TestValidateMachinePool(t *testing.T) {
 }
 
 func Test_ValdidateSecurityGroups(t *testing.T) {
+	maxSecurityGroups := make([]string, 0, maxSecurityGroupsCount)
+	for i := 0; i < maxSecurityGroupsCount; i++ {
+		maxSecurityGroups = append(maxSecurityGroups, fmt.Sprintf("sg-valid-%d", i))
+	}
 	cases := []struct {
 		name     string
 		platform *aws.Platform
 		pool     *aws.MachinePool
 		err      string
-	}{{
-		name: "valid security group config",
-		platform: &aws.Platform{
-			Region:  "us-east-1",
-			Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
-		},
-		pool: &aws.MachinePool{
-			AdditionalSecurityGroupIDs: []string{
-				"sg-valid-security-group",
+	}{
+		{
+			name: "valid security group config",
+			platform: &aws.Platform{
+				Region:  "us-east-1",
+				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+			},
+			pool: &aws.MachinePool{
+				AdditionalSecurityGroupIDs: []string{
+					"sg-valid-security-group",
+				},
 			},
 		},
-	}, {
-		name:     "invalid security group config",
-		platform: &aws.Platform{Region: "us-east-1"},
-		pool:     &aws.MachinePool{AdditionalSecurityGroupIDs: []string{"sg-valid-security-group"}},
-		err:      "test-path.platform.subnets: Required value: subnets must be provided when additional security groups are present",
-	},
+		{
+			name:     "invalid security group config",
+			platform: &aws.Platform{Region: "us-east-1"},
+			pool:     &aws.MachinePool{AdditionalSecurityGroupIDs: []string{"sg-valid-security-group"}},
+			err:      "test-path.platform.subnets: Required value: subnets must be provided when additional security groups are present",
+		},
+		{
+			name: "invalid security group config exceeds maximum",
+			platform: &aws.Platform{
+				Region:  "us-east-1",
+				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+			},
+			pool: &aws.MachinePool{
+				AdditionalSecurityGroupIDs: maxSecurityGroups,
+			},
+			err: "test-path: Too many: 16: must have at most 15 items",
+		},
+		{
+			name: "valid maximum security group config",
+			platform: &aws.Platform{
+				Region:  "us-east-1",
+				Subnets: []string{"valid-subnet-1", "valid-subnet-2"},
+			},
+			pool: &aws.MachinePool{
+				AdditionalSecurityGroupIDs: maxSecurityGroups[:maxSecurityGroupsCount-1],
+			},
+		},
 	}
 
 	for _, tc := range cases {
