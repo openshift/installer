@@ -124,13 +124,24 @@ func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 	}
 }
 
-func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
-	return gcptypes.MachinePool{
-		InstanceType: "n2-standard-4",
-		OSDisk: gcptypes.OSDisk{
-			DiskSizeGB: powerOfTwoRootVolumeSize,
-			DiskType:   "pd-ssd",
-		},
+func defaultGCPMachinePoolPlatform(arch types.Architecture) gcptypes.MachinePool {
+	switch arch {
+	case types.ArchitectureARM64:
+		return gcptypes.MachinePool{
+			InstanceType: "t2a-standard-4",
+			OSDisk: gcptypes.OSDisk{
+				DiskSizeGB: powerOfTwoRootVolumeSize,
+				DiskType:   "pd-ssd",
+			},
+		}
+	default:
+		return gcptypes.MachinePool{
+			InstanceType: "n2-standard-4",
+			OSDisk: gcptypes.OSDisk{
+				DiskSizeGB: powerOfTwoRootVolumeSize,
+				DiskType:   "pd-ssd",
+			},
+		}
 	}
 }
 
@@ -498,7 +509,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				machineSets = append(machineSets, set)
 			}
 		case gcptypes.Name:
-			mpool := defaultGCPMachinePoolPlatform()
+			mpool := defaultGCPMachinePoolPlatform(pool.Architecture)
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.GCP)
 			if len(mpool.Zones) == 0 {
