@@ -294,6 +294,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			return err
 		}
 
+		var securityGroups []string
+		if mp := installConfig.Config.ControlPlane; mp != nil {
+			if mp.Platform.AWS != nil {
+				securityGroups = append(securityGroups, mp.Platform.AWS.AdditionalSecurityGroupIDs...)
+			}
+		}
+
 		data, err := awstfvars.TFVars(awstfvars.TFVarsSources{
 			VPC:                       vpc,
 			PrivateSubnets:            privateSubnets,
@@ -315,6 +322,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Architecture:              installConfig.Config.ControlPlane.Architecture,
 			Proxy:                     installConfig.Config.Proxy,
 			PreserveBootstrapIgnition: installConfig.Config.AWS.PreserveBootstrapIgnition,
+			MasterSecurityGroups:      securityGroups,
 		})
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
