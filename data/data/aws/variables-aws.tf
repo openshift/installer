@@ -202,6 +202,6 @@ variable "aws_worker_iam_role_name" {
 }
 
 variable "aws_preserve_bootstrap_ignition" {
-  type = bool
+  type        = bool
   description = "The variable that needs to be set to avoid destuction of S3 objects during bootstrap destroy."
 }

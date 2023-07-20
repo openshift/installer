@@ -2024,6 +2024,11 @@ spec:
                       \n If this field is not set explicitly, it defaults to \"Classic\".
                       \ This default is subject to change over time."
                     type: string
+                  preserveBootstrapIgnition:
+                    description: PreserveBootstrapIgnition is an optional field that
+                      can be used to make the S3 deletion optional during bootstrap
+                      destroy.
+                    type: boolean
                   propagateUserTags:
                     description: PropagateUserTags is a flag that directs in-cluster
                       operators to include the specified user tags in the tags of

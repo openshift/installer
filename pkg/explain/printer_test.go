@@ -173,6 +173,9 @@ func Test_PrintFields(t *testing.T) {
  * "NLB": A Network Load Balancer that makes routing decisions at the transport layer (TCP/SSL). See the following for additional details: https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb 
  If this field is not set explicitly, it defaults to "Classic".  This default is subject to change over time.
 
+    preserveBootstrapIgnition <boolean>
+      PreserveBootstrapIgnition is an optional field that can be used to make the S3 deletion optional during bootstrap destroy.
+
     propagateUserTags <boolean>
       PropagateUserTags is a flag that directs in-cluster operators to include the specified user tags in the tags of the AWS resources that the operators create.
 
