@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2020 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2023 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import (
 	"github.com/vmware/govmomi/list"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/property"
+	"github.com/vmware/govmomi/view"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/mo"
 	"github.com/vmware/govmomi/vim25/types"
@@ -783,12 +784,29 @@ func (f *Finder) NetworkList(ctx context.Context, path string) ([]object.Network
 	}
 
 	if len(ns) == 0 {
+		net, nerr := f.networkByID(ctx, path)
+		if nerr == nil {
+			return []object.NetworkReference{net}, nil
+		}
+
 		return nil, &NotFoundError{"network", path}
 	}
 
 	return ns, nil
 }
 
+// Network finds a NetworkReference using a Name, Inventory Path, ManagedObject ID, Logical Switch UUID or Segment ID.
+// With standard vSphere networking, Portgroups cannot have the same name within the same network folder.
+// With NSX, Portgroups can have the same name, even within the same Switch. In this case, using an inventory path
+// results in a MultipleFoundError. A MOID, switch UUID or segment ID can be used instead, as both are unique.
+// See also: https://kb.vmware.com/s/article/79872#Duplicate_names
+// Examples:
+// - Name:                "dvpg-1"
+// - Inventory Path:      "vds-1/dvpg-1"
+// - Cluster Path:        "/dc-1/host/cluster-1/dvpg-1"
+// - ManagedObject ID:    "DistributedVirtualPortgroup:dvportgroup-53"
+// - Logical Switch UUID: "da2a59b8-2450-4cb2-b5cc-79c4c1d2144c"
+// - Segment ID:          "/infra/segments/vnet_ce50e69b-1784-4a14-9206-ffd7f1f146f7"
 func (f *Finder) Network(ctx context.Context, path string) (object.NetworkReference, error) {
 	networks, err := f.NetworkList(ctx, path)
 	if err != nil {
@@ -800,6 +818,41 @@ func (f *Finder) Network(ctx context.Context, path string) (object.NetworkRefere
 	}
 
 	return networks[0], nil
+}
+
+func (f *Finder) networkByID(ctx context.Context, path string) (object.NetworkReference, error) {
+	if ref := object.ReferenceFromString(path); ref != nil {
+		// This is a MOID
+		return object.NewReference(f.client, *ref).(object.NetworkReference), nil
+	}
+
+	kind := []string{"DistributedVirtualPortgroup"}
+
+	m := view.NewManager(f.client)
+	v, err := m.CreateContainerView(ctx, f.client.ServiceContent.RootFolder, kind, true)
+	if err != nil {
+		return nil, err
+	}
+	defer v.Destroy(ctx)
+
+	filter := property.Filter{
+		"config.logicalSwitchUuid": path,
+		"config.segmentId":         path,
+	}
+
+	refs, err := v.FindAny(ctx, kind, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(refs) == 0 {
+		return nil, &NotFoundError{"network", path}
+	}
+	if len(refs) > 1 {
+		return nil, &MultipleFoundError{"network", path}
+	}
+
+	return object.NewReference(f.client, refs[0]).(object.NetworkReference), nil
 }
 
 func (f *Finder) DefaultNetwork(ctx context.Context) (object.NetworkReference, error) {

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -23,6 +26,7 @@ var dvsVersions = []string{
 	"7.0.0",
 	"7.0.2",
 	"7.0.3",
+	"8.0.0",
 }
 
 // dvsFromUUID gets a DVS object from its UUID.

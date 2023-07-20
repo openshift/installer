@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package virtualmachine
 
 import (
@@ -172,7 +175,7 @@ func virtualMachineFromSearchIndex(ctx context.Context, client *govmomi.Client, 
 	return result, nil
 }
 
-// virtualMachineFromContainerView is a compatability method that is
+// virtualMachineFromContainerView is a compatibility method that is
 // used when the version of vSphere is too old to support using SearchIndex's
 // FindByUuid method correctly. This is mainly to facilitate the ability to use
 // FromUUID to find both templates in addition to virtual machines, which
@@ -826,15 +829,15 @@ func MoveToFolder(client *govmomi.Client, vm *object.VirtualMachine, relative st
 
 // Reconfigure wraps the Reconfigure task and the subsequent waiting for
 // the task to complete.
-func Reconfigure(vm *object.VirtualMachine, spec types.VirtualMachineConfigSpec) error {
+func Reconfigure(vm *object.VirtualMachine, spec types.VirtualMachineConfigSpec, timeout time.Duration) error {
 	log.Printf("[DEBUG] Reconfiguring virtual machine %q", vm.InventoryPath)
-	ctx, cancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	task, err := vm.Reconfigure(ctx, spec)
 	if err != nil {
 		return err
 	}
-	tctx, tcancel := context.WithTimeout(context.Background(), provider.DefaultAPITimeout)
+	tctx, tcancel := context.WithTimeout(context.Background(), timeout)
 	defer tcancel()
 	return task.Wait(tctx)
 }

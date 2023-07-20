@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -37,7 +40,7 @@ func dataSourceVSphereDynamic() *schema.Resource {
 }
 
 func dataSourceVSphereDynamicRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] dataSourceDynamic: Beggining dynamic data source read.")
+	log.Printf("[DEBUG] dataSourceDynamic: Beginning dynamic data source read.")
 	tm, err := meta.(*Client).TagsManager()
 	if err != nil {
 		return err

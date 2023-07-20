@@ -1,8 +1,13 @@
+# Copyright (c) HashiCorp, Inc.
+# SPDX-License-Identifier: MPL-2.0
+
 archives:
   - format: zip
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
 builds:
-  - env:
+  - # Special binary naming is only necessary for Terraform CLI 0.12
+    binary: '{{ .ProjectName }}_v{{ .Version }}_x5'
+    env:
       - CGO_ENABLED=0
     flags:
       - -trimpath
@@ -33,17 +38,17 @@ checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_SHA256SUMS'
   algorithm: sha256
 publishers:
-  - name: hc-releases
+  - name: upload
     checksum: true
     extra_files:
       - glob: 'terraform-registry-manifest.json'
         name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
     signature: true
-    cmd: hc-releases upload-file {{ abs .ArtifactPath }}
     env:
-      - AWS_ACCESS_KEY_ID={{ .Env.AWS_ACCESS_KEY_ID }}
-      - AWS_SECRET_ACCESS_KEY={{ .Env.AWS_SECRET_ACCESS_KEY }}
-      - AWS_SESSION_TOKEN={{ .Env.AWS_SESSION_TOKEN }}
+      - HC_RELEASES_HOST={{ .Env.HC_RELEASES_HOST }}
+      - HC_RELEASES_KEY={{ .Env.HC_RELEASES_KEY }}
+    cmd: |
+      hc-releases upload -product {{ .ProjectName }} -version {{ .Version }} -file={{ .ArtifactPath }}={{ .ArtifactName }} -header="x-terraform-protocol-version=5.0" -header="x-terraform-protocol-versions=5.0"
 release:
   extra_files:
     - glob: 'terraform-registry-manifest.json'
