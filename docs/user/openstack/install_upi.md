@@ -461,10 +461,10 @@ $ tree
 ### Remove Machines and MachineSets
 
 Remove the control-plane Machines and compute MachineSets, because we'll be providing those ourselves and don't want to involve the
-[machine-API operator][mao]:
+[machine-API operator][mao] and [cluster-control-plane-machine-set operator][ccpmso]:
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```sh
-$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml
+$ rm -f openshift/99_openshift-cluster-api_master-machines-*.yaml openshift/99_openshift-cluster-api_worker-machineset-*.yaml openshift/99_openshift-machine-api_master-control-plane-machine-set.yaml
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 Leave the compute MachineSets in if you want to create compute machines via the machine API. However, some references must be updated in the machineset spec (`openshift/99_openshift-cluster-api_worker-machineset-0.yaml`) to match your environment:
@@ -472,6 +472,7 @@ Leave the compute MachineSets in if you want to create compute machines via the 
 * The OS image: `spec.template.spec.providerSpec.value.image`
 
 [mao]: https://github.com/openshift/machine-api-operator
+[ccpmso]: https://github.com/openshift/cluster-control-plane-machine-set-operator
 
 ### Make control-plane nodes unschedulable
 
