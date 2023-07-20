@@ -44,6 +44,10 @@ func TestGetDiskLimit(t *testing.T) {
 			url:      "https://www.googleapis.com/compute/v1/projects/ci-op-lk2ifbjc/zones/us-central1-a/diskTypes/pd-ssd",
 			expected: "ssd_total_storage",
 		},
+		{
+			url:      "https://www.googleapis.com/compute/v1/projects/ci-op-lk2ifbjc/zones/us-central1-a/diskTypes/pd-balanced",
+			expected: "ssd_total_storage",
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.url, func(t *testing.T) {

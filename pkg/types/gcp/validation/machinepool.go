@@ -30,7 +30,7 @@ func ValidateMachinePool(platform *gcp.Platform, p *gcp.MachinePool, fldPath *fi
 	}
 
 	if p.OSDisk.DiskType != "" {
-		diskTypes := sets.NewString("pd-standard", "pd-ssd")
+		diskTypes := sets.NewString("pd-balanced", "pd-ssd", "pd-standard")
 		if !diskTypes.Has(p.OSDisk.DiskType) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.OSDisk.DiskType, diskTypes.List()))
 		}
@@ -69,11 +69,12 @@ func ValidateServiceAccount(platform *gcp.Platform, p *types.MachinePool, fldPat
 // ValidateMasterDiskType checks that the specified disk type is valid for control plane.
 func ValidateMasterDiskType(p *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-
-	if p.Name == "master" && p.Platform.GCP.OSDisk.DiskType == "pd-standard" {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskType"), p.Platform.GCP.OSDisk.DiskType, fmt.Sprintf("%s not compatible with control planes.", p.Platform.GCP.OSDisk.DiskType)))
+	if p.Name == "master" && p.Platform.GCP.OSDisk.DiskType != "" {
+		diskTypes := sets.NewString("pd-ssd")
+		if !diskTypes.Has(p.Platform.GCP.OSDisk.DiskType) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("diskType"), p.Platform.GCP.OSDisk.DiskType, diskTypes.List()))
+		}
 	}
-
 	return allErrs
 }
 
