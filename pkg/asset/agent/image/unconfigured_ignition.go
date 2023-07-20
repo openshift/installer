@@ -27,11 +27,11 @@ const (
 func GetConfigImageFiles() []string {
 	return []string{
 		"/etc/assisted/manifests/pull-secret.yaml", //nolint:gosec // not hardcoded credentials
-		"/etc/assisted/manifests/nmstateconfig.yaml",
 		"/etc/assisted/manifests/cluster-deployment.yaml",
 		"/etc/assisted/manifests/cluster-image-set.yaml",
 		"/etc/assisted/manifests/agent-cluster-install.yaml",
 		"/etc/assisted/manifests/infraenv.yaml",
+		"/etc/assisted/manifests",       // optional nmstateconfig.yaml
 		"/etc/assisted/extra-manifests", // all files in directory
 		"/etc/assisted/hostconfig",      // all files in directory
 		"/etc/assisted/hostnames",       // all files in directory
