@@ -47,7 +47,7 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `type` (optional string): The OpenStack flavor name for machines in the pool.
 * `rootVolume` (optional object): Defines the root volume for instances in the machine pool. The instances use ephemeral disks if not set.
   * `size` (required integer): Size of the root volume in GB. Must be set to at least 25.
-  * `type` (optional string): The volume pool to create the volume from. It was replaced by `types`.
+  * `type` (deprectated string): The volume pool to create the volume from. It was replaced by `types`.
   * `types` (required list of strings): The volume pool to create the volume from. If compute `zones` are defined with more than one type, the number of zones must match the number of types.
   * `zones` (optional list of strings): The names of the availability zones you want to install your root volumes on. If unset, the installer will use your default volume zone.
     If compute `zones` contains at least one value, `rootVolume.zones` must also contain at least one value.
