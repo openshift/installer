@@ -13,6 +13,7 @@ import (
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	externalinfra "github.com/openshift/installer/pkg/asset/manifests/external"
 	gcpmanifests "github.com/openshift/installer/pkg/asset/manifests/gcp"
 	vsphereinfra "github.com/openshift/installer/pkg/asset/manifests/vsphere"
 	"github.com/openshift/installer/pkg/types"
@@ -20,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -202,6 +204,10 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		}
 	case libvirt.Name:
 		config.Spec.PlatformSpec.Type = configv1.LibvirtPlatformType
+	case external.Name:
+		config.Spec.PlatformSpec.Type = configv1.ExternalPlatformType
+		config.Spec.PlatformSpec.External = externalinfra.GetInfraPlatformSpec(installConfig)
+		config.Status.PlatformStatus.External = externalinfra.GetInfraPlatformStatus()
 	case none.Name:
 		config.Spec.PlatformSpec.Type = configv1.NonePlatformType
 	case openstack.Name:

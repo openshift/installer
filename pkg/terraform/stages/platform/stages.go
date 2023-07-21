@@ -20,6 +20,7 @@ import (
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -62,6 +63,9 @@ func StagesForPlatform(platform string) []terraform.Stage {
 		return vsphere.PlatformStages
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"
+		return []terraform.Stage{}
+	case externaltypes.Name:
+		// terraform is not used when the platform is "external"
 		return []terraform.Stage{}
 	default:
 		panic(fmt.Sprintf("unsupported platform %q", platform))

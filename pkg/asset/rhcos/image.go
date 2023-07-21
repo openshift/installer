@@ -19,6 +19,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -196,6 +197,8 @@ func osImage(config *types.InstallConfig) (string, error) {
 		}
 
 		return "", fmt.Errorf("%s: No Power VS build found", st.FormatPrefix(archName))
+	case external.Name:
+		return "", nil
 	case none.Name:
 		return "", nil
 	case nutanix.Name:

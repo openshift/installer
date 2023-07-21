@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -92,6 +93,8 @@ func (a *platform) Generate(asset.Parents) error {
 		if err != nil {
 			return err
 		}
+	case external.Name:
+		a.External = &external.Platform{}
 	case none.Name:
 		a.None = &none.Platform{}
 	case openstack.Name:

@@ -51,6 +51,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -477,7 +478,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err := powervs.ConfigMasters(machines, controlPlaneMachineSet, clusterID.InfraID, ic.Publish); err != nil {
 			return errors.Wrap(err, "failed to to configure master machine objects")
 		}
-	case nonetypes.Name:
+	case externaltypes.Name, nonetypes.Name:
 	case nutanixtypes.Name:
 		mpool := defaultNutanixMachinePoolPlatform()
 		mpool.NumCPUs = 8
