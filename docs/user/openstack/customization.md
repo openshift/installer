@@ -266,7 +266,7 @@ vi <directory>/manifests/cloud-provider-config.yaml
 
 As an example in order to tweak support for LoadBalancer Services you can modify options regarding Octavia configuration in the `[LoadBalancer]` section of `config` key. In particular:
 
-* `use-octavia = true` enables the Octavia integration.
+* `enabled = false` disables the Octavia integration.
 * `lb-provider = <"amphora" or "ovn">` lets you choose the Octavia provider to use when creating load balancers. Please note that setting "ovn" requires setting `lb-method = SOURCE_IP_PORT` as this is the only method supported by OVN.
 * `floating-network-id = <uuid>` is required to be set if your OpenStack cluster has multiple external networks. The network set here will be used by cloud provider to create floating IPs on.
 
