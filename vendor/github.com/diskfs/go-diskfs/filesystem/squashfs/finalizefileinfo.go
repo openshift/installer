@@ -7,12 +7,15 @@ import (
 
 // finalizeFileInfo is a file info useful for finalization
 // fulfills os.FileInfo
-//   Name() string       // base name of the file
-//   Size() int64        // length in bytes for regular files; system-dependent for others
-//   Mode() FileMode     // file mode bits
-//   ModTime() time.Time // modification time
-//   IsDir() bool        // abbreviation for Mode().IsDir()
-//   Sys() interface{}   // underlying data source (can return nil)
+//
+//	Name() string       // base name of the file
+//	Size() int64        // length in bytes for regular files; system-dependent for others
+//	Mode() FileMode     // file mode bits
+//	ModTime() time.Time // modification time
+//	IsDir() bool        // abbreviation for Mode().IsDir()
+//	Sys() interface{}   // underlying data source (can return nil)
+//
+//nolint:structcheck // we are willing to leave unused elements here so that we can know their reference
 type finalizeFileInfo struct {
 	path              string
 	target            string

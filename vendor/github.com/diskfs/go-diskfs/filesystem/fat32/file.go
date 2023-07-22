@@ -38,7 +38,7 @@ func (fl *File) Read(b []byte) (int, error) {
 	file := fs.file
 	clusters, err := fs.getClusterList(fl.clusterLocation)
 	if err != nil {
-		return totalRead, fmt.Errorf("Unable to get list of clusters for file: %v", err)
+		return totalRead, fmt.Errorf("unable to get list of clusters for file: %v", err)
 	}
 	clusterIndex := 0
 
@@ -66,7 +66,7 @@ func (fl *File) Read(b []byte) (int, error) {
 			if toRead > int64(len(b)) {
 				toRead = int64(len(b))
 			}
-			file.ReadAt(b[0:toRead], int64(offset)+fs.start)
+			_, _ = file.ReadAt(b[0:toRead], offset+fs.start)
 			totalRead += int(toRead)
 			clusterIndex++
 		}
@@ -79,14 +79,14 @@ func (fl *File) Read(b []byte) (int, error) {
 			toRead = left
 		}
 		offset := uint32(start) + (clusters[i]-2)*uint32(bytesPerCluster)
-		file.ReadAt(b[totalRead:totalRead+toRead], int64(offset)+fs.start)
+		_, _ = file.ReadAt(b[totalRead:totalRead+toRead], int64(offset)+fs.start)
 		totalRead += toRead
 		if totalRead >= maxRead {
 			break
 		}
 	}
 
-	fl.offset = fl.offset + int64(totalRead)
+	fl.offset += int64(totalRead)
 	var retErr error
 	if fl.offset >= int64(fl.fileSize) {
 		retErr = io.EOF
@@ -108,7 +108,7 @@ func (fl *File) Write(p []byte) (int, error) {
 	fs := fl.filesystem
 	// if the file was not opened RDWR, nothing we can do
 	if !fl.isReadWrite {
-		return totalWritten, fmt.Errorf("Cannot write to file opened read-only")
+		return totalWritten, fmt.Errorf("cannot write to file opened read-only")
 	}
 	// what is the new file size?
 	writeSize := len(p)
@@ -120,7 +120,7 @@ func (fl *File) Write(p []byte) (int, error) {
 	// 1- ensure we have space and clusters
 	clusters, err := fs.allocateSpace(uint64(newSize), fl.clusterLocation)
 	if err != nil {
-		return 0x00, fmt.Errorf("Unable to allocate clusters for file: %v", err)
+		return 0x00, fmt.Errorf("unable to allocate clusters for file: %v", err)
 	}
 
 	// update the directory entry size for the file
@@ -146,7 +146,10 @@ func (fl *File) Write(p []byte) (int, error) {
 			if toWrite > int64(len(p)) {
 				toWrite = int64(len(p))
 			}
-			file.WriteAt(p[0:toWrite], int64(offset)+fs.start)
+			_, err := file.WriteAt(p[0:toWrite], offset+fs.start)
+			if err != nil {
+				return totalWritten, fmt.Errorf("unable to write to file: %v", err)
+			}
 			totalWritten += int(toWrite)
 			clusterIndex++
 		}
@@ -159,16 +162,19 @@ func (fl *File) Write(p []byte) (int, error) {
 			toWrite = left
 		}
 		offset := uint32(start) + (clusters[i]-2)*uint32(bytesPerCluster)
-		file.WriteAt(p[totalWritten:totalWritten+toWrite], int64(offset)+fs.start)
+		_, err := file.WriteAt(p[totalWritten:totalWritten+toWrite], int64(offset)+fs.start)
+		if err != nil {
+			return totalWritten, fmt.Errorf("unable to write to file: %v", err)
+		}
 		totalWritten += toWrite
 	}
 
-	fl.offset = fl.offset + int64(totalWritten)
+	fl.offset += int64(totalWritten)
 
 	// update the parent that we have changed the file size
 	err = fs.writeDirectoryEntries(fl.parent)
 	if err != nil {
-		return 0, fmt.Errorf("Error writing directory entries to disk: %v", err)
+		return 0, fmt.Errorf("error writing directory entries to disk: %v", err)
 	}
 
 	return totalWritten, nil
@@ -189,7 +195,7 @@ func (fl *File) Seek(offset int64, whence int) (int64, error) {
 		newOffset = fl.offset + offset
 	}
 	if newOffset < 0 {
-		return fl.offset, fmt.Errorf("Cannot set offset %d before start of file", offset)
+		return fl.offset, fmt.Errorf("cannot set offset %d before start of file", offset)
 	}
 	fl.offset = newOffset
 	return fl.offset, nil

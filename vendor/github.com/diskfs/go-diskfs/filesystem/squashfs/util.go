@@ -17,19 +17,12 @@ const (
 	uint32max uint64 = 0xffffffff
 )
 
-func universalizePath(p string) (string, error) {
+func universalizePath(p string) string {
 	// globalize the separator
-	ps := strings.Replace(p, `\`, "/", -1)
-	//if ps[0] != '/' {
-	//return "", errors.New("Must use absolute paths")
-	//}
-	return ps, nil
+	return strings.ReplaceAll(p, `\`, "/")
 }
-func splitPath(p string) ([]string, error) {
-	ps, err := universalizePath(p)
-	if err != nil {
-		return nil, err
-	}
+func splitPath(p string) []string {
+	ps := universalizePath(p)
 	// we need to split such that each one ends in "/", except possibly the last one
 	parts := strings.Split(ps, "/")
 	// eliminate empty parts
@@ -39,5 +32,5 @@ func splitPath(p string) ([]string, error) {
 			ret = append(ret, sub)
 		}
 	}
-	return ret, nil
+	return ret
 }

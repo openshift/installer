@@ -18,6 +18,7 @@ const (
 	Fat32LBA      Type = 0x0c
 	Fat16bLBA     Type = 0x0e
 	ExtendedLBA   Type = 0x0f
+	LinuxSwap     Type = 0x82
 	Linux         Type = 0x83
 	LinuxExtended Type = 0x85
 	LinuxLVM      Type = 0x8e

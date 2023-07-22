@@ -6,6 +6,6 @@ import "io"
 type File interface {
 	io.ReadWriteSeeker
 	io.Closer
-	//io.ReaderAt
-	//io.WriterAt
+	// io.ReaderAt
+	// io.WriterAt
 }

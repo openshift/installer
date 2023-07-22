@@ -78,7 +78,7 @@ func (a *AgentPXEFiles) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return err
 	}
-	a.kernelArgs = kernelArgs
+	a.kernelArgs = kernelArgs + string(agentArtifacts.Kargs)
 	return nil
 }
 

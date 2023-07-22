@@ -3,6 +3,7 @@ package mbr
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 
@@ -41,8 +42,8 @@ func PartitionEqualBytes(b1, b2 []byte) bool {
 	}
 	return b1[0] == b2[0] &&
 		b1[4] == b2[4] &&
-		bytes.Compare(b1[8:12], b2[8:12]) == 0 &&
-		bytes.Compare(b1[12:16], b2[12:16]) == 0
+		bytes.Equal(b1[8:12], b2[8:12]) &&
+		bytes.Equal(b1[12:16], b2[12:16])
 }
 
 // Equal compares if another partition is equal to this one, ignoring CHS start and end
@@ -66,8 +67,8 @@ func (p *Partition) GetStart() int64 {
 }
 
 // toBytes return the 16 bytes for this partition
-func (p *Partition) toBytes() ([]byte, error) {
-	b := make([]byte, partitionEntrySize, partitionEntrySize)
+func (p *Partition) toBytes() []byte {
+	b := make([]byte, partitionEntrySize)
 	if p.Bootable {
 		b[0] = 0x80
 	} else {
@@ -82,13 +83,15 @@ func (p *Partition) toBytes() ([]byte, error) {
 	b[7] = p.EndCylinder
 	binary.LittleEndian.PutUint32(b[8:12], p.Start)
 	binary.LittleEndian.PutUint32(b[12:16], p.Size)
-	return b, nil
+	return b
 }
 
 // partitionFromBytes create a partition entry from 16 bytes
+//
+//nolint:unparam // this always receives logicalSectorSize=512, but since it can be different, we want to leave it as a param
 func partitionFromBytes(b []byte, logicalSectorSize, physicalSectorSize int) (*Partition, error) {
 	if len(b) != partitionEntrySize {
-		return nil, fmt.Errorf("Data for partition was %d bytes instead of expected %d", len(b), partitionEntrySize)
+		return nil, fmt.Errorf("data for partition was %d bytes instead of expected %d", len(b), partitionEntrySize)
 	}
 	var bootable bool
 	switch b[0] {
@@ -97,7 +100,7 @@ func partitionFromBytes(b []byte, logicalSectorSize, physicalSectorSize int) (*P
 	case 0x80:
 		bootable = true
 	default:
-		return nil, fmt.Errorf("Invalid partition")
+		return nil, errors.New("invalid partition")
 	}
 
 	return &Partition{
@@ -123,7 +126,7 @@ func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, erro
 	total := uint64(0)
 
 	// chunks of physical sector size for efficient writing
-	b := make([]byte, pss, pss)
+	b := make([]byte, pss)
 	// we start at the correct byte location
 	start := p.Start * uint32(lss)
 	size := p.Size * uint32(lss)
@@ -132,20 +135,20 @@ func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, erro
 	for {
 		read, err := contents.Read(b)
 		if err != nil && err != io.EOF {
-			return total, fmt.Errorf("Could not read contents to pass to partition: %v", err)
+			return total, fmt.Errorf("could not read contents to pass to partition: %v", err)
 		}
 		tmpTotal := uint64(read) + total
-		if uint32(tmpTotal) > size {
-			return total, fmt.Errorf("Requested to write at least %d bytes to partition but maximum size is %d", tmpTotal, size)
+		if tmpTotal > uint64(size) {
+			return total, fmt.Errorf("requested to write at least %d bytes to partition but maximum size is %d", tmpTotal, size)
 		}
 		var written int
 		if read > 0 {
 			written, err = f.WriteAt(b[:read], int64(start)+int64(total))
 			if err != nil {
-				return total, fmt.Errorf("Error writing to file: %v", err)
+				return total, fmt.Errorf("error writing to file: %v", err)
 			}
 			// increment our total
-			total = total + uint64(written)
+			total += uint64(written)
 		}
 		// is this the end of the data?
 		if err == io.EOF {
@@ -154,7 +157,7 @@ func (p *Partition) WriteContents(f util.File, contents io.Reader) (uint64, erro
 	}
 	// did the total written equal the size of the partition?
 	if total != uint64(size) {
-		return total, fmt.Errorf("Write %d bytes to partition but actual size is %d", total, size)
+		return total, fmt.Errorf("write %d bytes to partition but actual size is %d", total, size)
 	}
 	return total, nil
 }
@@ -165,7 +168,7 @@ func (p *Partition) ReadContents(f util.File, out io.Writer) (int64, error) {
 	pss, lss := p.sectorSizes()
 	total := int64(0)
 	// chunks of physical sector size for efficient writing
-	b := make([]byte, pss, pss)
+	b := make([]byte, pss)
 	// we start at the correct byte location
 	start := p.Start * uint32(lss)
 	size := p.Size * uint32(lss)
@@ -174,10 +177,10 @@ func (p *Partition) ReadContents(f util.File, out io.Writer) (int64, error) {
 	for {
 		read, err := f.ReadAt(b, int64(start)+total)
 		if err != nil && err != io.EOF {
-			return total, fmt.Errorf("Error reading from file: %v", err)
+			return total, fmt.Errorf("error reading from file: %v", err)
 		}
 		if read > 0 {
-			out.Write(b[:read])
+			_, _ = out.Write(b[:read])
 		}
 		// increment our total
 		total += int64(read)
