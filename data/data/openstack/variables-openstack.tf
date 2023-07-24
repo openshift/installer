@@ -391,7 +391,7 @@ variable "openstack_master_root_volume_types" {
 
 variable "openstack_worker_server_group_names" {
   type        = set(string)
-  default     = [""]
+  default     = []
   description = "Names of the server groups for the worker nodes."
 }
 
