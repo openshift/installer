@@ -11,7 +11,6 @@ import (
 	"google.golang.org/api/cloudresourcemanager/v1"
 	compute "google.golang.org/api/compute/v1"
 	dns "google.golang.org/api/dns/v1"
-	"google.golang.org/api/googleapi"
 	iam "google.golang.org/api/iam/v1"
 	"google.golang.org/api/option"
 	"google.golang.org/api/serviceusage/v1"
@@ -32,7 +31,6 @@ var (
 type API interface {
 	GetNetwork(ctx context.Context, network, project string) (*compute.Network, error)
 	GetMachineType(ctx context.Context, project, zone, machineType string) (*compute.MachineType, error)
-	GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error)
 	GetPublicDomains(ctx context.Context, project string) ([]string, error)
 	GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error)
 	GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error)
@@ -82,62 +80,6 @@ func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType 
 	}
 
 	return req, nil
-}
-
-// GetMachineTypeList retrieves the machine type with the specified fields.
-func GetMachineTypeList(ctx context.Context, svc *compute.Service, project, region, machineType, fields string) ([]*compute.MachineType, error) {
-	var machines []*compute.MachineType
-
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
-	filter := fmt.Sprintf("name = \"%s\" AND zone : %s-*", machineType, region)
-	req := svc.MachineTypes.AggregatedList(project).Filter(filter).Context(ctx)
-	if len(fields) > 0 {
-		req.Fields(googleapi.Field(fields))
-	}
-	err := req.Pages(ctx, func(page *compute.MachineTypeAggregatedList) error {
-		for _, scopedList := range page.Items {
-			machines = append(machines, scopedList.MachineTypes...)
-		}
-		return nil
-	})
-	if len(machines) == 0 {
-		return nil, errors.New("failed to fetch instance type, this error usually occurs if the region or the instance type is not found")
-	}
-
-	return machines, err
-}
-
-// GetMachineTypeWithZones retrieves the specified machine type and the zones in which it is available.
-func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, machineType string) (*compute.MachineType, sets.Set[string], error) {
-	svc, err := c.getComputeService(ctx)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	machines, err := GetMachineTypeList(ctx, svc, project, region, machineType, "")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	zones := sets.New[string]()
-	for _, machine := range machines {
-		zones.Insert(machine.Zone)
-	}
-
-	// Restrict to zones available in the project
-	pz, err := GetZones(ctx, svc, project, fmt.Sprintf("region eq .*%s", region))
-	if err != nil {
-		return nil, nil, err
-	}
-	projZones := sets.New[string]()
-	for _, zone := range pz {
-		projZones.Insert(zone.Name)
-	}
-	zones = zones.Intersection(projZones)
-
-	return machines[0], zones, nil
 }
 
 // GetNetwork uses the GCP Compute Service API to get a network by name from a project.
@@ -353,8 +295,13 @@ func (c *Client) GetRegions(ctx context.Context, project string) ([]string, erro
 	return computeRegions, nil
 }
 
-// GetZones retrieves the available zones for the project.
-func GetZones(ctx context.Context, svc *compute.Service, project, filter string) ([]*compute.Zone, error) {
+// GetZones uses the GCP Compute Service API to get a list of zones from a project.
+func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	req := svc.Zones.List(project)
 	if filter != "" {
 		req = req.Filter(filter)
@@ -364,23 +311,15 @@ func GetZones(ctx context.Context, svc *compute.Service, project, filter string)
 	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
-		zones = append(zones, page.Items...)
+		for _, zone := range page.Items {
+			zones = append(zones, zone)
+		}
 		return nil
 	}); err != nil {
 		return nil, errors.Wrapf(err, "failed to get zones from project %s", project)
 	}
 
 	return zones, nil
-}
-
-// GetZones uses the GCP Compute Service API to get a list of zones from a project.
-func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compute.Zone, error) {
-	svc, err := c.getComputeService(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return GetZones(ctx, svc, project, filter)
 }
 
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {

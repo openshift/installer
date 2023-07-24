@@ -17,7 +17,6 @@ import (
 	"google.golang.org/api/googleapi"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/gcp/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -316,10 +315,10 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 	// Should return the machine type as specified.
 	for key, value := range machineTypeAPIResult {
-		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New(validZone), nil).AnyTimes()
+		gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, nil).AnyTimes()
 	}
 	// When passed incorrect machine type, the API returns nil.
-	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
+	gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("404")).AnyTimes()
 
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
@@ -541,7 +540,6 @@ func TestValidateCredentialMode(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-
 			ic := types.InstallConfig{
 				ObjectMeta:      metav1.ObjectMeta{Name: "cluster-name"},
 				BaseDomain:      "base-domain",
@@ -560,205 +558,6 @@ func TestValidateCredentialMode(t *testing.T) {
 				assert.NoError(t, err)
 			} else {
 				assert.Regexp(t, test.err, err)
-			}
-		})
-	}
-}
-
-func TestValidateZones(t *testing.T) {
-	validZonesDefaultMachine := func(ic *types.InstallConfig) {
-		ic.Platform.GCP.DefaultMachinePlatform.Zones = []string{"us-central1-a", "us-central1-c"}
-	}
-	validZonesControlPlane := func(ic *types.InstallConfig) {
-		ic.ControlPlane.Platform.GCP.Zones = []string{"us-central1-a", "us-central1-b"}
-	}
-	validZonesCompute := func(ic *types.InstallConfig) {
-		ic.Compute[0].Platform.GCP.Zones = []string{"us-central1-b", "us-central1-c", "us-central1-d"}
-	}
-	invalidZonesDefaultMachine := func(ic *types.InstallConfig) {
-		ic.Platform.GCP.DefaultMachinePlatform.Zones = []string{"us-central1-a", "us-central1-x", "us-central1-y"}
-	}
-	invalidZonesControlPlane := func(ic *types.InstallConfig) {
-		ic.ControlPlane.Platform.GCP.Zones = []string{"us-central1-d", "us-central1-x", "us-central1-y"}
-	}
-	invalidZonesCompute := func(ic *types.InstallConfig) {
-		ic.Compute[0].Platform.GCP.Zones = []string{"us-central1-y", "us-central1-z", "us-central1-w"}
-	}
-
-	cases := []struct {
-		name           string
-		edits          editFunctions
-		expectedError  bool
-		expectedErrMsg string
-	}{
-		{
-			name:           "Valid zones for defaultMachine",
-			edits:          editFunctions{validZonesDefaultMachine},
-			expectedError:  false,
-			expectedErrMsg: "",
-		},
-		{
-			name:           "Invalid zones for defaultMachine",
-			edits:          editFunctions{invalidZonesDefaultMachine},
-			expectedError:  true,
-			expectedErrMsg: `^\[platform.gcp.defaultMachinePlatform.zones: Invalid value: \[\]string\{"us\-central1\-x", "us\-central1\-y"\}: zone\(s\) not found in region\]$`,
-		},
-		{
-			name:           "Valid zones for controlPlane",
-			edits:          editFunctions{validZonesControlPlane},
-			expectedError:  false,
-			expectedErrMsg: "",
-		},
-		{
-			name:           "Invalid zones for controlPlane",
-			edits:          editFunctions{invalidZonesControlPlane},
-			expectedError:  true,
-			expectedErrMsg: `^\[controlPlane.platform.gcp.zones: Invalid value: \[\]string\{"us\-central1\-x", "us\-central1\-y"\}: zone\(s\) not found in region\]$`,
-		},
-		{
-			name:           "Valid zones for compute",
-			edits:          editFunctions{validZonesCompute},
-			expectedError:  false,
-			expectedErrMsg: "",
-		},
-		{
-			name:           "Invalid zones for compute",
-			edits:          editFunctions{invalidZonesCompute},
-			expectedError:  true,
-			expectedErrMsg: `^\[compute\[0\].platform.gcp.zones: Invalid value: \[\]string\{"us\-central1\-w", "us\-central1\-y", "us\-central1\-z"\}: zone\(s\) not found in region\]$`,
-		},
-	}
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-
-	gcpClient := mock.NewMockAPI(mockCtrl)
-
-	validZones := []*compute.Zone{
-		{Name: "us-central1-a"},
-		{Name: "us-central1-b"},
-		{Name: "us-central1-c"},
-		{Name: "us-central1-d"},
-	}
-
-	// Should get the list of zones.
-	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return(validZones, nil).AnyTimes()
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
-			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
-			}
-
-			errs := validateZones(gcpClient, editedInstallConfig)
-			if tc.expectedError {
-				assert.Regexp(t, tc.expectedErrMsg, errs)
-			} else {
-				assert.Empty(t, errs)
-			}
-		})
-	}
-}
-
-func TestValidateInstanceType(t *testing.T) {
-	cases := []struct {
-		name           string
-		zones          []string
-		instanceType   string
-		expectedError  bool
-		expectedErrMsg string
-	}{
-		{
-			name:           "Valid instance type with min requirements and no zones specified",
-			zones:          []string{},
-			instanceType:   "n1-standard-4",
-			expectedError:  false,
-			expectedErrMsg: "",
-		},
-		{
-			name:           "Valid instance type with min requirements and valid zones specified",
-			zones:          []string{"a", "b"},
-			instanceType:   "n1-standard-4",
-			expectedError:  false,
-			expectedErrMsg: "",
-		},
-		{
-			name:           "Valid instance type with min requirements and invalid zones specified",
-			zones:          []string{"a", "b", "d", "x", "y"},
-			instanceType:   "n1-standard-4",
-			expectedError:  true,
-			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-4": instance type not available in zones: \[x y\]\]$`,
-		},
-		{
-			name:           "Valid instance fails min requirements and no zones specified",
-			zones:          []string{},
-			instanceType:   "n1-standard-2",
-			expectedError:  true,
-			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-2": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
-		},
-		{
-			name:           "Valid instance fails min requirements and valid zones specified",
-			zones:          []string{"a", "b"},
-			instanceType:   "n1-standard-1",
-			expectedError:  true,
-			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
-		},
-		{
-			name:           "Valid instance fails min requirements and invalid zones specified",
-			zones:          []string{"a", "x", "y"},
-			instanceType:   "n1-standard-1",
-			expectedError:  true,
-			expectedErrMsg: `^\[instance.type: Invalid value: "n1\-standard\-1": instance type not available in zones: \[x y\] instance.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 4 vCPUs instance.type: Invalid value: "n1\-standard\-1": instance type does not meet minimum resource requirements of 15360 MB Memory\]$`,
-		},
-		{
-			name:           "Invalid instance and no zones specified",
-			zones:          []string{},
-			instanceType:   "invalid-instance-1",
-			expectedError:  true,
-			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
-		},
-		{
-			name:           "Invalid instance and valid zones specified",
-			zones:          []string{"a", "b"},
-			instanceType:   "invalid-instance-1",
-			expectedError:  true,
-			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
-		},
-		{
-			name:           "Invalid instance and invalid zones specified",
-			zones:          []string{"x", "y", "z"},
-			instanceType:   "invalid-instance-1",
-			expectedError:  true,
-			expectedErrMsg: `^\[<nil>: Internal error: 404\]$`,
-		},
-	}
-
-	mockCtrl := gomock.NewController(t)
-	defer mockCtrl.Finish()
-	gcpClient := mock.NewMockAPI(mockCtrl)
-
-	// Should return the machine type as specified.
-	for key, value := range machineTypeAPIResult {
-		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New("a", "b", "c", "d"), nil).AnyTimes()
-	}
-	// When passed incorrect machine type, the API returns nil.
-	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
-
-	zones := []*compute.Zone{
-		{Name: "a"},
-		{Name: "b"},
-		{Name: "c"},
-	}
-	gcpClient.EXPECT().GetZones(gomock.Any(), gomock.Any(), gomock.Any()).Return(zones, nil).AnyTimes()
-
-	for _, test := range cases {
-		t.Run(test.name, func(t *testing.T) {
-			errs := ValidateInstanceType(gcpClient, field.NewPath("instance"), "project-id", "region", test.zones, test.instanceType, controlPlaneReq)
-			if test.expectedError {
-				assert.Regexp(t, test.expectedErrMsg, errs)
-			} else {
-				assert.Empty(t, errs)
 			}
 		})
 	}
