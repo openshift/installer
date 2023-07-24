@@ -38,10 +38,11 @@ function gather_agent_data() {
 	( >&2 echo -n ".")
 	mkdir -p "${ARTIFACTS_DIR}/usr/local/share/"
 	cp -a /usr/local/share/assisted-service "${ARTIFACTS_DIR}/usr/local/share/"
+	cp -a /usr/local/share/start-cluster "${ARTIFACTS_DIR}/usr/local/share/"
 	( >&2 echo -n ".")
 	mkdir -p "${ARTIFACTS_DIR}/var/log/agent/"
 	cp -a /var/log/agent/agent-tui.log "${ARTIFACTS_DIR}/var/log/agent/"
-	
+
 	if [[ $(podman info -f json | jq 'if any(.registries[]; type=="array") then false else any(.registries[].Mirrors[]; has("Location")) end') == "true" ]]; then
 		mkdir -p "${ARTIFACTS_DIR}/etc/pki/ca-trust/extracted/"
 		cp -a /etc/pki/ca-trust/extracted/pem "${ARTIFACTS_DIR}/etc/pki/ca-trust/extracted/"
