@@ -64,15 +64,24 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, zone, instanceType string, req resourceRequirements) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	typeMeta, err := client.GetMachineType(context.TODO(), project, zone, instanceType)
+	typeMeta, typeZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
 	if err != nil {
 		if _, ok := err.(*googleapi.Error); ok {
 			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
+	}
+
+	userZones := sets.New(zones...)
+	if len(userZones) == 0 {
+		userZones = typeZones
+	}
+	if diff := userZones.Difference(typeZones); len(diff) > 0 {
+		errMsg := fmt.Sprintf("instance type not available in zones: %v", sets.List(diff))
+		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 	}
 
 	if typeMeta.GuestCpus < req.minimumVCpus {
@@ -106,14 +115,6 @@ func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.Er
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	// Get list of zones in region
-	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
-	if err != nil {
-		return append(allErrs, field.InternalError(nil, err))
-	} else if len(zones) == 0 {
-		return append(allErrs, field.InternalError(nil, fmt.Errorf("failed to fetch instance types, this error usually occurs if the region is not found")))
-	}
-
 	// Default requirements need to be sufficient to support Control Plane instances.
 	defaultInstanceReq := controlPlaneReq
 
@@ -121,20 +122,44 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		// Default requirements can be relaxed when the controlPlane type is set explicitly.
 		defaultInstanceReq = computeReq
 
-		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
-			ic.ControlPlane.Platform.GCP.InstanceType, controlPlaneReq)...)
+		allErrs = append(allErrs,
+			ValidateInstanceType(
+				client,
+				field.NewPath("controlPlane", "platform", "gcp"),
+				ic.GCP.ProjectID,
+				ic.GCP.Region,
+				ic.ControlPlane.Platform.GCP.Zones,
+				ic.ControlPlane.Platform.GCP.InstanceType,
+				controlPlaneReq,
+			)...)
 	}
 
 	if ic.Platform.GCP.DefaultMachinePlatform != nil && ic.Platform.GCP.DefaultMachinePlatform.InstanceType != "" {
-		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("platform", "gcp", "defaultMachinePlatform"), ic.GCP.ProjectID, zones[0].Name,
-			ic.Platform.GCP.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
+		allErrs = append(allErrs,
+			ValidateInstanceType(
+				client,
+				field.NewPath("platform", "gcp", "defaultMachinePlatform"),
+				ic.GCP.ProjectID,
+				ic.GCP.Region,
+				ic.Platform.GCP.DefaultMachinePlatform.Zones,
+				ic.Platform.GCP.DefaultMachinePlatform.InstanceType,
+				defaultInstanceReq,
+			)...)
 	}
 
 	for idx, compute := range ic.Compute {
 		fieldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
-			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
-				compute.Platform.GCP.InstanceType, computeReq)...)
+			allErrs = append(allErrs,
+				ValidateInstanceType(
+					client,
+					fieldPath.Child("platform", "gcp"),
+					ic.GCP.ProjectID,
+					ic.GCP.Region,
+					compute.Platform.GCP.Zones,
+					compute.Platform.GCP.InstanceType,
+					computeReq,
+				)...)
 		}
 	}
 

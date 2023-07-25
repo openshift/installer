@@ -315,10 +315,10 @@ func TestGCPInstallConfigValidation(t *testing.T) {
 
 	// Should return the machine type as specified.
 	for key, value := range machineTypeAPIResult {
-		gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, nil).AnyTimes()
+		gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), key).Return(value, sets.New(validZone), nil).AnyTimes()
 	}
 	// When passed incorrect machine type, the API returns nil.
-	gcpClient.EXPECT().GetMachineType(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("404")).AnyTimes()
+	gcpClient.EXPECT().GetMachineTypeWithZones(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil, fmt.Errorf("404")).AnyTimes()
 
 	// When passed the correct network & project, return an empty network, which should be enough to validate ok.
 	gcpClient.EXPECT().GetNetwork(gomock.Any(), validNetworkName, validProjectName).Return(&compute.Network{}, nil).AnyTimes()
