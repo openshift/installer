@@ -127,8 +127,8 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 
 // finishAWS set defaults for AWS Platform before the config validation.
 func (a *InstallConfig) finishAWS() error {
-	// Set the Default Edge Compute pool when the subnets are defined.
-	// Edge Compute Pool/AWS Local Zones is supported only when installing in existing VPC.
+	// Set the Default Edge Compute pool when the subnets in AWS Local Zones are defined,
+	// when installing a cluster in existing VPC.
 	if len(a.Config.Platform.AWS.Subnets) > 0 {
 		edgeSubnets, err := a.AWS.EdgeSubnets(context.TODO())
 		if err != nil {

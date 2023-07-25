@@ -202,7 +202,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 				return err
 			}
 			for id, subnet := range subnetMeta {
-				subnets[subnet.Zone] = id
+				subnets[subnet.Zone.Name] = id
 			}
 		}
 

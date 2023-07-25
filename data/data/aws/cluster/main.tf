@@ -88,12 +88,17 @@ module "vpc" {
   private_subnets  = var.aws_private_subnets
   publish_strategy = var.aws_publish_strategy
 
-  availability_zones = distinct(
-    concat(
-      var.aws_master_availability_zones,
-      var.aws_worker_availability_zones,
-    ),
+  availability_zones = sort(
+    distinct(
+      concat(
+        var.aws_master_availability_zones,
+        var.aws_worker_availability_zones,
+      ),
+    )
   )
+
+  edge_zones         = distinct(var.aws_edge_local_zones)
+  edge_parent_gw_map = var.aws_edge_parent_zones_index
 
   tags = local.tags
 }

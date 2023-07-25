@@ -3,6 +3,18 @@ variable "availability_zones" {
   description = "The availability zones in which to provision subnets."
 }
 
+variable "edge_zones" {
+  type        = list(string)
+  default     = []
+  description = "The local zones to provision subnets."
+}
+
+variable "edge_parent_gw_map" {
+  type        = map(string)
+  default     = {}
+  description = "The parent zone index used to lookup the NAT gateway for private subnets in Local Zone."
+}
+
 variable "cidr_blocks" {
   type        = list(string)
   description = "A list of IPv4 CIDRs with 0 index being the main CIDR."

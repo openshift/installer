@@ -209,23 +209,21 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 	}
 }
 
-// awsDiscoveryPreferredEdgeInstanceByZone discover supported instanceType for each subnet's
-// zone using the preferred list of instances allowed for OCP.
-func awsDiscoveryPreferredEdgeInstanceByZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, subnets icaws.Subnets) (ok bool, err error) {
-	for zone := range subnets {
-		subnet, ok := subnets[zone]
-		if !ok {
-			return ok, errors.Wrap(err, fmt.Sprintf("failed to get subnet's zone[%v] to lookup preferred instance type.", zone))
-		}
-
+// awsSetPreferredInstanceByEdgeZone discovers supported instanceType for each edge pool
+// using the existing preferred instance list used by worker compute pool.
+// Each machine set in the edge pool, created for each zone, can use different instance
+// types depending on the instance offerings in the location (Local Zones).
+func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, zones icaws.Zones) (ok bool, err error) {
+	for zone := range zones {
 		preferredType, err := aws.PreferredInstanceType(ctx, meta, defaultTypes, []string{zone})
 		if err != nil {
 			logrus.Warn(errors.Wrap(err, fmt.Sprintf("unable to select instanceType on the zone[%v] from the preferred list: %v. You must update the MachineSet manifest", zone, defaultTypes)))
 			continue
 		}
-
-		subnet.PreferredEdgeInstanceType = preferredType
-		subnets[zone] = subnet
+		if _, ok := zones[zone]; !ok {
+			zones[zone] = &icaws.Zone{Name: zone}
+		}
+		zones[zone].PreferredInstanceType = preferredType
 	}
 	return true, nil
 }
@@ -355,6 +353,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 		case awstypes.Name:
 			subnets := icaws.Subnets{}
+			zones := icaws.Zones{}
 			if len(ic.Platform.AWS.Subnets) > 0 {
 				var subnetsMeta icaws.Subnets
 				switch pool.Name {
@@ -363,10 +362,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 					if err != nil {
 						return err
 					}
-					if *pool.Replicas == 0 {
-						sbCount := int64(len(subnetsMeta))
-						pool.Replicas = &sbCount
-					}
 				default:
 					subnetsMeta, err = installConfig.AWS.PrivateSubnets(ctx)
 					if err != nil {
@@ -374,10 +369,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 					}
 				}
 				for _, subnet := range subnetsMeta {
-					subnets[subnet.Zone] = subnet
+					subnets[subnet.Zone.Name] = subnet
 				}
 			}
-
 			mpool := defaultAWSMachinePoolPlatform(pool.Name)
 
 			osImage := strings.SplitN(string(*rhcosImage), ",", 2)
@@ -392,8 +386,12 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			zoneDefaults := false
 			if len(mpool.Zones) == 0 {
 				if len(subnets) > 0 {
-					for zone := range subnets {
-						mpool.Zones = append(mpool.Zones, zone)
+					for _, subnet := range subnets {
+						if subnet.Zone == nil {
+							return errors.Wrapf(err, "failed to find zone attributes for subnet %s", subnet.ID)
+						}
+						mpool.Zones = append(mpool.Zones, subnet.Zone.Name)
+						zones[subnet.Zone.Name] = subnets[subnet.Zone.Name].Zone
 					}
 				} else {
 					mpool.Zones, err = installConfig.AWS.AvailabilityZones(ctx)
@@ -404,12 +402,23 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				}
 			}
 
+			// Requirements when using edge compute pools to populate machine sets.
+			if pool.Name == types.MachinePoolEdgeRoleName {
+				err = installConfig.AWS.SetZoneAttributes(ctx, mpool.Zones, zones)
+				if err != nil {
+					return errors.Wrap(err, "failed to retrieve zone attributes for edge compute pool")
+				}
+
+				if pool.Replicas == nil || *pool.Replicas == 0 {
+					pool.Replicas = pointer.Int64(int64(len(mpool.Zones)))
+				}
+			}
+
 			if mpool.InstanceType == "" {
 				instanceTypes := awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, configv1.HighlyAvailableTopologyMode)
-
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
-					ok, err := awsDiscoveryPreferredEdgeInstanceByZone(ctx, instanceTypes, installConfig.AWS, subnets)
+					ok, err := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
 					if err != nil {
 						return errors.Wrap(err, "failed to find default instance type for edge pool, you must define on the compute pool")
 					}
@@ -420,7 +429,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				default:
 					mpool.InstanceType, err = aws.PreferredInstanceType(ctx, installConfig.AWS, instanceTypes, mpool.Zones)
 					if err != nil {
-						logrus.Warn(errors.Wrap(err, "failed to find default instance type"))
+						logrus.Warn(errors.Wrapf(err, "failed to find default instance type for %s pool", pool.Name))
 						mpool.InstanceType = instanceTypes[0]
 					}
 				}
@@ -434,15 +443,15 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			}
 
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(
-				clusterID.InfraID,
-				installConfig.Config.Platform.AWS.Region,
-				subnets,
-				&pool,
-				pool.Name,
-				workerUserDataSecretName,
-				installConfig.Config.Platform.AWS.UserTags,
-			)
+			sets, err := aws.MachineSets(&aws.MachineSetInput{
+				ClusterID:                clusterID.InfraID,
+				InstallConfigPlatformAWS: installConfig.Config.Platform.AWS,
+				Subnets:                  subnets,
+				Zones:                    zones,
+				Pool:                     &pool,
+				Role:                     pool.Name,
+				UserDataSecret:           workerUserDataSecretName,
+			})
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

@@ -1,4 +1,210 @@
-# Cluster Installation in existing VPC with Local Zones subnet
+# Install a cluster in AWS extending nodes to AWS Local Zones
+
+The steps below describe how to install a cluster in AWS extending worker nodes to Local Zones.
+
+This document is split into the following sections:
+
+- [Install a cluster extending nodes to the Local Zone [new VPC]](#ipi-localzones) (4.14+)
+- [Install a cluster into existing VPC with Local Zone subnets](#ipi-localzones-existing-vpc) (4.13+)
+- [Extend worker nodes to AWS Local Zones in existing clusters [Day 2]](#day2-localzones)
+- [Use Cases](#use-cases)
+
+___
+___
+
+# Install a cluster extending nodes to the Local Zone <a name="ipi-localzones"></a>
+
+Starting on 4.14 you can install an OCP cluster in AWS extending nodes to the AWS Local Zones,
+letting the installation process automate all the steps from the subnet creation to
+node running through MachineSet manifests.
+
+There are some design considerations when using the fully automated process:
+
+- Read the [AWS Local Zones limitations](ocp-aws-localzone-limitations)
+- Cluster-wide network MTU: the Maximum Transmission Unit for the overlay network will automatically be adjusted when the edge pool configuration is set
+- Machine Network CIDR block allocation: the Machine CIDR blocks used to create the cluster will be sharded to smaller blocks depending on the number of zones provided on install-config.yaml to create the public and private subnets.
+- Internet egress traffic for private subnets: When using the installer automation to create subnets in Local Zones, the egress traffic for private subnets in AWS Local Zones will use the Nat Gateway from the parent zone, when the parent zone's route table is present, otherwise it will use the first route table for private subnets found in the region.
+
+## Steps to create a cluster
+
+The sections below describe how to create a cluster using a basic example with single-zone local, and a full example of retrieving all zones in the region.
+
+### Prerequisites
+
+The prerequisite for installing a cluster using AWS Local Zones is to opt-in to every Local Zone group.
+
+For Local Zones, the group name must be the zone name without the letter (zone identifier). Example: for Local Zone `us-east-1-bos-1a` the zone group will be `us-east-1-bos-1`.
+
+It's also possible to query the group name reading the zone attribute:
+
+```bash
+$ aws --region us-east-1 ec2 describe-availability-zones \
+  --all-availability-zones \
+  --filters Name=zone-name,Values=us-east-1-bos-1a \
+  --query "AvailabilityZones[].GroupName" --output text
+us-east-1-bos-1
+```
+
+#### Additional IAM permissions
+
+The AWS Local Zone deployment described in this document requires additional permission from the user creating the cluster allowing Local Zone group modification: `ec2:ModifyAvailabilityZoneGroup`
+
+Example of the permissive IAM Policy that can be attached to the User or Role:
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "ec2:ModifyAvailabilityZoneGroup"
+      ],
+      "Effect": "Allow",
+      "Resource": "*"
+    }
+  ]
+}
+```
+
+### Example 1. Steps to create a cluster with a single Local Zone
+
+<!-- > Note: this example preferably goes to the product documentation. -->
+
+Create a cluster in the region `us-east-1` extending worker nodes to AWS Local Zone `us-east-1-bos-1a`:
+
+- opt-in to the Zone Group
+
+```bash
+aws ec2 modify-availability-zone-group \
+    --region us-east-1 \
+    --group-name us-east-1-bos-1a \
+    --opt-in-status opted-in
+```
+
+AWS will process the request in the background, it could take a few minutes. Check the field `OptInStatus` before proceeding:
+
+```bash
+aws --region us-east-1 ec2 describe-availability-zones \
+  --all-availability-zones \
+  --filters Name=zone-name,Values=us-east-1-bos-1a \
+  --query "AvailabilityZones[]"
+```
+
+- Create the `install-config.yaml`:
+
+```yaml
+apiVersion: v1
+publish: External
+baseDomain: devcluster.openshift.com
+metadata:
+  name: "cluster-name"
+pullSecret: ...
+sshKey: ...
+platform:
+  aws:
+    region: us-east-1
+compute:
+- name: edge
+  platform:
+    aws:
+      zones:
+      - us-east-1-bos-1a
+```
+
+- Create the cluster
+
+```bash
+./openshift-install create cluster
+```
+
+### Example 2. Steps to create a cluster with many zones
+
+Steps to create a cluster using the AWS Region `us-east-1` as a reference, selecting all Local Zones in the Region.
+
+- Build the lists for zone groups and names:
+
+```bash
+mapfile -t local_zone_names < <(aws --region us-east-1 ec2 describe-availability-zones   --all-availability-zones   --filters Name=zone-type,Values=local-zone   --query "AvailabilityZones[].ZoneName" | jq -r .[])
+mapfile -t local_zone_groups < <(aws --region us-east-1 ec2 describe-availability-zones   --all-availability-zones   --filters Name=zone-type,Values=local-zone   --query "AvailabilityZones[].GroupName" | jq -r .[])
+```
+
+- Opt-in the zone group:
+
+```bash
+for zone_group in ${local_zone_groups[@]}; do
+  aws ec2 modify-availability-zone-group \
+    --region us-east-1 \
+    --group-name ${zone_group} \
+    --opt-in-status opted-in
+done
+```
+
+- Export the zone list:
+
+```bash
+$ for zone_name in ${local_zone_names[@]}; do echo "      - $zone_name"; done
+      - us-east-1-atl-1a
+      - us-east-1-bos-1a
+      - us-east-1-bue-1a
+      - us-east-1-chi-1a
+      - us-east-1-dfw-1a
+      - us-east-1-iah-1a
+      - us-east-1-lim-1a
+      - us-east-1-mci-1a
+      - us-east-1-mia-1a
+      - us-east-1-msp-1a
+      - us-east-1-nyc-1a
+      - us-east-1-phl-1a
+      - us-east-1-qro-1a
+      - us-east-1-scl-1a
+```
+
+- Create the `install-config.yaml` with the local zone list:
+
+```yaml
+apiVersion: v1
+publish: External
+baseDomain: devcluster.openshift.com
+metadata:
+  name: "cluster-name"
+pullSecret: ...
+sshKey: ...
+platform:
+  aws:
+    region: us-east-1
+compute:
+- name: edge
+  platform:
+    aws:
+      zones:
+      - us-east-1-atl-1a
+      - us-east-1-bos-1a
+      - us-east-1-bue-1a
+      - us-east-1-chi-1a
+      - us-east-1-dfw-1a
+      - us-east-1-iah-1a
+      - us-east-1-lim-1a
+      - us-east-1-mci-1a
+      - us-east-1-mia-1a
+      - us-east-1-msp-1a
+      - us-east-1-nyc-1a
+      - us-east-1-phl-1a
+      - us-east-1-qro-1a
+      - us-east-1-scl-1a
+```
+
+For each specified zone, a CIDR block range will be allocated, and subnets created.
+
+- Create the cluster
+
+```bash
+./openshift-install create cluster
+```
+
+___
+___
+
+# Install a cluster into existing VPC with Local Zone subnets <a name="ipi-localzones-existing-vpc"></a>
 
 The steps below describe how to install a cluster in existing VPC with AWS Local Zones subnets using Edge Machine Pool, introduced in 4.12.
 
@@ -70,7 +276,6 @@ Example of the permissive IAM Policy that can be attached to the User or Role:
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "Stmt1677614927608",
       "Action": [
         "ec2:ModifyAvailabilityZoneGroup"
       ],
@@ -400,8 +605,94 @@ aws cloudformation delete-stack \
     --region ${AWS_REGION} \
     --stack-name ${CLUSTER_NAME}-vpc
 ```
+___
+___
+
+# Extend worker nodes to AWS Local Zones in existing clusters [Day 2] <a name="#day2-localzones"></a>
+
+To create worker nodes in AWS Local Zones in existing clusters it is required those steps:
+
+- Make sure the overlay network MTU is set correctly to support the AWS Local Zone limitations
+- Create subnets in AWS Local Zones, and dependencies (subnet association)
+- Create MachineSet to deploy compute nodes in Local Zone subnets
+
+When the cluster is installed using the edge compute pool, the MTU for the overlay network is automatically adjusted depending on the network plugin used.
+
+When the cluster was already installed without the edge compute pool, without Local Zone support, the required dependencies must be satisfied. The steps below cover both scenarios.
+
+## Adjust the MTU of the overlay network
+
+> You can skip this section if the cluster is already installed with Local Zone support.
+
+The [KCS](https://access.redhat.com/solutions/6996487) covers the required step to change the MTU from the overlay network.
+
+***Example changing the default MTU (9001) to the maximum allowed for network plugin OVN-Kubernetes***:
+
+> TODO: need to check if can omit the `spec.migration.mtu.machine` on the process.
+
+```bash
+
+$ CLUSTER_MTU_CUR=$(oc get network.config.openshift.io/cluster --output=jsonpath={.status.clusterNetworkMTU})
+$ CLUSTER_MTU_NEW=1200
+
+$ oc patch Network.operator.openshift.io cluster --type=merge \
+  --patch "{
+    \"spec\":{
+      \"migration\":{
+        \"mtu\":{
+          \"network\":{
+            \"from\":${CLUSTER_MTU_CUR},
+            \"to\":${CLUSTER_MTU_NEW}
+          },
+          \"machine\":{\"to\":9001}
+        }}}}"
+```
+
+Wait for the deployment to be finished, then remove the migration config:
+
+```bash
+$ oc patch network.operator.openshift.io/cluster --type=merge \
+  --patch "{
+    \"spec\":{
+      \"migration\":null,
+      \"defaultNetwork\":{
+        \"ovnKubernetesConfig\":{\"mtu\":${CLUSTER_MTU_NEW}}
+        }}}"
+```
+
+## Setup subnet for Local Zone
+
+Prerequisites:
+
+- You must check the free CIDR Blocks available on the VPC
+- Only CloudFormation Templates for public subnets are provided, you must adapt them if need more advanced configuration
+
+Steps:
+
+- [Opt-in the Zone group](https://docs.openshift.com/container-platform/4.12/installing/installing_aws/installing-aws-localzone.html#installation-aws-add-local-zone-locations_installing-aws-localzone)
+- [Create the Local Zone subnet](https://docs.openshift.com/container-platform/4.12/installing/installing_aws/installing-aws-localzone.html#installation-creating-aws-vpc-localzone_installing-aws-localzone)
+
+
+## Create the MachineSet
+
+The steps below describe how to create the MachineSet manifests for the AWS Local Zone node:
+
+- [Create the MachineSet manifest: Step 3](https://docs.openshift.com/container-platform/4.12/installing/installing_aws/installing-aws-localzone.html#installation-localzone-generate-k8s-manifest_installing-aws-localzone)
+
+Once it is created you can apply the configuration to the cluster:
+
+***Example:***
+
+```bash
+oc create -f <installation_directory>/openshift/99_openshift-cluster-api_worker-machineset-nyc1.yaml
+```
+
+___
+___
 
 ## Use Cases <a name="use-cases"></a>
+
+> Note: part of this document was added to the official documentation: [Post-installation configuration / Cluster tasks / Creating user workloads in AWS Local Zones](ocp-aws-localzones-day2-user-workloads)
 
 ### Example of a sample application deployment <a name="uc-deployment"></a>
 
@@ -481,6 +772,7 @@ backends (compute nodes) placed in different zones that the traffic entered by t
 
 The ALB deployment is not covered by this documentation.
 
+___
 
 [openshift-install]: https://docs.openshift.com/container-platform/4.11/installing/index.html
 [aws-cli]: https://aws.amazon.com/cli/
@@ -488,3 +780,5 @@ The ALB deployment is not covered by this documentation.
 [aws-install-cloudformation]: https://docs.openshift.com/container-platform/4.11/installing/installing_aws/installing-aws-user-infra.html
 [aws-local-zones]: https://aws.amazon.com/about-aws/global-infrastructure/localzones
 [aws-local-zones-features]: https://aws.amazon.com/about-aws/global-infrastructure/localzones/features
+[ocp-aws-localzone-limitations]: https://docs.openshift.com/container-platform/4.13/installing/installing_aws/installing-aws-localzone.html#cluster-limitations-local-zone_installing-aws-localzone
+[ocp-aws-localzones-day2-user-workloads]: https://docs.openshift.com/container-platform/4.13/post_installation_configuration/cluster-tasks.html#installation-extend-edge-nodes-aws-local-zones_post-install-cluster-tasks

@@ -1,8 +1,3 @@
-locals {
-  new_private_cidr_range = cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 1, 1)
-  new_public_cidr_range  = cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 1, 0)
-}
-
 resource "aws_vpc" "new_vpc" {
   count = var.vpc == null ? 1 : 0
 

@@ -120,49 +120,69 @@ variable "aws_worker_availability_zones" {
   description = "The availability zones to provision for workers.  Worker instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
 }
 
+variable "aws_edge_local_zones" {
+  type    = list(string)
+  default = []
+
+  description = "The zones to provision subnets for the edge pool. Edge instances are created by the machine-API operator, but this variable controls their supporting infrastructure (subnets, routing, etc.)."
+}
+
+variable "aws_edge_parent_zones_index" {
+  type    = map(string)
+  default = {}
+
+  description = <<EOF
+(optional) A map of the Edge's Parent Zone indexes to discover the private's route table ID used by the private subnet from the parent's Zone in the Region.
+Each Local or Wavelength Zone is connected to a parent zone in the Region. If the parent zone has private Route tables, the installer
+uses the index to associate with the private edge subnets.
+
+Example: `{ "us-east-1-nyc-1a"=5, "us-east-1-wl1-nyc-wlz-1"=2 }`
+EOF
+}
+
 variable "aws_vpc" {
-  type        = string
-  default     = null
+  type = string
+  default = null
   description = "(optional) An existing network (VPC ID) into which the cluster should be installed."
 }
 
 variable "aws_public_subnets" {
-  type        = list(string)
-  default     = null
+  type = list(string)
+  default = null
   description = "(optional) Existing public subnets into which the cluster should be installed."
 }
 
 variable "aws_private_subnets" {
-  type        = list(string)
-  default     = null
+  type = list(string)
+  default = null
   description = "(optional) Existing private subnets into which the cluster should be installed."
 }
 
 variable "aws_internal_zone" {
-  type        = string
-  default     = null
+  type = string
+  default = null
   description = "(optional) An existing hosted zone (zone ID) to use for the internal API."
 }
 
 variable "aws_internal_zone_role" {
-  type        = string
-  default     = null
+  type = string
+  default = null
   description = "(optional) A role to assume when using an existing hosted zone from another account."
 }
 
 
 variable "aws_publish_strategy" {
-  type        = string
+  type = string
   description = "The cluster publishing strategy, either Internal or External"
 }
 
 variable "aws_ignition_bucket" {
-  type        = string
+  type = string
   description = "The S3 bucket where the ignition configuration is stored"
 }
 
 variable "aws_bootstrap_stub_ignition" {
-  type        = string
+  type = string
   description = <<EOF
 The stub Ignition config that should be used to boot the bootstrap instance. This already points to the presigned URL for the s3 bucket
 specified in aws_ignition_bucket.
@@ -170,13 +190,13 @@ EOF
 }
 
 variable "aws_master_iam_role_name" {
-  type = string
+  type        = string
   description = "The name of the IAM role that will be attached to master instances."
-  default = ""
+  default     = ""
 }
 
 variable "aws_worker_iam_role_name" {
-  type = string
+  type        = string
   description = "The name of the IAM role that will be attached to worker instances."
-  default = ""
+  default     = ""
 }

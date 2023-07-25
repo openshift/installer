@@ -54,20 +54,11 @@ func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) 
 
 	for idx, compute := range config.Compute {
 		fldPath := field.NewPath("compute").Index(idx)
-
-		// Pool's specific validation.
-		// Edge Compute Pool: AWS Local Zones is valid only when installing in existing VPC.
 		if compute.Name == types.MachinePoolEdgeRoleName {
 			if len(config.Platform.AWS.Subnets) == 0 {
-				return errors.New(field.Required(fldPath, "invalid install config. edge machine pool is valid when installing in existing VPC").Error())
-			}
-			edgeSubnets, err := meta.EdgeSubnets(ctx)
-			if err != nil {
-				errMsg := fmt.Sprintf("%s pool. %v", compute.Name, err.Error())
-				return errors.New(field.Invalid(field.NewPath("platform", "aws", "subnets"), config.Platform.AWS.Subnets, errMsg).Error())
-			}
-			if len(edgeSubnets) == 0 {
-				return errors.New(field.Required(fldPath, "invalid install config. There is no valid subnets for edge machine pool").Error())
+				if compute.Platform.AWS == nil {
+					allErrs = append(allErrs, field.Required(fldPath.Child("platform", "aws"), "edge compute pools are only supported on the AWS platform"))
+				}
 			}
 		}
 
@@ -191,10 +182,10 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 	privateZones := sets.NewString()
 	publicZones := sets.NewString()
 	for _, subnet := range privateSubnets {
-		privateZones.Insert(subnet.Zone)
+		privateZones.Insert(subnet.Zone.Name)
 	}
 	for _, subnet := range publicSubnets {
-		publicZones.Insert(subnet.Zone)
+		publicZones.Insert(subnet.Zone.Name)
 	}
 	if publish == types.ExternalPublishingStrategy && !publicZones.IsSuperset(privateZones) {
 		errMsg := fmt.Sprintf("No public subnet provided for zones %s", privateZones.Difference(publicZones).List())
@@ -205,26 +196,64 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, s
 }
 
 func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool, req resourceRequirements, poolName string) field.ErrorList {
+	var err error
 	allErrs := field.ErrorList{}
-	if len(pool.Zones) > 0 {
-		availableZones := sets.String{}
+
+	// Pool's specific validation.
+	// Edge Compute Pool / AWS Local Zones:
+	// - is valid when installing in existing VPC; or
+	// - is valid in new VPC when Local Zone name is defined
+	if poolName == types.MachinePoolEdgeRoleName {
 		if len(platform.Subnets) > 0 {
-			var err error
+			edgeSubnets, err := meta.EdgeSubnets(ctx)
+			if err != nil {
+				errMsg := fmt.Sprintf("%s pool. %v", poolName, err.Error())
+				return append(allErrs, field.Invalid(field.NewPath("subnets"), platform.Subnets, errMsg))
+			}
+			if len(edgeSubnets) == 0 {
+				return append(allErrs, field.Required(fldPath, "the provided subnets must include valid subnets for the specified edge zones"))
+			}
+		} else {
+			if pool.Zones == nil || len(pool.Zones) == 0 {
+				return append(allErrs, field.Required(fldPath, "zone is required when using edge machine pools"))
+			}
+			for _, zone := range pool.Zones {
+				err := validateZoneLocal(ctx, meta, fldPath.Child("zones"), zone)
+				if err != nil {
+					allErrs = append(allErrs, err)
+				}
+			}
+			if len(allErrs) > 0 {
+				return allErrs
+			}
+		}
+	}
+
+	if pool.Zones != nil && len(pool.Zones) > 0 {
+		availableZones := sets.String{}
+		diffErrMsgPrefix := "One or more zones are unavailable"
+		if len(platform.Subnets) > 0 {
+			diffErrMsgPrefix = "No subnets provided for zones"
 			var subnets Subnets
-			switch poolName {
-			case types.MachinePoolEdgeRoleName:
+			if poolName == types.MachinePoolEdgeRoleName {
 				subnets, err = meta.EdgeSubnets(ctx)
-			default:
+			} else {
 				subnets, err = meta.PrivateSubnets(ctx)
 			}
+
 			if err != nil {
 				return append(allErrs, field.InternalError(fldPath, err))
 			}
 			for _, subnet := range subnets {
-				availableZones.Insert(subnet.Zone)
+				availableZones.Insert(subnet.Zone.Name)
 			}
 		} else {
-			allzones, err := meta.AvailabilityZones(ctx)
+			var allzones []string
+			if poolName == types.MachinePoolEdgeRoleName {
+				allzones, err = meta.EdgeZones(ctx)
+			} else {
+				allzones, err = meta.AvailabilityZones(ctx)
+			}
 			if err != nil {
 				return append(allErrs, field.InternalError(fldPath, err))
 			}
@@ -232,7 +261,7 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		}
 
 		if diff := sets.NewString(pool.Zones...).Difference(availableZones); diff.Len() > 0 {
-			errMsg := fmt.Sprintf("No subnets provided for zones %s", diff.List())
+			errMsg := fmt.Sprintf("%s %s", diffErrMsgPrefix, diff.List())
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), pool.Zones, errMsg))
 		}
 	}
@@ -288,7 +317,7 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 	return allErrs
 }
 
-func validateSubnetCIDR(fldPath *field.Path, subnets map[string]Subnet, idxMap map[string]int, networks []types.MachineNetworkEntry) field.ErrorList {
+func validateSubnetCIDR(fldPath *field.Path, subnets Subnets, idxMap map[string]int, networks []types.MachineNetworkEntry) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for id, v := range subnets {
 		fp := fldPath.Index(idxMap[id])
@@ -311,7 +340,7 @@ func validateMachineNetworksContainIP(fldPath *field.Path, networks []types.Mach
 	return field.ErrorList{field.Invalid(fldPath, subnetName, fmt.Sprintf("subnet's CIDR range start %s is outside of the specified machine networks", ip))}
 }
 
-func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet, idxMap map[string]int, typ string) field.ErrorList {
+func validateDuplicateSubnetZones(fldPath *field.Path, subnets Subnets, idxMap map[string]int, typ string) field.ErrorList {
 	var keys []string
 	for id := range subnets {
 		keys = append(keys, id)
@@ -322,11 +351,11 @@ func validateDuplicateSubnetZones(fldPath *field.Path, subnets map[string]Subnet
 	zones := map[string]string{}
 	for _, id := range keys {
 		subnet := subnets[id]
-		if conflictingSubnet, ok := zones[subnet.Zone]; ok {
-			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", typ, conflictingSubnet, subnet.Zone)
+		if conflictingSubnet, ok := zones[subnet.Zone.Name]; ok {
+			errMsg := fmt.Sprintf("%s subnet %s is also in zone %s", typ, conflictingSubnet, subnet.Zone.Name)
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(idxMap[id]), id, errMsg))
 		} else {
-			zones[subnet.Zone] = id
+			zones[subnet.Zone.Name] = id
 		}
 	}
 	return allErrs
@@ -379,6 +408,33 @@ func validateRegion(region string) error {
 	}
 	ec2Session := ec2.New(ses)
 	return validateEndpointAccessibility(ec2Session.Endpoint)
+}
+
+func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path, zoneName string) *field.Error {
+	sess, err := meta.Session(ctx)
+	if err != nil {
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to start a session: %s", err.Error()))
+	}
+	zones, err := describeFilteredZones(ctx, sess, meta.Region, []string{zoneName})
+	if err != nil {
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to get describe zone: %s", err.Error()))
+	}
+	validZone := false
+	for _, zone := range zones {
+		if aws.StringValue(zone.ZoneName) == zoneName {
+			if aws.StringValue(zone.ZoneType) != awstypes.LocalZoneType {
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone is valid in the edge machine pool: %s", aws.StringValue(zone.ZoneType)))
+			}
+			if aws.StringValue(zone.OptInStatus) != awstypes.ZoneOptInStatusOptedIn {
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("zone group is not opted-in: %s", aws.StringValue(zone.GroupName)))
+			}
+			validZone = true
+		}
+	}
+	if !validZone {
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("invalid local zone name: %s", zoneName))
+	}
+	return nil
 }
 
 func validateEndpointAccessibility(endpointURL string) error {
