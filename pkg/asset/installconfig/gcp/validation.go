@@ -53,7 +53,6 @@ func Validate(client API, ic *types.InstallConfig) error {
 	allErrs = append(allErrs, validateProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateNetworkProject(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateRegion(client, ic, field.NewPath("platform").Child("gcp"))...)
-	allErrs = append(allErrs, validateZones(client, ic)...)
 	allErrs = append(allErrs, validateNetworks(client, ic, field.NewPath("platform").Child("gcp"))...)
 	allErrs = append(allErrs, validateInstanceTypes(client, ic)...)
 	allErrs = append(allErrs, validateCredentialMode(client, ic)...)
@@ -64,25 +63,15 @@ func Validate(client API, ic *types.InstallConfig) error {
 }
 
 // ValidateInstanceType ensures the instance type has sufficient Vcpu and Memory.
-func ValidateInstanceType(client API, fieldPath *field.Path, project, region string, zones []string, instanceType string, req resourceRequirements) field.ErrorList {
+func ValidateInstanceType(client API, fieldPath *field.Path, project, zone, instanceType string, req resourceRequirements) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	typeMeta, instanceZones, err := client.GetMachineTypeWithZones(context.TODO(), project, region, instanceType)
+	typeMeta, err := client.GetMachineType(context.TODO(), project, zone, instanceType)
 	if err != nil {
-		var gErr *googleapi.Error
-		if errors.As(err, &gErr) {
-			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, gErr.Message))
+		if _, ok := err.(*googleapi.Error); ok {
+			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
-	}
-
-	userZones := sets.New(zones...)
-	if len(userZones) == 0 {
-		userZones = instanceZones
-	}
-	if diff := userZones.Difference(instanceZones); len(diff) > 0 {
-		errMsg := fmt.Sprintf("instance type not available in zones: %v", sets.List(diff))
-		allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 	}
 
 	if typeMeta.GuestCpus < req.minimumVCpus {
@@ -116,6 +105,14 @@ func validateServiceAccountPresent(client API, ic *types.InstallConfig) field.Er
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
+	// Get list of zones in region
+	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
+	if err != nil {
+		return append(allErrs, field.InternalError(nil, err))
+	} else if len(zones) == 0 {
+		return append(allErrs, field.InternalError(nil, fmt.Errorf("failed to fetch instance types, this error usually occurs if the region is not found")))
+	}
+
 	// Default requirements need to be sufficient to support Control Plane instances.
 	defaultInstanceReq := controlPlaneReq
 
@@ -123,19 +120,19 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		// Default requirements can be relaxed when the controlPlane type is set explicitly.
 		defaultInstanceReq = computeReq
 
-		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "gcp"), ic.GCP.ProjectID, ic.GCP.Region, ic.ControlPlane.Platform.GCP.Zones,
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("controlPlane", "platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
 			ic.ControlPlane.Platform.GCP.InstanceType, controlPlaneReq)...)
 	}
 
 	if ic.Platform.GCP.DefaultMachinePlatform != nil && ic.Platform.GCP.DefaultMachinePlatform.InstanceType != "" {
-		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("platform", "gcp", "defaultMachinePlatform"), ic.GCP.ProjectID, ic.GCP.Region, ic.Platform.GCP.DefaultMachinePlatform.Zones,
+		allErrs = append(allErrs, ValidateInstanceType(client, field.NewPath("platform", "gcp", "defaultMachinePlatform"), ic.GCP.ProjectID, zones[0].Name,
 			ic.Platform.GCP.DefaultMachinePlatform.InstanceType, defaultInstanceReq)...)
 	}
 
 	for idx, compute := range ic.Compute {
 		fieldPath := field.NewPath("compute").Index(idx)
 		if compute.Platform.GCP != nil && compute.Platform.GCP.InstanceType != "" {
-			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "gcp"), ic.GCP.ProjectID, ic.GCP.Region, compute.Platform.GCP.Zones,
+			allErrs = append(allErrs, ValidateInstanceType(client, fieldPath.Child("platform", "gcp"), ic.GCP.ProjectID, zones[0].Name,
 				compute.Platform.GCP.InstanceType, computeReq)...)
 		}
 	}
@@ -425,50 +422,6 @@ func validateCredentialMode(client API, ic *types.InstallConfig) field.ErrorList
 			if ic.CredentialsMode != "" && ic.CredentialsMode != types.ManualCredentialsMode {
 				errMsg := "environmental authentication is only supported with Manual credentials mode"
 				return append(allErrs, field.Forbidden(field.NewPath("credentialsMode"), errMsg))
-			}
-		}
-	}
-
-	return allErrs
-}
-
-func validateZones(client API, ic *types.InstallConfig) field.ErrorList {
-	allErrs := field.ErrorList{}
-
-	zones, err := client.GetZones(context.TODO(), ic.GCP.ProjectID, fmt.Sprintf("region eq .*%s", ic.GCP.Region))
-	if err != nil {
-		return append(allErrs, field.InternalError(nil, err))
-	} else if len(zones) == 0 {
-		return append(allErrs, field.InternalError(nil, fmt.Errorf("failed to fetch zones, this error usually occurs if the region is not found")))
-	}
-
-	projZones := sets.New[string]()
-	for _, zone := range zones {
-		projZones.Insert(zone.Name)
-	}
-
-	const errMsg = "zone(s) not found in region"
-
-	if ic.Platform.GCP.DefaultMachinePlatform != nil {
-		diff := sets.New(ic.Platform.GCP.DefaultMachinePlatform.Zones...).Difference(projZones)
-		if len(diff) > 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("platform", "gcp", "defaultMachinePlatform", "zones"), sets.List(diff), errMsg))
-		}
-	}
-
-	if ic.ControlPlane != nil && ic.ControlPlane.Platform.GCP != nil {
-		diff := sets.New(ic.ControlPlane.Platform.GCP.Zones...).Difference(projZones)
-		if len(diff) > 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("controlPlane", "platform", "gcp", "zones"), sets.List(diff), errMsg))
-		}
-	}
-
-	for idx, compute := range ic.Compute {
-		fldPath := field.NewPath("compute").Index(idx)
-		if compute.Platform.GCP != nil {
-			diff := sets.New(compute.Platform.GCP.Zones...).Difference(projZones)
-			if len(diff) > 0 {
-				allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "gcp", "zones"), sets.List(diff), errMsg))
 			}
 		}
 	}
