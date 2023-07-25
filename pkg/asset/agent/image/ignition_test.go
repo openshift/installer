@@ -227,6 +227,32 @@ func TestRetrieveRendezvousIP(t *testing.T) {
 			},
 			expectedError: "missing rendezvousIP in agent-config or at least one NMStateConfig manifest",
 		},
+		{
+			Name: "non-canonical-ipv6-address",
+			agentConfig: &agent.Config{
+				RendezvousIP: "fd2e:6f44:5dd8:c956:0000:0000:0000:0050",
+				Hosts: []agent.Host{
+					{
+						Hostname: "control-0.example.org",
+						Role:     "master",
+					},
+				},
+			},
+			expectedRendezvousIP: "fd2e:6f44:5dd8:c956::50",
+		},
+		{
+			Name: "invalid-ipv6-address",
+			agentConfig: &agent.Config{
+				RendezvousIP: "fd2e:6f44:5dd8:c956::0000::0050",
+				Hosts: []agent.Host{
+					{
+						Hostname: "control-0.example.org",
+						Role:     "master",
+					},
+				},
+			},
+			expectedError: "invalid rendezvous IP: fd2e:6f44:5dd8:c956::0000::0050",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.Name, func(t *testing.T) {

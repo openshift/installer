@@ -487,8 +487,16 @@ func RetrieveRendezvousIP(agentConfig *agent.Config, nmStateConfigs []*v1beta1.N
 		logrus.Debug("RendezvousIP from the NMStateConfig ", rendezvousIP)
 	} else {
 		err = errors.New("missing rendezvousIP in agent-config or at least one NMStateConfig manifest")
+		return "", err
 	}
-	return rendezvousIP, err
+
+	// Convert IPv6 address to canonical to match host format for comparisons
+	addr := net.ParseIP(rendezvousIP)
+	if addr == nil {
+		err = errors.New(fmt.Sprintf("invalid rendezvous IP: %s", rendezvousIP))
+		return "", err
+	}
+	return addr.String(), err
 }
 
 func getPublicContainerRegistries(registriesConfig *mirror.RegistriesConf) string {
