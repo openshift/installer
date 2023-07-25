@@ -76,7 +76,7 @@ func (m *Metadata) AvailabilityZones(ctx context.Context) ([]string, error) {
 	return m.availabilityZones, nil
 }
 
-// EdgeZones retrieves a list of Local zones for the configured region.
+// EdgeZones retrieves a list of Local and Wavelength zones for the configured region.
 func (m *Metadata) EdgeZones(ctx context.Context) ([]string, error) {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
@@ -87,7 +87,7 @@ func (m *Metadata) EdgeZones(ctx context.Context) ([]string, error) {
 			return nil, err
 		}
 
-		m.edgeZones, err = localZones(ctx, session, m.Region)
+		m.edgeZones, err = edgeZones(ctx, session, m.Region)
 		if err != nil {
 			return nil, errors.Wrap(err, "getting Local Zones")
 		}
