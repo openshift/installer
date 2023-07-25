@@ -68,7 +68,10 @@ networking:
 platform:
   openstack:
     cloud: mycloud
-    machinesSubnet: 8586bf1a-cc3c-4d40-bdf6-c243decc603a
+    controlPlanePort:
+      fixedIPs:
+      - subnet:
+          id: 8586bf1a-cc3c-4d40-bdf6-c243decc603a
     apiVIPs:
     - 192.168.10.5
     ingressVIPs:
@@ -80,7 +83,7 @@ platform:
 There are some important things to note here:
 
 * `loadBalancer` is a new stanza created in OCP 4.13. The default type is `OpenShiftManagedDefault` (which will deploy HAproxy and Keepalived in OCP, known as the OpenShift managed load balancer). Setting it to `UserManaged` will allow a user managed load balancer to replace the OpenShift managed one.
-* `machinesSubnet` is the subnet ID where both the OpenShift cluster and the user managed load balancer are deployed.
+* `platform.openstack.controlPlanePort.fixedIPs.subnet.id` is the subnet ID where both the OpenShift cluster and the user managed load balancer are deployed.
 * In OCP 4.13 the feature had to be enabled as Technology Preview. This can be done by adding featureSet: `TechPreviewNoUpgrade` into the install-config.yaml.
 
 

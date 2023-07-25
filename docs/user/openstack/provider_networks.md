@@ -79,7 +79,7 @@ on a tenant network:
 
     - Set `platform.openstack.apiVIP` to the IP address for the API VIP.
     - Set `platform.openstack.ingressVIP` to the IP address for the Ingress VIP.
-    - Set `platform.openstack.machinesSubnet` to the subnet ID of the provider network subnet.
+    - Set `platform.openstack.controlPlanePort.fixedIPs.subnet.id` to the subnet ID of the provider network subnet and/or `platform.openstack.controlPlanePort.fixedIPs.subnet.name` to the name of the provider network.
     - Set `networking.machineNetwork.cidr` to the CIDR of the provider network subnet.
 
     > **Note**
@@ -93,7 +93,10 @@ on a tenant network:
           openstack:
             apiVIP: <IP address in the provider network reserved for the API VIP>
             ingressVIP: <IP address in the provider network reserved for the Ingress VIP>
-            machinesSubnet: <provider network subnet ID>
+            controlPlanePort:
+              fixedIPs:
+                - subnet:
+                  id: <provider network subnet ID>
             (...)
         networking:
           machineNetwork:
