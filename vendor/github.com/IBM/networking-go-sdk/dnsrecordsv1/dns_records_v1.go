@@ -17,7 +17,6 @@
 /*
  * IBM OpenAPI SDK Code Generator Version: 3.20.0-debb9f29-20201203-202043
  */
- 
 
 // Package dnsrecordsv1 : Operations and models for the DnsRecordsV1 service
 package dnsrecordsv1
@@ -26,11 +25,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/IBM/go-sdk-core/v4/core"
-	common "github.com/IBM/networking-go-sdk/common"
 	"net/http"
 	"reflect"
 	"time"
+
+	"github.com/IBM/go-sdk-core/v5/core"
+	common "github.com/IBM/networking-go-sdk/common"
 )
 
 // DnsRecordsV1 : DNS records
@@ -119,8 +119,8 @@ func NewDnsRecordsV1(options *DnsRecordsV1Options) (service *DnsRecordsV1, err e
 	}
 
 	service = &DnsRecordsV1{
-		Service: baseService,
-		Crn: options.Crn,
+		Service:        baseService,
+		Crn:            options.Crn,
 		ZoneIdentifier: options.ZoneIdentifier,
 	}
 
@@ -192,7 +192,7 @@ func (dnsRecords *DnsRecordsV1) ListAllDnsRecordsWithContext(ctx context.Context
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *dnsRecords.Crn,
+		"crn":             *dnsRecords.Crn,
 		"zone_identifier": *dnsRecords.ZoneIdentifier,
 	}
 
@@ -272,7 +272,7 @@ func (dnsRecords *DnsRecordsV1) CreateDnsRecordWithContext(ctx context.Context, 
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *dnsRecords.Crn,
+		"crn":             *dnsRecords.Crn,
 		"zone_identifier": *dnsRecords.ZoneIdentifier,
 	}
 
@@ -356,8 +356,8 @@ func (dnsRecords *DnsRecordsV1) DeleteDnsRecordWithContext(ctx context.Context, 
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *dnsRecords.Crn,
-		"zone_identifier": *dnsRecords.ZoneIdentifier,
+		"crn":                  *dnsRecords.Crn,
+		"zone_identifier":      *dnsRecords.ZoneIdentifier,
 		"dnsrecord_identifier": *deleteDnsRecordOptions.DnsrecordIdentifier,
 	}
 
@@ -416,8 +416,8 @@ func (dnsRecords *DnsRecordsV1) GetDnsRecordWithContext(ctx context.Context, get
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *dnsRecords.Crn,
-		"zone_identifier": *dnsRecords.ZoneIdentifier,
+		"crn":                  *dnsRecords.Crn,
+		"zone_identifier":      *dnsRecords.ZoneIdentifier,
 		"dnsrecord_identifier": *getDnsRecordOptions.DnsrecordIdentifier,
 	}
 
@@ -476,8 +476,8 @@ func (dnsRecords *DnsRecordsV1) UpdateDnsRecordWithContext(ctx context.Context, 
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *dnsRecords.Crn,
-		"zone_identifier": *dnsRecords.ZoneIdentifier,
+		"crn":                  *dnsRecords.Crn,
+		"zone_identifier":      *dnsRecords.ZoneIdentifier,
 		"dnsrecord_identifier": *updateDnsRecordOptions.DnsrecordIdentifier,
 	}
 
@@ -573,16 +573,16 @@ type CreateDnsRecordOptions struct {
 // Constants associated with the CreateDnsRecordOptions.Type property.
 // dns record type.
 const (
-	CreateDnsRecordOptions_Type_A = "A"
-	CreateDnsRecordOptions_Type_Aaaa = "AAAA"
-	CreateDnsRecordOptions_Type_Caa = "CAA"
+	CreateDnsRecordOptions_Type_A     = "A"
+	CreateDnsRecordOptions_Type_Aaaa  = "AAAA"
+	CreateDnsRecordOptions_Type_Caa   = "CAA"
 	CreateDnsRecordOptions_Type_Cname = "CNAME"
-	CreateDnsRecordOptions_Type_Loc = "LOC"
-	CreateDnsRecordOptions_Type_Mx = "MX"
-	CreateDnsRecordOptions_Type_Ns = "NS"
-	CreateDnsRecordOptions_Type_Spf = "SPF"
-	CreateDnsRecordOptions_Type_Srv = "SRV"
-	CreateDnsRecordOptions_Type_Txt = "TXT"
+	CreateDnsRecordOptions_Type_Loc   = "LOC"
+	CreateDnsRecordOptions_Type_Mx    = "MX"
+	CreateDnsRecordOptions_Type_Ns    = "NS"
+	CreateDnsRecordOptions_Type_Spf   = "SPF"
+	CreateDnsRecordOptions_Type_Srv   = "SRV"
+	CreateDnsRecordOptions_Type_Txt   = "TXT"
 )
 
 // NewCreateDnsRecordOptions : Instantiate CreateDnsRecordOptions
@@ -666,7 +666,6 @@ type DeleteDnsrecordRespResult struct {
 	ID *string `json:"id" validate:"required"`
 }
 
-
 // UnmarshalDeleteDnsrecordRespResult unmarshals an instance of DeleteDnsrecordRespResult from the specified map of raw messages.
 func UnmarshalDeleteDnsrecordRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DeleteDnsrecordRespResult)
@@ -740,16 +739,16 @@ type ListAllDnsRecordsOptions struct {
 // Field by which to order list of DNS records.
 const (
 	ListAllDnsRecordsOptions_Order_Content = "content"
-	ListAllDnsRecordsOptions_Order_Name = "name"
+	ListAllDnsRecordsOptions_Order_Name    = "name"
 	ListAllDnsRecordsOptions_Order_Proxied = "proxied"
-	ListAllDnsRecordsOptions_Order_TTL = "ttl"
-	ListAllDnsRecordsOptions_Order_Type = "type"
+	ListAllDnsRecordsOptions_Order_TTL     = "ttl"
+	ListAllDnsRecordsOptions_Order_Type    = "type"
 )
 
 // Constants associated with the ListAllDnsRecordsOptions.Direction property.
 // Direction in which to order results [ascending/descending order].
 const (
-	ListAllDnsRecordsOptions_Direction_Asc = "asc"
+	ListAllDnsRecordsOptions_Direction_Asc  = "asc"
 	ListAllDnsRecordsOptions_Direction_Desc = "desc"
 )
 
@@ -852,16 +851,16 @@ type UpdateDnsRecordOptions struct {
 // Constants associated with the UpdateDnsRecordOptions.Type property.
 // dns record type.
 const (
-	UpdateDnsRecordOptions_Type_A = "A"
-	UpdateDnsRecordOptions_Type_Aaaa = "AAAA"
-	UpdateDnsRecordOptions_Type_Caa = "CAA"
+	UpdateDnsRecordOptions_Type_A     = "A"
+	UpdateDnsRecordOptions_Type_Aaaa  = "AAAA"
+	UpdateDnsRecordOptions_Type_Caa   = "CAA"
 	UpdateDnsRecordOptions_Type_Cname = "CNAME"
-	UpdateDnsRecordOptions_Type_Loc = "LOC"
-	UpdateDnsRecordOptions_Type_Mx = "MX"
-	UpdateDnsRecordOptions_Type_Ns = "NS"
-	UpdateDnsRecordOptions_Type_Spf = "SPF"
-	UpdateDnsRecordOptions_Type_Srv = "SRV"
-	UpdateDnsRecordOptions_Type_Txt = "TXT"
+	UpdateDnsRecordOptions_Type_Loc   = "LOC"
+	UpdateDnsRecordOptions_Type_Mx    = "MX"
+	UpdateDnsRecordOptions_Type_Ns    = "NS"
+	UpdateDnsRecordOptions_Type_Spf   = "SPF"
+	UpdateDnsRecordOptions_Type_Srv   = "SRV"
+	UpdateDnsRecordOptions_Type_Txt   = "TXT"
 )
 
 // NewUpdateDnsRecordOptions : Instantiate UpdateDnsRecordOptions
@@ -940,7 +939,6 @@ type DeleteDnsrecordResp struct {
 	Result *DeleteDnsrecordRespResult `json:"result" validate:"required"`
 }
 
-
 // UnmarshalDeleteDnsrecordResp unmarshals an instance of DeleteDnsrecordResp from the specified map of raw messages.
 func UnmarshalDeleteDnsrecordResp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DeleteDnsrecordResp)
@@ -1009,18 +1007,17 @@ type DnsrecordDetails struct {
 // Constants associated with the DnsrecordDetails.Type property.
 // dns record type.
 const (
-	DnsrecordDetails_Type_A = "A"
-	DnsrecordDetails_Type_Aaaa = "AAAA"
-	DnsrecordDetails_Type_Caa = "CAA"
+	DnsrecordDetails_Type_A     = "A"
+	DnsrecordDetails_Type_Aaaa  = "AAAA"
+	DnsrecordDetails_Type_Caa   = "CAA"
 	DnsrecordDetails_Type_Cname = "CNAME"
-	DnsrecordDetails_Type_Loc = "LOC"
-	DnsrecordDetails_Type_Mx = "MX"
-	DnsrecordDetails_Type_Ns = "NS"
-	DnsrecordDetails_Type_Spf = "SPF"
-	DnsrecordDetails_Type_Srv = "SRV"
-	DnsrecordDetails_Type_Txt = "TXT"
+	DnsrecordDetails_Type_Loc   = "LOC"
+	DnsrecordDetails_Type_Mx    = "MX"
+	DnsrecordDetails_Type_Ns    = "NS"
+	DnsrecordDetails_Type_Spf   = "SPF"
+	DnsrecordDetails_Type_Srv   = "SRV"
+	DnsrecordDetails_Type_Txt   = "TXT"
 )
-
 
 // UnmarshalDnsrecordDetails unmarshals an instance of DnsrecordDetails from the specified map of raw messages.
 func UnmarshalDnsrecordDetails(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1096,7 +1093,6 @@ type DnsrecordResp struct {
 	Result *DnsrecordDetails `json:"result" validate:"required"`
 }
 
-
 // UnmarshalDnsrecordResp unmarshals an instance of DnsrecordResp from the specified map of raw messages.
 func UnmarshalDnsrecordResp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(DnsrecordResp)
@@ -1137,7 +1133,6 @@ type ListDnsrecordsResp struct {
 	// result information.
 	ResultInfo *ResultInfo `json:"result_info" validate:"required"`
 }
-
 
 // UnmarshalListDnsrecordsResp unmarshals an instance of ListDnsrecordsResp from the specified map of raw messages.
 func UnmarshalListDnsrecordsResp(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1180,7 +1175,6 @@ type ResultInfo struct {
 	// total count.
 	TotalCount *int64 `json:"total_count" validate:"required"`
 }
-
 
 // UnmarshalResultInfo unmarshals an instance of ResultInfo from the specified map of raw messages.
 func UnmarshalResultInfo(m map[string]json.RawMessage, result interface{}) (err error) {

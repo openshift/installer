@@ -130,7 +130,6 @@ func (requestBuilder *RequestBuilder) ConstructHTTPURL(serviceURL string, pathSe
 	return requestBuilder, nil
 }
 
-//
 // ResolveRequestURL creates a properly-encoded URL with path params.
 // This function returns an error if the serviceURL is "" or is an
 // invalid URL string (e.g. ":<badscheme>").
@@ -140,7 +139,6 @@ func (requestBuilder *RequestBuilder) ConstructHTTPURL(serviceURL string, pathSe
 // pathParams - a map containing the path params, keyed by the path param base name
 // (e.g. {"type_id": "type-1", "resource_id": "res-123-456-789-abc"})
 // The resulting request URL: "https://myservice.cloud.ibm.com/resource/res-123-456-789-abc/type/type-1"
-//
 func (requestBuilder *RequestBuilder) ResolveRequestURL(serviceURL string, path string, pathParams map[string]string) (*RequestBuilder, error) {
 	if serviceURL == "" {
 		return requestBuilder, fmt.Errorf(ERRORMSG_SERVICE_URL_MISSING)
@@ -243,14 +241,7 @@ func (requestBuilder *RequestBuilder) SetBodyContentStream(bodyContent io.Reader
 	return requestBuilder, nil
 }
 
-// CreateMultipartWriter initializes a new multipart writer.
-func (requestBuilder *RequestBuilder) createMultipartWriter() *multipart.Writer {
-	buff := new(bytes.Buffer)
-	requestBuilder.Body = buff
-	return multipart.NewWriter(buff)
-}
-
-// CreateFormFile is a convenience wrapper around CreatePart. It creates
+// createFormFile is a convenience wrapper around CreatePart. It creates
 // a new form-data header with the provided field name and file name and contentType.
 func createFormFile(formWriter *multipart.Writer, fieldname string, filename string, contentType string) (io.Writer, error) {
 	h := make(textproto.MIMEHeader)
@@ -288,11 +279,13 @@ func (requestBuilder *RequestBuilder) SetBodyContentForMultipart(contentType str
 
 // Build builds an HTTP Request object from this RequestBuilder instance.
 func (requestBuilder *RequestBuilder) Build() (req *http.Request, err error) {
-	// Create multipart form data
+
+	// If the request builder contains a non-empty "Form" map, then we need to create
+	// a form-based request body, with the specific flavor depending on the content type.
 	if len(requestBuilder.Form) > 0 {
-		// handle both application/x-www-form-urlencoded or multipart/form-data
 		contentType := requestBuilder.Header.Get(CONTENT_TYPE)
 		if contentType == FORM_URL_ENCODED_HEADER {
+			// Create a "application/x-www-form-urlencoded" request body.
 			data := url.Values{}
 			for fieldName, l := range requestBuilder.Form {
 				for _, v := range l {
@@ -304,26 +297,15 @@ func (requestBuilder *RequestBuilder) Build() (req *http.Request, err error) {
 				return
 			}
 		} else {
-			formWriter := requestBuilder.createMultipartWriter()
-			for fieldName, l := range requestBuilder.Form {
-				for _, v := range l {
-					var dataPartWriter io.Writer
-					dataPartWriter, err = createFormFile(formWriter, fieldName, v.fileName, v.contentType)
-					if err != nil {
-						return
-					}
-					if err = requestBuilder.SetBodyContentForMultipart(v.contentType,
-						v.contents, dataPartWriter); err != nil {
-						return
-					}
-				}
-			}
-
-			requestBuilder.AddHeader("Content-Type", formWriter.FormDataContentType())
-			err = formWriter.Close()
+			// Create a "multipart/form-data" request body.
+			var formBody io.ReadCloser
+			formBody, contentType, err = requestBuilder.createMultipartFormRequestBody()
 			if err != nil {
 				return
 			}
+
+			requestBuilder.Body = formBody
+			requestBuilder.AddHeader("Content-Type", contentType)
 		}
 	}
 
@@ -370,6 +352,60 @@ func (requestBuilder *RequestBuilder) Build() (req *http.Request, err error) {
 	if !IsNil(requestBuilder.ctx) {
 		req = req.WithContext(requestBuilder.ctx)
 	}
+
+	return
+}
+
+// createMultipartFormRequestBody will create a request body (a multi-part form) from the parts contained
+// in the request builder's "Form" map, which is a map of FormData values keyed by field name (part name).
+func (requestBuilder *RequestBuilder) createMultipartFormRequestBody() (bodyReader io.ReadCloser, contentType string, err error) {
+	var bodyWriter io.WriteCloser
+
+	// We'll use a pipe so that we can hand the Request object a body (bodyReader below) that can be
+	// read in parallel with the function that is writing it, thus saving us from having to make an entire copy
+	// of the contents of each form part.
+	bodyReader, bodyWriter = io.Pipe()
+	formWriter := multipart.NewWriter(bodyWriter)
+
+	go func() {
+		defer bodyWriter.Close() // #nosec G307
+
+		// Create a form part from each entry found in the request body's Form map.
+		// Note: each entry will actually be a slice of values, and we'll create a separate
+		// mime part for each element of the slice.
+		for fieldName, formPartList := range requestBuilder.Form {
+			for _, formPart := range formPartList {
+				var partWriter io.Writer
+
+				// Use the form writer to create the form part within the request body we're creating.
+				partWriter, err = createFormFile(formWriter, fieldName, formPart.fileName, formPart.contentType)
+				if err != nil {
+					return
+				}
+
+				// If the part's content is a ReadCloser, we'll need to close it when we're done.
+				if stream, ok := formPart.contents.(io.ReadCloser); ok {
+					defer stream.Close() // #nosec G307
+				} else if stream, ok := formPart.contents.(*io.ReadCloser); ok {
+					defer (*stream).Close()
+				}
+
+				// Copy the contents of the part to the form part within the request body.
+				if err = requestBuilder.SetBodyContentForMultipart(formPart.contentType, formPart.contents, partWriter); err != nil {
+					return
+				}
+			}
+		}
+
+		// We're done adding parts to the form, so close the form writer.
+		if err = formWriter.Close(); err != nil {
+			return
+		}
+
+	}()
+
+	// Grab the Content-Type from the form writer (it will also contain the boundary string)
+	contentType = formWriter.FormDataContentType()
 
 	return
 }

@@ -28,7 +28,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	validator "gopkg.in/go-playground/validator.v9"
+	validator "github.com/go-playground/validator/v10"
 )
 
 // Validate is a shared validator instance used to perform validation of structs.
@@ -112,6 +112,11 @@ func Float64Ptr(literal float64) *float64 {
 
 // UUIDPtr returns a pointer to strfmt.UUID literal.
 func UUIDPtr(literal strfmt.UUID) *strfmt.UUID {
+	return &literal
+}
+
+// ByteArrayPtr returns a pointer to []byte literal.
+func ByteArrayPtr(literal []byte) *[]byte {
 	return &literal
 }
 
@@ -266,28 +271,49 @@ func SliceContains(slice []string, contains string) bool {
 	return false
 }
 
-// GetQueryParam() returns a pointer to the value of query parameter `param` from urlStr,
+// GetQueryParam returns a pointer to the value of query parameter `param` from urlStr,
 // or nil if not found.
-func GetQueryParam(urlStr *string, param string) (*string, error) {
+func GetQueryParam(urlStr *string, param string) (value *string, err error) {
 	if urlStr == nil || *urlStr == "" {
-		return nil, nil
+		return
 	}
 
-	u, err := url.Parse(*urlStr)
+	urlObj, err := url.Parse(*urlStr)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	q, err := url.ParseQuery(u.RawQuery)
+	query, err := url.ParseQuery(urlObj.RawQuery)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	v := q.Get(param)
+	v := query.Get(param)
 	if v == "" {
-		return nil, nil
+		return
 	}
-	return &v, nil
+
+	value = &v
+
+	return
+}
+
+// GetQueryParamAsInt returns a pointer to the value of query parameter `param` from urlStr
+// converted to an int64 value, or nil if not found.
+func GetQueryParamAsInt(urlStr *string, param string) (value *int64, err error) {
+	strValue, err := GetQueryParam(urlStr, param)
+	if err != nil || strValue == nil {
+		return
+	}
+
+	intValue, err := strconv.ParseInt(*strValue, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	value = &intValue
+
+	return
 }
 
 // Pre-compiled regular expressions used by RedactSecrets().

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2020.
+ * (C) Copyright IBM Corp. 2022.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,8 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.20.0-debb9f29-20201203-202043
+ * IBM OpenAPI SDK Code Generator Version: 3.52.0-8345f809-20220627-220000
  */
- 
 
 // Package zonesv1 : Operations and models for the ZonesV1 service
 package zonesv1
@@ -26,16 +25,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/IBM/go-sdk-core/v4/core"
-	common "github.com/IBM/networking-go-sdk/common"
 	"net/http"
 	"reflect"
 	"time"
+
+	"github.com/IBM/go-sdk-core/v5/core"
+	common "github.com/IBM/networking-go-sdk/common"
 )
 
 // ZonesV1 : CIS Zones
 //
-// Version: 1.0.1
+// API Version: 1.0.1
 type ZonesV1 struct {
 	Service *core.BaseService
 
@@ -114,7 +114,7 @@ func NewZonesV1(options *ZonesV1Options) (service *ZonesV1, err error) {
 
 	service = &ZonesV1{
 		Service: baseService,
-		Crn: options.Crn,
+		Crn:     options.Crn,
 	}
 
 	return
@@ -223,11 +223,13 @@ func (zones *ZonesV1) ListZonesWithContext(ctx context.Context, listZonesOptions
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListZonesResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalListZonesResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -272,6 +274,9 @@ func (zones *ZonesV1) CreateZoneWithContext(ctx context.Context, createZoneOptio
 	if createZoneOptions.Name != nil {
 		body["name"] = createZoneOptions.Name
 	}
+	if createZoneOptions.Type != nil {
+		body["type"] = createZoneOptions.Type
+	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
 		return
@@ -287,11 +292,13 @@ func (zones *ZonesV1) CreateZoneWithContext(ctx context.Context, createZoneOptio
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -314,7 +321,7 @@ func (zones *ZonesV1) DeleteZoneWithContext(ctx context.Context, deleteZoneOptio
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *zones.Crn,
+		"crn":             *zones.Crn,
 		"zone_identifier": *deleteZoneOptions.ZoneIdentifier,
 	}
 
@@ -346,11 +353,13 @@ func (zones *ZonesV1) DeleteZoneWithContext(ctx context.Context, deleteZoneOptio
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteZoneResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalDeleteZoneResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -373,7 +382,7 @@ func (zones *ZonesV1) GetZoneWithContext(ctx context.Context, getZoneOptions *Ge
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *zones.Crn,
+		"crn":             *zones.Crn,
 		"zone_identifier": *getZoneOptions.ZoneIdentifier,
 	}
 
@@ -405,11 +414,13 @@ func (zones *ZonesV1) GetZoneWithContext(ctx context.Context, getZoneOptions *Ge
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -432,7 +443,7 @@ func (zones *ZonesV1) UpdateZoneWithContext(ctx context.Context, updateZoneOptio
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *zones.Crn,
+		"crn":             *zones.Crn,
 		"zone_identifier": *updateZoneOptions.ZoneIdentifier,
 	}
 
@@ -474,11 +485,13 @@ func (zones *ZonesV1) UpdateZoneWithContext(ctx context.Context, updateZoneOptio
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -501,7 +514,7 @@ func (zones *ZonesV1) ZoneActivationCheckWithContext(ctx context.Context, zoneAc
 	}
 
 	pathParamsMap := map[string]string{
-		"crn": *zones.Crn,
+		"crn":             *zones.Crn,
 		"zone_identifier": *zoneActivationCheckOptions.ZoneIdentifier,
 	}
 
@@ -533,11 +546,13 @@ func (zones *ZonesV1) ZoneActivationCheckWithContext(ctx context.Context, zoneAc
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneActivationcheckResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZoneActivationcheckResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -547,9 +562,19 @@ type CreateZoneOptions struct {
 	// name.
 	Name *string `json:"name,omitempty"`
 
+	// zone type.
+	Type *string `json:"type,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
+
+// Constants associated with the CreateZoneOptions.Type property.
+// zone type.
+const (
+	CreateZoneOptions_Type_Full    = "full"
+	CreateZoneOptions_Type_Partial = "partial"
+)
 
 // NewCreateZoneOptions : Instantiate CreateZoneOptions
 func (*ZonesV1) NewCreateZoneOptions() *CreateZoneOptions {
@@ -557,9 +582,15 @@ func (*ZonesV1) NewCreateZoneOptions() *CreateZoneOptions {
 }
 
 // SetName : Allow user to set Name
-func (options *CreateZoneOptions) SetName(name string) *CreateZoneOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateZoneOptions) SetName(name string) *CreateZoneOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *CreateZoneOptions) SetType(typeVar string) *CreateZoneOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -585,9 +616,9 @@ func (*ZonesV1) NewDeleteZoneOptions(zoneIdentifier string) *DeleteZoneOptions {
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *DeleteZoneOptions) SetZoneIdentifier(zoneIdentifier string) *DeleteZoneOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *DeleteZoneOptions) SetZoneIdentifier(zoneIdentifier string) *DeleteZoneOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -601,7 +632,6 @@ type DeleteZoneRespResult struct {
 	// id.
 	ID *string `json:"id" validate:"required"`
 }
-
 
 // UnmarshalDeleteZoneRespResult unmarshals an instance of DeleteZoneRespResult from the specified map of raw messages.
 func UnmarshalDeleteZoneRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -631,9 +661,9 @@ func (*ZonesV1) NewGetZoneOptions(zoneIdentifier string) *GetZoneOptions {
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *GetZoneOptions) SetZoneIdentifier(zoneIdentifier string) *GetZoneOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *GetZoneOptions) SetZoneIdentifier(zoneIdentifier string) *GetZoneOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -660,15 +690,15 @@ func (*ZonesV1) NewListZonesOptions() *ListZonesOptions {
 }
 
 // SetPage : Allow user to set Page
-func (options *ListZonesOptions) SetPage(page int64) *ListZonesOptions {
-	options.Page = core.Int64Ptr(page)
-	return options
+func (_options *ListZonesOptions) SetPage(page int64) *ListZonesOptions {
+	_options.Page = core.Int64Ptr(page)
+	return _options
 }
 
 // SetPerPage : Allow user to set PerPage
-func (options *ListZonesOptions) SetPerPage(perPage int64) *ListZonesOptions {
-	options.PerPage = core.Int64Ptr(perPage)
-	return options
+func (_options *ListZonesOptions) SetPerPage(perPage int64) *ListZonesOptions {
+	_options.PerPage = core.Int64Ptr(perPage)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -697,15 +727,15 @@ func (*ZonesV1) NewUpdateZoneOptions(zoneIdentifier string) *UpdateZoneOptions {
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *UpdateZoneOptions) SetZoneIdentifier(zoneIdentifier string) *UpdateZoneOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *UpdateZoneOptions) SetZoneIdentifier(zoneIdentifier string) *UpdateZoneOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetPaused : Allow user to set Paused
-func (options *UpdateZoneOptions) SetPaused(paused bool) *UpdateZoneOptions {
-	options.Paused = core.BoolPtr(paused)
-	return options
+func (_options *UpdateZoneOptions) SetPaused(paused bool) *UpdateZoneOptions {
+	_options.Paused = core.BoolPtr(paused)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -731,9 +761,9 @@ func (*ZonesV1) NewZoneActivationCheckOptions(zoneIdentifier string) *ZoneActiva
 }
 
 // SetZoneIdentifier : Allow user to set ZoneIdentifier
-func (options *ZoneActivationCheckOptions) SetZoneIdentifier(zoneIdentifier string) *ZoneActivationCheckOptions {
-	options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
-	return options
+func (_options *ZoneActivationCheckOptions) SetZoneIdentifier(zoneIdentifier string) *ZoneActivationCheckOptions {
+	_options.ZoneIdentifier = core.StringPtr(zoneIdentifier)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -747,7 +777,6 @@ type ZoneActivationcheckRespResult struct {
 	// id.
 	ID *string `json:"id" validate:"required"`
 }
-
 
 // UnmarshalZoneActivationcheckRespResult unmarshals an instance of ZoneActivationcheckRespResult from the specified map of raw messages.
 func UnmarshalZoneActivationcheckRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -774,7 +803,6 @@ type DeleteZoneResp struct {
 	// result.
 	Result *DeleteZoneRespResult `json:"result" validate:"required"`
 }
-
 
 // UnmarshalDeleteZoneResp unmarshals an instance of DeleteZoneResp from the specified map of raw messages.
 func UnmarshalDeleteZoneResp(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -816,7 +844,6 @@ type ListZonesResp struct {
 	// result information.
 	ResultInfo *ResultInfo `json:"result_info" validate:"required"`
 }
-
 
 // UnmarshalListZonesResp unmarshals an instance of ListZonesResp from the specified map of raw messages.
 func UnmarshalListZonesResp(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -860,7 +887,6 @@ type ResultInfo struct {
 	TotalCount *int64 `json:"total_count" validate:"required"`
 }
 
-
 // UnmarshalResultInfo unmarshals an instance of ResultInfo from the specified map of raw messages.
 func UnmarshalResultInfo(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(ResultInfo)
@@ -898,7 +924,6 @@ type ZoneActivationcheckResp struct {
 	// result.
 	Result *ZoneActivationcheckRespResult `json:"result" validate:"required"`
 }
-
 
 // UnmarshalZoneActivationcheckResp unmarshals an instance of ZoneActivationcheckResp from the specified map of raw messages.
 func UnmarshalZoneActivationcheckResp(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -954,8 +979,16 @@ type ZoneDetails struct {
 
 	// name servers.
 	NameServers []string `json:"name_servers,omitempty"`
-}
 
+	// zone type.
+	Type *string `json:"type,omitempty"`
+
+	// verification key.
+	VerificationKey *string `json:"verification_key,omitempty"`
+
+	// canme suffix.
+	CnameSuffix *string `json:"cname_suffix,omitempty"`
+}
 
 // UnmarshalZoneDetails unmarshals an instance of ZoneDetails from the specified map of raw messages.
 func UnmarshalZoneDetails(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -1000,6 +1033,18 @@ func UnmarshalZoneDetails(m map[string]json.RawMessage, result interface{}) (err
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "verification_key", &obj.VerificationKey)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "cname_suffix", &obj.CnameSuffix)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -1018,7 +1063,6 @@ type ZoneResp struct {
 	// zone details.
 	Result *ZoneDetails `json:"result" validate:"required"`
 }
-
 
 // UnmarshalZoneResp unmarshals an instance of ZoneResp from the specified map of raw messages.
 func UnmarshalZoneResp(m map[string]json.RawMessage, result interface{}) (err error) {
