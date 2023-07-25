@@ -5,18 +5,20 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/none"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // SupportedInstallerPlatforms lists the supported platforms for agent installer.
 func SupportedInstallerPlatforms() []string {
-	return []string{baremetal.Name, vsphere.Name, none.Name}
+	return []string{baremetal.Name, vsphere.Name, none.Name, nutanix.Name}
 }
 
-var supportedHivePlatforms = []hiveext.PlatformType{
-	hiveext.BareMetalPlatformType,
-	hiveext.VSpherePlatformType,
-	hiveext.NonePlatformType,
+var supportedHivePlatforms = []string{
+	// hiveext.BareMetalPlatformType,
+	// hiveext.VSpherePlatformType,
+	// hiveext.NonePlatformType,
+	"nutanix",
 }
 
 // SupportedHivePlatforms lists the supported platforms for AgentClusterInstall.
@@ -44,7 +46,7 @@ func HivePlatformType(platform types.Platform) hiveext.PlatformType {
 
 // IsSupportedPlatform returns true if provided platform is supported.
 // Otherwise, returns false.
-func IsSupportedPlatform(platform hiveext.PlatformType) bool {
+func IsSupportedPlatform(platform string) bool {
 	for _, p := range supportedHivePlatforms {
 		if p == platform {
 			return true

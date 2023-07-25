@@ -396,7 +396,7 @@ func (a *AgentClusterInstall) validateSupportedPlatforms() field.ErrorList {
 
 	fieldPath := field.NewPath("spec", "platformType")
 
-	if a.Config.Spec.PlatformType != "" && !agent.IsSupportedPlatform(a.Config.Spec.PlatformType) {
+	if a.Config.Spec.PlatformType != "" && !agent.IsSupportedPlatform(string(a.Config.Spec.PlatformType)) {
 		allErrs = append(allErrs, field.NotSupported(fieldPath, a.Config.Spec.PlatformType, agent.SupportedHivePlatforms()))
 	}
 	return allErrs
