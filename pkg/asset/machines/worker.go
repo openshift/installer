@@ -203,11 +203,13 @@ func defaultNutanixMachinePoolPlatform() nutanixtypes.MachinePool {
 // using the existing preferred instance list used by worker compute pool.
 // Each machine set in the edge pool, created for each zone, can use different instance
 // types depending on the instance offerings in the location (Local Zones).
-func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, zones icaws.Zones) (ok bool, err error) {
+func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []string, meta *icaws.Metadata, zones icaws.Zones) (ok bool) {
+	allZonesFound := true
 	for zone := range zones {
 		preferredType, err := aws.PreferredInstanceType(ctx, meta, defaultTypes, []string{zone})
 		if err != nil {
-			logrus.Warn(errors.Wrap(err, fmt.Sprintf("unable to select instanceType on the zone[%v] from the preferred list: %v. You must update the MachineSet manifest", zone, defaultTypes)))
+			logrus.Warnf("unable to select instanceType on the zone[%v] from the preferred list: %v. You must update the MachineSet manifest: %v", zone, defaultTypes, err)
+			allZonesFound = false
 			continue
 		}
 		if _, ok := zones[zone]; !ok {
@@ -215,7 +217,7 @@ func awsSetPreferredInstanceByEdgeZone(ctx context.Context, defaultTypes []strin
 		}
 		zones[zone].PreferredInstanceType = preferredType
 	}
-	return true, nil
+	return allZonesFound
 }
 
 // Worker generates the machinesets for `worker` machine pool.
@@ -420,12 +422,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				instanceTypes := awsdefaults.InstanceTypes(installConfig.Config.Platform.AWS.Region, installConfig.Config.ControlPlane.Architecture, configv1.HighlyAvailableTopologyMode)
 				switch pool.Name {
 				case types.MachinePoolEdgeRoleName:
-					ok, err := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
-					if err != nil {
-						return errors.Wrap(err, "failed to find default instance type for edge pool, you must define on the compute pool")
-					}
+					ok := awsSetPreferredInstanceByEdgeZone(ctx, instanceTypes, installConfig.AWS, zones)
 					if !ok {
-						logrus.Warn(errors.Wrap(err, "failed to find preferred instance type for edge pool, using default"))
+						logrus.Warnf("failed to find preferred instance type for one or more zones in the %s pool, using default: %s", pool.Name, instanceTypes[0])
 						mpool.InstanceType = instanceTypes[0]
 					}
 				default:
