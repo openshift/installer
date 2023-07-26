@@ -29,6 +29,9 @@ var (
 	validMetadataAuthValues = sets.NewString("Required", "Optional")
 )
 
+// https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html
+const maxSecurityGroupsCount = 16
+
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -58,6 +61,12 @@ func validateSecurityGroups(platform *aws.Platform, p *aws.MachinePool, fldPath 
 	if len(p.AdditionalSecurityGroupIDs) > 0 && len(platform.Subnets) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("platform.subnets"), "subnets must be provided when additional security groups are present"))
 	}
+
+	// The installer also creates a security group: `${var.cluster_id}-master-sg/${var.cluster_id}-worker-sg`
+	if count := len(p.AdditionalSecurityGroupIDs); count > maxSecurityGroupsCount-1 {
+		allErrs = append(allErrs, field.TooMany(fldPath, count, maxSecurityGroupsCount-1))
+	}
+
 	return allErrs
 }
 
