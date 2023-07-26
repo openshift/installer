@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -230,7 +233,7 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Type:        schema.TypeList,
 			Optional:    true,
 			Description: "A specification for a CDROM device on this virtual machine.",
-			MaxItems:    1,
+			MaxItems:    2,
 			Elem:        &schema.Resource{Schema: virtualdevice.CdromSubresourceSchema()},
 		},
 		"pci_device_id": {
@@ -272,11 +275,6 @@ func resourceVSphereVirtualMachine() *schema.Resource {
 			Type:        schema.TypeBool,
 			Computed:    true,
 			Description: "A flag internal to Terraform that indicates that this resource was either imported or came from a earlier major version of this resource. Reset after the first post-import or post-upgrade apply.",
-		},
-		"moid": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "The machine object ID from VMware vSphere.",
 		},
 		"power_state": {
 			Type:        schema.TypeString,
@@ -508,12 +506,16 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 		d.Set("storage_policy_id", polID)
 	}
 
-	// Read the PCI passthrough devices.
+	// Read the virtual machine PCI passthrough devices
 	var pciDevs []string
 	for _, dev := range vprops.Config.Hardware.Device {
 		if pci, ok := dev.(*types.VirtualPCIPassthrough); ok {
-			devID := pci.Backing.(*types.VirtualPCIPassthroughDeviceBackingInfo).Id
-			pciDevs = append(pciDevs, devID)
+			if pciBacking, ok := pci.Backing.(*types.VirtualPCIPassthroughDeviceBackingInfo); ok {
+				devId := pciBacking.Id
+				pciDevs = append(pciDevs, devId)
+			} else {
+				log.Printf("[DEBUG] %s: PCI passthrough device %q has no backing ID", resourceVSphereVirtualMachineIDString(d), pci.GetVirtualDevice().DeviceInfo.GetDescription())
+			}
 		}
 	}
 	err = d.Set("pci_device_id", pciDevs)
@@ -577,6 +579,7 @@ func resourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{})
 func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Performing update", resourceVSphereVirtualMachineIDString(d))
 	client := meta.(*Client).vimClient
+	timeout := meta.(*Client).timeout
 	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
@@ -747,7 +750,7 @@ func resourceVSphereVirtualMachineUpdate(d *schema.ResourceData, meta interface{
 		if _, ok := d.GetOk("datastore_cluster_id"); ok {
 			err = resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(d, meta, vm, spec)
 		} else {
-			err = virtualmachine.Reconfigure(vm, spec)
+			err = virtualmachine.Reconfigure(vm, spec, timeout)
 		}
 		if err != nil {
 			return err
@@ -828,9 +831,10 @@ func resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(
 ) error {
 	// Check to see if we have any disk creation operations first, as sending an
 	// update through SDRS without any disk creation operations will fail.
+	timeout := meta.(*Client).timeout
 	if !storagepod.HasDiskCreationOperations(spec.DeviceChange) {
 		log.Printf("[DEBUG] No disk operations for reconfiguration of VM %q, deferring to standard API", vm.InventoryPath)
-		return virtualmachine.Reconfigure(vm, spec)
+		return virtualmachine.Reconfigure(vm, spec, timeout)
 	}
 
 	client := meta.(*Client).vimClient
@@ -854,6 +858,7 @@ func resourceVSphereVirtualMachineUpdateReconfigureWithSDRS(
 func resourceVSphereVirtualMachineDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] %s: Performing delete", resourceVSphereVirtualMachineIDString(d))
 	client := meta.(*Client).vimClient
+	timeout := meta.(*Client).timeout
 	id := d.Id()
 	vm, err := virtualmachine.FromUUID(client, id)
 	if err != nil {
@@ -881,7 +886,7 @@ func resourceVSphereVirtualMachineDelete(d *schema.ResourceData, meta interface{
 	}
 	// Only run the reconfigure operation if there's actually disks in the spec.
 	if len(spec.DeviceChange) > 0 {
-		if err := virtualmachine.Reconfigure(vm, spec); err != nil {
+		if err := virtualmachine.Reconfigure(vm, spec, timeout); err != nil {
 			return fmt.Errorf("error detaching virtual disks: %s", err)
 		}
 	}
@@ -1172,6 +1177,7 @@ func resourceVSphereVirtualMachineImport(d *schema.ResourceData, meta interface{
 	_ = d.Set("wait_for_guest_net_timeout", rs["wait_for_guest_net_timeout"].Default)
 	_ = d.Set("wait_for_guest_net_routable", rs["wait_for_guest_net_routable"].Default)
 	_ = d.Set("poweron_timeout", rs["poweron_timeout"].Default)
+	_ = d.Set("extra_config_reboot_required", rs["extra_config_reboot_required"].Default)
 
 	log.Printf("[DEBUG] %s: Import complete, resource is ready for read", resourceVSphereVirtualMachineIDString(d))
 	return []*schema.ResourceData{d}, nil
@@ -1342,6 +1348,7 @@ func resourceVSphereVirtualMachineCreateBareStandard(
 // Deploy vm from ovf/ova template
 func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interface{}) (*object.VirtualMachine, error) {
 	client := meta.(*Client).vimClient
+	timeout := meta.(*Client).timeout
 
 	ovfParams := NewOvfHelperParamsFromVMResource(d)
 	ovfHelper, err := ovfdeploy.NewOvfHelper(client, ovfParams)
@@ -1391,7 +1398,7 @@ func resourceVsphereMachineDeployOvfAndOva(d *schema.ResourceData, meta interfac
 		vmConfigSpec := types.VirtualMachineConfigSpec{
 			VAppConfig: vappConfig,
 		}
-		err = virtualmachine.Reconfigure(vm, vmConfigSpec)
+		err = virtualmachine.Reconfigure(vm, vmConfigSpec, timeout)
 		if err != nil {
 			return nil, fmt.Errorf("error while applying vapp config %s", err)
 		}
@@ -1591,11 +1598,23 @@ func resourceVSphereVirtualMachinePostDeployChanges(d *schema.ResourceData, meta
 		)
 	}
 	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
+	// PCI passthrough devices
+	devices, delta, err = virtualdevice.PciPassthroughPostCloneOperation(d, client, devices)
+	if err != nil {
+		return resourceVSphereVirtualMachineRollbackCreate(
+			d,
+			meta,
+			vm,
+			fmt.Errorf("error processing PCI passthrough device changes post-clone: %s", err),
+		)
+	}
+	cfgSpec.DeviceChange = virtualdevice.AppendDeviceChangeSpec(cfgSpec.DeviceChange, delta...)
 	log.Printf("[DEBUG] %s: Final device list: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceListString(devices))
 	log.Printf("[DEBUG] %s: Final device change cfgSpec: %s", resourceVSphereVirtualMachineIDString(d), virtualdevice.DeviceChangeString(cfgSpec.DeviceChange))
 
 	// Perform updates
-	err = virtualmachine.Reconfigure(vm, cfgSpec)
+	timeout := meta.(*Client).timeout
+	err = virtualmachine.Reconfigure(vm, cfgSpec, timeout)
 	if err != nil {
 		return resourceVSphereVirtualMachineRollbackCreate(
 			d,

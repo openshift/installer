@@ -23,7 +23,6 @@ website/node_modules
 .vscode
 *.iml
 *.test
-*.iml
 *.tfvars
 
 website/vendor

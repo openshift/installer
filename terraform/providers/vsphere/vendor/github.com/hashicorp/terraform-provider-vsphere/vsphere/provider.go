@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -142,6 +145,7 @@ func Provider() *schema.Provider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vsphere_compute_cluster":            dataSourceVSphereComputeCluster(),
+			"vsphere_compute_cluster_host_group": dataSourceVSphereComputeClusterHostGroup(),
 			"vsphere_content_library":            dataSourceVSphereContentLibrary(),
 			"vsphere_content_library_item":       dataSourceVSphereContentLibraryItem(),
 			"vsphere_custom_attribute":           dataSourceVSphereCustomAttribute(),

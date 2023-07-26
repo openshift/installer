@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net"
 	"path"
+	"strings"
 
 	"github.com/vmware/govmomi/nfc"
 	"github.com/vmware/govmomi/property"
@@ -333,7 +334,9 @@ func (v VirtualMachine) WaitForNetIP(ctx context.Context, v4 bool, device ...str
 			devices := VirtualDeviceList(c.Val.(types.ArrayOfVirtualDevice).VirtualDevice)
 			for _, d := range devices {
 				if nic, ok := d.(types.BaseVirtualEthernetCard); ok {
-					mac := nic.GetVirtualEthernetCard().MacAddress
+					// Convert to lower so that e.g. 00:50:56:83:3A:5D is treated the
+					// same as 00:50:56:83:3a:5d
+					mac := strings.ToLower(nic.GetVirtualEthernetCard().MacAddress)
 					if mac == "" {
 						return false
 					}
@@ -369,7 +372,9 @@ func (v VirtualMachine) WaitForNetIP(ctx context.Context, v4 bool, device ...str
 
 			nics := c.Val.(types.ArrayOfGuestNicInfo).GuestNicInfo
 			for _, nic := range nics {
-				mac := nic.MacAddress
+				// Convert to lower so that e.g. 00:50:56:83:3A:5D is treated the
+				// same as 00:50:56:83:3a:5d
+				mac := strings.ToLower(nic.MacAddress)
 				if mac == "" || nic.IpConfig == nil {
 					continue
 				}
@@ -456,29 +461,33 @@ func (v VirtualMachine) ResourcePool(ctx context.Context) (*ResourcePool, error)
 	return NewResourcePool(v.c, *rp), nil
 }
 
+func diskFileOperation(op types.VirtualDeviceConfigSpecOperation, fop types.VirtualDeviceConfigSpecFileOperation, device types.BaseVirtualDevice) types.VirtualDeviceConfigSpecFileOperation {
+	if disk, ok := device.(*types.VirtualDisk); ok {
+		// Special case to attach an existing disk
+		if op == types.VirtualDeviceConfigSpecOperationAdd && disk.CapacityInKB == 0 && disk.CapacityInBytes == 0 {
+			childDisk := false
+			if b, ok := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo); ok {
+				childDisk = b.Parent != nil
+			}
+
+			if !childDisk {
+				fop = "" // existing disk
+			}
+		}
+		return fop
+	}
+
+	return ""
+}
+
 func (v VirtualMachine) configureDevice(ctx context.Context, op types.VirtualDeviceConfigSpecOperation, fop types.VirtualDeviceConfigSpecFileOperation, devices ...types.BaseVirtualDevice) error {
 	spec := types.VirtualMachineConfigSpec{}
 
 	for _, device := range devices {
 		config := &types.VirtualDeviceConfigSpec{
-			Device:    device,
-			Operation: op,
-		}
-
-		if disk, ok := device.(*types.VirtualDisk); ok {
-			config.FileOperation = fop
-
-			// Special case to attach an existing disk
-			if op == types.VirtualDeviceConfigSpecOperationAdd && disk.CapacityInKB == 0 {
-				childDisk := false
-				if b, ok := disk.Backing.(*types.VirtualDiskFlatVer2BackingInfo); ok {
-					childDisk = b.Parent != nil
-				}
-
-				if !childDisk {
-					config.FileOperation = "" // existing disk
-				}
-			}
+			Device:        device,
+			Operation:     op,
+			FileOperation: diskFileOperation(op, fop, device),
 		}
 
 		spec.DeviceChange = append(spec.DeviceChange, config)
@@ -1057,4 +1066,17 @@ func (v VirtualMachine) QueryChangedDiskAreas(ctx context.Context, baseSnapshot,
 	}
 
 	return res.Returnval, nil
+}
+
+// ExportSnapshot exports all VMDK-files up to (but not including) a specified snapshot. This
+// is useful when exporting a running VM.
+func (v *VirtualMachine) ExportSnapshot(ctx context.Context, snapshot *types.ManagedObjectReference) (*nfc.Lease, error) {
+	req := types.ExportSnapshot{
+		This: *snapshot,
+	}
+	resp, err := methods.ExportSnapshot(ctx, v.Client(), &req)
+	if err != nil {
+		return nil, err
+	}
+	return nfc.NewLease(v.c, resp.Returnval), nil
 }

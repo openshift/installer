@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package virtualdisk
 
 import (
@@ -137,7 +140,7 @@ func Delete(client *govmomi.Client, name string, dc *object.Datacenter) error {
 	if err := task.Wait(tctx); err != nil {
 		return err
 	}
-	log.Printf("[DEBUG] Virtual disk %q in datacenter %s deleted succesfully", name, dc)
+	log.Printf("[DEBUG] Virtual disk %q in datacenter %s deleted successfully", name, dc)
 	return nil
 }
 

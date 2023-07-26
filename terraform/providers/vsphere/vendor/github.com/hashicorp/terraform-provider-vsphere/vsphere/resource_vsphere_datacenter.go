@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -13,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/datacenter"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/folder"
 	"github.com/vmware/govmomi/find"
 	"github.com/vmware/govmomi/object"
 	"github.com/vmware/govmomi/vim25/methods"
@@ -285,6 +289,20 @@ func resourceVSphereDatacenterImport(d *schema.ResourceData, meta interface{}) (
 	if err != nil {
 		return nil, err
 	}
+
+	// determine a folder if one is present
+	f, err := folder.ParentFromPath(client, p, folder.VSphereFolderTypeDatacenter, dc)
+	if err != nil {
+		return nil, fmt.Errorf("cannot locate folder: %s", err)
+	}
+
+	path := strings.TrimPrefix(f.InventoryPath, "/")
+	if path != "" {
+		if err := d.Set("folder", path); err != nil {
+			return nil, err
+		}
+	}
+
 	d.SetId(dc.Name())
 	return []*schema.ResourceData{d}, nil
 }

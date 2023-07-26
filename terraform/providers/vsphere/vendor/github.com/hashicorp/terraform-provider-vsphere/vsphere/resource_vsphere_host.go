@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -10,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/clustercomputeresource"
+	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/customattribute"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/hostsystem"
 	"github.com/hashicorp/terraform-provider-vsphere/vsphere/internal/helper/viapi"
 	"github.com/vmware/govmomi/license"
@@ -78,7 +82,7 @@ func resourceVsphereHost() *schema.Resource {
 			"force": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Force add the host to vsphere, even if it's already managed by a different vSphere instance.",
+				Description: "Force add the host to the vSphere inventory even if it's already managed by a different vCenter Server instance.",
 				Default:     false,
 			},
 			"connected": {
@@ -103,88 +107,11 @@ func resourceVsphereHost() *schema.Resource {
 
 			// Tagging
 			vSphereTagAttributeKey: tagsSchema(),
+
+			// Custom Attributes
+			customattribute.ConfigKey: customattribute.ConfigSchema(),
 		},
 	}
-}
-
-func resourceVsphereHostRead(d *schema.ResourceData, meta interface{}) error {
-	// NOTE: Destroying the host without telling vsphere about it will result in us not
-	// knowing that the host does not exist any more.
-
-	// Look for host
-	client := meta.(*Client).vimClient
-	hostID := d.Id()
-
-	// Find host and get reference to it.
-	hs, err := hostsystem.FromID(client, hostID)
-	if err != nil {
-		if viapi.IsManagedObjectNotFoundError(err) {
-			d.SetId("")
-			return nil
-		}
-		return fmt.Errorf("error while searching host %s. Error: %s ", hostID, err)
-	}
-
-	maintenanceState, err := hostsystem.HostInMaintenance(hs)
-	if err != nil {
-		return fmt.Errorf("error while checking maintenance status for host %s. Error: %s", hostID, err)
-	}
-	_ = d.Set("maintenance", maintenanceState)
-
-	// Retrieve host's properties.
-	log.Printf("[DEBUG] Got host %s", hs.String())
-	host, err := hostsystem.Properties(hs)
-	if err != nil {
-		return fmt.Errorf("error while retrieving properties for host %s. Error: %s", hostID, err)
-	}
-
-	if host.Parent != nil && host.Parent.Type == "ClusterComputeResource" && !d.Get("cluster_managed").(bool) {
-		_ = d.Set("cluster", host.Parent.Value)
-	} else {
-		_ = d.Set("cluster", "")
-	}
-
-	connectionState, err := hostsystem.GetConnectionState(hs)
-	if err != nil {
-		return fmt.Errorf("error while getting connection state for host %s. Error: %s", hostID, err)
-	}
-
-	if connectionState == types.HostSystemConnectionStateDisconnected {
-		// Config and LicenseManager cannot be used while the host is
-		// disconnected.
-		_ = d.Set("connected", false)
-		return nil
-	}
-	_ = d.Set("connected", true)
-
-	lockdownMode, err := hostLockdownString(host.Config.LockdownMode)
-	if err != nil {
-		return err
-	}
-
-	log.Printf("Setting lockdown to %s", lockdownMode)
-	_ = d.Set("lockdown", lockdownMode)
-
-	licenseKey := d.Get("license").(string)
-	if licenseKey != "" {
-		licFound, err := isLicenseAssigned(client.Client, hostID, licenseKey)
-		if err != nil {
-			return fmt.Errorf("error while checking license assignment for host %s. Error: %s", hostID, err)
-		}
-
-		if !licFound {
-			_ = d.Set("license", "")
-		}
-	}
-
-	// Read tags if we have the ability to do so
-	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
-		if err := readTagsForResource(tagsClient, host, d); err != nil {
-			return fmt.Errorf("error reading tags: %s", err)
-		}
-	}
-
-	return nil
 }
 
 func resourceVsphereHostCreate(d *schema.ResourceData, meta interface{}) error {
@@ -282,15 +209,31 @@ func resourceVsphereHostCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("failed while retrieving host object for host %s. Error: %s", hostID, err)
 	}
 
+	// Load the tags client to validate the vCenter Sever connection before
+	// attempting to proceed if tags have been defined.
 	tagsClient, err := tagsManagerIfDefined(d, meta)
 	if err != nil {
 		return err
 	}
 
-	// Apply any pending tags now
+	// Verify the vCenter Server connection before
+	// attempting to proceed if custom attributes have been defined.
+	attrsProcessor, err := customattribute.GetDiffProcessorIfAttributesDefined(client, d)
+	if err != nil {
+		return err
+	}
+
+	// Apply tags
 	if tagsClient != nil {
 		if err := processTagDiff(tagsClient, d, host); err != nil {
 			return fmt.Errorf("error updating tags: %s", err)
+		}
+	}
+
+	// Apply custom attributes
+	if attrsProcessor != nil {
+		if err := attrsProcessor.ProcessDiff(host); err != nil {
+			return err
 		}
 	}
 
@@ -327,6 +270,95 @@ func resourceVsphereHostCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVsphereHostRead(d, meta)
 }
 
+func resourceVsphereHostRead(d *schema.ResourceData, meta interface{}) error {
+	// NOTE: Destroying the host without telling vsphere about it will result in us not
+	// knowing that the host does not exist any more.
+
+	// Look for host
+	client := meta.(*Client).vimClient
+	hostID := d.Id()
+
+	// Find host and get reference to it.
+	hs, err := hostsystem.FromID(client, hostID)
+	if err != nil {
+		if viapi.IsManagedObjectNotFoundError(err) {
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("error while searching host %s. Error: %s ", hostID, err)
+	}
+
+	maintenanceState, err := hostsystem.HostInMaintenance(hs)
+	if err != nil {
+		return fmt.Errorf("error while checking maintenance status for host %s. Error: %s", hostID, err)
+	}
+	_ = d.Set("maintenance", maintenanceState)
+
+	// Retrieve host's properties.
+	log.Printf("[DEBUG] Got host %s", hs.String())
+	host, err := hostsystem.Properties(hs)
+	if err != nil {
+		return fmt.Errorf("error while retrieving properties for host %s. Error: %s", hostID, err)
+	}
+
+	if host.Parent != nil && host.Parent.Type == "ClusterComputeResource" && !d.Get("cluster_managed").(bool) {
+		_ = d.Set("cluster", host.Parent.Value)
+	} else {
+		_ = d.Set("cluster", "")
+	}
+
+	connectionState, err := hostsystem.GetConnectionState(hs)
+	if err != nil {
+		return fmt.Errorf("error while getting connection state for host %s. Error: %s", hostID, err)
+	}
+
+	if connectionState == types.HostSystemConnectionStateDisconnected {
+		// Config and LicenseManager cannot be used while the host is
+		// disconnected.
+		_ = d.Set("connected", false)
+		return nil
+	}
+	_ = d.Set("connected", true)
+
+	lockdownMode, err := hostLockdownString(host.Config.LockdownMode)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("Setting lockdown to %s", lockdownMode)
+	_ = d.Set("lockdown", lockdownMode)
+
+	licenseKey := d.Get("license").(string)
+	if licenseKey != "" {
+		licFound, err := isLicenseAssigned(client.Client, hostID, licenseKey)
+		if err != nil {
+			return fmt.Errorf("error while checking license assignment for host %s. Error: %s", hostID, err)
+		}
+
+		if !licFound {
+			_ = d.Set("license", "")
+		}
+	}
+
+	// Read tags
+	if tagsClient, _ := meta.(*Client).TagsManager(); tagsClient != nil {
+		if err := readTagsForResource(tagsClient, host, d); err != nil {
+			return fmt.Errorf("error reading tags: %s", err)
+		}
+	}
+
+	// Read custom attributes
+	if customattribute.IsSupported(client) {
+		moHost, err := hostsystem.Properties(hs)
+		if err != nil {
+			return err
+		}
+		customattribute.ReadFromResource(moHost.Entity(), d)
+	}
+
+	return nil
+}
+
 func resourceVsphereHostUpdate(d *schema.ResourceData, meta interface{}) error {
 	err := validateFields(d)
 	if err != nil {
@@ -334,6 +366,16 @@ func resourceVsphereHostUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	client := meta.(*Client).vimClient
+
+	tagsClient, err := tagsManagerIfDefined(d, meta)
+	if err != nil {
+		return err
+	}
+
+	attrsProcessor, err := customattribute.GetDiffProcessorIfAttributesDefined(client, d)
+	if err != nil {
+		return err
+	}
 
 	// First let's establish where we are and where we want to go
 	var desiredConnectionState bool
@@ -406,14 +448,17 @@ func resourceVsphereHostUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	tagsClient, err := tagsManagerIfDefined(d, meta)
-	if err != nil {
-		return err
-	}
-
+	// Apply tags
 	if tagsClient != nil {
 		if err := processTagDiff(tagsClient, d, hostObject); err != nil {
 			return fmt.Errorf("error updating tags: %s", err)
+		}
+	}
+
+	// Apply custom attributes
+	if attrsProcessor != nil {
+		if err := attrsProcessor.ProcessDiff(hostObject); err != nil {
+			return err
 		}
 	}
 
@@ -753,11 +798,6 @@ func validateFields(d *schema.ResourceData) error {
 	}
 	return nil
 }
-
-// --------------
-// Implementing stuff govmomi should provide for us
-//
-//
 
 type HostAccessManager struct {
 	object.Common

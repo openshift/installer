@@ -25,6 +25,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math"
 	"strings"
 	"sync"
@@ -76,7 +77,7 @@ func NewGZIPCompressorWithLevel(level int) (Compressor, error) {
 	return &gzipCompressor{
 		pool: sync.Pool{
 			New: func() interface{} {
-				w, err := gzip.NewWriterLevel(io.Discard, level)
+				w, err := gzip.NewWriterLevel(ioutil.Discard, level)
 				if err != nil {
 					panic(err)
 				}
@@ -142,7 +143,7 @@ func (d *gzipDecompressor) Do(r io.Reader) ([]byte, error) {
 		z.Close()
 		d.pool.Put(z)
 	}()
-	return io.ReadAll(z)
+	return ioutil.ReadAll(z)
 }
 
 func (d *gzipDecompressor) Type() string {
@@ -296,8 +297,7 @@ func (o FailFastCallOption) before(c *callInfo) error {
 func (o FailFastCallOption) after(c *callInfo, attempt *csAttempt) {}
 
 // MaxCallRecvMsgSize returns a CallOption which sets the maximum message size
-// in bytes the client can receive. If this is not set, gRPC uses the default
-// 4MB.
+// in bytes the client can receive.
 func MaxCallRecvMsgSize(bytes int) CallOption {
 	return MaxRecvMsgSizeCallOption{MaxRecvMsgSize: bytes}
 }
@@ -320,8 +320,7 @@ func (o MaxRecvMsgSizeCallOption) before(c *callInfo) error {
 func (o MaxRecvMsgSizeCallOption) after(c *callInfo, attempt *csAttempt) {}
 
 // MaxCallSendMsgSize returns a CallOption which sets the maximum message size
-// in bytes the client can send. If this is not set, gRPC uses the default
-// `math.MaxInt32`.
+// in bytes the client can send.
 func MaxCallSendMsgSize(bytes int) CallOption {
 	return MaxSendMsgSizeCallOption{MaxSendMsgSize: bytes}
 }
@@ -712,7 +711,7 @@ func recvAndDecompress(p *parser, s *transport.Stream, dc Decompressor, maxRecei
 			d, size, err = decompress(compressor, d, maxReceiveMessageSize)
 		}
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "grpc: failed to decompress the received message: %v", err)
+			return nil, status.Errorf(codes.Internal, "grpc: failed to decompress the received message %v", err)
 		}
 		if size > maxReceiveMessageSize {
 			// TODO: Revisit the error code. Currently keep it consistent with java
@@ -747,7 +746,7 @@ func decompress(compressor encoding.Compressor, d []byte, maxReceiveMessageSize 
 	}
 	// Read from LimitReader with limit max+1. So if the underlying
 	// reader is over limit, the result will be bigger than max.
-	d, err = io.ReadAll(io.LimitReader(dcReader, int64(maxReceiveMessageSize)+1))
+	d, err = ioutil.ReadAll(io.LimitReader(dcReader, int64(maxReceiveMessageSize)+1))
 	return d, len(d), err
 }
 
@@ -760,7 +759,7 @@ func recv(p *parser, c baseCodec, s *transport.Stream, dc Decompressor, m interf
 		return err
 	}
 	if err := c.Unmarshal(d, m); err != nil {
-		return status.Errorf(codes.Internal, "grpc: failed to unmarshal the received message: %v", err)
+		return status.Errorf(codes.Internal, "grpc: failed to unmarshal the received message %v", err)
 	}
 	if payInfo != nil {
 		payInfo.uncompressedBytes = d

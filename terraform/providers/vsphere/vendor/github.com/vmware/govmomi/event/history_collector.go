@@ -19,7 +19,7 @@ package event
 import (
 	"context"
 
-	"github.com/vmware/govmomi/object"
+	"github.com/vmware/govmomi/history"
 	"github.com/vmware/govmomi/vim25"
 	"github.com/vmware/govmomi/vim25/methods"
 	"github.com/vmware/govmomi/vim25/mo"
@@ -27,12 +27,12 @@ import (
 )
 
 type HistoryCollector struct {
-	*object.HistoryCollector
+	*history.Collector
 }
 
-func NewHistoryCollector(c *vim25.Client, ref types.ManagedObjectReference) *HistoryCollector {
+func newHistoryCollector(c *vim25.Client, ref types.ManagedObjectReference) *HistoryCollector {
 	return &HistoryCollector{
-		HistoryCollector: object.NewHistoryCollector(c, ref),
+		Collector: history.NewCollector(c, ref),
 	}
 }
 

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -74,7 +77,7 @@ this issue, please use a tag name unique within your vCenter system.
 // When adding tags to a resource schema, the easiest way to do that (for now)
 // will be to use the following line:
 //
-//   vSphereTagAttributeKey: tagsSchema(),
+//	vSphereTagAttributeKey: tagsSchema(),
 //
 // This will ensure that the correct key and schema is used across all resources.
 const vSphereTagAttributeKey = "tags"
@@ -104,6 +107,15 @@ func isEligibleRestEndpoint(client *govmomi.Client) bool {
 // isEligiblePBMEndpoint is a meta-validation that is used on login to see if
 // the connected endpoint supports the CIS REST API, which we use for tags.
 func isEligiblePBMEndpoint(client *govmomi.Client) bool {
+	if err := viapi.ValidateVirtualCenter(client); err != nil {
+		return false
+	}
+	return true
+}
+
+// isEligibleVSANEndpoint is a meta-validation that is used on login to see if
+// the connected endpoint supports the CIS REST API, which we use for tags.
+func isEligibleVSANEndpoint(client *govmomi.Client) bool {
 	if err := viapi.ValidateVirtualCenter(client); err != nil {
 		return false
 	}
