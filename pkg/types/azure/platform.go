@@ -49,6 +49,9 @@ type Platform struct {
 	// +optional
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
+	// ManagedBy is a field that can be set to the azure resource group.
+	ManagedBy string `json:"managedBy,omitempty"`
+
 	// NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 	//
 	// +optional

@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package commonids
 
 import (
@@ -11,19 +14,19 @@ var _ resourceids.ResourceId = VirtualHubIPConfigurationId{}
 
 // VirtualHubIPConfigurationId is a struct representing the Resource ID for a Virtual Hub I P Configuration
 type VirtualHubIPConfigurationId struct {
-	SubscriptionId string
-	ResourceGroup  string
-	VirtualHubName string
-	IpConfigName   string
+	SubscriptionId    string
+	ResourceGroupName string
+	VirtualHubName    string
+	IpConfigName      string
 }
 
 // NewVirtualHubIPConfigurationID returns a new VirtualHubIPConfigurationId struct
-func NewVirtualHubIPConfigurationID(subscriptionId string, resourceGroup string, virtualHubName string, ipConfigName string) VirtualHubIPConfigurationId {
+func NewVirtualHubIPConfigurationID(subscriptionId string, resourceGroupName string, virtualHubName string, ipConfigName string) VirtualHubIPConfigurationId {
 	return VirtualHubIPConfigurationId{
-		SubscriptionId: subscriptionId,
-		ResourceGroup:  resourceGroup,
-		VirtualHubName: virtualHubName,
-		IpConfigName:   ipConfigName,
+		SubscriptionId:    subscriptionId,
+		ResourceGroupName: resourceGroupName,
+		VirtualHubName:    virtualHubName,
+		IpConfigName:      ipConfigName,
 	}
 }
 
@@ -39,19 +42,19 @@ func ParseVirtualHubIPConfigurationID(input string) (*VirtualHubIPConfigurationI
 	id := VirtualHubIPConfigurationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
 	}
 
-	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
+	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
 	}
 
 	if id.VirtualHubName, ok = parsed.Parsed["virtualHubName"]; !ok {
-		return nil, fmt.Errorf("the segment 'virtualHubName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualHubName", *parsed)
 	}
 
 	if id.IpConfigName, ok = parsed.Parsed["ipConfigName"]; !ok {
-		return nil, fmt.Errorf("the segment 'ipConfigName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigName", *parsed)
 	}
 
 	return &id, nil
@@ -70,19 +73,19 @@ func ParseVirtualHubIPConfigurationIDInsensitively(input string) (*VirtualHubIPC
 	id := VirtualHubIPConfigurationId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
 	}
 
-	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
-		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
+	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
 	}
 
 	if id.VirtualHubName, ok = parsed.Parsed["virtualHubName"]; !ok {
-		return nil, fmt.Errorf("the segment 'virtualHubName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualHubName", *parsed)
 	}
 
 	if id.IpConfigName, ok = parsed.Parsed["ipConfigName"]; !ok {
-		return nil, fmt.Errorf("the segment 'ipConfigName' was not found in the resource id %q", input)
+		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigName", *parsed)
 	}
 
 	return &id, nil
@@ -106,16 +109,16 @@ func ValidateVirtualHubIPConfigurationID(input interface{}, key string) (warning
 // ID returns the formatted Virtual Hub I P Configuration ID
 func (id VirtualHubIPConfigurationId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualHubs/%s/ipConfigurations/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.VirtualHubName, id.IpConfigName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.VirtualHubName, id.IpConfigName)
 }
 
-// Segments returns a slice of Resource ID Segments which comprise this Virtual Hub I P Configuration ID
+// Segments returns a slice of Resource ID Segments which comprise this Virtual Hub IP Configuration ID
 func (id VirtualHubIPConfigurationId) Segments() []resourceids.Segment {
 	return []resourceids.Segment{
 		resourceids.StaticSegment("subscriptions", "subscriptions", "subscriptions"),
 		resourceids.SubscriptionIdSegment("subscriptionId", "12345678-1234-9876-4563-123456789012"),
 		resourceids.StaticSegment("resourceGroups", "resourceGroups", "resourceGroups"),
-		resourceids.ResourceGroupSegment("resourceGroup", "example-resource-group"),
+		resourceids.ResourceGroupSegment("resourceGroupName", "example-resource-group"),
 		resourceids.StaticSegment("providers", "providers", "providers"),
 		resourceids.ResourceProviderSegment("resourceProvider", "Microsoft.Network", "Microsoft.Network"),
 		resourceids.StaticSegment("virtualHubs", "virtualHubs", "virtualHubs"),
@@ -129,7 +132,7 @@ func (id VirtualHubIPConfigurationId) Segments() []resourceids.Segment {
 func (id VirtualHubIPConfigurationId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
-		fmt.Sprintf("Resource Group: %q", id.ResourceGroup),
+		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
 		fmt.Sprintf("Virtual Hub Name: %q", id.VirtualHubName),
 		fmt.Sprintf("Ip Config Name: %q", id.IpConfigName),
 	}

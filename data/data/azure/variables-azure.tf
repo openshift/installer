@@ -13,6 +13,11 @@ variable "azure_environment" {
   description = "The target Azure cloud environment for the cluster."
 }
 
+variable "azure_managed_by" {
+  type = string
+  description = "A tag value that can be set to the azure resource group tag 'managedBy'"
+}
+
 variable "azure_region" {
   type = string
   description = "The target Azure region for the cluster."
