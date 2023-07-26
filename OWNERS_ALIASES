@@ -126,6 +126,7 @@ aliases:
     - RishabhSaini
     - Adam0Brien
     - lukewarmtemp
+    - yasminvalim
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -143,6 +144,7 @@ aliases:
     - RishabhSaini
     - Adam0Brien
     - lukewarmtemp
+    - yasminvalim
   agent-reviewers:
     - andfasano
     - bfournie
