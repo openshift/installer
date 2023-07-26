@@ -16,7 +16,7 @@ if [ ! -f stop-etcd.done ]; then
   echo "Stop etcd static pod by moving the manifest"
   mv /etc/kubernetes/manifests/etcd-member-pod.yaml /etc/kubernetes || echo "already moved etcd-member-pod.yaml"
 
-  until ! crictl ps | grep etcd; do
+  until crictl ps --state running -o json | jq -e '[.containers[] | select(.metadata.name == "etcd")] | length == 0' > /dev/null; do
     echo "Waiting for etcd to go down"
     sleep 10
   done
