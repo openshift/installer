@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
+	icgcp "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/asset/machines/alibabacloud"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/azure"
@@ -126,23 +127,12 @@ func defaultAzureMachinePoolPlatform() azuretypes.MachinePool {
 }
 
 func defaultGCPMachinePoolPlatform(arch types.Architecture) gcptypes.MachinePool {
-	switch arch {
-	case types.ArchitectureARM64:
-		return gcptypes.MachinePool{
-			InstanceType: "t2a-standard-4",
-			OSDisk: gcptypes.OSDisk{
-				DiskSizeGB: powerOfTwoRootVolumeSize,
-				DiskType:   "pd-ssd",
-			},
-		}
-	default:
-		return gcptypes.MachinePool{
-			InstanceType: "n2-standard-4",
-			OSDisk: gcptypes.OSDisk{
-				DiskSizeGB: powerOfTwoRootVolumeSize,
-				DiskType:   "pd-ssd",
-			},
-		}
+	return gcptypes.MachinePool{
+		InstanceType: icgcp.DefaultInstanceTypeForArch(arch),
+		OSDisk: gcptypes.OSDisk{
+			DiskSizeGB: powerOfTwoRootVolumeSize,
+			DiskType:   "pd-ssd",
+		},
 	}
 }
 
@@ -523,7 +513,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.GCP)
 			if len(mpool.Zones) == 0 {
-				azs, err := gcp.AvailabilityZones(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region)
+				azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType)
 				if err != nil {
 					return errors.Wrap(err, "failed to fetch availability zones")
 				}
