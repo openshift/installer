@@ -30,7 +30,7 @@ do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/journals/${service}.log"
 done
 
-journalctl --no-pager | gzip > "${ARTIFACTS}/journals/journal.log.gz"
+journalctl -o with-unit --no-pager | gzip > "${ARTIFACTS}/journals/journal.log.gz"
 
 echo "Gathering master networking ..."
 mkdir -p "${ARTIFACTS}/network"
