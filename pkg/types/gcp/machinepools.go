@@ -57,7 +57,7 @@ type OSDisk struct {
 	// DiskType defines the type of disk.
 	// For control plane nodes, the valid value is pd-ssd.
 	// +optional
-	// +kubebuilder:validation:Enum=pd-ssd;pd-standard
+	// +kubebuilder:validation:Enum=pd-balanced;pd-ssd;pd-standard
 	DiskType string `json:"diskType"`
 
 	// DiskSizeGB defines the size of disk in GB.
