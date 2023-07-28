@@ -32,7 +32,7 @@ RUN yum update -y && \
 
 # ansible 2.9 is EOL in September 2023, so we need to install ansible-core and get the collections from source
 # until we have a package available.
-RUN ansible-galaxy collection install openstack.cloud ansible.netcommon ansible.utils community.general && \
+RUN ansible-galaxy collection install openstack.cloud ansible.utils && \
     mkdir -p /usr/share/ansible/collections/ansible_collections && \
     cp -r /root/.ansible/collections/ansible_collections/* /usr/share/ansible/collections/ansible_collections/
 
