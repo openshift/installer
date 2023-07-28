@@ -20,9 +20,10 @@ package dnszonesv1
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/IBM/go-sdk-core/v4/core"
-	common "github.com/IBM/networking-go-sdk/common"
 	"reflect"
+
+	"github.com/IBM/go-sdk-core/v5/core"
+	common "github.com/IBM/networking-go-sdk/common"
 )
 
 // DnsZonesV1 : DNS Zones
@@ -482,7 +483,7 @@ type DeleteDnszoneOptions struct {
 func (*DnsZonesV1) NewDeleteDnszoneOptions(instanceID string, dnszoneID string) *DeleteDnszoneOptions {
 	return &DeleteDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -529,7 +530,7 @@ type GetDnszoneOptions struct {
 func (*DnsZonesV1) NewGetDnszoneOptions(instanceID string, dnszoneID string) *GetDnszoneOptions {
 	return &GetDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -646,7 +647,7 @@ type UpdateDnszoneOptions struct {
 func (*DnsZonesV1) NewUpdateDnszoneOptions(instanceID string, dnszoneID string) *UpdateDnszoneOptions {
 	return &UpdateDnszoneOptions{
 		InstanceID: core.StringPtr(instanceID),
-		DnszoneID: core.StringPtr(dnszoneID),
+		DnszoneID:  core.StringPtr(dnszoneID),
 	}
 }
 
@@ -716,13 +717,12 @@ type Dnszone struct {
 // Constants associated with the Dnszone.State property.
 // State of DNS zone.
 const (
-	Dnszone_State_Active = "active"
-	Dnszone_State_Deleted = "deleted"
-	Dnszone_State_Disabled = "disabled"
-	Dnszone_State_PendingDelete = "pending_delete"
+	Dnszone_State_Active            = "active"
+	Dnszone_State_Deleted           = "deleted"
+	Dnszone_State_Disabled          = "disabled"
+	Dnszone_State_PendingDelete     = "pending_delete"
 	Dnszone_State_PendingNetworkAdd = "pending_network_add"
 )
-
 
 // UnmarshalDnszone unmarshals an instance of Dnszone from the specified map of raw messages.
 func UnmarshalDnszone(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -769,7 +769,6 @@ type FirstHref struct {
 	Href *string `json:"href,omitempty"`
 }
 
-
 // UnmarshalFirstHref unmarshals an instance of FirstHref from the specified map of raw messages.
 func UnmarshalFirstHref(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(FirstHref)
@@ -801,7 +800,6 @@ type ListDnszones struct {
 	// href.
 	Next *NextHref `json:"next,omitempty"`
 }
-
 
 // UnmarshalListDnszones unmarshals an instance of ListDnszones from the specified map of raw messages.
 func UnmarshalListDnszones(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -839,7 +837,6 @@ type NextHref struct {
 	// href.
 	Href *string `json:"href,omitempty"`
 }
-
 
 // UnmarshalNextHref unmarshals an instance of NextHref from the specified map of raw messages.
 func UnmarshalNextHref(m map[string]json.RawMessage, result interface{}) (err error) {

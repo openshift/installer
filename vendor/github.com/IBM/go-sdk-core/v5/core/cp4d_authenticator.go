@@ -26,13 +26,11 @@ import (
 	"time"
 )
 
-//
 // CloudPakForDataAuthenticator uses either a username/password pair or a
 // username/apikey pair to obtain a suitable bearer token from the CP4D authentication service,
 // and adds the bearer token to requests via an Authorization header of the form:
 //
-// 		Authorization: Bearer <bearer-token>
-//
+//	Authorization: Bearer <bearer-token>
 type CloudPakForDataAuthenticator struct {
 	// The URL representing the Cloud Pak for Data token service endpoint [required].
 	URL string
@@ -57,7 +55,8 @@ type CloudPakForDataAuthenticator struct {
 
 	// The http.Client object used to invoke token server requests [optional]. If
 	// not specified, a suitable default Client will be constructed.
-	Client *http.Client
+	Client     *http.Client
+	clientInit sync.Once
 
 	// The cached token and expiration time.
 	tokenData *cp4dTokenData
@@ -157,13 +156,32 @@ func (authenticator *CloudPakForDataAuthenticator) Validate() error {
 	return nil
 }
 
+// client returns the authenticator's http client after potentially initializing it.
+func (authenticator *CloudPakForDataAuthenticator) client() *http.Client {
+	authenticator.clientInit.Do(func() {
+		if authenticator.Client == nil {
+			authenticator.Client = DefaultHTTPClient()
+			authenticator.Client.Timeout = time.Second * 30
+
+			// If the user told us to disable SSL verification, then do it now.
+			if authenticator.DisableSSLVerification {
+				transport := &http.Transport{
+					// #nosec G402
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				authenticator.Client.Transport = transport
+			}
+		}
+	})
+	return authenticator.Client
+}
+
 // Authenticate adds the bearer token (obtained from the token server) to the
 // specified request.
 //
 // The CP4D bearer token will be added to the request's headers in the form:
 //
-// 		Authorization: Bearer <bearer-token>
-//
+//	Authorization: Bearer <bearer-token>
 func (authenticator *CloudPakForDataAuthenticator) Authenticate(request *http.Request) error {
 	token, err := authenticator.GetToken()
 	if err != nil {
@@ -294,22 +312,6 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 		return
 	}
 
-	// If the authenticator does not have a Client, create one now.
-	if authenticator.Client == nil {
-		authenticator.Client = &http.Client{
-			Timeout: time.Second * 30,
-		}
-
-		// If the user told us to disable SSL verification, then do it now.
-		if authenticator.DisableSSLVerification {
-			transport := &http.Transport{
-				// #nosec G402
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}
-			authenticator.Client.Transport = transport
-		}
-	}
-
 	// If debug is enabled, then dump the request.
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
 		buf, dumpErr := httputil.DumpRequestOut(req, req.Body != nil)
@@ -321,7 +323,7 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 	}
 
 	GetLogger().Debug("Invoking CP4D token service operation: %s", builder.URL)
-	resp, err := authenticator.Client.Do(req)
+	resp, err := authenticator.client().Do(req)
 	if err != nil {
 		return
 	}
@@ -354,7 +356,7 @@ func (authenticator *CloudPakForDataAuthenticator) requestToken() (tokenResponse
 
 	tokenResponse = &cp4dTokenServerResponse{}
 	err = json.NewDecoder(resp.Body).Decode(tokenResponse)
-	defer resp.Body.Close()
+	defer resp.Body.Close() // #nosec G307
 	if err != nil {
 		err = fmt.Errorf(ERRORMSG_UNMARSHAL_AUTH_RESPONSE, err.Error())
 		tokenResponse = nil

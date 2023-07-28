@@ -22,6 +22,7 @@ import (
 	"github.com/IBM/networking-go-sdk/dnsrecordsv1"
 	"github.com/IBM/networking-go-sdk/dnszonesv1"
 	"github.com/IBM/networking-go-sdk/resourcerecordsv1"
+	"github.com/IBM/networking-go-sdk/transitgatewayapisv1"
 	"github.com/IBM/networking-go-sdk/zonesv1"
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/IBM/platform-services-go-sdk/resourcemanagerv2"
@@ -166,6 +167,7 @@ type ClusterUninstaller struct {
 	keyClient             *instance.IBMPIKeyClient
 	cloudConnectionClient *instance.IBMPICloudConnectionClient
 	dhcpClient            *instance.IBMPIDhcpClient
+	tgClient              *transitgatewayapisv1.TransitGatewayApisV1
 
 	resourceGroupID string
 	cosInstanceID   string
@@ -296,6 +298,8 @@ func (o *ClusterUninstaller) destroyCluster() error {
 		name    string
 		execute func() error
 	}{{
+		{name: "Transit Gateways", execute: o.destroyTransitGateways},
+	}, {
 		{name: "Cloud Instances", execute: o.destroyCloudInstances},
 	}, {
 		{name: "Power Instances", execute: o.destroyPowerInstances},
@@ -448,6 +452,8 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 		resourceClientV2      controllerv2.ResourceServiceInstanceRepository
 		authenticator         core.Authenticator
 		serviceInstances      cloudResources
+		versionDate           = "2023-07-04"
+		tgOptions             *transitgatewayapisv1.TransitGatewayApisV1Options
 	)
 
 	defer func() {
@@ -571,6 +577,21 @@ func (o *ClusterUninstaller) loadSDKServices() error {
 	})
 	if err != nil {
 		return fmt.Errorf("loadSDKServices: creating ControllerV2 Service: %w", err)
+	}
+
+	authenticator, err = o.newAuthenticator(o.APIKey)
+	if err != nil {
+		return err
+	}
+
+	tgOptions = &transitgatewayapisv1.TransitGatewayApisV1Options{
+		Authenticator: authenticator,
+		Version:       &versionDate,
+	}
+
+	o.tgClient, err = transitgatewayapisv1.NewTransitGatewayApisV1(tgOptions)
+	if err != nil {
+		return fmt.Errorf("loadSDKServices: NewTransitGatewayApisV1: %w", err)
 	}
 
 	// Either CISInstanceCRN is set or DNSInstanceCRN is set. Both should not be set at the same time,

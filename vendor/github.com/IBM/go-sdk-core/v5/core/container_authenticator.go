@@ -19,9 +19,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,8 +33,8 @@ import (
 // and uses that to obtain an IAM access token by invoking the IAM "get token" operation with grant-type=cr-token.
 // The resulting IAM access token is then added to outbound requests in an Authorization header
 // of the form:
-// 		Authorization: Bearer <access-token>
 //
+//	Authorization: Bearer <access-token>
 type ContainerAuthenticator struct {
 
 	// [optional] The name of the file containing the injected CR token value (applies to
@@ -83,7 +83,8 @@ type ContainerAuthenticator struct {
 
 	// [optional] The http.Client object used in interacts with the IAM token server.
 	// If not specified by the user, a suitable default Client will be constructed.
-	Client *http.Client
+	Client     *http.Client
+	clientInit sync.Once
 
 	// The cached IAM access token and its expiration time.
 	tokenData *iamTokenData
@@ -177,6 +178,26 @@ func (builder *ContainerAuthenticatorBuilder) Build() (*ContainerAuthenticator, 
 	return &builder.ContainerAuthenticator, nil
 }
 
+// client returns the authenticator's http client after potentially initializing it.
+func (authenticator *ContainerAuthenticator) client() *http.Client {
+	authenticator.clientInit.Do(func() {
+		if authenticator.Client == nil {
+			authenticator.Client = DefaultHTTPClient()
+			authenticator.Client.Timeout = time.Second * 30
+
+			// If the user told us to disable SSL verification, then do it now.
+			if authenticator.DisableSSLVerification {
+				transport := &http.Transport{
+					// #nosec G402
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				}
+				authenticator.Client.Transport = transport
+			}
+		}
+	})
+	return authenticator.Client
+}
+
 // newContainerAuthenticatorFromMap constructs a new ContainerAuthenticator instance from a map containing
 // configuration properties.
 func newContainerAuthenticatorFromMap(properties map[string]string) (authenticator *ContainerAuthenticator, err error) {
@@ -212,8 +233,7 @@ func (*ContainerAuthenticator) AuthenticationType() string {
 //
 // The IAM access token will be added to the request's headers in the form:
 //
-// 		Authorization: Bearer <access-token>
-//
+//	Authorization: Bearer <access-token>
 func (authenticator *ContainerAuthenticator) Authenticate(request *http.Request) error {
 	token, err := authenticator.GetToken()
 	if err != nil {
@@ -400,22 +420,6 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 		req.SetBasicAuth(authenticator.ClientID, authenticator.ClientSecret)
 	}
 
-	// If the authenticator does not have a Client, create one now.
-	if authenticator.Client == nil {
-		authenticator.Client = &http.Client{
-			Timeout: time.Second * 30,
-		}
-
-		// If the user told us to disable SSL verification, then do it now.
-		if authenticator.DisableSSLVerification {
-			transport := &http.Transport{
-				// #nosec G402
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-			}
-			authenticator.Client.Transport = transport
-		}
-	}
-
 	// If debug is enabled, then dump the request.
 	if GetLogger().IsLogLevelEnabled(LevelDebug) {
 		buf, dumpErr := httputil.DumpRequestOut(req, req.Body != nil)
@@ -427,7 +431,7 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 	}
 
 	GetLogger().Debug("Invoking IAM 'get token' operation: %s", builder.URL)
-	resp, err := authenticator.Client.Do(req)
+	resp, err := authenticator.client().Do(req)
 	if err != nil {
 		return nil, NewAuthenticationError(&DetailedResponse{}, err)
 	}
@@ -467,7 +471,7 @@ func (authenticator *ContainerAuthenticator) RequestToken() (*IamTokenServerResp
 	// Good response, so unmarshal the response body into an IamTokenServerResponse instance.
 	tokenResponse := &IamTokenServerResponse{}
 	_ = json.NewDecoder(resp.Body).Decode(tokenResponse)
-	defer resp.Body.Close()
+	defer resp.Body.Close() // #nosec G307
 
 	return tokenResponse, nil
 }
@@ -485,7 +489,7 @@ func (authenticator *ContainerAuthenticator) retrieveCRToken() (crToken string, 
 
 	// Read the entire file into a byte slice, then convert to string.
 	var bytes []byte
-	bytes, err = ioutil.ReadFile(crTokenFilename) // #nosec G304
+	bytes, err = os.ReadFile(crTokenFilename) // #nosec G304
 	if err != nil {
 		err = fmt.Errorf(ERRORMSG_UNABLE_RETRIEVE_CRTOKEN, err.Error())
 		GetLogger().Debug(err.Error())

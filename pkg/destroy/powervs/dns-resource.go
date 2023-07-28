@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/IBM-Cloud/bluemix-go/crn"
-	"github.com/IBM/go-sdk-core/v4/core"
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/networking-go-sdk/resourcerecordsv1"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
