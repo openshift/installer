@@ -38,6 +38,7 @@ var (
 		"europe-west6":            "Zürich, Switzerland",
 		"europe-west8":            "Milan, Italy",
 		"europe-west9":            "Paris, France",
+		"europe-west12":           "Turin, Italy",
 		"europe-southwest1":       "Madrid, Spain",
 		"me-west1":                "Tel Aviv, Israel",
 		"northamerica-northeast1": "Montréal, Québec, Canada",
