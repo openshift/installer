@@ -19,7 +19,7 @@ func GetHyperVGenerationVersion(capabilities map[string]string, imageHyperVGen s
 	if imageHyperVGen != "" && generations.Has(imageHyperVGen) {
 		return imageHyperVGen, nil
 	} else if generations.Len() > 0 { // otherwise, return the highest version available
-		return generations.List()[generations.Len()-1], nil
+		return sets.List(generations)[generations.Len()-1], nil
 	}
 	if generations.Has("V2") {
 		return "V2", nil
@@ -28,9 +28,9 @@ func GetHyperVGenerationVersion(capabilities map[string]string, imageHyperVGen s
 }
 
 // GetHyperVGenerationVersions returns all the HyperVGeneration versions supported by the instance type according to its capabilities as a string set V = {"V1", "V2", ...}
-func GetHyperVGenerationVersions(capabilities map[string]string) (sets.String, error) {
+func GetHyperVGenerationVersions(capabilities map[string]string) (sets.Set[string], error) {
 	if val, ok := capabilities["HyperVGenerations"]; ok {
-		generations := sets.NewString()
+		generations := sets.New[string]()
 		for _, g := range strings.Split(val, ",") {
 			g = strings.TrimSpace(g)
 			g = strings.ToUpper(g)

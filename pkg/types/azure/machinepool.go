@@ -104,8 +104,23 @@ func (a *MachinePool) Set(required *MachinePool) {
 	}
 }
 
+// ImagePurchasePlan defines the purchase plan of a Marketplace image.
+// +kubebuilder:validation:Enum=WithPurchasePlan;NoPurchasePlan
+type ImagePurchasePlan string
+
+const (
+	// ImageWithPurchasePlan enum attribute which is the default setting.
+	ImageWithPurchasePlan ImagePurchasePlan = "WithPurchasePlan"
+	// ImageNoPurchasePlan  enum attribute which speficies the image does not need a purchase plan.
+	ImageNoPurchasePlan ImagePurchasePlan = "NoPurchasePlan"
+)
+
 // OSImage is the image to use for the OS of a machine.
 type OSImage struct {
+	// Plan is the purchase plan of the image.
+	// If omitted, it defaults to "WithPurchasePlan".
+	// +optional
+	Plan ImagePurchasePlan `json:"plan"`
 	// Publisher is the publisher of the image.
 	Publisher string `json:"publisher"`
 	// Offer is the offer of the image.

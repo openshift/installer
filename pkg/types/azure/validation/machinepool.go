@@ -53,25 +53,27 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 		}
 	}
 
-	allErrs = append(allErrs, validateOSImage(p, poolName, fldPath)...)
+	allErrs = append(allErrs, validateOSImage(p, fldPath)...)
 
 	return allErrs
 }
 
-func validateOSImage(p *azure.MachinePool, poolName string, fldPath *field.Path) field.ErrorList {
+func validateOSImage(p *azure.MachinePool, fldPath *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
 	osImageFldPath := fldPath.Child("osImage")
 
 	emptyOSImage := azure.OSImage{}
 	if p.OSImage != emptyOSImage {
-		// The control plane cannot use the marketplace image. Don't let the default machine pool specify the
-		// marketplace image either.
-		if poolName == "" || poolName == "master" {
-			allErrs = append(allErrs, field.Invalid(osImageFldPath, p.OSImage, "cannot specify the OS image for the master machines"))
-			return allErrs
+		if p.OSImage.Plan != "" {
+			planOptions := sets.NewString(
+				string(azure.ImageNoPurchasePlan),
+				string(azure.ImageWithPurchasePlan),
+			)
+			if !planOptions.Has(string(p.OSImage.Plan)) {
+				allErrs = append(allErrs, field.NotSupported(osImageFldPath.Child("plan"), p.OSImage.Plan, planOptions.List()))
+			}
 		}
-
 		if p.OSImage.Publisher == "" {
 			allErrs = append(allErrs, field.Required(osImageFldPath.Child("publisher"), "must specify publisher for the OS image"))
 		}

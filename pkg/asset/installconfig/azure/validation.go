@@ -54,7 +54,7 @@ func Validate(client API, ic *types.InstallConfig) error {
 		}
 		allErrs = append(allErrs, validateAzureStackClusterOSImage(StorageEndpointSuffix, ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
-	allErrs = append(allErrs, validateMarketplaceImage(client, ic)...)
+	allErrs = append(allErrs, validateMarketplaceImages(client, ic)...)
 	return allErrs.ToAggregate()
 }
 
@@ -595,65 +595,145 @@ func validateAzureStackClusterOSImage(StorageEndpointSuffix string, ClusterOSIma
 	return allErrs
 }
 
-func validateMarketplaceImage(client API, installConfig *types.InstallConfig) field.ErrorList {
+func validateMarketplaceImages(client API, installConfig *types.InstallConfig) field.ErrorList {
 	var allErrs field.ErrorList
-	for i, compute := range installConfig.Compute {
-		platform := compute.Platform.Azure
-		if platform == nil {
-			continue
-		}
-		if platform.OSImage.Publisher == "" {
-			continue
-		}
-		osImageFieldPath := field.NewPath("compute").Index(i).Child("platform", "azure", "osImage")
-		vmImage, err := client.GetMarketplaceImage(
-			context.Background(),
-			installConfig.Platform.Azure.Region,
-			platform.OSImage.Publisher,
-			platform.OSImage.Offer,
-			platform.OSImage.SKU,
-			platform.OSImage.Version,
-		)
-		if err != nil {
-			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage, err.Error()))
-			continue
-		}
-		instanceType := platform.InstanceType
-		if instanceType == "" && installConfig.Platform.Azure.DefaultMachinePlatform != nil {
-			instanceType = installConfig.Platform.Azure.DefaultMachinePlatform.InstanceType
+
+	region := installConfig.Azure.Region
+	cloudName := installConfig.Azure.CloudName
+
+	var defaultInstanceType string
+	var defaultOSImage aztypes.OSImage
+	if installConfig.Azure.DefaultMachinePlatform != nil {
+		defaultInstanceType = installConfig.Azure.DefaultMachinePlatform.InstanceType
+		defaultOSImage = installConfig.Azure.DefaultMachinePlatform.OSImage
+	}
+
+	// Validate ControlPlane marketplace images
+	if installConfig.ControlPlane != nil {
+		platform := installConfig.ControlPlane.Platform.Azure
+		fldPath := field.NewPath("controlPlane")
+
+		// Determine instance type
+		instanceType := ""
+		if platform != nil {
+			instanceType = platform.InstanceType
 		}
 		if instanceType == "" {
-			instanceType = defaults.ComputeInstanceType(installConfig.Azure.CloudName, installConfig.Azure.Region, compute.Architecture)
+			instanceType = defaultInstanceType
 		}
-		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, installConfig.Azure.Region)
+		if instanceType == "" {
+			instanceType = defaults.ControlPlaneInstanceType(cloudName, region, installConfig.ControlPlane.Architecture)
+		}
+
+		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, region)
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("compute").Index(i).Child("platform", "azure", "type"), instanceType, err.Error()))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
+		}
+
+		generations, err := GetHyperVGenerationVersions(capabilities)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
+		}
+
+		// If not set, try to use the OS Image definition from the default machine pool
+		var osImage aztypes.OSImage
+		if platform != nil {
+			osImage = platform.OSImage
+		}
+		if osImage.Publisher == "" {
+			osImage = defaultOSImage
+		}
+
+		imgErr := validateMarketplaceImage(client, region, generations, &osImage, fldPath)
+		if imgErr != nil {
+			allErrs = append(allErrs, imgErr)
+		}
+	}
+
+	// Validate Compute marketplace images
+	for i, compute := range installConfig.Compute {
+		platform := compute.Platform.Azure
+		fldPath := field.NewPath("compute").Index(i)
+
+		// Determine instance type
+		instanceType := ""
+		if platform != nil {
+			instanceType = platform.InstanceType
+		}
+		if instanceType == "" {
+			instanceType = defaultInstanceType
+		}
+		if instanceType == "" {
+			instanceType = defaults.ComputeInstanceType(cloudName, region, compute.Architecture)
+		}
+
+		capabilities, err := client.GetVMCapabilities(context.Background(), instanceType, region)
+		if err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
 			continue
 		}
 
 		generations, err := GetHyperVGenerationVersions(capabilities)
 		if err != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("compute").Index(i).Child("platform", "azure", "type"), instanceType, err.Error()))
-			continue
-		}
-		imageHyperVGen := string(vmImage.HyperVGeneration)
-		if !generations.Has(imageHyperVGen) {
-			errMsg := fmt.Sprintf("instance type %s supports HyperVGenerations %v but the specified image is for HyperVGeneration %s; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU", instanceType, generations.UnsortedList(), imageHyperVGen)
-			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage.SKU, errMsg))
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("platform", "azure", "type"), instanceType, err.Error()))
 			continue
 		}
 
-		termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), platform.OSImage.Publisher, platform.OSImage.Offer, platform.OSImage.SKU)
-		if err == nil {
-			if !termsAccepted {
-				allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage, "the license terms for the marketplace image have not been accepted"))
-			}
-		} else {
-			allErrs = append(allErrs, field.Invalid(osImageFieldPath, platform.OSImage,
-				fmt.Sprintf("could not determine if the license terms for the marketplace image have been accepted: %v", err)))
+		// If not set, try to use the OS Image definition from the default machine pool
+		var osImage aztypes.OSImage
+		if platform != nil {
+			osImage = platform.OSImage
+		}
+		if osImage.Publisher == "" {
+			osImage = defaultOSImage
+		}
+		imgErr := validateMarketplaceImage(client, region, generations, &osImage, fldPath)
+		if imgErr != nil {
+			allErrs = append(allErrs, imgErr)
 		}
 	}
+
 	return allErrs
+}
+
+func validateMarketplaceImage(client API, region string, instanceHyperVGenSet sets.Set[string], osImage *aztypes.OSImage, fldPath *field.Path) *field.Error {
+	// Marketplace image not specified
+	if osImage.Publisher == "" {
+		return nil
+	}
+
+	osImageFieldPath := fldPath.Child("platform", "azure", "osImage")
+	vmImage, err := client.GetMarketplaceImage(
+		context.Background(),
+		region,
+		osImage.Publisher,
+		osImage.Offer,
+		osImage.SKU,
+		osImage.Version,
+	)
+	if err != nil {
+		return field.Invalid(osImageFieldPath, osImage, err.Error())
+	}
+	imageHyperVGen := string(vmImage.HyperVGeneration)
+	if !instanceHyperVGenSet.Has(imageHyperVGen) {
+		errMsg := fmt.Sprintf("instance type supports HyperVGenerations %v but the specified image is for HyperVGeneration %s; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU", instanceHyperVGenSet.UnsortedList(), imageHyperVGen)
+		return field.Invalid(osImageFieldPath, osImage.SKU, errMsg)
+	}
+
+	// Images with no purchase plan have no terms to be accepted
+	if osImage.Plan == aztypes.ImageNoPurchasePlan {
+		return nil
+	}
+
+	termsAccepted, err := client.AreMarketplaceImageTermsAccepted(context.Background(), osImage.Publisher, osImage.Offer, osImage.SKU)
+	if err != nil {
+		return field.Invalid(osImageFieldPath, osImage, fmt.Sprintf("could not determine if the license terms for the marketplace image have been accepted: %v", err))
+	}
+	if !termsAccepted {
+		return field.Invalid(osImageFieldPath, osImage, "the license terms for the marketplace image have not been accepted")
+	}
+
+	return nil
 }
 
 func validateAzureStackDiskType(_ API, installConfig *types.InstallConfig) field.ErrorList {

@@ -218,7 +218,29 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     disk_encryption_set_id = var.azure_master_disk_encryption_set_id
   }
 
-  source_image_id = var.vm_image
+  # Either source_image_id or source_image_reference must be defined
+  source_image_id = ! var.azure_use_marketplace_image ? var.vm_image : null
+
+  dynamic "source_image_reference" {
+    for_each = var.azure_use_marketplace_image ? [1] : []
+
+    content {
+      publisher = var.azure_marketplace_image_publisher
+      offer     = var.azure_marketplace_image_offer
+      sku       = var.azure_marketplace_image_sku
+      version   = var.azure_marketplace_image_version
+    }
+  }
+
+  dynamic "plan" {
+    for_each = var.azure_use_marketplace_image && var.azure_marketplace_image_has_plan ? [1] : []
+
+    content {
+      publisher = var.azure_marketplace_image_publisher
+      product   = var.azure_marketplace_image_offer
+      name      = var.azure_marketplace_image_sku
+    }
+  }
 
   computer_name = "${var.cluster_id}-bootstrap-vm"
   custom_data   = base64encode(data.ignition_config.redirect.rendered)

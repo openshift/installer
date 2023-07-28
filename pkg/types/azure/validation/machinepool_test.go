@@ -131,6 +131,23 @@ func TestValidateMachinePool(t *testing.T) {
 							Offer:     "test-offer",
 							SKU:       "test-sku",
 							Version:   "test-version",
+							Plan:      "NoPurchasePlan",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid OS image with purchase plan omitted",
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						OSImage: azure.OSImage{
+							Publisher: "test-publisher",
+							Offer:     "test-offer",
+							SKU:       "test-sku",
+							Version:   "test-version",
 						},
 					},
 				},
@@ -201,6 +218,24 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: `^test-path\.osImage.version: Required value: must specify version for the OS image$`,
 		},
 		{
+			name: "OS image with invalid plan",
+			pool: &types.MachinePool{
+				Name: "worker",
+				Platform: types.MachinePoolPlatform{
+					Azure: &azure.MachinePool{
+						OSImage: azure.OSImage{
+							Publisher: "test-publisher",
+							Offer:     "test-offer",
+							SKU:       "test-sku",
+							Version:   "test-version",
+							Plan:      "test-plan",
+						},
+					},
+				},
+			},
+			expected: `^test-path\.osImage.plan: Unsupported value: ".*": supported values: "NoPurchasePlan", "WithPurchasePlan"$`,
+		},
+		{
 			name: "OS image for master",
 			pool: &types.MachinePool{
 				Name: "master",
@@ -215,7 +250,6 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.osImage: Invalid value: .* cannot specify the OS image for the master machines$`,
 		},
 		{
 			name: "OS image for default pool",
@@ -232,7 +266,6 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path\.osImage: Invalid value: .* cannot specify the OS image for the master machines$`,
 		},
 	}
 	for _, tc := range cases {

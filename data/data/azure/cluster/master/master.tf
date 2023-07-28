@@ -118,7 +118,29 @@ resource "azurerm_linux_virtual_machine" "master" {
     disk_encryption_set_id = var.disk_encryption_set_id
   }
 
-  source_image_id = var.vm_image
+  # Either source_image_id or source_image_reference must be defined
+  source_image_id = ! var.use_marketplace_image ? var.vm_image : null
+
+  dynamic "source_image_reference" {
+    for_each = var.use_marketplace_image ? [1] : []
+
+    content {
+      publisher = var.vm_image_publisher
+      offer     = var.vm_image_offer
+      sku       = var.vm_image_sku
+      version   = var.vm_image_version
+    }
+  }
+
+  dynamic "plan" {
+    for_each = var.use_marketplace_image && var.vm_image_has_plan ? [1] : []
+
+    content {
+      publisher = var.vm_image_publisher
+      product   = var.vm_image_offer
+      name      = var.vm_image_sku
+    }
+  }
 
   //we don't provide a ssh key, because it is set with ignition.
   //it is required to provide at least 1 auth method to deploy a linux vm
