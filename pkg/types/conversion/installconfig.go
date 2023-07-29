@@ -169,7 +169,10 @@ func convertOpenStack(config *types.InstallConfig) error {
 	}
 
 	// type has been deprecated in favor of types in the machinePools.
-	if config.ControlPlane != nil && config.ControlPlane.Platform.OpenStack.RootVolume != nil && config.ControlPlane.Platform.OpenStack.RootVolume.DeprecatedType != "" {
+	if config.ControlPlane != nil &&
+		config.ControlPlane.Platform.OpenStack != nil &&
+		config.ControlPlane.Platform.OpenStack.RootVolume != nil &&
+		config.ControlPlane.Platform.OpenStack.RootVolume.DeprecatedType != "" {
 		if len(config.ControlPlane.Platform.OpenStack.RootVolume.Types) > 0 {
 			// Return error if both type and types of rootVolume are specified in the config
 			return field.Forbidden(field.NewPath("controlPlane").Child("platform").Child("openstack").Child("rootVolume").Child("type"), "cannot specify type and types in rootVolume together")
@@ -179,7 +182,7 @@ func convertOpenStack(config *types.InstallConfig) error {
 	}
 	for _, pool := range config.Compute {
 		mpool := pool.Platform.OpenStack
-		if mpool.RootVolume != nil && mpool.RootVolume.DeprecatedType != "" {
+		if mpool != nil && mpool.RootVolume != nil && mpool.RootVolume.DeprecatedType != "" {
 			if mpool.RootVolume.Types != nil && len(mpool.RootVolume.Types) > 0 {
 				// Return error if both type and types of rootVolume are specified in the config
 				return field.Forbidden(field.NewPath("compute").Child("platform").Child("openstack").Child("rootVolume").Child("type"), "cannot specify type and types in rootVolume together")

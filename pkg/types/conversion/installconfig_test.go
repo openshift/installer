@@ -351,6 +351,52 @@ func TestConvertInstallConfig(t *testing.T) {
 			},
 		},
 		{
+			name: "empty OpenStack platform for controlPlane",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{OpenStack: &openstack.Platform{}},
+				ControlPlane: &types.MachinePool{
+					Platform: types.MachinePoolPlatform{},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{OpenStack: &openstack.Platform{}},
+				ControlPlane: &types.MachinePool{
+					Platform: types.MachinePoolPlatform{},
+				},
+			},
+		},
+		{
+			name: "empty OpenStack platform for compute",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{OpenStack: &openstack.Platform{}},
+				Compute: []types.MachinePool{
+					{
+						Platform: types.MachinePoolPlatform{},
+					},
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				Platform: types.Platform{OpenStack: &openstack.Platform{}},
+				Compute: []types.MachinePool{
+					{
+						Platform: types.MachinePoolPlatform{},
+					},
+				},
+			},
+		},
+		{
 			name: "deprecated OpenStack computeFlavor",
 			config: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{
