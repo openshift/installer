@@ -290,11 +290,7 @@ func TFVars(
 
 // tagVIPsPort tags a provided Port to allow detach of security group when destroying the cluster.
 func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
-	opts := &clientconfig.ClientOpts{
-		Cloud: cloud,
-	}
-
-	networkClient, err := NewServiceClient("network", opts)
+	networkClient, err := NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return err
 	}
