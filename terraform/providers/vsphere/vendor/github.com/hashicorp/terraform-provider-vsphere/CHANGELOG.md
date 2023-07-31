@@ -1,9 +1,99 @@
+## 2.4.1 (Unreleased)
+
+BUG FIXES:
+* `r/vsphere_compute_cluster`:  Added version check for [vSphere 7.0.1 or later](https://docs.vmware.com/en/VMware-vSphere/7.0/com.vmware.vsphere.vsan.doc/GUID-9113BBD6-5428-4287-9F61-C8C3EE51E07E.html) when enabling vSAN HCI Mesh. ([#1931](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1931))
+
+## 2.4.0 (May 5, 2023)
+
+FEATURES:
+* `d/virtual_machine`: Support lookup by moid. ([#1868](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1868))
+* `r/vnic`: Support services for vmkernel adapter/vnic. ([#1855](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1855))
+
+BUG FIXES:
+* `r/nas_datastore`: Fix issue mounting and/or unmounting NFS datastores when updating `host_system_ids` as a day-two operation. ([#1860](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1860))
+* `r/vm_storage_policy`: Updates the `resourceVMStoragePolicyDelete` method to check the response of `pbmClient.DeleteProfile()` API for errors. If a storage policy is in use and cannot be deleted, the destroy operation will fail and the storage policy will remain in the state. ([#1863](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1863))
+* `r/virtual_machine`: Fix vSAN timeout ([#1864](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1864))
+
+IMPROVEMENTS:
+* `r/host`: Update docs ([#1884](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1884))
+* `r/vnic`: Fix vnic tests ([#1887](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1887))
+
+CHORES:
+* Update to terraform-plugin-sdk v2.26.1 ([#1862](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1862))
+* Update govmomi v0.30.4 ([#1858](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1858))
+
+## 2.3.1 (February 8, 2023)
+
+**If you are using v2.3.0, please upgrade to this new version as soon as possible.**
+
+BUG FIXES:
+* `resource/compute_cluster`: Fix panic when reading vSAN. ([#1835](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1835))
+* `r/vsphere_file`: Fixes a provider crash by updating the createDirectory method to check if the provided file path has any parent folder(s). If no folders need to be created FileManager.MakeDirectory is not invoked. ([#1866](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1866))
+
+## 2.3.0 (February 8, 2023)
+
+FEATURES:
+* `resource/virtual_machine`: Add support for the paravirtual RDMA (PVRDMA) `vmxnet3vrdma` network interface adapter type. ([#1598](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1598))
+* `resource/virtual_machine`: Adds support for an optional `extra_config_reboot_required` argument to `r/virtual_machine`. This argument allows you to configure if a virtual machine reboot is enforced when `extra_config` is changed. ([#1603](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1603))
+* `resource/virtual_machine`: Adds support for two (2) CD-ROMs attached to a virtual machine. ([#1631](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1631))
+* `resource/compute_cluster`: Add support for vSAN compression and deduplication. ([#1702](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1702))
+* `resource/compute_cluster`: Add support for vSAN performance services. ([#1727](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1727))
+* `resource/compute_cluster`: Add support for vSAN unmap. ([#1745](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1745))
+* `resource/compute_cluster`: Add support for vSAN HCI Mesh. ([#1820](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1820))
+* `resource/compute_cluster`: Add support for vSAN Data-in-Transit Encryption. ([#1820](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1820))
+* `resource/role`: Adds support for import. ([#1822](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1822))
+
+BUG FIXES:
+* `resource/datastore_cluster`: Fixes error parsing string as enum type for `sdrs_advanced_options`. [(1749](https://github.com/hashicorp/terraform-provider-vsphere/pull/1749))
+* `provider`: Reverts a linting update from #1416 back to SHA1. SHA1 is used by vmware/govmomi for the session file. This will allow session reuse from govc. [(1808](https://github.com/hashicorp/terraform-provider-vsphere/pull/1808))
+* `resource/compute_cluster`: Fix panic in vsan disk group ([#1820](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1820))
+* `resource/virtual_machine`: Updating the datastore_id on r/virtual_machine will apply to disk sub-resources resolving issue GH-1268. ([#1817](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1817))
+
+IMPROVEMENTS:
+* `resource/distributed_virtual_switch`: Adds support for vSphere distributed switch version `8.0.0` in vSphere 8.0. [(1767](https://github.com/hashicorp/terraform-provider-vsphere/pull/1767))
+* `resource/virtual_machine`: Enables virtual machine reconfiguration tasks to use the provider `api_timeout` setting. ([#1645](https://github.com/hashicorp/terraform-provider-vsphere/pull/1645))
+* `resource/host`: Documentation updates. ([#1675](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1675))
+* `resource/host_virtual_switch`: Allows `standby_nics` on `r/vsphere_host_virtual_switch` to be an optional attribute so `standby_nics = []` does not need to be defined when no standby NICs are required/available. ([#1695](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1695))
+* `resource/compute_cluster_vm_anti_affinity_rule`: Documentation updates. ([#1700](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1700))
+* `vsphere_ovf_vm_template`: Documentation updates to resource and datasource. ([#1792](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1792))
+
+CHORES:
+* Bumps [`vmware/govmomi`](https://github.com/vmware/govmomi) from `v0.25.0` to `v0.29.0`. ([#1701](https://github.com/terraform-providers/terraform-provider-vsphere/pull/1701))
+
+## 2.2.0 (June 16, 2022)
+
+BUG FIXES:
+* `resource/virtual_machine`: Fixes ability to clone and import virtual machine resources with SATA and IDE controllers. ([#1629](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1629))
+* `resource/dvs`: Prevent setting unsupported traffic classes. ([#1633](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1633))
+* `resource/virtual_machine`: Fixes provider panic when a non supported PCI device is added outside Terraform to a virtual machine. ([#1627](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1627))
+* `resource/datacenter`: Updates `resourceVSphereDatacenterImport` to include the datacenter folder in which the datacenter object may exist. ([#1607](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1607))
+* `resource/virtual_machine` - Fixes issue where PCI passthrough devices not applied during initial cloning. ([#1625](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1625))
+* `helper/content_library`: Fixes content library item local iso upload ([#1665](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1665))
+
+FEATURES:
+* `resource/vsphere_host`: Adds support for custom attributes. ([#1619](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1619))
+* `resource/virtual_machine`: Adds support for guest customization script for Linux guest operating systems. ([#1621](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1621))
+* `datasource/virtual_machine`: support lookup by `uuid`. ([#1650](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1650))
+* `resource/compute_cluster`: Adds support for scalable shares. ([#1634](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1634))
+* `resource/resource_pool`: Adds support for scalable shares. ([#1634](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1634))
+* `datasource/compute_cluster_host_group`: New data source can be used to read general attributes of a host group. ([#1636](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1636))
+
+IMPROVEMENTS:
+* `resource/vsphere_resource_pool`: Documentation updates. ([#1620](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1620))
+* `resource/virtual_machine`: Documentation updates. ([#1630](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1630))
+* `resource/virtual_machine`: Adds `tools_upgrade_policy` to list of params that trigger a reboot ([#1644](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1644))
+* `resource/datastore_cluster`: Documentation updates. ([#1670](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1670))
+* `provider`: Index page documentation updates. ([#1672](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1672))
+* `resource/host_port_group`: Documentation updates. ([#1671](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1671))
+* `provider`: Updates Go to 1.18 and remove vendoring. ([#1676](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1676))
+* `provider`: Updates Terraform Plugin SDK to 2.17.0. ([#1677](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1677))
+
 ## 2.1.1 (March 08, 2022)
 
 **If you are using v2.1.0, please upgrade to this new version as soon as possible.**
 
 BUG FIXES:
-* `resource/compute_cluster`: Revert ([#1432](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1432)] switching `vsan_disk_group` back to `TypeList`. Switching from `TypeList` to `TypeSet` is a sore spot when it comes to what is considered a breaking change to provider configuration. Generally we accept that users may use list indices within their config. When this attribute switched to `TypeSet` this caused a breaking change for configurations doing that, as `TypeSet` is indexed by a hash value that Terraform calculates. Furthermore other code around type assertions was not changed and this attribute actually crashed the provider in `v2.1.0`, we will address the now re-opened [[#1205](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1205)] in `v3.0.0` of the provider. [[#1615](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1615))
+* `resource/compute_cluster`: Reverts ([#1432](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1432)) switching `vsan_disk_group` back to `TypeList`. Switching from `TypeList` to `TypeSet` is a sore spot when it comes to what is considered a breaking change to provider configuration. Generally we accept that users may use list indices within their config. When this attribute switched to `TypeSet` this caused a breaking change for configurations doing that, as `TypeSet` is indexed by a hash value that Terraform calculates. Furthermore other code around type assertions was not changed and this attribute actually crashed the provider in `v2.1.0`, we will address the now re-opened ([#1205](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1205)) in `v3.0.0` of the provider. ([#1615](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1615))
 
 FEATURES:
 * `resource/virtual_machine`: Adds support to check the power state of the resource. ([#1407](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1407))
@@ -13,13 +103,13 @@ FEATURES:
 BUG FIXES:
 * `resource/compute_cluster`: Updates `ha_datastore_apd_response_delay` to the API default (180) for `vmTerminateDelayForAPDSec`. Previously set to 3 (minutes) however the codebase uses this value as seconds. Users who had the field left blank may see a warning about the state value drifting from 3 to 180, after applying this should go away. ([#1542](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1542))
 * `resource/virtual_machine`: Don't read `storage_policy_id` if vCenter is not configured. This is not a scenario we test or support explicitly ([#1408](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1408))
-* `datasource/virtual_machine`: Fix silent failure and add `default_ip_address` attribute. ([#1532](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1532))
-* `resource/virtual_machine`: Attempt to fix race condition by always forcing a new datastore id. ([#1486](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1486))
-* `resource/virtual_machine`: Fix default guest OS identifier. ([#1543](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1543))
+* `datasource/virtual_machine`: Fixes silent failure and add `default_ip_address` attribute. ([#1532](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1532))
+* `resource/virtual_machine`: Fixs race condition by always forcing a new datastore id. ([#1486](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1486))
+* `resource/virtual_machine`: Fixes default guest OS identifier. ([#1543](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1543))
 * `resource/virtual_machine`: Updates `windows_options` to ensure all required options for domain join are provided ([#1562](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1562))
-* `resource/virtual_machine`: Fix migration of all disks and configuration files when the datastore_cluster_id is changed on the resource. ([#1546](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1546))
-* `resource/file`: Fix upload of VMDK to datastore on ESXi host. ([#1409](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1409))
-* `resource/tag`: Fix deletion detection in `tag` and `tag_category`. ([#1579](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1579))
+* `resource/virtual_machine`: Fixes migration of all disks and configuration files when the datastore_cluster_id is changed on the resource. ([#1546](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1546))
+* `resource/file`: Fixes upload of VMDK to datastore on ESXi host. ([#1409](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1409))
+* `resource/tag`: Fixes deletion detection in `tag` and `tag_category`. ([#1579](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1579))
 * `resource/virtual_machine`: Sets `annotation` to optional + computed. ([#1588](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1588))
 
 FEATURES:
@@ -36,19 +126,19 @@ IMPROVEMENTS:
 * `datasource/storage_policy`: Documentation updates. ([#1541](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1541))
 * `resource/distributed_virtual_switch`: Documentation updates. ([#1504](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1504))
 * `datasource/distributed_virtual_switch`: Documentation updates. ([#1504](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1504))
-* `resource/distributed_virtual_switch`: Add support for dvs versions `6.6.0` and `7.0.3`. ([#1501](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1501))
+* `resource/distributed_virtual_switch`: Adds support for dvs versions `6.6.0` and `7.0.3`. ([#1501](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1501))
 * `datasource/content_library_item`: Documentation updates. ([#1507](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1507))
 * `resource/ha_vm_override`: Adds `disabled` option to `ha_vm_restart_priority`. ([#1505](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1505))
 * `resource/virtual_disk`: Documentation updates. ([#1569](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1569))
 * `resource/virtual_machine`: Documentation updates. ([#1566](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1566))
 * `resource/content_library`: Documentation updates. ([#1577](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1577))
-* `resource/virtual_machine`: Updated the documentation with the conditions that causes the virtual machine to reboot on update. ([#1522](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1522))
+* `resource/virtual_machine`: Updates the documentation with the conditions that causes the virtual machine to reboot on update. ([#1522](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1522))
 * `resource/distributed_virtual_switch`: Devices argument is now optional ([#1468](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1468))
-* `resource/virtual_host`: Added support add tags to hosts. ([#1499](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1499))
+* `resource/virtual_host`: Adds support add tags to hosts. ([#1499](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1499))
 * `resource/content_library_item`: Documentation updates. ([#1586](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1586))
 * `resource/file`: Documentation updates and deletion fix. ([#1590](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1590))
 * `resource/virtual_machine`: Documentation updates. ([#1595](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1595))
-* `resource/tag_category`: Perform validation of associable types and update documentation around "All" which never worked. ([#1602](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1602))
+* `resource/tag_category`: Performs validation of associable types and update documentation around "All" which never worked. ([#1602](https://github.com/terraform-providers/terraform-provider-vsphere/issues/1602))
 
 ## 2.0.2 (June 25, 2021)
 

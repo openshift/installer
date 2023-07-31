@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -149,6 +152,19 @@ func dataSourceVSphereVirtualMachine() *schema.Resource {
 	// include the number of cpus, memory, firmware, disks, etc.
 	structure.MergeSchema(s, schemaVirtualMachineConfigSpec())
 
+	// make name/uuid/moid Optional/AtLeastOneOf
+	s["name"].Required = false
+	s["name"].Optional = true
+	s["name"].AtLeastOneOf = []string{"name", "uuid", "moid"}
+
+	s["uuid"].Required = false
+	s["uuid"].Optional = true
+	s["uuid"].AtLeastOneOf = []string{"name", "uuid", "moid"}
+
+	s["moid"].Required = false
+	s["moid"].Optional = true
+	s["moid"].AtLeastOneOf = []string{"name", "uuid", "moid"}
+
 	// Now that the schema has been composed and merged, we can attach our reader and
 	// return the resource back to our host process.
 	return &schema.Resource{
@@ -159,22 +175,38 @@ func dataSourceVSphereVirtualMachine() *schema.Resource {
 
 func dataSourceVSphereVirtualMachineRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*Client).vimClient
-
+	uuid := d.Get("uuid").(string)
+	moid := d.Get("moid").(string)
 	name := d.Get("name").(string)
-	log.Printf("[DEBUG] Looking for VM or template by name/path %q", name)
-	var dc *object.Datacenter
-	if dcID, ok := d.GetOk("datacenter_id"); ok {
-		var err error
-		dc, err = datacenterFromID(client, dcID.(string))
-		if err != nil {
-			return fmt.Errorf("cannot locate datacenter: %s", err)
+	var vm *object.VirtualMachine
+	var err error
+
+	if uuid != "" {
+		log.Printf("[DEBUG] Looking for VM or template by UUID %q", uuid)
+		vm, err = virtualmachine.FromUUID(client, uuid)
+	} else if moid != "" {
+		log.Printf("[DEBUG] Looking for VM or template by MOID %q", moid)
+		vm, err = virtualmachine.FromMOID(client, moid)
+	} else {
+		log.Printf("[DEBUG] Looking for VM or template by name/path %q", name)
+		var dc *object.Datacenter
+		if dcID, ok := d.GetOk("datacenter_id"); ok {
+			dc, err = datacenterFromID(client, dcID.(string))
+			if err != nil {
+				return fmt.Errorf("cannot locate datacenter: %s", err)
+			}
+			log.Printf("[DEBUG] Datacenter for VM/template search: %s", dc.InventoryPath)
 		}
-		log.Printf("[DEBUG] Datacenter for VM/template search: %s", dc.InventoryPath)
+		vm, err = virtualmachine.FromPath(client, name, dc)
 	}
-	vm, err := virtualmachine.FromPath(client, name, dc)
+
 	if err != nil {
 		return fmt.Errorf("error fetching virtual machine: %s", err)
 	}
+
+	// Set the managed object id.
+	d.Set("moid", vm.Reference().Value)
+
 	props, err := virtualmachine.Properties(vm)
 	if err != nil {
 		return fmt.Errorf("error fetching virtual machine properties: %s", err)

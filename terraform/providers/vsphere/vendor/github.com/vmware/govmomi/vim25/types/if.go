@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014-2018 VMware, Inc. All Rights Reserved.
+Copyright (c) 2014-2022 VMware, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -1256,6 +1256,18 @@ func init() {
 	t["BaseHostDasEvent"] = reflect.TypeOf((*HostDasEvent)(nil)).Elem()
 }
 
+func (b *HostDataTransportConnectionInfo) GetHostDataTransportConnectionInfo() *HostDataTransportConnectionInfo {
+	return b
+}
+
+type BaseHostDataTransportConnectionInfo interface {
+	GetHostDataTransportConnectionInfo() *HostDataTransportConnectionInfo
+}
+
+func init() {
+	t["BaseHostDataTransportConnectionInfo"] = reflect.TypeOf((*HostDataTransportConnectionInfo)(nil)).Elem()
+}
+
 func (b *HostDatastoreConnectInfo) GetHostDatastoreConnectInfo() *HostDatastoreConnectInfo { return b }
 
 type BaseHostDatastoreConnectInfo interface {
@@ -1356,6 +1368,16 @@ type BaseHostHardwareElementInfo interface {
 
 func init() {
 	t["BaseHostHardwareElementInfo"] = reflect.TypeOf((*HostHardwareElementInfo)(nil)).Elem()
+}
+
+func (b *HostHbaCreateSpec) GetHostHbaCreateSpec() *HostHbaCreateSpec { return b }
+
+type BaseHostHbaCreateSpec interface {
+	GetHostHbaCreateSpec() *HostHbaCreateSpec
+}
+
+func init() {
+	t["BaseHostHbaCreateSpec"] = reflect.TypeOf((*HostHbaCreateSpec)(nil)).Elem()
 }
 
 func (b *HostHostBusAdapter) GetHostHostBusAdapter() *HostHostBusAdapter { return b }
@@ -1528,6 +1550,18 @@ type BaseHostTargetTransport interface {
 
 func init() {
 	t["BaseHostTargetTransport"] = reflect.TypeOf((*HostTargetTransport)(nil)).Elem()
+}
+
+func (b *HostTpmBootSecurityOptionEventDetails) GetHostTpmBootSecurityOptionEventDetails() *HostTpmBootSecurityOptionEventDetails {
+	return b
+}
+
+type BaseHostTpmBootSecurityOptionEventDetails interface {
+	GetHostTpmBootSecurityOptionEventDetails() *HostTpmBootSecurityOptionEventDetails
+}
+
+func init() {
+	t["BaseHostTpmBootSecurityOptionEventDetails"] = reflect.TypeOf((*HostTpmBootSecurityOptionEventDetails)(nil)).Elem()
 }
 
 func (b *HostTpmEventDetails) GetHostTpmEventDetails() *HostTpmEventDetails { return b }
@@ -3000,6 +3034,18 @@ func init() {
 	t["BaseVirtualHardwareCompatibilityIssue"] = reflect.TypeOf((*VirtualHardwareCompatibilityIssue)(nil)).Elem()
 }
 
+func (b *VirtualMachineBaseIndependentFilterSpec) GetVirtualMachineBaseIndependentFilterSpec() *VirtualMachineBaseIndependentFilterSpec {
+	return b
+}
+
+type BaseVirtualMachineBaseIndependentFilterSpec interface {
+	GetVirtualMachineBaseIndependentFilterSpec() *VirtualMachineBaseIndependentFilterSpec
+}
+
+func init() {
+	t["BaseVirtualMachineBaseIndependentFilterSpec"] = reflect.TypeOf((*VirtualMachineBaseIndependentFilterSpec)(nil)).Elem()
+}
+
 func (b *VirtualMachineBootOptionsBootableDevice) GetVirtualMachineBootOptionsBootableDevice() *VirtualMachineBootOptionsBootableDevice {
 	return b
 }
@@ -3102,6 +3148,18 @@ type BaseVirtualMachineTargetInfo interface {
 
 func init() {
 	t["BaseVirtualMachineTargetInfo"] = reflect.TypeOf((*VirtualMachineTargetInfo)(nil)).Elem()
+}
+
+func (b *VirtualMachineVirtualDeviceGroupsDeviceGroup) GetVirtualMachineVirtualDeviceGroupsDeviceGroup() *VirtualMachineVirtualDeviceGroupsDeviceGroup {
+	return b
+}
+
+type BaseVirtualMachineVirtualDeviceGroupsDeviceGroup interface {
+	GetVirtualMachineVirtualDeviceGroupsDeviceGroup() *VirtualMachineVirtualDeviceGroupsDeviceGroup
+}
+
+func init() {
+	t["BaseVirtualMachineVirtualDeviceGroupsDeviceGroup"] = reflect.TypeOf((*VirtualMachineVirtualDeviceGroupsDeviceGroup)(nil)).Elem()
 }
 
 func (b *VirtualPCIPassthroughPluginBackingInfo) GetVirtualPCIPassthroughPluginBackingInfo() *VirtualPCIPassthroughPluginBackingInfo {

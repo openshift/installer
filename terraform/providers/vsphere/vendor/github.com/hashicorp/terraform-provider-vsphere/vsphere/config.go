@@ -1,8 +1,11 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
 	"context"
-	"crypto/sha256"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -27,6 +30,7 @@ import (
 	"github.com/vmware/govmomi/vim25/debug"
 	"github.com/vmware/govmomi/vim25/soap"
 	"github.com/vmware/govmomi/vim25/types"
+	"github.com/vmware/govmomi/vsan"
 )
 
 // Client is the client connection manager for the vSphere provider. It
@@ -39,6 +43,9 @@ type Client struct {
 
 	// The policy based management client
 	pbmClient *pbm.Client
+
+	// The vSAN client
+	vsanClient *vsan.Client
 
 	// The REST client used for tags and content library.
 	restClient *rest.Client
@@ -63,11 +70,11 @@ type Client struct {
 // Read call to determine if tags are supported on this connection, and if they
 // are, read them from the object and save them in the resource:
 //
-//   if tm, _ := meta.(*VSphereClient).TagsManager(); tm != nil {
-//     if err := readTagsForResource(restClient, obj, d); err != nil {
-//       return err
-//     }
-//   }
+//	if tm, _ := meta.(*VSphereClient).TagsManager(); tm != nil {
+//	  if err := readTagsForResource(restClient, obj, d); err != nil {
+//	    return err
+//	  }
+//	}
 func (c *Client) TagsManager() (*tags.Manager, error) {
 	if err := viapi.ValidateVirtualCenter(c.vimClient); err != nil {
 		return nil, err
@@ -197,6 +204,16 @@ func (c *Config) Client() (*Client, error) {
 		log.Printf("[DEBUG] Connected endpoint does not support policy based management")
 	}
 
+	if isEligibleVSANEndpoint(client.vimClient) {
+		vc, err := vsan.NewClient(ctx, client.vimClient.Client)
+		if err != nil {
+			return nil, err
+		}
+		client.vsanClient = vc
+	} else {
+		log.Printf("[DEBUG] Connected endpoint does not support vSAN service")
+	}
+
 	// Done, save sessions if we need to and return
 	if err := c.SaveVimClient(client.vimClient); err != nil {
 		return nil, fmt.Errorf("error persisting SOAP session to disk: %s", err)
@@ -308,7 +325,7 @@ func (c *Config) sessionFile() (string, error) {
 	// Key session file off of full URI and insecure setting.
 	// Hash key to get a predictable, canonical format.
 	key := fmt.Sprintf("%s#insecure=%t", u.String(), c.InsecureFlag)
-	name := fmt.Sprintf("%040x", sha256.Sum256([]byte(key)))
+	name := fmt.Sprintf("%040x", sha1.Sum([]byte(key)))
 	return name, nil
 }
 

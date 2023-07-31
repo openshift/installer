@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -272,7 +275,7 @@ func resourceVMStoragePolicyUpdate(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourceVMStoragePolicyDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] Performing create of VM storage policy with ID %s", d.Id())
+	log.Printf("[DEBUG] Performing delete of VM storage policy with ID %s", d.Id())
 	client := meta.(*Client).vimClient
 	pbmClient, err := pbm.NewClient(context.Background(), client.Client)
 	if err != nil {
@@ -283,9 +286,14 @@ func resourceVMStoragePolicyDelete(d *schema.ResourceData, meta interface{}) err
 		UniqueId: d.Id(),
 	})
 
-	_, err = pbmClient.DeleteProfile(context.Background(), policyIdsToDelete)
+	var deleteProfileOutcome []types2.PbmProfileOperationOutcome
+	deleteProfileOutcome, err = pbmClient.DeleteProfile(context.Background(), policyIdsToDelete)
 	if err != nil {
 		return fmt.Errorf("error while deleting policy with ID %s %s", d.Id(), err)
+	}
+	if len(deleteProfileOutcome) > 0 && deleteProfileOutcome[0].Fault != nil {
+		return fmt.Errorf("error while deleting policy with ID %s %s",
+			d.Id(), deleteProfileOutcome[0].Fault.LocalizedMessage)
 	}
 	d.SetId("")
 	log.Printf("[DEBUG] %s: Delete complete", d.Id())

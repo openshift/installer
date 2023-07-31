@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package virtualdevice
 
 import (
@@ -359,7 +362,7 @@ func (r *Subresource) DevAddr() string {
 	return r.Get("device_address").(string)
 }
 
-// splitDevAddr splits an device addres into its inparticular parts and asserts
+// splitDevAddr splits an device address into its inparticular parts and asserts
 // that we have all the correct data.
 func splitDevAddr(id string) (string, int, int, error) {
 	parts := strings.Split(id, ":")
@@ -1025,11 +1028,50 @@ func PciPassthroughApplyOperation(d *schema.ResourceData, c *govmomi.Client, l o
 		Spec:          []types.BaseVirtualDeviceConfigSpec{},
 		VirtualDevice: l,
 	}
-	if addDevs.Len() <= 0 && delDevs.Len() <= 0 {
+	if addDevs.Len() == 0 && delDevs.Len() == 0 {
 		return applyConfig.VirtualDevice, applyConfig.Spec, nil
 	}
 
 	_ = d.Set("reboot_required", true)
+	err := applyConfig.getPciSysID()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Add new PCI passthrough devices
+	err = applyConfig.modifyVirtualPciDevices(addDevs, types.VirtualDeviceConfigSpecOperationAdd)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Remove deleted PCI passthrough devices
+	err = applyConfig.modifyVirtualPciDevices(delDevs, types.VirtualDeviceConfigSpecOperationRemove)
+	if err != nil {
+		return nil, nil, err
+	}
+	return applyConfig.VirtualDevice, applyConfig.Spec, nil
+}
+
+// PciPassthroughPostCloneOperation normalizes the PCI passthrough devices
+// on a newly-cloned virtual machine and outputs any necessary device change
+// operations. It also sets the state in advance of the post-create read.
+func PciPassthroughPostCloneOperation(d *schema.ResourceData, c *govmomi.Client, l object.VirtualDeviceList) (object.VirtualDeviceList, []types.BaseVirtualDeviceConfigSpec, error) {
+	old, newValue := d.GetChange("pci_device_id")
+	oldDevIds := old.(*schema.Set)
+	newDevIds := newValue.(*schema.Set)
+
+	delDevs := oldDevIds.Difference(newDevIds)
+	addDevs := newDevIds.Difference(oldDevIds)
+	applyConfig := &pciApplyConfig{
+		Client:        c,
+		ResourceData:  d,
+		Spec:          []types.BaseVirtualDeviceConfigSpec{},
+		VirtualDevice: l,
+	}
+	if addDevs.Len() <= 0 && delDevs.Len() <= 0 {
+		return applyConfig.VirtualDevice, applyConfig.Spec, nil
+	}
+
 	err := applyConfig.getPciSysID()
 	if err != nil {
 		return nil, nil, err

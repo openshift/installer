@@ -135,6 +135,18 @@ func (c *Client) WithSigner(ctx context.Context, s Signer) context.Context {
 	return context.WithValue(ctx, signerContext{}, s)
 }
 
+type headersContext struct{}
+
+// WithHeader returns a new Context populated with the provided headers map.
+// Calls to a VAPI REST client with this context will populate the HTTP headers
+// map using the provided headers.
+func (c *Client) WithHeader(
+	ctx context.Context,
+	headers http.Header) context.Context {
+
+	return context.WithValue(ctx, headersContext{}, headers)
+}
+
 type statusError struct {
 	res *http.Response
 }
@@ -143,10 +155,16 @@ func (e *statusError) Error() string {
 	return fmt.Sprintf("%s %s: %s", e.res.Request.Method, e.res.Request.URL, e.res.Status)
 }
 
+// RawResponse may be used with the Do method as the resBody argument in order
+// to capture the raw response data.
+type RawResponse struct {
+	bytes.Buffer
+}
+
 // Do sends the http.Request, decoding resBody if provided.
 func (c *Client) Do(ctx context.Context, req *http.Request, resBody interface{}) error {
 	switch req.Method {
-	case http.MethodPost, http.MethodPatch:
+	case http.MethodPost, http.MethodPatch, http.MethodPut:
 		req.Header.Set("Content-Type", "application/json")
 	}
 
@@ -159,6 +177,14 @@ func (c *Client) Do(ctx context.Context, req *http.Request, resBody interface{})
 	if s, ok := ctx.Value(signerContext{}).(Signer); ok {
 		if err := s.SignRequest(req); err != nil {
 			return err
+		}
+	}
+
+	if headers, ok := ctx.Value(headersContext{}).(http.Header); ok {
+		for k, v := range headers {
+			for _, v := range v {
+				req.Header.Add(k, v)
+			}
 		}
 	}
 
@@ -183,6 +209,8 @@ func (c *Client) Do(ctx context.Context, req *http.Request, resBody interface{})
 		}
 
 		switch b := resBody.(type) {
+		case *RawResponse:
+			return res.Write(b)
 		case io.Writer:
 			_, err := io.Copy(b, res.Body)
 			return err
