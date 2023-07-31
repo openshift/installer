@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/version"
 )
 
 const (
@@ -360,14 +361,35 @@ func failureDomainsFromSpec(mpool openstack.MachinePool) []machinev1.OpenStackFa
 	return failureDomains
 }
 
+// getUserAgent generates a Gophercloud UserAgent to help cloud operators
+// disambiguate openshift-installer requests.
+func getUserAgent() (gophercloud.UserAgent, error) {
+	ua := gophercloud.UserAgent{}
+
+	version, err := version.Version()
+	if err != nil {
+		return ua, err
+	}
+
+	ua.Prepend(fmt.Sprintf("openshift-installer/%s", version))
+	return ua, nil
+}
+
 func checkNetworkExtensionAvailability(cloud, alias string, opts *clientconfig.ClientOpts) (bool, error) {
 	if opts == nil {
 		opts = openstackdefaults.DefaultClientOpts(cloud)
 	}
+
+	ua, err := getUserAgent()
+	if err != nil {
+		return false, err
+	}
+
 	conn, err := clientconfig.NewServiceClient("network", opts)
 	if err != nil {
 		return false, err
 	}
+	conn.UserAgent = ua
 
 	res := netext.Get(conn, alias)
 	if res.Err != nil {

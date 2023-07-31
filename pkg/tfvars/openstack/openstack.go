@@ -39,7 +39,7 @@ func TFVars(
 		defaultmpool = installConfig.Config.OpenStack.DefaultMachinePlatform
 	)
 
-	networkClient, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+	networkClient, err := NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, fmt.Errorf("failed to build an OpenStack service client: %w", err)
 	}
@@ -294,7 +294,7 @@ func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
 		Cloud: cloud,
 	}
 
-	networkClient, err := clientconfig.NewServiceClient("network", opts)
+	networkClient, err := NewServiceClient("network", opts)
 	if err != nil {
 		return err
 	}
@@ -328,7 +328,7 @@ func tagVIPsPort(cloud, infraID, portIP, networkID string) error {
 
 // getServiceCatalog fetches OpenStack service catalog with service endpoints
 func getServiceCatalog(cloud string) (*tokens.ServiceCatalog, error) {
-	conn, err := clientconfig.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}

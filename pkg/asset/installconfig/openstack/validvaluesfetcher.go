@@ -3,6 +3,7 @@ package openstack
 import (
 	"fmt"
 
+	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/external"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
@@ -11,6 +12,7 @@ import (
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
 
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"github.com/openshift/installer/pkg/version"
 )
 
 // getCloudNames gets the valid cloud names. These are read from clouds.yaml.
@@ -27,13 +29,33 @@ func getCloudNames() ([]string, error) {
 	return cloudNames, nil
 }
 
+// getUserAgent generates a Gophercloud UserAgent to help cloud operators
+// disambiguate openshift-installer requests.
+func getUserAgent() (gophercloud.UserAgent, error) {
+	ua := gophercloud.UserAgent{}
+
+	version, err := version.Version()
+	if err != nil {
+		return ua, err
+	}
+
+	ua.Prepend(fmt.Sprintf("openshift-installer/%s", version))
+	return ua, nil
+}
+
 // getExternalNetworkNames interrogates OpenStack to get the external network
 // names.
 func getExternalNetworkNames(cloud string) ([]string, error) {
+	ua, err := getUserAgent()
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
+	conn.ProviderClient.UserAgent = ua
 
 	iTrue := true
 	listOpts := external.ListOptsExt{
@@ -61,10 +83,16 @@ func getExternalNetworkNames(cloud string) ([]string, error) {
 
 // getFlavorNames gets a list of valid flavor names.
 func getFlavorNames(cloud string) ([]string, error) {
+	ua, err := getUserAgent()
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := clientconfig.NewServiceClient("compute", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
+	conn.ProviderClient.UserAgent = ua
 
 	listOpts := flavors.ListOpts{}
 	allPages, err := flavors.ListDetail(conn, listOpts).AllPages()
@@ -121,10 +149,16 @@ func (fips sortableFloatingIPCollection) Contains(value string) bool {
 }
 
 func getFloatingIPs(cloud string, floatingNetworkName string) (sortableFloatingIPCollection, error) {
+	ua, err := getUserAgent()
+	if err != nil {
+		return nil, err
+	}
+
 	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
+	conn.ProviderClient.UserAgent = ua
 
 	// floatingips.ListOpts requires an ID so we must get it from the name
 	floatingNetworkID, err := networkutils.IDFromName(conn, floatingNetworkName)

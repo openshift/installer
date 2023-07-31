@@ -30,6 +30,7 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 	"github.com/openshift/installer/pkg/types/openstack/validation/networkextensions"
+	"github.com/openshift/installer/pkg/version"
 )
 
 // CloudInfo caches data fetched from the user's openstack cloud
@@ -67,6 +68,20 @@ type Flavor struct {
 
 var ci *CloudInfo
 
+// getUserAgent generates a Gophercloud UserAgent to help cloud operators
+// disambiguate openshift-installer requests.
+func getUserAgent() (gophercloud.UserAgent, error) {
+	ua := gophercloud.UserAgent{}
+
+	version, err := version.Version()
+	if err != nil {
+		return ua, err
+	}
+
+	ua.Prepend(fmt.Sprintf("openshift-installer/%s", version))
+	return ua, nil
+}
+
 // GetCloudInfo fetches and caches metadata from openstack
 func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 	var err error
@@ -80,32 +95,42 @@ func GetCloudInfo(ic *types.InstallConfig) (*CloudInfo, error) {
 		Flavors: map[string]Flavor{},
 	}
 
+	ua, err := getUserAgent()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cloud clients: %w", err)
+	}
+
 	opts := openstackdefaults.DefaultClientOpts(ic.OpenStack.Cloud)
 
 	ci.clients.networkClient, err = clientconfig.NewServiceClient("network", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a network client: %w", err)
 	}
+	ci.clients.networkClient.UserAgent = ua
 
 	ci.clients.computeClient, err = clientconfig.NewServiceClient("compute", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a compute client: %w", err)
 	}
+	ci.clients.computeClient.UserAgent = ua
 
 	ci.clients.imageClient, err = clientconfig.NewServiceClient("image", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create an image client: %w", err)
 	}
+	ci.clients.imageClient.UserAgent = ua
 
 	ci.clients.identityClient, err = clientconfig.NewServiceClient("identity", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create an identity client: %w", err)
 	}
+	ci.clients.identityClient.UserAgent = ua
 
 	ci.clients.volumeClient, err = clientconfig.NewServiceClient("volume", opts)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a volume client: %w", err)
 	}
+	ci.clients.volumeClient.UserAgent = ua
 
 	err = ci.collectInfo(ic, opts)
 	if err != nil {

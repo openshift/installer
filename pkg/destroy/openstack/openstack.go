@@ -217,7 +217,7 @@ func deleteServers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	logger.Debug("Deleting openstack servers")
 	defer logger.Debugf("Exiting deleting openstack servers")
 
-	conn, err := clientconfig.NewServiceClient("compute", opts)
+	conn, err := NewServiceClient("compute", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -278,7 +278,7 @@ func deleteServerGroups(opts *clientconfig.ClientOpts, filter Filter, logger log
 		}
 	}
 
-	conn, err := clientconfig.NewServiceClient("compute", opts)
+	conn, err := NewServiceClient("compute", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -399,7 +399,7 @@ func deletePorts(opts *clientconfig.ClientOpts, listOpts ports.ListOpts, logger 
 	logger.Debug("Deleting openstack ports")
 	defer logger.Debugf("Exiting deleting openstack ports")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -539,7 +539,7 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 	logger.Debug("Deleting openstack security-groups")
 	defer logger.Debugf("Exiting deleting openstack security-groups")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -572,7 +572,7 @@ func deleteSecurityGroups(opts *clientconfig.ClientOpts, filter Filter, logger l
 }
 
 func updateFips(allFIPs []floatingips.FloatingIP, opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) error {
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		return err
 	}
@@ -595,7 +595,7 @@ func updateFips(allFIPs []floatingips.FloatingIP, opts *clientconfig.ClientOpts,
 
 // deletePortFIPs looks up FIPs associated to the port and attempts to delete them
 func deletePortFIPs(portID string, opts *clientconfig.ClientOpts, logger logrus.FieldLogger) error {
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		return err
 	}
@@ -630,7 +630,7 @@ func deletePortFIPs(portID string, opts *clientconfig.ClientOpts, logger logrus.
 }
 
 func getRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) ([]routers.Router, error) {
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		return nil, err
 	}
@@ -655,7 +655,7 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	logger.Debug("Deleting openstack routers")
 	defer logger.Debugf("Exiting deleting openstack routers")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -767,7 +767,7 @@ func getRouterInterfaces(conn *gophercloud.ServiceClient, allNetworks []networks
 func clearRouterInterfaces(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
 	logger.Debugf("Removing interfaces from router")
 	defer logger.Debug("Exiting removal of interfaces from router")
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -922,7 +922,7 @@ func getRouterByPort(client *gophercloud.ServiceClient, allPorts []ports.Port) (
 }
 
 func deleteLeftoverLoadBalancers(opts *clientconfig.ClientOpts, logger logrus.FieldLogger, networkID string) error {
-	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
+	conn, err := NewServiceClient("load-balancer", opts)
 	if err != nil {
 		// Ignore the error if Octavia is not available for the cloud
 		var gerr *gophercloud.ErrEndpointNotFound
@@ -1000,7 +1000,7 @@ func deleteSubnets(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 	logger.Debug("Deleting openstack subnets")
 	defer logger.Debugf("Exiting deleting openstack subnets")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1047,7 +1047,7 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 	logger.Debug("Deleting openstack networks")
 	defer logger.Debugf("Exiting deleting openstack networks")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1108,7 +1108,7 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 	logger.Debug("Deleting openstack containers")
 	defer logger.Debugf("Exiting deleting openstack containers")
 
-	conn, err := clientconfig.NewServiceClient("object-store", opts)
+	conn, err := NewServiceClient("object-store", opts)
 	if err != nil {
 		// Ignore the error if Swift is not available for the cloud
 		var gerr *gophercloud.ErrEndpointNotFound
@@ -1244,7 +1244,7 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 	logger.Debug("Deleting openstack trunks")
 	defer logger.Debugf("Exiting deleting openstack trunks")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1336,7 +1336,7 @@ func deleteLoadBalancers(opts *clientconfig.ClientOpts, filter Filter, logger lo
 	logger.Debug("Deleting openstack load balancers")
 	defer logger.Debugf("Exiting deleting openstack load balancers")
 
-	conn, err := clientconfig.NewServiceClient("load-balancer", opts)
+	conn, err := NewServiceClient("load-balancer", opts)
 	if err != nil {
 		// Ignore the error if Octavia is not available for the cloud
 		var gerr *gophercloud.ErrEndpointNotFound
@@ -1433,7 +1433,7 @@ func deleteSubnetPools(opts *clientconfig.ClientOpts, filter Filter, logger logr
 	logger.Debug("Deleting openstack subnet-pools")
 	defer logger.Debugf("Exiting deleting openstack subnet-pools")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1486,7 +1486,7 @@ func deleteVolumes(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		}
 	}
 
-	conn, err := clientconfig.NewServiceClient("volume", opts)
+	conn, err := NewServiceClient("volume", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1557,7 +1557,7 @@ func deleteVolumeSnapshots(opts *clientconfig.ClientOpts, filter Filter, logger 
 		}
 	}
 
-	conn, err := clientconfig.NewServiceClient("volume", opts)
+	conn, err := NewServiceClient("volume", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1613,7 +1613,7 @@ func deleteShares(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 		}
 	}
 
-	conn, err := clientconfig.NewServiceClient("sharev2", opts)
+	conn, err := NewServiceClient("sharev2", opts)
 	if err != nil {
 		// Ignore the error if Manila is not available in the cloud
 		var gerr *gophercloud.ErrEndpointNotFound
@@ -1715,7 +1715,7 @@ func deleteFloatingIPs(opts *clientconfig.ClientOpts, filter Filter, logger logr
 	logger.Debug("Deleting openstack floating ips")
 	defer logger.Debugf("Exiting deleting openstack floating ips")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1761,7 +1761,7 @@ func deleteImages(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 	logger.Debug("Deleting openstack base image")
 	defer logger.Debugf("Exiting deleting openstack base image")
 
-	conn, err := clientconfig.NewServiceClient("image", opts)
+	conn, err := NewServiceClient("image", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil
@@ -1845,7 +1845,7 @@ func untagPrimaryNetwork(opts *clientconfig.ClientOpts, infraID string, logger l
 	logger.Debugf("Removing tag %v from openstack networks", networkTag)
 	defer logger.Debug("Exiting untagging openstack networks")
 
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Debug(err)
 		return false, nil
@@ -1894,7 +1894,7 @@ func validateCloud(opts *clientconfig.ClientOpts, logger logrus.FieldLogger) err
 	//
 	// See https://bugzilla.redhat.com/show_bug.cgi?id=2013877
 	logger.Debug("Validating network extensions")
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		return fmt.Errorf("failed to build the network client: %w", err)
 	}
@@ -1930,7 +1930,7 @@ func isClusterSG(providedPortSG string, clusterSGs []sg.SecGroup) bool {
 func cleanVIPsPorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Cleaning provided Ports for API and Ingress VIPs")
 	defer logger.Debugf("Exiting clean of provided Ports for API and Ingress VIPs")
-	conn, err := clientconfig.NewServiceClient("network", opts)
+	conn, err := NewServiceClient("network", opts)
 	if err != nil {
 		logger.Error(err)
 		return false, nil

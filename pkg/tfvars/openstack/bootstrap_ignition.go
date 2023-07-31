@@ -11,7 +11,6 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/imagedata"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
 
@@ -26,7 +25,7 @@ import (
 func uploadBootstrapConfig(cloud string, bootstrapIgn string, clusterID string) (string, error) {
 	logrus.Debugln("Creating a Glance image for your bootstrap ignition config...")
 
-	conn, err := clientconfig.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return "", err
 	}
@@ -179,7 +178,7 @@ func generateIgnitionShim(userCA string, clusterID string, bootstrapConfigURL st
 
 // getAuthToken fetches valid OpenStack authentication token ID
 func getAuthToken(cloud string) (string, error) {
-	conn, err := clientconfig.NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := NewServiceClient("identity", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return "", err
 	}
