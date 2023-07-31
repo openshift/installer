@@ -51,6 +51,7 @@ data "azurerm_public_ip" "cluster_public_ip_v6" {
 }
 
 resource "azurerm_lb" "public" {
+  count               = local.need_public_ipv4 ? 1 : 0
   sku                 = "Standard"
   name                = var.cluster_id
   resource_group_name = data.azurerm_resource_group.main.name
@@ -96,14 +97,14 @@ resource "azurerm_lb" "public" {
 resource "azurerm_lb_backend_address_pool" "public_lb_pool_v4" {
   count = local.need_public_ipv4 ? 1 : 0
 
-  loadbalancer_id = azurerm_lb.public.id
+  loadbalancer_id = azurerm_lb.public[0].id
   name            = var.cluster_id
 }
 
 resource "azurerm_lb_backend_address_pool" "public_lb_pool_v6" {
   count = local.need_public_ipv6 ? 1 : 0
 
-  loadbalancer_id = azurerm_lb.public.id
+  loadbalancer_id = azurerm_lb.public[0].id
   name            = "${var.cluster_id}-IPv6"
 }
 
@@ -114,7 +115,7 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v4" {
   resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id]
-  loadbalancer_id                = azurerm_lb.public.id
+  loadbalancer_id                = azurerm_lb.public[0].id
   frontend_port                  = 6443
   backend_port                   = 6443
   frontend_ip_configuration_name = local.public_lb_frontend_ip_v4_configuration_name
@@ -131,7 +132,7 @@ resource "azurerm_lb_rule" "public_lb_rule_api_internal_v6" {
   resource_group_name            = data.azurerm_resource_group.main.name
   protocol                       = "Tcp"
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id]
-  loadbalancer_id                = azurerm_lb.public.id
+  loadbalancer_id                = azurerm_lb.public[0].id
   frontend_port                  = 6443
   backend_port                   = 6443
   frontend_ip_configuration_name = local.public_lb_frontend_ip_v6_configuration_name
@@ -146,7 +147,7 @@ resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v4" {
 
   name                    = "outbound-rule-v4"
   resource_group_name     = data.azurerm_resource_group.main.name
-  loadbalancer_id         = azurerm_lb.public.id
+  loadbalancer_id         = azurerm_lb.public[0].id
   backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v4[0].id
   protocol                = "All"
 
@@ -160,7 +161,7 @@ resource "azurerm_lb_outbound_rule" "public_lb_outbound_rule_v6" {
 
   name                    = "outbound-rule-v6"
   resource_group_name     = data.azurerm_resource_group.main.name
-  loadbalancer_id         = azurerm_lb.public.id
+  loadbalancer_id         = azurerm_lb.public[0].id
   backend_address_pool_id = azurerm_lb_backend_address_pool.public_lb_pool_v6[0].id
   protocol                = "All"
 
@@ -176,7 +177,7 @@ resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
   resource_group_name = data.azurerm_resource_group.main.name
   interval_in_seconds = 5
   number_of_probes    = 2
-  loadbalancer_id     = azurerm_lb.public.id
+  loadbalancer_id     = azurerm_lb.public[0].id
   port                = 6443
   protocol            = "HTTPS"
   request_path        = "/readyz"
