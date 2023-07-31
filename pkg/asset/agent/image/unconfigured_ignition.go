@@ -36,6 +36,7 @@ func GetConfigImageFiles() []string {
 		"/etc/assisted/hostconfig",      // all files in directory
 		"/etc/assisted/hostnames",       // all files in directory
 		"/etc/assisted/network",         // all files in directory
+		"/etc/NetworkManager/conf.d/clientid.conf",
 		"/etc/issue",
 		"/etc/systemd/system.conf.d/10-default-env.conf",
 		"/root/.docker/config.json",
