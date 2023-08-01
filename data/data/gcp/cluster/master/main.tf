@@ -37,13 +37,6 @@ resource "google_project_iam_member" "master-storage-admin" {
   member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
 }
 
-resource "google_project_iam_member" "master-service-account-user" {
-  count   = var.service_account == "" ? 1 : 0
-  project = var.project_id
-  role    = "roles/iam.serviceAccountUser"
-  member  = "serviceAccount:${google_service_account.master-node-sa[0].email}"
-}
-
 resource "google_compute_instance" "master" {
   count       = var.instance_count
   description = local.description
