@@ -4,26 +4,26 @@
 # openstackclient
 # openstacksdk
 
-- import_playbook: common.yaml
+- ansible.builtin.import_playbook: common.yaml
 
 - hosts: all
   gather_facts: no
 
   tasks:
   - name: 'Remove the Compute servers'
-    os_server:
+    openstack.cloud.server:
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
     with_indexed_items: "{{ [os_compute_server_name] * os_compute_nodes_number }}"
 
   - name: 'List the Server groups'
-    command:
+    ansible.builtin.command:
       # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
       cmd: "openstack --os-compute-api-version=2.15 server group list -f json -c ID -c Name"
     register: server_group_list
 
   - name: 'Parse the Server group ID from existing'
-    set_fact:
+    ansible.builtin.set_fact:
       server_group_id: "{{ (server_group_list.stdout | from_json | json_query(list_query) | first).ID }}"
     vars:
       list_query: "[?Name=='{{ os_compute_server_group_name }}']"
@@ -31,20 +31,20 @@
     - "os_compute_server_group_name|string in server_group_list.stdout"
 
   - name: 'Remove the Compute server group'
-    command:
+    ansible.builtin.command:
       # os-compute-api-version 2.15 or higher is required for the 'soft-anti-affinity' policy
       cmd: "openstack --os-compute-api-version=2.15 server group delete {{ server_group_id }}"
     when:
     - server_group_id is defined
 
   - name: 'List the Compute trunks'
-    command:
+    ansible.builtin.command:
       cmd: "openstack network trunk list -c Name -f value"
     when: os_networking_type == "Kuryr"
     register: trunks
 
   - name: 'Remove the Compute trunks'
-    command:
+    ansible.builtin.command:
       cmd: "openstack network trunk delete {{ item.1 }}-{{ item.0 }}"
     when:
     - os_networking_type == "Kuryr"
@@ -52,7 +52,7 @@
     with_indexed_items: "{{ [os_compute_trunk_name] * os_compute_nodes_number }}"
 
   - name: 'Remove the Compute ports'
-    os_port:
+    openstack.cloud.port:
       name: "{{ item.1 }}-{{ item.0 }}"
       state: absent
     with_indexed_items: "{{ [os_port_worker] * os_compute_nodes_number }}"

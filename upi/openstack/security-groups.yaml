@@ -4,35 +4,35 @@
 # openstackclient
 # openstacksdk
 
-- import_playbook: common.yaml
+- ansible.builtin.import_playbook: common.yaml
 
 - hosts: all
   gather_facts: no
 
   tasks:
   - name: 'Create the master security group'
-    os_security_group:
+    openstack.cloud.security_group:
       name: "{{ os_sg_master }}"
 
   - name: 'Set master security group tag'
-    command:
+    ansible.builtin.command:
       cmd: "openstack security group set --tag {{ cluster_id_tag }} {{ os_sg_master }} "
 
   - name: 'Create the worker security group'
-    os_security_group:
+    openstack.cloud.security_group:
       name: "{{ os_sg_worker }}"
 
   - name: 'Set worker security group tag'
-    command:
+    ansible.builtin.command:
       cmd: "openstack security group set --tag {{ cluster_id_tag }} {{ os_sg_worker }} "
 
   - name: 'Create master-sg rule "ICMP"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: icmp
 
   - name: 'Create master-sg rule "machine config server"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -40,7 +40,7 @@
       port_range_max: 22623
 
   - name: 'Create master-sg rule "SSH"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -48,7 +48,7 @@
       port_range_max: 22
 
   - name: 'Create master-sg rule "DNS (TCP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       remote_ip_prefix: "{{ os_subnet_range }}"
       protocol: tcp
@@ -56,7 +56,7 @@
       port_range_max: 53
 
   - name: 'Create master-sg rule "DNS (UDP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       remote_ip_prefix: "{{ os_subnet_range }}"
       protocol: udp
@@ -64,14 +64,14 @@
       port_range_max: 53
 
   - name: 'Create master-sg rule "OpenShift API"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       port_range_min: 6443
       port_range_max: 6443
 
   - name: 'Create master-sg rule "VXLAN"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -79,7 +79,7 @@
       port_range_max: 4789
 
   - name: 'Create master-sg rule "Geneve"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -87,7 +87,7 @@
       port_range_max: 6081
 
   - name: 'Create master-sg rule "IPsec IKE"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -95,7 +95,7 @@
       port_range_max: 500
 
   - name: 'Create master-sg rule "IPsec NAT-T"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -103,7 +103,7 @@
       port_range_max: 4500
 
   - name: 'Create master-sg rule "ovndb"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -111,7 +111,7 @@
       port_range_max: 6642
 
   - name: 'Create master-sg rule "master ingress internal (TCP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -119,7 +119,7 @@
       port_range_max: 9999
 
   - name: 'Create master-sg rule "master ingress internal (UDP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -127,7 +127,7 @@
       port_range_max: 9999
 
   - name: 'Create master-sg rule "kube scheduler"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -135,7 +135,7 @@
       port_range_max: 10259
 
   - name: 'Create master-sg rule "kube controller manager"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -143,7 +143,7 @@
       port_range_max: 10257
 
   - name: 'Create master-sg rule "master ingress kubelet secure"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -151,7 +151,7 @@
       port_range_max: 10250
 
   - name: 'Create master-sg rule "etcd"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -159,7 +159,7 @@
       port_range_max: 2380
 
   - name: 'Create master-sg rule "master ingress services (TCP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: tcp
       remote_ip_prefix: "0.0.0.0/0"
@@ -167,7 +167,7 @@
       port_range_max: 32767
 
   - name: 'Create master-sg rule "master ingress services (UDP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: udp
       remote_ip_prefix: "0.0.0.0/0"
@@ -175,19 +175,19 @@
       port_range_max: 32767
 
   - name: 'Create master-sg rule "VRRP"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_master }}"
       protocol: '112'
       remote_ip_prefix: "{{ os_subnet_range }}"
 
 
   - name: 'Create worker-sg rule "ICMP"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: icmp
 
   - name: 'Create worker-sg rule "SSH"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -195,21 +195,21 @@
       port_range_max: 22
 
   - name: 'Create worker-sg rule "Ingress HTTP"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       port_range_min: 80
       port_range_max: 80
 
   - name: 'Create worker-sg rule "Ingress HTTPS"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       port_range_min: 443
       port_range_max: 443
 
   - name: 'Create worker-sg rule "router"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -217,7 +217,7 @@
       port_range_max: 1936
 
   - name: 'Create worker-sg rule "VXLAN"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -225,7 +225,7 @@
       port_range_max: 4789
 
   - name: 'Create worker-sg rule "Geneve"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -233,7 +233,7 @@
       port_range_max: 6081
 
   - name: 'Create worker-sg rule "IPsec IKE"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -241,7 +241,7 @@
       port_range_max: 500
 
   - name: 'Create worker-sg rule "IPsec NAT-T"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -249,7 +249,7 @@
       port_range_max: 4500
 
   - name: 'Create worker-sg rule "worker ingress internal (TCP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -257,7 +257,7 @@
       port_range_max: 9999
 
   - name: 'Create worker-sg rule "worker ingress internal (UDP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -265,7 +265,7 @@
       port_range_max: 9999
 
   - name: 'Create worker-sg rule "worker ingress kubelet insecure"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       remote_ip_prefix: "{{ os_subnet_range }}"
@@ -273,7 +273,7 @@
       port_range_max: 10250
 
   - name: 'Create worker-sg rule "worker ingress services (TCP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: tcp
       remote_ip_prefix: "0.0.0.0/0"
@@ -281,7 +281,7 @@
       port_range_max: 32767
 
   - name: 'Create worker-sg rule "worker ingress services (UDP)"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: udp
       remote_ip_prefix: "0.0.0.0/0"
@@ -289,7 +289,7 @@
       port_range_max: 32767
 
   - name: 'Create worker-sg rule "VRRP"'
-    os_security_group_rule:
+    openstack.cloud.security_group_rule:
       security_group: "{{ os_sg_worker }}"
       protocol: '112'
       remote_ip_prefix: "{{ os_subnet_range }}"
