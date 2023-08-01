@@ -5,6 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/azure/defaults"
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
@@ -13,6 +14,8 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 
 	if p.OSDisk.DiskSizeGB < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.OSDisk.DiskSizeGB, "Storage DiskSizeGB must be positive"))
+	} else if platform.CloudName == azure.StackCloud && p.OSDisk.DiskSizeGB != 0 && (p.OSDisk.DiskSizeGB < defaults.AzurestackMinimumDiskSize || p.OSDisk.DiskSizeGB > defaults.AzurestackMaximumDiskSize) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("diskSizeGB"), p.OSDisk.DiskSizeGB, "Storage DiskSizeGB must be between 128 and 1023 inclusive for Azure Stack"))
 	}
 
 	if p.OSDisk.DiskType != "" {

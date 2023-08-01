@@ -7,6 +7,11 @@ import (
 var (
 	// Overrides
 	defaultMachineClass = map[string]string{}
+
+	// AzurestackMinimumDiskSize is the minimum disk size value for azurestack.
+	AzurestackMinimumDiskSize int32 = 128
+	// AzurestackMaximumDiskSize is the maximum disk size value for azurestack.
+	AzurestackMaximumDiskSize int32 = 1023
 )
 
 // SetPlatformDefaults sets the defaults for the platform.
