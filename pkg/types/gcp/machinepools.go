@@ -50,8 +50,9 @@ type MachinePool struct {
 	ConfidentialCompute string `json:"confidentialCompute,omitempty"`
 
 	// ServiceAccount is the email of a gcp service account to be used for shared
-	// vpn installations. The provided service account will be attached to control-plane nodes
+	// vpc installations. The provided service account will be attached to control-plane nodes
 	// in order to provide the permissions required by the cloud provider in the host project.
+	// This field is only supported in the control-plane machinepool.
 	//
 	// +optional
 	ServiceAccount string `json:"serviceAccount,omitempty"`
