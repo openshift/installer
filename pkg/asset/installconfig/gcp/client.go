@@ -18,6 +18,8 @@ import (
 
 //go:generate mockgen -source=./client.go -destination=./mock/gcpclient_generated.go -package=mock
 
+const defaultTimeout = 2 * time.Minute
+
 var (
 	// RequiredBasePermissions is the list of permissions required for an installation.
 	// A list of valid permissions can be found at https://cloud.google.com/iam/docs/understanding-roles.
@@ -39,6 +41,7 @@ type API interface {
 	GetEnabledServices(ctx context.Context, project string) ([]string, error)
 	GetCredentials() *googleoauth.Credentials
 	GetProjectPermissions(ctx context.Context, project string, permissions []string) (sets.Set[string], error)
+	GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error)
 	ValidateServiceAccountHasPermissions(ctx context.Context, project string, permissions []string) (bool, error)
 }
 
@@ -49,9 +52,6 @@ type Client struct {
 
 // NewClient initializes a client with a session.
 func NewClient(ctx context.Context) (*Client, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
-	defer cancel()
-
 	ssn, err := GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
@@ -70,7 +70,7 @@ func (c *Client) GetMachineType(ctx context.Context, project, zone, machineType 
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	req, err := svc.MachineTypes.Get(project, zone, machineType).Context(ctx).Do()
 	if err != nil {
@@ -87,7 +87,7 @@ func (c *Client) GetNetwork(ctx context.Context, network, project string) (*comp
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	res, err := svc.Networks.Get(project, network).Context(ctx).Do()
 	if err != nil {
@@ -98,7 +98,7 @@ func (c *Client) GetNetwork(ctx context.Context, network, project string) (*comp
 
 // GetPublicDomains returns all of the domains from among the project's public DNS zones.
 func (c *Client) GetPublicDomains(ctx context.Context, project string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -124,7 +124,7 @@ func (c *Client) GetPublicDomains(ctx context.Context, project string) ([]string
 // GetDNSZoneByName returns a DNS zone matching the `zoneName` if the DNS zone exists
 // and can be seen (correct permissions for a private zone) in the project.
 func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string) (*dns.ManagedZone, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -141,7 +141,7 @@ func (c *Client) GetDNSZoneByName(ctx context.Context, project, zoneName string)
 
 // GetDNSZone returns a DNS zone for a basedomain.
 func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isPublic bool) (*dns.ManagedZone, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -177,7 +177,7 @@ func (c *Client) GetDNSZone(ctx context.Context, project, baseDomain string, isP
 
 // GetRecordSets returns all the records for a DNS zone.
 func (c *Client) GetRecordSets(ctx context.Context, project, zone string) ([]*dns.ResourceRecordSet, error) {
-	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getDNSService(ctx)
@@ -207,7 +207,7 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 	req := svc.Subnetworks.List(project, region).Filter(filter)
 	var res []*compute.Subnetwork
 
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	if err := req.Pages(ctx, func(page *compute.SubnetworkList) error {
@@ -220,7 +220,7 @@ func (c *Client) GetSubnetworks(ctx context.Context, network, project, region st
 }
 
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := compute.NewService(ctx, option.WithCredentials(c.ssn.Credentials))
@@ -241,7 +241,7 @@ func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
 // GetProjects gets the list of project names and ids associated with the current user in the form
 // of a map whose keys are ids and values are names.
 func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getCloudResourceService(ctx)
@@ -262,6 +262,19 @@ func (c *Client) GetProjects(ctx context.Context) (map[string]string, error) {
 	return projects, nil
 }
 
+// GetProjectByID retrieves the project specified by its ID.
+func (c *Client) GetProjectByID(ctx context.Context, project string) (*cloudresourcemanager.Project, error) {
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+	defer cancel()
+
+	svc, err := c.getCloudResourceService(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc.Projects.Get(project).Context(ctx).Do()
+}
+
 // GetRegions gets the regions that are valid for the project. An error is returned when unsuccessful
 func (c *Client) GetRegions(ctx context.Context, project string) ([]string, error) {
 	svc, err := c.getComputeService(ctx)
@@ -269,7 +282,7 @@ func (c *Client) GetRegions(ctx context.Context, project string) ([]string, erro
 		return nil, err
 	}
 
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	gcpRegionsList, err := svc.Regions.List(project).Context(ctx).Do()
 	if err != nil {
@@ -297,7 +310,7 @@ func (c *Client) GetZones(ctx context.Context, project, filter string) ([]*compu
 	}
 
 	zones := []*compute.Zone{}
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
 		for _, zone := range page.Items {
@@ -321,7 +334,7 @@ func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourceman
 
 // GetEnabledServices gets the list of enabled services for a project.
 func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	svc, err := c.getServiceUsageService(ctx)
@@ -360,7 +373,7 @@ func (c *Client) GetCredentials() *googleoauth.Credentials {
 }
 
 func (c *Client) getPermissions(ctx context.Context, project string, permissions []string) ([]string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 1*time.Minute)
+	ctx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
 
 	service, err := c.getCloudResourceService(ctx)
