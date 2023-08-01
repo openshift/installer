@@ -28,6 +28,15 @@ func Validate(config *types.InstallConfig) error {
 			fldPath := field.NewPath("compute").Index(idx)
 			allErrs = append(allErrs, validateMachinePool(fldPath, &compute)...)
 		}
+		// Machine pool CIDR check
+		for i := range config.Networking.MachineNetwork {
+			// Each machine pool CIDR must have 24 significant bits (/24)
+			if bits, _ := config.Networking.MachineNetwork[i].CIDR.Mask.Size(); bits != 24 {
+				// If not, create an error displaying the CIDR in the install config vs the expectation (/24)
+				fldPath := field.NewPath("Networking")
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("MachineNetwork").Child("CIDR"), (&config.Networking.MachineNetwork[i].CIDR).String(), "Machine Pool CIDR must be /24."))
+			}
+		}
 	}
 	return allErrs.ToAggregate()
 }
