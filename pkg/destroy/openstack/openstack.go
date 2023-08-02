@@ -3,6 +3,7 @@ package openstack
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -43,6 +44,7 @@ const (
 	cinderCSIClusterIDKey           = "cinder.csi.openstack.org/cluster"
 	manilaCSIClusterIDKey           = "manila.csi.openstack.org/cluster"
 	minOctaviaVersionWithTagSupport = "v2.5"
+	cloudProviderSGNamePattern      = `^lb-sg-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}`
 )
 
 // Filter holds the key/value pairs for the tags we will be matching
@@ -372,6 +374,27 @@ func getFIPsByPort(conn *gophercloud.ServiceClient, logger logrus.FieldLogger) (
 	return fipByPort, err
 }
 
+// getSGsByID prefetches a list of SGs and organizes it by ID for easy lookup.
+func getSGsByID(conn *gophercloud.ServiceClient, logger logrus.FieldLogger) (map[string]sg.SecGroup, error) {
+	sgByID := make(map[string]sg.SecGroup)
+	allPages, err := sg.List(conn, sg.ListOpts{}).AllPages()
+	if err != nil {
+		logger.Error(err)
+		return sgByID, nil
+	}
+	allSGs, err := sg.ExtractGroups(allPages)
+	if err != nil {
+		logger.Error(err)
+		return sgByID, nil
+	}
+
+	// Organize SGs for easy lookup
+	for _, group := range allSGs {
+		sgByID[group.ID] = group
+	}
+	return sgByID, err
+}
+
 func deletePorts(opts *clientconfig.ClientOpts, listOpts ports.ListOpts, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting openstack ports")
 	defer logger.Debugf("Exiting deleting openstack ports")
@@ -402,6 +425,13 @@ func deletePorts(opts *clientconfig.ClientOpts, listOpts ports.ListOpts, logger 
 		return false, nil
 	}
 
+	sgByID, err := getSGsByID(conn, logger)
+	if err != nil {
+		logger.Error(err)
+		return false, nil
+	}
+	cloudProviderSGNameRegexp := regexp.MustCompile(cloudProviderSGNamePattern)
+
 	deletePortsWorker := func(portsChannel <-chan ports.Port, deletedChannel chan<- int) {
 		localDeleted := 0
 		for port := range portsChannel {
@@ -419,6 +449,32 @@ func deletePorts(opts *clientconfig.ClientOpts, listOpts ports.ListOpts, logger 
 						continue
 					}
 					logger.Debugf("Cannot find floating ip %q. It's probably already been deleted.", fip.ID)
+				}
+			}
+
+			// If there is a security group created by cloud-provider-openstack we should find it and delete it.
+			// We'll look through the ones on each of the ports and attempt to remove it from the port and delete it.
+			// Most of the time it's a conflict, but last port should be guaranteed to allow deletion.
+			// TODO(dulek): Currently this is the only way to do it and if delete fails there's no way to get back to
+			//              that SG. This is bad and we should make groups created by CPO tagged by cluster ID ASAP.
+			assignedSGs := port.SecurityGroups
+			ports.Update(conn, port.ID, ports.UpdateOpts{
+				SecurityGroups: &[]string{}, // We can just detach all, we're deleting this port anyway.
+			})
+			for _, groupID := range assignedSGs {
+				if group, ok := sgByID[groupID]; ok {
+					if cloudProviderSGNameRegexp.MatchString(group.Name) {
+						logger.Debugf("Deleting cloud-provider-openstack SG %q", groupID)
+						err := sg.Delete(conn, groupID).ExtractErr()
+						var err404 gophercloud.ErrDefault404
+						var err409 gophercloud.ErrDefault409
+						if err == nil || errors.As(err, &err404) {
+							// If SG is gone let's remove it from the map and it'll save us these calls later on.
+							delete(sgByID, groupID)
+						} else if !errors.As(err, &err409) { // Ignore 404 Not Found (clause before) and 409 Conflict
+							logger.Errorf("Deleting SG %q at port %q failed. SG might get orphaned: %v", groupID, port.ID, err)
+						}
+					}
 				}
 			}
 
