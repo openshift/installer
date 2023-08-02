@@ -104,9 +104,6 @@ func GetMachineTypeList(ctx context.Context, svc *compute.Service, project, regi
 		}
 		return nil
 	})
-	if len(machines) == 0 {
-		return nil, errors.New("failed to fetch instance type, this error usually occurs if the region or the instance type is not found")
-	}
 
 	return machines, err
 }
@@ -118,17 +115,6 @@ func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, m
 		return nil, nil, err
 	}
 
-	machines, err := GetMachineTypeList(ctx, svc, project, region, machineType, "")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	zones := sets.New[string]()
-	for _, machine := range machines {
-		zones.Insert(machine.Zone)
-	}
-
-	// Restrict to zones avaialable in the project
 	pz, err := GetZones(ctx, svc, project, fmt.Sprintf("region eq .*%s", region))
 	if err != nil {
 		return nil, nil, err
@@ -137,6 +123,30 @@ func (c *Client) GetMachineTypeWithZones(ctx context.Context, project, region, m
 	for _, zone := range pz {
 		projZones.Insert(zone.Name)
 	}
+
+	machines, err := GetMachineTypeList(ctx, svc, project, region, machineType, "")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Custom machine types are not included in aggregated lists, so let's try
+	// to get the machine type directly before returning an error. Also
+	// fallback to all the zones in the project
+	if len(machines) == 0 {
+		cctx, cancel := context.WithTimeout(ctx, defaultTimeout)
+		defer cancel()
+		machine, err := svc.MachineTypes.Get(project, pz[0].Name, machineType).Context(cctx).Do()
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to fetch instance type: %w", err)
+		}
+		return machine, projZones, nil
+	}
+
+	zones := sets.New[string]()
+	for _, machine := range machines {
+		zones.Insert(machine.Zone)
+	}
+	// Restrict to zones avaialable in the project
 	zones = zones.Intersection(projZones)
 
 	return machines[0], zones, nil
