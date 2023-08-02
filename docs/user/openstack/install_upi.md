@@ -102,7 +102,7 @@ This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on
 They can be downloaded from Github with this script:
 
 ```sh
-RELEASE="release-4.14"; xargs -n 1 curl -O <<< "
+RELEASE="release-4.13"; xargs -n 1 curl -O <<< "
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
@@ -119,7 +119,7 @@ RELEASE="release-4.14"; xargs -n 1 curl -O <<< "
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
 ```
 
-For installing a different version, change the branch (`release-4.14`)
+For installing a different version, change the branch (`release-4.13`)
 accordingly (e.g. `release-4.12`).
 
 **Requirements:**
