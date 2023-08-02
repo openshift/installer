@@ -356,6 +356,7 @@ func commonFiles() []string {
 		"/etc/issue",
 		"/etc/multipath.conf",
 		"/etc/containers/containers.conf",
+		"/etc/NetworkManager/conf.d/clientid.conf",
 		"/root/.docker/config.json",
 		"/root/assisted.te",
 		"/usr/local/bin/agent-config-image-wait.sh",
