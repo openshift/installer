@@ -456,7 +456,7 @@
           "formats": {
             "ova": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/releases/rhcos-4.10/410.84.202210040010-0/x86_64/rhcos-410.84.202210040010-0-vmware.x86_64.ova",
+                "location": "https://doesntexist.sdodson.com/art/storage/releases/rhcos-4.10/410.84.202210040010-0/x86_64/rhcos-410.84.202210040010-0-vmware.x86_64.ova",
                 "sha256": "40738ae63a99fdaaf2229ed35098f053b3e0befbc237a0e737f0aae76b7bd747"
               }
             }
