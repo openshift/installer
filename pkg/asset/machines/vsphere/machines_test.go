@@ -17,6 +17,8 @@ import (
 
 const testClusterID = "test"
 
+// todo: multiple vcenter change
+
 var installConfigSample = `
 apiVersion: v1
 baseDomain: example.com

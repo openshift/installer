@@ -22,6 +22,9 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 	}
 }
 
+// todo: multiple vcenter change
+// todo: I don't see any changes required in here.
+
 // CloudProviderConfigYaml generates the yaml out of tree cloud provider config for the vSphere platform.
 func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, error) {
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)

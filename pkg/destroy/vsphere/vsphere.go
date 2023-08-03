@@ -26,6 +26,10 @@ type ClusterUninstaller struct {
 	client API
 }
 
+// todo: multiple vcenter change
+// todo: destroy will have to change, there is no loop for vcenters
+// todo: we will have to check each vcenter for each object we are removing
+
 // New returns an VSphere destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *installertypes.ClusterMetadata) (providers.Destroyer, error) {
 	client, err := NewClient(metadata.VSphere.VCenter, metadata.VSphere.Username, metadata.VSphere.Password)

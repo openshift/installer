@@ -18,6 +18,8 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// todo: multiple vcenter change
+
 func buildPermissionGroup(t *testing.T, authManagerMock *mock.MockAuthManager,
 	managedObjectRef vim25types.ManagedObjectReference,
 	username string,

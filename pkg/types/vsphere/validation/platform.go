@@ -69,6 +69,9 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 
 func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	// todo: multiple vcenter change
+
 	if len(p.VCenters) > 1 {
 		return field.ErrorList{field.TooMany(fldPath, len(p.VCenters), 1)}
 	}

@@ -197,6 +197,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	case vspheretypes.Name:
 		vsphereCredList := make([]*VSphereCredsSecretData, 0)
 
+		// todo: multiple vcenter change
+		// todo: this might be ok, test...
 		for _, vCenter := range installConfig.Config.VSphere.VCenters {
 			vsphereCred := VSphereCredsSecretData{
 				VCenter:              vCenter.Server,

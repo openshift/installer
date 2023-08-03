@@ -12,6 +12,9 @@ const (
 	cloudCredsSecretFileName = "cloud-creds-secret.yaml.template"
 )
 
+// todo: multiple vcenter change
+// todo: unknown if anything will need to change here...
+
 var _ asset.WritableAsset = (*CloudCredsSecret)(nil)
 
 // CloudCredsSecret is the constant to represent contents of corresponding yaml file

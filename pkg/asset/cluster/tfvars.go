@@ -913,6 +913,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 		defer cancel()
 
+		// todo: multiple vcenter change
+
 		vim25Client, _, cleanup, err := vsphereconfig.CreateVSphereClients(context.TODO(),
 			installConfig.Config.VSphere.VCenters[0].Server,
 			installConfig.Config.VSphere.VCenters[0].Username,

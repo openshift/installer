@@ -26,6 +26,8 @@ type testCase struct {
 	errorMsg  string
 }
 
+// todo: multiple vcenter change
+
 const (
 	infraID       = "infra-id"
 	listFailsID   = "list-fails-infra-id"

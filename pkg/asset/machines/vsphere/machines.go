@@ -15,6 +15,9 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// todo: multiple vcenter change
+// todo: review...
+
 // Machines returns a list of machines for a machinepool.
 func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != vsphere.Name {

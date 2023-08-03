@@ -1,5 +1,8 @@
 locals {
   description = "Created By OpenShift Installer"
+
+
+  // todo: multiple vcenter change
   vcenter_key = keys(var.vsphere_vcenters)[0]
 }
 
@@ -17,6 +20,7 @@ provider "vsphereprivate" {
   allow_unverified_ssl = false
 }
 
+// todo: multiple vcenter change, maybe?
 data "vsphere_datacenter" "datacenter" {
   for_each = var.vsphere_failure_domain_map
   name     = var.vsphere_failure_domain_map[each.key].topology.datacenter

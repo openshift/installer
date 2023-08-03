@@ -41,6 +41,8 @@ const (
 
 const wildcardDNS = "nip.io"
 
+// todo: multiple vcenter change
+
 func validIPIInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{

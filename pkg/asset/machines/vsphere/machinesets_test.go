@@ -10,6 +10,8 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// todo: multiple vcenter change
+
 var machineComputePoolValidZones = types.MachinePool{
 	Name:     "worker",
 	Replicas: &machinePoolReplicas,

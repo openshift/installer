@@ -1,5 +1,8 @@
 package vsphere
 
+// todo: multiple vcenter change
+// todo: see asset/cluster/vsphere/vsphere
+
 // Metadata contains vSphere metadata (e.g. for uninstalling the cluster).
 type Metadata struct {
 	// VCenter is the domain name or IP address of the vCenter.

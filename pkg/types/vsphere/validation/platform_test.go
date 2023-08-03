@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// todo: multiple vcenter change
 func validPlatform() *vsphere.Platform {
 	return &vsphere.Platform{
 		VCenters: []vsphere.VCenter{

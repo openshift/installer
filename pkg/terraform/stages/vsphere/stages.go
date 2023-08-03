@@ -16,6 +16,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+// todo: multiple vcenter change
+// todo: PlatformStates will need to be dynamically created based on the quantity of
+// todo: vcenters
+
 // PlatformStages are the stages to run to provision the infrastructure in a
 // multiple region and zone vsphere environment.
 var PlatformStages = []terraform.Stage{

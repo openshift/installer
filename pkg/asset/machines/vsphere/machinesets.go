@@ -13,6 +13,9 @@ import (
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
+// todo: multiple vcenter change
+// todo: review...
+
 func getMachineSetWithPlatform(
 	clusterID string,
 	name string,

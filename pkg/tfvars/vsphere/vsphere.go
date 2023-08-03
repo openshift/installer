@@ -47,6 +47,9 @@ type TFVarsSources struct {
 	ControlPlaneMachines    []machineapi.Machine
 }
 
+// todo: multiple vcenter change
+// todo: fully expect changes here. not currently clear...
+
 // TFVars generate vSphere-specific Terraform variables
 func TFVars(sources TFVarsSources) ([]byte, error) {
 	var err error

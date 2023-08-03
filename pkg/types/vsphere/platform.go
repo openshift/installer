@@ -118,6 +118,10 @@ type Platform struct {
 	// specified, it will be set according to the default storage policy
 	// of vsphere.
 	DiskType DiskType `json:"diskType,omitempty"`
+
+	// todo: multiple vcenter change
+	// todo: MaxItems will need to be greater than 1, what is the max number?
+
 	// VCenters holds the connection details for services to communicate with vCenter.
 	// Currently only a single vCenter is supported.
 	// +kubebuilder:validation:Optional

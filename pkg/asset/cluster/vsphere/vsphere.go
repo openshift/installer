@@ -12,6 +12,9 @@ func Metadata(config *types.InstallConfig) *typesvsphere.Metadata {
 	// Since currently we only support a single vCenter
 	// just use the first entry in the VCenters slice.
 
+	// todo: multiple vcenter change
+	// todo: this will need to be a slice...
+
 	return &typesvsphere.Metadata{
 		VCenter:           config.VSphere.VCenters[0].Server,
 		Username:          config.VSphere.VCenters[0].Username,
