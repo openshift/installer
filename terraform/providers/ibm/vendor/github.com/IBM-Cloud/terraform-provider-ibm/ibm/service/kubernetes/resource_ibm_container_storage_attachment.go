@@ -10,6 +10,7 @@ import (
 	"github.com/IBM-Cloud/bluemix-go/bmxerror"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -53,6 +54,9 @@ func ResourceIBMContainerVpcWorkerVolumeAttachment() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Cluster name or ID",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_storage_attachment",
+					"cluster"),
 			},
 
 			"worker": {
@@ -94,6 +98,20 @@ func ResourceIBMContainerVpcWorkerVolumeAttachment() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMContainerVpcWorkerVolumeAttachmentValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerVpcWorkerVolumeAttachmentValidator := validate.ResourceValidator{ResourceName: "ibm_container_storage_attachment", Schema: validateSchema}
+	return &iBMContainerVpcWorkerVolumeAttachmentValidator
 }
 
 func resourceIBMContainerVpcWorkerVolumeAttachmentCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

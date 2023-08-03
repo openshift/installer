@@ -54,10 +54,12 @@ func NewPcloudTenantsSshkeysPutParamsWithHTTPClient(client *http.Client) *Pcloud
 	}
 }
 
-/* PcloudTenantsSshkeysPutParams contains all the parameters to send to the API endpoint
-   for the pcloud tenants sshkeys put operation.
+/*
+PcloudTenantsSshkeysPutParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud tenants sshkeys put operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudTenantsSshkeysPutParams struct {
 

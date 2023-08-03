@@ -613,29 +613,23 @@ func parseIBMISSecurityGroupRuleDictionary(d *schema.ResourceData, tag string, s
 	if icmpInterface, ok := d.GetOk("icmp"); ok {
 		if icmpInterface.([]interface{})[0] != nil {
 			haveType := false
-			icmp := icmpInterface.([]interface{})[0].(map[string]interface{})
-			if value, ok := icmp["type"]; ok {
+			if value, ok := d.GetOk("icmp.0.type"); ok {
 				parsed.icmpType = int64(value.(int))
 				haveType = true
+				sgTemplate.Type = &parsed.icmpType
+				securityGroupRulePatchModel.Type = &parsed.icmpType
 			}
-			if value, ok := icmp["code"]; ok {
+			if value, ok := d.GetOk("icmp.0.code"); ok {
 				if !haveType {
 					return nil, nil, nil, fmt.Errorf("icmp code requires icmp type")
 				}
 				parsed.icmpCode = int64(value.(int))
+				sgTemplate.Code = &parsed.icmpCode
+				securityGroupRulePatchModel.Code = &parsed.icmpCode
 			}
 		}
 		parsed.protocol = "icmp"
-		if icmpInterface.([]interface{})[0] == nil {
-			parsed.icmpType = 0
-			parsed.icmpCode = 0
-		} else {
-			sgTemplate.Type = &parsed.icmpType
-			sgTemplate.Code = &parsed.icmpCode
-		}
 		sgTemplate.Protocol = &parsed.protocol
-		securityGroupRulePatchModel.Type = &parsed.icmpType
-		securityGroupRulePatchModel.Code = &parsed.icmpCode
 	}
 	for _, prot := range []string{"tcp", "udp"} {
 		if tcpInterface, ok := d.GetOk(prot); ok {
@@ -678,6 +672,15 @@ func parseIBMISSecurityGroupRuleDictionary(d *schema.ResourceData, tag string, s
 	securityGroupRulePatch, err := securityGroupRulePatchModel.AsPatch()
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("[ERROR] Error calling asPatch for SecurityGroupRulePatch: %s", err)
+	}
+	if _, ok := d.GetOk("icmp"); ok {
+
+		if parsed.icmpType == -1 {
+			securityGroupRulePatch["type"] = nil
+		}
+		if parsed.icmpCode == -1 {
+			securityGroupRulePatch["code"] = nil
+		}
 	}
 	sgTemplateUpdate.SecurityGroupRulePatch = securityGroupRulePatch
 	//	log.Printf("[DEBUG] parse tag=%s\n\t%v  \n\t%v  \n\t%v  \n\t%v  \n\t%v \n\t%v \n\t%v \n\t%v  \n\t%v  \n\t%v  \n\t%v  \n\t%v ",

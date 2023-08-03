@@ -9,6 +9,7 @@ import (
 	"log"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -24,6 +25,9 @@ func DataSourceIBMDatabaseRemotes() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Deployment ID.",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_database_remotes",
+					"deployment_id"),
 			},
 			"leader": &schema.Schema{
 				Type:        schema.TypeString,
@@ -40,6 +44,22 @@ func DataSourceIBMDatabaseRemotes() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMDatabaseRemotesValidator() *validate.ResourceValidator {
+
+	validateSchema := make([]validate.ValidateSchema, 0)
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "deployment_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cloud-database",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMDatabaseRemotesValidator := validate.ResourceValidator{ResourceName: "ibm_database_remotes", Schema: validateSchema}
+	return &iBMDatabaseRemotesValidator
 }
 
 func dataSourceIBMDatabaseRemotesRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

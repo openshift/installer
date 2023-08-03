@@ -52,10 +52,12 @@ func NewServiceInstanceLastOperationGetParamsWithHTTPClient(client *http.Client)
 	}
 }
 
-/* ServiceInstanceLastOperationGetParams contains all the parameters to send to the API endpoint
-   for the service instance last operation get operation.
+/*
+ServiceInstanceLastOperationGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service instance last operation get operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceInstanceLastOperationGetParams struct {
 

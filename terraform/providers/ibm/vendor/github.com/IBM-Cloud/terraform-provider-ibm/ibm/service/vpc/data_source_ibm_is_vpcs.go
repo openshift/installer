@@ -28,6 +28,16 @@ func DataSourceIBMISVPCs() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: dataSourceIBMISVPCListRead,
 		Schema: map[string]*schema.Schema{
+			"resource_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique identifier of the resource group this vpc belongs to",
+			},
+			"classic_access": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Filters the collection to VPCs with the specified classic_access value",
+			},
 			isVPCs: {
 				Type:        schema.TypeList,
 				Description: "Collection of VPCs",
@@ -112,6 +122,14 @@ func DataSourceIBMISVPCs() *schema.Resource {
 							Computed: true,
 							Elem:     &schema.Schema{Type: schema.TypeString},
 							Set:      flex.ResourceIBMVPCHash,
+						},
+
+						isVPCAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
 						},
 
 						isVPCCRN: {
@@ -306,9 +324,17 @@ func dataSourceIBMISVPCListRead(context context.Context, d *schema.ResourceData,
 	}
 	start := ""
 	allrecs := []vpcv1.VPC{}
+	listOptions := &vpcv1.ListVpcsOptions{}
+	if resgroupintf, ok := d.GetOk("resource_group"); ok {
+		resGroup := resgroupintf.(string)
+		listOptions.ResourceGroupID = &resGroup
+	}
+	if classicAccessIntf, ok := d.GetOk("classic_access"); ok {
+		classicAccess := classicAccessIntf.(bool)
+		listOptions.ClassicAccess = &classicAccess
+	}
 	for {
 
-		listOptions := &vpcv1.ListVpcsOptions{}
 		if start != "" {
 			listOptions.Start = &start
 		}
@@ -353,12 +379,19 @@ func dataSourceIBMISVPCListRead(context context.Context, d *schema.ResourceData,
 			l[isVPCDefaultSecurityGroupName] = *vpc.DefaultSecurityGroup.Name
 			l[isVPCDefaultSecurityGroupCRN] = vpc.DefaultSecurityGroup.CRN
 		}
-		tags, err := flex.GetTagsUsingCRN(meta, *vpc.CRN)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, *vpc.CRN, "", isVPCUserTagType)
 		if err != nil {
 			log.Printf(
 				"An error occured during reading of vpc (%s) tags : %s", d.Id(), err)
 		}
 		l[isVPCTags] = tags
+
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vpc.CRN, "", isVPCAccessTagType)
+		if err != nil {
+			log.Printf(
+				"An error occured during reading of vpc (%s) access tags: %s", d.Id(), err)
+		}
+		l[isVPCAccessTags] = accesstags
 
 		controller, err := flex.GetBaseController(meta)
 		if err != nil {

@@ -67,6 +67,11 @@ func DataSourceIBMEnChromeDestination() *schema.Resource {
 										Optional:    true,
 										Description: "The website url",
 									},
+									"pre_prod": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "The flag to enable destination as pre-prod or prod",
+									},
 								},
 							},
 						},
@@ -173,16 +178,19 @@ func enChromeDestinationConfigToMap(configItem en.DestinationConfig) (configMap 
 	return configMap
 }
 
-func enChromeDestinationConfigParamsToMap(paramsItem en.DestinationConfigParamsIntf) (paramsMap map[string]interface{}) {
+func enChromeDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIntf) (paramsMap map[string]interface{}) {
 	paramsMap = map[string]interface{}{}
 
-	params := paramsItem.(*en.DestinationConfigParams)
+	params := paramsItem.(*en.DestinationConfigOneOf)
 
 	if params.APIKey != nil {
 		paramsMap["api_key"] = params.APIKey
 	}
 	if params.WebsiteURL != nil {
 		paramsMap["website_url"] = params.WebsiteURL
+	}
+	if params.PreProd != nil {
+		paramsMap["pre_prod"] = params.PreProd
 	}
 
 	return paramsMap

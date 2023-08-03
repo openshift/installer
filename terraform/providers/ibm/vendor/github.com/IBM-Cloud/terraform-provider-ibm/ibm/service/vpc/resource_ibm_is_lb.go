@@ -42,6 +42,8 @@ const (
 	isLBLogging                 = "logging"
 	isLBSecurityGroups          = "security_groups"
 	isLBSecurityGroupsSupported = "security_group_supported"
+
+	isLBAccessTags = "access_tags"
 )
 
 func ResourceIBMISLB() *schema.Resource {
@@ -69,6 +71,10 @@ func ResourceIBMISLB() *schema.Resource {
 				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
 					return flex.ResourceRouteModeValidate(diff)
 				}),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -89,7 +95,27 @@ func ResourceIBMISLB() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator("ibm_is_lb", isLBType),
 				Description:  "Load Balancer type",
 			},
-
+			"dns": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Description: "The DNS configuration for this load balancer.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"instance_crn": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The CRN for this DNS instance",
+						},
+						"zone_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The unique identifier of the DNS zone.",
+						},
+					},
+				},
+			},
 			isLBStatus: {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -154,7 +180,9 @@ func ResourceIBMISLB() *schema.Resource {
 			isLBSubnets: {
 				Type:        schema.TypeSet,
 				Required:    true,
-				ForceNew:    true,
+				ForceNew:    false,
+				MinItems:    1,
+				MaxItems:    15,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         schema.HashString,
 				Description: "Load Balancer subnets list",
@@ -192,6 +220,15 @@ func ResourceIBMISLB() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_lb", "tags")},
 				Set:      flex.ResourceIBMVPCHash,
+			},
+
+			isLBAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_lb", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
 			},
 
 			isLBResourceGroup: {
@@ -245,6 +282,11 @@ func ResourceIBMISLB() *schema.Resource {
 				Computed:    true,
 				Description: "The resource group name in which resource is provisioned",
 			},
+
+			"version": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -285,6 +327,16 @@ func ResourceIBMISLBValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Optional:                   true,
 			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
+
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
 			MinValueLength:             1,
 			MaxValueLength:             128})
 
@@ -341,6 +393,21 @@ func lbCreate(d *schema.ResourceData, meta interface{}, name, lbType, rg string,
 		Name:     &name,
 	}
 
+	if dnsIntf, ok := d.GetOk("dns"); ok {
+		dnsMap := dnsIntf.([]interface{})[0].(map[string]interface{})
+		dnsInstance, _ := dnsMap["instance_crn"].(string)
+		zone, _ := dnsMap["zone_id"].(string)
+		dns := &vpcv1.LoadBalancerDnsPrototype{
+			Instance: &vpcv1.DnsInstanceIdentity{
+				CRN: &dnsInstance,
+			},
+			Zone: &vpcv1.DnsZoneIdentity{
+				ID: &zone,
+			},
+		}
+		options.Dns = dns
+	}
+
 	if routeModeBool, ok := d.GetOk(isLBRouteMode); ok {
 		routeMode := routeModeBool.(bool)
 		options.RouteMode = &routeMode
@@ -382,10 +449,10 @@ func lbCreate(d *schema.ResourceData, meta interface{}, name, lbType, rg string,
 		options.Profile = loadBalancerProfileIdentityModel
 	} else {
 
-		dataPath := &vpcv1.LoadBalancerLoggingDatapath{
+		dataPath := &vpcv1.LoadBalancerLoggingDatapathPrototype{
 			Active: &isLogging,
 		}
-		loadBalancerLogging := &vpcv1.LoadBalancerLogging{
+		loadBalancerLogging := &vpcv1.LoadBalancerLoggingPrototype{
 			Datapath: dataPath,
 		}
 		options.Logging = loadBalancerLogging
@@ -404,10 +471,19 @@ func lbCreate(d *schema.ResourceData, meta interface{}, name, lbType, rg string,
 	v := os.Getenv("IC_ENV_TAGS")
 	if _, ok := d.GetOk(isLBTags); ok || v != "" {
 		oldList, newList := d.GetChange(isLBTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *lb.CRN)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *lb.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on create of resource vpc Load Balancer (%s) tags: %s", d.Id(), err)
+		}
+	}
+
+	if _, ok := d.GetOk(isLBAccessTags); ok {
+		oldList, newList := d.GetChange(isLBAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *lb.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource load balancer (%s) access tags: %s", d.Id(), err)
 		}
 	}
 	return nil
@@ -439,6 +515,16 @@ func lbGet(d *schema.ResourceData, meta interface{}, id string) error {
 			return nil
 		}
 		return fmt.Errorf("[ERROR] Error getting Load Balancer : %s\n%s", err, response)
+	}
+	dnsList := make([]map[string]interface{}, 0)
+	if lb.Dns != nil {
+		dns := map[string]interface{}{}
+		dns["instance_crn"] = lb.Dns.Instance.CRN
+		dns["zone_id"] = lb.Dns.Zone.ID
+		dnsList = append(dnsList, dns)
+		d.Set("dns", dnsList)
+	} else {
+		d.Set("dns", nil)
 	}
 	d.Set(isLBName, *lb.Name)
 	if *lb.IsPublic {
@@ -532,12 +618,18 @@ func lbGet(d *schema.ResourceData, meta interface{}, id string) error {
 	if lb.UDPSupported != nil {
 		d.Set(isLBUdpSupported, *lb.UDPSupported)
 	}
-	tags, err := flex.GetTagsUsingCRN(meta, *lb.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *lb.CRN, "", isUserTagType)
 	if err != nil {
 		log.Printf(
 			"Error on get of resource vpc Load Balancer (%s) tags: %s", d.Id(), err)
 	}
 	d.Set(isLBTags, tags)
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *lb.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource load balancer (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isLBAccessTags, accesstags)
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -546,6 +638,9 @@ func lbGet(d *schema.ResourceData, meta interface{}, id string) error {
 	d.Set(flex.ResourceName, *lb.Name)
 	if lb.ResourceGroup != nil {
 		d.Set(flex.ResourceGroupName, lb.ResourceGroup.Name)
+	}
+	if err = d.Set("version", response.Headers.Get("Etag")); err != nil {
+		return fmt.Errorf("[ERROR] Error setting version: %s", err)
 	}
 	return nil
 }
@@ -590,7 +685,7 @@ func lbUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChan
 	if err != nil {
 		return err
 	}
-	if d.HasChange(isLBTags) {
+	if d.HasChange(isLBTags) || d.HasChange(isLBAccessTags) {
 		getLoadBalancerOptions := &vpcv1.GetLoadBalancerOptions{
 			ID: &id,
 		}
@@ -598,13 +693,101 @@ func lbUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChan
 		if err != nil {
 			return fmt.Errorf("[ERROR] Error getting Load Balancer : %s\n%s", err, response)
 		}
-		oldList, newList := d.GetChange(isLBTags)
-		err = flex.UpdateTagsUsingCRN(oldList, newList, meta, *lb.CRN)
-		if err != nil {
-			log.Printf(
-				"Error on update of resource vpc Load Balancer (%s) tags: %s", d.Id(), err)
+		if d.HasChange(isLBTags) {
+			oldList, newList := d.GetChange(isLBTags)
+			err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *lb.CRN, "", isUserTagType)
+			if err != nil {
+				log.Printf(
+					"Error on update of resource vpc Load Balancer (%s) tags: %s", d.Id(), err)
+			}
+		}
+		if d.HasChange(isLBAccessTags) {
+			oldList, newList := d.GetChange(isLBAccessTags)
+			err := flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *lb.CRN, "", isAccessTagType)
+			if err != nil {
+				log.Printf(
+					"Error on update of resource load balancer (%s) access tags: %s", d.Id(), err)
+			}
 		}
 	}
+
+	if d.HasChange("dns") {
+		updateLoadBalancerOptions := &vpcv1.UpdateLoadBalancerOptions{
+			ID: &id,
+		}
+		dnsRemoved := false
+		if _, ok := d.GetOk("dns"); !ok {
+			dnsRemoved = true
+		}
+		dnsPatchModel := &vpcv1.LoadBalancerDnsPatch{}
+		if d.HasChange("dns.0.instance_crn") {
+			dnsInstanceCrn := d.Get("dns.0.instance_crn").(string)
+			dnsPatchModel.Instance = &vpcv1.DnsInstanceIdentity{
+				CRN: &dnsInstanceCrn,
+			}
+		}
+		if d.HasChange("dns.0.zone_id") {
+			dnsZoneId := d.Get("dns.0.zone_id").(string)
+			dnsPatchModel.Zone = &vpcv1.DnsZoneIdentity{
+				ID: &dnsZoneId,
+			}
+		}
+
+		loadBalancerPatchModel := &vpcv1.LoadBalancerPatch{
+			Dns: dnsPatchModel,
+		}
+		loadBalancerPatch, err := loadBalancerPatchModel.AsPatch()
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error calling asPatch for LoadBalancerPatch: %s", err)
+		}
+		if dnsRemoved {
+			loadBalancerPatch["dns"] = nil
+		}
+		updateLoadBalancerOptions.LoadBalancerPatch = loadBalancerPatch
+
+		_, response, err := sess.UpdateLoadBalancer(updateLoadBalancerOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error Updating subents in vpc Load Balancer : %s\n%s", err, response)
+		}
+		_, err = isWaitForLBAvailable(sess, d.Id(), d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange(isLBSubnets) {
+		updateLoadBalancerOptions := &vpcv1.UpdateLoadBalancerOptions{
+			ID: &id,
+		}
+		updateLoadBalancerOptions.SetIfMatch(d.Get("version").(string))
+		loadBalancerPatchModel := &vpcv1.LoadBalancerPatch{}
+		subnets := d.Get(isLBSubnets).(*schema.Set)
+		if subnets.Len() != 0 {
+			subnetobjs := make([]vpcv1.SubnetIdentityIntf, subnets.Len())
+			for i, subnet := range subnets.List() {
+				subnetstr := subnet.(string)
+				subnetobjs[i] = &vpcv1.SubnetIdentity{
+					ID: &subnetstr,
+				}
+			}
+			loadBalancerPatchModel.Subnets = subnetobjs
+		}
+		loadBalancerPatch, err := loadBalancerPatchModel.AsPatch()
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error calling asPatch for LoadBalancerPatch: %s", err)
+		}
+		updateLoadBalancerOptions.LoadBalancerPatch = loadBalancerPatch
+
+		_, response, err := sess.UpdateLoadBalancer(updateLoadBalancerOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error Updating subents in vpc Load Balancer : %s\n%s", err, response)
+		}
+		_, err = isWaitForLBAvailable(sess, d.Id(), d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+	}
+
 	if hasChanged {
 		updateLoadBalancerOptions := &vpcv1.UpdateLoadBalancerOptions{
 			ID: &id,
@@ -627,10 +810,10 @@ func lbUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasChan
 		updateLoadBalancerOptions := &vpcv1.UpdateLoadBalancerOptions{
 			ID: &id,
 		}
-		dataPath := &vpcv1.LoadBalancerLoggingDatapath{
+		dataPath := &vpcv1.LoadBalancerLoggingDatapathPatch{
 			Active: &isLogging,
 		}
-		loadBalancerLogging := &vpcv1.LoadBalancerLogging{
+		loadBalancerLogging := &vpcv1.LoadBalancerLoggingPatch{
 			Datapath: dataPath,
 		}
 		loadBalancerPatchModel := &vpcv1.LoadBalancerPatch{

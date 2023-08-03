@@ -22,6 +22,11 @@ func DataSourceIBMISNetworkACLRules() *schema.Resource {
 		Read: dataSourceIBMISNetworkACLRulesRead,
 
 		Schema: map[string]*schema.Schema{
+			"direction": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The direction of the rules to filter",
+			},
 			isNwACLID: {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -185,10 +190,15 @@ func networkACLRulesList(d *schema.ResourceData, meta interface{}, nwACLID strin
 	}
 	start := ""
 	allrecs := []vpcv1.NetworkACLRuleItemIntf{}
+	listNetworkACLRulesOptions := &vpcv1.ListNetworkACLRulesOptions{
+		NetworkACLID: &nwACLID,
+	}
+	if directionIntf, ok := d.GetOk("direction"); ok {
+		direction := directionIntf.(string)
+		listNetworkACLRulesOptions.Direction = &direction
+	}
 	for {
-		listNetworkACLRulesOptions := &vpcv1.ListNetworkACLRulesOptions{
-			NetworkACLID: &nwACLID,
-		}
+
 		if start != "" {
 			listNetworkACLRulesOptions.Start = &start
 		}

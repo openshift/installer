@@ -57,7 +57,8 @@ func NewPcloudSapGetallOK() *PcloudSapGetallOK {
 	return &PcloudSapGetallOK{}
 }
 
-/* PcloudSapGetallOK describes a response with status code 200, with default header values.
+/*
+PcloudSapGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -65,9 +66,39 @@ type PcloudSapGetallOK struct {
 	Payload *models.SAPProfiles
 }
 
+// IsSuccess returns true when this pcloud sap getall o k response has a 2xx status code
+func (o *PcloudSapGetallOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud sap getall o k response has a 3xx status code
+func (o *PcloudSapGetallOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap getall o k response has a 4xx status code
+func (o *PcloudSapGetallOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud sap getall o k response has a 5xx status code
+func (o *PcloudSapGetallOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sap getall o k response a status code equal to that given
+func (o *PcloudSapGetallOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudSapGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudSapGetallOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudSapGetallOK) GetPayload() *models.SAPProfiles {
 	return o.Payload
 }
@@ -89,7 +120,8 @@ func NewPcloudSapGetallBadRequest() *PcloudSapGetallBadRequest {
 	return &PcloudSapGetallBadRequest{}
 }
 
-/* PcloudSapGetallBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudSapGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -97,9 +129,39 @@ type PcloudSapGetallBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sap getall bad request response has a 2xx status code
+func (o *PcloudSapGetallBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sap getall bad request response has a 3xx status code
+func (o *PcloudSapGetallBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap getall bad request response has a 4xx status code
+func (o *PcloudSapGetallBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sap getall bad request response has a 5xx status code
+func (o *PcloudSapGetallBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sap getall bad request response a status code equal to that given
+func (o *PcloudSapGetallBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudSapGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudSapGetallBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudSapGetallBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -121,7 +183,8 @@ func NewPcloudSapGetallUnauthorized() *PcloudSapGetallUnauthorized {
 	return &PcloudSapGetallUnauthorized{}
 }
 
-/* PcloudSapGetallUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudSapGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -129,9 +192,39 @@ type PcloudSapGetallUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sap getall unauthorized response has a 2xx status code
+func (o *PcloudSapGetallUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sap getall unauthorized response has a 3xx status code
+func (o *PcloudSapGetallUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap getall unauthorized response has a 4xx status code
+func (o *PcloudSapGetallUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud sap getall unauthorized response has a 5xx status code
+func (o *PcloudSapGetallUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud sap getall unauthorized response a status code equal to that given
+func (o *PcloudSapGetallUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudSapGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudSapGetallUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudSapGetallUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -153,7 +246,8 @@ func NewPcloudSapGetallInternalServerError() *PcloudSapGetallInternalServerError
 	return &PcloudSapGetallInternalServerError{}
 }
 
-/* PcloudSapGetallInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudSapGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -161,9 +255,39 @@ type PcloudSapGetallInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud sap getall internal server error response has a 2xx status code
+func (o *PcloudSapGetallInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud sap getall internal server error response has a 3xx status code
+func (o *PcloudSapGetallInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud sap getall internal server error response has a 4xx status code
+func (o *PcloudSapGetallInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud sap getall internal server error response has a 5xx status code
+func (o *PcloudSapGetallInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud sap getall internal server error response a status code equal to that given
+func (o *PcloudSapGetallInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudSapGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudSapGetallInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/sap][%d] pcloudSapGetallInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudSapGetallInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

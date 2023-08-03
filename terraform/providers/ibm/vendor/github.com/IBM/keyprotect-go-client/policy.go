@@ -22,9 +22,13 @@ import (
 )
 
 const (
-	policyType = "application/vnd.ibm.kms.policy+json"
+	// DualAuthDelete defines the policy type as dual auth delete
+	DualAuthDelete = "dualAuthDelete"
 
+	//RotationPolicy defines the policy type as rotation
 	RotationPolicy = "rotation"
+
+	policyType = "application/vnd.ibm.kms.policy+json"
 )
 
 // Policy represents a policy as returned by the KP API.
@@ -40,7 +44,8 @@ type Policy struct {
 }
 
 type Rotation struct {
-	Interval int `json:"interval_month,omitempty"`
+	Enabled  *bool `json:"enabled,omitempty"`
+	Interval int   `json:"interval_month,omitempty"`
 }
 
 type DualAuth struct {
@@ -59,15 +64,15 @@ type Policies struct {
 	Policies []Policy         `json:"resources"`
 }
 
-// GetPolicy retrieves a policy by Key ID. This function is
+// GetPolicy retrieves a policy by Key ID or alias. This function is
 // deprecated, as it only returns one policy and does not let you
 // select which policy set it will return. It is kept for backward
 // compatibility on keys with only one rotation policy. Please update
 // to use the new GetPolicies or Get<type>Policy functions.
-func (c *Client) GetPolicy(ctx context.Context, id string) (*Policy, error) {
+func (c *Client) GetPolicy(ctx context.Context, idOrAlias string) (*Policy, error) {
 	policyresponse := Policies{}
 
-	req, err := c.newRequest("GET", fmt.Sprintf("keys/%s/policies", id), nil)
+	req, err := c.newRequest("GET", fmt.Sprintf("keys/%s/policies", idOrAlias), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +89,7 @@ func (c *Client) GetPolicy(ctx context.Context, id string) (*Policy, error) {
 // the rotation interval needed. This function is deprecated as it will only
 // let you set key rotation  policies. To set dual auth and other newer policies
 // on a key, please use the new SetPolicies of Set<type>Policy functions.
-func (c *Client) SetPolicy(ctx context.Context, id string, prefer PreferReturn, rotationInterval int) (*Policy, error) {
+func (c *Client) SetPolicy(ctx context.Context, idOrAlias string, prefer PreferReturn, rotationInterval int) (*Policy, error) {
 
 	policy := Policy{
 		Type: policyType,
@@ -103,7 +108,7 @@ func (c *Client) SetPolicy(ctx context.Context, id string, prefer PreferReturn, 
 
 	policyresponse := Policies{}
 
-	req, err := c.newRequest("PUT", fmt.Sprintf("keys/%s/policies", id), &policyRequest)
+	req, err := c.newRequest("PUT", fmt.Sprintf("keys/%s/policies", idOrAlias), &policyRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -118,11 +123,11 @@ func (c *Client) SetPolicy(ctx context.Context, id string, prefer PreferReturn, 
 	return &policyresponse.Policies[0], nil
 }
 
-// GetPolicies retrieves all policies details associated with a Key ID.
-func (c *Client) GetPolicies(ctx context.Context, id string) ([]Policy, error) {
+// GetPolicies retrieves all policies details associated with a Key ID or alias.
+func (c *Client) GetPolicies(ctx context.Context, idOrAlias string) ([]Policy, error) {
 	policyresponse := Policies{}
 
-	req, err := c.newRequest("GET", fmt.Sprintf("keys/%s/policies", id), nil)
+	req, err := c.newRequest("GET", fmt.Sprintf("keys/%s/policies", idOrAlias), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -152,13 +157,13 @@ func (c *Client) getPolicy(ctx context.Context, id, policyType string, policyres
 	return err
 }
 
-// GetRotationPolivy method retrieves rotation policy details of a key
+// GetRotationPolicy method retrieves rotation policy details of a key
 // For more information can refet the Key Protect docs in the link below:
 // https://cloud.ibm.com/docs/key-protect?topic=key-protect-set-rotation-policy#view-rotation-policy-api
-func (c *Client) GetRotationPolicy(ctx context.Context, id string) (*Policy, error) {
+func (c *Client) GetRotationPolicy(ctx context.Context, idOrAlias string) (*Policy, error) {
 	policyresponse := Policies{}
 
-	err := c.getPolicy(ctx, id, RotationPolicy, &policyresponse)
+	err := c.getPolicy(ctx, idOrAlias, RotationPolicy, &policyresponse)
 	if err != nil {
 		return nil, err
 	}
@@ -173,10 +178,10 @@ func (c *Client) GetRotationPolicy(ctx context.Context, id string) (*Policy, err
 // GetDualAuthDeletePolicy method retrieves dual auth delete policy details of a key
 // For more information can refer the Key Protect docs in the link below:
 // https://cloud.ibm.com/docs/key-protect?topic=key-protect-set-dual-auth-key-policy#view-dual-auth-key-policy-api
-func (c *Client) GetDualAuthDeletePolicy(ctx context.Context, id string) (*Policy, error) {
+func (c *Client) GetDualAuthDeletePolicy(ctx context.Context, idOrAlias string) (*Policy, error) {
 	policyresponse := Policies{}
 
-	err := c.getPolicy(ctx, id, DualAuthDelete, &policyresponse)
+	err := c.getPolicy(ctx, idOrAlias, DualAuthDelete, &policyresponse)
 	if err != nil {
 		return nil, err
 	}
@@ -188,10 +193,10 @@ func (c *Client) GetDualAuthDeletePolicy(ctx context.Context, id string) (*Polic
 	return &policyresponse.Policies[0], nil
 }
 
-func (c *Client) setPolicy(ctx context.Context, id, policyType string, policyRequest Policies) (*Policies, error) {
+func (c *Client) setPolicy(ctx context.Context, idOrAlias, policyType string, policyRequest Policies) (*Policies, error) {
 	policyresponse := Policies{}
 
-	req, err := c.newRequest("PUT", fmt.Sprintf("keys/%s/policies", id), &policyRequest)
+	req, err := c.newRequest("PUT", fmt.Sprintf("keys/%s/policies", idOrAlias), &policyRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -207,13 +212,11 @@ func (c *Client) setPolicy(ctx context.Context, id, policyType string, policyReq
 	return &policyresponse, nil
 }
 
-// SetRotationPolicy updates the rotation policy associated with a key by specifying key ID and rotation interval.
-// For more information can refer the Key Protect docs in the link below:
-// https://cloud.ibm.com/docs/key-protect?topic=key-protect-set-rotation-policy#update-rotation-policy-api
-func (c *Client) SetRotationPolicy(ctx context.Context, id string, rotationInterval int) (*Policy, error) {
+func (c *Client) setKeyRotationPolicy(ctx context.Context, idOrAlias string, enable *bool, rotationInterval int) (*Policy, error) {
 	policy := Policy{
 		Type: policyType,
 		Rotation: &Rotation{
+			Enabled:  enable,
 			Interval: rotationInterval,
 		},
 	}
@@ -226,7 +229,7 @@ func (c *Client) SetRotationPolicy(ctx context.Context, id string, rotationInter
 		Policies: []Policy{policy},
 	}
 
-	policyresponse, err := c.setPolicy(ctx, id, RotationPolicy, policyRequest)
+	policyresponse, err := c.setPolicy(ctx, idOrAlias, RotationPolicy, policyRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -238,10 +241,39 @@ func (c *Client) SetRotationPolicy(ctx context.Context, id string, rotationInter
 	return &policyresponse.Policies[0], nil
 }
 
-// SetDualAuthDeletePolicy updates the dual auth delete policy by passing the key ID and enable detail
+func (c *Client) EnableRotationPolicy(ctx context.Context, idOrAlias string) (*Policy, error) {
+	enabled := true
+	return c.setKeyRotationPolicy(ctx, idOrAlias, &enabled, 0)
+}
+
+func (c *Client) DisableRotationPolicy(ctx context.Context, idOrAlias string) (*Policy, error) {
+	enabled := false
+	return c.setKeyRotationPolicy(ctx, idOrAlias, &enabled, 0)
+}
+
+// SetRotationPolicy updates the rotation policy associated with a key by specifying key ID  or alias and rotation interval.
+// For more information can refer the Key Protect docs in the link below:
+// https://cloud.ibm.com/docs/key-protect?topic=key-protect-set-rotation-policy#update-rotation-policy-api
+func (c *Client) SetRotationPolicy(ctx context.Context, idOrAlias string, rotationInterval int, enabled ...bool) (*Policy, error) {
+	/*
+	 Setting the value of rotationInterval to -1 in case user passes 0 value as we want to retain the param `interval_month` after marshalling
+	 so that we can get correct error msg from REST API saying interval_month should be between 1 to 12
+	 Otherwise the param would not be sent to REST API in case of value 0 and it would throw error saying interval_month is missing
+	*/
+	if rotationInterval == 0 {
+		rotationInterval = -1
+	}
+	var enable *bool
+	if enabled != nil {
+		enable = &enabled[0]
+	}
+	return c.setKeyRotationPolicy(ctx, idOrAlias, enable, rotationInterval)
+}
+
+// SetDualAuthDeletePolicy updates the dual auth delete policy by passing the key ID  or alias and enable detail
 // For more information can refer the Key Protect docs in the link below:
 // https://cloud.ibm.com/docs/key-protect?topic=key-protect-set-dual-auth-key-policy#create-dual-auth-key-policy-api
-func (c *Client) SetDualAuthDeletePolicy(ctx context.Context, id string, enabled bool) (*Policy, error) {
+func (c *Client) SetDualAuthDeletePolicy(ctx context.Context, idOrAlias string, enabled bool) (*Policy, error) {
 	policy := Policy{
 		Type: policyType,
 		DualAuth: &DualAuth{
@@ -257,7 +289,7 @@ func (c *Client) SetDualAuthDeletePolicy(ctx context.Context, id string, enabled
 		Policies: []Policy{policy},
 	}
 
-	policyresponse, err := c.setPolicy(ctx, id, DualAuthDelete, policyRequest)
+	policyresponse, err := c.setPolicy(ctx, idOrAlias, DualAuthDelete, policyRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -273,12 +305,25 @@ func (c *Client) SetDualAuthDeletePolicy(ctx context.Context, id string, enabled
 // To set rotation policy for the key pass the setRotationPolicy parameter as true and set the rotationInterval detail.
 // To set dual auth delete policy for the key pass the setDualAuthDeletePolicy parameter as true and set the dualAuthEnable detail.
 // Both the policies can be set or either of the policies can be set.
-func (c *Client) SetPolicies(ctx context.Context, id string, setRotationPolicy bool, rotationInterval int, setDualAuthDeletePolicy, dualAuthEnable bool) ([]Policy, error) {
+func (c *Client) SetPolicies(ctx context.Context, idOrAlias string, setRotationPolicy bool, rotationInterval int, setDualAuthDeletePolicy, dualAuthEnable bool, rotationEnable ...bool) ([]Policy, error) {
+	/*
+	 Setting the value of rotationInterval to -1 in case user passes 0 value as we want to retain the param `interval_month` after marshalling
+	 so that we can get correct error msg from REST API saying interval_month should be between 1 to 12
+	 Otherwise the param would not be sent to REST API in case of value 0 and it would throw error saying interval_month is missing
+	*/
+	if rotationInterval == 0 {
+		rotationInterval = -1
+	}
+	var enable *bool
+	if rotationEnable != nil {
+		enable = &rotationEnable[0]
+	}
 	policies := []Policy{}
 	if setRotationPolicy {
 		rotationPolicy := Policy{
 			Type: policyType,
 			Rotation: &Rotation{
+				Enabled:  enable,
 				Interval: rotationInterval,
 			},
 		}
@@ -304,7 +349,7 @@ func (c *Client) SetPolicies(ctx context.Context, id string, setRotationPolicy b
 
 	policyresponse := Policies{}
 
-	req, err := c.newRequest("PUT", fmt.Sprintf("keys/%s/policies", id), &policyRequest)
+	req, err := c.newRequest("PUT", fmt.Sprintf("keys/%s/policies", idOrAlias), &policyRequest)
 	if err != nil {
 		return nil, err
 	}

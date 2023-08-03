@@ -244,8 +244,8 @@ func resourceIBMPrivateDNSGLBPoolRead(d *schema.ResourceData, meta interface{}) 
 	d.Set(pdnsGlbPoolChannel, response.NotificationChannel)
 	d.Set(pdnsGlbPoolRegion, response.HealthcheckRegion)
 	d.Set(pdnsGlbPoolSubnet, response.HealthcheckSubnets)
-	d.Set(pdnsGlbPoolCreatedOn, response.CreatedOn)
-	d.Set(pdnsGlbPoolModifiedOn, response.ModifiedOn)
+	d.Set(pdnsGlbPoolCreatedOn, response.CreatedOn.String())
+	d.Set(pdnsGlbPoolModifiedOn, response.ModifiedOn.String())
 	d.Set(pdnsGlbPoolOrigins, flattenPDNSGlbPoolOrigins(response.Origins))
 
 	return nil

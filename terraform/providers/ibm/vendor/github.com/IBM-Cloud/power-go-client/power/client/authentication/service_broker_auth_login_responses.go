@@ -51,7 +51,8 @@ func NewServiceBrokerAuthLoginOK() *ServiceBrokerAuthLoginOK {
 	return &ServiceBrokerAuthLoginOK{}
 }
 
-/* ServiceBrokerAuthLoginOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerAuthLoginOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -59,9 +60,39 @@ type ServiceBrokerAuthLoginOK struct {
 	Payload *models.AccessToken
 }
 
+// IsSuccess returns true when this service broker auth login o k response has a 2xx status code
+func (o *ServiceBrokerAuthLoginOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker auth login o k response has a 3xx status code
+func (o *ServiceBrokerAuthLoginOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth login o k response has a 4xx status code
+func (o *ServiceBrokerAuthLoginOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker auth login o k response has a 5xx status code
+func (o *ServiceBrokerAuthLoginOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth login o k response a status code equal to that given
+func (o *ServiceBrokerAuthLoginOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerAuthLoginOK) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerAuthLoginOK) String() string {
+	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerAuthLoginOK) GetPayload() *models.AccessToken {
 	return o.Payload
 }
@@ -83,7 +114,8 @@ func NewServiceBrokerAuthLoginUnauthorized() *ServiceBrokerAuthLoginUnauthorized
 	return &ServiceBrokerAuthLoginUnauthorized{}
 }
 
-/* ServiceBrokerAuthLoginUnauthorized describes a response with status code 401, with default header values.
+/*
+ServiceBrokerAuthLoginUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -91,9 +123,39 @@ type ServiceBrokerAuthLoginUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth login unauthorized response has a 2xx status code
+func (o *ServiceBrokerAuthLoginUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth login unauthorized response has a 3xx status code
+func (o *ServiceBrokerAuthLoginUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth login unauthorized response has a 4xx status code
+func (o *ServiceBrokerAuthLoginUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth login unauthorized response has a 5xx status code
+func (o *ServiceBrokerAuthLoginUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth login unauthorized response a status code equal to that given
+func (o *ServiceBrokerAuthLoginUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *ServiceBrokerAuthLoginUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *ServiceBrokerAuthLoginUnauthorized) String() string {
+	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *ServiceBrokerAuthLoginUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -115,7 +177,8 @@ func NewServiceBrokerAuthLoginInternalServerError() *ServiceBrokerAuthLoginInter
 	return &ServiceBrokerAuthLoginInternalServerError{}
 }
 
-/* ServiceBrokerAuthLoginInternalServerError describes a response with status code 500, with default header values.
+/*
+ServiceBrokerAuthLoginInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -123,9 +186,39 @@ type ServiceBrokerAuthLoginInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth login internal server error response has a 2xx status code
+func (o *ServiceBrokerAuthLoginInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth login internal server error response has a 3xx status code
+func (o *ServiceBrokerAuthLoginInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth login internal server error response has a 4xx status code
+func (o *ServiceBrokerAuthLoginInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker auth login internal server error response has a 5xx status code
+func (o *ServiceBrokerAuthLoginInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this service broker auth login internal server error response a status code equal to that given
+func (o *ServiceBrokerAuthLoginInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *ServiceBrokerAuthLoginInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *ServiceBrokerAuthLoginInternalServerError) String() string {
+	return fmt.Sprintf("[GET /auth/v1/login][%d] serviceBrokerAuthLoginInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *ServiceBrokerAuthLoginInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

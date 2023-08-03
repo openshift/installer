@@ -109,6 +109,13 @@ func DataSourceIBMIsSshKeys() *schema.Resource {
 							Computed:    true,
 							Description: "The crypto-system used by this key.",
 						},
+						isKeyAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
+						},
 					},
 				},
 			},
@@ -148,7 +155,7 @@ func dataSourceIBMIsSshKeysRead(context context.Context, d *schema.ResourceData,
 
 	d.SetId(dataSourceIBMIsSshKeysID(d))
 
-	err = d.Set(isKeys, dataSourceKeyCollectionFlattenKeys(allrecs))
+	err = d.Set(isKeys, dataSourceKeyCollectionFlattenKeys(allrecs, d, meta))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting keys %s", err))
 	}
@@ -161,15 +168,15 @@ func dataSourceIBMIsSshKeysID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceKeyCollectionFlattenKeys(result []vpcv1.Key) (keys []map[string]interface{}) {
+func dataSourceKeyCollectionFlattenKeys(result []vpcv1.Key, d *schema.ResourceData, meta interface{}) (keys []map[string]interface{}) {
 	for _, keysItem := range result {
-		keys = append(keys, dataSourceKeyCollectionKeysToMap(keysItem))
+		keys = append(keys, dataSourceKeyCollectionKeysToMap(keysItem, d, meta))
 	}
 
 	return keys
 }
 
-func dataSourceKeyCollectionKeysToMap(keysItem vpcv1.Key) (keysMap map[string]interface{}) {
+func dataSourceKeyCollectionKeysToMap(keysItem vpcv1.Key, d *schema.ResourceData, meta interface{}) (keysMap map[string]interface{}) {
 	keysMap = map[string]interface{}{}
 
 	if keysItem.CreatedAt != nil {
@@ -205,6 +212,12 @@ func dataSourceKeyCollectionKeysToMap(keysItem vpcv1.Key) (keysMap map[string]in
 	if keysItem.Type != nil {
 		keysMap[isKeyType] = keysItem.Type
 	}
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *keysItem.CRN, "", isKeyAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource SSH Key (%s) access tags: %s", d.Id(), err)
+	}
+	keysMap[isKeyAccessTags] = accesstags
 
 	return keysMap
 }

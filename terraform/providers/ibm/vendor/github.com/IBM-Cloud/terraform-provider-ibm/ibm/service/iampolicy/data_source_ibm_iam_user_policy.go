@@ -91,6 +91,11 @@ func DataSourceIBMIAMUserPolicy() *schema.Resource {
 										Computed:    true,
 										Description: "Service type of the policy definition",
 									},
+									"service_group_id": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: "Service group id of the policy definition",
+									},
 									"attributes": {
 										Type:        schema.TypeMap,
 										Computed:    true,
@@ -129,6 +134,41 @@ func DataSourceIBMIAMUserPolicy() *schema.Resource {
 							Computed:    true,
 							Description: "Description of the Policy",
 						},
+						"rule_conditions": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "Rule conditions enforced by the policy",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Key of the condition",
+									},
+									"operator": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "Operator of the condition",
+									},
+									"value": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString},
+										Description: "Value of the condition",
+									},
+								},
+							},
+						},
+						"rule_operator": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Operator that multiple rule conditions are evaluated over",
+						},
+						"pattern": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Pattern rule follows for time-based condition",
+						},
 					},
 				},
 			},
@@ -156,7 +196,7 @@ func dataSourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	listPoliciesOptions := &iampolicymanagementv1.ListPoliciesOptions{
+	listPoliciesOptions := &iampolicymanagementv1.ListV2PoliciesOptions{
 		AccountID: core.StringPtr(accountID),
 		IamID:     core.StringPtr(ibmUniqueID),
 		Type:      core.StringPtr("access"),
@@ -170,7 +210,7 @@ func dataSourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) er
 		listPoliciesOptions.SetHeaders(map[string]string{"Transaction-Id": transactionID.(string)})
 	}
 
-	policyList, resp, err := iamPolicyManagementClient.ListPolicies(listPoliciesOptions)
+	policyList, resp, err := iamPolicyManagementClient.ListV2Policies(listPoliciesOptions)
 
 	if err != nil || resp == nil {
 		return fmt.Errorf("Error listing user policies: %s, %s", err, resp)
@@ -179,19 +219,28 @@ func dataSourceIBMIAMUserPolicyRead(d *schema.ResourceData, meta interface{}) er
 	policies := policyList.Policies
 	userPolicies := make([]map[string]interface{}, 0, len(policies))
 	for _, policy := range policies {
-		roles := make([]string, len(policy.Roles))
-		for i, role := range policy.Roles {
-			roles[i] = *role.DisplayName
+		roles, err := flex.GetRoleNamesFromPolicyResponse(policy, d, meta)
+		if err != nil {
+			return err
 		}
-		resources := flex.FlattenPolicyResource(policy.Resources)
+		resources := flex.FlattenV2PolicyResource(*policy.Resource)
 		p := map[string]interface{}{
 			"id":            fmt.Sprintf("%s/%s", userEmail, *policy.ID),
 			"roles":         roles,
 			"resources":     resources,
-			"resource_tags": flex.FlattenPolicyResourceTags(policy.Resources),
+			"resource_tags": flex.FlattenV2PolicyResourceTags(*policy.Resource),
 		}
 		if policy.Description != nil {
 			p["description"] = policy.Description
+		}
+		if policy.Rule != nil {
+			p["rule_conditions"] = flex.FlattenRuleConditions(*policy.Rule.(*iampolicymanagementv1.V2PolicyRule))
+			if len(policy.Rule.(*iampolicymanagementv1.V2PolicyRule).Conditions) > 0 {
+				p["rule_operator"] = policy.Rule.(*iampolicymanagementv1.V2PolicyRule).Operator
+			}
+		}
+		if policy.Pattern != nil {
+			p["pattern"] = policy.Pattern
 		}
 		userPolicies = append(userPolicies, p)
 	}

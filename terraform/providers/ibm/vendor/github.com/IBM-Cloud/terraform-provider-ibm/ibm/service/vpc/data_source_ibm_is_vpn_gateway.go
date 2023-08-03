@@ -206,6 +206,63 @@ func DataSourceIBMISVPNGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Route mode VPN gateway.",
 			},
+			"vpc": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "VPC for the VPN Gateway",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"crn": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The CRN for this VPC.",
+						},
+						"deleted": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"more_info": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "Link to documentation about deleted resources.",
+									},
+								},
+							},
+						},
+						"href": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this VPC.",
+						},
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique identifier for this VPC.",
+						},
+						"name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The unique user-defined name for this VPC.",
+						},
+					},
+				},
+			},
+			isVPNGatewayTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "VPN Gateway tags list",
+			},
+			isVPNGatewayAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 		},
 	}
 }
@@ -312,7 +369,25 @@ func dataSourceIBMIsVPNGatewayRead(context context.Context, d *schema.ResourceDa
 	if err = d.Set("mode", vpnGateway.Mode); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting mode: %s", err))
 	}
+	if vpnGateway.VPC != nil {
+		err = d.Set("vpc", dataSourceVPNGatewayFlattenVPC(vpnGateway.VPC))
+		if err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting vpc: %s", err))
+		}
+	}
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *vpnGateway.CRN, "", isUserTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource vpc VPN Gateway (%s) tags: %s", d.Id(), err)
+	}
+	d.Set(isVPNGatewayTags, tags)
 
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vpnGateway.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource VPC VPN Gateway (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isVPNGatewayAccessTags, accesstags)
 	return nil
 }
 
@@ -444,6 +519,47 @@ func dataSourceVPNGatewaySubnetToMap(subnetItem vpcv1.SubnetReference) (subnetMa
 }
 
 func dataSourceVPNGatewaySubnetDeletedToMap(deletedItem vpcv1.SubnetReferenceDeleted) (deletedMap map[string]interface{}) {
+	deletedMap = map[string]interface{}{}
+
+	if deletedItem.MoreInfo != nil {
+		deletedMap["more_info"] = deletedItem.MoreInfo
+	}
+
+	return deletedMap
+}
+
+func dataSourceVPNGatewayFlattenVPC(result *vpcv1.VPCReference) (vpcs []map[string]interface{}) {
+	vpcs = append(vpcs, dataSourceVPNGatewayVpcToMap(*result))
+	return vpcs
+}
+
+func dataSourceVPNGatewayVpcToMap(vpcItem vpcv1.VPCReference) (vpcsMap map[string]interface{}) {
+	vpcsMap = map[string]interface{}{}
+
+	if vpcItem.CRN != nil {
+		vpcsMap["crn"] = vpcItem.CRN
+	}
+	if vpcItem.Deleted != nil {
+		deletedList := []map[string]interface{}{}
+		deletedMap := dataSourceVPNGatewayVpcDeletedToMap(*vpcItem.Deleted)
+		deletedList = append(deletedList, deletedMap)
+		vpcsMap["deleted"] = deletedList
+	}
+	if vpcItem.Href != nil {
+		vpcsMap["href"] = vpcItem.Href
+	}
+	if vpcItem.ID != nil {
+		vpcsMap["id"] = vpcItem.ID
+	}
+	if vpcItem.Name != nil {
+		vpcsMap["name"] = vpcItem.Name
+	}
+
+	return vpcsMap
+
+}
+
+func dataSourceVPNGatewayVpcDeletedToMap(deletedItem vpcv1.VPCReferenceDeleted) (deletedMap map[string]interface{}) {
 	deletedMap = map[string]interface{}{}
 
 	if deletedItem.MoreInfo != nil {

@@ -40,7 +40,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudCloudinstancesDelete deletes a power cloud instance
+PcloudCloudinstancesDelete deletes a power cloud instance
 */
 func (a *Client) PcloudCloudinstancesDelete(params *PcloudCloudinstancesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -79,7 +79,7 @@ func (a *Client) PcloudCloudinstancesDelete(params *PcloudCloudinstancesDeletePa
 }
 
 /*
-  PcloudCloudinstancesGet gets a cloud instance s current state information
+PcloudCloudinstancesGet gets a cloud instance s current state information
 */
 func (a *Client) PcloudCloudinstancesGet(params *PcloudCloudinstancesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesGetOK, error) {
 	// TODO: Validate the params before sending
@@ -118,7 +118,7 @@ func (a *Client) PcloudCloudinstancesGet(params *PcloudCloudinstancesGetParams, 
 }
 
 /*
-  PcloudCloudinstancesPut updates upgrade a cloud instance
+PcloudCloudinstancesPut updates upgrade a cloud instance
 */
 func (a *Client) PcloudCloudinstancesPut(params *PcloudCloudinstancesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesPutOK, error) {
 	// TODO: Validate the params before sending

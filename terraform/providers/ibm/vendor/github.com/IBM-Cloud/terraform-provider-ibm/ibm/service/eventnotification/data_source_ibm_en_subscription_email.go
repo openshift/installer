@@ -59,50 +59,107 @@ func DataSourceIBMEnEmailSubscription() *schema.Resource {
 							Computed:    true,
 							Description: "Whether to add the notification payload to the email.",
 						},
-						"additional_properties": {
+						"reply_to_mail": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The email address to reply to.",
+						},
+						"reply_to_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The email address user name to reply to.",
+						},
+						"from_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: "The email address username of source email address.",
+						},
+						// "invited": {
+						// 	Type:        schema.TypeList,
+						// 	Optional:    true,
+						// 	Computed:    true,
+						// 	Description: "The email id to be invited",
+						// },
+						// "subscribed": {
+						// 	Type:        schema.TypeList,
+						// 	Optional:    true,
+						// 	Computed:    true,
+						// 	Description: "The Email address which should be subscribed from smtp_ibm.",
+						// },
+						// "unsubscribed": {
+						// 	Type:        schema.TypeList,
+						// 	Optional:    true,
+						// 	Computed:    true,
+						// 	Description: "The Email address which should be unsubscribed from smtp_ibm.",
+						// },
+						"invited": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Optional:    true,
-							Description: "Additional attributes.",
+							Description: "The invited item schema",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"reply_to_mail": {
+									"email": {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Computed:    true,
 										Description: "The email address to reply to.",
 									},
-									"reply_to_name": {
+									"updated_at": {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Computed:    true,
-										Description: "The email address user name to reply to.",
+										Description: "The updated date of invitation",
 									},
-									"from_name": {
+									"expires_at": {
 										Type:        schema.TypeString,
 										Optional:    true,
 										Computed:    true,
-										Description: "The email address username of source email address.",
+										Description: "The expiry date of invitation mail",
 									},
-									"to": {
-										Type:        schema.TypeList,
+								},
+							},
+						},
+						"subscribed": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The email subscribed items schema",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"email": {
+										Type:        schema.TypeString,
 										Optional:    true,
 										Computed:    true,
-										Description: "The email id  list to whom send the mail.",
-										Elem:        &schema.Schema{Type: schema.TypeMap},
+										Description: "The email address to reply to.",
 									},
-									"invited": {
-										Type:        schema.TypeList,
+									"updated_at": {
+										Type:        schema.TypeString,
 										Optional:    true,
 										Computed:    true,
-										Description: "The email id to be invited",
-										Elem:        &schema.Schema{Type: schema.TypeMap},
+										Description: "The updated date of susbcription",
 									},
-									"unsubscribed": {
-										Type:        schema.TypeList,
+								},
+							},
+						},
+						"unsubscribed": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The unsusbscribed email items schema",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"email": {
+										Type:        schema.TypeString,
 										Optional:    true,
-										Description: "The Email address which should be unsubscribed from smtp_ibm.",
-										Elem:        &schema.Schema{Type: schema.TypeMap},
+										Computed:    true,
+										Description: "The email address to reply to.",
+									},
+									"updated_at": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The updated date of unsusbcription",
 									},
 								},
 							},
@@ -173,6 +230,22 @@ func enEmailSubscriptionFlattenAttributes(result en.SubscriptionAttributesIntf) 
 	attributes := result.(*en.SubscriptionAttributes)
 
 	finalMap := enEmailSubscriptionToMap(attributes)
+	// finalList = append(finalList, finalMap)
+	// invitedmap := make(map[string]interface{})
+	// if attributes.Invited != nil {
+	// 	invitedmap["invited"] = attributes.Invited
+	// }
+	// finalList = append(finalList, invitedmap)
+	// subscribedmap := make(map[string]interface{})
+	// if attributes.Subscribed != nil {
+	// 	subscribedmap["subscribed"] = attributes.Subscribed
+	// }
+	// finalList = append(finalList, subscribedmap)
+	// unsubscribedmap := make(map[string]interface{})
+	// if attributes.Unsubscribed != nil {
+	// 	unsubscribedmap["unsubscribed"] = attributes.Unsubscribed
+	// }
+	// finalList = append(finalList, unsubscribedmap)
 	finalList = append(finalList, finalMap)
 
 	return finalList
@@ -181,16 +254,17 @@ func enEmailSubscriptionFlattenAttributes(result en.SubscriptionAttributesIntf) 
 func enEmailSubscriptionToMap(attributeItem *en.SubscriptionAttributes) (attributeMap map[string]interface{}) {
 	attributeMap = map[string]interface{}{}
 
-	prop := []map[string]interface{}{}
-
-	b := attributeItem.GetProperties()
-	m := make(map[string]interface{})
-	if len(b) > 0 {
-		for k, v := range b {
-			m[k] = v
-		}
+	if attributeItem.AddNotificationPayload != nil {
+		attributeMap["add_notification_payload"] = attributeItem.AddNotificationPayload
 	}
-	prop = append(prop, m)
-	attributeMap["additional_properties"] = prop
+	if attributeItem.ReplyToMail != nil {
+		attributeMap["reply_to_mail"] = attributeItem.ReplyToMail
+	}
+	if attributeItem.ReplyToName != nil {
+		attributeMap["reply_to_name"] = attributeItem.ReplyToName
+	}
+	if attributeItem.FromName != nil {
+		attributeMap["from_name"] = attributeItem.FromName
+	}
 	return attributeMap
 }

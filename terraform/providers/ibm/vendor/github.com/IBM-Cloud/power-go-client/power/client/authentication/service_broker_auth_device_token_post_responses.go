@@ -65,7 +65,8 @@ func NewServiceBrokerAuthDeviceTokenPostOK() *ServiceBrokerAuthDeviceTokenPostOK
 	return &ServiceBrokerAuthDeviceTokenPostOK{}
 }
 
-/* ServiceBrokerAuthDeviceTokenPostOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerAuthDeviceTokenPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -73,9 +74,39 @@ type ServiceBrokerAuthDeviceTokenPostOK struct {
 	Payload *models.Token
 }
 
+// IsSuccess returns true when this service broker auth device token post o k response has a 2xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker auth device token post o k response has a 3xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth device token post o k response has a 4xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker auth device token post o k response has a 5xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth device token post o k response a status code equal to that given
+func (o *ServiceBrokerAuthDeviceTokenPostOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostOK) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerAuthDeviceTokenPostOK) String() string {
+	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostOK) GetPayload() *models.Token {
 	return o.Payload
 }
@@ -97,7 +128,8 @@ func NewServiceBrokerAuthDeviceTokenPostBadRequest() *ServiceBrokerAuthDeviceTok
 	return &ServiceBrokerAuthDeviceTokenPostBadRequest{}
 }
 
-/* ServiceBrokerAuthDeviceTokenPostBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceBrokerAuthDeviceTokenPostBadRequest describes a response with status code 400, with default header values.
 
 Authorization pending
 */
@@ -105,9 +137,39 @@ type ServiceBrokerAuthDeviceTokenPostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth device token post bad request response has a 2xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth device token post bad request response has a 3xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth device token post bad request response has a 4xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth device token post bad request response has a 5xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth device token post bad request response a status code equal to that given
+func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -129,7 +191,8 @@ func NewServiceBrokerAuthDeviceTokenPostForbidden() *ServiceBrokerAuthDeviceToke
 	return &ServiceBrokerAuthDeviceTokenPostForbidden{}
 }
 
-/* ServiceBrokerAuthDeviceTokenPostForbidden describes a response with status code 403, with default header values.
+/*
+ServiceBrokerAuthDeviceTokenPostForbidden describes a response with status code 403, with default header values.
 
 User refused grant
 */
@@ -137,9 +200,39 @@ type ServiceBrokerAuthDeviceTokenPostForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth device token post forbidden response has a 2xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth device token post forbidden response has a 3xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth device token post forbidden response has a 4xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth device token post forbidden response has a 5xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth device token post forbidden response a status code equal to that given
+func (o *ServiceBrokerAuthDeviceTokenPostForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostForbidden) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostForbidden  %+v", 403, o.Payload)
 }
+
+func (o *ServiceBrokerAuthDeviceTokenPostForbidden) String() string {
+	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostForbidden  %+v", 403, o.Payload)
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -161,7 +254,8 @@ func NewServiceBrokerAuthDeviceTokenPostTooManyRequests() *ServiceBrokerAuthDevi
 	return &ServiceBrokerAuthDeviceTokenPostTooManyRequests{}
 }
 
-/* ServiceBrokerAuthDeviceTokenPostTooManyRequests describes a response with status code 429, with default header values.
+/*
+ServiceBrokerAuthDeviceTokenPostTooManyRequests describes a response with status code 429, with default header values.
 
 Polling too frequently
 */
@@ -169,9 +263,39 @@ type ServiceBrokerAuthDeviceTokenPostTooManyRequests struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth device token post too many requests response has a 2xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth device token post too many requests response has a 3xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth device token post too many requests response has a 4xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker auth device token post too many requests response has a 5xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth device token post too many requests response a status code equal to that given
+func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) IsCode(code int) bool {
+	return code == 429
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostTooManyRequests  %+v", 429, o.Payload)
 }
+
+func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) String() string {
+	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostTooManyRequests  %+v", 429, o.Payload)
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostTooManyRequests) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -193,7 +317,8 @@ func NewServiceBrokerAuthDeviceTokenPostInternalServerError() *ServiceBrokerAuth
 	return &ServiceBrokerAuthDeviceTokenPostInternalServerError{}
 }
 
-/* ServiceBrokerAuthDeviceTokenPostInternalServerError describes a response with status code 500, with default header values.
+/*
+ServiceBrokerAuthDeviceTokenPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -201,9 +326,39 @@ type ServiceBrokerAuthDeviceTokenPostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth device token post internal server error response has a 2xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth device token post internal server error response has a 3xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth device token post internal server error response has a 4xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker auth device token post internal server error response has a 5xx status code
+func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this service broker auth device token post internal server error response a status code equal to that given
+func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /auth/v1/device/token][%d] serviceBrokerAuthDeviceTokenPostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -220,7 +375,8 @@ func (o *ServiceBrokerAuthDeviceTokenPostInternalServerError) readResponse(respo
 	return nil
 }
 
-/*ServiceBrokerAuthDeviceTokenPostBody service broker auth device token post body
+/*
+ServiceBrokerAuthDeviceTokenPostBody service broker auth device token post body
 swagger:model ServiceBrokerAuthDeviceTokenPostBody
 */
 type ServiceBrokerAuthDeviceTokenPostBody struct {

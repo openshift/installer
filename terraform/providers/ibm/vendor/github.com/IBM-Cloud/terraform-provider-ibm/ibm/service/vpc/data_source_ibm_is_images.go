@@ -5,6 +5,7 @@ package vpc
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -16,6 +17,7 @@ import (
 const (
 	isImages                = "images"
 	isImagesResourceGroupID = "resource_group"
+	isImageCatalogManaged   = "catalog_managed"
 )
 
 func DataSourceIBMISImages() *schema.Resource {
@@ -26,6 +28,11 @@ func DataSourceIBMISImages() *schema.Resource {
 			isImagesResourceGroupID: {
 				Type:        schema.TypeString,
 				Description: "The id of the resource group",
+				Optional:    true,
+			},
+			isImageCatalogManaged: {
+				Type:        schema.TypeBool,
+				Description: "Lists images managed as part of a catalog offering. If an image is managed, accounts in the same enterprise with access to that catalog can specify the image's catalog offering version CRN to provision virtual server instances using the image",
 				Optional:    true,
 			},
 			isImageName: {
@@ -107,6 +114,54 @@ func DataSourceIBMISImages() *schema.Resource {
 							Computed:    true,
 							Description: "Source volume id of the image",
 						},
+						isImageCatalogOffering: {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									isImageCatalogOfferingManaged: {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "Indicates whether this image is managed as part of a catalog offering. A managed image can be provisioned using its catalog offering CRN or catalog offering version CRN.",
+									},
+									isImageCatalogOfferingVersion: {
+										Type:        schema.TypeList,
+										Computed:    true,
+										Description: "The catalog offering version associated with this image.",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												isImageCatalogOfferingDeleted: {
+													Type:        schema.TypeList,
+													Computed:    true,
+													Description: "If present, this property indicates the referenced resource has been deleted and providessome supplementary information.",
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															isImageCatalogOfferingMoreInfo: {
+																Type:        schema.TypeString,
+																Computed:    true,
+																Description: "Link to documentation about deleted resources.",
+															},
+														},
+													},
+												},
+												isImageCatalogOfferingCrn: {
+													Type:        schema.TypeString,
+													Computed:    true,
+													Description: "The CRN for this version of the IBM Cloud catalog offering.",
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						isImageAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
+						},
 					},
 				},
 			},
@@ -165,6 +220,10 @@ func imageList(d *schema.ResourceData, meta interface{}) error {
 	if v, ok := d.GetOk(isImageStatus); ok {
 		status = v.(string)
 	}
+	var catalogManaged bool
+	if v, ok := d.GetOk(isImageCatalogManaged); ok {
+		catalogManaged = v.(bool)
+	}
 
 	listImagesOptions := &vpcv1.ListImagesOptions{}
 	if resourceGroupID != "" {
@@ -202,6 +261,16 @@ func imageList(d *schema.ResourceData, meta interface{}) error {
 		allrecs = allrecsTemp
 	}
 
+	if catalogManaged {
+		allrecsTemp := []vpcv1.Image{}
+		for _, image := range allrecs {
+			if image.CatalogOffering != nil && catalogManaged == *image.CatalogOffering.Managed {
+				allrecsTemp = append(allrecsTemp, image)
+			}
+		}
+		allrecs = allrecsTemp
+	}
+
 	imagesInfo := make([]map[string]interface{}, 0)
 	for _, image := range allrecs {
 
@@ -226,9 +295,21 @@ func imageList(d *schema.ResourceData, meta interface{}) error {
 		if image.SourceVolume != nil {
 			l["source_volume"] = *image.SourceVolume.ID
 		}
+		if image.CatalogOffering != nil {
+			catalogOfferingList := []map[string]interface{}{}
+			catalogOfferingMap := dataSourceImageCollectionCatalogOfferingToMap(*image.CatalogOffering)
+			catalogOfferingList = append(catalogOfferingList, catalogOfferingMap)
+			l[isImageCatalogOffering] = catalogOfferingList
+		}
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *image.CRN, "", isImageAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of resource image (%s) access tags: %s", d.Id(), err)
+		}
+		l[isImageAccessTags] = accesstags
 		imagesInfo = append(imagesInfo, l)
 	}
-	d.SetId(dataSourceIBMISSubnetsID(d))
+	d.SetId(dataSourceIBMISImagesID(d))
 	d.Set(isImages, imagesInfo)
 	return nil
 }

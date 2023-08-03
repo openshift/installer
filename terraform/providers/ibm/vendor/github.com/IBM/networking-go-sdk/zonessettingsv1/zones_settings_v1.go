@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2020.
+ * (C) Copyright IBM Corp. 2022.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.20.0-debb9f29-20201203-202043
+ * IBM OpenAPI SDK Code Generator Version: 99-SNAPSHOT-df265cd0-20221201-141156
  */
 
 // Package zonessettingsv1 : Operations and models for the ZonesSettingsV1 service
@@ -36,7 +36,7 @@ import (
 
 // ZonesSettingsV1 : CIS Zones Settings
 //
-// Version: 1.0.1
+// API Version: 1.0.1
 type ZonesSettingsV1 struct {
 	Service *core.BaseService
 
@@ -225,11 +225,13 @@ func (zonesSettings *ZonesSettingsV1) GetZoneDnssecWithContext(ctx context.Conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesDnssecResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesDnssecResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -290,11 +292,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneDnssecWithContext(ctx context.Co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesDnssecResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesDnssecResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -345,11 +349,13 @@ func (zonesSettings *ZonesSettingsV1) GetZoneCnameFlatteningWithContext(ctx cont
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesCnameFlatteningResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesCnameFlatteningResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -410,11 +416,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateZoneCnameFlatteningWithContext(ctx c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesCnameFlatteningResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalZonesCnameFlatteningResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -465,11 +473,13 @@ func (zonesSettings *ZonesSettingsV1) GetOpportunisticEncryptionWithContext(ctx 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticEncryptionResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticEncryptionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -530,11 +540,137 @@ func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticEncryptionWithContext(c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticEncryptionResp)
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticEncryptionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetOpportunisticOnion : Get opportunistic onion setting
+// Get opportunistic onion setting for a zone.
+func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnion(getOpportunisticOnionOptions *GetOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.GetOpportunisticOnionWithContext(context.Background(), getOpportunisticOnionOptions)
+}
+
+// GetOpportunisticOnionWithContext is an alternate form of the GetOpportunisticOnion method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) GetOpportunisticOnionWithContext(ctx context.Context, getOpportunisticOnionOptions *GetOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(getOpportunisticOnionOptions, "getOpportunisticOnionOptions")
 	if err != nil {
 		return
 	}
-	response.Result = result
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/opportunistic_onion`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getOpportunisticOnionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "GetOpportunisticOnion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticOnionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateOpportunisticOnion : Update opportunistic onion setting
+// Update opportunistic onion setting for a zone.
+func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnion(updateOpportunisticOnionOptions *UpdateOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.UpdateOpportunisticOnionWithContext(context.Background(), updateOpportunisticOnionOptions)
+}
+
+// UpdateOpportunisticOnionWithContext is an alternate form of the UpdateOpportunisticOnion method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) UpdateOpportunisticOnionWithContext(ctx context.Context, updateOpportunisticOnionOptions *UpdateOpportunisticOnionOptions) (result *OpportunisticOnionResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(updateOpportunisticOnionOptions, "updateOpportunisticOnionOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/opportunistic_onion`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateOpportunisticOnionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "UpdateOpportunisticOnion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateOpportunisticOnionOptions.Value != nil {
+		body["value"] = updateOpportunisticOnionOptions.Value
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOpportunisticOnionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -585,11 +721,13 @@ func (zonesSettings *ZonesSettingsV1) GetChallengeTTLWithContext(ctx context.Con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChallengeTtlResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChallengeTtlResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -650,11 +788,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateChallengeTTLWithContext(ctx context.
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChallengeTtlResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalChallengeTtlResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -705,11 +845,13 @@ func (zonesSettings *ZonesSettingsV1) GetAutomaticHttpsRewritesWithContext(ctx c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutomaticHttpsRewritesResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutomaticHttpsRewritesResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -770,11 +912,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateAutomaticHttpsRewritesWithContext(ct
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutomaticHttpsRewritesResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAutomaticHttpsRewritesResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -825,11 +969,13 @@ func (zonesSettings *ZonesSettingsV1) GetTrueClientIpWithContext(ctx context.Con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrueClientIpResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrueClientIpResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -890,11 +1036,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateTrueClientIpWithContext(ctx context.
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrueClientIpResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrueClientIpResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -945,11 +1093,13 @@ func (zonesSettings *ZonesSettingsV1) GetAlwaysUseHttpsWithContext(ctx context.C
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAlwaysUseHttpsResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAlwaysUseHttpsResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1010,11 +1160,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateAlwaysUseHttpsWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAlwaysUseHttpsResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAlwaysUseHttpsResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1065,11 +1217,13 @@ func (zonesSettings *ZonesSettingsV1) GetImageSizeOptimizationWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageSizeOptimizationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageSizeOptimizationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1130,11 +1284,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageSizeOptimizationWithContext(ctx
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageSizeOptimizationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageSizeOptimizationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1185,11 +1341,13 @@ func (zonesSettings *ZonesSettingsV1) GetScriptLoadOptimizationWithContext(ctx c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScriptLoadOptimizationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScriptLoadOptimizationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1250,11 +1408,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateScriptLoadOptimizationWithContext(ct
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScriptLoadOptimizationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalScriptLoadOptimizationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1305,11 +1465,13 @@ func (zonesSettings *ZonesSettingsV1) GetImageLoadOptimizationWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageLoadOptimizationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageLoadOptimizationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1370,11 +1532,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateImageLoadOptimizationWithContext(ctx
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageLoadOptimizationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalImageLoadOptimizationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1425,11 +1589,13 @@ func (zonesSettings *ZonesSettingsV1) GetMinifyWithContext(ctx context.Context, 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinifyResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinifyResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1490,11 +1656,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinifyWithContext(ctx context.Contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinifyResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinifyResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1545,11 +1713,13 @@ func (zonesSettings *ZonesSettingsV1) GetMinTlsVersionWithContext(ctx context.Co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinTlsVersionResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinTlsVersionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1610,11 +1780,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateMinTlsVersionWithContext(ctx context
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinTlsVersionResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMinTlsVersionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1665,11 +1837,13 @@ func (zonesSettings *ZonesSettingsV1) GetIpGeolocationWithContext(ctx context.Co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpGeolocationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpGeolocationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1730,11 +1904,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpGeolocationWithContext(ctx context
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpGeolocationResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpGeolocationResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1785,11 +1961,13 @@ func (zonesSettings *ZonesSettingsV1) GetServerSideExcludeWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerSideExcludeResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerSideExcludeResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1850,11 +2028,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateServerSideExcludeWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerSideExcludeResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServerSideExcludeResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1905,11 +2085,13 @@ func (zonesSettings *ZonesSettingsV1) GetSecurityHeaderWithContext(ctx context.C
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurityHeaderResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurityHeaderResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -1970,11 +2152,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateSecurityHeaderWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurityHeaderResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalSecurityHeaderResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2025,11 +2209,13 @@ func (zonesSettings *ZonesSettingsV1) GetMobileRedirectWithContext(ctx context.C
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMobileRedirectResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMobileRedirectResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2090,11 +2276,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateMobileRedirectWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMobileRedirectResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMobileRedirectResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2145,11 +2333,13 @@ func (zonesSettings *ZonesSettingsV1) GetPrefetchPreloadWithContext(ctx context.
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefetchPreloadResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefetchPreloadResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2210,11 +2400,13 @@ func (zonesSettings *ZonesSettingsV1) UpdatePrefetchPreloadWithContext(ctx conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefetchPreloadResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPrefetchPreloadResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2265,11 +2457,13 @@ func (zonesSettings *ZonesSettingsV1) GetHttp2WithContext(ctx context.Context, g
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp2Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp2Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2330,11 +2524,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp2WithContext(ctx context.Context
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp2Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp2Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2385,11 +2581,13 @@ func (zonesSettings *ZonesSettingsV1) GetHttp3WithContext(ctx context.Context, g
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2450,11 +2648,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateHttp3WithContext(ctx context.Context
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHttp3Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2505,11 +2705,13 @@ func (zonesSettings *ZonesSettingsV1) GetIpv6WithContext(ctx context.Context, ge
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpv6Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpv6Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2570,11 +2772,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateIpv6WithContext(ctx context.Context,
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpv6Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalIpv6Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2625,11 +2829,13 @@ func (zonesSettings *ZonesSettingsV1) GetWebSocketsWithContext(ctx context.Conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWebsocketsResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWebsocketsResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2690,11 +2896,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebSocketsWithContext(ctx context.Co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWebsocketsResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWebsocketsResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2745,11 +2953,13 @@ func (zonesSettings *ZonesSettingsV1) GetPseudoIpv4WithContext(ctx context.Conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPseudoIpv4Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPseudoIpv4Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2810,11 +3020,13 @@ func (zonesSettings *ZonesSettingsV1) UpdatePseudoIpv4WithContext(ctx context.Co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPseudoIpv4Resp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalPseudoIpv4Resp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2865,11 +3077,13 @@ func (zonesSettings *ZonesSettingsV1) GetResponseBufferingWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResponseBufferingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResponseBufferingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2930,11 +3144,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateResponseBufferingWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResponseBufferingResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResponseBufferingResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -2985,11 +3201,13 @@ func (zonesSettings *ZonesSettingsV1) GetHotlinkProtectionWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHotlinkProtectionResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHotlinkProtectionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3050,11 +3268,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateHotlinkProtectionWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHotlinkProtectionResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalHotlinkProtectionResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3105,11 +3325,13 @@ func (zonesSettings *ZonesSettingsV1) GetMaxUploadWithContext(ctx context.Contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMaxUploadResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMaxUploadResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3170,11 +3392,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateMaxUploadWithContext(ctx context.Con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMaxUploadResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalMaxUploadResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3225,11 +3449,13 @@ func (zonesSettings *ZonesSettingsV1) GetTlsClientAuthWithContext(ctx context.Co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTlsClientAuthResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTlsClientAuthResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3290,11 +3516,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateTlsClientAuthWithContext(ctx context
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTlsClientAuthResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTlsClientAuthResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3345,11 +3573,13 @@ func (zonesSettings *ZonesSettingsV1) GetBrotliWithContext(ctx context.Context, 
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrotliResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrotliResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3410,11 +3640,137 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrotliWithContext(ctx context.Contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrotliResp)
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrotliResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetProxyReadTimeout : Get proxy read timeout setting
+// Get proxy read timeout setting for a zone.
+func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeout(getProxyReadTimeoutOptions *GetProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.GetProxyReadTimeoutWithContext(context.Background(), getProxyReadTimeoutOptions)
+}
+
+// GetProxyReadTimeoutWithContext is an alternate form of the GetProxyReadTimeout method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) GetProxyReadTimeoutWithContext(ctx context.Context, getProxyReadTimeoutOptions *GetProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(getProxyReadTimeoutOptions, "getProxyReadTimeoutOptions")
 	if err != nil {
 		return
 	}
-	response.Result = result
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/proxy_read_timeout`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getProxyReadTimeoutOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "GetProxyReadTimeout")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProxyReadTimeoutResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateProxyReadTimeout : Update proxy read timeout setting
+// Update proxy read timeout setting for a zone.
+func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeout(updateProxyReadTimeoutOptions *UpdateProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
+	return zonesSettings.UpdateProxyReadTimeoutWithContext(context.Background(), updateProxyReadTimeoutOptions)
+}
+
+// UpdateProxyReadTimeoutWithContext is an alternate form of the UpdateProxyReadTimeout method which supports a Context parameter
+func (zonesSettings *ZonesSettingsV1) UpdateProxyReadTimeoutWithContext(ctx context.Context, updateProxyReadTimeoutOptions *UpdateProxyReadTimeoutOptions) (result *ProxyReadTimeoutResp, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(updateProxyReadTimeoutOptions, "updateProxyReadTimeoutOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"crn":             *zonesSettings.Crn,
+		"zone_identifier": *zonesSettings.ZoneIdentifier,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = zonesSettings.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(zonesSettings.Service.Options.URL, `/v1/{crn}/zones/{zone_identifier}/settings/proxy_read_timeout`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range updateProxyReadTimeoutOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("zones_settings", "V1", "UpdateProxyReadTimeout")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if updateProxyReadTimeoutOptions.Value != nil {
+		body["value"] = updateProxyReadTimeoutOptions.Value
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = zonesSettings.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalProxyReadTimeoutResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
 
 	return
 }
@@ -3465,11 +3821,13 @@ func (zonesSettings *ZonesSettingsV1) GetBrowserCheckWithContext(ctx context.Con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrowserCheckResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrowserCheckResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3530,11 +3888,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateBrowserCheckWithContext(ctx context.
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrowserCheckResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalBrowserCheckResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3585,11 +3945,13 @@ func (zonesSettings *ZonesSettingsV1) GetEnableErrorPagesOnWithContext(ctx conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginErrorPagePassThruResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginErrorPagePassThruResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3650,11 +4012,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateEnableErrorPagesOnWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginErrorPagePassThruResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalOriginErrorPagePassThruResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3705,11 +4069,13 @@ func (zonesSettings *ZonesSettingsV1) GetWebApplicationFirewallWithContext(ctx c
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWafResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWafResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3770,11 +4136,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateWebApplicationFirewallWithContext(ct
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWafResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalWafResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3825,11 +4193,13 @@ func (zonesSettings *ZonesSettingsV1) GetCiphersWithContext(ctx context.Context,
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCiphersResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCiphersResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -3890,11 +4260,13 @@ func (zonesSettings *ZonesSettingsV1) UpdateCiphersWithContext(ctx context.Conte
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCiphersResp)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalCiphersResp)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -4289,7 +4661,7 @@ func (options *GetHttp2Options) SetHeaders(param map[string]string) *GetHttp2Opt
 	return options
 }
 
-/// GetHttp3Options : The GetHttp3 options.
+// GetHttp3Options : The GetHttp3 options.
 type GetHttp3Options struct {
 
 	// Allows users to set headers on API requests
@@ -4469,6 +4841,24 @@ func (options *GetOpportunisticEncryptionOptions) SetHeaders(param map[string]st
 	return options
 }
 
+// GetOpportunisticOnionOptions : The GetOpportunisticOnion options.
+type GetOpportunisticOnionOptions struct {
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetOpportunisticOnionOptions : Instantiate GetOpportunisticOnionOptions
+func (*ZonesSettingsV1) NewGetOpportunisticOnionOptions() *GetOpportunisticOnionOptions {
+	return &GetOpportunisticOnionOptions{}
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetOpportunisticOnionOptions) SetHeaders(param map[string]string) *GetOpportunisticOnionOptions {
+	options.Headers = param
+	return options
+}
+
 // GetPrefetchPreloadOptions : The GetPrefetchPreload options.
 type GetPrefetchPreloadOptions struct {
 
@@ -4483,6 +4873,24 @@ func (*ZonesSettingsV1) NewGetPrefetchPreloadOptions() *GetPrefetchPreloadOption
 
 // SetHeaders : Allow user to set Headers
 func (options *GetPrefetchPreloadOptions) SetHeaders(param map[string]string) *GetPrefetchPreloadOptions {
+	options.Headers = param
+	return options
+}
+
+// GetProxyReadTimeoutOptions : The GetProxyReadTimeout options.
+type GetProxyReadTimeoutOptions struct {
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewGetProxyReadTimeoutOptions : Instantiate GetProxyReadTimeoutOptions
+func (*ZonesSettingsV1) NewGetProxyReadTimeoutOptions() *GetProxyReadTimeoutOptions {
+	return &GetProxyReadTimeoutOptions{}
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetProxyReadTimeoutOptions) SetHeaders(param map[string]string) *GetProxyReadTimeoutOptions {
 	options.Headers = param
 	return options
 }
@@ -5130,13 +5538,13 @@ const (
 )
 
 // NewMinifySettingValue : Instantiate MinifySettingValue (Generic Model Constructor)
-func (*ZonesSettingsV1) NewMinifySettingValue(css string, html string, js string) (model *MinifySettingValue, err error) {
-	model = &MinifySettingValue{
+func (*ZonesSettingsV1) NewMinifySettingValue(css string, html string, js string) (_model *MinifySettingValue, err error) {
+	_model = &MinifySettingValue{
 		Css:  core.StringPtr(css),
 		HTML: core.StringPtr(html),
 		Js:   core.StringPtr(js),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -5180,13 +5588,13 @@ const (
 )
 
 // NewMobileRedirecSettingValue : Instantiate MobileRedirecSettingValue (Generic Model Constructor)
-func (*ZonesSettingsV1) NewMobileRedirecSettingValue(status string, mobileSubdomain string, stripURI bool) (model *MobileRedirecSettingValue, err error) {
-	model = &MobileRedirecSettingValue{
+func (*ZonesSettingsV1) NewMobileRedirecSettingValue(status string, mobileSubdomain string, stripURI bool) (_model *MobileRedirecSettingValue, err error) {
+	_model = &MobileRedirecSettingValue{
 		Status:          core.StringPtr(status),
 		MobileSubdomain: core.StringPtr(mobileSubdomain),
 		StripURI:        core.BoolPtr(stripURI),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -5317,6 +5725,44 @@ func UnmarshalOpportunisticEncryptionRespResult(m map[string]json.RawMessage, re
 	return
 }
 
+// OpportunisticOnionRespResult : Container for response information.
+type OpportunisticOnionRespResult struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Value.
+	Value *string `json:"value" validate:"required"`
+
+	// Editable.
+	Editable *bool `json:"editable" validate:"required"`
+
+	// Modified date.
+	ModifiedOn *strfmt.DateTime `json:"modified_on" validate:"required"`
+}
+
+// UnmarshalOpportunisticOnionRespResult unmarshals an instance of OpportunisticOnionRespResult from the specified map of raw messages.
+func UnmarshalOpportunisticOnionRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OpportunisticOnionRespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // OriginErrorPagePassThruRespResult : Container for response information.
 type OriginErrorPagePassThruRespResult struct {
 	// ID.
@@ -5373,6 +5819,44 @@ type PrefetchPreloadRespResult struct {
 // UnmarshalPrefetchPreloadRespResult unmarshals an instance of PrefetchPreloadRespResult from the specified map of raw messages.
 func UnmarshalPrefetchPreloadRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PrefetchPreloadRespResult)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "editable", &obj.Editable)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_on", &obj.ModifiedOn)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProxyReadTimeoutRespResult : Container for response information.
+type ProxyReadTimeoutRespResult struct {
+	// ID.
+	ID *string `json:"id" validate:"required"`
+
+	// Value.
+	Value *float64 `json:"value" validate:"required"`
+
+	// Editable.
+	Editable *bool `json:"editable" validate:"required"`
+
+	// Modified date.
+	ModifiedOn *strfmt.DateTime `json:"modified_on" validate:"required"`
+}
+
+// UnmarshalProxyReadTimeoutRespResult unmarshals an instance of ProxyReadTimeoutRespResult from the specified map of raw messages.
+func UnmarshalProxyReadTimeoutRespResult(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProxyReadTimeoutRespResult)
 	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
 	if err != nil {
 		return
@@ -5573,6 +6057,9 @@ type SecurityHeaderRespResultValueStrictTransportSecurity struct {
 	// Include all subdomains.
 	IncludeSubdomains *bool `json:"include_subdomains" validate:"required"`
 
+	// Whether or not to permit browsers to preload security_header config.
+	Preload *bool `json:"preload" validate:"required"`
+
 	// Whether or not to include 'X-Content-Type-Options:nosniff' header.
 	Nosniff *bool `json:"nosniff" validate:"required"`
 }
@@ -5592,6 +6079,10 @@ func UnmarshalSecurityHeaderRespResultValueStrictTransportSecurity(m map[string]
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "preload", &obj.Preload)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "nosniff", &obj.Nosniff)
 	if err != nil {
 		return
@@ -5607,11 +6098,11 @@ type SecurityHeaderSettingValue struct {
 }
 
 // NewSecurityHeaderSettingValue : Instantiate SecurityHeaderSettingValue (Generic Model Constructor)
-func (*ZonesSettingsV1) NewSecurityHeaderSettingValue(strictTransportSecurity *SecurityHeaderSettingValueStrictTransportSecurity) (model *SecurityHeaderSettingValue, err error) {
-	model = &SecurityHeaderSettingValue{
+func (*ZonesSettingsV1) NewSecurityHeaderSettingValue(strictTransportSecurity *SecurityHeaderSettingValueStrictTransportSecurity) (_model *SecurityHeaderSettingValue, err error) {
+	_model = &SecurityHeaderSettingValue{
 		StrictTransportSecurity: strictTransportSecurity,
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -5637,19 +6128,23 @@ type SecurityHeaderSettingValueStrictTransportSecurity struct {
 	// Include all subdomains.
 	IncludeSubdomains *bool `json:"include_subdomains" validate:"required"`
 
+	// Whether or not to permit browsers to preload security_header config.
+	Preload *bool `json:"preload" validate:"required"`
+
 	// Whether or not to include 'X-Content-Type-Options:nosniff' header.
 	Nosniff *bool `json:"nosniff" validate:"required"`
 }
 
 // NewSecurityHeaderSettingValueStrictTransportSecurity : Instantiate SecurityHeaderSettingValueStrictTransportSecurity (Generic Model Constructor)
-func (*ZonesSettingsV1) NewSecurityHeaderSettingValueStrictTransportSecurity(enabled bool, maxAge int64, includeSubdomains bool, nosniff bool) (model *SecurityHeaderSettingValueStrictTransportSecurity, err error) {
-	model = &SecurityHeaderSettingValueStrictTransportSecurity{
+func (*ZonesSettingsV1) NewSecurityHeaderSettingValueStrictTransportSecurity(enabled bool, maxAge int64, includeSubdomains bool, preload bool, nosniff bool) (_model *SecurityHeaderSettingValueStrictTransportSecurity, err error) {
+	_model = &SecurityHeaderSettingValueStrictTransportSecurity{
 		Enabled:           core.BoolPtr(enabled),
 		MaxAge:            core.Int64Ptr(maxAge),
 		IncludeSubdomains: core.BoolPtr(includeSubdomains),
+		Preload:           core.BoolPtr(preload),
 		Nosniff:           core.BoolPtr(nosniff),
 	}
-	err = core.ValidateStruct(model, "required parameters")
+	err = core.ValidateStruct(_model, "required parameters")
 	return
 }
 
@@ -5665,6 +6160,10 @@ func UnmarshalSecurityHeaderSettingValueStrictTransportSecurity(m map[string]jso
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "include_subdomains", &obj.IncludeSubdomains)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "preload", &obj.Preload)
 	if err != nil {
 		return
 	}
@@ -5812,9 +6311,9 @@ func (*ZonesSettingsV1) NewUpdateAlwaysUseHttpsOptions() *UpdateAlwaysUseHttpsOp
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateAlwaysUseHttpsOptions) SetValue(value string) *UpdateAlwaysUseHttpsOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateAlwaysUseHttpsOptions) SetValue(value string) *UpdateAlwaysUseHttpsOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -5845,9 +6344,9 @@ func (*ZonesSettingsV1) NewUpdateAutomaticHttpsRewritesOptions() *UpdateAutomati
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateAutomaticHttpsRewritesOptions) SetValue(value string) *UpdateAutomaticHttpsRewritesOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateAutomaticHttpsRewritesOptions) SetValue(value string) *UpdateAutomaticHttpsRewritesOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -5859,7 +6358,7 @@ func (options *UpdateAutomaticHttpsRewritesOptions) SetHeaders(param map[string]
 // UpdateBrotliOptions : The UpdateBrotli options.
 type UpdateBrotliOptions struct {
 	// Value.
-	Value *string
+	Value *string `json:"value,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -5878,9 +6377,9 @@ func (*ZonesSettingsV1) NewUpdateBrotliOptions() *UpdateBrotliOptions {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateBrotliOptions) SetValue(value string) *UpdateBrotliOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateBrotliOptions) SetValue(value string) *UpdateBrotliOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -5911,9 +6410,9 @@ func (*ZonesSettingsV1) NewUpdateBrowserCheckOptions() *UpdateBrowserCheckOption
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateBrowserCheckOptions) SetValue(value string) *UpdateBrowserCheckOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateBrowserCheckOptions) SetValue(value string) *UpdateBrowserCheckOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -5937,9 +6436,9 @@ func (*ZonesSettingsV1) NewUpdateChallengeTtlOptions() *UpdateChallengeTtlOption
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateChallengeTtlOptions) SetValue(value int64) *UpdateChallengeTtlOptions {
-	options.Value = core.Int64Ptr(value)
-	return options
+func (_options *UpdateChallengeTtlOptions) SetValue(value int64) *UpdateChallengeTtlOptions {
+	_options.Value = core.Int64Ptr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -5987,9 +6486,9 @@ func (*ZonesSettingsV1) NewUpdateCiphersOptions() *UpdateCiphersOptions {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateCiphersOptions) SetValue(value []string) *UpdateCiphersOptions {
-	options.Value = value
-	return options
+func (_options *UpdateCiphersOptions) SetValue(value []string) *UpdateCiphersOptions {
+	_options.Value = value
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6020,9 +6519,9 @@ func (*ZonesSettingsV1) NewUpdateEnableErrorPagesOnOptions() *UpdateEnableErrorP
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateEnableErrorPagesOnOptions) SetValue(value string) *UpdateEnableErrorPagesOnOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateEnableErrorPagesOnOptions) SetValue(value string) *UpdateEnableErrorPagesOnOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6053,9 +6552,9 @@ func (*ZonesSettingsV1) NewUpdateHotlinkProtectionOptions() *UpdateHotlinkProtec
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateHotlinkProtectionOptions) SetValue(value string) *UpdateHotlinkProtectionOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateHotlinkProtectionOptions) SetValue(value string) *UpdateHotlinkProtectionOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6086,9 +6585,9 @@ func (*ZonesSettingsV1) NewUpdateHttp2Options() *UpdateHttp2Options {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateHttp2Options) SetValue(value string) *UpdateHttp2Options {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateHttp2Options) SetValue(value string) *UpdateHttp2Options {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6100,7 +6599,7 @@ func (options *UpdateHttp2Options) SetHeaders(param map[string]string) *UpdateHt
 // UpdateHttp3Options : The UpdateHttp3 options.
 type UpdateHttp3Options struct {
 	// Value.
-	Value *string
+	Value *string `json:"value,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -6119,9 +6618,9 @@ func (*ZonesSettingsV1) NewUpdateHttp3Options() *UpdateHttp3Options {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateHttp3Options) SetValue(value string) *UpdateHttp3Options {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateHttp3Options) SetValue(value string) *UpdateHttp3Options {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6152,9 +6651,9 @@ func (*ZonesSettingsV1) NewUpdateImageLoadOptimizationOptions() *UpdateImageLoad
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateImageLoadOptimizationOptions) SetValue(value string) *UpdateImageLoadOptimizationOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateImageLoadOptimizationOptions) SetValue(value string) *UpdateImageLoadOptimizationOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6190,9 +6689,9 @@ func (*ZonesSettingsV1) NewUpdateImageSizeOptimizationOptions() *UpdateImageSize
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateImageSizeOptimizationOptions) SetValue(value string) *UpdateImageSizeOptimizationOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateImageSizeOptimizationOptions) SetValue(value string) *UpdateImageSizeOptimizationOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6223,9 +6722,9 @@ func (*ZonesSettingsV1) NewUpdateIpGeolocationOptions() *UpdateIpGeolocationOpti
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateIpGeolocationOptions) SetValue(value string) *UpdateIpGeolocationOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateIpGeolocationOptions) SetValue(value string) *UpdateIpGeolocationOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6256,9 +6755,9 @@ func (*ZonesSettingsV1) NewUpdateIpv6Options() *UpdateIpv6Options {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateIpv6Options) SetValue(value string) *UpdateIpv6Options {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateIpv6Options) SetValue(value string) *UpdateIpv6Options {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6283,9 +6782,9 @@ func (*ZonesSettingsV1) NewUpdateMaxUploadOptions() *UpdateMaxUploadOptions {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateMaxUploadOptions) SetValue(value int64) *UpdateMaxUploadOptions {
-	options.Value = core.Int64Ptr(value)
-	return options
+func (_options *UpdateMaxUploadOptions) SetValue(value int64) *UpdateMaxUploadOptions {
+	_options.Value = core.Int64Ptr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6309,9 +6808,9 @@ func (*ZonesSettingsV1) NewUpdateMinTlsVersionOptions() *UpdateMinTlsVersionOpti
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateMinTlsVersionOptions) SetValue(value string) *UpdateMinTlsVersionOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateMinTlsVersionOptions) SetValue(value string) *UpdateMinTlsVersionOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6335,9 +6834,9 @@ func (*ZonesSettingsV1) NewUpdateMinifyOptions() *UpdateMinifyOptions {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateMinifyOptions) SetValue(value *MinifySettingValue) *UpdateMinifyOptions {
-	options.Value = value
-	return options
+func (_options *UpdateMinifyOptions) SetValue(value *MinifySettingValue) *UpdateMinifyOptions {
+	_options.Value = value
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6361,9 +6860,9 @@ func (*ZonesSettingsV1) NewUpdateMobileRedirectOptions() *UpdateMobileRedirectOp
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateMobileRedirectOptions) SetValue(value *MobileRedirecSettingValue) *UpdateMobileRedirectOptions {
-	options.Value = value
-	return options
+func (_options *UpdateMobileRedirectOptions) SetValue(value *MobileRedirecSettingValue) *UpdateMobileRedirectOptions {
+	_options.Value = value
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6394,13 +6893,46 @@ func (*ZonesSettingsV1) NewUpdateOpportunisticEncryptionOptions() *UpdateOpportu
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateOpportunisticEncryptionOptions) SetValue(value string) *UpdateOpportunisticEncryptionOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateOpportunisticEncryptionOptions) SetValue(value string) *UpdateOpportunisticEncryptionOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdateOpportunisticEncryptionOptions) SetHeaders(param map[string]string) *UpdateOpportunisticEncryptionOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateOpportunisticOnionOptions : The UpdateOpportunisticOnion options.
+type UpdateOpportunisticOnionOptions struct {
+	// Value.
+	Value *string `json:"value,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the UpdateOpportunisticOnionOptions.Value property.
+// Value.
+const (
+	UpdateOpportunisticOnionOptions_Value_Off = "off"
+	UpdateOpportunisticOnionOptions_Value_On  = "on"
+)
+
+// NewUpdateOpportunisticOnionOptions : Instantiate UpdateOpportunisticOnionOptions
+func (*ZonesSettingsV1) NewUpdateOpportunisticOnionOptions() *UpdateOpportunisticOnionOptions {
+	return &UpdateOpportunisticOnionOptions{}
+}
+
+// SetValue : Allow user to set Value
+func (_options *UpdateOpportunisticOnionOptions) SetValue(value string) *UpdateOpportunisticOnionOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateOpportunisticOnionOptions) SetHeaders(param map[string]string) *UpdateOpportunisticOnionOptions {
 	options.Headers = param
 	return options
 }
@@ -6427,13 +6959,39 @@ func (*ZonesSettingsV1) NewUpdatePrefetchPreloadOptions() *UpdatePrefetchPreload
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdatePrefetchPreloadOptions) SetValue(value string) *UpdatePrefetchPreloadOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdatePrefetchPreloadOptions) SetValue(value string) *UpdatePrefetchPreloadOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
 func (options *UpdatePrefetchPreloadOptions) SetHeaders(param map[string]string) *UpdatePrefetchPreloadOptions {
+	options.Headers = param
+	return options
+}
+
+// UpdateProxyReadTimeoutOptions : The UpdateProxyReadTimeout options.
+type UpdateProxyReadTimeoutOptions struct {
+	// Value.
+	Value *float64 `json:"value,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewUpdateProxyReadTimeoutOptions : Instantiate UpdateProxyReadTimeoutOptions
+func (*ZonesSettingsV1) NewUpdateProxyReadTimeoutOptions() *UpdateProxyReadTimeoutOptions {
+	return &UpdateProxyReadTimeoutOptions{}
+}
+
+// SetValue : Allow user to set Value
+func (_options *UpdateProxyReadTimeoutOptions) SetValue(value float64) *UpdateProxyReadTimeoutOptions {
+	_options.Value = core.Float64Ptr(value)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateProxyReadTimeoutOptions) SetHeaders(param map[string]string) *UpdateProxyReadTimeoutOptions {
 	options.Headers = param
 	return options
 }
@@ -6461,9 +7019,9 @@ func (*ZonesSettingsV1) NewUpdatePseudoIpv4Options() *UpdatePseudoIpv4Options {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdatePseudoIpv4Options) SetValue(value string) *UpdatePseudoIpv4Options {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdatePseudoIpv4Options) SetValue(value string) *UpdatePseudoIpv4Options {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6494,9 +7052,9 @@ func (*ZonesSettingsV1) NewUpdateResponseBufferingOptions() *UpdateResponseBuffe
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateResponseBufferingOptions) SetValue(value string) *UpdateResponseBufferingOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateResponseBufferingOptions) SetValue(value string) *UpdateResponseBufferingOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6527,9 +7085,9 @@ func (*ZonesSettingsV1) NewUpdateScriptLoadOptimizationOptions() *UpdateScriptLo
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateScriptLoadOptimizationOptions) SetValue(value string) *UpdateScriptLoadOptimizationOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateScriptLoadOptimizationOptions) SetValue(value string) *UpdateScriptLoadOptimizationOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6553,9 +7111,9 @@ func (*ZonesSettingsV1) NewUpdateSecurityHeaderOptions() *UpdateSecurityHeaderOp
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateSecurityHeaderOptions) SetValue(value *SecurityHeaderSettingValue) *UpdateSecurityHeaderOptions {
-	options.Value = value
-	return options
+func (_options *UpdateSecurityHeaderOptions) SetValue(value *SecurityHeaderSettingValue) *UpdateSecurityHeaderOptions {
+	_options.Value = value
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6586,9 +7144,9 @@ func (*ZonesSettingsV1) NewUpdateServerSideExcludeOptions() *UpdateServerSideExc
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateServerSideExcludeOptions) SetValue(value string) *UpdateServerSideExcludeOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateServerSideExcludeOptions) SetValue(value string) *UpdateServerSideExcludeOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6619,9 +7177,9 @@ func (*ZonesSettingsV1) NewUpdateTlsClientAuthOptions() *UpdateTlsClientAuthOpti
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateTlsClientAuthOptions) SetValue(value string) *UpdateTlsClientAuthOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateTlsClientAuthOptions) SetValue(value string) *UpdateTlsClientAuthOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6652,9 +7210,9 @@ func (*ZonesSettingsV1) NewUpdateTrueClientIpOptions() *UpdateTrueClientIpOption
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateTrueClientIpOptions) SetValue(value string) *UpdateTrueClientIpOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateTrueClientIpOptions) SetValue(value string) *UpdateTrueClientIpOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6685,9 +7243,9 @@ func (*ZonesSettingsV1) NewUpdateWebApplicationFirewallOptions() *UpdateWebAppli
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateWebApplicationFirewallOptions) SetValue(value string) *UpdateWebApplicationFirewallOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateWebApplicationFirewallOptions) SetValue(value string) *UpdateWebApplicationFirewallOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6718,9 +7276,9 @@ func (*ZonesSettingsV1) NewUpdateWebSocketsOptions() *UpdateWebSocketsOptions {
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateWebSocketsOptions) SetValue(value string) *UpdateWebSocketsOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateWebSocketsOptions) SetValue(value string) *UpdateWebSocketsOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6753,9 +7311,9 @@ func (*ZonesSettingsV1) NewUpdateZoneCnameFlatteningOptions() *UpdateZoneCnameFl
 }
 
 // SetValue : Allow user to set Value
-func (options *UpdateZoneCnameFlatteningOptions) SetValue(value string) *UpdateZoneCnameFlatteningOptions {
-	options.Value = core.StringPtr(value)
-	return options
+func (_options *UpdateZoneCnameFlatteningOptions) SetValue(value string) *UpdateZoneCnameFlatteningOptions {
+	_options.Value = core.StringPtr(value)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -6786,9 +7344,9 @@ func (*ZonesSettingsV1) NewUpdateZoneDnssecOptions() *UpdateZoneDnssecOptions {
 }
 
 // SetStatus : Allow user to set Status
-func (options *UpdateZoneDnssecOptions) SetStatus(status string) *UpdateZoneDnssecOptions {
-	options.Status = core.StringPtr(status)
-	return options
+func (_options *UpdateZoneDnssecOptions) SetStatus(status string) *UpdateZoneDnssecOptions {
+	_options.Status = core.StringPtr(status)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -7654,7 +8212,7 @@ func UnmarshalMobileRedirectResp(m map[string]json.RawMessage, result interface{
 	return
 }
 
-// OpportunisticEncryptionResp : Oppertunistic encryption response.
+// OpportunisticEncryptionResp : Opportunistic encryption response.
 type OpportunisticEncryptionResp struct {
 	// Container for response information.
 	Result *OpportunisticEncryptionRespResult `json:"result" validate:"required"`
@@ -7673,6 +8231,44 @@ type OpportunisticEncryptionResp struct {
 func UnmarshalOpportunisticEncryptionResp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(OpportunisticEncryptionResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOpportunisticEncryptionRespResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// OpportunisticOnionResp : Opportunistic onion response.
+type OpportunisticOnionResp struct {
+	// Container for response information.
+	Result *OpportunisticOnionRespResult `json:"result" validate:"required"`
+
+	// Was the get successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalOpportunisticOnionResp unmarshals an instance of OpportunisticOnionResp from the specified map of raw messages.
+func UnmarshalOpportunisticOnionResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(OpportunisticOnionResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalOpportunisticOnionRespResult)
 	if err != nil {
 		return
 	}
@@ -7749,6 +8345,44 @@ type PrefetchPreloadResp struct {
 func UnmarshalPrefetchPreloadResp(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(PrefetchPreloadResp)
 	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalPrefetchPreloadRespResult)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "success", &obj.Success)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "errors", &obj.Errors)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "messages", &obj.Messages)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ProxyReadTimeoutResp : Proxy read timeout response.
+type ProxyReadTimeoutResp struct {
+	// Container for response information.
+	Result *ProxyReadTimeoutRespResult `json:"result" validate:"required"`
+
+	// Was the get successful.
+	Success *bool `json:"success" validate:"required"`
+
+	// Array of errors encountered.
+	Errors [][]string `json:"errors" validate:"required"`
+
+	// Array of messages returned.
+	Messages [][]string `json:"messages" validate:"required"`
+}
+
+// UnmarshalProxyReadTimeoutResp unmarshals an instance of ProxyReadTimeoutResp from the specified map of raw messages.
+func UnmarshalProxyReadTimeoutResp(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ProxyReadTimeoutResp)
+	err = core.UnmarshalModel(m, "result", &obj.Result, UnmarshalProxyReadTimeoutRespResult)
 	if err != nil {
 		return
 	}

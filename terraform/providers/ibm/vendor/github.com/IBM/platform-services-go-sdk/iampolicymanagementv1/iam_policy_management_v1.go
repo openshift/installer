@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2021.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.39.0-748eb4ca-20210917-165907
+ * IBM OpenAPI SDK Code Generator Version: 3.68.2-ac7def68-20230310-195410
  */
 
 // Package iampolicymanagementv1 : Operations and models for the IamPolicyManagementV1 service
@@ -161,11 +161,11 @@ func (iamPolicyManagement *IamPolicyManagementV1) DisableRetries() {
 }
 
 // ListPolicies : Get policies by attributes
-// Get policies and filter by attributes. While managing policies, you may want to retrieve policies in the account and
-// filter by attribute values. This can be done through query parameters. Currently, only the following attributes are
-// supported: account_id, iam_id, access_group_id, type, service_type, sort, format and state. account_id is a required
-// query parameter. Only policies that have the specified attributes and that the caller has read access to are
-// returned. If the caller does not have read access to any policies an empty array is returned.
+// Get policies and filter by attributes. While managing policies, you might want to retrieve policies in the account
+// and filter by attribute values. This can be done through query parameters. The following attributes are supported:
+// account_id, iam_id, access_group_id, type, service_type, sort, format and state. account_id is a required query
+// parameter. Only policies that have the specified attributes and that the caller has read access to are returned. If
+// the caller does not have read access to any policies an empty array is returned.
 func (iamPolicyManagement *IamPolicyManagementV1) ListPolicies(listPoliciesOptions *ListPoliciesOptions) (result *PolicyList, response *core.DetailedResponse, err error) {
 	return iamPolicyManagement.ListPoliciesWithContext(context.Background(), listPoliciesOptions)
 }
@@ -262,11 +262,14 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPoliciesWithContext(ctx co
 //
 // To create an access policy, use **`"type": "access"`** in the body. The possible subject attributes are **`iam_id`**
 // and **`access_group_id`**. Use the **`iam_id`** subject attribute for assigning access for a user or service-id. Use
-// the **`access_group_id`** subject attribute for assigning access for an access group. The roles must be a subset of a
-// service's or the platform's supported roles. The resource attributes must be a subset of a service's or the
-// platform's supported attributes. The policy resource must include either the **`serviceType`**, **`serviceName`**,
-// or **`resourceGroupId`** attribute and the **`accountId`** attribute.` If the subject is a locked service-id, the
-// request will fail.
+// the **`access_group_id`** subject attribute for assigning access for an access group. Assign roles that are supported
+// by the service or platform roles. For more information, see [IAM roles and
+// actions](/docs/account?topic=account-iam-service-roles-actions). Use only the resource attributes supported by the
+// service. To view a service's or the platform's supported attributes, check the [documentation](/docs?tab=all-docs).
+// The policy resource must include either the **`serviceType`**, **`serviceName`**, **`resourceGroupId`** or
+// **`service_group_id`** attribute and the **`accountId`** attribute. The IAM Services group (`IAM`) is a subset of
+// account management services that includes the IAM platform services IAM Identity, IAM Access Management, IAM Users
+// Management, IAM Groups, and future IAM services. If the subject is a locked service-id, the request will fail.
 //
 // ### Authorization
 //
@@ -274,16 +277,17 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListPoliciesWithContext(ctx co
 // their support of authorization policies. To create an authorization policy, use **`"type": "authorization"`** in the
 // body. The subject attributes must match the supported authorization subjects of the resource. Multiple subject
 // attributes might be provided. The following attributes are supported:
-//   serviceName, serviceInstance, region, resourceType, resource, accountId The policy roles must be a subset of the
-// supported authorization roles supported by the target service. The user must also have the same level of access or
-// greater to the target resource in order to grant the role. The resource attributes must be a subset of a service's or
-// the platform's supported attributes. Both the policy subject and the policy resource must include the
-// **`serviceName`** and **`accountId`** attributes.
+//   serviceName, serviceInstance, region, resourceType, resource, accountId Assign roles that are supported by the
+// service or platform roles. For more information, see [IAM roles and
+// actions](/docs/account?topic=account-iam-service-roles-actions). The user must also have the same level of access or
+// greater to the target resource in order to grant the role. Use only the resource attributes supported by the service.
+// To view a service's or the platform's supported attributes, check the [documentation](/docs?tab=all-docs). Both the
+// policy subject and the policy resource must include the **`serviceName`** and **`accountId`** attributes.
 //
 // ### Attribute Operators
 //
 // Currently, only the `stringEquals` and the `stringMatch` operators are available. Resource attributes may support one
-// or both operators.  For more information, see [how to assign access by using wildcards
+// or both operators. For more information, see [Assigning access by using wildcard
 // policies](https://cloud.ibm.com/docs/account?topic=account-wildcard).
 //
 // ### Attribute Validations
@@ -370,7 +374,7 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyWithContext(ctx co
 	return
 }
 
-// UpdatePolicy : Update a policy
+// ReplacePolicy : Update a policy
 // Update a policy to grant access between a subject and a resource. A policy administrator might want to update an
 // existing policy. The policy type cannot be changed (You cannot change an access policy to an authorization policy).
 //
@@ -378,27 +382,29 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyWithContext(ctx co
 //
 // To update an access policy, use **`"type": "access"`** in the body. The possible subject attributes are **`iam_id`**
 // and **`access_group_id`**. Use the **`iam_id`** subject attribute for assigning access for a user or service-id. Use
-// the **`access_group_id`** subject attribute for assigning access for an access group. The roles must be a subset of a
-// service's or the platform's supported roles. The resource attributes must be a subset of a service's or the
-// platform's supported attributes. The policy resource must include either the **`serviceType`**, **`serviceName`**,
-// or **`resourceGroupId`** attribute and the **`accountId`** attribute.` If the subject is a locked service-id, the
-// request will fail.
+// the **`access_group_id`** subject attribute for assigning access for an access group. Assign roles that are supported
+// by the service or platform roles. For more information, see [IAM roles and
+// actions](/docs/account?topic=account-iam-service-roles-actions). Use only the resource attributes supported by the
+// service. To view a service's or the platform's supported attributes, check the [documentation](/docs?tab=all-docs).
+// The policy resource must include either the **`serviceType`**, **`serviceName`**,  or **`resourceGroupId`** attribute
+// and the **`accountId`** attribute.` If the subject is a locked service-id, the request will fail.
 //
 // ### Authorization
 //
 // To update an authorization policy, use **`"type": "authorization"`** in the body. The subject attributes must match
 // the supported authorization subjects of the resource. Multiple subject attributes might be provided. The following
 // attributes are supported:
-//   serviceName, serviceInstance, region, resourceType, resource, accountId The policy roles must be a subset of the
-// supported authorization roles supported by the target service. The user must also have the same level of access or
-// greater to the target resource in order to grant the role. The resource attributes must be a subset of a service's or
-// the platform's supported attributes. Both the policy subject and the policy resource must include the
-// **`serviceName`** and **`accountId`** attributes.
+//   serviceName, serviceInstance, region, resourceType, resource, accountId Assign roles that are supported by the
+// service or platform roles. For more information, see [IAM roles and
+// actions](/docs/account?topic=account-iam-service-roles-actions). The user must also have the same level of access or
+// greater to the target resource in order to grant the role. Use only the resource attributes supported by the service.
+// To view a service's or the platform's supported attributes, check the [documentation](/docs?tab=all-docs). Both the
+// policy subject and the policy resource must include the **`serviceName`** and **`accountId`** attributes.
 //
 // ### Attribute Operators
 //
 // Currently, only the `stringEquals` and the `stringMatch` operators are available. Resource attributes might support
-// one or both operators.  For more information, see [how to assign access by using wildcards
+// one or both operators. For more information, see [Assigning access by using wildcard
 // policies](https://cloud.ibm.com/docs/account?topic=account-wildcard).
 //
 // ### Attribute Validations
@@ -406,23 +412,23 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreatePolicyWithContext(ctx co
 // Policy attribute values must be between 1 and 1,000 characters in length. If location related attributes like
 // geography, country, metro, region, satellite, and locationvalues are supported by the service, they are validated
 // against Global Catalog locations.
-func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicy(updatePolicyOptions *UpdatePolicyOptions) (result *Policy, response *core.DetailedResponse, err error) {
-	return iamPolicyManagement.UpdatePolicyWithContext(context.Background(), updatePolicyOptions)
+func (iamPolicyManagement *IamPolicyManagementV1) ReplacePolicy(replacePolicyOptions *ReplacePolicyOptions) (result *Policy, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.ReplacePolicyWithContext(context.Background(), replacePolicyOptions)
 }
 
-// UpdatePolicyWithContext is an alternate form of the UpdatePolicy method which supports a Context parameter
-func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicyWithContext(ctx context.Context, updatePolicyOptions *UpdatePolicyOptions) (result *Policy, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updatePolicyOptions, "updatePolicyOptions cannot be nil")
+// ReplacePolicyWithContext is an alternate form of the ReplacePolicy method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ReplacePolicyWithContext(ctx context.Context, replacePolicyOptions *ReplacePolicyOptions) (result *Policy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replacePolicyOptions, "replacePolicyOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(updatePolicyOptions, "updatePolicyOptions")
+	err = core.ValidateStruct(replacePolicyOptions, "replacePolicyOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"policy_id": *updatePolicyOptions.PolicyID,
+		"policy_id": *replacePolicyOptions.PolicyID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -433,35 +439,35 @@ func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicyWithContext(ctx co
 		return
 	}
 
-	for headerName, headerValue := range updatePolicyOptions.Headers {
+	for headerName, headerValue := range replacePolicyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdatePolicy")
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplacePolicy")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
-	if updatePolicyOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*updatePolicyOptions.IfMatch))
+	if replacePolicyOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*replacePolicyOptions.IfMatch))
 	}
 
 	body := make(map[string]interface{})
-	if updatePolicyOptions.Type != nil {
-		body["type"] = updatePolicyOptions.Type
+	if replacePolicyOptions.Type != nil {
+		body["type"] = replacePolicyOptions.Type
 	}
-	if updatePolicyOptions.Subjects != nil {
-		body["subjects"] = updatePolicyOptions.Subjects
+	if replacePolicyOptions.Subjects != nil {
+		body["subjects"] = replacePolicyOptions.Subjects
 	}
-	if updatePolicyOptions.Roles != nil {
-		body["roles"] = updatePolicyOptions.Roles
+	if replacePolicyOptions.Roles != nil {
+		body["roles"] = replacePolicyOptions.Roles
 	}
-	if updatePolicyOptions.Resources != nil {
-		body["resources"] = updatePolicyOptions.Resources
+	if replacePolicyOptions.Resources != nil {
+		body["resources"] = replacePolicyOptions.Resources
 	}
-	if updatePolicyOptions.Description != nil {
-		body["description"] = updatePolicyOptions.Description
+	if replacePolicyOptions.Description != nil {
+		body["description"] = replacePolicyOptions.Description
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -598,26 +604,26 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeletePolicyWithContext(ctx co
 	return
 }
 
-// PatchPolicy : Restore a deleted policy by ID
+// UpdatePolicyState : Restore a deleted policy by ID
 // Restore a policy that has recently been deleted. A policy administrator might want to restore a deleted policy. To
 // restore a policy, use **`"state": "active"`** in the body.
-func (iamPolicyManagement *IamPolicyManagementV1) PatchPolicy(patchPolicyOptions *PatchPolicyOptions) (result *Policy, response *core.DetailedResponse, err error) {
-	return iamPolicyManagement.PatchPolicyWithContext(context.Background(), patchPolicyOptions)
+func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicyState(updatePolicyStateOptions *UpdatePolicyStateOptions) (result *Policy, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.UpdatePolicyStateWithContext(context.Background(), updatePolicyStateOptions)
 }
 
-// PatchPolicyWithContext is an alternate form of the PatchPolicy method which supports a Context parameter
-func (iamPolicyManagement *IamPolicyManagementV1) PatchPolicyWithContext(ctx context.Context, patchPolicyOptions *PatchPolicyOptions) (result *Policy, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(patchPolicyOptions, "patchPolicyOptions cannot be nil")
+// UpdatePolicyStateWithContext is an alternate form of the UpdatePolicyState method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) UpdatePolicyStateWithContext(ctx context.Context, updatePolicyStateOptions *UpdatePolicyStateOptions) (result *Policy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updatePolicyStateOptions, "updatePolicyStateOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(patchPolicyOptions, "patchPolicyOptions")
+	err = core.ValidateStruct(updatePolicyStateOptions, "updatePolicyStateOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"policy_id": *patchPolicyOptions.PolicyID,
+		"policy_id": *updatePolicyStateOptions.PolicyID,
 	}
 
 	builder := core.NewRequestBuilder(core.PATCH)
@@ -628,23 +634,23 @@ func (iamPolicyManagement *IamPolicyManagementV1) PatchPolicyWithContext(ctx con
 		return
 	}
 
-	for headerName, headerValue := range patchPolicyOptions.Headers {
+	for headerName, headerValue := range updatePolicyStateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "PatchPolicy")
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdatePolicyState")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
-	if patchPolicyOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*patchPolicyOptions.IfMatch))
+	if updatePolicyStateOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updatePolicyStateOptions.IfMatch))
 	}
 
 	body := make(map[string]interface{})
-	if patchPolicyOptions.State != nil {
-		body["state"] = patchPolicyOptions.State
+	if updatePolicyStateOptions.State != nil {
+		body["state"] = updatePolicyStateOptions.State
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -675,8 +681,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) PatchPolicyWithContext(ctx con
 // ListRoles : Get roles by filters
 // Get roles based on the filters. While managing roles, you may want to retrieve roles and filter by usages. This can
 // be done through query parameters. Currently, we only support the following attributes: account_id, service_name,
-// source_service_name and policy_type. Only roles that match the filter and that the caller has read access to are
-// returned. If the caller does not have read access to any roles an empty array is returned.
+// service_group_id, source_service_name and policy_type. Both service_name and service_group_id attributes are mutually
+// exclusive. Only roles that match the filter and that the caller has read access to are returned. If the caller does
+// not have read access to any roles an empty array is returned.
 func (iamPolicyManagement *IamPolicyManagementV1) ListRoles(listRolesOptions *ListRolesOptions) (result *RoleList, response *core.DetailedResponse, err error) {
 	return iamPolicyManagement.ListRolesWithContext(context.Background(), listRolesOptions)
 }
@@ -720,6 +727,9 @@ func (iamPolicyManagement *IamPolicyManagementV1) ListRolesWithContext(ctx conte
 	}
 	if listRolesOptions.PolicyType != nil {
 		builder.AddQuery("policy_type", fmt.Sprint(*listRolesOptions.PolicyType))
+	}
+	if listRolesOptions.ServiceGroupID != nil {
+		builder.AddQuery("service_group_id", fmt.Sprint(*listRolesOptions.ServiceGroupID))
 	}
 
 	request, err := builder.Build()
@@ -830,26 +840,26 @@ func (iamPolicyManagement *IamPolicyManagementV1) CreateRoleWithContext(ctx cont
 	return
 }
 
-// UpdateRole : Update a role
+// ReplaceRole : Update a role
 // Update a custom role. A role administrator might want to update an existing role by updating the display name,
 // description, or the actions that are mapped to the role. The name, account_id, and service_name can't be changed.
-func (iamPolicyManagement *IamPolicyManagementV1) UpdateRole(updateRoleOptions *UpdateRoleOptions) (result *CustomRole, response *core.DetailedResponse, err error) {
-	return iamPolicyManagement.UpdateRoleWithContext(context.Background(), updateRoleOptions)
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceRole(replaceRoleOptions *ReplaceRoleOptions) (result *CustomRole, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.ReplaceRoleWithContext(context.Background(), replaceRoleOptions)
 }
 
-// UpdateRoleWithContext is an alternate form of the UpdateRole method which supports a Context parameter
-func (iamPolicyManagement *IamPolicyManagementV1) UpdateRoleWithContext(ctx context.Context, updateRoleOptions *UpdateRoleOptions) (result *CustomRole, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateRoleOptions, "updateRoleOptions cannot be nil")
+// ReplaceRoleWithContext is an alternate form of the ReplaceRole method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceRoleWithContext(ctx context.Context, replaceRoleOptions *ReplaceRoleOptions) (result *CustomRole, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceRoleOptions, "replaceRoleOptions cannot be nil")
 	if err != nil {
 		return
 	}
-	err = core.ValidateStruct(updateRoleOptions, "updateRoleOptions")
+	err = core.ValidateStruct(replaceRoleOptions, "replaceRoleOptions")
 	if err != nil {
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"role_id": *updateRoleOptions.RoleID,
+		"role_id": *replaceRoleOptions.RoleID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -860,29 +870,29 @@ func (iamPolicyManagement *IamPolicyManagementV1) UpdateRoleWithContext(ctx cont
 		return
 	}
 
-	for headerName, headerValue := range updateRoleOptions.Headers {
+	for headerName, headerValue := range replaceRoleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "UpdateRole")
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceRole")
 	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
-	if updateRoleOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*updateRoleOptions.IfMatch))
+	if replaceRoleOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*replaceRoleOptions.IfMatch))
 	}
 
 	body := make(map[string]interface{})
-	if updateRoleOptions.DisplayName != nil {
-		body["display_name"] = updateRoleOptions.DisplayName
+	if replaceRoleOptions.DisplayName != nil {
+		body["display_name"] = replaceRoleOptions.DisplayName
 	}
-	if updateRoleOptions.Description != nil {
-		body["description"] = updateRoleOptions.Description
+	if replaceRoleOptions.Actions != nil {
+		body["actions"] = replaceRoleOptions.Actions
 	}
-	if updateRoleOptions.Actions != nil {
-		body["actions"] = updateRoleOptions.Actions
+	if replaceRoleOptions.Description != nil {
+		body["description"] = replaceRoleOptions.Description
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1018,6 +1028,555 @@ func (iamPolicyManagement *IamPolicyManagementV1) DeleteRoleWithContext(ctx cont
 	return
 }
 
+// ListV2Policies : Get policies by attributes
+// Get policies and filter by attributes. While managing policies, you might want to retrieve policies in the account
+// and filter by attribute values. This can be done through query parameters. The following attributes are supported:
+// account_id, iam_id, access_group_id, type, service_type, sort, format and state. account_id is a required query
+// parameter. Only policies that have the specified attributes and that the caller has read access to are returned. If
+// the caller does not have read access to any policies an empty array is returned.
+func (iamPolicyManagement *IamPolicyManagementV1) ListV2Policies(listV2PoliciesOptions *ListV2PoliciesOptions) (result *V2PolicyCollection, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.ListV2PoliciesWithContext(context.Background(), listV2PoliciesOptions)
+}
+
+// ListV2PoliciesWithContext is an alternate form of the ListV2Policies method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ListV2PoliciesWithContext(ctx context.Context, listV2PoliciesOptions *ListV2PoliciesOptions) (result *V2PolicyCollection, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listV2PoliciesOptions, "listV2PoliciesOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listV2PoliciesOptions, "listV2PoliciesOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v2/policies`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listV2PoliciesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ListV2Policies")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listV2PoliciesOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*listV2PoliciesOptions.AcceptLanguage))
+	}
+
+	builder.AddQuery("account_id", fmt.Sprint(*listV2PoliciesOptions.AccountID))
+	if listV2PoliciesOptions.IamID != nil {
+		builder.AddQuery("iam_id", fmt.Sprint(*listV2PoliciesOptions.IamID))
+	}
+	if listV2PoliciesOptions.AccessGroupID != nil {
+		builder.AddQuery("access_group_id", fmt.Sprint(*listV2PoliciesOptions.AccessGroupID))
+	}
+	if listV2PoliciesOptions.Type != nil {
+		builder.AddQuery("type", fmt.Sprint(*listV2PoliciesOptions.Type))
+	}
+	if listV2PoliciesOptions.ServiceType != nil {
+		builder.AddQuery("service_type", fmt.Sprint(*listV2PoliciesOptions.ServiceType))
+	}
+	if listV2PoliciesOptions.ServiceName != nil {
+		builder.AddQuery("service_name", fmt.Sprint(*listV2PoliciesOptions.ServiceName))
+	}
+	if listV2PoliciesOptions.ServiceGroupID != nil {
+		builder.AddQuery("service_group_id", fmt.Sprint(*listV2PoliciesOptions.ServiceGroupID))
+	}
+	if listV2PoliciesOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listV2PoliciesOptions.Sort))
+	}
+	if listV2PoliciesOptions.Format != nil {
+		builder.AddQuery("format", fmt.Sprint(*listV2PoliciesOptions.Format))
+	}
+	if listV2PoliciesOptions.State != nil {
+		builder.AddQuery("state", fmt.Sprint(*listV2PoliciesOptions.State))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalV2PolicyCollection)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateV2Policy : Create a policy
+// Creates a policy to grant access between a subject and a resource. Currently, there is one type of a v2/policy:
+// **access**. A policy administrator might want to create an access policy that grants access to a user, service-id, or
+// an access group.
+//
+// ### Access
+//
+// To create an access policy, use **`"type": "access"`** in the body. The supported subject attributes are **`iam_id`**
+// and **`access_group_id`**. Use the **`iam_id`** subject attribute to assign access to a user or service-id. Use the
+// **`access_group_id`** subject attribute to assign access to an access group. Assign roles that are supported by the
+// service or platform roles. For more information, see [IAM roles and
+// actions](/docs/account?topic=account-iam-service-roles-actions). Use only the resource attributes supported by the
+// service. To view a service's or the platform's supported attributes, check the [documentation](/docs?tab=all-docs).
+// The policy resource must include either the **`serviceType`**, **`serviceName`**, **`resourceGroupId`** or
+// **`service_group_id`** attribute and the **`accountId`** attribute. In the rule field, you can specify a single
+// condition by using **`key`**, **`value`**, and condition **`operator`**, or a set of **`conditions`** with a
+// combination **`operator`**.  The possible combination operators are **`and`** and **`or`**. Combine conditions to
+// specify a time-based restriction (e.g., access only during business hours, during the Monday-Friday work week). For
+// example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following rule:
+// ```json
+//   "rule": {
+//     "operator": "and",
+//     "conditions": [{
+//       "key": "{{environment.attributes.day_of_week}}",
+//       "operator": "dayOfWeekAnyOf",
+//       "value": ["1+00:00", "2+00:00", "3+00:00", "4+00:00", "5+00:00"]
+//     },
+//       "key": "{{environment.attributes.current_time}}",
+//       "operator": "timeGreaterThanOrEquals",
+//       "value": "09:00:00+00:00"
+//     },
+//       "key": "{{environment.attributes.current_time}}",
+//       "operator": "timeLessThanOrEquals",
+//       "value": "17:00:00+00:00"
+//     }]
+//   }
+// ``` You can use the following operators in the **`key`** and **`value`** pair:
+// ```
+//   'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
+//   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
+//   'dayOfWeekEquals', 'dayOfWeekAnyOf',
+// ```
+//
+// The pattern field that matches the rule is required when rule is provided. For the business hour rule example above,
+// the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
+// operators](https://cloud.ibm.com/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties)
+// and
+// [Limiting access with time-based
+// conditions](https://cloud.ibm.com/docs/account?topic=account-iam-time-based&interface=ui). If the subject is a locked
+// service-id, the request will fail.
+//
+// ### Attribute Operators
+//
+// Currently, only the `stringEquals`, `stringMatch`, and `stringEquals` operators are available. For more information,
+// see [Assigning access by using wildcard policies](https://cloud.ibm.com/docs/account?topic=account-wildcard).
+//
+// ### Attribute Validations
+//
+// Policy attribute values must be between 1 and 1,000 characters in length. If location related attributes like
+// geography, country, metro, region, satellite, and locationvalues are supported by the service, they are validated
+// against Global Catalog locations.
+func (iamPolicyManagement *IamPolicyManagementV1) CreateV2Policy(createV2PolicyOptions *CreateV2PolicyOptions) (result *V2Policy, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.CreateV2PolicyWithContext(context.Background(), createV2PolicyOptions)
+}
+
+// CreateV2PolicyWithContext is an alternate form of the CreateV2Policy method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) CreateV2PolicyWithContext(ctx context.Context, createV2PolicyOptions *CreateV2PolicyOptions) (result *V2Policy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createV2PolicyOptions, "createV2PolicyOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(createV2PolicyOptions, "createV2PolicyOptions")
+	if err != nil {
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v2/policies`, nil)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range createV2PolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "CreateV2Policy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createV2PolicyOptions.AcceptLanguage != nil {
+		builder.AddHeader("Accept-Language", fmt.Sprint(*createV2PolicyOptions.AcceptLanguage))
+	}
+
+	body := make(map[string]interface{})
+	if createV2PolicyOptions.Control != nil {
+		body["control"] = createV2PolicyOptions.Control
+	}
+	if createV2PolicyOptions.Type != nil {
+		body["type"] = createV2PolicyOptions.Type
+	}
+	if createV2PolicyOptions.Description != nil {
+		body["description"] = createV2PolicyOptions.Description
+	}
+	if createV2PolicyOptions.Subject != nil {
+		body["subject"] = createV2PolicyOptions.Subject
+	}
+	if createV2PolicyOptions.Resource != nil {
+		body["resource"] = createV2PolicyOptions.Resource
+	}
+	if createV2PolicyOptions.Pattern != nil {
+		body["pattern"] = createV2PolicyOptions.Pattern
+	}
+	if createV2PolicyOptions.Rule != nil {
+		body["rule"] = createV2PolicyOptions.Rule
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalV2Policy)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ReplaceV2Policy : Update a policy
+// Update a policy to grant access between a subject and a resource. A policy administrator might want to update an
+// existing policy.
+//
+// ### Access
+//
+// To create an access policy, use **`"type": "access"`** in the body. The supported subject attributes are **`iam_id`**
+// and **`access_group_id`**. Use the **`iam_id`** subject attribute to assign access to a user or service-id. Use the
+// **`access_group_id`** subject attribute to assign access to an access group. Assign roles that are supported by the
+// service or platform roles. For more information, see [IAM roles and
+// actions](/docs/account?topic=account-iam-service-roles-actions). Use only the resource attributes supported by the
+// service. To view a service's or the platform's supported attributes, check the [documentation](/docs?tab=all-docs).
+// The policy resource must include either the **`serviceType`**, **`serviceName`**, **`resourceGroupId`** or
+// **`service_group_id`** attribute and the **`accountId`** attribute. In the rule field, you can specify a single
+// condition by using **`key`**, **`value`**, and condition **`operator`**, or a set of **`conditions`** with a
+// combination **`operator`**.  The possible combination operators are **`and`** and **`or`**. Combine conditions to
+// specify a time-based restriction (e.g., access only during business hours, during the Monday-Friday work week). For
+// example, a policy can grant access Monday-Friday, 9:00am-5:00pm using the following rule:
+// ```json
+//   "rule": {
+//     "operator": "and",
+//     "conditions": [{
+//       "key": "{{environment.attributes.day_of_week}}",
+//       "operator": "dayOfWeekAnyOf",
+//       "value": ["1+00:00", "2+00:00", "3+00:00", "4+00:00", "5+00:00"]
+//     },
+//       "key": "{{environment.attributes.current_time}}",
+//       "operator": "timeGreaterThanOrEquals",
+//       "value": "09:00:00+00:00"
+//     },
+//       "key": "{{environment.attributes.current_time}}",
+//       "operator": "timeLessThanOrEquals",
+//       "value": "17:00:00+00:00"
+//     }]
+//   }
+// ``` You can use the following operators in the **`key`**, **`value`** pair:
+// ```
+//   'timeLessThan', 'timeLessThanOrEquals', 'timeGreaterThan', 'timeGreaterThanOrEquals',
+//   'dateTimeLessThan', 'dateTimeLessThanOrEquals', 'dateTimeGreaterThan', 'dateTimeGreaterThanOrEquals',
+//   'dayOfWeekEquals', 'dayOfWeekAnyOf',
+// ``` The pattern field that matches the rule is required when rule is provided. For the business hour rule example
+// above, the **`pattern`** is **`"time-based-conditions:weekly"`**. For more information, see [Time-based conditions
+// operators](https://cloud.ibm.com/docs/account?topic=account-iam-condition-properties&interface=ui#policy-condition-properties)
+// and
+// [Limiting access with time-based
+// conditions](https://cloud.ibm.com/docs/account?topic=account-iam-time-based&interface=ui).
+// ### Attribute Operators
+//
+// Currently, only the `stringEquals`, `stringMatch`, and `stringEquals` operators are available. For more information,
+// see [Assigning access by using wildcard policies](https://cloud.ibm.com/docs/account?topic=account-wildcard).
+//
+// ### Attribute Validations
+//
+// Policy attribute values must be between 1 and 1,000 characters in length. If location related attributes like
+// geography, country, metro, region, satellite, and locationvalues are supported by the service, they are validated
+// against Global Catalog locations.
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceV2Policy(replaceV2PolicyOptions *ReplaceV2PolicyOptions) (result *V2Policy, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.ReplaceV2PolicyWithContext(context.Background(), replaceV2PolicyOptions)
+}
+
+// ReplaceV2PolicyWithContext is an alternate form of the ReplaceV2Policy method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) ReplaceV2PolicyWithContext(ctx context.Context, replaceV2PolicyOptions *ReplaceV2PolicyOptions) (result *V2Policy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(replaceV2PolicyOptions, "replaceV2PolicyOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(replaceV2PolicyOptions, "replaceV2PolicyOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *replaceV2PolicyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v2/policies/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range replaceV2PolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "ReplaceV2Policy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if replaceV2PolicyOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*replaceV2PolicyOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if replaceV2PolicyOptions.Control != nil {
+		body["control"] = replaceV2PolicyOptions.Control
+	}
+	if replaceV2PolicyOptions.Type != nil {
+		body["type"] = replaceV2PolicyOptions.Type
+	}
+	if replaceV2PolicyOptions.Description != nil {
+		body["description"] = replaceV2PolicyOptions.Description
+	}
+	if replaceV2PolicyOptions.Subject != nil {
+		body["subject"] = replaceV2PolicyOptions.Subject
+	}
+	if replaceV2PolicyOptions.Resource != nil {
+		body["resource"] = replaceV2PolicyOptions.Resource
+	}
+	if replaceV2PolicyOptions.Pattern != nil {
+		body["pattern"] = replaceV2PolicyOptions.Pattern
+	}
+	if replaceV2PolicyOptions.Rule != nil {
+		body["rule"] = replaceV2PolicyOptions.Rule
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalV2Policy)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetV2Policy : Retrieve a policy by ID
+// Retrieve a policy by providing a policy ID.
+func (iamPolicyManagement *IamPolicyManagementV1) GetV2Policy(getV2PolicyOptions *GetV2PolicyOptions) (result *V2Policy, response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.GetV2PolicyWithContext(context.Background(), getV2PolicyOptions)
+}
+
+// GetV2PolicyWithContext is an alternate form of the GetV2Policy method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) GetV2PolicyWithContext(ctx context.Context, getV2PolicyOptions *GetV2PolicyOptions) (result *V2Policy, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getV2PolicyOptions, "getV2PolicyOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(getV2PolicyOptions, "getV2PolicyOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *getV2PolicyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v2/policies/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range getV2PolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "GetV2Policy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getV2PolicyOptions.Format != nil {
+		builder.AddQuery("format", fmt.Sprint(*getV2PolicyOptions.Format))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamPolicyManagement.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalV2Policy)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteV2Policy : Delete a policy by ID
+// Delete a policy by providing a policy ID. A policy cannot be deleted if the subject ID contains a locked service ID.
+// If the subject of the policy is a locked service-id, the request will fail.
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteV2Policy(deleteV2PolicyOptions *DeleteV2PolicyOptions) (response *core.DetailedResponse, err error) {
+	return iamPolicyManagement.DeleteV2PolicyWithContext(context.Background(), deleteV2PolicyOptions)
+}
+
+// DeleteV2PolicyWithContext is an alternate form of the DeleteV2Policy method which supports a Context parameter
+func (iamPolicyManagement *IamPolicyManagementV1) DeleteV2PolicyWithContext(ctx context.Context, deleteV2PolicyOptions *DeleteV2PolicyOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteV2PolicyOptions, "deleteV2PolicyOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(deleteV2PolicyOptions, "deleteV2PolicyOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *deleteV2PolicyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamPolicyManagement.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamPolicyManagement.Service.Options.URL, `/v2/policies/{id}`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range deleteV2PolicyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_policy_management", "V1", "DeleteV2Policy")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	response, err = iamPolicyManagement.Service.Request(request, nil)
+
+	return
+}
+
+// Control : Specifies the type of access granted by the policy.
+type Control struct {
+	// Permission granted by the policy.
+	Grant *Grant `json:"grant" validate:"required"`
+}
+
+// NewControl : Instantiate Control (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewControl(grant *Grant) (_model *Control, err error) {
+	_model = &Control{
+		Grant: grant,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalControl unmarshals an instance of Control from the specified map of raw messages.
+func UnmarshalControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Control)
+	err = core.UnmarshalModel(m, "grant", &obj.Grant, UnmarshalGrant)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ControlResponse : ControlResponse struct
+// Models which "extend" this model:
+// - ControlResponseControl
+// - ControlResponseControlWithEnrichedRoles
+type ControlResponse struct {
+	// Permission granted by the policy.
+	Grant *Grant `json:"grant,omitempty"`
+}
+func (*ControlResponse) isaControlResponse() bool {
+	return true
+}
+
+type ControlResponseIntf interface {
+	isaControlResponse() bool
+}
+
+// UnmarshalControlResponse unmarshals an instance of ControlResponse from the specified map of raw messages.
+func UnmarshalControlResponse(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ControlResponse)
+	err = core.UnmarshalModel(m, "grant", &obj.Grant, UnmarshalGrant)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // CreatePolicyOptions : The CreatePolicy options.
 type CreatePolicyOptions struct {
 	// The policy type; either 'access' or 'authorization'.
@@ -1110,7 +1669,7 @@ type CreateRoleOptions struct {
 	// The display name of the role that is shown in the console.
 	DisplayName *string `json:"display_name" validate:"required"`
 
-	// The actions of the role. Please refer to [IAM roles and
+	// The actions of the role. For more information, see [IAM roles and
 	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
 	Actions []string `json:"actions" validate:"required"`
 
@@ -1203,6 +1762,117 @@ func (options *CreateRoleOptions) SetHeaders(param map[string]string) *CreateRol
 	return options
 }
 
+// CreateV2PolicyOptions : The CreateV2Policy options.
+type CreateV2PolicyOptions struct {
+	// Specifies the type of access granted by the policy.
+	Control *Control `json:"control" validate:"required"`
+
+	// The policy type; either 'access' or 'authorization'.
+	Type *string `json:"type" validate:"required"`
+
+	// Allows the customer to use their own words to record the purpose/context related to a policy.
+	Description *string `json:"description,omitempty"`
+
+	// The subject attributes for whom the policy grants access.
+	Subject *V2PolicySubject `json:"subject,omitempty"`
+
+	// The resource attributes to which the policy grants access.
+	Resource *V2PolicyResource `json:"resource,omitempty"`
+
+	// Indicates pattern of rule, either 'time-based-conditions:once', 'time-based-conditions:weekly:all-day', or
+	// 'time-based-conditions:weekly:custom-hours'.
+	Pattern *string `json:"pattern,omitempty"`
+
+	// Additional access conditions associated with the policy.
+	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
+
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the CreateV2PolicyOptions.Type property.
+// The policy type; either 'access' or 'authorization'.
+const (
+	CreateV2PolicyOptionsTypeAccessConst = "access"
+	CreateV2PolicyOptionsTypeAuthorizationConst = "authorization"
+)
+
+// NewCreateV2PolicyOptions : Instantiate CreateV2PolicyOptions
+func (*IamPolicyManagementV1) NewCreateV2PolicyOptions(control *Control, typeVar string) *CreateV2PolicyOptions {
+	return &CreateV2PolicyOptions{
+		Control: control,
+		Type: core.StringPtr(typeVar),
+	}
+}
+
+// SetControl : Allow user to set Control
+func (_options *CreateV2PolicyOptions) SetControl(control *Control) *CreateV2PolicyOptions {
+	_options.Control = control
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *CreateV2PolicyOptions) SetType(typeVar string) *CreateV2PolicyOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateV2PolicyOptions) SetDescription(description string) *CreateV2PolicyOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetSubject : Allow user to set Subject
+func (_options *CreateV2PolicyOptions) SetSubject(subject *V2PolicySubject) *CreateV2PolicyOptions {
+	_options.Subject = subject
+	return _options
+}
+
+// SetResource : Allow user to set Resource
+func (_options *CreateV2PolicyOptions) SetResource(resource *V2PolicyResource) *CreateV2PolicyOptions {
+	_options.Resource = resource
+	return _options
+}
+
+// SetPattern : Allow user to set Pattern
+func (_options *CreateV2PolicyOptions) SetPattern(pattern string) *CreateV2PolicyOptions {
+	_options.Pattern = core.StringPtr(pattern)
+	return _options
+}
+
+// SetRule : Allow user to set Rule
+func (_options *CreateV2PolicyOptions) SetRule(rule V2PolicyRuleIntf) *CreateV2PolicyOptions {
+	_options.Rule = rule
+	return _options
+}
+
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *CreateV2PolicyOptions) SetAcceptLanguage(acceptLanguage string) *CreateV2PolicyOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateV2PolicyOptions) SetHeaders(param map[string]string) *CreateV2PolicyOptions {
+	options.Headers = param
+	return options
+}
+
 // DeletePolicyOptions : The DeletePolicy options.
 type DeletePolicyOptions struct {
 	// The policy ID.
@@ -1257,6 +1927,74 @@ func (_options *DeleteRoleOptions) SetRoleID(roleID string) *DeleteRoleOptions {
 func (options *DeleteRoleOptions) SetHeaders(param map[string]string) *DeleteRoleOptions {
 	options.Headers = param
 	return options
+}
+
+// DeleteV2PolicyOptions : The DeleteV2Policy options.
+type DeleteV2PolicyOptions struct {
+	// The policy ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewDeleteV2PolicyOptions : Instantiate DeleteV2PolicyOptions
+func (*IamPolicyManagementV1) NewDeleteV2PolicyOptions(id string) *DeleteV2PolicyOptions {
+	return &DeleteV2PolicyOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteV2PolicyOptions) SetID(id string) *DeleteV2PolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteV2PolicyOptions) SetHeaders(param map[string]string) *DeleteV2PolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// EnrichedRoles : A role associated with a policy with additional information (display_name, description, actions) when
+// `format=display`.
+type EnrichedRoles struct {
+	// The role Cloud Resource Name (CRN) granted by the policy. Example CRN: 'crn:v1:bluemix:public:iam::::role:Editor'.
+	RoleID *string `json:"role_id" validate:"required"`
+
+	// The service defined (or user defined if a custom role) display name of the role.
+	DisplayName *string `json:"display_name,omitempty"`
+
+	// The service defined (or user defined if a custom role) description of the role.
+	Description *string `json:"description,omitempty"`
+
+	// The actions of the role. For more information, see [IAM roles and
+	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
+	Actions []RoleAction `json:"actions" validate:"required"`
+}
+
+// UnmarshalEnrichedRoles unmarshals an instance of EnrichedRoles from the specified map of raw messages.
+func UnmarshalEnrichedRoles(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EnrichedRoles)
+	err = core.UnmarshalPrimitive(m, "role_id", &obj.RoleID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "actions", &obj.Actions, UnmarshalRoleAction)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // GetPolicyOptions : The GetPolicy options.
@@ -1315,9 +2053,104 @@ func (options *GetRoleOptions) SetHeaders(param map[string]string) *GetRoleOptio
 	return options
 }
 
+// GetV2PolicyOptions : The GetV2Policy options.
+type GetV2PolicyOptions struct {
+	// The policy ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Include additional data for policy returned
+	// * `include_last_permit` - returns details of when the policy last granted a permit decision and the number of times
+	// it has done so
+	// * `display` - returns the list of all actions included in each of the policy roles and translations for all relevant
+	// fields.
+	Format *string `json:"format,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the GetV2PolicyOptions.Format property.
+// Include additional data for policy returned
+// * `include_last_permit` - returns details of when the policy last granted a permit decision and the number of times
+// it has done so
+// * `display` - returns the list of all actions included in each of the policy roles and translations for all relevant
+// fields.
+const (
+	GetV2PolicyOptionsFormatDisplayConst = "display"
+	GetV2PolicyOptionsFormatIncludeLastPermitConst = "include_last_permit"
+)
+
+// NewGetV2PolicyOptions : Instantiate GetV2PolicyOptions
+func (*IamPolicyManagementV1) NewGetV2PolicyOptions(id string) *GetV2PolicyOptions {
+	return &GetV2PolicyOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *GetV2PolicyOptions) SetID(id string) *GetV2PolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetFormat : Allow user to set Format
+func (_options *GetV2PolicyOptions) SetFormat(format string) *GetV2PolicyOptions {
+	_options.Format = core.StringPtr(format)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetV2PolicyOptions) SetHeaders(param map[string]string) *GetV2PolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// Grant : Permission granted by the policy.
+type Grant struct {
+	// A set of role cloud resource names (CRNs) granted by the policy.
+	Roles []Roles `json:"roles" validate:"required"`
+}
+
+// NewGrant : Instantiate Grant (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewGrant(roles []Roles) (_model *Grant, err error) {
+	_model = &Grant{
+		Roles: roles,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalGrant unmarshals an instance of Grant from the specified map of raw messages.
+func UnmarshalGrant(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Grant)
+	err = core.UnmarshalModel(m, "roles", &obj.Roles, UnmarshalRoles)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// GrantWithEnrichedRoles : Permission granted by the policy with translated roles and additional role information.
+type GrantWithEnrichedRoles struct {
+	// A set of roles granted by the policy.
+	Roles []EnrichedRoles `json:"roles" validate:"required"`
+}
+
+// UnmarshalGrantWithEnrichedRoles unmarshals an instance of GrantWithEnrichedRoles from the specified map of raw messages.
+func UnmarshalGrantWithEnrichedRoles(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(GrantWithEnrichedRoles)
+	err = core.UnmarshalModel(m, "roles", &obj.Roles, UnmarshalEnrichedRoles)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // ListPoliciesOptions : The ListPolicies options.
 type ListPoliciesOptions struct {
-	// The account GUID in which the policies belong to.
+	// The account GUID that the policies belong to.
 	AccountID *string `json:"account_id" validate:"required"`
 
 	// Language code for translations
@@ -1346,10 +2179,10 @@ type ListPoliciesOptions struct {
 	// Optional type of service.
 	ServiceType *string `json:"service_type,omitempty"`
 
-	// Optional name of the access management tag in the policy.
+	// Optional name of the access tag in the policy.
 	TagName *string `json:"tag_name,omitempty"`
 
-	// Optional value of the access management tag in the policy.
+	// Optional value of the access tag in the policy.
 	TagValue *string `json:"tag_value,omitempty"`
 
 	// Optional top level policy field to sort results. Ascending sort is default. Descending sort available by prepending
@@ -1525,6 +2358,9 @@ type ListRolesOptions struct {
 	// Optional Policy Type.
 	PolicyType *string `json:"policy_type,omitempty"`
 
+	// Optional id of service group.
+	ServiceGroupID *string `json:"service_group_id,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -1564,69 +2400,242 @@ func (_options *ListRolesOptions) SetPolicyType(policyType string) *ListRolesOpt
 	return _options
 }
 
+// SetServiceGroupID : Allow user to set ServiceGroupID
+func (_options *ListRolesOptions) SetServiceGroupID(serviceGroupID string) *ListRolesOptions {
+	_options.ServiceGroupID = core.StringPtr(serviceGroupID)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListRolesOptions) SetHeaders(param map[string]string) *ListRolesOptions {
 	options.Headers = param
 	return options
 }
 
-// PatchPolicyOptions : The PatchPolicy options.
-type PatchPolicyOptions struct {
-	// The policy ID.
-	PolicyID *string `json:"policy_id" validate:"required,ne="`
+// ListV2PoliciesOptions : The ListV2Policies options.
+type ListV2PoliciesOptions struct {
+	// The account GUID in which the policies belong to.
+	AccountID *string `json:"account_id" validate:"required"`
 
-	// The revision number for updating a policy and must match the ETag value of the existing policy. The Etag can be
-	// retrieved using the GET /v1/policies/{policy_id} API and looking at the ETag response header.
-	IfMatch *string `json:"If-Match" validate:"required"`
+	// Language code for translations
+	// * `default` - English
+	// * `de` -  German (Standard)
+	// * `en` - English
+	// * `es` - Spanish (Spain)
+	// * `fr` - French (Standard)
+	// * `it` - Italian (Standard)
+	// * `ja` - Japanese
+	// * `ko` - Korean
+	// * `pt-br` - Portuguese (Brazil)
+	// * `zh-cn` - Chinese (Simplified, PRC)
+	// * `zh-tw` - (Chinese, Taiwan).
+	AcceptLanguage *string `json:"Accept-Language,omitempty"`
 
-	// The policy state.
+	// Optional IAM ID used to identify the subject.
+	IamID *string `json:"iam_id,omitempty"`
+
+	// Optional access group id.
+	AccessGroupID *string `json:"access_group_id,omitempty"`
+
+	// Optional type of policy.
+	Type *string `json:"type,omitempty"`
+
+	// Optional type of service.
+	ServiceType *string `json:"service_type,omitempty"`
+
+	// Optional name of service.
+	ServiceName *string `json:"service_name,omitempty"`
+
+	// Optional ID of service group.
+	ServiceGroupID *string `json:"service_group_id,omitempty"`
+
+	// Optional top level policy field to sort results. Ascending sort is default. Descending sort available by prepending
+	// '-' to field, for example, '-last_modified_at'. Note that last permit information is only included when
+	// 'format=include_last_permit', for example, "format=include_last_permit&sort=last_permit_at" Example fields that can
+	// be sorted on:
+	//   - 'id'
+	//   - 'type'
+	//   - 'href'
+	//   - 'created_at'
+	//   - 'created_by_id'
+	//   - 'last_modified_at'
+	//   - 'last_modified_by_id'
+	//   - 'state'
+	//   - 'last_permit_at'
+	//   - 'last_permit_frequency'.
+	Sort *string `json:"sort,omitempty"`
+
+	// Include additional data per policy returned
+	// * `include_last_permit` - returns details of when the policy last granted a permit decision and the number of times
+	// it has done so
+	// * `display` - returns the list of all actions included in each of the policy roles and translations for all relevant
+	// fields.
+	Format *string `json:"format,omitempty"`
+
+	// The state of the policy.
+	// * `active` - returns active policies
+	// * `deleted` - returns non-active policies.
 	State *string `json:"state,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
-// Constants associated with the PatchPolicyOptions.State property.
-// The policy state.
+// Constants associated with the ListV2PoliciesOptions.Type property.
+// Optional type of policy.
 const (
-	PatchPolicyOptionsStateActiveConst = "active"
-	PatchPolicyOptionsStateDeletedConst = "deleted"
+	ListV2PoliciesOptionsTypeAccessConst = "access"
+	ListV2PoliciesOptionsTypeAuthorizationConst = "authorization"
 )
 
-// NewPatchPolicyOptions : Instantiate PatchPolicyOptions
-func (*IamPolicyManagementV1) NewPatchPolicyOptions(policyID string, ifMatch string) *PatchPolicyOptions {
-	return &PatchPolicyOptions{
-		PolicyID: core.StringPtr(policyID),
-		IfMatch: core.StringPtr(ifMatch),
+// Constants associated with the ListV2PoliciesOptions.ServiceType property.
+// Optional type of service.
+const (
+	ListV2PoliciesOptionsServiceTypePlatformServiceConst = "platform_service"
+	ListV2PoliciesOptionsServiceTypeServiceConst = "service"
+)
+
+// Constants associated with the ListV2PoliciesOptions.Format property.
+// Include additional data per policy returned
+// * `include_last_permit` - returns details of when the policy last granted a permit decision and the number of times
+// it has done so
+// * `display` - returns the list of all actions included in each of the policy roles and translations for all relevant
+// fields.
+const (
+	ListV2PoliciesOptionsFormatDisplayConst = "display"
+	ListV2PoliciesOptionsFormatIncludeLastPermitConst = "include_last_permit"
+)
+
+// Constants associated with the ListV2PoliciesOptions.State property.
+// The state of the policy.
+// * `active` - returns active policies
+// * `deleted` - returns non-active policies.
+const (
+	ListV2PoliciesOptionsStateActiveConst = "active"
+	ListV2PoliciesOptionsStateDeletedConst = "deleted"
+)
+
+// NewListV2PoliciesOptions : Instantiate ListV2PoliciesOptions
+func (*IamPolicyManagementV1) NewListV2PoliciesOptions(accountID string) *ListV2PoliciesOptions {
+	return &ListV2PoliciesOptions{
+		AccountID: core.StringPtr(accountID),
 	}
 }
 
-// SetPolicyID : Allow user to set PolicyID
-func (_options *PatchPolicyOptions) SetPolicyID(policyID string) *PatchPolicyOptions {
-	_options.PolicyID = core.StringPtr(policyID)
+// SetAccountID : Allow user to set AccountID
+func (_options *ListV2PoliciesOptions) SetAccountID(accountID string) *ListV2PoliciesOptions {
+	_options.AccountID = core.StringPtr(accountID)
 	return _options
 }
 
-// SetIfMatch : Allow user to set IfMatch
-func (_options *PatchPolicyOptions) SetIfMatch(ifMatch string) *PatchPolicyOptions {
-	_options.IfMatch = core.StringPtr(ifMatch)
+// SetAcceptLanguage : Allow user to set AcceptLanguage
+func (_options *ListV2PoliciesOptions) SetAcceptLanguage(acceptLanguage string) *ListV2PoliciesOptions {
+	_options.AcceptLanguage = core.StringPtr(acceptLanguage)
+	return _options
+}
+
+// SetIamID : Allow user to set IamID
+func (_options *ListV2PoliciesOptions) SetIamID(iamID string) *ListV2PoliciesOptions {
+	_options.IamID = core.StringPtr(iamID)
+	return _options
+}
+
+// SetAccessGroupID : Allow user to set AccessGroupID
+func (_options *ListV2PoliciesOptions) SetAccessGroupID(accessGroupID string) *ListV2PoliciesOptions {
+	_options.AccessGroupID = core.StringPtr(accessGroupID)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *ListV2PoliciesOptions) SetType(typeVar string) *ListV2PoliciesOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetServiceType : Allow user to set ServiceType
+func (_options *ListV2PoliciesOptions) SetServiceType(serviceType string) *ListV2PoliciesOptions {
+	_options.ServiceType = core.StringPtr(serviceType)
+	return _options
+}
+
+// SetServiceName : Allow user to set ServiceName
+func (_options *ListV2PoliciesOptions) SetServiceName(serviceName string) *ListV2PoliciesOptions {
+	_options.ServiceName = core.StringPtr(serviceName)
+	return _options
+}
+
+// SetServiceGroupID : Allow user to set ServiceGroupID
+func (_options *ListV2PoliciesOptions) SetServiceGroupID(serviceGroupID string) *ListV2PoliciesOptions {
+	_options.ServiceGroupID = core.StringPtr(serviceGroupID)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListV2PoliciesOptions) SetSort(sort string) *ListV2PoliciesOptions {
+	_options.Sort = core.StringPtr(sort)
+	return _options
+}
+
+// SetFormat : Allow user to set Format
+func (_options *ListV2PoliciesOptions) SetFormat(format string) *ListV2PoliciesOptions {
+	_options.Format = core.StringPtr(format)
 	return _options
 }
 
 // SetState : Allow user to set State
-func (_options *PatchPolicyOptions) SetState(state string) *PatchPolicyOptions {
+func (_options *ListV2PoliciesOptions) SetState(state string) *ListV2PoliciesOptions {
 	_options.State = core.StringPtr(state)
 	return _options
 }
 
 // SetHeaders : Allow user to set Headers
-func (options *PatchPolicyOptions) SetHeaders(param map[string]string) *PatchPolicyOptions {
+func (options *ListV2PoliciesOptions) SetHeaders(param map[string]string) *ListV2PoliciesOptions {
 	options.Headers = param
 	return options
 }
 
-// UpdatePolicyOptions : The UpdatePolicy options.
-type UpdatePolicyOptions struct {
+// PolicyRole : A role associated with a policy.
+type PolicyRole struct {
+	// The role Cloud Resource Name (CRN) granted by the policy. Example CRN: 'crn:v1:bluemix:public:iam::::role:Editor'.
+	RoleID *string `json:"role_id" validate:"required"`
+
+	// The display name of the role.
+	DisplayName *string `json:"display_name,omitempty"`
+
+	// The description of the role.
+	Description *string `json:"description,omitempty"`
+}
+
+// NewPolicyRole : Instantiate PolicyRole (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewPolicyRole(roleID string) (_model *PolicyRole, err error) {
+	_model = &PolicyRole{
+		RoleID: core.StringPtr(roleID),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalPolicyRole unmarshals an instance of PolicyRole from the specified map of raw messages.
+func UnmarshalPolicyRole(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(PolicyRole)
+	err = core.UnmarshalPrimitive(m, "role_id", &obj.RoleID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ReplacePolicyOptions : The ReplacePolicy options.
+type ReplacePolicyOptions struct {
 	// The policy ID.
 	PolicyID *string `json:"policy_id" validate:"required,ne="`
 
@@ -1653,9 +2662,9 @@ type UpdatePolicyOptions struct {
 	Headers map[string]string
 }
 
-// NewUpdatePolicyOptions : Instantiate UpdatePolicyOptions
-func (*IamPolicyManagementV1) NewUpdatePolicyOptions(policyID string, ifMatch string, typeVar string, subjects []PolicySubject, roles []PolicyRole, resources []PolicyResource) *UpdatePolicyOptions {
-	return &UpdatePolicyOptions{
+// NewReplacePolicyOptions : Instantiate ReplacePolicyOptions
+func (*IamPolicyManagementV1) NewReplacePolicyOptions(policyID string, ifMatch string, typeVar string, subjects []PolicySubject, roles []PolicyRole, resources []PolicyResource) *ReplacePolicyOptions {
+	return &ReplacePolicyOptions{
 		PolicyID: core.StringPtr(policyID),
 		IfMatch: core.StringPtr(ifMatch),
 		Type: core.StringPtr(typeVar),
@@ -1666,55 +2675,55 @@ func (*IamPolicyManagementV1) NewUpdatePolicyOptions(policyID string, ifMatch st
 }
 
 // SetPolicyID : Allow user to set PolicyID
-func (_options *UpdatePolicyOptions) SetPolicyID(policyID string) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetPolicyID(policyID string) *ReplacePolicyOptions {
 	_options.PolicyID = core.StringPtr(policyID)
 	return _options
 }
 
 // SetIfMatch : Allow user to set IfMatch
-func (_options *UpdatePolicyOptions) SetIfMatch(ifMatch string) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetIfMatch(ifMatch string) *ReplacePolicyOptions {
 	_options.IfMatch = core.StringPtr(ifMatch)
 	return _options
 }
 
 // SetType : Allow user to set Type
-func (_options *UpdatePolicyOptions) SetType(typeVar string) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetType(typeVar string) *ReplacePolicyOptions {
 	_options.Type = core.StringPtr(typeVar)
 	return _options
 }
 
 // SetSubjects : Allow user to set Subjects
-func (_options *UpdatePolicyOptions) SetSubjects(subjects []PolicySubject) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetSubjects(subjects []PolicySubject) *ReplacePolicyOptions {
 	_options.Subjects = subjects
 	return _options
 }
 
 // SetRoles : Allow user to set Roles
-func (_options *UpdatePolicyOptions) SetRoles(roles []PolicyRole) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetRoles(roles []PolicyRole) *ReplacePolicyOptions {
 	_options.Roles = roles
 	return _options
 }
 
 // SetResources : Allow user to set Resources
-func (_options *UpdatePolicyOptions) SetResources(resources []PolicyResource) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetResources(resources []PolicyResource) *ReplacePolicyOptions {
 	_options.Resources = resources
 	return _options
 }
 
 // SetDescription : Allow user to set Description
-func (_options *UpdatePolicyOptions) SetDescription(description string) *UpdatePolicyOptions {
+func (_options *ReplacePolicyOptions) SetDescription(description string) *ReplacePolicyOptions {
 	_options.Description = core.StringPtr(description)
 	return _options
 }
 
 // SetHeaders : Allow user to set Headers
-func (options *UpdatePolicyOptions) SetHeaders(param map[string]string) *UpdatePolicyOptions {
+func (options *ReplacePolicyOptions) SetHeaders(param map[string]string) *ReplacePolicyOptions {
 	options.Headers = param
 	return options
 }
 
-// UpdateRoleOptions : The UpdateRole options.
-type UpdateRoleOptions struct {
+// ReplaceRoleOptions : The ReplaceRole options.
+type ReplaceRoleOptions struct {
 	// The role ID.
 	RoleID *string `json:"role_id" validate:"required,ne="`
 
@@ -1723,61 +2732,771 @@ type UpdateRoleOptions struct {
 	IfMatch *string `json:"If-Match" validate:"required"`
 
 	// The display name of the role that is shown in the console.
-	DisplayName *string `json:"display_name,omitempty"`
+	DisplayName *string `json:"display_name" validate:"required"`
+
+	// The actions of the role. For more information, see [IAM roles and
+	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
+	Actions []string `json:"actions" validate:"required"`
 
 	// The description of the role.
 	Description *string `json:"description,omitempty"`
-
-	// The actions of the role. Please refer to [IAM roles and
-	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
-	Actions []string `json:"actions,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
-// NewUpdateRoleOptions : Instantiate UpdateRoleOptions
-func (*IamPolicyManagementV1) NewUpdateRoleOptions(roleID string, ifMatch string) *UpdateRoleOptions {
-	return &UpdateRoleOptions{
+// NewReplaceRoleOptions : Instantiate ReplaceRoleOptions
+func (*IamPolicyManagementV1) NewReplaceRoleOptions(roleID string, ifMatch string, displayName string, actions []string) *ReplaceRoleOptions {
+	return &ReplaceRoleOptions{
 		RoleID: core.StringPtr(roleID),
 		IfMatch: core.StringPtr(ifMatch),
+		DisplayName: core.StringPtr(displayName),
+		Actions: actions,
 	}
 }
 
 // SetRoleID : Allow user to set RoleID
-func (_options *UpdateRoleOptions) SetRoleID(roleID string) *UpdateRoleOptions {
+func (_options *ReplaceRoleOptions) SetRoleID(roleID string) *ReplaceRoleOptions {
 	_options.RoleID = core.StringPtr(roleID)
 	return _options
 }
 
 // SetIfMatch : Allow user to set IfMatch
-func (_options *UpdateRoleOptions) SetIfMatch(ifMatch string) *UpdateRoleOptions {
+func (_options *ReplaceRoleOptions) SetIfMatch(ifMatch string) *ReplaceRoleOptions {
 	_options.IfMatch = core.StringPtr(ifMatch)
 	return _options
 }
 
 // SetDisplayName : Allow user to set DisplayName
-func (_options *UpdateRoleOptions) SetDisplayName(displayName string) *UpdateRoleOptions {
+func (_options *ReplaceRoleOptions) SetDisplayName(displayName string) *ReplaceRoleOptions {
 	_options.DisplayName = core.StringPtr(displayName)
 	return _options
 }
 
-// SetDescription : Allow user to set Description
-func (_options *UpdateRoleOptions) SetDescription(description string) *UpdateRoleOptions {
-	_options.Description = core.StringPtr(description)
-	return _options
-}
-
 // SetActions : Allow user to set Actions
-func (_options *UpdateRoleOptions) SetActions(actions []string) *UpdateRoleOptions {
+func (_options *ReplaceRoleOptions) SetActions(actions []string) *ReplaceRoleOptions {
 	_options.Actions = actions
 	return _options
 }
 
+// SetDescription : Allow user to set Description
+func (_options *ReplaceRoleOptions) SetDescription(description string) *ReplaceRoleOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
-func (options *UpdateRoleOptions) SetHeaders(param map[string]string) *UpdateRoleOptions {
+func (options *ReplaceRoleOptions) SetHeaders(param map[string]string) *ReplaceRoleOptions {
 	options.Headers = param
 	return options
+}
+
+// ReplaceV2PolicyOptions : The ReplaceV2Policy options.
+type ReplaceV2PolicyOptions struct {
+	// The policy ID.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The revision number for updating a policy and must match the ETag value of the existing policy. The Etag can be
+	// retrieved using the GET /v2/policies/{id} API and looking at the ETag response header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// Specifies the type of access granted by the policy.
+	Control *Control `json:"control" validate:"required"`
+
+	// The policy type; either 'access' or 'authorization'.
+	Type *string `json:"type" validate:"required"`
+
+	// Allows the customer to use their own words to record the purpose/context related to a policy.
+	Description *string `json:"description,omitempty"`
+
+	// The subject attributes for whom the policy grants access.
+	Subject *V2PolicySubject `json:"subject,omitempty"`
+
+	// The resource attributes to which the policy grants access.
+	Resource *V2PolicyResource `json:"resource,omitempty"`
+
+	// Indicates pattern of rule, either 'time-based-conditions:once', 'time-based-conditions:weekly:all-day', or
+	// 'time-based-conditions:weekly:custom-hours'.
+	Pattern *string `json:"pattern,omitempty"`
+
+	// Additional access conditions associated with the policy.
+	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the ReplaceV2PolicyOptions.Type property.
+// The policy type; either 'access' or 'authorization'.
+const (
+	ReplaceV2PolicyOptionsTypeAccessConst = "access"
+	ReplaceV2PolicyOptionsTypeAuthorizationConst = "authorization"
+)
+
+// NewReplaceV2PolicyOptions : Instantiate ReplaceV2PolicyOptions
+func (*IamPolicyManagementV1) NewReplaceV2PolicyOptions(id string, ifMatch string, control *Control, typeVar string) *ReplaceV2PolicyOptions {
+	return &ReplaceV2PolicyOptions{
+		ID: core.StringPtr(id),
+		IfMatch: core.StringPtr(ifMatch),
+		Control: control,
+		Type: core.StringPtr(typeVar),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *ReplaceV2PolicyOptions) SetID(id string) *ReplaceV2PolicyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *ReplaceV2PolicyOptions) SetIfMatch(ifMatch string) *ReplaceV2PolicyOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetControl : Allow user to set Control
+func (_options *ReplaceV2PolicyOptions) SetControl(control *Control) *ReplaceV2PolicyOptions {
+	_options.Control = control
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *ReplaceV2PolicyOptions) SetType(typeVar string) *ReplaceV2PolicyOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *ReplaceV2PolicyOptions) SetDescription(description string) *ReplaceV2PolicyOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetSubject : Allow user to set Subject
+func (_options *ReplaceV2PolicyOptions) SetSubject(subject *V2PolicySubject) *ReplaceV2PolicyOptions {
+	_options.Subject = subject
+	return _options
+}
+
+// SetResource : Allow user to set Resource
+func (_options *ReplaceV2PolicyOptions) SetResource(resource *V2PolicyResource) *ReplaceV2PolicyOptions {
+	_options.Resource = resource
+	return _options
+}
+
+// SetPattern : Allow user to set Pattern
+func (_options *ReplaceV2PolicyOptions) SetPattern(pattern string) *ReplaceV2PolicyOptions {
+	_options.Pattern = core.StringPtr(pattern)
+	return _options
+}
+
+// SetRule : Allow user to set Rule
+func (_options *ReplaceV2PolicyOptions) SetRule(rule V2PolicyRuleIntf) *ReplaceV2PolicyOptions {
+	_options.Rule = rule
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ReplaceV2PolicyOptions) SetHeaders(param map[string]string) *ReplaceV2PolicyOptions {
+	options.Headers = param
+	return options
+}
+
+// RoleAction : An action that can be performed by the policy subject when assigned role.
+type RoleAction struct {
+	// Unique identifier for action with structure service.resource.action e.g., cbr.rule.read.
+	ID *string `json:"id" validate:"required"`
+
+	// Service defined display name for action.
+	DisplayName *string `json:"display_name" validate:"required"`
+
+	// Service defined description for action.
+	Description *string `json:"description" validate:"required"`
+}
+
+// UnmarshalRoleAction unmarshals an instance of RoleAction from the specified map of raw messages.
+func UnmarshalRoleAction(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RoleAction)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Roles : A role associated with a policy.
+type Roles struct {
+	// The role Cloud Resource Name (CRN) granted by the policy. Example CRN: 'crn:v1:bluemix:public:iam::::role:Editor'.
+	RoleID *string `json:"role_id" validate:"required"`
+}
+
+// NewRoles : Instantiate Roles (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewRoles(roleID string) (_model *Roles, err error) {
+	_model = &Roles{
+		RoleID: core.StringPtr(roleID),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalRoles unmarshals an instance of Roles from the specified map of raw messages.
+func UnmarshalRoles(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(Roles)
+	err = core.UnmarshalPrimitive(m, "role_id", &obj.RoleID)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// RuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
+type RuleAttribute struct {
+	// The name of an attribute.
+	Key *string `json:"key" validate:"required"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator" validate:"required"`
+
+	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
+	// array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value" validate:"required"`
+}
+
+// Constants associated with the RuleAttribute.Operator property.
+// The operator of an attribute.
+const (
+	RuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	RuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
+	RuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
+	RuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
+	RuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
+	RuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	RuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
+	RuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
+	RuleAttributeOperatorTimelessthanConst = "timeLessThan"
+	RuleAttributeOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+)
+
+// NewRuleAttribute : Instantiate RuleAttribute (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewRuleAttribute(key string, operator string, value interface{}) (_model *RuleAttribute, err error) {
+	_model = &RuleAttribute{
+		Key: core.StringPtr(key),
+		Operator: core.StringPtr(operator),
+		Value: value,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalRuleAttribute unmarshals an instance of RuleAttribute from the specified map of raw messages.
+func UnmarshalRuleAttribute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(RuleAttribute)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// UpdatePolicyStateOptions : The UpdatePolicyState options.
+type UpdatePolicyStateOptions struct {
+	// The policy ID.
+	PolicyID *string `json:"policy_id" validate:"required,ne="`
+
+	// The revision number for updating a policy and must match the ETag value of the existing policy. The Etag can be
+	// retrieved using the GET /v1/policies/{policy_id} API and looking at the ETag response header.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// The policy state.
+	State *string `json:"state,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// Constants associated with the UpdatePolicyStateOptions.State property.
+// The policy state.
+const (
+	UpdatePolicyStateOptionsStateActiveConst = "active"
+	UpdatePolicyStateOptionsStateDeletedConst = "deleted"
+)
+
+// NewUpdatePolicyStateOptions : Instantiate UpdatePolicyStateOptions
+func (*IamPolicyManagementV1) NewUpdatePolicyStateOptions(policyID string, ifMatch string) *UpdatePolicyStateOptions {
+	return &UpdatePolicyStateOptions{
+		PolicyID: core.StringPtr(policyID),
+		IfMatch: core.StringPtr(ifMatch),
+	}
+}
+
+// SetPolicyID : Allow user to set PolicyID
+func (_options *UpdatePolicyStateOptions) SetPolicyID(policyID string) *UpdatePolicyStateOptions {
+	_options.PolicyID = core.StringPtr(policyID)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdatePolicyStateOptions) SetIfMatch(ifMatch string) *UpdatePolicyStateOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetState : Allow user to set State
+func (_options *UpdatePolicyStateOptions) SetState(state string) *UpdatePolicyStateOptions {
+	_options.State = core.StringPtr(state)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdatePolicyStateOptions) SetHeaders(param map[string]string) *UpdatePolicyStateOptions {
+	options.Headers = param
+	return options
+}
+
+// V2Policy : The core set of properties associated with the policy.
+type V2Policy struct {
+	// The policy type; either 'access' or 'authorization'.
+	Type *string `json:"type" validate:"required"`
+
+	// Allows the customer to use their own words to record the purpose/context related to a policy.
+	Description *string `json:"description,omitempty"`
+
+	// The subject attributes for whom the policy grants access.
+	Subject *V2PolicySubject `json:"subject,omitempty"`
+
+	// The resource attributes to which the policy grants access.
+	Resource *V2PolicyResource `json:"resource,omitempty"`
+
+	// Indicates pattern of rule, either 'time-based-conditions:once', 'time-based-conditions:weekly:all-day', or
+	// 'time-based-conditions:weekly:custom-hours'.
+	Pattern *string `json:"pattern,omitempty"`
+
+	// Additional access conditions associated with the policy.
+	Rule V2PolicyRuleIntf `json:"rule,omitempty"`
+
+	// The policy ID.
+	ID *string `json:"id,omitempty"`
+
+	// The href URL that links to the policies API by policy ID.
+	Href *string `json:"href,omitempty"`
+
+	Control ControlResponseIntf `json:"control" validate:"required"`
+
+	// The UTC timestamp when the policy was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// The iam ID of the entity that created the policy.
+	CreatedByID *string `json:"created_by_id,omitempty"`
+
+	// The UTC timestamp when the policy was last modified.
+	LastModifiedAt *strfmt.DateTime `json:"last_modified_at,omitempty"`
+
+	// The iam ID of the entity that last modified the policy.
+	LastModifiedByID *string `json:"last_modified_by_id,omitempty"`
+
+	// The policy state, either 'deleted' or 'active'.
+	State *string `json:"state" validate:"required"`
+
+	// The optional last permit time of policy, when passing query parameter format=include_last_permit.
+	LastPermitAt *string `json:"last_permit_at,omitempty"`
+
+	// The optional count of times that policy has provided a permit, when passing query parameter
+	// format=include_last_permit.
+	LastPermitFrequency *int64 `json:"last_permit_frequency,omitempty"`
+}
+
+// Constants associated with the V2Policy.Type property.
+// The policy type; either 'access' or 'authorization'.
+const (
+	V2PolicyTypeAccessConst = "access"
+	V2PolicyTypeAuthorizationConst = "authorization"
+)
+
+// Constants associated with the V2Policy.State property.
+// The policy state, either 'deleted' or 'active'.
+const (
+	V2PolicyStateActiveConst = "active"
+	V2PolicyStateDeletedConst = "deleted"
+)
+
+// UnmarshalV2Policy unmarshals an instance of V2Policy from the specified map of raw messages.
+func UnmarshalV2Policy(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2Policy)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "subject", &obj.Subject, UnmarshalV2PolicySubject)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "resource", &obj.Resource, UnmarshalV2PolicyResource)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pattern", &obj.Pattern)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "rule", &obj.Rule, UnmarshalV2PolicyRule)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "control", &obj.Control, UnmarshalControlResponse)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by_id", &obj.CreatedByID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_at", &obj.LastModifiedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_modified_by_id", &obj.LastModifiedByID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "state", &obj.State)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_permit_at", &obj.LastPermitAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "last_permit_frequency", &obj.LastPermitFrequency)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyCollection : A collection of policies.
+type V2PolicyCollection struct {
+	// List of policies.
+	Policies []V2Policy `json:"policies,omitempty"`
+}
+
+// UnmarshalV2PolicyCollection unmarshals an instance of V2PolicyCollection from the specified map of raw messages.
+func UnmarshalV2PolicyCollection(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyCollection)
+	err = core.UnmarshalModel(m, "policies", &obj.Policies, UnmarshalV2Policy)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyResource : The resource attributes to which the policy grants access.
+type V2PolicyResource struct {
+	// List of resource attributes to which the policy grants access.
+	Attributes []V2PolicyResourceAttribute `json:"attributes" validate:"required"`
+
+	// Optional list of resource tags to which the policy grants access.
+	Tags []V2PolicyResourceTag `json:"tags,omitempty"`
+}
+
+// NewV2PolicyResource : Instantiate V2PolicyResource (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicyResource(attributes []V2PolicyResourceAttribute) (_model *V2PolicyResource, err error) {
+	_model = &V2PolicyResource{
+		Attributes: attributes,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalV2PolicyResource unmarshals an instance of V2PolicyResource from the specified map of raw messages.
+func UnmarshalV2PolicyResource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyResource)
+	err = core.UnmarshalModel(m, "attributes", &obj.Attributes, UnmarshalV2PolicyResourceAttribute)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "tags", &obj.Tags, UnmarshalV2PolicyResourceTag)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyResourceAttribute : Resource attribute to which the policy grants access.
+type V2PolicyResourceAttribute struct {
+	// The name of a resource attribute.
+	Key *string `json:"key" validate:"required"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator" validate:"required"`
+
+	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
+	// array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value" validate:"required"`
+}
+
+// Constants associated with the V2PolicyResourceAttribute.Operator property.
+// The operator of an attribute.
+const (
+	V2PolicyResourceAttributeOperatorStringequalsConst = "stringEquals"
+	V2PolicyResourceAttributeOperatorStringexistsConst = "stringExists"
+	V2PolicyResourceAttributeOperatorStringmatchConst = "stringMatch"
+)
+
+// NewV2PolicyResourceAttribute : Instantiate V2PolicyResourceAttribute (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicyResourceAttribute(key string, operator string, value interface{}) (_model *V2PolicyResourceAttribute, err error) {
+	_model = &V2PolicyResourceAttribute{
+		Key: core.StringPtr(key),
+		Operator: core.StringPtr(operator),
+		Value: value,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalV2PolicyResourceAttribute unmarshals an instance of V2PolicyResourceAttribute from the specified map of raw messages.
+func UnmarshalV2PolicyResourceAttribute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyResourceAttribute)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyResourceTag : A tag associated with a resource.
+type V2PolicyResourceTag struct {
+	// The name of an access management tag.
+	Key *string `json:"key" validate:"required"`
+
+	// The value of an access management tag.
+	Value *string `json:"value" validate:"required"`
+
+	// The operator of an access management tag.
+	Operator *string `json:"operator" validate:"required"`
+}
+
+// Constants associated with the V2PolicyResourceTag.Operator property.
+// The operator of an access management tag.
+const (
+	V2PolicyResourceTagOperatorStringequalsConst = "stringEquals"
+	V2PolicyResourceTagOperatorStringmatchConst = "stringMatch"
+)
+
+// NewV2PolicyResourceTag : Instantiate V2PolicyResourceTag (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicyResourceTag(key string, value string, operator string) (_model *V2PolicyResourceTag, err error) {
+	_model = &V2PolicyResourceTag{
+		Key: core.StringPtr(key),
+		Value: core.StringPtr(value),
+		Operator: core.StringPtr(operator),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalV2PolicyResourceTag unmarshals an instance of V2PolicyResourceTag from the specified map of raw messages.
+func UnmarshalV2PolicyResourceTag(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyResourceTag)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyRule : Additional access conditions associated with the policy.
+// Models which "extend" this model:
+// - V2PolicyRuleRuleAttribute
+// - V2PolicyRuleRuleWithConditions
+type V2PolicyRule struct {
+	// The name of an attribute.
+	Key *string `json:"key,omitempty"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator,omitempty"`
+
+	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
+	// array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value,omitempty"`
+
+	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
+	// period.
+	Conditions []RuleAttribute `json:"conditions,omitempty"`
+}
+
+// Constants associated with the V2PolicyRule.Operator property.
+// The operator of an attribute.
+const (
+	V2PolicyRuleOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	V2PolicyRuleOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
+	V2PolicyRuleOperatorDatetimelessthanConst = "dateTimeLessThan"
+	V2PolicyRuleOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
+	V2PolicyRuleOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
+	V2PolicyRuleOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	V2PolicyRuleOperatorTimegreaterthanConst = "timeGreaterThan"
+	V2PolicyRuleOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
+	V2PolicyRuleOperatorTimelessthanConst = "timeLessThan"
+	V2PolicyRuleOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+)
+func (*V2PolicyRule) isaV2PolicyRule() bool {
+	return true
+}
+
+type V2PolicyRuleIntf interface {
+	isaV2PolicyRule() bool
+}
+
+// UnmarshalV2PolicyRule unmarshals an instance of V2PolicyRule from the specified map of raw messages.
+func UnmarshalV2PolicyRule(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyRule)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttribute)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicySubject : The subject attributes for whom the policy grants access.
+type V2PolicySubject struct {
+	// List of subject attributes associated with policy/.
+	Attributes []V2PolicySubjectAttribute `json:"attributes" validate:"required"`
+}
+
+// NewV2PolicySubject : Instantiate V2PolicySubject (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicySubject(attributes []V2PolicySubjectAttribute) (_model *V2PolicySubject, err error) {
+	_model = &V2PolicySubject{
+		Attributes: attributes,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalV2PolicySubject unmarshals an instance of V2PolicySubject from the specified map of raw messages.
+func UnmarshalV2PolicySubject(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicySubject)
+	err = core.UnmarshalModel(m, "attributes", &obj.Attributes, UnmarshalV2PolicySubjectAttribute)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicySubjectAttribute : Subject attribute for whom the policy grants access.
+type V2PolicySubjectAttribute struct {
+	// The name of a subject attribute, e.g., iam_id, access_group_id.
+	Key *string `json:"key" validate:"required"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator" validate:"required"`
+
+	// The value of the ID of the subject, e.g., service ID, access group ID, IAM ID.
+	Value *string `json:"value" validate:"required"`
+}
+
+// Constants associated with the V2PolicySubjectAttribute.Operator property.
+// The operator of an attribute.
+const (
+	V2PolicySubjectAttributeOperatorStringequalsConst = "stringEquals"
+)
+
+// NewV2PolicySubjectAttribute : Instantiate V2PolicySubjectAttribute (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicySubjectAttribute(key string, operator string, value string) (_model *V2PolicySubjectAttribute, err error) {
+	_model = &V2PolicySubjectAttribute{
+		Key: core.StringPtr(key),
+		Operator: core.StringPtr(operator),
+		Value: core.StringPtr(value),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalV2PolicySubjectAttribute unmarshals an instance of V2PolicySubjectAttribute from the specified map of raw messages.
+func UnmarshalV2PolicySubjectAttribute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicySubjectAttribute)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // CustomRole : An additional set of properties associated with a role.
@@ -1786,27 +3505,27 @@ type CustomRole struct {
 	ID *string `json:"id,omitempty"`
 
 	// The display name of the role that is shown in the console.
-	DisplayName *string `json:"display_name,omitempty"`
+	DisplayName *string `json:"display_name" validate:"required"`
 
 	// The description of the role.
 	Description *string `json:"description,omitempty"`
 
-	// The actions of the role. Please refer to [IAM roles and
+	// The actions of the role. For more information, see [IAM roles and
 	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
-	Actions []string `json:"actions,omitempty"`
+	Actions []string `json:"actions" validate:"required"`
 
 	// The role Cloud Resource Name (CRN). Example CRN:
 	// 'crn:v1:ibmcloud:public:iam-access-management::a/exampleAccountId::customRole:ExampleRoleName'.
 	CRN *string `json:"crn,omitempty"`
 
 	// The name of the role that is used in the CRN. Can only be alphanumeric and has to be capitalized.
-	Name *string `json:"name,omitempty"`
+	Name *string `json:"name" validate:"required"`
 
 	// The account GUID.
-	AccountID *string `json:"account_id,omitempty"`
+	AccountID *string `json:"account_id" validate:"required"`
 
 	// The service name.
-	ServiceName *string `json:"service_name,omitempty"`
+	ServiceName *string `json:"service_name" validate:"required"`
 
 	// The UTC timestamp when the role was created.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
@@ -1889,19 +3608,19 @@ type Policy struct {
 	ID *string `json:"id,omitempty"`
 
 	// The policy type; either 'access' or 'authorization'.
-	Type *string `json:"type,omitempty"`
+	Type *string `json:"type" validate:"required"`
 
 	// Customer-defined description.
 	Description *string `json:"description,omitempty"`
 
 	// The subjects associated with a policy.
-	Subjects []PolicySubject `json:"subjects,omitempty"`
+	Subjects []PolicySubject `json:"subjects" validate:"required"`
 
 	// A set of role cloud resource names (CRNs) granted by the policy.
-	Roles []PolicyRole `json:"roles,omitempty"`
+	Roles []PolicyRole `json:"roles" validate:"required"`
 
 	// The resources associated with a policy.
-	Resources []PolicyResource `json:"resources,omitempty"`
+	Resources []PolicyResource `json:"resources" validate:"required"`
 
 	// The href link back to the policy.
 	Href *string `json:"href,omitempty"`
@@ -2025,46 +3744,6 @@ func UnmarshalPolicyResource(m map[string]json.RawMessage, result interface{}) (
 	return
 }
 
-// PolicyRole : A role associated with a policy.
-type PolicyRole struct {
-	// The role Cloud Resource Name (CRN) granted by the policy. Example CRN: 'crn:v1:bluemix:public:iam::::role:Editor'.
-	RoleID *string `json:"role_id" validate:"required"`
-
-	// The display name of the role.
-	DisplayName *string `json:"display_name,omitempty"`
-
-	// The description of the role.
-	Description *string `json:"description,omitempty"`
-}
-
-// NewPolicyRole : Instantiate PolicyRole (Generic Model Constructor)
-func (*IamPolicyManagementV1) NewPolicyRole(roleID string) (_model *PolicyRole, err error) {
-	_model = &PolicyRole{
-		RoleID: core.StringPtr(roleID),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-// UnmarshalPolicyRole unmarshals an instance of PolicyRole from the specified map of raw messages.
-func UnmarshalPolicyRole(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(PolicyRole)
-	err = core.UnmarshalPrimitive(m, "role_id", &obj.RoleID)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "display_name", &obj.DisplayName)
-	if err != nil {
-		return
-	}
-	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
-	if err != nil {
-		return
-	}
-	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
-	return
-}
-
 // PolicySubject : The subject attribute values that must match in order for this policy to apply in a permission decision.
 type PolicySubject struct {
 	// List of subject attributes.
@@ -2167,18 +3846,28 @@ func UnmarshalResourceTag(m map[string]json.RawMessage, result interface{}) (err
 // Role : A role resource.
 type Role struct {
 	// The display name of the role that is shown in the console.
-	DisplayName *string `json:"display_name,omitempty"`
+	DisplayName *string `json:"display_name" validate:"required"`
 
 	// The description of the role.
 	Description *string `json:"description,omitempty"`
 
-	// The actions of the role. Please refer to [IAM roles and
+	// The actions of the role. For more information, see [IAM roles and
 	// actions](https://cloud.ibm.com/docs/account?topic=account-iam-service-roles-actions).
-	Actions []string `json:"actions,omitempty"`
+	Actions []string `json:"actions" validate:"required"`
 
 	// The role Cloud Resource Name (CRN). Example CRN:
 	// 'crn:v1:ibmcloud:public:iam-access-management::a/exampleAccountId::customRole:ExampleRoleName'.
 	CRN *string `json:"crn,omitempty"`
+}
+
+// NewRole : Instantiate Role (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewRole(displayName string, actions []string) (_model *Role, err error) {
+	_model = &Role{
+		DisplayName: core.StringPtr(displayName),
+		Actions: actions,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
 }
 
 // UnmarshalRole unmarshals an instance of Role from the specified map of raw messages.
@@ -2262,6 +3951,160 @@ func UnmarshalSubjectAttribute(m map[string]json.RawMessage, result interface{})
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ControlResponseControl : Specifies the type of access granted by the policy.
+// This model "extends" ControlResponse
+type ControlResponseControl struct {
+	// Permission granted by the policy.
+	Grant *Grant `json:"grant" validate:"required"`
+}
+
+func (*ControlResponseControl) isaControlResponse() bool {
+	return true
+}
+
+// UnmarshalControlResponseControl unmarshals an instance of ControlResponseControl from the specified map of raw messages.
+func UnmarshalControlResponseControl(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ControlResponseControl)
+	err = core.UnmarshalModel(m, "grant", &obj.Grant, UnmarshalGrant)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ControlResponseControlWithEnrichedRoles : Specifies the type of access granted by the policy with additional role information.
+// This model "extends" ControlResponse
+type ControlResponseControlWithEnrichedRoles struct {
+	// Permission granted by the policy with translated roles and additional role information.
+	Grant *GrantWithEnrichedRoles `json:"grant" validate:"required"`
+}
+
+func (*ControlResponseControlWithEnrichedRoles) isaControlResponse() bool {
+	return true
+}
+
+// UnmarshalControlResponseControlWithEnrichedRoles unmarshals an instance of ControlResponseControlWithEnrichedRoles from the specified map of raw messages.
+func UnmarshalControlResponseControlWithEnrichedRoles(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ControlResponseControlWithEnrichedRoles)
+	err = core.UnmarshalModel(m, "grant", &obj.Grant, UnmarshalGrantWithEnrichedRoles)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyRuleRuleAttribute : Rule that specifies additional access granted (e.g., time-based condition).
+// This model "extends" V2PolicyRule
+type V2PolicyRuleRuleAttribute struct {
+	// The name of an attribute.
+	Key *string `json:"key" validate:"required"`
+
+	// The operator of an attribute.
+	Operator *string `json:"operator" validate:"required"`
+
+	// The value of a rule or resource attribute; can be boolean or string for resource attribute. Can be string or an
+	// array of strings (e.g., array of days to permit access) for rule attribute.
+	Value interface{} `json:"value" validate:"required"`
+}
+
+// Constants associated with the V2PolicyRuleRuleAttribute.Operator property.
+// The operator of an attribute.
+const (
+	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanConst = "dateTimeGreaterThan"
+	V2PolicyRuleRuleAttributeOperatorDatetimegreaterthanorequalsConst = "dateTimeGreaterThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDatetimelessthanConst = "dateTimeLessThan"
+	V2PolicyRuleRuleAttributeOperatorDatetimelessthanorequalsConst = "dateTimeLessThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorDayofweekanyofConst = "dayOfWeekAnyOf"
+	V2PolicyRuleRuleAttributeOperatorDayofweekequalsConst = "dayOfWeekEquals"
+	V2PolicyRuleRuleAttributeOperatorTimegreaterthanConst = "timeGreaterThan"
+	V2PolicyRuleRuleAttributeOperatorTimegreaterthanorequalsConst = "timeGreaterThanOrEquals"
+	V2PolicyRuleRuleAttributeOperatorTimelessthanConst = "timeLessThan"
+	V2PolicyRuleRuleAttributeOperatorTimelessthanorequalsConst = "timeLessThanOrEquals"
+)
+
+// NewV2PolicyRuleRuleAttribute : Instantiate V2PolicyRuleRuleAttribute (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicyRuleRuleAttribute(key string, operator string, value interface{}) (_model *V2PolicyRuleRuleAttribute, err error) {
+	_model = &V2PolicyRuleRuleAttribute{
+		Key: core.StringPtr(key),
+		Operator: core.StringPtr(operator),
+		Value: value,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*V2PolicyRuleRuleAttribute) isaV2PolicyRule() bool {
+	return true
+}
+
+// UnmarshalV2PolicyRuleRuleAttribute unmarshals an instance of V2PolicyRuleRuleAttribute from the specified map of raw messages.
+func UnmarshalV2PolicyRuleRuleAttribute(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyRuleRuleAttribute)
+	err = core.UnmarshalPrimitive(m, "key", &obj.Key)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "value", &obj.Value)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// V2PolicyRuleRuleWithConditions : Rule that specifies additional access granted (e.g., time-based condition) accross multiple conditions.
+// This model "extends" V2PolicyRule
+type V2PolicyRuleRuleWithConditions struct {
+	// Operator to evaluate conditions.
+	Operator *string `json:"operator" validate:"required"`
+
+	// List of conditions associated with a policy, e.g., time-based conditions that grant access over a certain time
+	// period.
+	Conditions []RuleAttribute `json:"conditions" validate:"required"`
+}
+
+// Constants associated with the V2PolicyRuleRuleWithConditions.Operator property.
+// Operator to evaluate conditions.
+const (
+	V2PolicyRuleRuleWithConditionsOperatorAndConst = "and"
+	V2PolicyRuleRuleWithConditionsOperatorOrConst = "or"
+)
+
+// NewV2PolicyRuleRuleWithConditions : Instantiate V2PolicyRuleRuleWithConditions (Generic Model Constructor)
+func (*IamPolicyManagementV1) NewV2PolicyRuleRuleWithConditions(operator string, conditions []RuleAttribute) (_model *V2PolicyRuleRuleWithConditions, err error) {
+	_model = &V2PolicyRuleRuleWithConditions{
+		Operator: core.StringPtr(operator),
+		Conditions: conditions,
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*V2PolicyRuleRuleWithConditions) isaV2PolicyRule() bool {
+	return true
+}
+
+// UnmarshalV2PolicyRuleRuleWithConditions unmarshals an instance of V2PolicyRuleRuleWithConditions from the specified map of raw messages.
+func UnmarshalV2PolicyRuleRuleWithConditions(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(V2PolicyRuleRuleWithConditions)
+	err = core.UnmarshalPrimitive(m, "operator", &obj.Operator)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "conditions", &obj.Conditions, UnmarshalRuleAttribute)
 	if err != nil {
 		return
 	}

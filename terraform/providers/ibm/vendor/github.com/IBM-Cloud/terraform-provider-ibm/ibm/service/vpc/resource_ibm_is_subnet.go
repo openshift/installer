@@ -62,10 +62,15 @@ func ResourceIBMISSubnet() *schema.Resource {
 			Delete: schema.DefaultTimeout(10 * time.Minute),
 		},
 
-		CustomizeDiff: customdiff.Sequence(
-			func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
-				return flex.ResourceTagsCustomizeDiff(diff)
-			},
+		CustomizeDiff: customdiff.All(
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceTagsCustomizeDiff(diff)
+				}),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
+				}),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -253,7 +258,7 @@ func ResourceIBMISSubnetValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `^([ ]*[A-Za-z0-9:_.-]+[ ]*)+$`,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
 			MinValueLength:             1,
 			MaxValueLength:             128})
 

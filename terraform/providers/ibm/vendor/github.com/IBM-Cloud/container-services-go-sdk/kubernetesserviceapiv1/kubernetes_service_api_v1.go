@@ -2003,18 +2003,21 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) GetLBConfigWithContext(ctx c
 // to all load balancers that expose ALBs in the cluster.
 //
 // Available features:
-//   + `proxyProtocol`:
-//     + Limitations:
-//       + This feature is supported only for VPC Gen 2 clusters that run Kubernetes version 1.18 or later.
-//       + This feature is cluster-level, therefore `type` field of the request must be empty.
-//     + Configuration:
-//       + `enable`: Set to `true` to enable or `false` to disable the PROXY protocol for the ALB load balancers. The
+//   - `proxyProtocol`:
+//   - Limitations:
+//   - This feature is supported only for VPC Gen 2 clusters that run Kubernetes version 1.18 or later.
+//   - This feature is cluster-level, therefore `type` field of the request must be empty.
+//   - Configuration:
+//   - `enable`: Set to `true` to enable or `false` to disable the PROXY protocol for the ALB load balancers. The
+//
 // PROXY protocol enables load balancers to pass client connection information that is contained in headers on the
 // client request, including the client IP address, the proxy server IP address, and both port numbers, to ALBs.
-//       + `headerTimeout`: The timeout value, in seconds, for the load balancer to receive the PROXY protocol headers
+//   - `headerTimeout`: The timeout value, in seconds, for the load balancer to receive the PROXY protocol headers
+//
 // that contain the client connection information. This option has effect only on ALBs running the Kubernetes Ingress
 // image. Default: `5`
-//       + `cidr`: Load balancer CIDRs from which ALBs process information in PROXY protocol headers. If requests that
+//   - `cidr`: Load balancer CIDRs from which ALBs process information in PROXY protocol headers. If requests that
+//
 // contain PROXY headers originate from load balancers in other IP ranges, the information in the headers is not process
 // by the ALB. This option has effect only on ALBs running the Kubernetes Ingress image. Default: `0.0.0.0/0`.
 func (kubernetesServiceApi *KubernetesServiceApiV1) PatchLBConfig(patchLBConfigOptions *PatchLBConfigOptions) (response *core.DetailedResponse, err error) {
@@ -9739,6 +9742,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteClusterWithCo
 	if createSatelliteClusterOptions.Name != nil {
 		body["name"] = createSatelliteClusterOptions.Name
 	}
+	if createSatelliteClusterOptions.OperatingSystem != nil {
+		body["operatingSystem"] = createSatelliteClusterOptions.OperatingSystem
+	}
 	if createSatelliteClusterOptions.PodSubnet != nil {
 		body["podSubnet"] = createSatelliteClusterOptions.PodSubnet
 	}
@@ -9753,6 +9759,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteClusterWithCo
 	}
 	if createSatelliteClusterOptions.Zone != nil {
 		body["zone"] = createSatelliteClusterOptions.Zone
+	}
+	if createSatelliteClusterOptions.InfrastructureTopology != nil {
+		body["infrastructureTopology"] = createSatelliteClusterOptions.InfrastructureTopology
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -9847,6 +9856,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteWorkerPoolWit
 	}
 	if createSatelliteWorkerPoolOptions.Name != nil {
 		body["name"] = createSatelliteWorkerPoolOptions.Name
+	}
+	if createSatelliteWorkerPoolOptions.OperatingSystem != nil {
+		body["operatingSystem"] = createSatelliteWorkerPoolOptions.OperatingSystem
 	}
 	if createSatelliteWorkerPoolOptions.WorkerCount != nil {
 		body["workerCount"] = createSatelliteWorkerPoolOptions.WorkerCount
@@ -10655,6 +10667,9 @@ func (kubernetesServiceApi *KubernetesServiceApiV1) CreateSatelliteClusterRemote
 	}
 	if createSatelliteClusterRemoteOptions.Name != nil {
 		body["name"] = createSatelliteClusterRemoteOptions.Name
+	}
+	if createSatelliteClusterRemoteOptions.OperatingSystem != nil {
+		body["operatingSystem"] = createSatelliteClusterRemoteOptions.OperatingSystem
 	}
 	if createSatelliteClusterRemoteOptions.PodSubnet != nil {
 		body["podSubnet"] = createSatelliteClusterRemoteOptions.PodSubnet
@@ -16920,7 +16935,7 @@ type AttachSatelliteHostOptions struct {
 	// Key-value pairs to label the host, such as cpu=4 to describe the host capabilities.
 	Labels map[string]string
 
-	//The operating system of the hosts to attach to the location. Options are RHEL or RHCOS
+	//Optional: The operating system of the hosts to attach to the location. Options are RHEL or RHCOS
 	OperatingSystem *string
 
 	// The ID of the resource group that the Satellite location is in. To list the resource group ID of the location, use
@@ -20112,6 +20127,9 @@ type CreateSatelliteClusterOptions struct {
 	// The unique name for the new IBM Cloud Satellite cluster.
 	Name *string
 
+	//Optional: The operating system of the hosts to add to the cluster. Options are RHEL7, RHEL8, or RHCOS.
+	OperatingSystem *string
+
 	// Optional: User provided value for the pod subnet.
 	PodSubnet *string
 
@@ -20133,6 +20151,9 @@ type CreateSatelliteClusterOptions struct {
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
+
+	// User provided value for single node option.
+	InfrastructureTopology *string
 }
 
 // NewCreateSatelliteClusterOptions : Instantiate CreateSatelliteClusterOptions
@@ -20167,6 +20188,18 @@ func (options *CreateSatelliteClusterOptions) SetLabels(labels map[string]string
 // SetName : Allow user to set Name
 func (options *CreateSatelliteClusterOptions) SetName(name string) *CreateSatelliteClusterOptions {
 	options.Name = core.StringPtr(name)
+	return options
+}
+
+// SetOperatingSystem : Allow user to set OperatingSystem
+func (options *CreateSatelliteClusterOptions) SetOperatingSystem(operatingSystem string) *CreateSatelliteClusterOptions {
+	options.OperatingSystem = core.StringPtr(operatingSystem)
+	return options
+}
+
+// SetInfrastructureTopology : Allow user to set InfrastructureTopology
+func (options *CreateSatelliteClusterOptions) SetInfrastructureTopology(infrastructureTopology string) *CreateSatelliteClusterOptions {
+	options.InfrastructureTopology = core.StringPtr(infrastructureTopology)
 	return options
 }
 
@@ -20235,6 +20268,9 @@ type CreateSatelliteClusterRemoteOptions struct {
 	// The unique name for the new IBM Cloud Satellite cluster.
 	Name *string
 
+	//Optional: The operating system of the hosts to add to the cluster. Options are RHEL7, RHEL8, or RHCOS.
+	OperatingSystem *string
+
 	// Optional: User provided value for the pod subnet.
 	PodSubnet *string
 
@@ -20298,6 +20334,12 @@ func (options *CreateSatelliteClusterRemoteOptions) SetLabels(labels map[string]
 // SetName : Allow user to set Name
 func (options *CreateSatelliteClusterRemoteOptions) SetName(name string) *CreateSatelliteClusterRemoteOptions {
 	options.Name = core.StringPtr(name)
+	return options
+}
+
+// SetOperatingSystem : Allow user to set OperatingSystem
+func (options *CreateSatelliteClusterRemoteOptions) SetOperatingSystem(operatingSystem string) *CreateSatelliteClusterRemoteOptions {
+	options.OperatingSystem = core.StringPtr(operatingSystem)
 	return options
 }
 
@@ -20471,6 +20513,9 @@ type CreateSatelliteWorkerPoolOptions struct {
 
 	Name *string
 
+	//Optional: The operating system of the hosts in the worker pool. Options are RHEL7, RHEL8, or RHCOS.
+	OperatingSystem *string
+
 	WorkerCount *int64
 
 	// The ID of the resource group that the Satellite location is in. To list the resource group ID of the location, use
@@ -20537,6 +20582,12 @@ func (options *CreateSatelliteWorkerPoolOptions) SetLabels(labels map[string]str
 // SetName : Allow user to set Name
 func (options *CreateSatelliteWorkerPoolOptions) SetName(name string) *CreateSatelliteWorkerPoolOptions {
 	options.Name = core.StringPtr(name)
+	return options
+}
+
+// SetOperatingSystem : Allow user to set OperatingSystem
+func (options *CreateSatelliteWorkerPoolOptions) SetOperatingSystem(operatingSystem string) *CreateSatelliteWorkerPoolOptions {
+	options.OperatingSystem = core.StringPtr(operatingSystem)
 	return options
 }
 
@@ -23487,6 +23538,8 @@ type GetClusterResponse struct {
 
 	Name *string `json:"name,omitempty"`
 
+	InfrastructureTopology *string `json:"infrastructureTopology,omitempty"`
+
 	PodSubnet *string `json:"podSubnet,omitempty"`
 
 	Provider *string `json:"provider,omitempty"`
@@ -23585,6 +23638,10 @@ func UnmarshalGetClusterResponse(m map[string]json.RawMessage, result interface{
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "infrastructureTopology", &obj.InfrastructureTopology)
 	if err != nil {
 		return
 	}
@@ -25981,6 +26038,8 @@ type GetWorkerPoolResponse struct {
 
 	OpenshiftLicense *string `json:"openshiftLicense,omitempty"`
 
+	OperatingSystem *string `json:"operatingSystem,omitempty"`
+
 	PoolName *string `json:"poolName,omitempty"`
 
 	Provider *string `json:"provider,omitempty"`
@@ -26032,6 +26091,10 @@ func UnmarshalGetWorkerPoolResponse(m map[string]json.RawMessage, result interfa
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "openshiftLicense", &obj.OpenshiftLicense)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "operatingSystem", &obj.OperatingSystem)
 	if err != nil {
 		return
 	}

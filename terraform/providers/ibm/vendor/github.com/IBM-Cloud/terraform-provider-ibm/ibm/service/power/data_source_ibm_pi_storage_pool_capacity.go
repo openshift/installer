@@ -76,7 +76,7 @@ func dataSourceIBMPIStoragePoolCapacityRead(ctx context.Context, d *schema.Resou
 
 	d.SetId(fmt.Sprintf("%s/%s", cloudInstanceID, storagePool))
 
-	d.Set(MaxAllocationSize, sp.MaxAllocationSize)
+	d.Set(MaxAllocationSize, *sp.MaxAllocationSize)
 	d.Set(StorageType, sp.StorageType)
 	d.Set(TotalCapacity, sp.TotalCapacity)
 

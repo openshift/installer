@@ -69,7 +69,8 @@ func NewPcloudPvminstancesOperationsPostOK() *PcloudPvminstancesOperationsPostOK
 	return &PcloudPvminstancesOperationsPostOK{}
 }
 
-/* PcloudPvminstancesOperationsPostOK describes a response with status code 200, with default header values.
+/*
+PcloudPvminstancesOperationsPostOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +78,39 @@ type PcloudPvminstancesOperationsPostOK struct {
 	Payload models.Object
 }
 
+// IsSuccess returns true when this pcloud pvminstances operations post o k response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post o k response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post o k response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post o k response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post o k response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudPvminstancesOperationsPostOK) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudPvminstancesOperationsPostOK) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudPvminstancesOperationsPostOK) GetPayload() models.Object {
 	return o.Payload
 }
@@ -99,7 +130,8 @@ func NewPcloudPvminstancesOperationsPostBadRequest() *PcloudPvminstancesOperatio
 	return &PcloudPvminstancesOperationsPostBadRequest{}
 }
 
-/* PcloudPvminstancesOperationsPostBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudPvminstancesOperationsPostBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -107,9 +139,39 @@ type PcloudPvminstancesOperationsPostBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances operations post bad request response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post bad request response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post bad request response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post bad request response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post bad request response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudPvminstancesOperationsPostBadRequest) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudPvminstancesOperationsPostBadRequest) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudPvminstancesOperationsPostBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -131,7 +193,8 @@ func NewPcloudPvminstancesOperationsPostUnauthorized() *PcloudPvminstancesOperat
 	return &PcloudPvminstancesOperationsPostUnauthorized{}
 }
 
-/* PcloudPvminstancesOperationsPostUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudPvminstancesOperationsPostUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -139,9 +202,39 @@ type PcloudPvminstancesOperationsPostUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances operations post unauthorized response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post unauthorized response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post unauthorized response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post unauthorized response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post unauthorized response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudPvminstancesOperationsPostUnauthorized) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudPvminstancesOperationsPostUnauthorized) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudPvminstancesOperationsPostUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -163,7 +256,8 @@ func NewPcloudPvminstancesOperationsPostNotFound() *PcloudPvminstancesOperations
 	return &PcloudPvminstancesOperationsPostNotFound{}
 }
 
-/* PcloudPvminstancesOperationsPostNotFound describes a response with status code 404, with default header values.
+/*
+PcloudPvminstancesOperationsPostNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -171,9 +265,39 @@ type PcloudPvminstancesOperationsPostNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances operations post not found response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post not found response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post not found response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post not found response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post not found response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudPvminstancesOperationsPostNotFound) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudPvminstancesOperationsPostNotFound) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudPvminstancesOperationsPostNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -195,7 +319,8 @@ func NewPcloudPvminstancesOperationsPostUnprocessableEntity() *PcloudPvminstance
 	return &PcloudPvminstancesOperationsPostUnprocessableEntity{}
 }
 
-/* PcloudPvminstancesOperationsPostUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+PcloudPvminstancesOperationsPostUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -203,9 +328,39 @@ type PcloudPvminstancesOperationsPostUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances operations post unprocessable entity response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post unprocessable entity response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post unprocessable entity response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post unprocessable entity response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud pvminstances operations post unprocessable entity response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *PcloudPvminstancesOperationsPostUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -227,7 +382,8 @@ func NewPcloudPvminstancesOperationsPostInternalServerError() *PcloudPvminstance
 	return &PcloudPvminstancesOperationsPostInternalServerError{}
 }
 
-/* PcloudPvminstancesOperationsPostInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudPvminstancesOperationsPostInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -235,9 +391,39 @@ type PcloudPvminstancesOperationsPostInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud pvminstances operations post internal server error response has a 2xx status code
+func (o *PcloudPvminstancesOperationsPostInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud pvminstances operations post internal server error response has a 3xx status code
+func (o *PcloudPvminstancesOperationsPostInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud pvminstances operations post internal server error response has a 4xx status code
+func (o *PcloudPvminstancesOperationsPostInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud pvminstances operations post internal server error response has a 5xx status code
+func (o *PcloudPvminstancesOperationsPostInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud pvminstances operations post internal server error response a status code equal to that given
+func (o *PcloudPvminstancesOperationsPostInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudPvminstancesOperationsPostInternalServerError) Error() string {
 	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudPvminstancesOperationsPostInternalServerError) String() string {
+	return fmt.Sprintf("[POST /pcloud/v1/cloud-instances/{cloud_instance_id}/pvm-instances/{pvm_instance_id}/operations][%d] pcloudPvminstancesOperationsPostInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudPvminstancesOperationsPostInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

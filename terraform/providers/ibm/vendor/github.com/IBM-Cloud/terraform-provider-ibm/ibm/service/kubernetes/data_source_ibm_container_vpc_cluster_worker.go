@@ -8,6 +8,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -25,6 +26,9 @@ func DataSourceIBMContainerVPCClusterWorker() *schema.Resource {
 				Description: "Name or ID of the cluster",
 				Type:        schema.TypeString,
 				Required:    true,
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_vpc_cluster_worker",
+					"cluster_name_id"),
 			},
 			"flavor": {
 				Description: "flavor of the worker",
@@ -88,6 +92,20 @@ func DataSourceIBMContainerVPCClusterWorker() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMContainerVPCClusterWorkerValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster_name_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerVPCClusterWorkerValidator := validate.ResourceValidator{ResourceName: "ibm_container_vpc_cluster_worker", Schema: validateSchema}
+	return &iBMContainerVPCClusterWorkerValidator
 }
 
 func dataSourceIBMContainerVPCClusterWorkerRead(d *schema.ResourceData, meta interface{}) error {

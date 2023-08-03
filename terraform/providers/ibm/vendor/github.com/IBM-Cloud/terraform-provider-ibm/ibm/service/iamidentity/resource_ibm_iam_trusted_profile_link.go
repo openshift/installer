@@ -10,6 +10,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
@@ -30,6 +31,8 @@ func ResourceIBMIAMTrustedProfileLink() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "ID of the trusted profile.",
+				ValidateFunc: validate.InvokeValidator("ibm_iam_trusted_profile_link",
+					"profile_id"),
 			},
 			"cr_type": {
 				Type:        schema.TypeString,
@@ -92,6 +95,21 @@ func ResourceIBMIAMTrustedProfileLink() *schema.Resource {
 			},
 		},
 	}
+}
+
+func ResourceIBMIAMTrustedProfileLinkValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "profile_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:trusted_profile", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIAMTrustedProfileLinkValidator := validate.ResourceValidator{ResourceName: "ibm_iam_trusted_profile_link", Schema: validateSchema}
+	return &iBMIAMTrustedProfileLinkValidator
 }
 
 func resourceIBMIamTrustedProfileLinkCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

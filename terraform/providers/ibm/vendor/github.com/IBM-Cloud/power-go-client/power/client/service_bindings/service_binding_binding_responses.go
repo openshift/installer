@@ -69,7 +69,8 @@ func NewServiceBindingBindingOK() *ServiceBindingBindingOK {
 	return &ServiceBindingBindingOK{}
 }
 
-/* ServiceBindingBindingOK describes a response with status code 200, with default header values.
+/*
+ServiceBindingBindingOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +78,39 @@ type ServiceBindingBindingOK struct {
 	Payload *models.ServiceBinding
 }
 
+// IsSuccess returns true when this service binding binding o k response has a 2xx status code
+func (o *ServiceBindingBindingOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service binding binding o k response has a 3xx status code
+func (o *ServiceBindingBindingOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding binding o k response has a 4xx status code
+func (o *ServiceBindingBindingOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service binding binding o k response has a 5xx status code
+func (o *ServiceBindingBindingOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding binding o k response a status code equal to that given
+func (o *ServiceBindingBindingOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBindingBindingOK) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBindingBindingOK) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBindingBindingOK) GetPayload() *models.ServiceBinding {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewServiceBindingBindingCreated() *ServiceBindingBindingCreated {
 	return &ServiceBindingBindingCreated{}
 }
 
-/* ServiceBindingBindingCreated describes a response with status code 201, with default header values.
+/*
+ServiceBindingBindingCreated describes a response with status code 201, with default header values.
 
 Created
 */
@@ -109,9 +141,39 @@ type ServiceBindingBindingCreated struct {
 	Payload *models.ServiceBinding
 }
 
+// IsSuccess returns true when this service binding binding created response has a 2xx status code
+func (o *ServiceBindingBindingCreated) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service binding binding created response has a 3xx status code
+func (o *ServiceBindingBindingCreated) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding binding created response has a 4xx status code
+func (o *ServiceBindingBindingCreated) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service binding binding created response has a 5xx status code
+func (o *ServiceBindingBindingCreated) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding binding created response a status code equal to that given
+func (o *ServiceBindingBindingCreated) IsCode(code int) bool {
+	return code == 201
+}
+
 func (o *ServiceBindingBindingCreated) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingCreated  %+v", 201, o.Payload)
 }
+
+func (o *ServiceBindingBindingCreated) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingCreated  %+v", 201, o.Payload)
+}
+
 func (o *ServiceBindingBindingCreated) GetPayload() *models.ServiceBinding {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewServiceBindingBindingAccepted() *ServiceBindingBindingAccepted {
 	return &ServiceBindingBindingAccepted{}
 }
 
-/* ServiceBindingBindingAccepted describes a response with status code 202, with default header values.
+/*
+ServiceBindingBindingAccepted describes a response with status code 202, with default header values.
 
 Accepted
 */
@@ -141,9 +204,39 @@ type ServiceBindingBindingAccepted struct {
 	Payload *models.AsyncOperation
 }
 
+// IsSuccess returns true when this service binding binding accepted response has a 2xx status code
+func (o *ServiceBindingBindingAccepted) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service binding binding accepted response has a 3xx status code
+func (o *ServiceBindingBindingAccepted) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding binding accepted response has a 4xx status code
+func (o *ServiceBindingBindingAccepted) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service binding binding accepted response has a 5xx status code
+func (o *ServiceBindingBindingAccepted) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding binding accepted response a status code equal to that given
+func (o *ServiceBindingBindingAccepted) IsCode(code int) bool {
+	return code == 202
+}
+
 func (o *ServiceBindingBindingAccepted) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingAccepted  %+v", 202, o.Payload)
 }
+
+func (o *ServiceBindingBindingAccepted) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingAccepted  %+v", 202, o.Payload)
+}
+
 func (o *ServiceBindingBindingAccepted) GetPayload() *models.AsyncOperation {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewServiceBindingBindingBadRequest() *ServiceBindingBindingBadRequest {
 	return &ServiceBindingBindingBadRequest{}
 }
 
-/* ServiceBindingBindingBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceBindingBindingBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -173,9 +267,39 @@ type ServiceBindingBindingBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service binding binding bad request response has a 2xx status code
+func (o *ServiceBindingBindingBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service binding binding bad request response has a 3xx status code
+func (o *ServiceBindingBindingBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding binding bad request response has a 4xx status code
+func (o *ServiceBindingBindingBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service binding binding bad request response has a 5xx status code
+func (o *ServiceBindingBindingBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding binding bad request response a status code equal to that given
+func (o *ServiceBindingBindingBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceBindingBindingBadRequest) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceBindingBindingBadRequest) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceBindingBindingBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewServiceBindingBindingConflict() *ServiceBindingBindingConflict {
 	return &ServiceBindingBindingConflict{}
 }
 
-/* ServiceBindingBindingConflict describes a response with status code 409, with default header values.
+/*
+ServiceBindingBindingConflict describes a response with status code 409, with default header values.
 
 Conflict
 */
@@ -205,9 +330,39 @@ type ServiceBindingBindingConflict struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service binding binding conflict response has a 2xx status code
+func (o *ServiceBindingBindingConflict) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service binding binding conflict response has a 3xx status code
+func (o *ServiceBindingBindingConflict) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding binding conflict response has a 4xx status code
+func (o *ServiceBindingBindingConflict) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service binding binding conflict response has a 5xx status code
+func (o *ServiceBindingBindingConflict) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding binding conflict response a status code equal to that given
+func (o *ServiceBindingBindingConflict) IsCode(code int) bool {
+	return code == 409
+}
+
 func (o *ServiceBindingBindingConflict) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingConflict  %+v", 409, o.Payload)
 }
+
+func (o *ServiceBindingBindingConflict) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingConflict  %+v", 409, o.Payload)
+}
+
 func (o *ServiceBindingBindingConflict) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewServiceBindingBindingUnprocessableEntity() *ServiceBindingBindingUnproce
 	return &ServiceBindingBindingUnprocessableEntity{}
 }
 
-/* ServiceBindingBindingUnprocessableEntity describes a response with status code 422, with default header values.
+/*
+ServiceBindingBindingUnprocessableEntity describes a response with status code 422, with default header values.
 
 Unprocessable Entity
 */
@@ -237,9 +393,39 @@ type ServiceBindingBindingUnprocessableEntity struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service binding binding unprocessable entity response has a 2xx status code
+func (o *ServiceBindingBindingUnprocessableEntity) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service binding binding unprocessable entity response has a 3xx status code
+func (o *ServiceBindingBindingUnprocessableEntity) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service binding binding unprocessable entity response has a 4xx status code
+func (o *ServiceBindingBindingUnprocessableEntity) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service binding binding unprocessable entity response has a 5xx status code
+func (o *ServiceBindingBindingUnprocessableEntity) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service binding binding unprocessable entity response a status code equal to that given
+func (o *ServiceBindingBindingUnprocessableEntity) IsCode(code int) bool {
+	return code == 422
+}
+
 func (o *ServiceBindingBindingUnprocessableEntity) Error() string {
 	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingUnprocessableEntity  %+v", 422, o.Payload)
 }
+
+func (o *ServiceBindingBindingUnprocessableEntity) String() string {
+	return fmt.Sprintf("[PUT /v2/service_instances/{instance_id}/service_bindings/{binding_id}][%d] serviceBindingBindingUnprocessableEntity  %+v", 422, o.Payload)
+}
+
 func (o *ServiceBindingBindingUnprocessableEntity) GetPayload() *models.Error {
 	return o.Payload
 }

@@ -61,6 +61,11 @@ func DataSourceIBMEnFirefoxDestination() *schema.Resource {
 										Optional:    true,
 										Description: "The website url",
 									},
+									"pre_prod": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Description: "The flag to enable destination as pre-prod or prod",
+									},
 								},
 							},
 						},
@@ -167,13 +172,16 @@ func enFirefoxDestinationConfigToMap(configItem en.DestinationConfig) (configMap
 	return configMap
 }
 
-func enFirefoxDestinationConfigParamsToMap(paramsItem en.DestinationConfigParamsIntf) (paramsMap map[string]interface{}) {
+func enFirefoxDestinationConfigParamsToMap(paramsItem en.DestinationConfigOneOfIntf) (paramsMap map[string]interface{}) {
 	paramsMap = map[string]interface{}{}
 
-	params := paramsItem.(*en.DestinationConfigParams)
+	params := paramsItem.(*en.DestinationConfigOneOf)
 
 	if params.WebsiteURL != nil {
 		paramsMap["website_url"] = params.WebsiteURL
+	}
+	if params.PreProd != nil {
+		paramsMap["pre_prod"] = params.PreProd
 	}
 
 	return paramsMap

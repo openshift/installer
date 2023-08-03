@@ -1,17 +1,12 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtektonpipeline
 
 import (
 	"context"
-	"crypto/hmac"
-	"encoding/hex"
 	"fmt"
 	"log"
-	"strings"
-
-	"golang.org/x/crypto/sha3"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -20,15 +15,15 @@ import (
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/continuous-delivery-go-sdk/cdtektonpipelinev2"
-	"github.com/google/go-cmp/cmp"
+	"github.com/IBM/go-sdk-core/v5/core"
 )
 
-func ResourceIBMTektonPipelineProperty() *schema.Resource {
+func ResourceIBMCdTektonPipelineProperty() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: ResourceIBMTektonPipelinePropertyCreate,
-		ReadContext:   ResourceIBMTektonPipelinePropertyRead,
-		UpdateContext: ResourceIBMTektonPipelinePropertyUpdate,
-		DeleteContext: ResourceIBMTektonPipelinePropertyDelete,
+		CreateContext: resourceIBMCdTektonPipelinePropertyCreate,
+		ReadContext:   resourceIBMCdTektonPipelinePropertyRead,
+		UpdateContext: resourceIBMCdTektonPipelinePropertyUpdate,
+		DeleteContext: resourceIBMCdTektonPipelinePropertyDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
@@ -37,7 +32,7 @@ func ResourceIBMTektonPipelineProperty() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "pipeline_id"),
-				Description:  "The tekton pipeline ID.",
+				Description:  "The Tekton pipeline ID.",
 			},
 			"name": &schema.Schema{
 				Type:         schema.TypeString,
@@ -46,60 +41,42 @@ func ResourceIBMTektonPipelineProperty() *schema.Resource {
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "name"),
 				Description:  "Property name.",
 			},
-			"value": &schema.Schema{
+			"type": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "value"),
-				Description:  "String format property value.",
-				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
-					if d.Get("type").(string) == "SECURE" {
-						segs := []string{d.Get("pipeline_id").(string), d.Get("name").(string)}
-						secret := strings.Join(segs, ".")
-						mac := hmac.New(sha3.New512, []byte(secret))
-						mac.Write([]byte(new))
-						secureHmac := hex.EncodeToString(mac.Sum(nil))
-						hasEnvChange := !cmp.Equal(strings.Join([]string{"hash", "SHA3-512", secureHmac}, ":"), old)
-						if hasEnvChange {
-							return false
-						}
-						return true
-					} else {
-						if old == new {
-							return true
-						}
-						return false
-					}
-				},
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "type"),
+				Description:  "Property type.",
+			},
+			"value": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.SuppressPipelinePropertyRawSecret,
+				ValidateFunc:     validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "value"),
+				Description:      "Property value. Any string value is valid.",
 			},
 			"enum": &schema.Schema{
 				Type:        schema.TypeList,
 				Optional:    true,
-				Description: "Options for SINGLE_SELECT property type.",
+				Description: "Options for `single_select` property type. Only needed when using `single_select` property type.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
-			},
-			"default": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "default"),
-				Description:  "Default option for SINGLE_SELECT property type.",
-			},
-			"type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "type"),
-				Description:  "Property type.",
 			},
 			"path": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_tekton_pipeline_property", "path"),
-				Description:  "property path for INTEGRATION type properties.",
+				Description:  "A dot notation path for `integration` type properties only, to select a value from the tool integration. If left blank the full tool integration data will be used.",
+			},
+			"href": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "API URL for interacting with the property.",
 			},
 		},
 	}
 }
 
-func ResourceIBMTektonPipelinePropertyValidator() *validate.ResourceValidator {
+func ResourceIBMCdTektonPipelinePropertyValidator() *validate.ResourceValidator {
 	validateSchema := make([]validate.ValidateSchema, 0)
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
@@ -116,25 +93,7 @@ func ResourceIBMTektonPipelinePropertyValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			Regexp:                     `^[-0-9a-zA-Z_.]{1,234}$`,
-			MinValueLength:             1,
-			MaxValueLength:             253,
-		},
-		validate.ValidateSchema{
-			Identifier:                 "value",
-			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
-			Type:                       validate.TypeString,
-			Optional:                   true,
-			Regexp:                     `.`,
-			MinValueLength:             1,
-			MaxValueLength:             4096,
-		},
-		validate.ValidateSchema{
-			Identifier:                 "default",
-			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
-			Type:                       validate.TypeString,
-			Optional:                   true,
-			Regexp:                     `^[-0-9a-zA-Z_.]{1,235}$`,
+			Regexp:                     `^[-0-9a-zA-Z_.]{1,253}$`,
 			MinValueLength:             1,
 			MaxValueLength:             253,
 		},
@@ -143,15 +102,24 @@ func ResourceIBMTektonPipelinePropertyValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateAllowedStringValue,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			AllowedValues:              "APPCONFIG, INTEGRATION, SECURE, SINGLE_SELECT, TEXT",
+			AllowedValues:              "appconfig, integration, secure, single_select, text",
+		},
+		validate.ValidateSchema{
+			Identifier:                 "value",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^.*$`,
+			MinValueLength:             0,
+			MaxValueLength:             4096,
 		},
 		validate.ValidateSchema{
 			Identifier:                 "path",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `.`,
-			MinValueLength:             1,
+			Regexp:                     `^[-0-9a-zA-Z_.]*$`,
+			MinValueLength:             0,
 			MaxValueLength:             4096,
 		},
 	)
@@ -160,7 +128,7 @@ func ResourceIBMTektonPipelinePropertyValidator() *validate.ResourceValidator {
 	return &resourceValidator
 }
 
-func ResourceIBMTektonPipelinePropertyCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdTektonPipelinePropertyCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -169,25 +137,18 @@ func ResourceIBMTektonPipelinePropertyCreate(context context.Context, d *schema.
 	createTektonPipelinePropertiesOptions := &cdtektonpipelinev2.CreateTektonPipelinePropertiesOptions{}
 
 	createTektonPipelinePropertiesOptions.SetPipelineID(d.Get("pipeline_id").(string))
-	if _, ok := d.GetOk("name"); ok {
-		createTektonPipelinePropertiesOptions.SetName(d.Get("name").(string))
-	}
+	createTektonPipelinePropertiesOptions.SetName(d.Get("name").(string))
+	createTektonPipelinePropertiesOptions.SetType(d.Get("type").(string))
 	if _, ok := d.GetOk("value"); ok {
 		createTektonPipelinePropertiesOptions.SetValue(d.Get("value").(string))
 	}
 	if _, ok := d.GetOk("enum"); ok {
-		enumInterface := d.Get("enum").([]interface{})
-		enum := make([]string, len(enumInterface))
-		for i, v := range enumInterface {
-			enum[i] = fmt.Sprint(v)
+		var enum []string
+		for _, v := range d.Get("enum").([]interface{}) {
+			enumItem := v.(string)
+			enum = append(enum, enumItem)
 		}
 		createTektonPipelinePropertiesOptions.SetEnum(enum)
-	}
-	if _, ok := d.GetOk("default"); ok {
-		createTektonPipelinePropertiesOptions.SetDefault(d.Get("default").(string))
-	}
-	if _, ok := d.GetOk("type"); ok {
-		createTektonPipelinePropertiesOptions.SetType(d.Get("type").(string))
 	}
 	if _, ok := d.GetOk("path"); ok {
 		createTektonPipelinePropertiesOptions.SetPath(d.Get("path").(string))
@@ -201,10 +162,10 @@ func ResourceIBMTektonPipelinePropertyCreate(context context.Context, d *schema.
 
 	d.SetId(fmt.Sprintf("%s/%s", *createTektonPipelinePropertiesOptions.PipelineID, *property.Name))
 
-	return ResourceIBMTektonPipelinePropertyRead(context, d, meta)
+	return resourceIBMCdTektonPipelinePropertyRead(context, d, meta)
 }
 
-func ResourceIBMTektonPipelinePropertyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdTektonPipelinePropertyRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -236,28 +197,34 @@ func ResourceIBMTektonPipelinePropertyRead(context context.Context, d *schema.Re
 	if err = d.Set("name", property.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
-	if err = d.Set("value", property.Value); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting value: %s", err))
+	if err = d.Set("type", property.Type); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
 	}
-	if property.Enum != nil {
+	if !core.IsNil(property.Value) {
+		if err = d.Set("value", property.Value); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting value: %s", err))
+		}
+	}
+	if !core.IsNil(property.Enum) {
 		if err = d.Set("enum", property.Enum); err != nil {
 			return diag.FromErr(fmt.Errorf("Error setting enum: %s", err))
 		}
 	}
-	if err = d.Set("default", property.Default); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting default: %s", err))
+	if !core.IsNil(property.Path) {
+		if err = d.Set("path", property.Path); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting path: %s", err))
+		}
 	}
-	if err = d.Set("type", property.Type); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting type: %s", err))
-	}
-	if err = d.Set("path", property.Path); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting path: %s", err))
+	if !core.IsNil(property.Href) {
+		if err = d.Set("href", property.Href); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
+		}
 	}
 
 	return nil
 }
 
-func ResourceIBMTektonPipelinePropertyUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdTektonPipelinePropertyUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -277,26 +244,34 @@ func ResourceIBMTektonPipelinePropertyUpdate(context context.Context, d *schema.
 
 	hasChange := false
 
+	if d.HasChange("pipeline_id") {
+		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "pipeline_id"))
+	}
 	if d.HasChange("name") {
 		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "name"))
 	}
+	if d.HasChange("type") {
+		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
+			" The resource must be re-created to update this property.", "type"))
+	}
 
-	if d.Get("type").(string) == "INTEGRATION" {
+	if d.Get("type").(string) == "integration" {
 		if d.HasChange("value") || d.HasChange("path") {
 			replaceTektonPipelinePropertyOptions.SetValue(d.Get("value").(string))
 			replaceTektonPipelinePropertyOptions.SetPath(d.Get("path").(string))
 			hasChange = true
 		}
-	} else if d.Get("type").(string) == "SINGLE_SELECT" {
-		if d.HasChange("enum") || d.HasChange("default") {
-			enumInterface := d.Get("enum").([]interface{})
-			enum := make([]string, len(enumInterface))
-			for i, v := range enumInterface {
-				enum[i] = fmt.Sprint(v)
+	} else if d.Get("type").(string) == "single_select" {
+		if d.HasChange("enum") || d.HasChange("value") {
+			var enum []string
+			for _, v := range d.Get("enum").([]interface{}) {
+				enumItem := v.(string)
+				enum = append(enum, enumItem)
 			}
 			replaceTektonPipelinePropertyOptions.SetEnum(enum)
-			replaceTektonPipelinePropertyOptions.SetDefault(d.Get("default").(string))
+			replaceTektonPipelinePropertyOptions.SetValue(d.Get("value").(string))
 			hasChange = true
 		}
 	} else {
@@ -314,10 +289,10 @@ func ResourceIBMTektonPipelinePropertyUpdate(context context.Context, d *schema.
 		}
 	}
 
-	return ResourceIBMTektonPipelinePropertyRead(context, d, meta)
+	return resourceIBMCdTektonPipelinePropertyRead(context, d, meta)
 }
 
-func ResourceIBMTektonPipelinePropertyDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdTektonPipelinePropertyDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdTektonPipelineClient, err := meta.(conns.ClientSession).CdTektonPipelineV2()
 	if err != nil {
 		return diag.FromErr(err)

@@ -165,7 +165,7 @@ func resourceIBMEnTopicCreate(context context.Context, d *schema.ResourceData, m
 	}
 
 	if _, ok := d.GetOk("sources"); ok {
-		var sources []en.TopicUpdateSourcesItem
+		var sources []en.SourcesItems
 		for _, e := range d.Get("sources").([]interface{}) {
 			value := e.(map[string]interface{})
 			sourcesItem := enTopicUpdateSourcesItem(value)
@@ -283,7 +283,7 @@ func resourceIBMEnTopicUpdate(context context.Context, d *schema.ResourceData, m
 	}
 
 	if _, ok := d.GetOk("sources"); ok {
-		var sources []en.TopicUpdateSourcesItem
+		var sources []en.SourcesItems
 		for _, e := range d.Get("sources").([]interface{}) {
 			value := e.(map[string]interface{})
 			sourcesItem := enTopicUpdateSourcesItem(value)
@@ -330,8 +330,8 @@ func resourceIBMEnTopicDelete(context context.Context, d *schema.ResourceData, m
 	return nil
 }
 
-func enTopicUpdateSourcesItem(topicUpdateSourcesItemMap map[string]interface{}) en.TopicUpdateSourcesItem {
-	topicUpdateSourcesItem := en.TopicUpdateSourcesItem{}
+func enTopicUpdateSourcesItem(topicUpdateSourcesItemMap map[string]interface{}) en.SourcesItems {
+	topicUpdateSourcesItem := en.SourcesItems{}
 
 	if topicUpdateSourcesItemMap["id"] != nil {
 		topicUpdateSourcesItem.ID = core.StringPtr(topicUpdateSourcesItemMap["id"].(string))
@@ -364,7 +364,7 @@ func resourceIBMEnTopicMapToRules(rulesMap map[string]interface{}) en.Rules {
 	return rules
 }
 
-func enTopicUpdateSourcesItemToMap(source en.SourcesListItem) map[string]interface{} {
+func enTopicUpdateSourcesItemToMap(source en.SourcesListItems) map[string]interface{} {
 	sourceMap := map[string]interface{}{}
 
 	if source.ID != nil {

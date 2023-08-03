@@ -364,6 +364,13 @@ func DataSourceIBMIsVPNServer() *schema.Resource {
 					},
 				},
 			},
+			isVPNServerAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -546,6 +553,13 @@ func dataSourceIBMIsVPNServerRead(context context.Context, d *schema.ResourceDat
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting the vpc: %s", err))
 		}
 	}
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vpnServer.CRN, "", isVPNServerAccessTagType)
+	if err != nil {
+		log.Printf(
+			"An error occured during reading of vpn server (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isVPNServerAccessTags, accesstags)
 
 	return nil
 }

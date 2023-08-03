@@ -52,10 +52,12 @@ func NewPcloudVolumeOnboardingGetallParamsWithHTTPClient(client *http.Client) *P
 	}
 }
 
-/* PcloudVolumeOnboardingGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud volume onboarding getall operation.
+/*
+PcloudVolumeOnboardingGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud volume onboarding getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudVolumeOnboardingGetallParams struct {
 

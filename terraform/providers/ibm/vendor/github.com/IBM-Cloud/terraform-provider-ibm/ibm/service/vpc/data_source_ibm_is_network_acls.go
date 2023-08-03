@@ -344,6 +344,13 @@ func DataSourceIBMIsNetworkAcls() *schema.Resource {
 								},
 							},
 						},
+						isNetworkACLAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
+						},
 					},
 				},
 			},
@@ -381,7 +388,7 @@ func dataSourceIBMIsNetworkAclsRead(context context.Context, d *schema.ResourceD
 
 	d.SetId(dataSourceIBMIsNetworkAclsID(d))
 
-	err = d.Set("network_acls", dataSourceNetworkACLCollectionFlattenNetworkAcls(allrecs))
+	err = d.Set("network_acls", dataSourceNetworkACLCollectionFlattenNetworkAcls(allrecs, d, meta))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting network_acls %s", err))
 	}
@@ -394,15 +401,15 @@ func dataSourceIBMIsNetworkAclsID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceNetworkACLCollectionFlattenNetworkAcls(result []vpcv1.NetworkACL) (networkAcls []map[string]interface{}) {
+func dataSourceNetworkACLCollectionFlattenNetworkAcls(result []vpcv1.NetworkACL, d *schema.ResourceData, meta interface{}) (networkAcls []map[string]interface{}) {
 	for _, networkAclsItem := range result {
-		networkAcls = append(networkAcls, dataSourceNetworkACLCollectionNetworkAclsToMap(networkAclsItem))
+		networkAcls = append(networkAcls, dataSourceNetworkACLCollectionNetworkAclsToMap(networkAclsItem, d, meta))
 	}
 
 	return networkAcls
 }
 
-func dataSourceNetworkACLCollectionNetworkAclsToMap(networkAclsItem vpcv1.NetworkACL) (networkAclsMap map[string]interface{}) {
+func dataSourceNetworkACLCollectionNetworkAclsToMap(networkAclsItem vpcv1.NetworkACL, d *schema.ResourceData, meta interface{}) (networkAclsMap map[string]interface{}) {
 	networkAclsMap = map[string]interface{}{}
 
 	if networkAclsItem.CreatedAt != nil {
@@ -446,6 +453,13 @@ func dataSourceNetworkACLCollectionNetworkAclsToMap(networkAclsItem vpcv1.Networ
 		vpcList = append(vpcList, vpcMap)
 		networkAclsMap["vpc"] = vpcList
 	}
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *networkAclsItem.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource Network ACL (%s) access tags: %s", d.Id(), err)
+	}
+	networkAclsMap[isNetworkACLAccessTags] = accesstags
 
 	return networkAclsMap
 }

@@ -26,6 +26,11 @@ func DataSourceIBMSchematicsResourceQuery() *schema.Resource {
 				Required:    true,
 				Description: "Resource query Id.  Use `GET /v2/resource_query` API to look up the Resource query definition Ids  in your IBM Cloud account.",
 			},
+			"location": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The Region of the workspace.",
+			},
 			"type": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -115,6 +120,13 @@ func dataSourceIBMSchematicsResourceQueryRead(context context.Context, d *schema
 		return diag.FromErr(err)
 	}
 
+	if r, ok := d.GetOk("location"); ok {
+		region := r.(string)
+		schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+		if updatedURL {
+			schematicsClient.Service.Options.URL = schematicsURL
+		}
+	}
 	getResourcesQueryOptions := &schematicsv1.GetResourcesQueryOptions{}
 
 	getResourcesQueryOptions.SetQueryID(d.Get("query_id").(string))

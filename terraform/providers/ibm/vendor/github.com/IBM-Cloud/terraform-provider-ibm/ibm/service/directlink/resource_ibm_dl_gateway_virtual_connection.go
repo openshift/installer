@@ -14,19 +14,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-const (
-	dlGatewaysVirtualConnections = "gateway_vcs"
-	dlVCNetworkAccount           = "network_account"
-	dlVCNetworkId                = "network_id"
-	dlVCName                     = "name"
-	dlVCType                     = "type"
-	dlVCCreatedAt                = "created_at"
-	dlVCStatus                   = "status"
-	dlGatewayId                  = "gateway"
-	ID                           = "id"
-	dlVirtualConnectionId        = "virtual_connection_id"
-)
-
 func ResourceIBMDLGatewayVC() *schema.Resource {
 	return &schema.Resource{
 		Create:   resourceIBMdlGatewayVCCreate,

@@ -102,9 +102,13 @@ func dataSourceIBMPIDhcpServersRead(ctx context.Context, d *schema.ResourceData,
 		}
 		if dhcpServer.Network != nil {
 			dhcpNetwork := dhcpServer.Network
-			server[Attr_DhcpNetworkDeprecated] = *dhcpNetwork.ID
-			server[Attr_DhcpNetworkID] = *dhcpNetwork.ID
-			server[Attr_DhcpNetworkName] = *dhcpNetwork.Name
+			if dhcpNetwork.ID != nil {
+				d.Set(Attr_DhcpNetworkDeprecated, *dhcpNetwork.ID)
+				d.Set(Attr_DhcpNetworkID, *dhcpNetwork.ID)
+			}
+			if dhcpNetwork.Name != nil {
+				d.Set(Attr_DhcpNetworkName, *dhcpNetwork.Name)
+			}
 		}
 		servers = append(servers, server)
 	}

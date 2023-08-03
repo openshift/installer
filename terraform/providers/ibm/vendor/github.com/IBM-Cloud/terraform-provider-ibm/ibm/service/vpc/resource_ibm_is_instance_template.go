@@ -19,6 +19,8 @@ import (
 
 const (
 	isInstanceTemplateBootVolume                   = "boot_volume"
+	isInstanceTemplateBootVolumeTags               = "tags"
+	isInstanceTemplateVolAttTags                   = "tags"
 	isInstanceTemplateCRN                          = "crn"
 	isInstanceTemplateVolAttVolAutoDelete          = "auto_delete"
 	isInstanceTemplateVolAttVol                    = "volume"
@@ -58,6 +60,11 @@ const (
 	isInstanceTemplateNicReservedIpAutoDelete      = "auto_delete"
 	isInstanceTemplateNicReservedIpName            = "name"
 	isInstanceTemplateNicReservedIpId              = "reserved_ip"
+
+	// catalog offering
+	isInstanceTemplateCatalogOffering            = "catalog_offering"
+	isInstanceTemplateCatalogOfferingOfferingCrn = "offering_crn"
+	isInstanceTemplateCatalogOfferingVersionCrn  = "version_crn"
 )
 
 func ResourceIBMISInstanceTemplate() *schema.Resource {
@@ -100,13 +107,51 @@ func ResourceIBMISInstanceTemplate() *schema.Resource {
 			},
 
 			isInstanceTemplateMetadataServiceEnabled: {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     false,
-				Description: "Indicates whether the metadata service endpoint is available to the virtual server instance",
+				Type:          schema.TypeBool,
+				Optional:      true,
+				ForceNew:      true,
+				Computed:      true,
+				Deprecated:    "Use metadata_service instead",
+				ConflictsWith: []string{isInstanceMetadataService},
+				Description:   "Indicates whether the metadata service endpoint is available to the virtual server instance",
 			},
 
+			isInstanceMetadataService: {
+				Type:          schema.TypeList,
+				Optional:      true,
+				Computed:      true,
+				MinItems:      1,
+				MaxItems:      1,
+				ConflictsWith: []string{isInstanceTemplateMetadataServiceEnabled},
+				Description:   "The metadata service configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceMetadataServiceEnabled1: {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							ForceNew:    true,
+							Computed:    true,
+							Description: "Indicates whether the metadata service endpoint will be available to the virtual server instance",
+						},
+
+						isInstanceMetadataServiceProtocol: {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Computed:    true,
+							Description: "The communication protocol to use for the metadata service endpoint. Applies only when the metadata service is enabled.",
+						},
+
+						isInstanceMetadataServiceRespHopLimit: {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							ForceNew:    true,
+							Computed:    true,
+							Description: "The hop limit (IP time to live) for IP response packets from the metadata service",
+						},
+					},
+				},
+			},
 			isInstanceTemplateVPC: {
 				Type:        schema.TypeString,
 				ForceNew:    true,
@@ -187,7 +232,7 @@ func ResourceIBMISInstanceTemplate() *schema.Resource {
 			isInstanceTemplateVolumeAttachments: {
 				Type:     schema.TypeList,
 				Optional: true,
-				Computed: true,
+				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						isInstanceTemplateVolumeDeleteOnInstanceDelete: {
@@ -239,8 +284,44 @@ func ResourceIBMISInstanceTemplate() *schema.Resource {
 										ForceNew:    true,
 										Description: "The CRN of the [Key Protect Root Key](https://cloud.ibm.com/docs/key-protect?topic=key-protect-getting-started-tutorial) or [Hyper Protect Crypto Service Root Key](https://cloud.ibm.com/docs/hs-crypto?topic=hs-crypto-get-started) for this resource.",
 									},
+									isInstanceTemplateVolAttTags: {
+										Type:        schema.TypeSet,
+										Optional:    true,
+										ForceNew:    true,
+										Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_instance_template", "tags")},
+										Set:         flex.ResourceIBMVPCHash,
+										Description: "UserTags for the volume instance",
+									},
 								},
 							},
+						},
+					},
+				},
+			},
+
+			isInstanceTemplateCatalogOffering: {
+				Type:         schema.TypeList,
+				MinItems:     0,
+				MaxItems:     1,
+				ExactlyOneOf: []string{isInstanceTemplateCatalogOffering, isInstanceTemplateImage},
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The catalog offering or offering version to use when provisioning this virtual server instance template. If an offering is specified, the latest version of that offering will be used. The specified offering or offering version may be in a different account in the same enterprise, subject to IAM policies.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceTemplateCatalogOfferingOfferingCrn: {
+							Type:          schema.TypeString,
+							Optional:      true,
+							ForceNew:      true,
+							ConflictsWith: []string{"catalog_offering.0.version_crn"},
+							Description:   "Identifies a catalog offering by a unique CRN property",
+						},
+						isInstanceTemplateCatalogOfferingVersionCrn: {
+							Type:          schema.TypeString,
+							Optional:      true,
+							ForceNew:      true,
+							ConflictsWith: []string{"catalog_offering.0.offering_crn"},
+							Description:   "Identifies a version of a catalog offering by a unique CRN property",
 						},
 					},
 				},
@@ -418,10 +499,11 @@ func ResourceIBMISInstanceTemplate() *schema.Resource {
 			},
 
 			isInstanceTemplateImage: {
-				Type:        schema.TypeString,
-				ForceNew:    true,
-				Required:    true,
-				Description: "image name",
+				Type:         schema.TypeString,
+				ForceNew:     true,
+				ExactlyOneOf: []string{isInstanceTemplateCatalogOffering, isInstanceTemplateImage},
+				Optional:     true,
+				Description:  "image name",
 			},
 
 			isInstanceTemplateBootVolume: {
@@ -436,6 +518,14 @@ func ResourceIBMISInstanceTemplate() *schema.Resource {
 							Type:     schema.TypeString,
 							Optional: true,
 							Computed: true,
+						},
+						isInstanceTemplateBootVolumeTags: {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_instance_template", "tags")},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "UserTags for the volume instance",
 						},
 						isInstanceTemplateBootEncryption: {
 							Type:     schema.TypeString,
@@ -521,7 +611,15 @@ func ResourceIBMISInstanceTemplateValidator() *validate.ResourceValidator {
 			Type:                       validate.TypeString,
 			Optional:                   true,
 			AllowedValues:              host_failure})
-
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "tags",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[A-Za-z0-9:_ .-]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
 	ibmISInstanceTemplateValidator := validate.ResourceValidator{ResourceName: "ibm_is_instance_template", Schema: validateSchema}
 	return &ibmISInstanceTemplateValidator
 }
@@ -533,9 +631,19 @@ func resourceIBMisInstanceTemplateCreate(d *schema.ResourceData, meta interface{
 	zone := d.Get(isInstanceTemplateZone).(string)
 	image := d.Get(isInstanceTemplateImage).(string)
 
-	err := instanceTemplateCreate(d, meta, profile, name, vpcID, zone, image)
-	if err != nil {
-		return err
+	if catalogOfferingOk, ok := d.GetOk(isInstanceTemplateCatalogOffering); ok {
+		catalogOffering := catalogOfferingOk.([]interface{})[0].(map[string]interface{})
+		offeringCrn, _ := catalogOffering[isInstanceTemplateCatalogOfferingOfferingCrn].(string)
+		versionCrn, _ := catalogOffering[isInstanceTemplateCatalogOfferingVersionCrn].(string)
+		err := instanceTemplateCreateByCatalogOffering(d, meta, profile, name, vpcID, zone, offeringCrn, versionCrn)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := instanceTemplateCreate(d, meta, profile, name, vpcID, zone, image)
+		if err != nil {
+			return err
+		}
 	}
 
 	return resourceIBMisInstanceTemplateRead(d, meta)
@@ -579,15 +687,13 @@ func resourceIBMisInstanceTemplateExists(d *schema.ResourceData, meta interface{
 	return ok, err
 }
 
-func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, name, vpcID, zone, image string) error {
+func instanceTemplateCreateByCatalogOffering(d *schema.ResourceData, meta interface{}, profile, name, vpcID, zone, offeringCrn, versionCrn string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
-	instanceproto := &vpcv1.InstanceTemplatePrototype{
-		Image: &vpcv1.ImageIdentity{
-			ID: &image,
-		},
+
+	instanceproto := &vpcv1.InstanceTemplatePrototypeInstanceTemplateByCatalogOffering{
 		Zone: &vpcv1.ZoneIdentity{
 			Name: &zone,
 		},
@@ -598,6 +704,23 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 			ID: &vpcID,
 		},
 	}
+	if offeringCrn != "" {
+		catalogOffering := &vpcv1.InstanceCatalogOfferingPrototypeCatalogOfferingByOffering{
+			Offering: &vpcv1.CatalogOfferingIdentityCatalogOfferingByCRN{
+				CRN: &offeringCrn,
+			},
+		}
+		instanceproto.CatalogOffering = catalogOffering
+	}
+	if versionCrn != "" {
+		catalogOffering := &vpcv1.InstanceCatalogOfferingPrototypeCatalogOfferingByVersion{
+			Version: &vpcv1.CatalogOfferingVersionIdentityCatalogOfferingVersionByCRN{
+				CRN: &versionCrn,
+			},
+		}
+		instanceproto.CatalogOffering = catalogOffering
+	}
+
 	if name != "" {
 		instanceproto.Name = &name
 	}
@@ -608,6 +731,11 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 			Enabled: &metadataServiceEnabled,
 		}
 	}
+
+	if metadataService := GetInstanceTemplateMetadataServiceOptions(d); metadataService != nil {
+		instanceproto.MetadataService = metadataService
+	}
+
 	if defaultTrustedProfileTargetIntf, ok := d.GetOk(isInstanceDefaultTrustedProfileTarget); ok {
 		defaultTrustedProfiletarget := defaultTrustedProfileTargetIntf.(string)
 
@@ -628,7 +756,7 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 	}
 	if availablePolicyHostFailureIntf, ok := d.GetOk(isInstanceTemplateAvailablePolicyHostFailure); ok {
 		availablePolicyHostFailure := availablePolicyHostFailureIntf.(string)
-		instanceproto.AvailabilityPolicy = &vpcv1.InstanceAvailabilityPrototype{
+		instanceproto.AvailabilityPolicy = &vpcv1.InstanceAvailabilityPolicyPrototype{
 			HostFailure: &availablePolicyHostFailure,
 		}
 	}
@@ -671,6 +799,19 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 			volTemplate.Name = &namestr
 		}
 
+		var userTags *schema.Set
+		if v, ok := bootvol[isInstanceTemplateBootVolumeTags]; ok {
+			userTags = v.(*schema.Set)
+			if userTags != nil && userTags.Len() != 0 {
+				userTagsArray := make([]string, userTags.Len())
+				for i, userTag := range userTags.List() {
+					userTagStr := userTag.(string)
+					userTagsArray[i] = userTagStr
+				}
+				volTemplate.UserTags = userTagsArray
+			}
+		}
+
 		volcap := 100
 		volcapint64 := int64(volcap)
 		volprof := "general-purpose"
@@ -702,10 +843,10 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 	// Handle volume attachments
 	if volsintf, ok := d.GetOk(isInstanceTemplateVolumeAttachments); ok {
 		vols := volsintf.([]interface{})
-		var intfs []vpcv1.VolumeAttachmentPrototypeInstanceContext
+		var intfs []vpcv1.VolumeAttachmentPrototype
 		for _, resource := range vols {
 			vol := resource.(map[string]interface{})
-			volInterface := &vpcv1.VolumeAttachmentPrototypeInstanceContext{}
+			volInterface := &vpcv1.VolumeAttachmentPrototype{}
 			deleteVolBool := vol[isInstanceTemplateVolumeDeleteOnInstanceDelete].(bool)
 			volInterface.DeleteVolumeOnInstanceDelete = &deleteVolBool
 			attachmentnamestr := vol[isInstanceTemplateVolAttachmentName].(string)
@@ -713,7 +854,7 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 			volIdStr := vol[isInstanceTemplateVolAttVol].(string)
 
 			if volIdStr != "" {
-				volInterface.Volume = &vpcv1.VolumeAttachmentVolumePrototypeInstanceContextVolumeIdentity{
+				volInterface.Volume = &vpcv1.VolumeAttachmentPrototypeVolume{
 					ID: &volIdStr,
 				}
 			} else {
@@ -722,7 +863,7 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 				profileName := newvol[isInstanceTemplateVolAttVolProfile].(string)
 				capacity := int64(newvol[isInstanceTemplateVolAttVolCapacity].(int))
 
-				volPrototype := &vpcv1.VolumeAttachmentVolumePrototypeInstanceContextVolumePrototypeInstanceContext{
+				volPrototype := &vpcv1.VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext{
 					Profile: &vpcv1.VolumeProfileIdentity{
 						Name: &profileName,
 					},
@@ -738,6 +879,441 @@ func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, n
 				if encryptionKey != "" {
 					volPrototype.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
 						CRN: &encryptionKey,
+					}
+				}
+				var userTags *schema.Set
+				if v, ok := newvol[isInstanceTemplateVolAttTags]; ok {
+					userTags = v.(*schema.Set)
+					if userTags != nil && userTags.Len() != 0 {
+						userTagsArray := make([]string, userTags.Len())
+						for i, userTag := range userTags.List() {
+							userTagStr := userTag.(string)
+							userTagsArray[i] = userTagStr
+						}
+						volPrototype.UserTags = userTagsArray
+					}
+				}
+				volInterface.Volume = volPrototype
+			}
+
+			intfs = append(intfs, *volInterface)
+		}
+		instanceproto.VolumeAttachments = intfs
+	}
+
+	// Handle primary network interface
+	if primnicintf, ok := d.GetOk(isInstanceTemplatePrimaryNetworkInterface); ok {
+		primnic := primnicintf.([]interface{})[0].(map[string]interface{})
+		subnetintf, _ := primnic[isInstanceTemplateNicSubnet]
+		subnetintfstr := subnetintf.(string)
+		var primnicobj = &vpcv1.NetworkInterfacePrototype{}
+		primnicobj.Subnet = &vpcv1.SubnetIdentity{
+			ID: &subnetintfstr,
+		}
+
+		if name, ok := primnic[isInstanceTemplateNicName]; ok {
+			namestr := name.(string)
+			if namestr != "" {
+				primnicobj.Name = &namestr
+			}
+		}
+		allowIPSpoofing, ok := primnic[isInstanceTemplateNicAllowIPSpoofing]
+		allowIPSpoofingbool := allowIPSpoofing.(bool)
+		if ok {
+			primnicobj.AllowIPSpoofing = &allowIPSpoofingbool
+		}
+
+		secgrpintf, ok := primnic[isInstanceTemplateNicSecurityGroups]
+		if ok {
+			secgrpSet := secgrpintf.(*schema.Set)
+			if secgrpSet.Len() != 0 {
+				var secgrpobjs = make([]vpcv1.SecurityGroupIdentityIntf, secgrpSet.Len())
+				for i, secgrpIntf := range secgrpSet.List() {
+					secgrpIntfstr := secgrpIntf.(string)
+					secgrpobjs[i] = &vpcv1.SecurityGroupIdentity{
+						ID: &secgrpIntfstr,
+					}
+				}
+				primnicobj.SecurityGroups = secgrpobjs
+			}
+		}
+		// reserved ip changes
+		var PrimaryIpv4Address, reservedIp, reservedIpAddress, reservedIpName string
+		var reservedIpAutoDelete, okAuto bool
+		if IPAddress, ok := primnic[isInstanceTemplateNicPrimaryIpv4Address]; ok {
+			PrimaryIpv4Address = IPAddress.(string)
+		}
+		primaryIpOk, ok := primnic[isInstanceTemplateNicPrimaryIP]
+		if ok && len(primaryIpOk.([]interface{})) > 0 {
+			primip := primaryIpOk.([]interface{})[0].(map[string]interface{})
+
+			reservedipok, _ := primip[isInstanceTemplateNicReservedIpId]
+			reservedIp = reservedipok.(string)
+			reservedipv4Ok, _ := primip[isInstanceTemplateNicReservedIpAddress]
+			reservedIpAddress = reservedipv4Ok.(string)
+			reservedipnameOk, _ := primip[isInstanceTemplateNicReservedIpName]
+			reservedIpName = reservedipnameOk.(string)
+			reservedipautodeleteok, okAuto := primip[isInstanceTemplateNicReservedIpAutoDelete]
+			if okAuto {
+				reservedIpAutoDelete = reservedipautodeleteok.(bool)
+			}
+		}
+		if PrimaryIpv4Address != "" && reservedIpAddress != "" && PrimaryIpv4Address != reservedIpAddress {
+			return fmt.Errorf("[ERROR] Error creating instance template, primary_network_interface error, use either primary_ipv4_address(%s) or primary_ip.0.address(%s)", PrimaryIpv4Address, reservedIpAddress)
+		}
+		if reservedIp != "" {
+			primnicobj.PrimaryIP = &vpcv1.NetworkInterfaceIPPrototypeReservedIPIdentity{
+				ID: &reservedIp,
+			}
+		} else {
+			if PrimaryIpv4Address != "" || reservedIpAddress != "" || reservedIpName != "" || okAuto {
+				primaryipobj := &vpcv1.NetworkInterfaceIPPrototypeReservedIPPrototypeNetworkInterfaceContext{}
+				if PrimaryIpv4Address != "" {
+					primaryipobj.Address = &PrimaryIpv4Address
+				}
+				if reservedIpAddress != "" {
+					primaryipobj.Address = &reservedIpAddress
+				}
+				if reservedIpName != "" {
+					primaryipobj.Name = &reservedIpName
+				}
+				if okAuto {
+					primaryipobj.AutoDelete = &reservedIpAutoDelete
+				}
+				primnicobj.PrimaryIP = primaryipobj
+			}
+		}
+		instanceproto.PrimaryNetworkInterface = primnicobj
+	}
+
+	// Handle  additional network interface
+	if nicsintf, ok := d.GetOk(isInstanceTemplateNetworkInterfaces); ok {
+		nics := nicsintf.([]interface{})
+		var intfs []vpcv1.NetworkInterfacePrototype
+		for _, resource := range nics {
+			nic := resource.(map[string]interface{})
+			nwInterface := &vpcv1.NetworkInterfacePrototype{}
+			subnetintf, _ := nic[isInstanceTemplateNicSubnet]
+			subnetintfstr := subnetintf.(string)
+			nwInterface.Subnet = &vpcv1.SubnetIdentity{
+				ID: &subnetintfstr,
+			}
+
+			name, ok := nic[isInstanceTemplateNicName]
+			namestr := name.(string)
+			if ok && namestr != "" {
+				nwInterface.Name = &namestr
+			}
+			allowIPSpoofing, ok := nic[isInstanceTemplateNicAllowIPSpoofing]
+			allowIPSpoofingbool := allowIPSpoofing.(bool)
+			if ok {
+				nwInterface.AllowIPSpoofing = &allowIPSpoofingbool
+			}
+			secgrpintf, ok := nic[isInstanceTemplateNicSecurityGroups]
+			if ok {
+				secgrpSet := secgrpintf.(*schema.Set)
+				if secgrpSet.Len() != 0 {
+					var secgrpobjs = make([]vpcv1.SecurityGroupIdentityIntf, secgrpSet.Len())
+					for i, secgrpIntf := range secgrpSet.List() {
+						secgrpIntfstr := secgrpIntf.(string)
+						secgrpobjs[i] = &vpcv1.SecurityGroupIdentity{
+							ID: &secgrpIntfstr,
+						}
+					}
+					nwInterface.SecurityGroups = secgrpobjs
+				}
+			}
+			// reserved ip changes
+			var PrimaryIpv4Address, reservedIp, reservedIpAddress, reservedIpName string
+			var reservedIpAutoDelete, okAuto bool
+			if IPAddress, ok := nic[isInstanceTemplateNicPrimaryIpv4Address]; ok {
+				PrimaryIpv4Address = IPAddress.(string)
+			}
+			primaryIpOk, ok := nic[isInstanceTemplateNicPrimaryIP]
+			if ok && len(primaryIpOk.([]interface{})) > 0 {
+				primip := primaryIpOk.([]interface{})[0].(map[string]interface{})
+
+				reservedipok, _ := primip[isInstanceTemplateNicReservedIpId]
+				reservedIp = reservedipok.(string)
+				reservedipv4Ok, _ := primip[isInstanceTemplateNicReservedIpAddress]
+				reservedIpAddress = reservedipv4Ok.(string)
+				reservedipnameOk, _ := primip[isInstanceTemplateNicReservedIpName]
+				reservedIpName = reservedipnameOk.(string)
+				// var reservedipautodeleteok interface{}
+
+				if v, ok := primip[isInstanceTemplateNicReservedIpAutoDelete].(bool); ok && v {
+					log.Printf("[INFO] UJJK isInstanceTemplateNicReservedIpAutoDelete is v is %t and okay is %t", v, ok)
+					reservedIpAutoDelete = primip[isInstanceTemplateNicReservedIpAutoDelete].(bool)
+					okAuto = true
+				}
+				// reservedipautodeleteok, okAuto = primip[isInstanceTemplateNicReservedIpAutoDelete]
+				// if okAuto {
+				// 	reservedIpAutoDelete = reservedipautodeleteok.(bool)
+				// }
+			}
+			if PrimaryIpv4Address != "" && reservedIpAddress != "" && PrimaryIpv4Address != reservedIpAddress {
+				return fmt.Errorf("[ERROR] Error creating instance template, network_interfaces error, use either primary_ipv4_address(%s) or primary_ip.0.address(%s)", PrimaryIpv4Address, reservedIpAddress)
+			}
+			if reservedIp != "" && (PrimaryIpv4Address != "" || reservedIpAddress != "" || reservedIpName != "" || okAuto) {
+				return fmt.Errorf("[ERROR] Error creating instance template, network_interfaces error, reserved_ip(%s) is mutually exclusive with other primary_ip attributes", reservedIp)
+			}
+			if reservedIp != "" {
+				nwInterface.PrimaryIP = &vpcv1.NetworkInterfaceIPPrototypeReservedIPIdentity{
+					ID: &reservedIp,
+				}
+			} else {
+				if PrimaryIpv4Address != "" || reservedIpAddress != "" || reservedIpName != "" || okAuto {
+					primaryipobj := &vpcv1.NetworkInterfaceIPPrototypeReservedIPPrototypeNetworkInterfaceContext{}
+					if PrimaryIpv4Address != "" {
+						primaryipobj.Address = &PrimaryIpv4Address
+					}
+					if reservedIpAddress != "" {
+						primaryipobj.Address = &reservedIpAddress
+					}
+					if reservedIpName != "" {
+						primaryipobj.Name = &reservedIpName
+					}
+					if okAuto {
+						primaryipobj.AutoDelete = &reservedIpAutoDelete
+					}
+					nwInterface.PrimaryIP = primaryipobj
+				}
+			}
+			intfs = append(intfs, *nwInterface)
+		}
+		instanceproto.NetworkInterfaces = intfs
+	}
+
+	// Handle SSH Keys
+	keySet := d.Get(isInstanceTemplateKeys).(*schema.Set)
+	if keySet.Len() != 0 {
+		keyobjs := make([]vpcv1.KeyIdentityIntf, keySet.Len())
+		for i, key := range keySet.List() {
+			keystr := key.(string)
+			keyobjs[i] = &vpcv1.KeyIdentity{
+				ID: &keystr,
+			}
+		}
+		instanceproto.Keys = keyobjs
+	}
+
+	// Handle user data
+	if userdata, ok := d.GetOk(isInstanceTemplateUserData); ok {
+		userdatastr := userdata.(string)
+		instanceproto.UserData = &userdatastr
+	}
+
+	// handle resource group
+	if grp, ok := d.GetOk(isInstanceTemplateResourceGroup); ok {
+		grpstr := grp.(string)
+		instanceproto.ResourceGroup = &vpcv1.ResourceGroupIdentity{
+			ID: &grpstr,
+		}
+
+	}
+
+	options := &vpcv1.CreateInstanceTemplateOptions{
+		InstanceTemplatePrototype: instanceproto,
+	}
+
+	instanceIntf, response, err := sess.CreateInstanceTemplate(options)
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error creating InstanceTemplate: %s\n%s", err, response)
+	}
+	instance := instanceIntf.(*vpcv1.InstanceTemplate)
+	d.SetId(*instance.ID)
+	return nil
+}
+
+func instanceTemplateCreate(d *schema.ResourceData, meta interface{}, profile, name, vpcID, zone, image string) error {
+	sess, err := vpcClient(meta)
+	if err != nil {
+		return err
+	}
+	instanceproto := &vpcv1.InstanceTemplatePrototype{
+		Image: &vpcv1.ImageIdentity{
+			ID: &image,
+		},
+		Zone: &vpcv1.ZoneIdentity{
+			Name: &zone,
+		},
+		Profile: &vpcv1.InstanceProfileIdentity{
+			Name: &profile,
+		},
+		VPC: &vpcv1.VPCIdentity{
+			ID: &vpcID,
+		},
+	}
+	if name != "" {
+		instanceproto.Name = &name
+	}
+
+	metadataServiceEnabled := d.Get(isInstanceTemplateMetadataServiceEnabled).(bool)
+	if metadataServiceEnabled {
+		instanceproto.MetadataService = &vpcv1.InstanceMetadataServicePrototype{
+			Enabled: &metadataServiceEnabled,
+		}
+	}
+
+	if metadataService := GetInstanceTemplateMetadataServiceOptions(d); metadataService != nil {
+		instanceproto.MetadataService = metadataService
+	}
+
+	if defaultTrustedProfileTargetIntf, ok := d.GetOk(isInstanceDefaultTrustedProfileTarget); ok {
+		defaultTrustedProfiletarget := defaultTrustedProfileTargetIntf.(string)
+
+		target := &vpcv1.TrustedProfileIdentity{}
+		if strings.HasPrefix(defaultTrustedProfiletarget, "crn") {
+			target.CRN = &defaultTrustedProfiletarget
+		} else {
+			target.ID = &defaultTrustedProfiletarget
+		}
+		instanceproto.DefaultTrustedProfile = &vpcv1.InstanceDefaultTrustedProfilePrototype{
+			Target: target,
+		}
+
+		if defaultTrustedProfileAutoLinkIntf, ok := d.GetOkExists(isInstanceDefaultTrustedProfileAutoLink); ok {
+			defaultTrustedProfileAutoLink := defaultTrustedProfileAutoLinkIntf.(bool)
+			instanceproto.DefaultTrustedProfile.AutoLink = &defaultTrustedProfileAutoLink
+		}
+	}
+	if availablePolicyHostFailureIntf, ok := d.GetOk(isInstanceTemplateAvailablePolicyHostFailure); ok {
+		availablePolicyHostFailure := availablePolicyHostFailureIntf.(string)
+		instanceproto.AvailabilityPolicy = &vpcv1.InstanceAvailabilityPolicyPrototype{
+			HostFailure: &availablePolicyHostFailure,
+		}
+	}
+	if dHostIdInf, ok := d.GetOk(isPlacementTargetDedicatedHost); ok {
+		dHostIdStr := dHostIdInf.(string)
+		dHostPlaementTarget := &vpcv1.InstancePlacementTargetPrototypeDedicatedHostIdentity{
+			ID: &dHostIdStr,
+		}
+		instanceproto.PlacementTarget = dHostPlaementTarget
+	}
+
+	if dHostGrpIdInf, ok := d.GetOk(isPlacementTargetDedicatedHostGroup); ok {
+		dHostGrpIdStr := dHostGrpIdInf.(string)
+		dHostGrpPlaementTarget := &vpcv1.InstancePlacementTargetPrototypeDedicatedHostGroupIdentity{
+			ID: &dHostGrpIdStr,
+		}
+		instanceproto.PlacementTarget = dHostGrpPlaementTarget
+	}
+
+	if placementGroupInf, ok := d.GetOk(isPlacementTargetPlacementGroup); ok {
+		placementGrpStr := placementGroupInf.(string)
+		placementGrp := &vpcv1.InstancePlacementTargetPrototypePlacementGroupIdentity{
+			ID: &placementGrpStr,
+		}
+		instanceproto.PlacementTarget = placementGrp
+	}
+
+	if totalVolBandwidthIntf, ok := d.GetOk(isInstanceTotalVolumeBandwidth); ok {
+		totalVolBandwidthStr := int64(totalVolBandwidthIntf.(int))
+		instanceproto.TotalVolumeBandwidth = &totalVolBandwidthStr
+	}
+
+	// BOOT VOLUME ATTACHMENT for instance template
+	if boot, ok := d.GetOk(isInstanceTemplateBootVolume); ok {
+		bootvol := boot.([]interface{})[0].(map[string]interface{})
+		var volTemplate = &vpcv1.VolumePrototypeInstanceByImageContext{}
+		name, ok := bootvol[isInstanceTemplateBootName]
+		namestr := name.(string)
+		if ok && namestr != "" {
+			volTemplate.Name = &namestr
+		}
+
+		var userTags *schema.Set
+		if v, ok := bootvol[isInstanceTemplateBootVolumeTags]; ok {
+			userTags = v.(*schema.Set)
+			if userTags != nil && userTags.Len() != 0 {
+				userTagsArray := make([]string, userTags.Len())
+				for i, userTag := range userTags.List() {
+					userTagStr := userTag.(string)
+					userTagsArray[i] = userTagStr
+				}
+				volTemplate.UserTags = userTagsArray
+			}
+		}
+
+		volcap := 100
+		volcapint64 := int64(volcap)
+		volprof := "general-purpose"
+		volTemplate.Capacity = &volcapint64
+		volTemplate.Profile = &vpcv1.VolumeProfileIdentity{
+			Name: &volprof,
+		}
+
+		if encryption, ok := bootvol[isInstanceTemplateBootEncryption]; ok {
+			bootEncryption := encryption.(string)
+			if bootEncryption != "" {
+				volTemplate.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
+					CRN: &bootEncryption,
+				}
+			}
+		}
+
+		var deleteVolumeOption bool
+		if deleteVolume, ok := bootvol[isInstanceTemplateVolumeDeleteOnInstanceDelete]; ok {
+			deleteVolumeOption = deleteVolume.(bool)
+		}
+
+		instanceproto.BootVolumeAttachment = &vpcv1.VolumeAttachmentPrototypeInstanceByImageContext{
+			DeleteVolumeOnInstanceDelete: &deleteVolumeOption,
+			Volume:                       volTemplate,
+		}
+	}
+
+	// Handle volume attachments
+	if volsintf, ok := d.GetOk(isInstanceTemplateVolumeAttachments); ok {
+		vols := volsintf.([]interface{})
+		var intfs []vpcv1.VolumeAttachmentPrototype
+		for _, resource := range vols {
+			vol := resource.(map[string]interface{})
+			volInterface := &vpcv1.VolumeAttachmentPrototype{}
+			deleteVolBool := vol[isInstanceTemplateVolumeDeleteOnInstanceDelete].(bool)
+			volInterface.DeleteVolumeOnInstanceDelete = &deleteVolBool
+			attachmentnamestr := vol[isInstanceTemplateVolAttachmentName].(string)
+			volInterface.Name = &attachmentnamestr
+			volIdStr := vol[isInstanceTemplateVolAttVol].(string)
+
+			if volIdStr != "" {
+				volInterface.Volume = &vpcv1.VolumeAttachmentPrototypeVolumeVolumeIdentity{
+					ID: &volIdStr,
+				}
+			} else {
+				newvolintf := vol[isInstanceTemplateVolAttVolPrototype].([]interface{})[0]
+				newvol := newvolintf.(map[string]interface{})
+				profileName := newvol[isInstanceTemplateVolAttVolProfile].(string)
+				capacity := int64(newvol[isInstanceTemplateVolAttVolCapacity].(int))
+
+				volPrototype := &vpcv1.VolumeAttachmentPrototypeVolumeVolumePrototypeInstanceContext{
+					Profile: &vpcv1.VolumeProfileIdentity{
+						Name: &profileName,
+					},
+					Capacity: &capacity,
+				}
+				iops := int64(newvol[isInstanceTemplateVolAttVolIops].(int))
+				encryptionKey := newvol[isInstanceTemplateVolAttVolEncryptionKey].(string)
+
+				if iops != 0 {
+					volPrototype.Iops = &iops
+				}
+
+				if encryptionKey != "" {
+					volPrototype.EncryptionKey = &vpcv1.EncryptionKeyIdentity{
+						CRN: &encryptionKey,
+					}
+				}
+				var userTags *schema.Set
+				if v, ok := newvol[isInstanceTemplateVolAttTags]; ok {
+					userTags = v.(*schema.Set)
+					if userTags != nil && userTags.Len() != 0 {
+						userTagsArray := make([]string, userTags.Len())
+						for i, userTag := range userTags.List() {
+							userTagStr := userTag.(string)
+							userTagsArray[i] = userTagStr
+						}
+						volPrototype.UserTags = userTagsArray
 					}
 				}
 				volInterface.Volume = volPrototype
@@ -990,6 +1566,27 @@ func instanceTemplateGet(d *schema.ResourceData, meta interface{}, ID string) er
 	if instance.AvailabilityPolicy != nil && instance.AvailabilityPolicy.HostFailure != nil {
 		d.Set(isInstanceTemplateAvailablePolicyHostFailure, instance.AvailabilityPolicy.HostFailure)
 	}
+
+	// catalog offering if any
+
+	if instance.CatalogOffering != nil {
+		catOfferingList := make([]map[string]interface{}, 0)
+		insTempCatalogOffering := instance.CatalogOffering.(*vpcv1.InstanceCatalogOfferingPrototype)
+
+		currentOffering := map[string]interface{}{}
+		if insTempCatalogOffering.Offering != nil {
+			offering := insTempCatalogOffering.Offering.(*vpcv1.CatalogOfferingIdentity)
+			currentOffering[isInstanceTemplateCatalogOfferingOfferingCrn] = *offering.CRN
+		}
+		if insTempCatalogOffering.Version != nil {
+			version := insTempCatalogOffering.Version.(*vpcv1.CatalogOfferingVersionIdentity)
+			currentOffering[isInstanceTemplateCatalogOfferingVersionCrn] = *version.CRN
+		}
+		catOfferingList = append(catOfferingList, currentOffering)
+		d.Set(isInstanceTemplateCatalogOffering, catOfferingList)
+
+	}
+
 	if instance.Profile != nil {
 		instanceProfileIntf := instance.Profile
 		identity := instanceProfileIntf.(*vpcv1.InstanceProfileIdentity)
@@ -1021,6 +1618,19 @@ func instanceTemplateGet(d *schema.ResourceData, meta interface{}, ID string) er
 	}
 	if instance.MetadataService != nil {
 		d.Set(isInstanceTemplateMetadataServiceEnabled, instance.MetadataService.Enabled)
+		metadataService := []map[string]interface{}{}
+		metadataServiceMap := map[string]interface{}{}
+
+		metadataServiceMap[isInstanceMetadataServiceEnabled1] = instance.MetadataService.Enabled
+		if instance.MetadataService.Protocol != nil {
+			metadataServiceMap[isInstanceMetadataServiceProtocol] = instance.MetadataService.Protocol
+		}
+		if instance.MetadataService.ResponseHopLimit != nil {
+			metadataServiceMap[isInstanceMetadataServiceRespHopLimit] = instance.MetadataService.ResponseHopLimit
+		}
+		metadataService = append(metadataService, metadataServiceMap)
+		d.Set(isInstanceMetadataService, metadataService)
+
 	}
 
 	var placementTargetMap map[string]interface{}
@@ -1164,7 +1774,7 @@ func instanceTemplateGet(d *schema.ResourceData, meta interface{}, ID string) er
 			newVolumeArr := []map[string]interface{}{}
 			newVolume := map[string]interface{}{}
 			volumeIntf := volume.Volume
-			volumeInst := volumeIntf.(*vpcv1.VolumeAttachmentVolumePrototypeInstanceContext)
+			volumeInst := volumeIntf.(*vpcv1.VolumeAttachmentPrototypeVolume)
 			if volumeInst.ID != nil {
 				volumeAttach[isInstanceTemplateVolAttVol] = *volumeInst.ID
 			}
@@ -1183,6 +1793,9 @@ func instanceTemplateGet(d *schema.ResourceData, meta interface{}, ID string) er
 			if volumeInst.EncryptionKey != nil {
 				encryptionKey := volumeInst.EncryptionKey.(*vpcv1.EncryptionKeyIdentity)
 				newVolume[isInstanceTemplateVolAttVolEncryptionKey] = *encryptionKey.CRN
+			}
+			if volumeInst.UserTags != nil {
+				newVolume[isInstanceTemplateVolAttTags] = volumeInst.UserTags
 			}
 			if len(newVolume) > 0 {
 				newVolumeArr = append(newVolumeArr, newVolume)
@@ -1209,6 +1822,9 @@ func instanceTemplateGet(d *schema.ResourceData, meta interface{}, ID string) er
 				volEncryption := volumeIntf.EncryptionKey
 				volEncryptionIntf := volEncryption.(*vpcv1.EncryptionKeyIdentity)
 				bootVol[isInstanceTemplateBootEncryption] = volEncryptionIntf.CRN
+			}
+			if volumeIntf.UserTags != nil {
+				bootVol[isVolumeTags] = volumeIntf.UserTags
 			}
 		}
 
@@ -1294,4 +1910,29 @@ func instanceTemplateExists(d *schema.ResourceData, meta interface{}, ID string)
 		return false, fmt.Errorf("[ERROR] Error Getting InstanceTemplate: %s\n%s", err, response)
 	}
 	return true, nil
+}
+
+func GetInstanceTemplateMetadataServiceOptions(d *schema.ResourceData) (metadataService *vpcv1.InstanceMetadataServicePrototype) {
+	if metadataServiceIntf, ok := d.GetOk(isInstanceMetadataService); ok {
+		metadataServiceMap := metadataServiceIntf.([]interface{})[0].(map[string]interface{})
+		enabledIntf, ok := metadataServiceMap[isInstanceMetadataServiceEnabled1]
+		metadataService = &vpcv1.InstanceMetadataServicePrototype{}
+		if ok {
+			enabled := enabledIntf.(bool)
+			metadataService.Enabled = &enabled
+		}
+		protocolIntf, ok := metadataServiceMap[isInstanceMetadataServiceProtocol]
+		if ok && protocolIntf.(string) != "" {
+			protocol := protocolIntf.(string)
+			metadataService.Protocol = &protocol
+		}
+		respHopLimitIntf, ok := metadataServiceMap[isInstanceMetadataServiceRespHopLimit]
+		if ok && int64(respHopLimitIntf.(int)) != 0 {
+			respHopLimit := int64(respHopLimitIntf.(int))
+			metadataService.ResponseHopLimit = &respHopLimit
+		}
+
+		return
+	}
+	return nil
 }

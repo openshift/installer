@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2021 All Rights Reserved.
+// Copyright IBM Corp. 2022 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package iamidentity
@@ -13,6 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
+	"github.com/IBM/go-sdk-core/v5/core"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 )
 
@@ -76,6 +77,25 @@ func ResourceIBMIAMAccountSettings() *schema.Resource {
 				Default:     "*",
 				Description: "Version of the account settings to be updated. Specify the version that you retrieved as entity_tag (ETag header) when reading the account. This value helps identifying parallel usage of this API. Pass * to indicate to update any version available. This might result in stale updates.",
 			},
+			"user_mfa": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "List of users that are exempted from the MFA requirement of the account.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"iam_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The iam_id of the user.",
+						},
+						"mfa": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Defines the MFA requirement for the user. Valid values:  * NONE - No MFA trait set  * TOTP - For all non-federated IBMId users  * TOTP4ALL - For all users  * LEVEL1 - Email-based MFA for all users  * LEVEL2 - TOTP-based MFA for all users  * LEVEL3 - U2F MFA for all users.",
+						},
+					},
+				},
+			},
 			"history": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -126,13 +146,25 @@ func ResourceIBMIAMAccountSettings() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Defines the period of time in seconds in which a session will be invalidated due  to inactivity. Valid values:   * Any whole number between '900' and '7200'   * NOT_SET - To unset account setting and use service default.",
+				Description: "Defines the period of time in seconds in which a session will be invalidated due to inactivity. Valid values:  * Any whole number between '900' and '7200'  * NOT_SET - To unset account setting and use service default.",
 			},
 			"max_sessions_per_identity": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Defines the max allowed sessions per identity required by the account. Value values: * Any whole number greater than '0'   * NOT_SET - To unset account setting and use service default.",
+				Description: "Defines the max allowed sessions per identity required by the account. Value values:  * Any whole number greater than 0  * NOT_SET - To unset account setting and use service default.",
+			},
+			"system_access_token_expiration_in_seconds": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Defines the access token expiration in seconds. Valid values:  * Any whole number between '900' and '3600'  * NOT_SET - To unset account setting and use service default.",
+			},
+			"system_refresh_token_expiration_in_seconds": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Defines the refresh token expiration in seconds. Valid values:  * Any whole number between '900' and '2592000'  * NOT_SET - To unset account setting and use service default.",
 			},
 		},
 	}
@@ -244,6 +276,19 @@ func resourceIbmIamAccountSettingsRead(context context.Context, d *schema.Resour
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting history: %s", err))
 		}
 	}
+	userMfa := []map[string]interface{}{}
+	if accountSettingsResponse.UserMfa != nil {
+		for _, userMfaItem := range accountSettingsResponse.UserMfa {
+			userMfaItemMap, err := resourceIBMIamAccountSettingsAccountSettingsUserMfaToMap(&userMfaItem)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			userMfa = append(userMfa, userMfaItemMap)
+		}
+	}
+	if err = d.Set("user_mfa", userMfa); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting user_mfa: %s", err))
+	}
 	if err = d.Set("session_expiration_in_seconds", accountSettingsResponse.SessionExpirationInSeconds); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting session_expiration_in_seconds: %s", err))
 	}
@@ -252,6 +297,12 @@ func resourceIbmIamAccountSettingsRead(context context.Context, d *schema.Resour
 	}
 	if err = d.Set("max_sessions_per_identity", accountSettingsResponse.MaxSessionsPerIdentity); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting max_sessions_per_identity: %s", err))
+	}
+	if err = d.Set("system_access_token_expiration_in_seconds", accountSettingsResponse.SystemAccessTokenExpirationInSeconds); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting system_access_token_expiration_in_seconds: %s", err))
+	}
+	if err = d.Set("system_refresh_token_expiration_in_seconds", accountSettingsResponse.SystemRefreshTokenExpirationInSeconds); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting system_refresh_token_expiration_in_seconds: %s", err))
 	}
 
 	return nil
@@ -306,7 +357,16 @@ func resourceIbmIamAccountSettingsUpdate(context context.Context, d *schema.Reso
 		updateAccountSettingsOptions.SetMfa(mfa_str)
 		hasChange = true
 	}
-
+	var user_mfa []iamidentityv1.AccountSettingsUserMfa
+	if d.HasChange("user_mfa") {
+		for _, e := range d.Get("user_mfa").([]interface{}) {
+			value := e.(map[string]interface{})
+			userMfaItem := resourceIBMIamAccountSettingsMapToAccountSettingsUserMfa(value)
+			user_mfa = append(user_mfa, userMfaItem)
+		}
+		updateAccountSettingsOptions.SetUserMfa(user_mfa)
+		hasChange = true
+	}
 	if d.HasChange("session_expiration_in_seconds") {
 		session_expiration_in_seconds_str := d.Get("session_expiration_in_seconds").(string)
 		updateAccountSettingsOptions.SetSessionExpirationInSeconds(session_expiration_in_seconds_str)
@@ -324,6 +384,14 @@ func resourceIbmIamAccountSettingsUpdate(context context.Context, d *schema.Reso
 		updateAccountSettingsOptions.SetMaxSessionsPerIdentity(max_sessions_per_identity_str)
 		hasChange = true
 	}
+	if d.HasChange("system_access_token_expiration_in_seconds") {
+		updateAccountSettingsOptions.SetSystemAccessTokenExpirationInSeconds(d.Get("system_access_token_expiration_in_seconds").(string))
+		hasChange = true
+	}
+	if d.HasChange("system_refresh_token_expiration_in_seconds") {
+		updateAccountSettingsOptions.SetSystemRefreshTokenExpirationInSeconds(d.Get("system_refresh_token_expiration_in_seconds").(string))
+		hasChange = true
+	}
 
 	if hasChange {
 		_, response, err := iamIdentityClient.UpdateAccountSettings(updateAccountSettingsOptions)
@@ -334,6 +402,20 @@ func resourceIbmIamAccountSettingsUpdate(context context.Context, d *schema.Reso
 	}
 
 	return resourceIbmIamAccountSettingsRead(context, d, meta)
+}
+
+func resourceIBMIamAccountSettingsMapToAccountSettingsUserMfa(userMfaMap map[string]interface{}) iamidentityv1.AccountSettingsUserMfa {
+	userMfa := iamidentityv1.AccountSettingsUserMfa{}
+	userMfa.IamID = core.StringPtr(userMfaMap["iam_id"].(string))
+	userMfa.Mfa = core.StringPtr(userMfaMap["mfa"].(string))
+	return userMfa
+}
+
+func resourceIBMIamAccountSettingsAccountSettingsUserMfaToMap(model *iamidentityv1.AccountSettingsUserMfa) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["iam_id"] = model.IamID
+	modelMap["mfa"] = model.Mfa
+	return modelMap, nil
 }
 
 func resourceIbmIamAccountSettingsDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {

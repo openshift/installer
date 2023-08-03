@@ -1,4 +1,4 @@
-// Copyright IBM Corp. 2022 All Rights Reserved.
+// Copyright IBM Corp. 2023 All Rights Reserved.
 // Licensed under the Mozilla Public License v2.0
 
 package cdtoolchain
@@ -19,10 +19,10 @@ import (
 
 func ResourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: ResourceIBMCdToolchainToolGithubconsolidatedCreate,
-		ReadContext:   ResourceIBMCdToolchainToolGithubconsolidatedRead,
-		UpdateContext: ResourceIBMCdToolchainToolGithubconsolidatedUpdate,
-		DeleteContext: ResourceIBMCdToolchainToolGithubconsolidatedDelete,
+		CreateContext: resourceIBMCdToolchainToolGithubconsolidatedCreate,
+		ReadContext:   resourceIBMCdToolchainToolGithubconsolidatedRead,
+		UpdateContext: resourceIBMCdToolchainToolGithubconsolidatedUpdate,
+		DeleteContext: resourceIBMCdToolchainToolGithubconsolidatedDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
@@ -31,89 +31,120 @@ func ResourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_githubconsolidated", "toolchain_id"),
-				Description:  "ID of the toolchain to bind tool to.",
+				Description:  "ID of the toolchain to bind the tool to.",
 			},
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				MinItems:    1,
 				MaxItems:    1,
 				Required:    true,
-				Description: "Parameters to be used to create the tool.",
+				Description: "Unique key-value pairs representing parameters to be used to create the tool. A list of parameters for each tool integration can be found in the <a href=\"https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-integrations\">Configuring tool integrations page</a>.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"git_id": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Set this value to 'github' for github.com, the GUID of an existing custom GitHub Enterprise server, or 'githubcustom'.",
+						},
+						"title": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The title of the server. e.g. My GitHub Enterprise Server.",
 						},
 						"api_root_url": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
-							Description: "e.g. https://api.github.example.com.",
+							Description: "The API root URL for the GitHub server.",
+						},
+						"default_branch": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The default branch of the git repository.",
+						},
+						"root_url": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The Root URL of the server. e.g. https://github.example.com.",
+						},
+						"blind_connection": &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Setting this value to true means the server is not addressable on the public internet. IBM Cloud will not be able to validate the connection details you provide. Certain functionality that requires API access to the git server will be disabled. Delivery pipeline will only work using a private worker that has network access to the git server.",
 						},
 						"owner_id": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The GitHub user or organization that owns the repository.  This parameter is required when creating a new repository, cloning, or forking a repository.  The value will be computed when linking to an existing repository.",
 						},
 						"repo_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The name of the new GitHub repository to create.  This parameter is required when creating a new repository, cloning, or forking a repository.  The value will be computed when linking to an existing repository.",
 						},
 						"repo_url": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
-							Description: "Type the URL of the repository that you are linking to.",
+							Description: "The URL of the GitHub repository for this tool integration.  This parameter is required when linking to an existing repository.  The value will be computed when creating a new repository, cloning, or forking a repository.",
 						},
 						"source_repo_url": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
-							Description: "Type the URL of the repository that you are forking or cloning.",
+							Description: "The URL of the repository that you are forking or cloning.  This parameter is required when forking or cloning a repository.  It is not used when creating a new repository or linking to an existing repository.",
 						},
 						"token_url": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
 							Computed:    true,
-							Description: "Integration token URL.",
+							Description: "The token URL used for authorizing with the GitHub server.",
 						},
 						"type": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							Computed: true,
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The operation that should be performed to initialize the new tool integration. Use 'new' or 'new_if_not_exists' to create a new git repository, 'clone' or 'clone_if_not_exists' to clone an existing repository into a new git repository, 'fork' or 'fork_if_not_exists' to fork an existing git repository, or 'link' to link to an existing git repository. If you attempt to apply a resource with type 'new', 'clone', or 'fork' when the target repo already exists, the attempt will fail. If you apply a resource with type 'new_if_not_exists`, 'clone_if_not_exists', or 'fork_if_not_exists' when the target repo already exists, the existing repo will be used as-is.",
 						},
 						"private_repo": &schema.Schema{
 							Type:        schema.TypeBool,
-							Optional:    true,
 							Computed:    true,
-							Description: "Select this check box to make this repository private.",
-						},
-						"has_issues": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     true,
-							Description: "Select this check box to enable GitHub Issues for lightweight issue tracking.",
+							Description: "Set this value to 'true' to make the repository private when creating a new repository or when cloning or forking a repository.  This parameter is not used when linking to an existing repository.",
 						},
 						"auto_init": &schema.Schema{
 							Type:        schema.TypeBool,
-							Optional:    true,
 							Computed:    true,
-							Description: "Select this checkbox to initialize this repository with a README.",
+							Description: "Setting this value to true will initialize this repository with a README.  This parameter is only used when creating a new repository.",
 						},
 						"enable_traceability": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "Select this check box to track the deployment of code changes by creating tags, labels and comments on commits, pull requests and referenced issues.",
+							Description: "Set this value to 'true' to track the deployment of code changes by creating tags, labels and comments on commits, pull requests and referenced issues.",
 						},
 						"integration_owner": &schema.Schema{
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: flex.SuppressAllowBlank,
+							Description:      "Select the user which git operations will be performed as.",
+						},
+						"repo_id": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The ID of the GitHub repository.",
+						},
+						"auth_type": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Computed:    true,
-							Description: "Select the user which git operations will be performed as.",
+							Description: "Select the method of authentication that will be used to access the git provider. The default value is 'oauth'.",
+						},
+						"api_token": &schema.Schema{
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: flex.SuppressHashedRawSecret,
+							Sensitive:        true,
+							Description:      "Personal Access Token. Required if ‘auth_type’ is set to ‘pat’, ignored otherwise.",
+						},
+						"toolchain_issues_enabled": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "Setting this value to true will enable issues on the GitHub repository and add an issues tool card to the toolchain.  Setting the value to false will remove the tool card from the toolchain, but will not impact whether or not issues are enabled on the GitHub repository itself.",
 						},
 					},
 				},
@@ -126,50 +157,73 @@ func ResourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"git_id": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "Set this value to 'github' for github.com, the GUID of an existing custom GitHub Enterprise server, or 'githubcustom'.",
+						},
+						"title": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "The title of the server. e.g. My GitHub Enterprise Server.",
+						},
+						"root_url": &schema.Schema{
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "The Root URL of the server. e.g. https://github.example.com.",
+						},
+						"blind_connection": &schema.Schema{
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     false,
+							ForceNew:    true,
+							Description: "Setting this value to true means the server is not addressable on the public internet. IBM Cloud will not be able to validate the connection details you provide. Certain functionality that requires API access to the git server will be disabled. Delivery pipeline will only work using a private worker that has network access to the git server.",
 						},
 						"owner_id": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "The GitHub user or organization that owns the repository.  This parameter is required when creating a new repository, cloning, or forking a repository.  The value will be computed when linking to an existing repository.",
 						},
 						"repo_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: "The name of the new GitHub repository to create.  This parameter is required when creating a new repository, cloning, or forking a repository.  The value will be computed when linking to an existing repository.",
 						},
 						"repo_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
-							Description: "Type the URL of the repository that you are linking to.",
+							Description: "The URL of the GitHub repository for this tool integration.  This parameter is required when linking to an existing repository.  The value will be computed when creating a new repository, cloning, or forking a repository.",
 						},
 						"source_repo_url": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
-							Description: "Type the URL of the repository that you are forking or cloning.",
+							Description: "The URL of the repository that you are forking or cloning.  This parameter is required when forking or cloning a repository.  It is not used when creating a new repository or linking to an existing repository.",
 						},
 						"type": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The operation that should be performed to initialize the new tool integration. Use 'new' or 'new_if_not_exists' to create a new git repository, 'clone' or 'clone_if_not_exists' to clone an existing repository into a new git repository, 'fork' or 'fork_if_not_exists' to fork an existing git repository, or 'link' to link to an existing git repository. If you attempt to apply a resource with type 'new', 'clone', or 'fork' when the target repo already exists, the attempt will fail. If you apply a resource with type 'new_if_not_exists`, 'clone_if_not_exists', or 'fork_if_not_exists' when the target repo already exists, the existing repo will be used as-is.",
 						},
 						"private_repo": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
 							ForceNew:    true,
-							Description: "Select this check box to make this repository private.",
+							Description: "Set this value to 'true' to make the repository private when creating a new repository or when cloning or forking a repository.  This parameter is not used when linking to an existing repository.",
 						},
 						"auto_init": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
 							ForceNew:    true,
-							Description: "Select this checkbox to initialize this repository with a README.",
+							Description: "Setting this value to true will initialize this repository with a README.  This parameter is only used when creating a new repository.",
 						},
 					},
 				},
@@ -178,12 +232,12 @@ func ResourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_githubconsolidated", "name"),
-				Description:  "Name of tool.",
+				Description:  "Name of the tool.",
 			},
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where tool can be found.",
+				Description: "Resource group where the tool is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -209,12 +263,12 @@ func ResourceIBMCdToolchainToolGithubconsolidated() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "URI representing the this resource through the UI.",
+							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "URI representing the this resource through an API.",
+							Description: "URI representing this resource through an API.",
 						},
 					},
 				},
@@ -255,7 +309,7 @@ func ResourceIBMCdToolchainToolGithubconsolidatedValidator() *validate.ResourceV
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `^([^\\x00-\\x7F]|[a-zA-Z0-9-._ ])+$`,
+			Regexp:                     `^([^\x00-\x7F]|[a-zA-Z0-9-._ ])+$`,
 			MinValueLength:             0,
 			MaxValueLength:             128,
 		},
@@ -265,7 +319,7 @@ func ResourceIBMCdToolchainToolGithubconsolidatedValidator() *validate.ResourceV
 	return &resourceValidator
 }
 
-func ResourceIBMCdToolchainToolGithubconsolidatedCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolGithubconsolidatedCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -275,24 +329,27 @@ func ResourceIBMCdToolchainToolGithubconsolidatedCreate(context context.Context,
 
 	createToolOptions.SetToolchainID(d.Get("toolchain_id").(string))
 	createToolOptions.SetToolTypeID("githubconsolidated")
-	parametersModel := GetParametersForCreate(d, ResourceIBMCdToolchainToolGithubconsolidated(), nil)
+	remapFields := map[string]string{
+		"toolchain_issues_enabled": "has_issues",
+	}
+	parametersModel := GetParametersForCreate(d, ResourceIBMCdToolchainToolGithubconsolidated(), remapFields)
 	createToolOptions.SetParameters(parametersModel)
 	if _, ok := d.GetOk("name"); ok {
 		createToolOptions.SetName(d.Get("name").(string))
 	}
 
-	postToolResponse, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
+	toolchainToolPost, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateToolWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("CreateToolWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *postToolResponse.ID))
+	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *toolchainToolPost.ID))
 
-	return ResourceIBMCdToolchainToolGithubconsolidatedRead(context, d, meta)
+	return resourceIBMCdToolchainToolGithubconsolidatedRead(context, d, meta)
 }
 
-func ResourceIBMCdToolchainToolGithubconsolidatedRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolGithubconsolidatedRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -308,7 +365,7 @@ func ResourceIBMCdToolchainToolGithubconsolidatedRead(context context.Context, d
 	getToolByIDOptions.SetToolchainID(parts[0])
 	getToolByIDOptions.SetToolID(parts[1])
 
-	getToolByIDResponse, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -318,49 +375,52 @@ func ResourceIBMCdToolchainToolGithubconsolidatedRead(context context.Context, d
 		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
 	}
 
-	if err = d.Set("toolchain_id", getToolByIDResponse.ToolchainID); err != nil {
+	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
 	}
-	parametersMap := GetParametersFromRead(getToolByIDResponse.Parameters, ResourceIBMCdToolchainToolGithubconsolidated(), nil)
+	remapFields := map[string]string{
+		"toolchain_issues_enabled": "has_issues",
+	}
+	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolGithubconsolidated(), remapFields)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
 	}
-	if err = d.Set("name", getToolByIDResponse.Name); err != nil {
+	if err = d.Set("name", toolchainTool.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
-	if err = d.Set("resource_group_id", getToolByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
-	if err = d.Set("crn", getToolByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchainTool.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
-	if err = d.Set("toolchain_crn", getToolByIDResponse.ToolchainCRN); err != nil {
+	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
 	}
-	if err = d.Set("href", getToolByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchainTool.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
-	referentMap, err := ResourceIBMCdToolchainToolGithubconsolidatedToolReferentToMap(getToolByIDResponse.Referent)
+	referentMap, err := resourceIBMCdToolchainToolGithubconsolidatedToolModelReferentToMap(toolchainTool.Referent)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err = d.Set("referent", []map[string]interface{}{referentMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting referent: %s", err))
 	}
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
-	if err = d.Set("state", getToolByIDResponse.State); err != nil {
+	if err = d.Set("state", toolchainTool.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
-	if err = d.Set("tool_id", getToolByIDResponse.ID); err != nil {
+	if err = d.Set("tool_id", toolchainTool.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting tool_id: %s", err))
 	}
 
 	return nil
 }
 
-func ResourceIBMCdToolchainToolGithubconsolidatedUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolGithubconsolidatedUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -375,36 +435,41 @@ func ResourceIBMCdToolchainToolGithubconsolidatedUpdate(context context.Context,
 
 	updateToolOptions.SetToolchainID(parts[0])
 	updateToolOptions.SetToolID(parts[1])
-	updateToolOptions.SetToolTypeID("githubconsolidated")
 
 	hasChange := false
 
+	patchVals := &cdtoolchainv2.ToolchainToolPrototypePatch{}
 	if d.HasChange("toolchain_id") {
 		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "toolchain_id"))
 	}
 	if d.HasChange("parameters") {
-		parameters := GetParametersForUpdate(d, ResourceIBMCdToolchainToolGithubconsolidated(), nil)
-		updateToolOptions.SetParameters(parameters)
+		remapFields := map[string]string{
+			"toolchain_issues_enabled": "has_issues",
+		}
+		parameters := GetParametersForUpdate(d, ResourceIBMCdToolchainToolGithubconsolidated(), remapFields)
+		patchVals.Parameters = parameters
 		hasChange = true
 	}
 	if d.HasChange("name") {
-		updateToolOptions.SetName(d.Get("name").(string))
+		newName := d.Get("name").(string)
+		patchVals.Name = &newName
 		hasChange = true
 	}
 
 	if hasChange {
-		response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
+		updateToolOptions.ToolchainToolPrototypePatch, _ = patchVals.AsPatch()
+		_, response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateToolWithContext failed %s\n%s", err, response)
 			return diag.FromErr(fmt.Errorf("UpdateToolWithContext failed %s\n%s", err, response))
 		}
 	}
 
-	return ResourceIBMCdToolchainToolGithubconsolidatedRead(context, d, meta)
+	return resourceIBMCdToolchainToolGithubconsolidatedRead(context, d, meta)
 }
 
-func ResourceIBMCdToolchainToolGithubconsolidatedDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolGithubconsolidatedDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -431,7 +496,7 @@ func ResourceIBMCdToolchainToolGithubconsolidatedDelete(context context.Context,
 	return nil
 }
 
-func ResourceIBMCdToolchainToolGithubconsolidatedToolReferentToMap(model *cdtoolchainv2.ToolReferent) (map[string]interface{}, error) {
+func resourceIBMCdToolchainToolGithubconsolidatedToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
 		modelMap["ui_href"] = model.UIHref

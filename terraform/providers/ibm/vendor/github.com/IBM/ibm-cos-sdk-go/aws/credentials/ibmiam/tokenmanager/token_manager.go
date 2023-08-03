@@ -341,7 +341,19 @@ func (tm *defaultTMImplementation) refresh() error {
 	// parse the response
 	tokenValue, err := processResponse(response)
 	if err != nil {
-		return ErrFetchingIAMTokenFn(err)
+		if response.StatusCode == 400 {
+			// Initialize new token when REFRESH TOKEN got invalid
+			if tm.logLevel.Matches(aws.LogDebug) {
+				tm.logger.Log(debugLog, defaultTMImpLog, "REFRESH TOKEN INVALID. NEW TOKEN INITIALIZED", err, response.Header["Transaction-Id"], response.Body)
+			}
+			tm.init()
+			return nil
+		} else {
+			if tm.logLevel.Matches(aws.LogDebug) {
+				tm.logger.Log(debugLog, defaultTMImpLog, "REFRESH TOKEN EXCHANGE FAILED", err, response.Header["Transaction-Id"], response.Body)
+			}
+			return ErrFetchingIAMTokenFn(err)
+		}
 	}
 	// sets current token to the value fetched
 	tm.Cache = tokenValue

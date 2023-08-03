@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iamaccessgroupsv2"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -22,6 +23,8 @@ func DataSourceIBMIAMAccessGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Name of the access group",
+				ValidateFunc: validate.InvokeDataSourceValidator("ibm_iam_access_group",
+					"access_group_name"),
 			},
 			"groups": {
 				Type:     schema.TypeList,
@@ -109,6 +112,20 @@ func DataSourceIBMIAMAccessGroup() *schema.Resource {
 			},
 		},
 	}
+}
+func DataSourceIBMIAMAccessGroupValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "access_group_name",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:access_group", "resolved_to:name"},
+			Optional:                   true})
+
+	iBMIAMAccessGroupValidator := validate.ResourceValidator{ResourceName: "ibm_iam_access_group", Schema: validateSchema}
+	return &iBMIAMAccessGroupValidator
 }
 
 func dataIBMIAMAccessGroupRead(d *schema.ResourceData, meta interface{}) error {

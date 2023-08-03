@@ -22,6 +22,11 @@ func DataSourceIBMIsFloatingIps() *schema.Resource {
 		ReadContext: dataSourceIBMIsFloatingIpsRead,
 
 		Schema: map[string]*schema.Schema{
+			"resource_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique identifier of the resource group this floating ips belongs to",
+			},
 			"name": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -198,6 +203,13 @@ func DataSourceIBMIsFloatingIps() *schema.Resource {
 								},
 							},
 						},
+						isFloatingIPAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access management tags",
+						},
 					},
 				},
 			},
@@ -212,8 +224,13 @@ func dataSourceIBMIsFloatingIpsRead(context context.Context, d *schema.ResourceD
 	}
 	start := ""
 	allFloatingIPs := []vpcv1.FloatingIP{}
+	floatingIPOptions := &vpcv1.ListFloatingIpsOptions{}
+	if resgroupintf, ok := d.GetOk("resource_group"); ok {
+		resGroup := resgroupintf.(string)
+		floatingIPOptions.ResourceGroupID = &resGroup
+	}
 	for {
-		floatingIPOptions := &vpcv1.ListFloatingIpsOptions{}
+
 		if start != "" {
 			floatingIPOptions.Start = &start
 		}
@@ -253,7 +270,7 @@ func dataSourceIBMIsFloatingIpsRead(context context.Context, d *schema.ResourceD
 	}
 
 	if matchFloatingIps != nil {
-		err = d.Set("floating_ips", dataSourceFloatingIPCollectionFlattenFloatingIps(matchFloatingIps))
+		err = d.Set("floating_ips", dataSourceFloatingIPCollectionFlattenFloatingIps(matchFloatingIps, d, meta))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting floating_ips %s", err))
 		}
@@ -284,15 +301,15 @@ func dataSourceFloatingIPCollectionFirstToMap(firstItem vpcv1.FloatingIPCollecti
 	return firstMap
 }
 
-func dataSourceFloatingIPCollectionFlattenFloatingIps(result []vpcv1.FloatingIP) (floatingIps []map[string]interface{}) {
+func dataSourceFloatingIPCollectionFlattenFloatingIps(result []vpcv1.FloatingIP, d *schema.ResourceData, meta interface{}) (floatingIps []map[string]interface{}) {
 	for _, floatingIpsItem := range result {
-		floatingIps = append(floatingIps, dataSourceFloatingIPCollectionFloatingIpsToMap(floatingIpsItem))
+		floatingIps = append(floatingIps, dataSourceFloatingIPCollectionFloatingIpsToMap(floatingIpsItem, d, meta))
 	}
 
 	return floatingIps
 }
 
-func dataSourceFloatingIPCollectionFloatingIpsToMap(floatingIpsItem vpcv1.FloatingIP) (floatingIpsMap map[string]interface{}) {
+func dataSourceFloatingIPCollectionFloatingIpsToMap(floatingIpsItem vpcv1.FloatingIP, d *schema.ResourceData, meta interface{}) (floatingIpsMap map[string]interface{}) {
 	floatingIpsMap = map[string]interface{}{}
 
 	if floatingIpsItem.Address != nil {
@@ -334,6 +351,12 @@ func dataSourceFloatingIPCollectionFloatingIpsToMap(floatingIpsItem vpcv1.Floati
 		zoneList = append(zoneList, zoneMap)
 		floatingIpsMap["zone"] = zoneList
 	}
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *floatingIpsItem.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource floating ip (%s) access tags: %s", d.Id(), err)
+	}
+	floatingIpsMap[isFloatingIPAccessTags] = accesstags
 
 	return floatingIpsMap
 }

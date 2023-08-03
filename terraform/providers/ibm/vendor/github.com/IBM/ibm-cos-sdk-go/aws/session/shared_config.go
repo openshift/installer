@@ -49,6 +49,8 @@ const (
 
 	// S3 ARN Region Usage
 	s3UseARNRegionKey = "s3_use_arn_region"
+	// Use DualStack Endpoint Resolution
+	useDualStackEndpoint = "use_dualstack_endpoint"
 )
 
 // sharedConfig represents the configuration fields of the SDK config files.
@@ -109,6 +111,8 @@ type sharedConfig struct {
 	//
 	// s3_use_arn_region=true
 	S3UseARNRegion bool
+	// use_dualstack_endpoint=true
+	UseDualStackEndpoint endpoints.DualStackEndpointState
 }
 
 type sharedConfigFile struct {

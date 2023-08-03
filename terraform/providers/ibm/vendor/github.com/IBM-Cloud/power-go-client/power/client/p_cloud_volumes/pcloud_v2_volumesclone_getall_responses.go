@@ -41,8 +41,8 @@ func (o *PcloudV2VolumescloneGetallReader) ReadResponse(response runtime.ClientR
 			return nil, err
 		}
 		return nil, result
-	case 404:
-		result := NewPcloudV2VolumescloneGetallNotFound()
+	case 403:
+		result := NewPcloudV2VolumescloneGetallForbidden()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -63,7 +63,8 @@ func NewPcloudV2VolumescloneGetallOK() *PcloudV2VolumescloneGetallOK {
 	return &PcloudV2VolumescloneGetallOK{}
 }
 
-/* PcloudV2VolumescloneGetallOK describes a response with status code 200, with default header values.
+/*
+PcloudV2VolumescloneGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -71,9 +72,39 @@ type PcloudV2VolumescloneGetallOK struct {
 	Payload *models.VolumesClones
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone getall o k response has a 2xx status code
+func (o *PcloudV2VolumescloneGetallOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone getall o k response has a 3xx status code
+func (o *PcloudV2VolumescloneGetallOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone getall o k response has a 4xx status code
+func (o *PcloudV2VolumescloneGetallOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone getall o k response has a 5xx status code
+func (o *PcloudV2VolumescloneGetallOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone getall o k response a status code equal to that given
+func (o *PcloudV2VolumescloneGetallOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudV2VolumescloneGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneGetallOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneGetallOK) GetPayload() *models.VolumesClones {
 	return o.Payload
 }
@@ -95,7 +126,8 @@ func NewPcloudV2VolumescloneGetallBadRequest() *PcloudV2VolumescloneGetallBadReq
 	return &PcloudV2VolumescloneGetallBadRequest{}
 }
 
-/* PcloudV2VolumescloneGetallBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudV2VolumescloneGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -103,9 +135,39 @@ type PcloudV2VolumescloneGetallBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone getall bad request response has a 2xx status code
+func (o *PcloudV2VolumescloneGetallBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone getall bad request response has a 3xx status code
+func (o *PcloudV2VolumescloneGetallBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone getall bad request response has a 4xx status code
+func (o *PcloudV2VolumescloneGetallBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone getall bad request response has a 5xx status code
+func (o *PcloudV2VolumescloneGetallBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone getall bad request response a status code equal to that given
+func (o *PcloudV2VolumescloneGetallBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudV2VolumescloneGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneGetallBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneGetallBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -127,7 +189,8 @@ func NewPcloudV2VolumescloneGetallUnauthorized() *PcloudV2VolumescloneGetallUnau
 	return &PcloudV2VolumescloneGetallUnauthorized{}
 }
 
-/* PcloudV2VolumescloneGetallUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudV2VolumescloneGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -135,9 +198,39 @@ type PcloudV2VolumescloneGetallUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone getall unauthorized response has a 2xx status code
+func (o *PcloudV2VolumescloneGetallUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone getall unauthorized response has a 3xx status code
+func (o *PcloudV2VolumescloneGetallUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone getall unauthorized response has a 4xx status code
+func (o *PcloudV2VolumescloneGetallUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone getall unauthorized response has a 5xx status code
+func (o *PcloudV2VolumescloneGetallUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone getall unauthorized response a status code equal to that given
+func (o *PcloudV2VolumescloneGetallUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudV2VolumescloneGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneGetallUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneGetallUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -154,27 +247,58 @@ func (o *PcloudV2VolumescloneGetallUnauthorized) readResponse(response runtime.C
 	return nil
 }
 
-// NewPcloudV2VolumescloneGetallNotFound creates a PcloudV2VolumescloneGetallNotFound with default headers values
-func NewPcloudV2VolumescloneGetallNotFound() *PcloudV2VolumescloneGetallNotFound {
-	return &PcloudV2VolumescloneGetallNotFound{}
+// NewPcloudV2VolumescloneGetallForbidden creates a PcloudV2VolumescloneGetallForbidden with default headers values
+func NewPcloudV2VolumescloneGetallForbidden() *PcloudV2VolumescloneGetallForbidden {
+	return &PcloudV2VolumescloneGetallForbidden{}
 }
 
-/* PcloudV2VolumescloneGetallNotFound describes a response with status code 404, with default header values.
+/*
+PcloudV2VolumescloneGetallForbidden describes a response with status code 403, with default header values.
 
-Not Found
+Forbidden
 */
-type PcloudV2VolumescloneGetallNotFound struct {
+type PcloudV2VolumescloneGetallForbidden struct {
 	Payload *models.Error
 }
 
-func (o *PcloudV2VolumescloneGetallNotFound) Error() string {
-	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallNotFound  %+v", 404, o.Payload)
+// IsSuccess returns true when this pcloud v2 volumesclone getall forbidden response has a 2xx status code
+func (o *PcloudV2VolumescloneGetallForbidden) IsSuccess() bool {
+	return false
 }
-func (o *PcloudV2VolumescloneGetallNotFound) GetPayload() *models.Error {
+
+// IsRedirect returns true when this pcloud v2 volumesclone getall forbidden response has a 3xx status code
+func (o *PcloudV2VolumescloneGetallForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone getall forbidden response has a 4xx status code
+func (o *PcloudV2VolumescloneGetallForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone getall forbidden response has a 5xx status code
+func (o *PcloudV2VolumescloneGetallForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 volumesclone getall forbidden response a status code equal to that given
+func (o *PcloudV2VolumescloneGetallForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+func (o *PcloudV2VolumescloneGetallForbidden) Error() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneGetallForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *PcloudV2VolumescloneGetallForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
 
-func (o *PcloudV2VolumescloneGetallNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+func (o *PcloudV2VolumescloneGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 
@@ -191,7 +315,8 @@ func NewPcloudV2VolumescloneGetallInternalServerError() *PcloudV2VolumescloneGet
 	return &PcloudV2VolumescloneGetallInternalServerError{}
 }
 
-/* PcloudV2VolumescloneGetallInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudV2VolumescloneGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -199,9 +324,39 @@ type PcloudV2VolumescloneGetallInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 volumesclone getall internal server error response has a 2xx status code
+func (o *PcloudV2VolumescloneGetallInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 volumesclone getall internal server error response has a 3xx status code
+func (o *PcloudV2VolumescloneGetallInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 volumesclone getall internal server error response has a 4xx status code
+func (o *PcloudV2VolumescloneGetallInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 volumesclone getall internal server error response has a 5xx status code
+func (o *PcloudV2VolumescloneGetallInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud v2 volumesclone getall internal server error response a status code equal to that given
+func (o *PcloudV2VolumescloneGetallInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudV2VolumescloneGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudV2VolumescloneGetallInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/volumes-clone][%d] pcloudV2VolumescloneGetallInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudV2VolumescloneGetallInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

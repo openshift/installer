@@ -54,10 +54,12 @@ func NewServiceBrokerAuthTokenPostParamsWithHTTPClient(client *http.Client) *Ser
 	}
 }
 
-/* ServiceBrokerAuthTokenPostParams contains all the parameters to send to the API endpoint
-   for the service broker auth token post operation.
+/*
+ServiceBrokerAuthTokenPostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the service broker auth token post operation.
+
+	Typically these are written to a http.Request.
 */
 type ServiceBrokerAuthTokenPostParams struct {
 

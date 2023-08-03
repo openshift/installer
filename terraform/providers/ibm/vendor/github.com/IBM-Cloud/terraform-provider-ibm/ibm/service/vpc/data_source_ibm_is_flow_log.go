@@ -192,6 +192,13 @@ func DataSourceIBMIsFlowLog() *schema.Resource {
 					},
 				},
 			},
+			isFlowLogAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
 		},
 	}
 }
@@ -294,6 +301,16 @@ func dataSourceIBMIsFlowLogRead(context context.Context, d *schema.ResourceData,
 		}
 	}
 
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *flowLogCollector.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource VPC Flow Log (%s) access tags: %s", d.Id(), err)
+	}
+
+	err = d.Set(isFlowLogAccessTags, accesstags)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting access tags %s", err))
+	}
 	return nil
 }
 

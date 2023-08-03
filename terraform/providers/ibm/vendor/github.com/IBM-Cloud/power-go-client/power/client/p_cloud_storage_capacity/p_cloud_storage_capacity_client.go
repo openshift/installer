@@ -42,7 +42,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudStoragecapacityPoolsGet storages capacity for a storage pool in a region
+PcloudStoragecapacityPoolsGet storages capacity for a storage pool in a region
 */
 func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -81,7 +81,7 @@ func (a *Client) PcloudStoragecapacityPoolsGet(params *PcloudStoragecapacityPool
 }
 
 /*
-  PcloudStoragecapacityPoolsGetall storages capacity for all available storage pools in a region
+PcloudStoragecapacityPoolsGetall storages capacity for all available storage pools in a region
 */
 func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityPoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityPoolsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -120,7 +120,7 @@ func (a *Client) PcloudStoragecapacityPoolsGetall(params *PcloudStoragecapacityP
 }
 
 /*
-  PcloudStoragecapacityTypesGet storages capacity for a storage type in a region
+PcloudStoragecapacityTypesGet storages capacity for a storage type in a region
 */
 func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityTypesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetOK, error) {
 	// TODO: Validate the params before sending
@@ -159,7 +159,7 @@ func (a *Client) PcloudStoragecapacityTypesGet(params *PcloudStoragecapacityType
 }
 
 /*
-  PcloudStoragecapacityTypesGetall storages capacity for all available storage types in a region
+PcloudStoragecapacityTypesGetall storages capacity for all available storage types in a region
 */
 func (a *Client) PcloudStoragecapacityTypesGetall(params *PcloudStoragecapacityTypesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudStoragecapacityTypesGetallOK, error) {
 	// TODO: Validate the params before sending

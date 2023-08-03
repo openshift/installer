@@ -148,8 +148,8 @@ func resourceIBMPrivateDNSZoneRead(d *schema.ResourceData, meta interface{}) err
 	d.Set(pdnsZoneName, response.Name)
 	d.Set(pdnsZoneDescription, response.Description)
 	d.Set(pdnsZoneLabel, response.Label)
-	d.Set(pdnsZoneCreatedOn, response.CreatedOn)
-	d.Set(pdnsZoneModifiedOn, response.ModifiedOn)
+	d.Set(pdnsZoneCreatedOn, response.CreatedOn.String())
+	d.Set(pdnsZoneModifiedOn, response.ModifiedOn.String())
 	d.Set(pdnsZoneState, response.State)
 
 	return nil

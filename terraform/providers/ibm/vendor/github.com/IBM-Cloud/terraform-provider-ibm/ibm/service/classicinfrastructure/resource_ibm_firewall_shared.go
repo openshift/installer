@@ -68,7 +68,8 @@ func ResourceIBMFirewallShared() *schema.Resource {
 }
 
 // keyName is in between:[10MBPS_HARDWARE_FIREWALL, 20MBPS_HARDWARE_FIREWALL,
-//                         100MBPS_HARDWARE_FIREWALL, 1000MBPS_HARDWARE_FIREWALL]
+//
+//	100MBPS_HARDWARE_FIREWALL, 1000MBPS_HARDWARE_FIREWALL]
 func resourceIBMFirewallSharedCreate(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 
@@ -255,7 +256,7 @@ func resourceIBMFirewallSharedRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-//detach hardware firewall from particular machine
+// detach hardware firewall from particular machine
 func resourceIBMFirewallSharedDelete(d *schema.ResourceData, meta interface{}) error {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	idd2 := (d.Get("billing_item_id")).(int)
@@ -272,7 +273,7 @@ func resourceIBMFirewallSharedDelete(d *schema.ResourceData, meta interface{}) e
 	return nil
 }
 
-//exists method
+// exists method
 func resourceIBMFirewallSharedExists(d *schema.ResourceData, meta interface{}) (bool, error) {
 	sess := meta.(conns.ClientSession).SoftLayerSession()
 	fservice := services.GetNetworkComponentFirewallService(sess)

@@ -78,6 +78,51 @@ func DataSourceIBMIsBareMetalServerProfile() *schema.Resource {
 					},
 				},
 			},
+			"network_interface_count": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"max": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The maximum value for this profile field.",
+						},
+						"min": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The minimum value for this profile field.",
+						},
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+					},
+				},
+			},
+			"console_types": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The console type configuration for a bare metal server with this profile.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The type for this profile field.",
+						},
+						"values": &schema.Schema{
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The console types for a bare metal server with this profile.",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 			isBareMetalServerProfileRT: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -321,6 +366,30 @@ func dataSourceIBMISBMSProfileRead(context context.Context, d *schema.ResourceDa
 		bwList = append(bwList, bandwidth)
 		d.Set(isBareMetalServerProfileBandwidth, bwList)
 	}
+	consoleTypes := []map[string]interface{}{}
+	if bmsProfile.ConsoleTypes != nil {
+		modelMap, err := dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileConsoleTypesToMap(bmsProfile.ConsoleTypes)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		consoleTypes = append(consoleTypes, modelMap)
+	}
+	if err = d.Set("console_types", consoleTypes); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting console_types %s", err))
+	}
+
+	networkInterfaceCount := []map[string]interface{}{}
+	if bmsProfile.NetworkInterfaceCount != nil {
+		modelMap, err := dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountToMap(bmsProfile.NetworkInterfaceCount)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		networkInterfaceCount = append(networkInterfaceCount, modelMap)
+	}
+	if err = d.Set("network_interface_count", networkInterfaceCount); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting network_interface_count %s", err))
+	}
+
 	if bmsProfile.CpuArchitecture != nil {
 		caList := make([]map[string]interface{}, 0)
 		ca := bmsProfile.CpuArchitecture
@@ -429,4 +498,52 @@ func dataSourceIBMISBMSProfileRead(context context.Context, d *schema.ResourceDa
 	}
 
 	return nil
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileConsoleTypesToMap(model *vpcv1.BareMetalServerProfileConsoleTypes) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	modelMap["values"] = model.Values
+	return modelMap, nil
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountToMap(model vpcv1.BareMetalServerProfileNetworkInterfaceCountIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*vpcv1.BareMetalServerProfileNetworkInterfaceCountRange); ok {
+		return dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountRangeToMap(model.(*vpcv1.BareMetalServerProfileNetworkInterfaceCountRange))
+	} else if _, ok := model.(*vpcv1.BareMetalServerProfileNetworkInterfaceCountDependent); ok {
+		return dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountDependentToMap(model.(*vpcv1.BareMetalServerProfileNetworkInterfaceCountDependent))
+	} else if _, ok := model.(*vpcv1.BareMetalServerProfileNetworkInterfaceCount); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*vpcv1.BareMetalServerProfileNetworkInterfaceCount)
+		if model.Max != nil {
+			modelMap["max"] = flex.IntValue(model.Max)
+		}
+		if model.Min != nil {
+			modelMap["min"] = flex.IntValue(model.Min)
+		}
+		if model.Type != nil {
+			modelMap["type"] = model.Type
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized vpcv1.BareMetalServerProfileNetworkInterfaceCountIntf subtype encountered")
+	}
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountRangeToMap(model *vpcv1.BareMetalServerProfileNetworkInterfaceCountRange) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	if model.Max != nil {
+		modelMap["max"] = flex.IntValue(model.Max)
+	}
+	if model.Min != nil {
+		modelMap["min"] = flex.IntValue(model.Min)
+	}
+	modelMap["type"] = model.Type
+	return modelMap, nil
+}
+
+func dataSourceIBMIsBareMetalServerProfileBareMetalServerProfileNetworkInterfaceCountDependentToMap(model *vpcv1.BareMetalServerProfileNetworkInterfaceCountDependent) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["type"] = model.Type
+	return modelMap, nil
 }

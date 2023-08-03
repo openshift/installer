@@ -42,7 +42,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudCloudinstancesSnapshotsDelete deletes a p VM instance snapshot of a cloud instance
+PcloudCloudinstancesSnapshotsDelete deletes a p VM instance snapshot of a cloud instance
 */
 func (a *Client) PcloudCloudinstancesSnapshotsDelete(params *PcloudCloudinstancesSnapshotsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsDeleteAccepted, error) {
 	// TODO: Validate the params before sending
@@ -81,7 +81,7 @@ func (a *Client) PcloudCloudinstancesSnapshotsDelete(params *PcloudCloudinstance
 }
 
 /*
-  PcloudCloudinstancesSnapshotsGet gets the detail of a snapshot
+PcloudCloudinstancesSnapshotsGet gets the detail of a snapshot
 */
 func (a *Client) PcloudCloudinstancesSnapshotsGet(params *PcloudCloudinstancesSnapshotsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -120,7 +120,7 @@ func (a *Client) PcloudCloudinstancesSnapshotsGet(params *PcloudCloudinstancesSn
 }
 
 /*
-  PcloudCloudinstancesSnapshotsGetall lists all p VM instance snapshots for this cloud instance
+PcloudCloudinstancesSnapshotsGetall lists all p VM instance snapshots for this cloud instance
 */
 func (a *Client) PcloudCloudinstancesSnapshotsGetall(params *PcloudCloudinstancesSnapshotsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -159,7 +159,7 @@ func (a *Client) PcloudCloudinstancesSnapshotsGetall(params *PcloudCloudinstance
 }
 
 /*
-  PcloudCloudinstancesSnapshotsPut updates a p VM instance snapshot
+PcloudCloudinstancesSnapshotsPut updates a p VM instance snapshot
 */
 func (a *Client) PcloudCloudinstancesSnapshotsPut(params *PcloudCloudinstancesSnapshotsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudCloudinstancesSnapshotsPutOK, error) {
 	// TODO: Validate the params before sending

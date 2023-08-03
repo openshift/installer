@@ -27,6 +27,21 @@ func DataSourceIbmIsDedicatedHosts() *schema.Resource {
 				Optional:    true,
 				Description: "The unique identifier of the dedicated host group this dedicated host belongs to",
 			},
+			"resource_group": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The unique identifier of the resource group this dedicated host belongs to",
+			},
+			"zone": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The zone name this dedicated host is in",
+			},
+			"name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The name of the dedicated host",
+			},
 			"dedicated_hosts": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -49,7 +64,12 @@ func DataSourceIbmIsDedicatedHosts() *schema.Resource {
 										Computed:    true,
 										Description: "The VCPU architecture.",
 									},
-									"count": {
+									"manufacturer": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The VCPU manufacturer.",
+									},
+									"count": &schema.Schema{
 										Type:        schema.TypeInt,
 										Computed:    true,
 										Description: "The number of VCPUs assigned.",
@@ -329,7 +349,12 @@ func DataSourceIbmIsDedicatedHosts() *schema.Resource {
 										Computed:    true,
 										Description: "The VCPU architecture.",
 									},
-									"count": {
+									"manufacturer": &schema.Schema{
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The VCPU manufacturer.",
+									},
+									"count": &schema.Schema{
 										Type:        schema.TypeInt,
 										Computed:    true,
 										Description: "The number of VCPUs assigned.",
@@ -341,6 +366,13 @@ func DataSourceIbmIsDedicatedHosts() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "The globally unique name of the zone this dedicated host resides in.",
+						},
+						isDedicatedHostAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
 						},
 					},
 				},
@@ -365,6 +397,18 @@ func dataSourceIbmIsDedicatedHostsRead(context context.Context, d *schema.Resour
 		hostgroupid := hostgroupintf.(string)
 		listDedicatedHostsOptions.DedicatedHostGroupID = &hostgroupid
 	}
+	if resgroupintf, ok := d.GetOk("resource_group"); ok {
+		resGroup := resgroupintf.(string)
+		listDedicatedHostsOptions.ResourceGroupID = &resGroup
+	}
+	if zoneintf, ok := d.GetOk("zone"); ok {
+		zoneName := zoneintf.(string)
+		listDedicatedHostsOptions.ZoneName = &zoneName
+	}
+	if nameintf, ok := d.GetOk("name"); ok {
+		name := nameintf.(string)
+		listDedicatedHostsOptions.Name = &name
+	}
 	start := ""
 	allrecs := []vpcv1.DedicatedHost{}
 	for {
@@ -387,7 +431,7 @@ func dataSourceIbmIsDedicatedHostsRead(context context.Context, d *schema.Resour
 
 		d.SetId(dataSourceIbmIsDedicatedHostsID(d))
 
-		err = d.Set("dedicated_hosts", dataSourceDedicatedHostCollectionFlattenDedicatedHosts(allrecs))
+		err = d.Set("dedicated_hosts", dataSourceDedicatedHostCollectionFlattenDedicatedHosts(allrecs, meta))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting dedicated_hosts %s", err))
 		}
@@ -404,15 +448,15 @@ func dataSourceIbmIsDedicatedHostsID(d *schema.ResourceData) string {
 	return time.Now().UTC().String()
 }
 
-func dataSourceDedicatedHostCollectionFlattenDedicatedHosts(result []vpcv1.DedicatedHost) (dedicatedHosts []map[string]interface{}) {
+func dataSourceDedicatedHostCollectionFlattenDedicatedHosts(result []vpcv1.DedicatedHost, meta interface{}) (dedicatedHosts []map[string]interface{}) {
 	for _, dedicatedHostsItem := range result {
-		dedicatedHosts = append(dedicatedHosts, dataSourceDedicatedHostCollectionDedicatedHostsToMap(dedicatedHostsItem))
+		dedicatedHosts = append(dedicatedHosts, dataSourceDedicatedHostCollectionDedicatedHostsToMap(dedicatedHostsItem, meta))
 	}
 
 	return dedicatedHosts
 }
 
-func dataSourceDedicatedHostCollectionDedicatedHostsToMap(dedicatedHostsItem vpcv1.DedicatedHost) (dedicatedHostsMap map[string]interface{}) {
+func dataSourceDedicatedHostCollectionDedicatedHostsToMap(dedicatedHostsItem vpcv1.DedicatedHost, meta interface{}) (dedicatedHostsMap map[string]interface{}) {
 	dedicatedHostsMap = map[string]interface{}{}
 
 	if dedicatedHostsItem.AvailableMemory != nil {
@@ -502,6 +546,12 @@ func dataSourceDedicatedHostCollectionDedicatedHostsToMap(dedicatedHostsItem vpc
 	if dedicatedHostsItem.Zone != nil {
 		dedicatedHostsMap["zone"] = *dedicatedHostsItem.Zone.Name
 	}
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *dedicatedHostsItem.CRN, "", isDedicatedHostAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource dedicated host (%s) access tags: %s", *dedicatedHostsItem.ID, err)
+	}
+	dedicatedHostsMap[isDedicatedHostAccessTags] = accesstags
 
 	return dedicatedHostsMap
 }
@@ -511,6 +561,10 @@ func dataSourceDedicatedHostCollectionDedicatedHostsAvailableVcpuToMap(available
 
 	if availableVcpuItem.Architecture != nil {
 		availableVcpuMap["architecture"] = availableVcpuItem.Architecture
+	}
+	// Added AMD Support for the manufacturer.
+	if availableVcpuItem.Manufacturer != nil {
+		availableVcpuMap["manufacturer"] = availableVcpuItem.Manufacturer
 	}
 	if availableVcpuItem.Count != nil {
 		availableVcpuMap["count"] = availableVcpuItem.Count
@@ -623,6 +677,10 @@ func dataSourceDedicatedHostCollectionDedicatedHostsVcpuToMap(vcpuItem vpcv1.Vcp
 
 	if vcpuItem.Architecture != nil {
 		vcpuMap["architecture"] = vcpuItem.Architecture
+	}
+	// Added AMD Support for the manufacturer.
+	if vcpuItem.Manufacturer != nil {
+		vcpuMap["manufacturer"] = vcpuItem.Manufacturer
 	}
 	if vcpuItem.Count != nil {
 		vcpuMap["count"] = vcpuItem.Count

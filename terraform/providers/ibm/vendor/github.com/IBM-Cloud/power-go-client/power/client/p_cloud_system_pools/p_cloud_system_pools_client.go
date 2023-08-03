@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudSystempoolsGet lists of available system pools within a particular data center
+PcloudSystempoolsGet lists of available system pools within a particular data center
 */
 func (a *Client) PcloudSystempoolsGet(params *PcloudSystempoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSystempoolsGetOK, error) {
 	// TODO: Validate the params before sending

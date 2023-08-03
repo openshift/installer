@@ -97,8 +97,8 @@ func dataSourceIBMPrivateDNSZonesRead(d *schema.ResourceData, meta interface{}) 
 		dnsZone[pdnsZoneName] = instance.Name
 		dnsZone[pdnsZoneDescription] = instance.Description
 		dnsZone[pdnsZoneLabel] = instance.Label
-		dnsZone[pdnsZoneCreatedOn] = instance.CreatedOn
-		dnsZone[pdnsZoneModifiedOn] = instance.ModifiedOn
+		dnsZone[pdnsZoneCreatedOn] = instance.CreatedOn.String()
+		dnsZone[pdnsZoneModifiedOn] = instance.ModifiedOn.String()
 		dnsZone[pdnsZoneState] = instance.State
 		dnsZones = append(dnsZones, dnsZone)
 	}

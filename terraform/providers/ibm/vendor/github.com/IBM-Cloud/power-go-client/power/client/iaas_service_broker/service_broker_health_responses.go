@@ -45,7 +45,8 @@ func NewServiceBrokerHealthOK() *ServiceBrokerHealthOK {
 	return &ServiceBrokerHealthOK{}
 }
 
-/* ServiceBrokerHealthOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerHealthOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type ServiceBrokerHealthOK struct {
 	Payload *models.Health
 }
 
+// IsSuccess returns true when this service broker health o k response has a 2xx status code
+func (o *ServiceBrokerHealthOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker health o k response has a 3xx status code
+func (o *ServiceBrokerHealthOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker health o k response has a 4xx status code
+func (o *ServiceBrokerHealthOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker health o k response has a 5xx status code
+func (o *ServiceBrokerHealthOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker health o k response a status code equal to that given
+func (o *ServiceBrokerHealthOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerHealthOK) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/health][%d] serviceBrokerHealthOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerHealthOK) String() string {
+	return fmt.Sprintf("[GET /broker/v1/health][%d] serviceBrokerHealthOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerHealthOK) GetPayload() *models.Health {
 	return o.Payload
 }
@@ -77,7 +108,8 @@ func NewServiceBrokerHealthBadRequest() *ServiceBrokerHealthBadRequest {
 	return &ServiceBrokerHealthBadRequest{}
 }
 
-/* ServiceBrokerHealthBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceBrokerHealthBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -85,9 +117,39 @@ type ServiceBrokerHealthBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker health bad request response has a 2xx status code
+func (o *ServiceBrokerHealthBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker health bad request response has a 3xx status code
+func (o *ServiceBrokerHealthBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker health bad request response has a 4xx status code
+func (o *ServiceBrokerHealthBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker health bad request response has a 5xx status code
+func (o *ServiceBrokerHealthBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker health bad request response a status code equal to that given
+func (o *ServiceBrokerHealthBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceBrokerHealthBadRequest) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/health][%d] serviceBrokerHealthBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceBrokerHealthBadRequest) String() string {
+	return fmt.Sprintf("[GET /broker/v1/health][%d] serviceBrokerHealthBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceBrokerHealthBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }

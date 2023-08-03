@@ -35,7 +35,6 @@ const (
 	DEFAULT_CREDENTIAL_FILE_NAME = "ibm-credentials.env"
 )
 
-//
 // GetServiceProperties returns a map containing configuration properties for the specified service
 // that are retrieved from external configuration sources in the following precedence order:
 // 1) credential file

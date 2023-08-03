@@ -117,8 +117,8 @@ func dataSourceIBMPrivateDNSPermittedNetworksRead(d *schema.ResourceData, meta i
 		permittedNetworkVpcCrn := map[string]interface{}{}
 		permittedNetwork[pdnsInstanceID] = instanceID
 		permittedNetwork[pdnsPermittedNetworkID] = instance.ID
-		permittedNetwork[pdnsPermittedNetworkCreatedOn] = instance.CreatedOn
-		permittedNetwork[pdnsPermittedNetworkModifiedOn] = instance.ModifiedOn
+		permittedNetwork[pdnsPermittedNetworkCreatedOn] = instance.CreatedOn.String()
+		permittedNetwork[pdnsPermittedNetworkModifiedOn] = instance.ModifiedOn.String()
 		permittedNetwork[pdnsPermittedNetworkState] = instance.State
 		permittedNetwork[pdnsNetworkType] = instance.Type
 		permittedNetworkVpcCrn[pdnsVpcCRN] = instance.PermittedNetwork.VpcCrn

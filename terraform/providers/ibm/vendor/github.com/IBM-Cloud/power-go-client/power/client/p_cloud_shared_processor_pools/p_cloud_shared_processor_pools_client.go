@@ -44,7 +44,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudSharedprocessorpoolsDelete deletes a shared processor pool from a cloud instance
+PcloudSharedprocessorpoolsDelete deletes a shared processor pool from a cloud instance
 */
 func (a *Client) PcloudSharedprocessorpoolsDelete(params *PcloudSharedprocessorpoolsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSharedprocessorpoolsDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -83,7 +83,7 @@ func (a *Client) PcloudSharedprocessorpoolsDelete(params *PcloudSharedprocessorp
 }
 
 /*
-  PcloudSharedprocessorpoolsGet gets the detail of a shared processor pool for a cloud instance
+PcloudSharedprocessorpoolsGet gets the detail of a shared processor pool for a cloud instance
 */
 func (a *Client) PcloudSharedprocessorpoolsGet(params *PcloudSharedprocessorpoolsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSharedprocessorpoolsGetOK, error) {
 	// TODO: Validate the params before sending
@@ -122,7 +122,7 @@ func (a *Client) PcloudSharedprocessorpoolsGet(params *PcloudSharedprocessorpool
 }
 
 /*
-  PcloudSharedprocessorpoolsGetall gets the list of shared processor pools for a cloud instance
+PcloudSharedprocessorpoolsGetall gets the list of shared processor pools for a cloud instance
 */
 func (a *Client) PcloudSharedprocessorpoolsGetall(params *PcloudSharedprocessorpoolsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSharedprocessorpoolsGetallOK, error) {
 	// TODO: Validate the params before sending
@@ -161,7 +161,7 @@ func (a *Client) PcloudSharedprocessorpoolsGetall(params *PcloudSharedprocessorp
 }
 
 /*
-  PcloudSharedprocessorpoolsPost creates a new shared processor pool
+PcloudSharedprocessorpoolsPost creates a new shared processor pool
 */
 func (a *Client) PcloudSharedprocessorpoolsPost(params *PcloudSharedprocessorpoolsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSharedprocessorpoolsPostAccepted, error) {
 	// TODO: Validate the params before sending
@@ -200,7 +200,7 @@ func (a *Client) PcloudSharedprocessorpoolsPost(params *PcloudSharedprocessorpoo
 }
 
 /*
-  PcloudSharedprocessorpoolsPut updates a shared processor pool for a cloud instance
+PcloudSharedprocessorpoolsPut updates a shared processor pool for a cloud instance
 */
 func (a *Client) PcloudSharedprocessorpoolsPut(params *PcloudSharedprocessorpoolsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudSharedprocessorpoolsPutOK, error) {
 	// TODO: Validate the params before sending

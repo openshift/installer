@@ -20,6 +20,7 @@ const (
 	rtVpcID                      = "vpc"
 	rtName                       = "name"
 	rtRouteDirectLinkIngress     = "route_direct_link_ingress"
+	rtRouteInternetIngress       = "route_internet_ingress"
 	rtRouteTransitGatewayIngress = "route_transit_gateway_ingress"
 	rtRouteVPCZoneIngress        = "route_vpc_zone_ingress"
 	rtCreateAt                   = "created_at"
@@ -70,6 +71,13 @@ func ResourceIBMISVPCRoutingTable() *schema.Resource {
 				Default:     false,
 				Optional:    true,
 				Description: "If set to true, this routing table will be used to route traffic that originates from Direct Link to this VPC.",
+			},
+			rtRouteInternetIngress: {
+				Type:        schema.TypeBool,
+				ForceNew:    false,
+				Default:     false,
+				Optional:    true,
+				Description: "If set to true, this routing table will be used to route traffic that originates from the internet. For this to succeed, the VPC must not already have a routing table with this property set to true.",
 			},
 			rtRouteTransitGatewayIngress: {
 				Type:        schema.TypeBool,
@@ -202,6 +210,10 @@ func resourceIBMISVPCRoutingTableCreate(d *schema.ResourceData, meta interface{}
 		createVpcRoutingTableOptions.AcceptRoutesFrom = aroutes
 	}
 
+	if _, ok := d.GetOk(rtRouteInternetIngress); ok {
+		rtRouteInternetIngress := d.Get(rtRouteInternetIngress).(bool)
+		createVpcRoutingTableOptions.RouteInternetIngress = &rtRouteInternetIngress
+	}
 	if _, ok := d.GetOk(rtRouteTransitGatewayIngress); ok {
 		routeTransitGatewayIngress := d.Get(rtRouteTransitGatewayIngress).(bool)
 		createVpcRoutingTableOptions.RouteTransitGatewayIngress = &routeTransitGatewayIngress
@@ -246,6 +258,7 @@ func resourceIBMISVPCRoutingTableRead(d *schema.ResourceData, meta interface{}) 
 	d.Set(rtCreateAt, routeTable.CreatedAt.String())
 	d.Set(rtResourceType, routeTable.ResourceType)
 	d.Set(rtRouteDirectLinkIngress, routeTable.RouteDirectLinkIngress)
+	d.Set(rtRouteInternetIngress, routeTable.RouteInternetIngress)
 	d.Set(rtRouteTransitGatewayIngress, routeTable.RouteTransitGatewayIngress)
 	d.Set(rtRouteVPCZoneIngress, routeTable.RouteVPCZoneIngress)
 	d.Set(rtIsDefault, routeTable.IsDefault)
@@ -311,6 +324,10 @@ func resourceIBMISVPCRoutingTableUpdate(d *schema.ResourceData, meta interface{}
 		routeDirectLinkIngress := d.Get(rtRouteDirectLinkIngress).(bool)
 		routingTablePatchModel.RouteDirectLinkIngress = core.BoolPtr(routeDirectLinkIngress)
 		hasChange = true
+	}
+	if d.HasChange(rtRouteInternetIngress) {
+		rtRouteInternetIngress := d.Get(rtRouteInternetIngress).(bool)
+		routingTablePatchModel.RouteInternetIngress = core.BoolPtr(rtRouteInternetIngress)
 	}
 	if d.HasChange(rtRouteTransitGatewayIngress) {
 		routeTransitGatewayIngress := d.Get(rtRouteTransitGatewayIngress).(bool)

@@ -468,6 +468,7 @@ func lbPoolUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID strin
 
 	loadBalancerPoolPatchModel := &vpcv1.LoadBalancerPoolPatch{}
 
+	lBPoolHealthMonitorPortRemoved := false
 	if d.HasChange(isLBPoolHealthDelay) || d.HasChange(isLBPoolHealthRetries) ||
 		d.HasChange(isLBPoolHealthTimeout) || d.HasChange(isLBPoolHealthType) || d.HasChange(isLBPoolHealthMonitorURL) || d.HasChange(isLBPoolHealthMonitorPort) {
 
@@ -486,6 +487,8 @@ func lbPoolUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID strin
 		port := int64(d.Get(isLBPoolHealthMonitorPort).(int))
 		if port > int64(0) {
 			healthMonitorTemplate.Port = &port
+		} else {
+			lBPoolHealthMonitorPortRemoved = true
 		}
 		loadBalancerPoolPatchModel.HealthMonitor = healthMonitorTemplate
 		hasChanged = true
@@ -547,6 +550,10 @@ func lbPoolUpdate(d *schema.ResourceData, meta interface{}, lbID, lbPoolID strin
 		if sessionPersistenceRemoved {
 			LoadBalancerPoolPatch["session_persistence"] = nil
 		}
+		if lBPoolHealthMonitorPortRemoved {
+			LoadBalancerPoolPatch["health_monitor"].(map[string]interface{})["port"] = nil
+		}
+
 		updateLoadBalancerPoolOptions.LoadBalancerPoolPatch = LoadBalancerPoolPatch
 
 		_, response, err := sess.UpdateLoadBalancerPool(updateLoadBalancerPoolOptions)

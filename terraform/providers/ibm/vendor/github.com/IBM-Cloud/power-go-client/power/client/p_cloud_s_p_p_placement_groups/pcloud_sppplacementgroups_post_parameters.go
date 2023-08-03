@@ -54,10 +54,12 @@ func NewPcloudSppplacementgroupsPostParamsWithHTTPClient(client *http.Client) *P
 	}
 }
 
-/* PcloudSppplacementgroupsPostParams contains all the parameters to send to the API endpoint
-   for the pcloud sppplacementgroups post operation.
+/*
+PcloudSppplacementgroupsPostParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud sppplacementgroups post operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudSppplacementgroupsPostParams struct {
 

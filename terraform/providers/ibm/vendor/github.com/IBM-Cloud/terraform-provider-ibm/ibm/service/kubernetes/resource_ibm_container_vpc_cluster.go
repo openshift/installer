@@ -198,6 +198,22 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Description: "Labels for default worker pool",
 			},
 
+			"operating_system": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Computed:    true,
+				Description: "The operating system of the workers in the default worker pool.",
+			},
+
+			"secondary_storage": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "The secondary storage option for the default worker pool.",
+			},
+
 			"taints": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -225,6 +241,7 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 					},
 				},
 			},
+
 			"disable_public_service_endpoint": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -246,8 +263,8 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Optional:         true,
 				Default:          ingressReady,
 				DiffSuppressFunc: flex.ApplyOnce,
-				ValidateFunc:     validation.StringInSlice([]string{masterNodeReady, oneWorkerNodeReady, ingressReady}, true),
-				Description:      "wait_till can be configured for Master Ready, One worker Ready or Ingress Ready",
+				ValidateFunc:     validation.StringInSlice([]string{masterNodeReady, oneWorkerNodeReady, ingressReady, clusterNormal}, true),
+				Description:      "wait_till can be configured for Master Ready, One worker Ready or Ingress Ready or Normal",
 			},
 
 			"entitlement": {
@@ -276,6 +293,7 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Computed:    true,
 				Description: "The URL of the IBM Cloud dashboard that can be used to explore and view details about this cluster",
 			},
+
 			"kms_instance_id": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -283,12 +301,20 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Description:      "Instance ID for boot volume encryption",
 				RequiredWith:     []string{"crk"},
 			},
+
 			"crk": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				DiffSuppressFunc: flex.ApplyOnce,
 				Description:      "Root Key ID for boot volume encryption",
 				RequiredWith:     []string{"kms_instance_id"},
+			},
+			"kms_account_id": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: flex.ApplyOnce,
+				Description:      "Account ID of kms instance holder - if not provided, defaults to the account in use",
+				RequiredWith:     []string{"kms_instance_id", "crk"},
 			},
 
 			//Get Cluster info Request
@@ -314,6 +340,7 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
 			"albs": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -354,6 +381,7 @@ func ResourceIBMContainerVpcCluster() *schema.Resource {
 					},
 				},
 			},
+
 			"public_service_endpoint_url": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -475,7 +503,7 @@ func resourceIBMContainerVpcClusterCreate(d *schema.ResourceData, meta interface
 	// timeoutStage will define the timeout stage
 	var timeoutStage string
 	if v, ok := d.GetOk("wait_till"); ok {
-		timeoutStage = v.(string)
+		timeoutStage = strings.ToLower(v.(string))
 	}
 
 	var zonesList = make([]v2.Zone, 0)
@@ -494,21 +522,34 @@ func resourceIBMContainerVpcClusterCreate(d *schema.ResourceData, meta interface
 	}
 
 	workerpool := v2.WorkerPoolConfig{
-		VpcID:       vpcID,
-		Flavor:      flavor,
-		WorkerCount: workerCount,
-		Zones:       zonesList,
+		CommonWorkerPoolConfig: v2.CommonWorkerPoolConfig{
+			VpcID:       vpcID,
+			Flavor:      flavor,
+			WorkerCount: workerCount,
+			Zones:       zonesList,
+		},
 	}
 
 	if hpid, ok := d.GetOk("host_pool_id"); ok {
 		workerpool.HostPoolID = hpid.(string)
 	}
 
-	if v, ok := d.GetOk("kms_instance_id"); ok {
+	if os, ok := d.GetOk("operating_system"); ok {
+		workerpool.OperatingSystem = os.(string)
+	}
+
+	if secondarystorage, ok := d.GetOk("secondary_storage"); ok {
+		workerpool.SecondaryStorageOption = secondarystorage.(string)
+	}
+
+	if kmsid, ok := d.GetOk("kms_instance_id"); ok {
 		crk := d.Get("crk").(string)
 		wve := v2.WorkerVolumeEncryption{
-			KmsInstanceID:     v.(string),
+			KmsInstanceID:     kmsid.(string),
 			WorkerVolumeCRKID: crk,
+		}
+		if kmsaccid, ok := d.GetOk("kms_account_id"); ok {
+			wve.KMSAccountID = kmsaccid.(string)
 		}
 		workerpool.WorkerVolumeEncryption = &wve
 	}
@@ -560,7 +601,14 @@ func resourceIBMContainerVpcClusterCreate(d *schema.ResourceData, meta interface
 		}
 	}
 
-	switch strings.ToLower(timeoutStage) {
+	switch timeoutStage {
+
+	case strings.ToLower(clusterNormal):
+		pendingStates := []string{clusterDeploying, clusterRequested, clusterPending, clusterDeployed, clusterCritical, clusterWarning}
+		_, err = waitForVpcClusterState(d, meta, clusterNormal, pendingStates)
+		if err != nil {
+			return err
+		}
 
 	case strings.ToLower(masterNodeReady):
 		_, err = waitForVpcClusterMasterAvailable(d, meta)
@@ -785,20 +833,14 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 				"[ERROR] Error updating the labels: %s", err)
 		}
 	}
-	if d.HasChange("taints") {
-		taintParam := expandWorkerPoolTaints(d, meta, clusterID, "default")
 
-		targetEnv, err := getVpcClusterTargetHeader(d, meta)
-		if err != nil {
-			return err
+	if d.HasChange("taints") {
+		var taints []interface{}
+		if taintRes, ok := d.GetOk("taints"); ok {
+			taints = taintRes.(*schema.Set).List()
 		}
-		ClusterClient, err := meta.(conns.ClientSession).VpcContainerAPI()
-		if err != nil {
+		if err := updateWorkerpoolTaints(d, meta, clusterID, "default", taints); err != nil {
 			return err
-		}
-		err = ClusterClient.WorkerPools().UpdateWorkerPoolTaints(taintParam, targetEnv)
-		if err != nil {
-			return fmt.Errorf("[ERROR] Error updating the taints: %s", err)
 		}
 	}
 
@@ -816,6 +858,7 @@ func resourceIBMContainerVpcClusterUpdate(d *schema.ResourceData, meta interface
 				"[ERROR] Error updating the worker_count %d: %s", count, err)
 		}
 	}
+
 	if d.HasChange("zones") && !d.IsNewResource() {
 		oldList, newList := d.GetChange("zones")
 		if oldList == nil {
@@ -1006,6 +1049,10 @@ func resourceIBMContainerVpcClusterRead(d *schema.ResourceData, meta interface{}
 	}
 	d.Set("image_security_enforcement", cls.ImageSecurityEnabled)
 	d.Set("host_pool_id", workerPool.HostPoolID)
+	d.Set("operating_system", workerPool.OperatingSystem)
+	if workerPool.SecondaryStorageOption != nil {
+		d.Set("secondary_storage", workerPool.SecondaryStorageOption.Name)
+	}
 
 	tags, err := flex.GetTagsUsingCRN(meta, cls.CRN)
 	if err != nil {
@@ -1026,6 +1073,9 @@ func resourceIBMContainerVpcClusterRead(d *schema.ResourceData, meta interface{}
 	if workerPool.WorkerVolumeEncryption != nil {
 		d.Set("crk", workerPool.WorkerVolumeEncryption.WorkerVolumeCRKID)
 		d.Set("kms_instance_id", workerPool.WorkerVolumeEncryption.KmsInstanceID)
+		if workerPool.WorkerVolumeEncryption.KMSAccountID != "" {
+			d.Set("kms_account_id", workerPool.WorkerVolumeEncryption.KMSAccountID)
+		}
 	}
 
 	return nil
@@ -1192,6 +1242,42 @@ func waitForVpcClusterOneWorkerAvailable(d *schema.ResourceData, meta interface{
 			}
 			return workers, deployInProgress, nil
 
+		},
+		Timeout:                   d.Timeout(schema.TimeoutCreate),
+		Delay:                     10 * time.Second,
+		MinTimeout:                5 * time.Second,
+		ContinuousTargetOccurence: 5,
+	}
+	return createStateConf.WaitForState()
+}
+
+func waitForVpcClusterState(d *schema.ResourceData, meta interface{}, waitForState string, pendingState []string) (interface{}, error) {
+	targetEnv, err := getVpcClusterTargetHeader(d, meta)
+	if err != nil {
+		return nil, err
+	}
+	csClient, err := meta.(conns.ClientSession).VpcContainerAPI()
+	if err != nil {
+		return nil, err
+	}
+	clusterID := d.Id()
+	createStateConf := &resource.StateChangeConf{
+		Pending: pendingState,
+		Target:  []string{waitForState},
+		Refresh: func() (interface{}, string, error) {
+			clusterInfo, err := csClient.Clusters().GetCluster(clusterID, targetEnv)
+			if err != nil {
+				return nil, "", err
+			}
+
+			if clusterInfo.State == clusterWarning {
+				log.Println("[WARN] Cluster is in Warning State, this may be temporary")
+			}
+			if clusterInfo.State == clusterCritical {
+				log.Println("[WARN] Cluster is in Critical State, this may be temporary")
+			}
+
+			return clusterInfo, clusterInfo.State, nil
 		},
 		Timeout:                   d.Timeout(schema.TimeoutCreate),
 		Delay:                     10 * time.Second,

@@ -44,6 +44,38 @@ func DataSourceIBMIsBareMetalServer() *schema.Resource {
 				Computed:    true,
 				Description: "The total bandwidth (in megabits per second)",
 			},
+			isBareMetalServerEnableSecureBoot: {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Indicates whether secure boot is enabled. If enabled, the image must support secure boot or the server will fail to boot.",
+			},
+
+			isBareMetalServerTrustedPlatformModule: {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isBareMetalServerTrustedPlatformModuleMode: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The trusted platform module mode to use. The specified value must be listed in the bare metal server profile's supported_trusted_platform_module_modes",
+						},
+						isBareMetalServerTrustedPlatformModuleEnabled: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether the trusted platform module is enabled.",
+						},
+						isBareMetalServerTrustedPlatformModuleSupportedModes: {
+							Type:        schema.TypeSet,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Computed:    true,
+							Description: "The trusted platform module (TPM) mode:: disabled: No TPM functionality, tpm_2: TPM 2.0. The enumerated values for this property are expected to expand in the future. When processing this property, check for and log unknown values. Optionally halt processing and surface the error, or bypass the resource on which the unexpected property value was encountered. Enum: [ disabled, tpm_2 ]",
+						},
+					},
+				},
+			},
+
 			isBareMetalServerBootTarget: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -366,6 +398,13 @@ func DataSourceIBMIsBareMetalServer() *schema.Resource {
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "Tags for the Bare metal server",
 			},
+			isBareMetalServerAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -498,6 +537,23 @@ func dataSourceIBMISBareMetalServerRead(context context.Context, d *schema.Resou
 	if err = d.Set("identifier", *bms.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting identifier: %s", err))
 	}
+
+	//enable secure boot
+	if err = d.Set(isBareMetalServerEnableSecureBoot, bms.EnableSecureBoot); err != nil {
+		return diag.FromErr(fmt.Errorf("[ERROR] Error setting enable_secure_boot: %s", err))
+	}
+
+	// tpm
+	if bms.TrustedPlatformModule != nil {
+		trustedPlatformModuleMap, err := resourceIBMIsBareMetalServerBareMetalServerTrustedPlatformModulePrototypeToMap(bms.TrustedPlatformModule)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err = d.Set(isBareMetalServerTrustedPlatformModule, []map[string]interface{}{trustedPlatformModuleMap}); err != nil {
+			return diag.FromErr(fmt.Errorf("[ERROR] Error setting trusted_platform_module: %s", err))
+		}
+	}
+
 	//pni
 
 	if bms.PrimaryNetworkInterface != nil {
@@ -557,6 +613,19 @@ func dataSourceIBMISBareMetalServerRead(context context.Context, d *schema.Resou
 				primNic := bmsnic.(*vpcv1.BareMetalServerNetworkInterfaceByVlan)
 				currentPrimNic[isInstanceNicAllowIPSpoofing] = *primNic.AllowIPSpoofing
 				currentPrimNic[isBareMetalServerNicPortSpeed] = *primNic.PortSpeed
+
+				if len(primNic.SecurityGroups) != 0 {
+					secgrpList := []string{}
+					for i := 0; i < len(primNic.SecurityGroups); i++ {
+						secgrpList = append(secgrpList, string(*(primNic.SecurityGroups[i].ID)))
+					}
+					currentPrimNic[isInstanceNicSecurityGroups] = flex.NewStringSet(schema.HashString, secgrpList)
+				}
+			}
+		case "*vpcv1.BareMetalServerNetworkInterfaceByHiperSocket":
+			{
+				primNic := bmsnic.(*vpcv1.BareMetalServerNetworkInterfaceByHiperSocket)
+				currentPrimNic[isInstanceNicAllowIPSpoofing] = *primNic.AllowIPSpoofing
 
 				if len(primNic.SecurityGroups) != 0 {
 					secgrpList := []string{}
@@ -638,6 +707,19 @@ func dataSourceIBMISBareMetalServerRead(context context.Context, d *schema.Resou
 						currentNic[isBareMetalServerNicSecurityGroups] = flex.NewStringSet(schema.HashString, secgrpList)
 					}
 				}
+			case "*vpcv1.BareMetalServerNetworkInterfaceByHiperSocket":
+				{
+					bmsnic := bmsnicintf.(*vpcv1.BareMetalServerNetworkInterfaceByHiperSocket)
+					currentNic[isBareMetalServerNicAllowIPSpoofing] = *bmsnic.AllowIPSpoofing
+					currentNic[isBareMetalServerNicSubnet] = *bmsnic.Subnet.ID
+					if len(bmsnic.SecurityGroups) != 0 {
+						secgrpList := []string{}
+						for i := 0; i < len(bmsnic.SecurityGroups); i++ {
+							secgrpList = append(secgrpList, string(*(bmsnic.SecurityGroups[i].ID)))
+						}
+						currentNic[isBareMetalServerNicSecurityGroups] = flex.NewStringSet(schema.HashString, secgrpList)
+					}
+				}
 			}
 			interfacesList = append(interfacesList, currentNic)
 		}
@@ -679,11 +761,19 @@ func dataSourceIBMISBareMetalServerRead(context context.Context, d *schema.Resou
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting zone: %s", err))
 	}
 
-	tags, err := flex.GetTagsUsingCRN(meta, *bms.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *bms.CRN, "", isBareMetalServerAccessTagType)
 	if err != nil {
 		log.Printf(
 			"[ERROR] Error on get of resource bare metal server (%s) tags: %s", d.Id(), err)
 	}
 	d.Set(isBareMetalServerTags, tags)
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *bms.CRN, "", isBareMetalServerAccessTagType)
+	if err != nil {
+		log.Printf(
+			"[ERROR] Error on get of resource bare metal server (%s) tags: %s", d.Id(), err)
+	}
+	d.Set(isBareMetalServerAccessTags, accesstags)
+
 	return nil
 }

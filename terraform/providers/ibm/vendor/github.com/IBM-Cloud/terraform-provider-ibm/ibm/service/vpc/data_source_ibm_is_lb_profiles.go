@@ -14,7 +14,8 @@ import (
 )
 
 const (
-	isLbsProfiles = "lb_profiles"
+	isLbsProfiles    = "lb_profiles"
+	isLbsProfileName = "name"
 )
 
 func DataSourceIBMISLbProfiles() *schema.Resource {
@@ -22,7 +23,11 @@ func DataSourceIBMISLbProfiles() *schema.Resource {
 		Read: dataSourceIBMISLbProfilesRead,
 
 		Schema: map[string]*schema.Schema{
-
+			isLbsProfileName: &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The load balancer profile name.",
+			},
 			isLbsProfiles: {
 				Type:        schema.TypeList,
 				Description: "Collection of load balancer profile collectors",
@@ -79,19 +84,31 @@ func dataSourceIBMISLbProfilesRead(d *schema.ResourceData, meta interface{}) err
 
 	start := ""
 	allrecs := []vpcv1.LoadBalancerProfile{}
-	for {
-		listOptions := &vpcv1.ListLoadBalancerProfilesOptions{}
-		if start != "" {
-			listOptions.Start = &start
+	if lbprofilenameok, ok := d.GetOk(isLbsProfileName); ok {
+		lbprofilename := lbprofilenameok.(string)
+		getLoadBalancerProfileOptions := &vpcv1.GetLoadBalancerProfileOptions{
+			Name: &lbprofilename,
 		}
-		profileCollectors, response, err := sess.ListLoadBalancerProfiles(listOptions)
+		lbProfile, response, err := sess.GetLoadBalancerProfile(getLoadBalancerProfileOptions)
 		if err != nil {
-			return fmt.Errorf("[ERROR] Error Fetching Load Balancer Profiles for VPC %s\n%s", err, response)
+			return fmt.Errorf("[ERROR] Error Fetching Load Balancer Profile(%s) for VPC %s\n%s", lbprofilename, err, response)
 		}
-		start = flex.GetNext(profileCollectors.Next)
-		allrecs = append(allrecs, profileCollectors.Profiles...)
-		if start == "" {
-			break
+		allrecs = append(allrecs, *lbProfile)
+	} else {
+		for {
+			listOptions := &vpcv1.ListLoadBalancerProfilesOptions{}
+			if start != "" {
+				listOptions.Start = &start
+			}
+			profileCollectors, response, err := sess.ListLoadBalancerProfiles(listOptions)
+			if err != nil {
+				return fmt.Errorf("[ERROR] Error Fetching Load Balancer Profiles for VPC %s\n%s", err, response)
+			}
+			start = flex.GetNext(profileCollectors.Next)
+			allrecs = append(allrecs, profileCollectors.Profiles...)
+			if start == "" {
+				break
+			}
 		}
 	}
 	lbprofilesInfo := make([]map[string]interface{}, 0)

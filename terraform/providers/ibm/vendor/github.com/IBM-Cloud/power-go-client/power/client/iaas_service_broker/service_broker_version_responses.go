@@ -45,7 +45,8 @@ func NewServiceBrokerVersionOK() *ServiceBrokerVersionOK {
 	return &ServiceBrokerVersionOK{}
 }
 
-/* ServiceBrokerVersionOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerVersionOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type ServiceBrokerVersionOK struct {
 	Payload *models.Version
 }
 
+// IsSuccess returns true when this service broker version o k response has a 2xx status code
+func (o *ServiceBrokerVersionOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker version o k response has a 3xx status code
+func (o *ServiceBrokerVersionOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker version o k response has a 4xx status code
+func (o *ServiceBrokerVersionOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker version o k response has a 5xx status code
+func (o *ServiceBrokerVersionOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker version o k response a status code equal to that given
+func (o *ServiceBrokerVersionOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerVersionOK) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerVersionOK) String() string {
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerVersionOK) GetPayload() *models.Version {
 	return o.Payload
 }
@@ -77,7 +108,8 @@ func NewServiceBrokerVersionBadRequest() *ServiceBrokerVersionBadRequest {
 	return &ServiceBrokerVersionBadRequest{}
 }
 
-/* ServiceBrokerVersionBadRequest describes a response with status code 400, with default header values.
+/*
+ServiceBrokerVersionBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -85,9 +117,39 @@ type ServiceBrokerVersionBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker version bad request response has a 2xx status code
+func (o *ServiceBrokerVersionBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker version bad request response has a 3xx status code
+func (o *ServiceBrokerVersionBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker version bad request response has a 4xx status code
+func (o *ServiceBrokerVersionBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this service broker version bad request response has a 5xx status code
+func (o *ServiceBrokerVersionBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker version bad request response a status code equal to that given
+func (o *ServiceBrokerVersionBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *ServiceBrokerVersionBadRequest) Error() string {
 	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *ServiceBrokerVersionBadRequest) String() string {
+	return fmt.Sprintf("[GET /broker/v1/version][%d] serviceBrokerVersionBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *ServiceBrokerVersionBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }

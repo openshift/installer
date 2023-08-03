@@ -25,6 +25,11 @@ func DataSourceIBMSchematicsOutput() *schema.Resource {
 				Required:    true,
 				Description: "The ID of the workspace for which you want to retrieve output values. To find the workspace ID, use the `GET /workspaces` API.",
 			},
+			"location": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The Region of the workspace.",
+			},
 			"template_id": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -56,6 +61,14 @@ func dataSourceIBMSchematicsOutputRead(d *schema.ResourceData, meta interface{})
 
 	workspaceID := d.Get("workspace_id").(string)
 	templateID := d.Get("template_id").(string)
+
+	if r, ok := d.GetOk("location"); ok {
+		region := r.(string)
+		schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+		if updatedURL {
+			schematicsClient.Service.Options.URL = schematicsURL
+		}
+	}
 
 	getWorkspaceOutputsOptions := &schematicsv1.GetWorkspaceOutputsOptions{}
 

@@ -35,6 +35,12 @@ func (o *InternalV1StorageRegionsStoragePoolsGetallReader) ReadResponse(response
 			return nil, err
 		}
 		return nil, result
+	case 403:
+		result := NewInternalV1StorageRegionsStoragePoolsGetallForbidden()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 404:
 		result := NewInternalV1StorageRegionsStoragePoolsGetallNotFound()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -57,7 +63,8 @@ func NewInternalV1StorageRegionsStoragePoolsGetallOK() *InternalV1StorageRegions
 	return &InternalV1StorageRegionsStoragePoolsGetallOK{}
 }
 
-/* InternalV1StorageRegionsStoragePoolsGetallOK describes a response with status code 200, with default header values.
+/*
+InternalV1StorageRegionsStoragePoolsGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -65,9 +72,39 @@ type InternalV1StorageRegionsStoragePoolsGetallOK struct {
 	Payload models.StoragePools
 }
 
+// IsSuccess returns true when this internal v1 storage regions storage pools getall o k response has a 2xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this internal v1 storage regions storage pools getall o k response has a 3xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions storage pools getall o k response has a 4xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 storage regions storage pools getall o k response has a 5xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions storage pools getall o k response a status code equal to that given
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallOK) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallOK  %+v", 200, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallOK) String() string {
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallOK  %+v", 200, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallOK) GetPayload() models.StoragePools {
 	return o.Payload
 }
@@ -87,7 +124,8 @@ func NewInternalV1StorageRegionsStoragePoolsGetallUnauthorized() *InternalV1Stor
 	return &InternalV1StorageRegionsStoragePoolsGetallUnauthorized{}
 }
 
-/* InternalV1StorageRegionsStoragePoolsGetallUnauthorized describes a response with status code 401, with default header values.
+/*
+InternalV1StorageRegionsStoragePoolsGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -95,9 +133,39 @@ type InternalV1StorageRegionsStoragePoolsGetallUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions storage pools getall unauthorized response has a 2xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions storage pools getall unauthorized response has a 3xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions storage pools getall unauthorized response has a 4xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions storage pools getall unauthorized response has a 5xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions storage pools getall unauthorized response a status code equal to that given
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) String() string {
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -114,12 +182,76 @@ func (o *InternalV1StorageRegionsStoragePoolsGetallUnauthorized) readResponse(re
 	return nil
 }
 
+// NewInternalV1StorageRegionsStoragePoolsGetallForbidden creates a InternalV1StorageRegionsStoragePoolsGetallForbidden with default headers values
+func NewInternalV1StorageRegionsStoragePoolsGetallForbidden() *InternalV1StorageRegionsStoragePoolsGetallForbidden {
+	return &InternalV1StorageRegionsStoragePoolsGetallForbidden{}
+}
+
+/*
+InternalV1StorageRegionsStoragePoolsGetallForbidden describes a response with status code 403, with default header values.
+
+Forbidden
+*/
+type InternalV1StorageRegionsStoragePoolsGetallForbidden struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this internal v1 storage regions storage pools getall forbidden response has a 2xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions storage pools getall forbidden response has a 3xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions storage pools getall forbidden response has a 4xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions storage pools getall forbidden response has a 5xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions storage pools getall forbidden response a status code equal to that given
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) Error() string {
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) String() string {
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallForbidden  %+v", 403, o.Payload)
+}
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallForbidden) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewInternalV1StorageRegionsStoragePoolsGetallNotFound creates a InternalV1StorageRegionsStoragePoolsGetallNotFound with default headers values
 func NewInternalV1StorageRegionsStoragePoolsGetallNotFound() *InternalV1StorageRegionsStoragePoolsGetallNotFound {
 	return &InternalV1StorageRegionsStoragePoolsGetallNotFound{}
 }
 
-/* InternalV1StorageRegionsStoragePoolsGetallNotFound describes a response with status code 404, with default header values.
+/*
+InternalV1StorageRegionsStoragePoolsGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -127,9 +259,39 @@ type InternalV1StorageRegionsStoragePoolsGetallNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions storage pools getall not found response has a 2xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions storage pools getall not found response has a 3xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions storage pools getall not found response has a 4xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 storage regions storage pools getall not found response has a 5xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 storage regions storage pools getall not found response a status code equal to that given
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallNotFound  %+v", 404, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallNotFound  %+v", 404, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -151,7 +313,8 @@ func NewInternalV1StorageRegionsStoragePoolsGetallInternalServerError() *Interna
 	return &InternalV1StorageRegionsStoragePoolsGetallInternalServerError{}
 }
 
-/* InternalV1StorageRegionsStoragePoolsGetallInternalServerError describes a response with status code 500, with default header values.
+/*
+InternalV1StorageRegionsStoragePoolsGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -159,9 +322,39 @@ type InternalV1StorageRegionsStoragePoolsGetallInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 storage regions storage pools getall internal server error response has a 2xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 storage regions storage pools getall internal server error response has a 3xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 storage regions storage pools getall internal server error response has a 4xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 storage regions storage pools getall internal server error response has a 5xx status code
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this internal v1 storage regions storage pools getall internal server error response a status code equal to that given
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) String() string {
+	return fmt.Sprintf("[GET /internal/v1/storage/regions/{region_zone_id}/storage-pools][%d] internalV1StorageRegionsStoragePoolsGetallInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *InternalV1StorageRegionsStoragePoolsGetallInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }
