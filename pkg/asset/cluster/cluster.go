@@ -135,10 +135,13 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	// todo: before we run all the stages for a particular vcenter
 	// todo: we need to set which vcenter we are using.
 
-	// todo: vcenters will have to be map, where the key is the vcenter server name
+	// todo: for tfvars - vcenters will have to be map, where the key is the vcenter server name
 	// todo: failure domains already has vcenters, it might be easier to convert
 	// todo: or add a new variable that is a map of slices where the key is the vcenter name
 	// todo: and the slice is the failure domains for that vcenter.
+
+	// todo: applyStage would need to change to accept additional variables
+	// todo: unless we just change above lines 127,130 ^
 
 	for _, stage := range stages {
 		outputs, err := c.applyStage(platform, stage, terraformDirPath, tfvarsFiles)
@@ -187,6 +190,12 @@ func (c *Cluster) applyStage(platform string, stage terraform.Stage, terraformDi
 		extraOpts = append(extraOpts, tfexec.VarFile(filepath.Join(tmpDir, file.Filename)))
 	}
 
+	// todo: something like this?
+	// todo: varOption := tfexec.Var(fmt.Sprintf("current_vcenter=%s",vcenter))
+
+	// todo: multiple vcenter
+	// todo: set a variable use applyConfig vars
+	// todo: this variable would be the current vcenter in use
 	return c.applyTerraform(tmpDir, platform, stage, terraformDir, extraOpts...)
 }
 
