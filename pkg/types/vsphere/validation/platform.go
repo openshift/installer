@@ -71,11 +71,6 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	allErrs := field.ErrorList{}
 
 	// todo: multiple vcenter change
-
-	if len(p.VCenters) > 1 {
-		return field.ErrorList{field.TooMany(fldPath, len(p.VCenters), 1)}
-	}
-
 	for _, vCenter := range p.VCenters {
 		if len(vCenter.Server) == 0 {
 			allErrs = append(allErrs, field.Required(fldPath.Child("server"), "must be the domain name or IP address of the vCenter"))

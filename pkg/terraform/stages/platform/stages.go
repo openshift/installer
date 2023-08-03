@@ -60,6 +60,9 @@ func StagesForPlatform(platform string) []terraform.Stage {
 	case ovirttypes.Name:
 		return ovirt.PlatformStages
 	case vspheretypes.Name:
+
+		// todo: generate something else...
+
 		return vsphere.PlatformStages
 	case nonetypes.Name:
 		// terraform is not used when the platform is "none"

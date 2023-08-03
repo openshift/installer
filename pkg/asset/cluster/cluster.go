@@ -92,6 +92,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		platform = typesazure.StackTerraformName
 	}
 
+	// todo:
 	stages := platformstages.StagesForPlatform(platform)
 
 	terraformDir := filepath.Join(InstallDir, "terraform")
@@ -127,6 +128,17 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	for _, file := range terraformVariables.Files() {
 		tfvarsFiles = append(tfvarsFiles, file)
 	}
+
+	// todo: hmm maybe we could hijack this
+	// todo: maybe a map that the key is the vcenter and then the value is the stage slice
+
+	// todo: before we run all the stages for a particular vcenter
+	// todo: we need to set which vcenter we are using.
+
+	// todo: vcenters will have to be map, where the key is the vcenter server name
+	// todo: failure domains already has vcenters, it might be easier to convert
+	// todo: or add a new variable that is a map of slices where the key is the vcenter name
+	// todo: and the slice is the failure domains for that vcenter.
 
 	for _, stage := range stages {
 		outputs, err := c.applyStage(platform, stage, terraformDirPath, tfvarsFiles)

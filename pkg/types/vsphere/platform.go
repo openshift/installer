@@ -125,7 +125,6 @@ type Platform struct {
 	// VCenters holds the connection details for services to communicate with vCenter.
 	// Currently only a single vCenter is supported.
 	// +kubebuilder:validation:Optional
-	// +kubebuilder:validation:MaxItems=1
 	// +kubebuilder:validation:MinItems=1
 	VCenters []VCenter `json:"vcenters,omitempty"`
 	// FailureDomains holds the VSpherePlatformFailureDomainSpec which contains
