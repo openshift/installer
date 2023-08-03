@@ -119,6 +119,7 @@ var FeatureSets = map[FeatureSet]*FeatureGateEnabledDisabled{
 		with("RetroactiveDefaultStorageClass").    // sig-storage, RomanBednar, Kubernetes feature gate
 		with("PDBUnhealthyPodEvictionPolicy").     // sig-apps, atiratree (#forum-workloads), Kubernetes feature gate
 		with("DynamicResourceAllocation").         // sig-scheduling, jchaloup (#forum-workloads), Kubernetes feature gate
+		with("OpenShiftPodSecurityAdmission").     // bz-auth, stlaz, OCP specific
 		toFeatures(),
 	LatencySensitive: newDefaultFeatures().
 		with(
@@ -132,7 +133,6 @@ var defaultFeatures = &FeatureGateEnabledDisabled{
 		"APIPriorityAndFairness",         // sig-apimachinery, deads2k
 		"RotateKubeletServerCertificate", // sig-pod, sjenning
 		"DownwardAPIHugePages",           // sig-node, rphillips
-		"OpenShiftPodSecurityAdmission",  // bz-auth, stlaz, OCP specific
 	},
 	Disabled: []string{
 		"RetroactiveDefaultStorageClass", // sig-storage, RomanBednar, Kubernetes feature gate

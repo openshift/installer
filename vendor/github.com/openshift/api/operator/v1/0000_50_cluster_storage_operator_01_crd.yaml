@@ -69,6 +69,19 @@ spec:
                   type: object
                   nullable: true
                   x-kubernetes-preserve-unknown-fields: true
+                vsphereStorageDriver:
+                  description: 'VSphereStorageDriver indicates the storage driver to use on VSphere clusters. Once this field is set to CSIWithMigrationDriver, it can not be changed. If this is empty, the platform will choose a good default, which may change over time without notice. The current default is LegacyDeprecatedInTreeDriver. DEPRECATED: This field will be removed in a future release.'
+                  type: string
+                  enum:
+                    - ""
+                    - LegacyDeprecatedInTreeDriver
+                    - CSIWithMigrationDriver
+                  x-kubernetes-validations:
+                    - rule: oldSelf != "CSIWithMigrationDriver" || self == "CSIWithMigrationDriver"
+                      message: VSphereStorageDriver can not be changed once it is set to CSIWithMigrationDriver
+              x-kubernetes-validations:
+                - rule: '!has(oldSelf.vsphereStorageDriver) || has(self.vsphereStorageDriver)'
+                  message: VSphereStorageDriver is required once set
             status:
               description: status holds observed values from the cluster. They may not be overridden.
               type: object

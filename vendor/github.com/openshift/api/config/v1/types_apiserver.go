@@ -184,8 +184,7 @@ type APIServerEncryption struct {
 	Type EncryptionType `json:"type,omitempty"`
 }
 
-// +openshift:validation:FeatureSetAwareEnum:featureSet=Default,enum="";identity;aescbc
-// +openshift:validation:FeatureSetAwareEnum:featureSet=TechPreviewNoUpgrade,enum="";identity;aescbc;aesgcm
+// +kubebuilder:validation:Enum="";identity;aescbc;aesgcm
 type EncryptionType string
 
 const (
