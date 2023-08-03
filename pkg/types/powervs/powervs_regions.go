@@ -20,7 +20,10 @@ var Regions = map[string]Region{
 	"dal": {
 		Description: "Dallas, USA",
 		VPCRegion:   "us-south",
-		Zones:       []string{"dal12"},
+		Zones: []string{
+			"dal10",
+			"dal12",
+		},
 	},
 	"eu-de": {
 		Description: "Frankfurt, Germany",

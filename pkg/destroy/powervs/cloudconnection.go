@@ -2,12 +2,12 @@ package powervs
 
 import (
 	"context"
+	"fmt"
 	"math"
 	"strings"
 	"time"
 
 	"github.com/IBM-Cloud/power-go-client/power/models"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -42,14 +42,19 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 	default:
 	}
 
+	result := []cloudResource{}
+
 	cloudConnections, err = o.cloudConnectionClient.GetAll()
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to list cloud connections")
+		message := err.Error()
+		if strings.Contains(message, "Cloud connections are not currently available") {
+			return cloudResources{}.insert(result...), nil
+		}
+		return nil, fmt.Errorf("failed to list cloud connections: %w", err)
 	}
 
 	var foundOne = false
 
-	result := []cloudResource{}
 	for _, cloudConnection = range cloudConnections.CloudConnections {
 		if strings.Contains(*cloudConnection.Name, o.InfraID) {
 			o.Logger.Debugf("listCloudConnections: FOUND: %s (%s)", *cloudConnection.Name, *cloudConnection.CloudConnectionID)
@@ -57,7 +62,7 @@ func (o *ClusterUninstaller) listCloudConnections() (cloudResources, error) {
 
 			jobReference, err = o.cloudConnectionClient.Delete(*cloudConnection.CloudConnectionID)
 			if err != nil {
-				errors.Errorf("Failed to delete cloud connection (%s): %v", *cloudConnection.CloudConnectionID, err)
+				return nil, fmt.Errorf("failed to delete cloud connection (%s): %w", *cloudConnection.CloudConnectionID, err)
 			}
 
 			o.Logger.Debugf("listCloudConnections: jobReference.ID = %s", *jobReference.ID)
@@ -124,7 +129,7 @@ func (o *ClusterUninstaller) destroyCloudConnections() error {
 				o.Logger.Debugf("destroyCloudConnections: deleteJob returns DeleteJobError: %v", err2)
 				return false, err2
 			default:
-				return false, errors.Errorf("destroyCloudConnections: deleteJob unknown result enum %v", result)
+				return false, fmt.Errorf("destroyCloudConnections: deleteJob unknown result enum %v", result)
 			}
 		})
 		if err != nil {
@@ -136,7 +141,7 @@ func (o *ClusterUninstaller) destroyCloudConnections() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyCloudConnections: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyCloudConnections: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyCloudConnections: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{

@@ -46,3 +46,9 @@ variable "enable_snat" {
   description = "Boolean indicating if SNAT should be enabled."
   default     = true
 }
+
+variable "transit_gateway_enabled" {
+  type        = bool
+  description = "Boolean indicating if Transit Gateways should be used."
+  default     = false
+}

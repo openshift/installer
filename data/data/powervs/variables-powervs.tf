@@ -123,6 +123,12 @@ variable "powervs_enable_snat" {
   default     = true
 }
 
+variable "powervs_transit_gateway_enabled" {
+  type        = bool
+  description = "Boolean indicating if Transit Gateways should be used."
+  default     = false
+}
+
 ################################################################
 # Configure instances
 ################################################################
@@ -208,6 +214,14 @@ variable "powervs_cis_crn" {
 variable "powervs_dns_guid" {
   type        = string
   description = "The GUID of the IBM DNS Service instance to use when creating a private cluster."
+}
+
+################################################################
+# Configure Tranit Gateways
+################################################################
+variable "powervs_service_instance_crn" {
+  type        = string
+  description = "The CRN of service instance to use."
 }
 
 ################################################################
