@@ -75,6 +75,8 @@ type agentClusterInstallInstallConfigOverrides struct {
 	Platform *agentClusterInstallPlatform `json:"platform,omitempty"`
 	// Capabilities selects the managed set of optional, core cluster components.
 	Capabilities *types.Capabilities `json:"capabilities,omitempty"`
+	// AdditionalTrustBundle must be set here when mirroring not configured
+	AdditionalTrustBundle string `json:"additionalTrustBundle,omitempty"`
 }
 
 var _ asset.WritableAsset = (*AgentClusterInstall)(nil)
@@ -192,6 +194,14 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 
 		if installConfig.Config.Capabilities != nil {
 			icOverrides.Capabilities = installConfig.Config.Capabilities
+			icOverridden = true
+		}
+
+		if installConfig.Config.AdditionalTrustBundle != "" {
+			// Add trust bundle to the config overrides to be included in installed image
+			// TODO: when MGMT-11520 adds support for AdditionalTrustBundle as part of the InfraEnv CRD
+			// then it must be set in the infraEnv manifest instead of below
+			icOverrides.AdditionalTrustBundle = installConfig.Config.AdditionalTrustBundle
 			icOverridden = true
 		}
 		if icOverridden {
