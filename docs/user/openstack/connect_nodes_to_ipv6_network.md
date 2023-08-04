@@ -16,7 +16,7 @@ compute:
 ```
 
 > **Note**
-> To use Stateful IPv6 Networks, the arg `ip=dhcp,dhcpv6` needs to be included in the kernel args of the Worker nodes,
+> To use Stateful IPv6 Networks, the arg `ip=dhcp,dhcp6` needs to be included in the kernel args of the Worker nodes,
 > otherwise the Nodes won't get an IPv6 address due to a [bug][dhcpv6-bug].
 > Use the [procedure][add-kernel-args] to add kernel argument to the Nodes.
 
@@ -67,6 +67,6 @@ To create pods with IPv6 network make sure to create them on the same Namespace 
 and specify the following annotation `k8s.v1.cni.cncf.io/networks: <additional-network-name>`.
 
 [dhcpv6-bug]: https://issues.redhat.com/browse/OCPBUGS-2104
-[add-kernel-args]: https://docs.openshift.com/container-platform/4.11/nodes/nodes/nodes-nodes-working.html#nodes-nodes-kernel-arguments_nodes-nodes-working
+[add-kernel-args]: https://docs.openshift.com/container-platform/4.11/nodes/nodes/nodes-nodes-managing.html#nodes-nodes-kernel-arguments_nodes-nodes-managing
 [configuring-an-additional-network]: https://docs.openshift.com/container-platform/4.11/networking/multiple_networks/configuring-additional-network.html#configuring-additional-network_approaches-managing-additional-network
 [dhcpv6-multus]: https://issues.redhat.com/browse/SDN-2844
