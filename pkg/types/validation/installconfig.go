@@ -156,6 +156,16 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		}
 	}
 
+	if c.Capabilities != nil {
+		if c.Capabilities.BaselineCapabilitySet == configv1.ClusterVersionCapabilitySetNone {
+			enabledCaps := sets.New[configv1.ClusterVersionCapability](c.Capabilities.AdditionalEnabledCapabilities...)
+			if enabledCaps.Has(configv1.ClusterVersionCapabilityBaremetal) && !enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("additionalEnabledCapabilities"), c.Capabilities.AdditionalEnabledCapabilities,
+					"the baremetal capability requires the MachineAPI capability"))
+			}
+		}
+	}
+
 	allErrs = append(allErrs, validateFeatureSet(c)...)
 
 	return allErrs
