@@ -67,7 +67,7 @@ copy_archive_contents() {
     echo "Successfully copied contents of ${AGENT_CONFIG_ARCHIVE_FILE} on ${devname}"
 
     # Update core password with one from config-image if not overridden by appliance
-    if ! cpio --list < "${unzipped_file}" | grep -q -e "${OVERRIDE_PASSWORD_SET}"; then
+    if [[ ! -f "${OVERRIDE_PASSWORD_SET}" ]]; then
        echo "Setting core password"
        usermod --password "$(cat ${PASSWORD_HASH})" core
     else

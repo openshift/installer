@@ -65,14 +65,6 @@ func (a *ConfigImage) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	// Add additional file to allow for override of setting the core password
-	if _, ok := os.LookupEnv("OPENSHIFT_APPLIANCE_OVERRIDE_PASSWORD_SET"); ok {
-		err := ca.StoreBytes("/etc/assisted/appliance-override-password-set", []byte("true"), 0o644)
-		if err != nil {
-			return errors.Wrapf(err, "failure storing appliance override password file")
-		}
-	}
-
 	// Save the cpi archive to a temp file
 	tmpPath, err := os.MkdirTemp("", "agent")
 	if err != nil {
