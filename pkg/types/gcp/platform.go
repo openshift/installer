@@ -35,14 +35,6 @@ type Platform struct {
 	// +optional
 	ComputeSubnet string `json:"computeSubnet,omitempty"`
 
-	// Licenses is a list of licenses to apply to the compute images
-	// The value should a list of strings (https URLs only) representing the license keys.
-	// When set, this will cause the installer to copy the image into user's project.
-	// This option is incompatible with any mechanism that makes use of pre-built images
-	// such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
-	// +optional
-	Licenses []string `json:"licenses,omitempty"`
-
 	// userLabels has additional keys and values that the installer will add as
 	// labels to all resources that it creates on GCP. Resources created by the
 	// cluster itself may not include these labels. This is a TechPreview feature

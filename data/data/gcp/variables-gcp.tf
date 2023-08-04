@@ -53,11 +53,6 @@ variable "gcp_master_instance_type" {
   description = "Instance type for the master node(s). Example: `n1-standard-4`"
 }
 
-variable "gcp_image_uri" {
-  type = string
-  description = "URL to Raw Image for all nodes. This is used in case a new image needs to be generated for the nodes."
-}
-
 variable "gcp_image" {
   type = string
   description = "URL to the Image for all nodes."
@@ -67,12 +62,6 @@ variable "gcp_instance_service_account" {
   type = string
   description = "The service account used by the instances."
   default = ""
-}
-
-variable "gcp_preexisting_image" {
-  type = bool
-  default = true
-  description = "Specifies whether an existing GCP Image should be used or a new one created for installation"
 }
 
 variable "gcp_master_root_volume_type" {
@@ -126,12 +115,6 @@ variable "gcp_compute_subnet" {
 variable "gcp_publish_strategy" {
   type = string
   description = "The cluster publishing strategy, either Internal or External"
-}
-
-variable "gcp_image_licenses" {
-  type = list(string)
-  description = "The licenses to use when creating compute instances"
-  default = []
 }
 
 variable "gcp_root_volume_kms_key_link" {

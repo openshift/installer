@@ -490,18 +490,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if img == nil {
 			return fmt.Errorf("%s: No GCP build found", st.FormatPrefix(archName))
 		}
-		// For backwards compatibility, we generate this URL to the image (only applies to RHCOS, not FCOS/OKD)
-		// right now.  It will only be used if nested virt or other licenses are enabled, which we
-		// really should deprecate and remove - xref https://github.com/openshift/installer/pull/4696
-		imageURL := fmt.Sprintf("https://storage.googleapis.com/rhcos/rhcos/%s.tar.gz", img.Name)
+
 		data, err := gcptfvars.TFVars(
 			gcptfvars.TFVarsSources{
 				Auth:                auth,
 				MasterConfigs:       masterConfigs,
 				WorkerConfigs:       workerConfigs,
 				CreateFirewallRules: createFirewallRules,
-				ImageURI:            imageURL,
-				ImageLicenses:       installConfig.Config.GCP.Licenses,
 				PreexistingNetwork:  preexistingnetwork,
 				PublicZoneName:      publicZoneName,
 				PrivateZoneName:     privateZoneName,
