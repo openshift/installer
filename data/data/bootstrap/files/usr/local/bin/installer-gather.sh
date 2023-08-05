@@ -39,7 +39,7 @@ do
     journalctl --boot --no-pager --output=short --unit="${service}" > "${ARTIFACTS}/bootstrap/journals/${service}.log"
 done
 
-journalctl --no-pager | gzip > "${ARTIFACTS}/bootstrap/journals/journal.log.gz"
+journalctl -o with-unit --no-pager | gzip > "${ARTIFACTS}/bootstrap/journals/journal.log.gz"
 
 echo "Gathering bootstrap networking ..."
 mkdir -p "${ARTIFACTS}/bootstrap/network"
