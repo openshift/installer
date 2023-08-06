@@ -55,7 +55,7 @@ require (
 	github.com/microsoftgraph/msgraph-sdk-go v0.47.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
 	github.com/onsi/gomega v1.27.4
-	github.com/openshift/api v0.0.0-20230621174358-ea40115b9fa6
+	github.com/openshift/api v0.0.0-20230804173756-26b8597c4de2
 	github.com/openshift/assisted-image-service v0.0.0-20230508133451-c15a62b72155
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
@@ -77,7 +77,7 @@ require (
 	github.com/pkg/sftp v1.10.1
 	github.com/prometheus/client_golang v1.16.0
 	github.com/prometheus/common v0.44.0
-	github.com/rogpeppe/go-internal v1.10.0
+	github.com/rogpeppe/go-internal v1.11.0
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.6.0
@@ -86,22 +86,22 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.30.4
-	golang.org/x/crypto v0.5.0
+	golang.org/x/crypto v0.12.0
 	golang.org/x/oauth2 v0.8.0
-	golang.org/x/sys v0.9.0
-	golang.org/x/term v0.6.0
+	golang.org/x/sys v0.11.0
+	golang.org/x/term v0.11.0
 	google.golang.org/api v0.107.0
 	google.golang.org/genproto v0.0.0-20230112194545-e10362b5ecf9
 	google.golang.org/grpc v1.51.0
 	gopkg.in/ini.v1 v1.66.6
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.27.2
+	k8s.io/api v0.27.4
 	k8s.io/apiextensions-apiserver v0.26.1
-	k8s.io/apimachinery v0.27.2
+	k8s.io/apimachinery v0.27.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/cloud-provider-vsphere v0.0.0
 	k8s.io/klog v1.0.0
-	k8s.io/klog/v2 v2.90.1
+	k8s.io/klog/v2 v2.100.1
 	k8s.io/utils v0.0.0-20230209194617-a36077c30491
 	sigs.k8s.io/controller-tools v0.10.0
 	sigs.k8s.io/yaml v1.3.0
@@ -132,7 +132,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.10.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
-	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/go-logr/logr v1.2.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-logr/zapr v1.2.3 // indirect
 	github.com/go-openapi/analysis v0.21.2 // indirect
@@ -210,9 +210,9 @@ require (
 	go.uber.org/multierr v1.6.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/mod v0.9.0 // indirect
-	golang.org/x/net v0.10.0 // indirect
+	golang.org/x/net v0.14.0 // indirect
 	golang.org/x/sync v0.3.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -226,7 +226,7 @@ require (
 	k8s.io/kube-openapi v0.0.0-20230501164219-8b0f38b5fd1f // indirect
 	sigs.k8s.io/controller-runtime v0.14.5 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
-	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
+	sigs.k8s.io/structured-merge-diff/v4 v4.3.0 // indirect
 )
 
 // OpenShift Forks
@@ -259,10 +259,10 @@ replace github.com/openshift/assisted-service/api => github.com/openshift/assist
 replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20220928142635-a40422bdea61
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2064702
-replace golang.org/x/crypto => golang.org/x/crypto v0.0.0-20220315160706-3147a52a75dd
+replace golang.org/x/crypto => golang.org/x/crypto v0.5.0
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2100495
-replace golang.org/x/text => golang.org/x/text v0.3.7
+replace golang.org/x/text => golang.org/x/text v0.12.0
 
 // https://issues.redhat.com/browse/OCPBUGS-5324
 replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
@@ -271,10 +271,10 @@ replace gopkg.in/yaml.v2 => gopkg.in/yaml.v2 v2.4.0
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 
 // https://bugzilla.redhat.com/show_bug.cgi?id=2045880
-replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.12.1
+replace github.com/prometheus/client_golang => github.com/prometheus/client_golang v1.16.0
 
 // https://issues.redhat.com/browse/OCPBUGS-6422
-replace golang.org/x/net => golang.org/x/net v0.5.0
+replace golang.org/x/net => golang.org/x/net v0.14.0
 
 // https://issues.redhat.com/browse/OCPBUGS-8119
 replace github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
