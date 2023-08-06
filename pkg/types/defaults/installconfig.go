@@ -66,7 +66,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		c.ControlPlane = &types.MachinePool{}
 	}
 	c.ControlPlane.Name = "master"
-	SetMachinePoolDefaults(c.ControlPlane, c.Platform.Name())
+	SetMachinePoolDefaults(c.ControlPlane, c)
 
 	if c.Arbiter != nil {
 		c.Arbiter.Name = "arbiter"
@@ -84,7 +84,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		c.Compute = append(c.Compute, types.MachinePool{Name: types.MachinePoolComputeRoleName})
 	}
 	for i := range c.Compute {
-		SetMachinePoolDefaults(&c.Compute[i], c.Platform.Name())
+		SetMachinePoolDefaults(&c.Compute[i], c)
 	}
 
 	if c.CredentialsMode == "" {
