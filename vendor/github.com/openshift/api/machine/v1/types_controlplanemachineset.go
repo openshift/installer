@@ -298,6 +298,7 @@ type GCPFailureDomain struct {
 
 // OpenStackFailureDomain configures failure domain information for the OpenStack platform.
 // +kubebuilder:validation:MinProperties:=1
+// +kubebuilder:validation:XValidation:rule="!has(self.availabilityZone) || !has(self.rootVolume) || has(self.rootVolume.availabilityZone)",message="rootVolume.availabilityZone is required when availabilityZone is set"
 type OpenStackFailureDomain struct {
 	// availabilityZone is the nova availability zone in which the OpenStack machine provider will create the VM.
 	// If not specified, the VM will be created in the default availability zone specified in the nova configuration.

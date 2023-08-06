@@ -183,16 +183,6 @@ var (
 		OwningProduct:       ocpSpecific,
 	}
 
-	FeatureGateAWSSecurityTokenService = FeatureGateName("AWSSecurityTokenService")
-	awsSecurityTokenService            = FeatureGateDescription{
-		FeatureGateAttributes: FeatureGateAttributes{
-			Name: FeatureGateAWSSecurityTokenService,
-		},
-		OwningJiraComponent: "cloud-credential-operator",
-		ResponsiblePerson:   "abutcher",
-		OwningProduct:       ocpSpecific,
-	}
-
 	FeatureGateMaxUnavailableStatefulSet = FeatureGateName("MaxUnavailableStatefulSet")
 	maxUnavailableStatefulSet            = FeatureGateDescription{
 		FeatureGateAttributes: FeatureGateAttributes{
@@ -269,6 +259,46 @@ var (
 		},
 		OwningJiraComponent: "splat",
 		ResponsiblePerson:   "rvanderp3",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateRouteExternalCertificate = FeatureGateName("RouteExternalCertificate")
+	routeExternalCertificate            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateRouteExternalCertificate,
+		},
+		OwningJiraComponent: "router",
+		ResponsiblePerson:   "thejasn",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateAdminNetworkPolicy = FeatureGateName("AdminNetworkPolicy")
+	adminNetworkPolicy            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateAdminNetworkPolicy,
+		},
+		OwningJiraComponent: "Networking/ovn-kubernetes",
+		ResponsiblePerson:   "tssurya",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateAutomatedEtcdBackup = FeatureGateName("AutomatedEtcdBackup")
+	automatedEtcdBackup            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateAutomatedEtcdBackup,
+		},
+		OwningJiraComponent: "etcd",
+		ResponsiblePerson:   "hasbro17",
+		OwningProduct:       ocpSpecific,
+	}
+
+	FeatureGateMachineAPIOperatorDisableMachineHealthCheckController = FeatureGateName("MachineAPIOperatorDisableMachineHealthCheckController")
+	machineAPIOperatorDisableMachineHealthCheckController            = FeatureGateDescription{
+		FeatureGateAttributes: FeatureGateAttributes{
+			Name: FeatureGateMachineAPIOperatorDisableMachineHealthCheckController,
+		},
+		OwningJiraComponent: "ecoproject",
+		ResponsiblePerson:   "msluiter",
 		OwningProduct:       ocpSpecific,
 	}
 )

@@ -14,6 +14,7 @@ import (
 	"flag"
 	"fmt"
 	"go/build"
+	"io"
 	"io/fs"
 	"io/ioutil"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strings"
 	"sync/atomic"
 	"syscall"
@@ -28,6 +30,7 @@ import (
 	"time"
 
 	"github.com/rogpeppe/go-internal/imports"
+	"github.com/rogpeppe/go-internal/internal/misspell"
 	"github.com/rogpeppe/go-internal/internal/os/execpath"
 	"github.com/rogpeppe/go-internal/par"
 	"github.com/rogpeppe/go-internal/testenv"
@@ -362,6 +365,17 @@ type TestScript struct {
 	scriptFiles   map[string]string           // files stored in the txtar archive (absolute paths -> path in script)
 	scriptUpdates map[string]string           // updates to testscript files via UpdateScripts.
 
+	// runningBuiltin indicates if we are running a user-supplied builtin
+	// command. These commands are specified via Params.Cmds.
+	runningBuiltin bool
+
+	// builtinStd(out|err) are established if a user-supplied builtin command
+	// requests Stdout() or Stderr(). Either both are non-nil, or both are nil.
+	// This invariant is maintained by both setBuiltinStd() and
+	// clearBuiltinStd().
+	builtinStdout *strings.Builder
+	builtinStderr *strings.Builder
+
 	ctxt        context.Context // per TestScript context
 	gracePeriod time.Duration   // time between SIGQUIT and SIGKILL
 }
@@ -657,10 +671,74 @@ func (ts *TestScript) runLine(line string) (runOK bool) {
 		cmd = ts.params.Cmds[args[0]]
 	}
 	if cmd == nil {
-		ts.Fatalf("unknown command %q", args[0])
+		// try to find spelling corrections. We arbitrarily limit the number of
+		// corrections, to not be too noisy.
+		switch c := ts.cmdSuggestions(args[0]); len(c) {
+		case 1:
+			ts.Fatalf("unknown command %q (did you mean %q?)", args[0], c[0])
+		case 2, 3, 4:
+			ts.Fatalf("unknown command %q (did you mean one of %q?)", args[0], c)
+		default:
+			ts.Fatalf("unknown command %q", args[0])
+		}
 	}
-	cmd(ts, neg, args[1:])
+	ts.callBuiltinCmd(args[0], func() {
+		cmd(ts, neg, args[1:])
+	})
 	return true
+}
+
+func (ts *TestScript) callBuiltinCmd(cmd string, runCmd func()) {
+	ts.runningBuiltin = true
+	defer func() {
+		r := recover()
+		ts.runningBuiltin = false
+		ts.clearBuiltinStd()
+		switch r {
+		case nil:
+			// we did not panic
+		default:
+			// re-"throw" the panic
+			panic(r)
+		}
+	}()
+	runCmd()
+}
+
+func (ts *TestScript) cmdSuggestions(name string) []string {
+	// special case: spell-correct `!cmd` to `! cmd`
+	if strings.HasPrefix(name, "!") {
+		if _, ok := scriptCmds[name[1:]]; ok {
+			return []string{"! " + name[1:]}
+		}
+		if _, ok := ts.params.Cmds[name[1:]]; ok {
+			return []string{"! " + name[1:]}
+		}
+	}
+	var candidates []string
+	for c := range scriptCmds {
+		if misspell.AlmostEqual(name, c) {
+			candidates = append(candidates, c)
+		}
+	}
+	for c := range ts.params.Cmds {
+		if misspell.AlmostEqual(name, c) {
+			candidates = append(candidates, c)
+		}
+	}
+	if len(candidates) == 0 {
+		return nil
+	}
+	// deduplicate candidates
+	// TODO: Use slices.Compact (and maybe slices.Sort) once we can use Go 1.21
+	sort.Strings(candidates)
+	out := candidates[:1]
+	for _, c := range candidates[1:] {
+		if out[len(out)-1] == c {
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 func (ts *TestScript) applyScriptUpdates() {
@@ -786,6 +864,60 @@ func (ts *TestScript) Check(err error) {
 	if err != nil {
 		ts.Fatalf("%v", err)
 	}
+}
+
+// Stdout returns an io.Writer that can be used by a user-supplied builtin
+// command (delcared via Params.Cmds) to write to stdout. If this method is
+// called outside of the execution of a user-supplied builtin command, the
+// call panics.
+func (ts *TestScript) Stdout() io.Writer {
+	if !ts.runningBuiltin {
+		panic("can only call TestScript.Stdout when running a builtin command")
+	}
+	ts.setBuiltinStd()
+	return ts.builtinStdout
+}
+
+// Stderr returns an io.Writer that can be used by a user-supplied builtin
+// command (delcared via Params.Cmds) to write to stderr. If this method is
+// called outside of the execution of a user-supplied builtin command, the
+// call panics.
+func (ts *TestScript) Stderr() io.Writer {
+	if !ts.runningBuiltin {
+		panic("can only call TestScript.Stderr when running a builtin command")
+	}
+	ts.setBuiltinStd()
+	return ts.builtinStderr
+}
+
+// setBuiltinStd ensures that builtinStdout and builtinStderr are non nil.
+func (ts *TestScript) setBuiltinStd() {
+	// This method must maintain the invariant that both builtinStdout and
+	// builtinStderr are set or neither are set
+
+	// If both are set, nothing to do
+	if ts.builtinStdout != nil && ts.builtinStderr != nil {
+		return
+	}
+	ts.builtinStdout = new(strings.Builder)
+	ts.builtinStderr = new(strings.Builder)
+}
+
+// clearBuiltinStd sets ts.stdout and ts.stderr from the builtin command
+// buffers, logs both, and resets both builtinStdout and builtinStderr to nil.
+func (ts *TestScript) clearBuiltinStd() {
+	// This method must maintain the invariant that both builtinStdout and
+	// builtinStderr are set or neither are set
+
+	// If neither set, nothing to do
+	if ts.builtinStdout == nil && ts.builtinStderr == nil {
+		return
+	}
+	ts.stdout = ts.builtinStdout.String()
+	ts.builtinStdout = nil
+	ts.stderr = ts.builtinStderr.String()
+	ts.builtinStderr = nil
+	ts.logStd()
 }
 
 // Logf appends the given formatted message to the test log transcript.
@@ -933,13 +1065,18 @@ func interruptProcess(p *os.Process) {
 func (ts *TestScript) Exec(command string, args ...string) error {
 	var err error
 	ts.stdout, ts.stderr, err = ts.exec(command, args...)
+	ts.logStd()
+	return err
+}
+
+// logStd logs the current non-empty values of stdout and stderr.
+func (ts *TestScript) logStd() {
 	if ts.stdout != "" {
 		ts.Logf("[stdout]\n%s", ts.stdout)
 	}
 	if ts.stderr != "" {
 		ts.Logf("[stderr]\n%s", ts.stderr)
 	}
-	return err
 }
 
 // expand applies environment variable expansion to the string s.
@@ -954,6 +1091,12 @@ func (ts *TestScript) expand(s string) string {
 
 // fatalf aborts the test with the given failure message.
 func (ts *TestScript) Fatalf(format string, args ...interface{}) {
+	// In user-supplied builtins, the only way we have of aborting
+	// is via Fatalf. Hence if we are aborting from a user-supplied
+	// builtin, it's important we first log stdout and stderr. If
+	// we are not, the following call is a no-op.
+	ts.clearBuiltinStd()
+
 	fmt.Fprintf(&ts.log, "FAIL: %s:%d: %s\n", ts.file, ts.lineno, fmt.Sprintf(format, args...))
 	// This should be caught by the defer inside the TestScript.runLine method.
 	// We do this rather than calling ts.t.FailNow directly because we want to
