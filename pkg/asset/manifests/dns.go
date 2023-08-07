@@ -129,6 +129,9 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 				}
 			}
 		}
+		// This is a test
+		config.Spec.PublicZone = &configv1.DNSZone{ID: ""}
+		config.Spec.PrivateZone = &configv1.DNSZone{ID: ""}
 	case azuretypes.Name:
 		dnsConfig, err := installConfig.Azure.DNSConfig()
 		if err != nil {
