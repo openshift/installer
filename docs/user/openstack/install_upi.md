@@ -102,7 +102,7 @@ This repository contains [Ansible playbooks][ansible-upi] to deploy OpenShift on
 They can be downloaded from Github with this script:
 
 ```sh
-RELEASE="release-4.6"; xargs -n 1 curl -O <<< "
+RELEASE="release-4.13"; xargs -n 1 curl -O <<< "
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/bootstrap.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/common.yaml
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/compute-nodes.yaml
@@ -119,38 +119,38 @@ RELEASE="release-4.6"; xargs -n 1 curl -O <<< "
         https://raw.githubusercontent.com/openshift/installer/${RELEASE}/upi/openstack/security-groups.yaml"
 ```
 
-For installing a different version, change the branch (`release-4.6`)
-accordingly (e.g. `release-4.7`). Note that `down-containers.yaml` was only
-introduced in `release-4.6`.
+For installing a different version, change the branch (`release-4.13`)
+accordingly (e.g. `release-4.12`).
 
 **Requirements:**
 
-* Python
-* Ansible
+* Python (>=3.8 for ansible-core, currently tested by CI or lower if using Ansible 2.9)
+* Ansible (>=2.10 is currently tested by CI, 2.9 is EOL soon)
 * Python modules required in the playbooks. Namely:
   * openstackclient
   * openstacksdk
   * netaddr
+* Ansible collections required in the playbooks. Namely:
+  * openstack.cloud
+  * ansible.utils
+  * community.general
 
 ### RHEL
 
-From a RHEL 8 box, make sure that the repository origins are all set:
+From a RHEL box, make sure that the repository origins are all set:
 
 ```sh
 sudo subscription-manager register # if not done already
 sudo subscription-manager attach --pool=$YOUR_POOLID # if not done already
 sudo subscription-manager repos --disable=* # if not done already
-
 sudo subscription-manager repos \
-  --enable=rhel-8-for-x86_64-baseos-rpms \
-  --enable=openstack-16-tools-for-rhel-8-x86_64-rpms \
-  --enable=ansible-2.9-for-rhel-8-x86_64-rpms \
-  --enable=rhel-8-for-x86_64-appstream-rpms
+  --enable=rhel-8-for-x86_64-baseos-rpms \ # change RHEL version if needed
+  --enable=rhel-8-for-x86_64-appstream-rpms # change RHEL version if needed
 ```
 
-Then install the packages:
+Then install the package:
 ```sh
-sudo dnf install python3-openstackclient ansible python3-openstacksdk python3-netaddr
+sudo dnf install ansible-core
 ```
 
 Make sure that `python` points to Python3:
@@ -158,15 +158,30 @@ Make sure that `python` points to Python3:
 sudo alternatives --set python /usr/bin/python3
 ```
 
+To avoid packages not found or mismatchs, we use pip to install the dependencies:
+```sh
+python3 -m pip install --upgrade pip
+python3 -m pip install yq openstackclient openstacksdk netaddr
+```
+
 ### Fedora
 
 This command installs all required dependencies on Fedora:
 
 ```sh
-sudo dnf install python3-openstackclient ansible python3-openstacksdk python3-netaddr
+sudo dnf install python3-openstackclient ansible-core python3-openstacksdk python3-netaddr
 ```
 
 [ansible-upi]: ../../../upi/openstack "Ansible Playbooks for Openstack UPI"
+
+## Ansible Collections
+
+The Ansible Collections are not packaged (yet) on recent versions of OSP and RHEL when `ansible-core` is
+installed instead of Ansible 2.9. So the collections need to be installed from `ansible-galaxy`.
+
+```sh
+ansible-galaxy collection install openstack.cloud ansible.utils community.general
+```
 
 ## OpenShift Configuration Directory
 
