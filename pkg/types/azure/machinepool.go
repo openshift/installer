@@ -1,5 +1,15 @@
 package azure
 
+// SecurityTypes represents the SecurityType of the virtual machine.
+type SecurityTypes string
+
+const (
+	// SecurityTypesConfidentialVM defines the SecurityType of the virtual machine as a Confidential VM.
+	SecurityTypesConfidentialVM SecurityTypes = "ConfidentialVM"
+	// SecurityTypesTrustedLaunch defines the SecurityType of the virtual machine as a Trusted Launch VM.
+	SecurityTypesTrustedLaunch SecurityTypes = "TrustedLaunch"
+)
+
 // MachinePool stores the configuration for a machine pool installed
 // on Azure.
 type MachinePool struct {
@@ -43,6 +53,67 @@ type MachinePool struct {
 	// OSImage defines the image to use for the OS.
 	// +optional
 	OSImage OSImage `json:"osImage,omitempty"`
+
+	// Settings specify the security type and the UEFI settings of the virtual machine. This field can
+	// be set for Confidential VMs and Trusted Launch for VMs.
+	// +optional
+	Settings *SecuritySettings `json:"settings,omitempty"`
+}
+
+// SecuritySettings define the security type and the UEFI settings of the virtual machine.
+type SecuritySettings struct {
+	// SecurityType specifies the SecurityType of the virtual machine. It has to be set to any specified value to
+	// enable secure boot and vTPM. The default behavior is: secure boot and vTPM will not be enabled unless this property is set.
+	// +kubebuilder:validation:Enum=ConfidentialVM;TrustedLaunch
+	// +kubebuilder:validation:Required
+	SecurityType SecurityTypes `json:"securityType,omitempty"`
+
+	// ConfidentialVM specifies the security configuration of the virtual machine.
+	// For more information regarding Confidential VMs, please refer to:
+	// https://learn.microsoft.com/azure/confidential-computing/confidential-vm-overview
+	// +optional
+	ConfidentialVM *ConfidentialVM `json:"confidentialVM,omitempty"`
+
+	// TrustedLaunch specifies the security configuration of the virtual machine.
+	// For more information regarding TrustedLaunch for VMs, please refer to:
+	// https://learn.microsoft.com/azure/virtual-machines/trusted-launch
+	// +optional
+	TrustedLaunch *TrustedLaunch `json:"trustedLaunch,omitempty"`
+}
+
+// ConfidentialVM defines the UEFI settings for the virtual machine.
+type ConfidentialVM struct {
+	// UEFISettings specifies the security settings like secure boot and vTPM used while creating the virtual machine.
+	// +kubebuilder:validation:Required
+	UEFISettings *UEFISettings `json:"uefiSettings,omitempty"`
+}
+
+// TrustedLaunch defines the UEFI settings for the virtual machine.
+type TrustedLaunch struct {
+	// UEFISettings specifies the security settings like secure boot and vTPM used while creating the virtual machine.
+	// +kubebuilder:validation:Required
+	UEFISettings *UEFISettings `json:"uefiSettings,omitempty"`
+}
+
+// UEFISettings specifies the security settings like secure boot and vTPM used while creating the
+// virtual machine.
+type UEFISettings struct {
+	// SecureBoot specifies whether secure boot should be enabled on the virtual machine.
+	// Secure Boot verifies the digital signature of all boot components and halts the boot process if
+	// signature verification fails.
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is disabled.
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +optional
+	SecureBoot *string `json:"secureBoot,omitempty"`
+
+	// VirtualizedTrustedPlatformModule specifies whether vTPM should be enabled on the virtual machine.
+	// When enabled the virtualized trusted platform module measurements are used to create a known good boot integrity policy baseline.
+	// The integrity policy baseline is used for comparison with measurements from subsequent VM boots to determine if anything has changed.
+	// This is required to be set to enabled if the SecurityEncryptionType is defined.
+	// If omitted, the platform chooses a default, which is subject to change over time, currently that default is disabled.
+	// +kubebuilder:validation:Enum=Enabled;Disabled
+	// +optional
+	VirtualizedTrustedPlatformModule *string `json:"virtualizedTrustedPlatformModule,omitempty"`
 }
 
 // VMNetworkingCapability defines the states for accelerated networking feature
@@ -101,6 +172,14 @@ func (a *MachinePool) Set(required *MachinePool) {
 	var emptyOSImage OSImage
 	if required.OSImage != emptyOSImage {
 		a.OSImage = required.OSImage
+	}
+
+	if required.OSDisk.SecurityProfile != nil {
+		a.OSDisk.SecurityProfile = required.OSDisk.SecurityProfile
+	}
+
+	if required.Settings != nil {
+		a.Settings = required.Settings
 	}
 }
 

@@ -174,3 +174,36 @@ networking_type specifies whether to enable accelerated networking. Accelerated 
 enables single root I/O virtualization (SR-IOV) to a VM, greatly improving its networking performance.
 EOF
 }
+
+variable "security_encryption_type" {
+  type = string
+  default = null
+
+  description = <<EOF
+Defines the encryption type when the Virtual Machine is a Confidential VM. Possible values are VMGuestStateOnly and DiskWithVMGuestState.
+When set to "VMGuestStateOnly" vtpm_enabled should be set to true.
+When set to "DiskWithVMGuestState" both vtpm_enabled and secure_boot_enabled should be true.
+EOF
+}
+
+variable "secure_vm_disk_encryption_set_id" {
+  type    = string
+  default = null
+
+  description = <<EOF
+Defines the ID of the Disk Encryption Set which should be used to encrypt this OS Disk when the Virtual Machine is a Confidential VM.
+It can only be set when security_encryption_type is set to "DiskWithVMGuestState".
+EOF
+}
+
+variable "secure_boot" {
+  type = string
+  default = ""
+  description = "Defines whether secure boot should be enabled on the virtual machine."
+}
+
+variable "virtualized_trusted_platform_module" {
+  type = string
+  default = ""
+  description = "Defines whether vTPM should be enabled on the virtual machine."
+}

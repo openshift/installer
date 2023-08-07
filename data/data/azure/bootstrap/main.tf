@@ -204,6 +204,8 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
   encryption_at_host_enabled      = var.azure_master_encryption_at_host_enabled
+  secure_boot_enabled             = var.azure_master_secure_boot == "Enabled"
+  vtpm_enabled                    = var.azure_master_virtualized_trusted_platform_module == "Enabled"
 
   identity {
     type         = "UserAssigned"
@@ -216,6 +218,9 @@ resource "azurerm_linux_virtual_machine" "bootstrap" {
     storage_account_type   = var.azure_master_root_volume_type
     disk_size_gb           = 100
     disk_encryption_set_id = var.azure_master_disk_encryption_set_id
+
+    security_encryption_type         = var.azure_master_security_encryption_type
+    secure_vm_disk_encryption_set_id = var.azure_master_secure_vm_disk_encryption_set_id
   }
 
   # Either source_image_id or source_image_reference must be defined

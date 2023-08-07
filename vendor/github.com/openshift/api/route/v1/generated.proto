@@ -13,6 +13,16 @@ import "k8s.io/apimachinery/pkg/util/intstr/generated.proto";
 // Package-wide variables from generator "generated".
 option go_package = "github.com/openshift/api/route/v1";
 
+// LocalObjectReference contains enough information to let you locate the
+// referenced object inside the same namespace.
+// +structType=atomic
+message LocalObjectReference {
+  // name of the referent.
+  // More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+  // +optional
+  optional string name = 1;
+}
+
 // A route allows developers to expose services through an HTTP(S) aware load balancing and proxy
 // layer via a public DNS entry. The route may further specify TLS options and a certificate, or
 // specify a public CNAME that the router should also accept for HTTP and HTTPS traffic. An
@@ -244,6 +254,7 @@ message RouterShard {
 // TLSConfig defines config used to secure a route and provide termination
 //
 // +kubebuilder:validation:XValidation:rule="has(self.termination) && has(self.insecureEdgeTerminationPolicy) ? !((self.termination=='passthrough') && (self.insecureEdgeTerminationPolicy=='Allow')) : true", message="cannot have both spec.tls.termination: passthrough and spec.tls.insecureEdgeTerminationPolicy: Allow"
+// +openshift:validation:FeatureSetAwareXValidation:featureSet=TechPreviewNoUpgrade;CustomNoUpgrade,rule="!(has(self.certificate) && has(self.externalCertificate))", message="cannot have both spec.tls.certificate and spec.tls.externalCertificate"
 message TLSConfig {
   // termination indicates termination type.
   //
@@ -280,5 +291,15 @@ message TLSConfig {
   //
   // +kubebuilder:validation:Enum=Allow;None;Redirect;""
   optional string insecureEdgeTerminationPolicy = 6;
+
+  // externalCertificate provides certificate contents as a secret reference.
+  // This should be a single serving certificate, not a certificate
+  // chain. Do not include a CA certificate. The secret referenced should
+  // be present in the same namespace as that of the Route.
+  // Forbidden when `certificate` is set.
+  //
+  // +openshift:enable:FeatureSets=CustomNoUpgrade;TechPreviewNoUpgrade
+  // +optional
+  optional LocalObjectReference externalCertificate = 7;
 }
 

@@ -100,6 +100,8 @@ resource "azurerm_linux_virtual_machine" "master" {
   admin_password                  = "NotActuallyApplied!"
   disable_password_authentication = false
   encryption_at_host_enabled      = var.encryption_at_host_enabled
+  secure_boot_enabled             = var.secure_boot == "Enabled"
+  vtpm_enabled                    = var.virtualized_trusted_platform_module == "Enabled"
 
   additional_capabilities {
     ultra_ssd_enabled = var.ultra_ssd_enabled
@@ -116,6 +118,9 @@ resource "azurerm_linux_virtual_machine" "master" {
     storage_account_type   = var.os_volume_type
     disk_size_gb           = var.os_volume_size
     disk_encryption_set_id = var.disk_encryption_set_id
+
+    security_encryption_type         = var.security_encryption_type
+    secure_vm_disk_encryption_set_id = var.secure_vm_disk_encryption_set_id
   }
 
   # Either source_image_id or source_image_reference must be defined

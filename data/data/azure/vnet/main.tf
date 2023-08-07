@@ -128,6 +128,10 @@ resource "azurerm_shared_image" "clustergen2" {
   hyper_v_generation  = "V2"
   architecture        = var.azure_vm_architecture
 
+  confidential_vm_supported = var.azure_master_security_encryption_type != null ? true : null
+
+  trusted_launch_enabled = var.azure_master_security_encryption_type == null ? (var.azure_master_secure_boot == "Enabled" || var.azure_master_virtualized_trusted_platform_module == "Enabled") : null
+
   identifier {
     publisher = "RedHat-gen2"
     offer     = "rhcos-gen2"
