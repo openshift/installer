@@ -45,6 +45,9 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	for idx := range machinesets {
 		var replicaNumber int32
 		{
+			// The replica number is set to 3 by default when install-config does not have
+			// any Compute machine-pool, or when the Compute machine-pool does not have the
+			// `replicas` property. As a consequence, pool.Replicas is never nil
 			replicas := *pool.Replicas / numberOfFailureDomains
 			if int64(idx) < *pool.Replicas%numberOfFailureDomains {
 				replicas++
