@@ -1,3 +1,6 @@
+# Copyright (c) 2021 VMware, Inc. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 ifneq (,$(strip $(GOOS)))
 ifeq (,$(strip $(GOARCH)))
 GOARCH := $(shell go env | grep GOARCH | awk -F= '{print $$2}' | tr -d '"')
@@ -24,13 +27,13 @@ TAGS += netgo
 ifeq (,$(strip $(findstring -w,$(LDFLAGS))))
 LDFLAGS += -w
 endif
-BUILD_ARGS := -tags '$(TAGS)' -ldflags '$(LDFLAGS)' -mod=vendor -v
+BUILD_ARGS := -tags '$(TAGS)' -ldflags '$(LDFLAGS)' -v
 
 $(PROGRAM):
 	CGO_ENABLED=0 go build -a $(BUILD_ARGS) -o $@
 
 install:
-	CGO_ENABLED=0 go install -i -v $(BUILD_ARGS)
+	CGO_ENABLED=0 go install -v $(BUILD_ARGS)
 
 ifneq (,$(strip $(BUILD_OS)))
 ifneq (,$(strip $(BUILD_ARCH)))

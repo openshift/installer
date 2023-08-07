@@ -3,6 +3,7 @@ package tfexec
 import (
 	"context"
 	"fmt"
+	"io"
 	"os/exec"
 	"strconv"
 )
@@ -17,6 +18,7 @@ type applyConfig struct {
 	parallelism  int
 	reattachInfo ReattachInfo
 	refresh      bool
+	replaceAddrs []string
 	state        string
 	stateOut     string
 	targets      []string
@@ -73,6 +75,10 @@ func (opt *RefreshOption) configureApply(conf *applyConfig) {
 	conf.refresh = opt.refresh
 }
 
+func (opt *ReplaceOption) configureApply(conf *applyConfig) {
+	conf.replaceAddrs = append(conf.replaceAddrs, opt.address)
+}
+
 func (opt *VarOption) configureApply(conf *applyConfig) {
 	conf.vars = append(conf.vars, opt.assignment)
 }
@@ -94,6 +100,27 @@ func (tf *Terraform) Apply(ctx context.Context, opts ...ApplyOption) error {
 	return tf.runTerraformCmd(ctx, cmd)
 }
 
+// ApplyJSON represents the terraform apply subcommand with the `-json` flag.
+// Using the `-json` flag will result in
+// [machine-readable](https://developer.hashicorp.com/terraform/internals/machine-readable-ui)
+// JSON being written to the supplied `io.Writer`. ApplyJSON is likely to be
+// removed in a future major version in favour of Apply returning JSON by default.
+func (tf *Terraform) ApplyJSON(ctx context.Context, w io.Writer, opts ...ApplyOption) error {
+	err := tf.compatible(ctx, tf0_15_3, nil)
+	if err != nil {
+		return fmt.Errorf("terraform apply -json was added in 0.15.3: %w", err)
+	}
+
+	tf.SetStdout(w)
+
+	cmd, err := tf.applyJSONCmd(ctx, opts...)
+	if err != nil {
+		return err
+	}
+
+	return tf.runTerraformCmd(ctx, cmd)
+}
+
 func (tf *Terraform) applyCmd(ctx context.Context, opts ...ApplyOption) (*exec.Cmd, error) {
 	c := defaultApplyOptions
 
@@ -101,6 +128,32 @@ func (tf *Terraform) applyCmd(ctx context.Context, opts ...ApplyOption) (*exec.C
 		o.configureApply(&c)
 	}
 
+	args, err := tf.buildApplyArgs(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+
+	return tf.buildApplyCmd(ctx, c, args)
+}
+
+func (tf *Terraform) applyJSONCmd(ctx context.Context, opts ...ApplyOption) (*exec.Cmd, error) {
+	c := defaultApplyOptions
+
+	for _, o := range opts {
+		o.configureApply(&c)
+	}
+
+	args, err := tf.buildApplyArgs(ctx, c)
+	if err != nil {
+		return nil, err
+	}
+
+	args = append(args, "-json")
+
+	return tf.buildApplyCmd(ctx, c, args)
+}
+
+func (tf *Terraform) buildApplyArgs(ctx context.Context, c applyConfig) ([]string, error) {
 	args := []string{"apply", "-no-color", "-auto-approve", "-input=false"}
 
 	// string opts: only pass if set
@@ -126,6 +179,15 @@ func (tf *Terraform) applyCmd(ctx context.Context, opts ...ApplyOption) (*exec.C
 	args = append(args, "-refresh="+strconv.FormatBool(c.refresh))
 
 	// string slice opts: split into separate args
+	if c.replaceAddrs != nil {
+		err := tf.compatible(ctx, tf0_15_2, nil)
+		if err != nil {
+			return nil, fmt.Errorf("replace option was introduced in Terraform 0.15.2: %w", err)
+		}
+		for _, addr := range c.replaceAddrs {
+			args = append(args, "-replace="+addr)
+		}
+	}
 	if c.targets != nil {
 		for _, ta := range c.targets {
 			args = append(args, "-target="+ta)
@@ -137,6 +199,10 @@ func (tf *Terraform) applyCmd(ctx context.Context, opts ...ApplyOption) (*exec.C
 		}
 	}
 
+	return args, nil
+}
+
+func (tf *Terraform) buildApplyCmd(ctx context.Context, c applyConfig, args []string) (*exec.Cmd, error) {
 	// string argument: pass if set
 	if c.dirOrPlan != "" {
 		args = append(args, c.dirOrPlan)

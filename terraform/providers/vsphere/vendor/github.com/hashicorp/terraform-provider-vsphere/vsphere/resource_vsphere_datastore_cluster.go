@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -867,6 +870,9 @@ func expandStorageDrsOptionSpec(d *schema.ResourceData) []types.StorageDrsOption
 	m := d.Get("sdrs_advanced_options").(map[string]interface{})
 	for k, v := range m {
 		opts = append(opts, types.StorageDrsOptionSpec{
+			ArrayUpdateSpec: types.ArrayUpdateSpec{
+				Operation: types.ArrayUpdateOperationAdd,
+			},
 			Option: &types.OptionValue{
 				Key:   k,
 				Value: types.AnyType(v),

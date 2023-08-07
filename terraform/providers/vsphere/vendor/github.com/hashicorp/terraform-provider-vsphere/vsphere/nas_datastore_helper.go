@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -47,12 +50,13 @@ func (p *nasDatastoreMountProcessor) diffNewOld() []string {
 
 // diff is what diffOldNew and diffNewOld hand off to.
 func (p *nasDatastoreMountProcessor) diff(a, b []string) []string {
-	var found bool
 	c := make([]string, 0)
 	for _, v1 := range a {
+		found := false
 		for _, v2 := range b {
 			if v1 == v2 {
 				found = true
+				break
 			}
 		}
 		if !found {

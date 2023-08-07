@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package vsphere
 
 import (
@@ -642,6 +645,11 @@ func expandSliceOfDvsHostInfrastructureTrafficResource(d *schema.ResourceData) [
 // flattenSliceOfDvsHostInfrastructureTrafficResource reads in the supplied network I/O control allocation entries supplied via a respective DVSConfigInfo field and sets the appropriate keys in the supplied ResourceData.
 func flattenSliceOfDvsHostInfrastructureTrafficResource(d *schema.ResourceData, s []types.DvsHostInfrastructureTrafficResource) error {
 	for _, v := range s {
+		if !stringInSlice(v.Key, infrastructureTrafficClassValues) {
+			// this would imply there are new classes introduced by the vCenter
+			// API but not yet supported by govmomi/provider
+			continue
+		}
 		if err := flattenDvsHostInfrastructureTrafficResource(d, v, v.Key); err != nil {
 			return err
 		}
@@ -748,7 +756,7 @@ func schemaDVSCreateSpec() map[string]*schema.Schema {
 		"version": {
 			Type:         schema.TypeString,
 			Computed:     true,
-			Description:  "The version of this virtual switch. Allowed versions are 7.0.3, 7.0.0, 6.6.0, 6.5.0, 6.0.0, 5.5.0, 5.1.0, and 5.0.0.",
+			Description:  "The version of this virtual switch. Allowed versions are 8.0.0, 7.0.3, 7.0.2, 7.0.0, 6.6.0, 6.5.0, 6.0.0, 5.5.0, 5.1.0, and 5.0.0.",
 			Optional:     true,
 			ValidateFunc: validation.StringInSlice(dvsVersions, false),
 		},
