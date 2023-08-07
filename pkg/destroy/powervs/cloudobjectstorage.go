@@ -11,7 +11,6 @@ import (
 	"github.com/IBM/go-sdk-core/v5/core"
 	// https://github.com/IBM/platform-services-go-sdk/blob/v0.18.16/resourcecontrollerv2/resource_controller_v2.go
 	"github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
-	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -82,7 +81,7 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 		if resources.NextURL != nil {
 			start, err := resources.GetNextStart()
 			if err != nil {
-				o.Logger.Debugf("listCOSInstances: err = %w", err)
+				o.Logger.Debugf("listCOSInstances: err = %v", err)
 				return nil, fmt.Errorf("failed to GetNextStart: %w", err)
 			}
 			if start != nil {
@@ -120,7 +119,7 @@ func (o *ClusterUninstaller) listCOSInstances() (cloudResources, error) {
 			if resources.NextURL != nil {
 				start, err := resources.GetNextStart()
 				if err != nil {
-					o.Logger.Debugf("listCOSInstances: err = %w", err)
+					o.Logger.Debugf("listCOSInstances: err = %v", err)
 					return nil, fmt.Errorf("failed to GetNextStart: %w", err)
 				}
 				if start != nil {
@@ -214,7 +213,7 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 	response, err = o.controllerSvc.DeleteResourceInstanceWithContext(ctx, options)
 
 	if err != nil && response != nil && response.StatusCode != http.StatusNotFound {
-		return errors.Wrapf(err, "failed to delete COS instance %s", item.name)
+		return fmt.Errorf("failed to delete COS instance %s: %w", item.name, err)
 	}
 
 	var reclamation *resourcecontrollerv2.Reclamation
@@ -227,7 +226,7 @@ func (o *ClusterUninstaller) destroyCOSInstance(item cloudResource) error {
 
 		_, response, err = o.controllerSvc.RunReclamationActionWithContext(ctx, reclamationActionOptions)
 		if err != nil {
-			return errors.Wrapf(err, "failed RunReclamationActionWithContext")
+			return fmt.Errorf("failed RunReclamationActionWithContext: %w", err)
 		}
 	}
 
@@ -284,7 +283,7 @@ func (o *ClusterUninstaller) destroyCOSInstances() error {
 		for _, item := range items {
 			o.Logger.Debugf("destroyCOSInstances: found %s in pending items", item.name)
 		}
-		return errors.Errorf("destroyCOSInstances: %d undeleted items pending", len(items))
+		return fmt.Errorf("destroyCOSInstances: %d undeleted items pending", len(items))
 	}
 
 	backoff := wait.Backoff{
@@ -325,7 +324,7 @@ func (o *ClusterUninstaller) COSInstanceID() (string, error) {
 	}
 	instanceList := cosInstances.list()
 	if len(instanceList) == 0 {
-		return "", errors.Errorf("COS instance not found")
+		return "", fmt.Errorf("COS instance not found")
 	}
 
 	// Locate the installer's COS instance by name.
@@ -335,5 +334,5 @@ func (o *ClusterUninstaller) COSInstanceID() (string, error) {
 			return instance.id, nil
 		}
 	}
-	return "", errors.Errorf("COS instance not found")
+	return "", fmt.Errorf("COS instance not found")
 }
