@@ -17,6 +17,7 @@ var onceLoggers = map[string]*sync.Once{}
 // Session is an object representing session for OpenStack.
 type Session struct {
 	CloudConfig *clientconfig.Cloud
+	ClientOpts  *clientconfig.ClientOpts
 }
 
 // GetSession returns an OpenStack session for a given cloud name in clouds.yaml.
@@ -30,6 +31,7 @@ func GetSession(cloudName string) (*Session, error) {
 	}
 	return &Session{
 		CloudConfig: cloudConfig,
+		ClientOpts:  opts,
 	}, nil
 }
 
