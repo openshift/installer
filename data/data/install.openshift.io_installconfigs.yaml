@@ -76,6 +76,8 @@ spec:
                   - CSISnapshot
                   - NodeTuning
                   - MachineAPI
+                  - Build
+                  - DeploymentConfig
                   type: string
                 type: array
               baselineCapabilitySet:
