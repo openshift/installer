@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"sort"
 
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -25,6 +26,7 @@ var (
 		for n := range validSecurityEncryptionTypes {
 			v = append(v, string(n))
 		}
+		sort.Strings(v)
 		return v
 	}()
 )

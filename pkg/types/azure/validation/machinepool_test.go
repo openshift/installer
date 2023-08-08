@@ -415,7 +415,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path.defaultMachinePlatform.osDisk.securityProfile.securityEncryptionType: Unsupported value: "invalidSecurityEncryptionType": supported values: "VMGuestStateOnly", "DiskWithVMGuestState"$`,
+			expected: `^test-path.defaultMachinePlatform.osDisk.securityProfile.securityEncryptionType: Unsupported value: "invalidSecurityEncryptionType": supported values: "DiskWithVMGuestState", "VMGuestStateOnly"$`,
 		},
 		{
 			name:          "securityType set to ConfidentialVM, securityEncryptionType is set but confidentialVM section is empty",
