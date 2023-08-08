@@ -213,6 +213,7 @@ tests:
               openstack:
               - rootVolume:
                   availabilityZone: foo
+                  volumeType: fast
     expected: |
       apiVersion: machine.openshift.io/v1
       kind: ControlPlaneMachineSet
@@ -240,6 +241,7 @@ tests:
               openstack:
               - rootVolume:
                   availabilityZone: foo
+                  volumeType: fast
   - name: Should accept an OpenStack failure domain with only the root volume type provided
     initial: |
       apiVersion: machine.openshift.io/v1
@@ -316,6 +318,7 @@ tests:
               - availabilityZone: foo
                 rootVolume:
                   availabilityZone: foo
+                  volumeType: fast
     expected: |
       apiVersion: machine.openshift.io/v1
       kind: ControlPlaneMachineSet
@@ -344,6 +347,7 @@ tests:
               - availabilityZone: foo
                 rootVolume:
                   availabilityZone: foo
+                  volumeType: fast
   - name: Should accept an OpenStack failure domain with both availabilityZone and root volume type provided
     initial: |
       apiVersion: machine.openshift.io/v1
@@ -368,6 +372,7 @@ tests:
               openstack:
               - availabilityZone: foo
                 rootVolume:
+                  availabilityZone: foo
                   volumeType: bar
     expected: |
       apiVersion: machine.openshift.io/v1
@@ -396,7 +401,58 @@ tests:
               openstack:
               - availabilityZone: foo
                 rootVolume:
+                  availabilityZone: foo
                   volumeType: bar
+  - name: Should reject an OpenStack failure domain with no rootVolume volumeType provided
+    initial: |
+      apiVersion: machine.openshift.io/v1
+      kind: ControlPlaneMachineSet
+      spec:
+        selector:
+          matchLabels:
+            machine.openshift.io/cluster-api-machine-role: master
+            machine.openshift.io/cluster-api-machine-type: master
+        template:
+          machineType: machines_v1beta1_machine_openshift_io
+          machines_v1beta1_machine_openshift_io:
+            metadata:
+              labels:
+                machine.openshift.io/cluster-api-machine-role: master
+                machine.openshift.io/cluster-api-machine-type: master
+                machine.openshift.io/cluster-api-cluster: cluster
+            spec:
+              providerSpec: {}
+            failureDomains:
+              platform: OpenStack
+              openstack:
+              - rootVolume:
+                  availabilityZone: foo
+    expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume.volumeType: Required value, <nil>: Invalid value: \"null\": some validation rules were not checked"
+  - name: Should reject an OpenStack failure domain with an empty rootVolume volumeType provided
+    initial: |
+      apiVersion: machine.openshift.io/v1
+      kind: ControlPlaneMachineSet
+      spec:
+        selector:
+          matchLabels:
+            machine.openshift.io/cluster-api-machine-role: master
+            machine.openshift.io/cluster-api-machine-type: master
+        template:
+          machineType: machines_v1beta1_machine_openshift_io
+          machines_v1beta1_machine_openshift_io:
+            metadata:
+              labels:
+                machine.openshift.io/cluster-api-machine-role: master
+                machine.openshift.io/cluster-api-machine-type: master
+                machine.openshift.io/cluster-api-cluster: cluster
+            spec:
+              providerSpec: {}
+            failureDomains:
+              platform: OpenStack
+              openstack:
+              - rootVolume:
+                  volumeType: ""
+    expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume.volumeType: Invalid value: \"\": spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume.volumeType in body should be at least 1 chars long"
   - name: Should reject an OpenStack failure domain with too long a rootVolume volumeType name
     initial: |
       apiVersion: machine.openshift.io/v1
@@ -423,7 +479,7 @@ tests:
                 rootVolume:
                   volumeType: a123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345
     expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume.volumeType: Too long: may not be longer than 255"
-  - name: Should reject an OpenStack failure domain with an empty rootVolume provided
+  - name: Should reject an OpenStack failure domain with both availabilityZone and root volume provided but with missing root volume availabilityZone
     initial: |
       apiVersion: machine.openshift.io/v1
       kind: ControlPlaneMachineSet
@@ -446,8 +502,9 @@ tests:
               platform: OpenStack
               openstack:
               - availabilityZone: foo
-                rootVolume: {}
-    expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume in body should have at least 1 properties"
+                rootVolume:
+                  volumeType: bar
+    expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0]: Invalid value: \"object\": rootVolume.availabilityZone is required when availabilityZone is set"
   - name: Should reject an empty OpenStack failure domain
     initial: |
       apiVersion: machine.openshift.io/v1
@@ -521,6 +578,7 @@ tests:
               openstack:
               - rootVolume:
                   availabilityZone: ""
+                  volumeType: fast
     expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume.availabilityZone in body should be at least 1 chars long"
   - name: Should reject an OpenStack failure domain with an invalid availabilityZone provided
     initial: |
@@ -570,4 +628,5 @@ tests:
               openstack:
                 - rootVolume:
                     availabilityZone: "foo bar"
+                    volumeType: fast
     expectedError: "spec.template.machines_v1beta1_machine_openshift_io.failureDomains.openstack[0].rootVolume.availabilityZone in body should match"
