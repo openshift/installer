@@ -208,8 +208,11 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	if p.ARMEndpoint == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be set when installing on Azure Stack"))
 	}
-	if p.OutboundType == azure.UserDefinedRoutingOutboundType {
+	switch p.OutboundType {
+	case azure.UserDefinedRoutingOutboundType:
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support user-defined routing"))
+	case azure.NatGatewayOutboundType:
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support NAT routing currently"))
 	}
 	return allErrs
 }
