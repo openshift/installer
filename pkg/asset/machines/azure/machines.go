@@ -111,7 +111,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 		image.Version = mpool.OSImage.Version
 	} else {
 		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
-		if hyperVGen == "V2" {
+		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
 			imageID += "-gen2"
 		}
 		image.ResourceID = imageID
