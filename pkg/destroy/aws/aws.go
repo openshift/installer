@@ -56,11 +56,12 @@ type ClusterUninstaller struct {
 	//   }
 	//
 	// will match resources with (a:b and c:d) or d:e.
-	Filters       []Filter // filter(s) we will be searching for
-	Logger        logrus.FieldLogger
-	Region        string
-	ClusterID     string
-	ClusterDomain string
+	Filters        []Filter // filter(s) we will be searching for
+	Logger         logrus.FieldLogger
+	Region         string
+	ClusterID      string
+	ClusterDomain  string
+	HostedZoneRole string
 
 	// Session is the AWS session to be used for deletion.  If nil, a
 	// new session will be created based on the usual credential
@@ -84,12 +85,13 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}
 
 	return &ClusterUninstaller{
-		Filters:       filters,
-		Region:        region,
-		Logger:        logger,
-		ClusterID:     metadata.InfraID,
-		ClusterDomain: metadata.AWS.ClusterDomain,
-		Session:       session,
+		Filters:        filters,
+		Region:         region,
+		Logger:         logger,
+		ClusterID:      metadata.InfraID,
+		ClusterDomain:  metadata.AWS.ClusterDomain,
+		Session:        session,
+		HostedZoneRole: metadata.AWS.HostedZoneRole,
 	}, nil
 }
 
@@ -132,6 +134,14 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 
 	tagClients := []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI{
 		resourcegroupstaggingapi.New(awsSession),
+	}
+
+	if o.HostedZoneRole != "" {
+		cfg := awssession.GetR53ClientCfg(awsSession, o.HostedZoneRole)
+		// This client is specifically for finding route53 zones,
+		// so it needs to use the global us-east-1 region.
+		cfg.Region = aws.String(endpoints.UsEast1RegionID)
+		tagClients = append(tagClients, resourcegroupstaggingapi.New(awsSession, cfg))
 	}
 
 	switch o.Region {

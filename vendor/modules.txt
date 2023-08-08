@@ -8696,7 +8696,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.11
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20230201213816-61d971884921 => github.com/openshift/api v0.0.0-20230228142948-d170fcdc0fa6
+# github.com/openshift/api v0.0.0-20230803134339-2d9b46419536 => github.com/openshift/api v0.0.0-20230803134339-2d9b46419536
 ## explicit; go 1.19
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
@@ -9640,7 +9640,7 @@ sigs.k8s.io/yaml
 # github.com/openshift/machine-config-operator => github.com/openshift/machine-config-operator v0.0.1-0.20201009041932-4fe8559913b8
 # k8s.io/client-go => k8s.io/client-go v0.25.0
 # sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20200617211605-651903477185
-# github.com/openshift/api => github.com/openshift/api v0.0.0-20230228142948-d170fcdc0fa6
+# github.com/openshift/api => github.com/openshift/api v0.0.0-20230803134339-2d9b46419536
 # github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 # github.com/mattn/go-sqlite3 => github.com/mattn/go-sqlite3 v1.10.0
 # github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20220928142635-a40422bdea61

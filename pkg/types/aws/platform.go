@@ -41,6 +41,15 @@ type Platform struct {
 	// +optional
 	HostedZone string `json:"hostedZone,omitempty"`
 
+	// HostedZoneRole is the ARN of an IAM role to be assumed when performing
+	// operations on the provided HostedZone. HostedZoneRole can be used
+	// in a shared VPC scenario when the private hosted zone belongs to a
+	// different account than the rest of the cluster resources.
+	// If HostedZoneRole is set, HostedZone must also be set.
+	//
+	// +optional
+	HostedZoneRole string `json:"hostedZoneRole,omitempty"`
+
 	// UserTags additional keys and values that the installer will add
 	// as tags to all resources that it creates. Resources created by the
 	// cluster itself may not include these tags.

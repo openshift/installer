@@ -26,9 +26,29 @@ type Storage struct {
 	Status StorageStatus `json:"status"`
 }
 
+// StorageDriverType indicates whether CSI migration should be enabled for drivers where it is optional.
+// +kubebuilder:validation:Enum="";LegacyDeprecatedInTreeDriver;CSIWithMigrationDriver
+type StorageDriverType string
+
+const (
+	LegacyDeprecatedInTreeDriver StorageDriverType = "LegacyDeprecatedInTreeDriver"
+	CSIWithMigrationDriver       StorageDriverType = "CSIWithMigrationDriver"
+)
+
 // StorageSpec is the specification of the desired behavior of the cluster storage operator.
+// +kubebuilder:validation:XValidation:rule="!has(oldSelf.vsphereStorageDriver) || has(self.vsphereStorageDriver)", message="VSphereStorageDriver is required once set"
 type StorageSpec struct {
 	OperatorSpec `json:",inline"`
+
+	// VSphereStorageDriver indicates the storage driver to use on VSphere clusters.
+	// Once this field is set to CSIWithMigrationDriver, it can not be changed.
+	// If this is empty, the platform will choose a good default,
+	// which may change over time without notice.
+	// The current default is LegacyDeprecatedInTreeDriver.
+	// DEPRECATED: This field will be removed in a future release.
+	// +kubebuilder:validation:XValidation:rule="oldSelf != \"CSIWithMigrationDriver\" || self == \"CSIWithMigrationDriver\"",message="VSphereStorageDriver can not be changed once it is set to CSIWithMigrationDriver"
+	// +optional
+	VSphereStorageDriver StorageDriverType `json:"vsphereStorageDriver"`
 }
 
 // StorageStatus defines the observed status of the cluster storage operator.

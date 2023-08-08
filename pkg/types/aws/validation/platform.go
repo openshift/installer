@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -26,7 +27,7 @@ var openshiftNamespaceRegex = regexp.MustCompile(`^([^/]*\.)?openshift.io/`)
 const userTagLimit = 25
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *aws.Platform, cm types.CredentialsMode, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	if p.Region == "" {
@@ -39,12 +40,24 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 		}
 	}
 
+	if p.HostedZoneRole != "" {
+		if p.HostedZone == "" {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostedZoneRole"), p.HostedZoneRole, "may not specify a role to assume for hosted zone operations without also specifying a hosted zone"))
+		}
+
+		if cm != types.ManualCredentialsMode && cm != types.PassthroughCredentialsMode {
+			errMsg := "when specifying a hostedZoneRole, either Passthrough or Manual credential mode must be specified"
+			allErrs = append(allErrs, field.Forbidden(fldPath.Child("credentialsMode"), errMsg))
+		}
+	}
+
 	allErrs = append(allErrs, validateServiceEndpoints(p.ServiceEndpoints, fldPath.Child("serviceEndpoints"))...)
 	allErrs = append(allErrs, validateUserTags(p.UserTags, p.PropagateUserTag, fldPath.Child("userTags"))...)
 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p, p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
+
 	return allErrs
 }
 

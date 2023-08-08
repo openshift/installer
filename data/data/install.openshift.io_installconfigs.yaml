@@ -2243,6 +2243,14 @@ spec:
                       the subnets. Leave the hosted zone unset to have the installer
                       create the hosted zone on your behalf.
                     type: string
+                  hostedZoneRole:
+                    description: HostedZoneRole is the ARN of an IAM role to be assumed
+                      when performing operations on the provided HostedZone. HostedZoneRole
+                      can be used in a shared VPC scenario when the private hosted
+                      zone belongs to a different account than the rest of the cluster
+                      resources. If HostedZoneRole is set, HostedZone must also be
+                      set.
+                    type: string
                   lbType:
                     description: "LBType is an optional field to specify a load balancer
                       type. \n When this field is specified, the default ingresscontroller

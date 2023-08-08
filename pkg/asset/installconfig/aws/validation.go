@@ -385,21 +385,22 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 	var zonePath *field.Path
 	var zone *route53.HostedZone
 
-	errors := field.ErrorList{}
 	allErrs := field.ErrorList{}
+	r53cfg := GetR53ClientCfg(metadata.session, ic.AWS.HostedZoneRole)
 
 	if ic.AWS.HostedZone != "" {
 		zoneName = ic.AWS.HostedZone
 		zonePath = field.NewPath("aws", "hostedZone")
-		zoneOutput, err := client.GetHostedZone(zoneName)
+		zoneOutput, err := client.GetHostedZone(zoneName, r53cfg)
 		if err != nil {
+			errMsg := errors.Wrapf(err, "unable to retrieve hosted zone").Error()
 			return field.ErrorList{
-				field.Invalid(zonePath, zoneName, "cannot find hosted zone"),
+				field.Invalid(zonePath, zoneName, errMsg),
 			}.ToAggregate()
 		}
 
-		if errors = validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errors) > 0 {
-			allErrs = append(allErrs, errors...)
+		if errs := validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errs) > 0 {
+			allErrs = append(allErrs, errs...)
 		}
 
 		zone = zoneOutput.HostedZone
@@ -416,8 +417,8 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 		zone = baseDomainOutput
 	}
 
-	if errors = client.ValidateZoneRecords(zone, zoneName, zonePath, ic); len(errors) > 0 {
-		allErrs = append(allErrs, errors...)
+	if errs := client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errs) > 0 {
+		allErrs = append(allErrs, errs...)
 	}
 
 	return allErrs.ToAggregate()
