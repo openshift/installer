@@ -23,13 +23,9 @@ func (TableV0ToV1) UpgradeFunc() pluginsdk.StateUpgraderFunc {
 		tableName := rawState["name"].(string)
 		accountName := rawState["storage_account_name"].(string)
 		environment := meta.(*clients.Client).Account.Environment
-		storageDomainSuffix, ok := environment.Storage.DomainSuffix()
-		if !ok {
-			return nil, fmt.Errorf("could not determine Storage domain suffix for environment %q", environment.Name)
-		}
 
 		id := rawState["id"].(string)
-		newResourceID := fmt.Sprintf("https://%s.table.%s/%s", accountName, *storageDomainSuffix, tableName)
+		newResourceID := fmt.Sprintf("https://%s.table.%s/%s", accountName, environment.StorageEndpointSuffix, tableName)
 		log.Printf("[DEBUG] Updating ID from %q to %q", id, newResourceID)
 
 		rawState["id"] = newResourceID
@@ -51,13 +47,9 @@ func (TableV1ToV2) UpgradeFunc() pluginsdk.StateUpgraderFunc {
 		tableName := rawState["name"].(string)
 		accountName := rawState["storage_account_name"].(string)
 		environment := meta.(*clients.Client).Account.Environment
-		storageDomainSuffix, ok := environment.Storage.DomainSuffix()
-		if !ok {
-			return nil, fmt.Errorf("could not determine Storage domain suffix for environment %q", environment.Name)
-		}
 
 		id := rawState["id"].(string)
-		newResourceID := fmt.Sprintf("https://%s.table.%s/Tables('%s')", accountName, *storageDomainSuffix, tableName)
+		newResourceID := fmt.Sprintf("https://%s.table.%s/Tables('%s')", accountName, environment.StorageEndpointSuffix, tableName)
 		log.Printf("[DEBUG] Updating ID from %q to %q", id, newResourceID)
 
 		rawState["id"] = newResourceID

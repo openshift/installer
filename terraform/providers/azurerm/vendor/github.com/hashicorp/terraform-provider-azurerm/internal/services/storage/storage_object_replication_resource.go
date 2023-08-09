@@ -3,11 +3,10 @@ package storage
 import (
 	"fmt"
 	"log"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/storage/2022-05-01/objectreplicationpolicies"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/storage/2021-04-01/objectreplicationpolicies"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/parse"
@@ -17,8 +16,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
-
-// TODO: @tombuildsstuff: this wants a state migration to move the ID to `{id1}|{id2}` to match other resources
 
 func resourceStorageObjectReplication() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
@@ -112,7 +109,7 @@ func resourceStorageObjectReplication() *pluginsdk.Resource {
 }
 
 func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Storage.ResourceManager.ObjectReplicationPolicies
+	client := meta.(*clients.Client).Storage.ObjectReplicationClient
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -125,8 +122,8 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 		return err
 	}
 
-	srcId := objectreplicationpolicies.NewObjectReplicationPolicyID(srcAccount.SubscriptionId, srcAccount.ResourceGroupName, srcAccount.StorageAccountName, "default")
-	dstId := objectreplicationpolicies.NewObjectReplicationPolicyID(dstAccount.SubscriptionId, dstAccount.ResourceGroupName, dstAccount.StorageAccountName, "default")
+	srcId := objectreplicationpolicies.NewObjectReplicationPoliciesID(srcAccount.SubscriptionId, srcAccount.ResourceGroupName, srcAccount.AccountName, "default")
+	dstId := objectreplicationpolicies.NewObjectReplicationPoliciesID(dstAccount.SubscriptionId, dstAccount.ResourceGroupName, dstAccount.AccountName, "default")
 
 	resp, err := client.List(ctx, *dstAccount)
 	if err != nil {
@@ -137,11 +134,7 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 	if resp.Model != nil && resp.Model.Value != nil {
 		for _, existing := range *resp.Model.Value {
 			if existing.Name != nil && *existing.Name != "" {
-				if prop := existing.Properties; prop != nil && (
-				// Storage allows either a storage account name (only when allowCrossTenantReplication of the SA is false) or a full resource id (both cases).
-				// We should check for both cases.
-				(prop.SourceAccount == srcAccount.StorageAccountName && prop.DestinationAccount == dstAccount.StorageAccountName) ||
-					(strings.EqualFold(prop.SourceAccount, srcAccount.ID()) && strings.EqualFold(prop.DestinationAccount, dstAccount.ID()))) {
+				if prop := existing.Properties; prop != nil && prop.SourceAccount == srcAccount.AccountName && prop.DestinationAccount == dstAccount.AccountName {
 					srcId.ObjectReplicationPolicyId = *existing.Name
 					dstId.ObjectReplicationPolicyId = *existing.Name
 					return tf.ImportAsExistsError("azurerm_storage_object_replication", parse.NewObjectReplicationID(srcId, dstId).ID())
@@ -152,8 +145,8 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 
 	props := objectreplicationpolicies.ObjectReplicationPolicy{
 		Properties: &objectreplicationpolicies.ObjectReplicationPolicyProperties{
-			SourceAccount:      srcAccount.ID(),
-			DestinationAccount: dstAccount.ID(),
+			SourceAccount:      srcId.AccountName,
+			DestinationAccount: dstId.AccountName,
 			Rules:              expandArmObjectReplicationRuleArray(d.Get("rules").(*pluginsdk.Set).List()),
 		},
 	}
@@ -161,20 +154,20 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 	// create in dest storage account
 	dstResp, err := client.CreateOrUpdate(ctx, dstId, props)
 	if err != nil {
-		return fmt.Errorf("creating Storage Object Replication for destination storage account name %q: %+v", dstId.StorageAccountName, err)
+		return fmt.Errorf("creating Storage Object Replication for destination storage account name %q: %+v", dstId.AccountName, err)
 	}
 
 	if dstResp.Model == nil {
-		return fmt.Errorf("nil model returned for Storage Object Replication for destination storage account name %q ID", dstId.StorageAccountName)
+		return fmt.Errorf("nil model returned for Storage Object Replication for destination storage account name %q ID", dstId.AccountName)
 	}
 	if dstResp.Model.Id == nil || *dstResp.Model.Id == "" {
-		return fmt.Errorf("empty or nil ID returned for Storage Object Replication for destination storage account name %q ID", dstId.StorageAccountName)
+		return fmt.Errorf("empty or nil ID returned for Storage Object Replication for destination storage account name %q ID", dstId.AccountName)
 	}
 	if dstResp.Model.Name == nil || *dstResp.Model.Name == "" {
-		return fmt.Errorf("empty or nil Name returned for Storage Object Replication for destination storage account name %q ID", dstAccount.StorageAccountName)
+		return fmt.Errorf("empty or nil Name returned for Storage Object Replication for destination storage account name %q ID", dstAccount.AccountName)
 	}
 	if dstResp.Model.Properties == nil {
-		return fmt.Errorf("nil properties returned for Storage Object Replication for destination storage account name %q ID", dstAccount.StorageAccountName)
+		return fmt.Errorf("nil properties returned for Storage Object Replication for destination storage account name %q ID", dstAccount.AccountName)
 	}
 
 	// Update the srcId and dstId using the returned computed object replication policy ID.
@@ -184,7 +177,7 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 	// create in source storage account, update policy Id and ruleId which are computed from destination ORP
 	props.Properties.Rules = dstResp.Model.Properties.Rules
 	if _, err := client.CreateOrUpdate(ctx, srcId, props); err != nil {
-		return fmt.Errorf("creating Storage Object Replication %q for source storage account name %q: %+v", srcId.ObjectReplicationPolicyId, srcId.StorageAccountName, err)
+		return fmt.Errorf("creating Storage Object Replication %q for source storage account name %q: %+v", srcId.ObjectReplicationPolicyId, srcId.AccountName, err)
 	}
 
 	d.SetId(parse.NewObjectReplicationID(srcId, dstId).ID())
@@ -193,7 +186,7 @@ func resourceStorageObjectReplicationCreate(d *pluginsdk.ResourceData, meta inte
 }
 
 func resourceStorageObjectReplicationUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Storage.ResourceManager.ObjectReplicationPolicies
+	client := meta.(*clients.Client).Storage.ObjectReplicationClient
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -202,13 +195,10 @@ func resourceStorageObjectReplicationUpdate(d *pluginsdk.ResourceData, meta inte
 		return err
 	}
 
-	srcAccount := objectreplicationpolicies.NewStorageAccountID(id.Src.SubscriptionId, id.Src.ResourceGroupName, id.Src.StorageAccountName)
-	dstAccount := objectreplicationpolicies.NewStorageAccountID(id.Dst.SubscriptionId, id.Dst.ResourceGroupName, id.Dst.StorageAccountName)
-
 	props := objectreplicationpolicies.ObjectReplicationPolicy{
 		Properties: &objectreplicationpolicies.ObjectReplicationPolicyProperties{
-			SourceAccount:      srcAccount.ID(),
-			DestinationAccount: dstAccount.ID(),
+			SourceAccount:      id.Src.AccountName,
+			DestinationAccount: id.Dst.AccountName,
 			Rules:              expandArmObjectReplicationRuleArray(d.Get("rules").(*pluginsdk.Set).List()),
 		},
 	}
@@ -216,26 +206,26 @@ func resourceStorageObjectReplicationUpdate(d *pluginsdk.ResourceData, meta inte
 	// update in dest storage account
 	resp, err := client.CreateOrUpdate(ctx, id.Dst, props)
 	if err != nil {
-		return fmt.Errorf("updating %q for destination storage account name %q: %+v", id, id.Dst.StorageAccountName, err)
+		return fmt.Errorf("updating %q for destination storage account name %q: %+v", id, id.Dst.AccountName, err)
 	}
 	if resp.Model == nil {
-		return fmt.Errorf("nil model returned for Storage Object Replication for destination storage account name %q ID", id.Dst.StorageAccountName)
+		return fmt.Errorf("nil model returned for Storage Object Replication for destination storage account name %q ID", id.Dst.AccountName)
 	}
 	if resp.Model.Properties == nil {
-		return fmt.Errorf("nil properties returned for Storage Object Replication for destination storage account name %q ID", id.Dst.StorageAccountName)
+		return fmt.Errorf("nil properties returned for Storage Object Replication for destination storage account name %q ID", id.Dst.AccountName)
 	}
 
 	// update in source storage account, update policy Id and ruleId
 	props.Properties.Rules = resp.Model.Properties.Rules
 	if _, err := client.CreateOrUpdate(ctx, id.Src, props); err != nil {
-		return fmt.Errorf("updating %q for source storage account name %q: %+v", id, id.Src.StorageAccountName, err)
+		return fmt.Errorf("updating %q for source storage account name %q: %+v", id, id.Src.AccountName, err)
 	}
 
 	return resourceStorageObjectReplicationRead(d, meta)
 }
 
 func resourceStorageObjectReplicationRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Storage.ResourceManager.ObjectReplicationPolicies
+	client := meta.(*clients.Client).Storage.ObjectReplicationClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -266,8 +256,8 @@ func resourceStorageObjectReplicationRead(d *pluginsdk.ResourceData, meta interf
 
 	if model := dstResp.Model; model != nil {
 		if props := dstResp.Model.Properties; props != nil {
-			d.Set("source_storage_account_id", parse.NewStorageAccountID(id.Src.SubscriptionId, id.Src.ResourceGroupName, id.Src.StorageAccountName).ID())
-			d.Set("destination_storage_account_id", parse.NewStorageAccountID(id.Dst.SubscriptionId, id.Dst.ResourceGroupName, id.Dst.StorageAccountName).ID())
+			d.Set("source_storage_account_id", parse.NewStorageAccountID(id.Src.SubscriptionId, id.Src.ResourceGroupName, id.Src.AccountName).ID())
+			d.Set("destination_storage_account_id", parse.NewStorageAccountID(id.Dst.SubscriptionId, id.Dst.ResourceGroupName, id.Dst.AccountName).ID())
 			if err := d.Set("rules", flattenObjectReplicationRules(props.Rules)); err != nil {
 				return fmt.Errorf("setting `rules`: %+v", err)
 			}
@@ -279,7 +269,7 @@ func resourceStorageObjectReplicationRead(d *pluginsdk.ResourceData, meta interf
 }
 
 func resourceStorageObjectReplicationDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Storage.ResourceManager.ObjectReplicationPolicies
+	client := meta.(*clients.Client).Storage.ObjectReplicationClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 

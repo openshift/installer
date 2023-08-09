@@ -7,9 +7,6 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = FluidRelayServerId{}
 
 // FluidRelayServerId is a struct representing the Resource ID for a Fluid Relay Server
@@ -40,15 +37,15 @@ func ParseFluidRelayServerID(input string) (*FluidRelayServerId, error) {
 	id := FluidRelayServerId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroup", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
 	}
 
 	if id.FluidRelayServerName, ok = parsed.Parsed["fluidRelayServerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "fluidRelayServerName", *parsed)
+		return nil, fmt.Errorf("the segment 'fluidRelayServerName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseFluidRelayServerIDInsensitively(input string) (*FluidRelayServerId, er
 	id := FluidRelayServerId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroup", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
 	}
 
 	if id.FluidRelayServerName, ok = parsed.Parsed["fluidRelayServerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "fluidRelayServerName", *parsed)
+		return nil, fmt.Errorf("the segment 'fluidRelayServerName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil

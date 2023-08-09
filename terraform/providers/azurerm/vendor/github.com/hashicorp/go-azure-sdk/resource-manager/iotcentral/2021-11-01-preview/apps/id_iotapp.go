@@ -7,24 +7,21 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = IotAppId{}
 
 // IotAppId is a struct representing the Resource ID for a Iot App
 type IotAppId struct {
 	SubscriptionId    string
 	ResourceGroupName string
-	IotAppName        string
+	ResourceName      string
 }
 
 // NewIotAppID returns a new IotAppId struct
-func NewIotAppID(subscriptionId string, resourceGroupName string, iotAppName string) IotAppId {
+func NewIotAppID(subscriptionId string, resourceGroupName string, resourceName string) IotAppId {
 	return IotAppId{
 		SubscriptionId:    subscriptionId,
 		ResourceGroupName: resourceGroupName,
-		IotAppName:        iotAppName,
+		ResourceName:      resourceName,
 	}
 }
 
@@ -40,15 +37,15 @@ func ParseIotAppID(input string) (*IotAppId, error) {
 	id := IotAppId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.IotAppName, ok = parsed.Parsed["iotAppName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "iotAppName", *parsed)
+	if id.ResourceName, ok = parsed.Parsed["resourceName"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseIotAppIDInsensitively(input string) (*IotAppId, error) {
 	id := IotAppId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.IotAppName, ok = parsed.Parsed["iotAppName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "iotAppName", *parsed)
+	if id.ResourceName, ok = parsed.Parsed["resourceName"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -99,7 +96,7 @@ func ValidateIotAppID(input interface{}, key string) (warnings []string, errors 
 // ID returns the formatted Iot App ID
 func (id IotAppId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.IoTCentral/iotApps/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.IotAppName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.ResourceName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Iot App ID
@@ -112,7 +109,7 @@ func (id IotAppId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftIoTCentral", "Microsoft.IoTCentral", "Microsoft.IoTCentral"),
 		resourceids.StaticSegment("staticIotApps", "iotApps", "iotApps"),
-		resourceids.UserSpecifiedSegment("iotAppName", "iotAppValue"),
+		resourceids.UserSpecifiedSegment("resourceName", "resourceValue"),
 	}
 }
 
@@ -121,7 +118,7 @@ func (id IotAppId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Iot App Name: %q", id.IotAppName),
+		fmt.Sprintf("Resource Name: %q", id.ResourceName),
 	}
 	return fmt.Sprintf("Iot App (%s)", strings.Join(components, "\n"))
 }

@@ -5,15 +5,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountpartners"
+	"github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceLogicAppIntegrationAccountPartner() *pluginsdk.Resource {
@@ -31,7 +32,7 @@ func resourceLogicAppIntegrationAccountPartner() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := integrationaccountpartners.ParsePartnerID(id)
+			_, err := parse.IntegrationAccountPartnerID(id)
 			return err
 		}),
 
@@ -43,7 +44,7 @@ func resourceLogicAppIntegrationAccountPartner() *pluginsdk.Resource {
 				ValidateFunc: validate.IntegrationAccountPartnerName(),
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"integration_account_name": {
 				Type:         pluginsdk.TypeString,
@@ -88,36 +89,37 @@ func resourceLogicAppIntegrationAccountPartnerCreateUpdate(d *pluginsdk.Resource
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := integrationaccountpartners.NewPartnerID(subscriptionId, d.Get("resource_group_name").(string), d.Get("integration_account_name").(string), d.Get("name").(string))
+	id := parse.NewIntegrationAccountPartnerID(subscriptionId, d.Get("resource_group_name").(string), d.Get("integration_account_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.IntegrationAccountName, id.PartnerName)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_logic_app_integration_account_partner", id.ID())
 		}
 	}
 
-	parameters := integrationaccountpartners.IntegrationAccountPartner{
-		Properties: integrationaccountpartners.IntegrationAccountPartnerProperties{
-			Content: integrationaccountpartners.PartnerContent{
-				B2b: &integrationaccountpartners.B2BPartnerContent{
+	parameters := logic.IntegrationAccountPartner{
+		IntegrationAccountPartnerProperties: &logic.IntegrationAccountPartnerProperties{
+			Content: &logic.PartnerContent{
+				B2b: &logic.B2BPartnerContent{
 					BusinessIdentities: expandIntegrationAccountPartnerBusinessIdentity(d.Get("business_identity").(*pluginsdk.Set).List()),
 				},
 			},
-			PartnerType: integrationaccountpartners.PartnerTypeBTwoB,
+			PartnerType: logic.PartnerTypeB2B,
 		},
 	}
 
 	if v, ok := d.GetOk("metadata"); ok {
-		parameters.Properties.Metadata = &v
+		metadata, _ := pluginsdk.ExpandJsonFromString(v.(string))
+		parameters.IntegrationAccountPartnerProperties.Metadata = metadata
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.IntegrationAccountName, id.PartnerName, parameters); err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}
 
@@ -130,14 +132,14 @@ func resourceLogicAppIntegrationAccountPartnerRead(d *pluginsdk.ResourceData, me
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := integrationaccountpartners.ParsePartnerID(d.Id())
+	id, err := parse.IntegrationAccountPartnerID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.IntegrationAccountName, id.PartnerName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[DEBUG] %s was not found - removing from state", *id)
 			d.SetId("")
 			return nil
@@ -146,19 +148,20 @@ func resourceLogicAppIntegrationAccountPartnerRead(d *pluginsdk.ResourceData, me
 	}
 
 	d.Set("name", id.PartnerName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("integration_account_name", id.IntegrationAccountName)
 
-	if model := resp.Model; model != nil {
-		props := model.Properties
-		if props.Content.B2b != nil && props.Content.B2b.BusinessIdentities != nil {
+	if props := resp.IntegrationAccountPartnerProperties; props != nil {
+		if props.Content != nil && props.Content.B2b != nil && props.Content.B2b.BusinessIdentities != nil {
 			if err := d.Set("business_identity", flattenIntegrationAccountPartnerBusinessIdentity(props.Content.B2b.BusinessIdentities)); err != nil {
 				return fmt.Errorf("setting `business_identity`: %+v", err)
 			}
 		}
 
 		if props.Metadata != nil {
-			d.Set("metadata", props.Metadata)
+			metadataValue := props.Metadata.(map[string]interface{})
+			metadataStr, _ := pluginsdk.FlattenJsonToString(metadataValue)
+			d.Set("metadata", metadataStr)
 		}
 	}
 
@@ -170,43 +173,53 @@ func resourceLogicAppIntegrationAccountPartnerDelete(d *pluginsdk.ResourceData, 
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := integrationaccountpartners.ParsePartnerID(d.Id())
+	id, err := parse.IntegrationAccountPartnerID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err := client.Delete(ctx, *id); err != nil {
+	if _, err := client.Delete(ctx, id.ResourceGroup, id.IntegrationAccountName, id.PartnerName); err != nil {
 		return fmt.Errorf("deleting %s: %+v", id, err)
 	}
 
 	return nil
 }
 
-func expandIntegrationAccountPartnerBusinessIdentity(input []interface{}) *[]integrationaccountpartners.BusinessIdentity {
-	results := make([]integrationaccountpartners.BusinessIdentity, 0)
+func expandIntegrationAccountPartnerBusinessIdentity(input []interface{}) *[]logic.BusinessIdentity {
+	results := make([]logic.BusinessIdentity, 0)
 
 	for _, item := range input {
 		v := item.(map[string]interface{})
 
-		results = append(results, integrationaccountpartners.BusinessIdentity{
-			Qualifier: v["qualifier"].(string),
-			Value:     v["value"].(string),
+		results = append(results, logic.BusinessIdentity{
+			Qualifier: utils.String(v["qualifier"].(string)),
+			Value:     utils.String(v["value"].(string)),
 		})
 	}
 
 	return &results
 }
 
-func flattenIntegrationAccountPartnerBusinessIdentity(input *[]integrationaccountpartners.BusinessIdentity) []interface{} {
+func flattenIntegrationAccountPartnerBusinessIdentity(input *[]logic.BusinessIdentity) []interface{} {
 	results := make([]interface{}, 0)
 	if input == nil {
 		return results
 	}
 
 	for _, item := range *input {
+		var qualifier string
+		if item.Qualifier != nil {
+			qualifier = *item.Qualifier
+		}
+
+		var value string
+		if item.Value != nil {
+			value = *item.Value
+		}
+
 		results = append(results, map[string]interface{}{
-			"qualifier": item.Qualifier,
-			"value":     item.Value,
+			"qualifier": qualifier,
+			"value":     value,
 		})
 	}
 

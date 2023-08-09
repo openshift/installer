@@ -1,16 +1,16 @@
 package client
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/advisor/2020-01-01/getrecommendations" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/advisor/mgmt/2020-01-01/advisor"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	RecommendationsClient *getrecommendations.GetRecommendationsClient
+	RecommendationsClient *advisor.RecommendationsClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
-	recommendationsClient := getrecommendations.NewGetRecommendationsClientWithBaseURI(o.ResourceManagerEndpoint)
+	recommendationsClient := advisor.NewRecommendationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&recommendationsClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{

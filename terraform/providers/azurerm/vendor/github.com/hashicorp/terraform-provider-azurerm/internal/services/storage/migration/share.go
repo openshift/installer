@@ -57,7 +57,7 @@ func (s ShareV1ToV2) UpgradeFunc() pluginsdk.StateUpgraderFunc {
 		shareName := parsedId[0]
 		accountName := parsedId[2]
 
-		environment := meta.(*clients.Client).Account.AzureEnvironment
+		environment := meta.(*clients.Client).Account.Environment
 		client := shares.NewWithEnvironment(environment)
 
 		newResourceId := client.GetResourceID(accountName, shareName)

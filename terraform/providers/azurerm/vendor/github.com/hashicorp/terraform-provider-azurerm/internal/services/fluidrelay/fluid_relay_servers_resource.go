@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/fluidrelay/2022-05-26/fluidrelayservers"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/fluidrelay/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -24,11 +24,8 @@ type ServerModel struct {
 	Location         string                                     `tfschema:"location"`
 	StorageSKU       string                                     `tfschema:"storage_sku"`
 	FrsTenantId      string                                     `tfschema:"frs_tenant_id"`
-	PrimaryKey       string                                     `tfschema:"primary_key"`
-	SecondaryKey     string                                     `tfschema:"secondary_key"`
 	OrdererEndpoints []string                                   `tfschema:"orderer_endpoints"`
 	StorageEndpoints []string                                   `tfschema:"storage_endpoints"`
-	ServiceEndpoints []string                                   `tfschema:"service_endpoints"`
 	Tags             map[string]string                          `tfschema:"tags"`
 	Identity         []identity.ModelSystemAssignedUserAssigned `tfschema:"identity"`
 }
@@ -90,7 +87,6 @@ func (s Server) Attributes() map[string]*pluginsdk.Schema {
 			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
-
 		"orderer_endpoints": {
 			Type:     pluginsdk.TypeList,
 			Computed: true,
@@ -98,33 +94,12 @@ func (s Server) Attributes() map[string]*pluginsdk.Schema {
 				Type: pluginsdk.TypeString,
 			},
 		},
-
 		"storage_endpoints": {
 			Type:     pluginsdk.TypeList,
 			Computed: true,
 			Elem: &pluginsdk.Schema{
 				Type: pluginsdk.TypeString,
 			},
-		},
-
-		"service_endpoints": {
-			Type:     pluginsdk.TypeList,
-			Computed: true,
-			Elem: &pluginsdk.Schema{
-				Type: pluginsdk.TypeString,
-			},
-		},
-
-		"primary_key": {
-			Type:      pluginsdk.TypeString,
-			Computed:  true,
-			Sensitive: true,
-		},
-
-		"secondary_key": {
-			Type:      pluginsdk.TypeString,
-			Computed:  true,
-			Sensitive: true,
 		},
 	}
 }
@@ -141,14 +116,15 @@ func (s Server) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, meta sdk.ResourceMetaData) (err error) {
-			client := meta.Client.FluidRelay.FluidRelayServers
+			client := meta.Client.FluidRelay.ServerClient
 
 			var model ServerModel
 			if err = meta.Decode(&model); err != nil {
 				return err
 			}
 
-			id := fluidrelayservers.NewFluidRelayServerID(meta.Client.Account.SubscriptionId, model.ResourceGroup, model.Name)
+			subscriptionID := meta.Client.Account.SubscriptionId
+			id := fluidrelayservers.NewFluidRelayServerID(subscriptionID, model.ResourceGroup, model.Name)
 
 			existing, err := client.Get(ctx, id)
 			if !response.WasNotFound(existing.HttpResponse) {
@@ -159,21 +135,24 @@ func (s Server) Create() sdk.ResourceFunc {
 				return meta.ResourceRequiresImport(s.ResourceType(), id)
 			}
 
-			payload := fluidrelayservers.FluidRelayServer{
-				Location:   location.Normalize(model.Location),
-				Properties: &fluidrelayservers.FluidRelayServerProperties{},
-				Tags:       &model.Tags,
+			serverReq := fluidrelayservers.FluidRelayServer{
+				Location: azure.NormalizeLocation(model.Location),
+				Name:     utils.String(model.Name),
 			}
-			payload.Identity, err = identity.ExpandSystemAndUserAssignedMapFromModel(model.Identity)
+			if model.Tags != nil {
+				serverReq.Tags = &model.Tags
+			}
+			serverReq.Properties = &fluidrelayservers.FluidRelayServerProperties{}
+			serverReq.Identity, err = identity.ExpandSystemAndUserAssignedMapFromModel(model.Identity)
 			if err != nil {
 				return fmt.Errorf("expanding user identities: %+v", err)
 			}
 
 			if model.StorageSKU != "" {
-				payload.Properties.Storagesku = pointer.To(fluidrelayservers.StorageSKU(model.StorageSKU))
+				serverReq.Properties.Storagesku = (*fluidrelayservers.StorageSKU)(&model.StorageSKU)
 			}
-
-			if _, err = client.CreateOrUpdate(ctx, id, payload); err != nil {
+			_, err = client.CreateOrUpdate(ctx, id, serverReq)
+			if err != nil {
 				return fmt.Errorf("creating %v err: %+v", id, err)
 			}
 			meta.SetID(id)
@@ -187,7 +166,7 @@ func (s Server) Update() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 10 * time.Minute,
 		Func: func(ctx context.Context, meta sdk.ResourceMetaData) (err error) {
-			client := meta.Client.FluidRelay.FluidRelayServers
+			client := meta.Client.FluidRelay.ServerClient
 			id, err := fluidrelayservers.ParseFluidRelayServerID(meta.ResourceData.Id())
 			if err != nil {
 				return err
@@ -198,17 +177,17 @@ func (s Server) Update() sdk.ResourceFunc {
 				return fmt.Errorf("decoding err: %+v", err)
 			}
 
-			payload := fluidrelayservers.FluidRelayServerUpdate{}
+			var upd fluidrelayservers.FluidRelayServerUpdate
 			if meta.ResourceData.HasChange("tags") {
-				payload.Tags = &model.Tags
+				upd.Tags = &model.Tags
 			}
 			if meta.ResourceData.HasChange("identity") {
-				payload.Identity, err = identity.ExpandSystemAndUserAssignedMapFromModel(model.Identity)
+				upd.Identity, err = identity.ExpandSystemAndUserAssignedMapFromModel(model.Identity)
 				if err != nil {
 					return fmt.Errorf("expanding user identities: %+v", err)
 				}
 			}
-			if _, err = client.Update(ctx, *id, payload); err != nil {
+			if _, err = client.Update(ctx, *id, upd); err != nil {
 				return fmt.Errorf("updating %s: %v", id, err)
 			}
 
@@ -221,7 +200,7 @@ func (s Server) Read() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, meta sdk.ResourceMetaData) error {
-			client := meta.Client.FluidRelay.FluidRelayServers
+			client := meta.Client.FluidRelay.ServerClient
 
 			id, err := fluidrelayservers.ParseFluidRelayServerID(meta.ResourceData.Id())
 			if err != nil {
@@ -230,57 +209,38 @@ func (s Server) Read() sdk.ResourceFunc {
 
 			server, err := client.Get(ctx, *id)
 			if err != nil {
-				if response.WasNotFound(server.HttpResponse) {
-					return meta.MarkAsGone(id)
-				}
 				return fmt.Errorf("retrieving %s: %v", id, err)
 			}
 
-			keys, err := client.ListKeys(ctx, *id)
-			if err != nil {
-				return fmt.Errorf("retrieving keys for %s: %+v", *id, err)
-			}
+			model := server.Model
 
 			output := &ServerModel{
 				Name:          id.FluidRelayServerName,
 				ResourceGroup: id.ResourceGroup,
+				Location:      location.Normalize(model.Location),
 			}
-			if model := server.Model; model != nil {
-				output.Location = location.Normalize(model.Location)
-
-				if err = output.flattenIdentity(model.Identity); err != nil {
-					return fmt.Errorf("flattening `identity`: %v", err)
+			if err = output.flattenIdentity(model.Identity); err != nil {
+				return fmt.Errorf("flattening `identity`: %v", err)
+			}
+			if server.Model.Tags != nil {
+				output.Tags = *server.Model.Tags
+			}
+			if prop := model.Properties; prop != nil {
+				if prop.FrsTenantId != nil {
+					output.FrsTenantId = *prop.FrsTenantId
 				}
-				if server.Model.Tags != nil {
-					output.Tags = *server.Model.Tags
-				}
-				if prop := model.Properties; prop != nil {
-					if prop.FrsTenantId != nil {
-						output.FrsTenantId = *prop.FrsTenantId
+				if points := prop.FluidRelayEndpoints; points != nil {
+					if points.OrdererEndpoints != nil {
+						output.OrdererEndpoints = *points.OrdererEndpoints
 					}
-					if points := prop.FluidRelayEndpoints; points != nil {
-						if points.OrdererEndpoints != nil {
-							output.OrdererEndpoints = *points.OrdererEndpoints
-						}
-						if points.StorageEndpoints != nil {
-							output.StorageEndpoints = *points.StorageEndpoints
-						}
-
-						if points.ServiceEndpoints != nil {
-							output.ServiceEndpoints = *points.ServiceEndpoints
-						}
+					if points.StorageEndpoints != nil {
+						output.StorageEndpoints = *points.StorageEndpoints
 					}
 				}
-				if val, ok := meta.ResourceData.GetOk("storage_sku"); ok {
-					output.StorageSKU = val.(string)
-				}
 			}
-
-			if model := keys.Model; model != nil {
-				output.PrimaryKey = utils.NormalizeNilableString(model.Key1)
-				output.SecondaryKey = utils.NormalizeNilableString(model.Key2)
+			if val, ok := meta.ResourceData.GetOk("storage_sku"); ok {
+				output.StorageSKU = val.(string)
 			}
-
 			return meta.Encode(output)
 		},
 	}
@@ -290,7 +250,7 @@ func (s Server) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 10 * time.Minute,
 		Func: func(ctx context.Context, meta sdk.ResourceMetaData) error {
-			client := meta.Client.FluidRelay.FluidRelayServers
+			client := meta.Client.FluidRelay.ServerClient
 
 			id, err := fluidrelayservers.ParseFluidRelayServerID(meta.ResourceData.Id())
 			if err != nil {
@@ -299,7 +259,7 @@ func (s Server) Delete() sdk.ResourceFunc {
 
 			meta.Logger.Infof("deleting %s", id)
 			if _, err := client.Delete(ctx, *id); err != nil {
-				return fmt.Errorf("deleting %s: %v", id, err)
+				return fmt.Errorf("delete %s: %v", id, err)
 			}
 			return nil
 		},

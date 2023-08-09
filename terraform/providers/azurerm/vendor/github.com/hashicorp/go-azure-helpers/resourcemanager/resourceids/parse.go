@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package resourceids
 
 import (
@@ -13,59 +10,35 @@ type Parser struct {
 	// segments is a slice containing the expected (ordered) segments which
 	// should be present within this Resource ID
 	segments []Segment
+}
 
-	// resourceId is a reference to the Resource ID type
-	resourceId ResourceId
+// NewParser takes a slice of Segments expected for this Resource ID
+func NewParser(segments []Segment) Parser {
+	return Parser{
+		segments: segments,
+	}
 }
 
 // NewParserFromResourceIdType takes a ResourceId interface and uses its (ordered) Segments
 // to create a Parser which can be used to Parse Resource ID's.
 func NewParserFromResourceIdType(id ResourceId) Parser {
 	segments := id.Segments()
-	return Parser{
-		resourceId: id,
-		segments:   segments,
-	}
+	return NewParser(segments)
 }
 
 type ParseResult struct {
 	// Parsed is a map of segmentName : segmentValue
 	Parsed map[string]string
-
-	// RawInput is the raw value that's been parsed to obtain Parsed
-	RawInput string
-}
-
-// SegmentNamed returns the specified Resource ID segment by its name, if it exists
-func (p ParseResult) SegmentNamed(key string, insensitively bool) (*string, bool) {
-	if !insensitively {
-		v, ok := p.Parsed[key]
-		if !ok {
-			return nil, false
-		}
-		return &v, ok
-	}
-
-	for k := range p.Parsed {
-		if strings.EqualFold(k, key) {
-			val := p.Parsed[k]
-			return &val, true
-		}
-	}
-
-	return nil, false
 }
 
 // Parse processes a Resource ID and parses it into a ParseResult containing a map of the
 // Known Segments for this Resource ID which callers of this method can then process to
 // form a Resource ID struct of those values doing any type conversions as necessary (for
-//
 //	example, type-casting/converting Constants).
 //
 // `input`: the Resource ID to be parsed, which should match the segments for this Resource ID
 // `insensitively`: should this Resource ID be parsed case-insensitively and fix up any Constant,
-//
-//	Resource Provider and Static Segments to the expected casing.
+//					Resource Provider and Static Segments to the expected casing.
 func (p Parser) Parse(input string, insensitively bool) (*ParseResult, error) {
 	if input == "" {
 		return nil, fmt.Errorf("cannot parse an empty string")
@@ -80,14 +53,10 @@ func (p Parser) Parse(input string, insensitively bool) (*ParseResult, error) {
 			Parsed: map[string]string{
 				p.segments[0].Name: input,
 			},
-			RawInput: input,
 		}, nil
 	}
 
-	parseResult := ParseResult{
-		Parsed:   make(map[string]string, 0),
-		RawInput: input,
-	}
+	parsed := make(map[string]string)
 
 	hasScopeAtStart := p.segments[0].Type == ScopeSegmentType
 	hasScopeAtEnd := p.segments[len(p.segments)-1].Type == ScopeSegmentType
@@ -141,7 +110,7 @@ func (p Parser) Parse(input string, insensitively bool) (*ParseResult, error) {
 		}
 
 		scopePrefix = *prefix
-		parseResult.Parsed[p.segments[0].Name] = *prefix
+		parsed[p.segments[0].Name] = *prefix
 	}
 
 	// trim off the scopePrefix and the leading `/` to give us the segments we expect plus the final scope string
@@ -159,7 +128,7 @@ func (p Parser) Parse(input string, insensitively bool) (*ParseResult, error) {
 	split := strings.Split(uri, "/")
 	segmentCount := len(split)
 	if segmentCount < len(p.segments) {
-		return nil, NewNumberOfSegmentsDidntMatchError(p.resourceId, parseResult)
+		return nil, fmt.Errorf("expected %d segments within the Resource ID but got %d for %q", len(p.segments), segmentCount, input)
 	}
 
 	if hasScopeAtStart {
@@ -174,11 +143,11 @@ func (p Parser) Parse(input string, insensitively bool) (*ParseResult, error) {
 
 		// as we go around each of the segments we're expecting, process the value we should surface
 		rawSegment := split[i]
-		value, err := p.parseSegment(segment, rawSegment, insensitively, parseResult)
+		value, err := p.parseSegment(segment, rawSegment, insensitively)
 		if err != nil {
 			return nil, fmt.Errorf("parsing segment %q: %+v", segment.Name, err)
 		}
-		parseResult.Parsed[segment.Name] = *value
+		parsed[segment.Name] = *value
 
 		// and then remove rawSegment from `uri` so that any leftovers is the scope
 		// since if there's a scope there'll be more segments than we expect
@@ -191,18 +160,22 @@ func (p Parser) Parse(input string, insensitively bool) (*ParseResult, error) {
 			return nil, fmt.Errorf("unexpected segment %q present at the end of the URI (input %q)", uri, input)
 		}
 
-		parseResult.Parsed[p.segments[len(p.segments)-1].Name] = fmt.Sprintf("/%s", uri)
-	}
-	if len(p.segments) != len(parseResult.Parsed) {
-		return nil, NewNumberOfSegmentsDidntMatchError(p.resourceId, parseResult)
+		parsed[p.segments[len(p.segments)-1].Name] = fmt.Sprintf("/%s", uri)
 	}
 
-	for k, v := range parseResult.Parsed {
+	if len(p.segments) != len(parsed) {
+		return nil, fmt.Errorf("expected %d segments but got %d for %q", len(p.segments), len(parsed), input)
+	}
+
+	for k, v := range parsed {
 		if v == "" {
-			return nil, NewSegmentNotSpecifiedError(p.resourceId, k, parseResult)
+			return nil, fmt.Errorf("segment %q is required but got an empty value", k)
 		}
 	}
-	return &parseResult, nil
+
+	return &ParseResult{
+		Parsed: parsed,
+	}, nil
 }
 
 func (p Parser) parseScopePrefix(input, regexForNonScopeSegments string, insensitively bool) (*string, error) {
@@ -226,7 +199,7 @@ func (p Parser) parseScopePrefix(input, regexForNonScopeSegments string, insensi
 	return &v, nil
 }
 
-func (p Parser) parseSegment(segment Segment, rawValue string, insensitively bool, currentlyParsed ParseResult) (*string, error) {
+func (p Parser) parseSegment(segment Segment, rawValue string, insensitively bool) (*string, error) {
 	switch segment.Type {
 	case ConstantSegmentType:
 		{
@@ -259,10 +232,10 @@ func (p Parser) parseSegment(segment Segment, rawValue string, insensitively boo
 			}
 
 			if matches {
-				return segment.FixedValue, nil
+				return &*segment.FixedValue, nil
 			}
 
-			return nil, NewSegmentNotSpecifiedError(p.resourceId, segment.Name, currentlyParsed)
+			return nil, fmt.Errorf("expected the segment %q to be %q", rawValue, *segment.FixedValue)
 		}
 
 	case ScopeSegmentType:

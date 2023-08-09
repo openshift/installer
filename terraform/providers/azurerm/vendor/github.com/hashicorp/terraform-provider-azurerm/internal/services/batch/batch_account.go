@@ -3,39 +3,42 @@ package batch
 import (
 	"fmt"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/batchaccount"
+	"github.com/Azure/azure-sdk-for-go/services/batch/mgmt/2022-01-01/batch"
 )
 
 // expandBatchAccountKeyVaultReference expands Batch account KeyVault reference
-func expandBatchAccountKeyVaultReference(list []interface{}) (*batchaccount.KeyVaultReference, error) {
-	if len(list) == 0 || list[0] == nil {
-		return nil, fmt.Errorf("key vault reference should be defined")
+func expandBatchAccountKeyVaultReference(list []interface{}) (*batch.KeyVaultReference, error) {
+	if len(list) == 0 {
+		return nil, fmt.Errorf("Error: key vault reference should be defined")
 	}
 
 	keyVaultRef := list[0].(map[string]interface{})
 
-	ref := &batchaccount.KeyVaultReference{
-		Id:  keyVaultRef["id"].(string),
-		Url: keyVaultRef["url"].(string),
+	keyVaultRefID := keyVaultRef["id"].(string)
+	keyVaultRefURL := keyVaultRef["url"].(string)
+
+	ref := &batch.KeyVaultReference{
+		ID:  &keyVaultRefID,
+		URL: &keyVaultRefURL,
 	}
 
 	return ref, nil
 }
 
 // flattenBatchAccountKeyvaultReference flattens a Batch account keyvault reference
-func flattenBatchAccountKeyvaultReference(keyVaultReference *batchaccount.KeyVaultReference) interface{} {
+func flattenBatchAccountKeyvaultReference(keyVaultReference *batch.KeyVaultReference) interface{} {
 	result := make(map[string]interface{})
 
 	if keyVaultReference == nil {
 		return []interface{}{}
 	}
 
-	if keyVaultReference.Id != "" {
-		result["id"] = keyVaultReference.Id
+	if keyVaultReference.ID != nil {
+		result["id"] = *keyVaultReference.ID
 	}
 
-	if keyVaultReference.Url != "" {
-		result["url"] = keyVaultReference.Url
+	if keyVaultReference.URL != nil {
+		result["url"] = *keyVaultReference.URL
 	}
 
 	return []interface{}{result}

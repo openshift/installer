@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/postgresql/2020-01-01/serverkeys"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -70,11 +69,11 @@ func getPostgreSQLServerKeyName(ctx context.Context, keyVaultsClient *client.Cli
 	if keyVaultIDRaw == nil {
 		return nil, fmt.Errorf("cannot get the keyvault ID from keyvault URL %q", keyVaultKeyID.KeyVaultBaseUrl)
 	}
-	keyVaultID, err := commonids.ParseKeyVaultID(*keyVaultIDRaw)
+	keyVaultID, err := keyVaultParse.VaultID(*keyVaultIDRaw)
 	if err != nil {
 		return nil, err
 	}
-	return utils.String(fmt.Sprintf("%s_%s_%s", keyVaultID.VaultName, keyVaultKeyID.Name, keyVaultKeyID.Version)), nil
+	return utils.String(fmt.Sprintf("%s_%s_%s", keyVaultID.Name, keyVaultKeyID.Name, keyVaultKeyID.Version)), nil
 }
 
 func resourcePostgreSQLServerKeyCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -97,8 +96,6 @@ func resourcePostgreSQLServerKeyCreateUpdate(d *pluginsdk.ResourceData, meta int
 	locks.ByName(serverId.ServerName, postgreSQLServerResourceName)
 	defer locks.UnlockByName(serverId.ServerName, postgreSQLServerResourceName)
 
-	id := serverkeys.NewKeyID(serverId.SubscriptionId, serverId.ResourceGroupName, serverId.ServerName, *name)
-
 	if d.IsNewResource() {
 		// This resource is a singleton, but its name can be anything.
 		// If you create a new key with different name with the old key, the service will not give you any warning but directly replace the old key with the new key.
@@ -115,11 +112,7 @@ func resourcePostgreSQLServerKeyCreateUpdate(d *pluginsdk.ResourceData, meta int
 					return fmt.Errorf("parsing existing Server Key ID %q: %+v", *rawId, err)
 				}
 
-				// API allows adding same key again with Create action, which would trigger revalidation of the key on the server.
-				// This is required to revalidate Replica server after creation.
-				if *rawId != id.ID() {
-					return tf.ImportAsExistsError("azurerm_postgresql_server_key", id.ID())
-				}
+				return tf.ImportAsExistsError("azurerm_postgresql_server_key", id.ID())
 			}
 		}
 	}
@@ -131,6 +124,7 @@ func resourcePostgreSQLServerKeyCreateUpdate(d *pluginsdk.ResourceData, meta int
 		},
 	}
 
+	id := serverkeys.NewKeyID(serverId.SubscriptionId, serverId.ResourceGroupName, serverId.ServerName, *name)
 	if err = keysClient.CreateOrUpdateThenPoll(ctx, id, param); err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}

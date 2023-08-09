@@ -5,17 +5,18 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/Azure/azure-sdk-for-go/services/batch/mgmt/2022-01-01/batch"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/certificate"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceBatchCertificate() *pluginsdk.Resource {
@@ -33,7 +34,7 @@ func resourceBatchCertificate() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := certificate.ParseCertificateID(id)
+			_, err := parse.CertificateID(id)
 			return err
 		}),
 
@@ -65,8 +66,8 @@ func resourceBatchCertificate() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(certificate.CertificateFormatCer),
-					string(certificate.CertificateFormatPfx),
+					string(batch.CertificateFormatCer),
+					string(batch.CertificateFormatPfx),
 				}, false),
 			},
 
@@ -107,45 +108,45 @@ func resourceBatchCertificateCreate(d *pluginsdk.ResourceData, meta interface{})
 
 	log.Printf("[INFO] preparing arguments for Azure Batch certificate creation.")
 
-	cert := d.Get("certificate").(string)
+	certificate := d.Get("certificate").(string)
 	format := d.Get("format").(string)
 	password := d.Get("password").(string)
 	thumbprint := d.Get("thumbprint").(string)
 	thumbprintAlgorithm := d.Get("thumbprint_algorithm").(string)
 	name := thumbprintAlgorithm + "-" + thumbprint
-	id := certificate.NewCertificateID(subscriptionId, d.Get("resource_group_name").(string), d.Get("account_name").(string), name)
+	id := parse.NewCertificateID(subscriptionId, d.Get("resource_group_name").(string), d.Get("account_name").(string), name)
 
 	if err := validateBatchCertificateFormatAndPassword(format, password); err != nil {
 		return err
 	}
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.BatchAccountName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_batch_certificate", id.ID())
 		}
 	}
-	certificateProperties := certificate.CertificateCreateOrUpdateProperties{
-		Data:                cert,
-		Format:              pointer.To(certificate.CertificateFormat(format)),
+	certificateProperties := batch.CertificateCreateOrUpdateProperties{
+		Data:                &certificate,
+		Format:              batch.CertificateFormat(format),
 		Thumbprint:          &thumbprint,
 		ThumbprintAlgorithm: &thumbprintAlgorithm,
 	}
 	if password != "" {
 		certificateProperties.Password = &password
 	}
-	parameters := certificate.CertificateCreateOrUpdateParameters{
-		Name:       &name,
-		Properties: &certificateProperties,
+	parameters := batch.CertificateCreateOrUpdateParameters{
+		Name:                                &name,
+		CertificateCreateOrUpdateProperties: &certificateProperties,
 	}
 
-	_, err := client.Create(ctx, id, parameters, certificate.CreateOperationOptions{})
+	_, err := client.Create(ctx, id.ResourceGroup, id.BatchAccountName, id.Name, parameters, "", "")
 	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
@@ -159,51 +160,30 @@ func resourceBatchCertificateRead(d *pluginsdk.ResourceData, meta interface{}) e
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := certificate.ParseCertificateID(d.Id())
+	id, err := parse.CertificateID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.BatchAccountName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
-			log.Printf("%s was not found - removing from state!", *id)
+			log.Printf("[DEBUG] Batch certificate %q was not found in Account %q / Resource Group %q - removing from state!", id.Name, id.BatchAccountName, id.ResourceGroup)
 			return nil
 		}
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("retrieving Batch Certificate %q (Account %q / Resource Group %q): %+v", id.Name, id.BatchAccountName, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.CertificateName)
+	d.Set("name", id.Name)
 	d.Set("account_name", id.BatchAccountName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			format := ""
-			if v := props.Format; v != nil {
-				format = string(*v)
-			}
-			d.Set("format", format)
-
-			publicData := ""
-			if v := props.PublicData; v != nil {
-				publicData = *v
-			}
-			d.Set("public_data", publicData)
-
-			thumbprint := ""
-			if v := props.Thumbprint; v != nil {
-				thumbprint = *v
-			}
-			d.Set("thumbprint", thumbprint)
-
-			thumbprintAlgorithm := ""
-			if v := props.ThumbprintAlgorithm; v != nil {
-				thumbprintAlgorithm = *v
-			}
-			d.Set("thumbprint_algorithm", thumbprintAlgorithm)
-		}
+	if props := resp.CertificateProperties; props != nil {
+		d.Set("format", props.Format)
+		d.Set("public_data", props.PublicData)
+		d.Set("thumbprint", props.Thumbprint)
+		d.Set("thumbprint_algorithm", props.ThumbprintAlgorithm)
 	}
 
 	return nil
@@ -216,12 +196,12 @@ func resourceBatchCertificateUpdate(d *pluginsdk.ResourceData, meta interface{})
 
 	log.Printf("[INFO] preparing arguments for Azure Batch certificate update.")
 
-	id, err := certificate.ParseCertificateID(d.Id())
+	id, err := parse.CertificateID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	cert := d.Get("certificate").(string)
+	certificate := d.Get("certificate").(string)
 	format := d.Get("format").(string)
 	password := d.Get("password").(string)
 	thumbprint := d.Get("thumbprint").(string)
@@ -231,24 +211,28 @@ func resourceBatchCertificateUpdate(d *pluginsdk.ResourceData, meta interface{})
 		return err
 	}
 
-	parameters := certificate.CertificateCreateOrUpdateParameters{
-		Name: &id.CertificateName,
-		Properties: &certificate.CertificateCreateOrUpdateProperties{
-			Data:                cert,
-			Format:              pointer.To(certificate.CertificateFormat(format)),
+	parameters := batch.CertificateCreateOrUpdateParameters{
+		Name: &id.Name,
+		CertificateCreateOrUpdateProperties: &batch.CertificateCreateOrUpdateProperties{
+			Data:                &certificate,
+			Format:              batch.CertificateFormat(format),
 			Password:            &password,
 			Thumbprint:          &thumbprint,
 			ThumbprintAlgorithm: &thumbprintAlgorithm,
 		},
 	}
 
-	if _, err = client.Update(ctx, *id, parameters, certificate.UpdateOperationOptions{}); err != nil {
-		return fmt.Errorf("updating %s: %+v", *id, err)
+	if _, err = client.Update(ctx, id.ResourceGroup, id.BatchAccountName, id.Name, parameters, ""); err != nil {
+		return fmt.Errorf("updating Batch certificate %q (Account %q / Resource Group %q): %+v", id.Name, id.BatchAccountName, id.ResourceGroup, err)
 	}
 
-	_, err = client.Get(ctx, *id)
+	read, err := client.Get(ctx, id.ResourceGroup, id.BatchAccountName, id.Name)
 	if err != nil {
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("retrieving Batch Certificate %q (Account %q / Resource Group %q): %+v", id.Name, id.BatchAccountName, id.ResourceGroup, err)
+	}
+
+	if read.ID == nil {
+		return fmt.Errorf("Cannot read ID for Batch certificate %q (Account: %q, Resource Group %q) ID", id.Name, id.BatchAccountName, id.ResourceGroup)
 	}
 
 	return resourceBatchCertificateRead(d, meta)
@@ -259,13 +243,20 @@ func resourceBatchCertificateDelete(d *pluginsdk.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := certificate.ParseCertificateID(d.Id())
+	id, err := parse.CertificateID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err := client.DeleteThenPoll(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.BatchAccountName, id.Name)
+	if err != nil {
+		return fmt.Errorf("deleting Batch Certificate %q (Account %q / Resource Group %q): %+v", id.Name, id.BatchAccountName, id.ResourceGroup, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		if !response.WasNotFound(future.Response()) {
+			return fmt.Errorf("waiting for deletion of Batch Certificate %q (Account %q / Resource Group %q): %+v", id.Name, id.BatchAccountName, id.ResourceGroup, err)
+		}
 	}
 
 	return nil

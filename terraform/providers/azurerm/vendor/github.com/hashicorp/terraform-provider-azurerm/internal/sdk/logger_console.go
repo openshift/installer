@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package sdk
 
 import (
@@ -16,7 +13,7 @@ type ConsoleLogger struct{}
 
 // Info prints out a message prefixed with `[INFO]` verbatim
 func (ConsoleLogger) Info(message string) {
-	log.Printf("[INFO] %s", message)
+	log.Print(fmt.Sprintf("[INFO] %s", message))
 }
 
 // Infof prints out a message prefixed with `[INFO]` formatted
@@ -27,7 +24,7 @@ func (l ConsoleLogger) Infof(format string, args ...interface{}) {
 
 // Warn prints out a message prefixed with `[WARN]` formatted verbatim
 func (l ConsoleLogger) Warn(message string) {
-	log.Printf("[WARN] %s", message)
+	log.Print(fmt.Sprintf("[WARN] %s", message))
 }
 
 // Warnf prints out a message prefixed with `[WARN]` formatted

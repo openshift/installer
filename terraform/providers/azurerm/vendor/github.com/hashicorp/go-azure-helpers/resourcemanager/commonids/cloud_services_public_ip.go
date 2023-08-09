@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package commonids
 
 import (
@@ -15,7 +12,7 @@ var _ resourceids.ResourceId = CloudServicesPublicIPAddressId{}
 // CloudServicesPublicIPAddressId is a struct representing the Resource ID for a Cloud Services Public I P Address
 type CloudServicesPublicIPAddressId struct {
 	SubscriptionId       string
-	ResourceGroupName    string
+	ResourceGroup        string
 	CloudServiceName     string
 	RoleInstanceName     string
 	NetworkInterfaceName string
@@ -24,10 +21,10 @@ type CloudServicesPublicIPAddressId struct {
 }
 
 // NewCloudServicesPublicIPAddressID returns a new CloudServicesPublicIPAddressId struct
-func NewCloudServicesPublicIPAddressID(subscriptionId string, resourceGroupName string, cloudServiceName string, roleInstanceName string, networkInterfaceName string, ipConfigurationName string, publicIPAddressName string) CloudServicesPublicIPAddressId {
+func NewCloudServicesPublicIPAddressID(subscriptionId string, resourceGroup string, cloudServiceName string, roleInstanceName string, networkInterfaceName string, ipConfigurationName string, publicIPAddressName string) CloudServicesPublicIPAddressId {
 	return CloudServicesPublicIPAddressId{
 		SubscriptionId:       subscriptionId,
-		ResourceGroupName:    resourceGroupName,
+		ResourceGroup:        resourceGroup,
 		CloudServiceName:     cloudServiceName,
 		RoleInstanceName:     roleInstanceName,
 		NetworkInterfaceName: networkInterfaceName,
@@ -48,31 +45,31 @@ func ParseCloudServicesPublicIPAddressID(input string) (*CloudServicesPublicIPAd
 	id := CloudServicesPublicIPAddressId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
 	}
 
 	if id.CloudServiceName, ok = parsed.Parsed["cloudServiceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "cloudServiceName", *parsed)
+		return nil, fmt.Errorf("the segment 'cloudServiceName' was not found in the resource id %q", input)
 	}
 
 	if id.RoleInstanceName, ok = parsed.Parsed["roleInstanceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "roleInstanceName", *parsed)
+		return nil, fmt.Errorf("the segment 'roleInstanceName' was not found in the resource id %q", input)
 	}
 
 	if id.NetworkInterfaceName, ok = parsed.Parsed["networkInterfaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "networkInterfaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'networkInterfaceName' was not found in the resource id %q", input)
 	}
 
 	if id.IpConfigurationName, ok = parsed.Parsed["ipConfigurationName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigurationName", *parsed)
+		return nil, fmt.Errorf("the segment 'ipConfigurationName' was not found in the resource id %q", input)
 	}
 
 	if id.PublicIPAddressName, ok = parsed.Parsed["publicIPAddressName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "publicIPAddressName", *parsed)
+		return nil, fmt.Errorf("the segment 'publicIPAddressName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -91,31 +88,31 @@ func ParseCloudServicesPublicIPAddressIDInsensitively(input string) (*CloudServi
 	id := CloudServicesPublicIPAddressId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
 	}
 
 	if id.CloudServiceName, ok = parsed.Parsed["cloudServiceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "cloudServiceName", *parsed)
+		return nil, fmt.Errorf("the segment 'cloudServiceName' was not found in the resource id %q", input)
 	}
 
 	if id.RoleInstanceName, ok = parsed.Parsed["roleInstanceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "roleInstanceName", *parsed)
+		return nil, fmt.Errorf("the segment 'roleInstanceName' was not found in the resource id %q", input)
 	}
 
 	if id.NetworkInterfaceName, ok = parsed.Parsed["networkInterfaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "networkInterfaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'networkInterfaceName' was not found in the resource id %q", input)
 	}
 
 	if id.IpConfigurationName, ok = parsed.Parsed["ipConfigurationName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigurationName", *parsed)
+		return nil, fmt.Errorf("the segment 'ipConfigurationName' was not found in the resource id %q", input)
 	}
 
 	if id.PublicIPAddressName, ok = parsed.Parsed["publicIPAddressName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "publicIPAddressName", *parsed)
+		return nil, fmt.Errorf("the segment 'publicIPAddressName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -136,10 +133,10 @@ func ValidateCloudServicesPublicIPAddressID(input interface{}, key string) (warn
 	return
 }
 
-// ID returns the formatted Cloud Services Public IP Address ID
+// ID returns the formatted Cloud Services Public I P Address ID
 func (id CloudServicesPublicIPAddressId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/cloudServices/%s/roleInstances/%s/networkInterfaces/%s/ipConfigurations/%s/publicIPAddresses/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.CloudServiceName, id.RoleInstanceName, id.NetworkInterfaceName, id.IpConfigurationName, id.PublicIPAddressName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.CloudServiceName, id.RoleInstanceName, id.NetworkInterfaceName, id.IpConfigurationName, id.PublicIPAddressName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Cloud Services Public I P Address ID
@@ -148,7 +145,7 @@ func (id CloudServicesPublicIPAddressId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("subscriptions", "subscriptions", "subscriptions"),
 		resourceids.SubscriptionIdSegment("subscriptionId", "12345678-1234-9876-4563-123456789012"),
 		resourceids.StaticSegment("resourceGroups", "resourceGroups", "resourceGroups"),
-		resourceids.ResourceGroupSegment("resourceGroupName", "example-resource-group"),
+		resourceids.ResourceGroupSegment("resourceGroup", "example-resource-group"),
 		resourceids.StaticSegment("providers", "providers", "providers"),
 		resourceids.ResourceProviderSegment("resourceProvider", "Microsoft.Compute", "Microsoft.Compute"),
 		resourceids.StaticSegment("cloudServices", "cloudServices", "cloudServices"),
@@ -168,12 +165,12 @@ func (id CloudServicesPublicIPAddressId) Segments() []resourceids.Segment {
 func (id CloudServicesPublicIPAddressId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
-		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
+		fmt.Sprintf("Resource Group: %q", id.ResourceGroup),
 		fmt.Sprintf("Cloud Service Name: %q", id.CloudServiceName),
 		fmt.Sprintf("Role Instance Name: %q", id.RoleInstanceName),
 		fmt.Sprintf("Network Interface Name: %q", id.NetworkInterfaceName),
 		fmt.Sprintf("Ip Configuration Name: %q", id.IpConfigurationName),
 		fmt.Sprintf("Public I P Address Name: %q", id.PublicIPAddressName),
 	}
-	return fmt.Sprintf("Cloud Services Public IP Address (%s)", strings.Join(components, "\n"))
+	return fmt.Sprintf("Cloud Services Public I P Address (%s)", strings.Join(components, "\n"))
 }

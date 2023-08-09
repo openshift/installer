@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/consumption/2019-10-01/budgets"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/consumption/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/consumption/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceArmConsumptionBudgetResourceGroupDataSource() *pluginsdk.Resource {
@@ -220,29 +220,31 @@ func resourceArmConsumptionBudgetResourceGroupDataSource() *pluginsdk.Resource {
 
 func resourceArmConsumptionBudgetResourceGroupDataSourceRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Consumption.BudgetsClient
-	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
+	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := budgets.NewScopedBudgetID(d.Get("resource_group_id").(string), d.Get("name").(string))
-	resp, err := client.Get(ctx, id)
+	id := parse.NewConsumptionBudgetId(d.Get("resource_group_id").(string), d.Get("name").(string))
+	d.SetId(id.ID())
+
+	resp, err := client.Get(ctx, id.Scope, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			return fmt.Errorf("%s was not found", id)
+		if utils.ResponseWasNotFound(resp.Response) {
+			d.SetId("")
+			return nil
 		}
 		return fmt.Errorf("making read request on %s: %+v", id, err)
 	}
 
-	d.SetId(id.ID())
-	d.Set("name", id.BudgetName)
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			d.Set("amount", props.Amount)
-			d.Set("time_grain", string(props.TimeGrain))
-			d.Set("time_period", flattenConsumptionBudgetTimePeriod(&props.TimePeriod))
-			d.Set("notification", flattenConsumptionBudgetNotifications(props.Notifications, id.Scope))
-			d.Set("filter", flattenConsumptionBudgetFilter(props.Filter))
-		}
+	d.Set("name", resp.Name)
+	if resp.Amount != nil {
+		amount, _ := resp.Amount.Float64()
+		d.Set("amount", amount)
 	}
+	d.Set("resource_group_id", id.Scope)
+	d.Set("time_grain", string(resp.TimeGrain))
+	d.Set("time_period", flattenConsumptionBudgetTimePeriod(resp.TimePeriod))
+	d.Set("notification", flattenConsumptionBudgetNotifications(resp.Notifications, id.Scope))
+	d.Set("filter", flattenConsumptionBudgetFilter(resp.Filter))
 
 	return nil
 }

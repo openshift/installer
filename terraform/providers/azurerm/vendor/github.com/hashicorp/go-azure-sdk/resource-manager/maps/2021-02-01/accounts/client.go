@@ -1,26 +1,18 @@
 package accounts
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type AccountsClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewAccountsClientWithBaseURI(api environments.Api) (*AccountsClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "accounts", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating AccountsClient: %+v", err)
+func NewAccountsClientWithBaseURI(endpoint string) AccountsClient {
+	return AccountsClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &AccountsClient{
-		Client: client,
-	}, nil
 }

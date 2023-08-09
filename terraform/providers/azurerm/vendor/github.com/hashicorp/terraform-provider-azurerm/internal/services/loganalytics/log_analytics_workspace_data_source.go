@@ -72,7 +72,8 @@ func dataSourceLogAnalyticsWorkspace() *pluginsdk.Resource {
 }
 
 func dataSourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).LogAnalytics.SharedKeyWorkspacesClient
+	client := meta.(*clients.Client).LogAnalytics.WorkspacesClient
+	sharedKeysClient := meta.(*clients.Client).LogAnalytics.SharedKeysClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -98,26 +99,15 @@ func dataSourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interfa
 		d.Set("location", location.NormalizeNilable(&model.Location))
 
 		if props := model.Properties; props != nil {
-			customerId := ""
-			if props.CustomerId != nil {
-				customerId = *props.CustomerId
-			}
-			d.Set("workspace_id", customerId)
+			d.Set("workspace_id", props.CustomerId)
 
-			sku := ""
-			if props.Sku != nil {
-				sku = string(props.Sku.Name)
+			if sku := props.Sku; sku != nil {
+				d.Set("sku", sku.Name)
 			}
-			d.Set("sku", sku)
+			d.Set("retention_in_days", props.RetentionInDays)
 
-			var retentionInDays int64
-			if props.RetentionInDays != nil {
-				retentionInDays = *props.RetentionInDays
-			}
-			d.Set("retention_in_days", retentionInDays)
-
-			if props.WorkspaceCapping != nil && props.WorkspaceCapping.DailyQuotaGb != nil {
-				d.Set("daily_quota_gb", props.WorkspaceCapping.DailyQuotaGb)
+			if workspaceCapping := props.WorkspaceCapping; workspaceCapping != nil {
+				d.Set("daily_quota_gb", workspaceCapping.DailyQuotaGb)
 			} else {
 				d.Set("daily_quota_gb", utils.Float(-1))
 			}
@@ -128,23 +118,13 @@ func dataSourceLogAnalyticsWorkspaceRead(d *pluginsdk.ResourceData, meta interfa
 		}
 	}
 
-	sharedKeysResp, err := client.SharedKeysGetSharedKeys(ctx, id)
+	sharedKeys, err := sharedKeysClient.GetSharedKeys(ctx, resGroup, name)
 	if err != nil {
 		log.Printf("[ERROR] Unable to List Shared keys for Log Analytics workspaces %s: %+v", name, err)
 	} else {
-		if sharedKeysModel := sharedKeysResp.Model; sharedKeysModel != nil {
-			primarySharedKey := ""
-			if sharedKeysModel.PrimarySharedKey != nil {
-				primarySharedKey = *sharedKeysModel.PrimarySharedKey
-			}
-			d.Set("primary_shared_key", primarySharedKey)
-
-			secondarySharedKey := ""
-			if sharedKeysModel.SecondarySharedKey != nil {
-				secondarySharedKey = *sharedKeysModel.SecondarySharedKey
-			}
-			d.Set("secondary_shared_key", secondarySharedKey)
-		}
+		d.Set("primary_shared_key", sharedKeys.PrimarySharedKey)
+		d.Set("secondary_shared_key", sharedKeys.SecondarySharedKey)
 	}
+
 	return nil
 }

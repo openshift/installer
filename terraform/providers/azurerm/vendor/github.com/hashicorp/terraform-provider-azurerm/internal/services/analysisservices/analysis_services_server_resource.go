@@ -50,9 +50,9 @@ func resourceAnalysisServicesServer() *pluginsdk.Resource {
 				ValidateFunc: validate.ServerName,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"sku": {
 				Type:     pluginsdk.TypeString,
@@ -138,7 +138,7 @@ func resourceAnalysisServicesServer() *pluginsdk.Resource {
 }
 
 func resourceAnalysisServicesServerCreate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).AnalysisServices.Servers
+	client := meta.(*clients.Client).AnalysisServices.ServerClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
@@ -178,7 +178,7 @@ func resourceAnalysisServicesServerCreate(d *pluginsdk.ResourceData, meta interf
 }
 
 func resourceAnalysisServicesServerRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).AnalysisServices.Servers
+	client := meta.(*clients.Client).AnalysisServices.ServerClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -238,7 +238,7 @@ func resourceAnalysisServicesServerRead(d *pluginsdk.ResourceData, meta interfac
 }
 
 func resourceAnalysisServicesServerUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).AnalysisServices.Servers
+	client := meta.(*clients.Client).AnalysisServices.ServerClient
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -300,7 +300,7 @@ func resourceAnalysisServicesServerUpdate(d *pluginsdk.ResourceData, meta interf
 }
 
 func resourceAnalysisServicesServerDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).AnalysisServices.Servers
+	client := meta.(*clients.Client).AnalysisServices.ServerClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 

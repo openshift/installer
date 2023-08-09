@@ -1,31 +1,24 @@
 package client
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/machinelearningservices/2022-05-01/datastore"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/machinelearningservices/2022-05-01/machinelearningcomputes"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/machinelearningservices/2022-05-01/workspaces"
+	"github.com/Azure/azure-sdk-for-go/services/machinelearningservices/mgmt/2021-07-01/machinelearningservices"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	ComputeClient    *machinelearningcomputes.MachineLearningComputesClient
-	WorkspacesClient *workspaces.WorkspacesClient
-	DatastoreClient  *datastore.DatastoreClient
+	ComputeClient    *machinelearningservices.ComputeClient
+	WorkspacesClient *machinelearningservices.WorkspacesClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
-	ComputeClient := machinelearningcomputes.NewMachineLearningComputesClientWithBaseURI(o.ResourceManagerEndpoint)
+	ComputeClient := machinelearningservices.NewComputeClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ComputeClient.Client, o.ResourceManagerAuthorizer)
 
-	WorkspacesClient := workspaces.NewWorkspacesClientWithBaseURI(o.ResourceManagerEndpoint)
+	WorkspacesClient := machinelearningservices.NewWorkspacesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&WorkspacesClient.Client, o.ResourceManagerAuthorizer)
-
-	DatastoreClient := datastore.NewDatastoreClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&DatastoreClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{
 		ComputeClient:    &ComputeClient,
 		WorkspacesClient: &WorkspacesClient,
-		DatastoreClient:  &DatastoreClient,
 	}
 }

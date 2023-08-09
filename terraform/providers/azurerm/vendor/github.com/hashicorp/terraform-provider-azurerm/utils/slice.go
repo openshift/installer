@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package utils
 
 // RemoveFromStringArray removes all matching values from a string array

@@ -45,16 +45,6 @@ func dataSourcePublicIP() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"ddos_protection_mode": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
-			"ddos_protection_plan_id": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
 			"ip_version": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
@@ -119,7 +109,7 @@ func dataSourcePublicIPRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	d.SetId(id.ID())
 
 	d.Set("location", location.NormalizeNilable(resp.Location))
-	d.Set("zones", zones.FlattenUntyped(resp.Zones))
+	d.Set("zones", zones.Flatten(resp.Zones))
 
 	if resp.PublicIPAddressPropertiesFormat == nil {
 		return fmt.Errorf("retreving %s: `properties` was nil", id)
@@ -147,14 +137,6 @@ func dataSourcePublicIPRead(d *pluginsdk.ResourceData, meta interface{}) error {
 			reverseFqdn = *dnsSettings.ReverseFqdn
 		}
 	}
-
-	if ddosSetting := props.DdosSettings; ddosSetting != nil {
-		d.Set("ddos_protection_mode", string(ddosSetting.ProtectionMode))
-		if subResource := ddosSetting.DdosProtectionPlan; subResource != nil {
-			d.Set("ddos_protection_plan_id", subResource.ID)
-		}
-	}
-
 	d.Set("domain_name_label", domainNameLabel)
 	d.Set("fqdn", fqdn)
 	d.Set("reverse_fqdn", reverseFqdn)

@@ -5,14 +5,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 )
 
-type Registration struct {
-	autoRegistration
-}
-
-var (
-	_ sdk.TypedServiceRegistration   = Registration{}
-	_ sdk.UntypedServiceRegistration = Registration{}
-)
+type Registration struct{}
 
 // Name is the name of this Service
 func (r Registration) Name() string {
@@ -21,11 +14,9 @@ func (r Registration) Name() string {
 
 // WebsiteCategories returns a list of categories which can be used for the sidebar
 func (r Registration) WebsiteCategories() []string {
-	categories := []string{
+	return []string{
 		"Container",
 	}
-	categories = append(categories, r.autoRegistration.WebsiteCategories()...)
-	return categories
 }
 
 // SupportedDataSources returns the supported Data Sources supported by this Service
@@ -56,22 +47,12 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 }
 
 func (r Registration) DataSources() []sdk.DataSource {
-	dataSources := []sdk.DataSource{
-		KubernetesNodePoolSnapshotDataSource{},
-	}
-	dataSources = append(dataSources, r.autoRegistration.DataSources()...)
-	return dataSources
+	return []sdk.DataSource{}
 }
 
 func (r Registration) Resources() []sdk.Resource {
-	resources := []sdk.Resource{
+	return []sdk.Resource{
 		ContainerRegistryTaskResource{},
-		ContainerRegistryTaskScheduleResource{},
-		ContainerRegistryTokenPasswordResource{},
 		ContainerConnectedRegistryResource{},
-		KubernetesClusterExtensionResource{},
-		KubernetesFluxConfigurationResource{},
 	}
-	resources = append(resources, r.autoRegistration.Resources()...)
-	return resources
 }

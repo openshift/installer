@@ -7,15 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/appinsights/mgmt/2020-02-02/insights" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/appinsights/mgmt/2020-02-02/insights"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/applicationinsights/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/applicationinsights/parse"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/applicationinsights/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
@@ -55,16 +53,16 @@ func resourceApplicationInsightsWebTests() *pluginsdk.Resource {
 				ValidateFunc: validation.NoZeroValues,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"application_insights_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.ComponentID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"kind": {
 				Type:     pluginsdk.TypeString,
@@ -237,12 +235,7 @@ func resourceApplicationInsightsWebTestsRead(d *pluginsdk.ResourceData, meta int
 			appInsightsId = strings.Split(i, ":")[1]
 		}
 	}
-	parsedAppInsightsId, err := parse.ComponentIDInsensitively(appInsightsId)
-	if err != nil {
-		return fmt.Errorf("parsing `application_insights_id`: %+v", err)
-	}
-
-	d.Set("application_insights_id", parsedAppInsightsId.ID())
+	d.Set("application_insights_id", appInsightsId)
 	d.Set("name", id.Name)
 	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("kind", resp.Kind)

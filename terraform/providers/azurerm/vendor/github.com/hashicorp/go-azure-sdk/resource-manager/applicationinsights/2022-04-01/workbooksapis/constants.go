@@ -1,10 +1,6 @@
 package workbooksapis
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -25,19 +21,6 @@ func PossibleValuesForCategoryType() []string {
 		string(CategoryTypeTSG),
 		string(CategoryTypeWorkbook),
 	}
-}
-
-func (s *CategoryType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseCategoryType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseCategoryType(input string) (*CategoryType, error) {
@@ -68,19 +51,6 @@ func PossibleValuesForWorkbookSharedTypeKind() []string {
 	}
 }
 
-func (s *WorkbookSharedTypeKind) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseWorkbookSharedTypeKind(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseWorkbookSharedTypeKind(input string) (*WorkbookSharedTypeKind, error) {
 	vals := map[string]WorkbookSharedTypeKind{
 		"shared": WorkbookSharedTypeKindShared,
@@ -104,19 +74,6 @@ func PossibleValuesForWorkbookUpdateSharedTypeKind() []string {
 	return []string{
 		string(WorkbookUpdateSharedTypeKindShared),
 	}
-}
-
-func (s *WorkbookUpdateSharedTypeKind) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseWorkbookUpdateSharedTypeKind(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseWorkbookUpdateSharedTypeKind(input string) (*WorkbookUpdateSharedTypeKind, error) {

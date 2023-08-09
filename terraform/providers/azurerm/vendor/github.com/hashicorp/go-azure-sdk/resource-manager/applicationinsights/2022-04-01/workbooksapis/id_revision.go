@@ -7,25 +7,22 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = RevisionId{}
 
 // RevisionId is a struct representing the Resource ID for a Revision
 type RevisionId struct {
 	SubscriptionId    string
 	ResourceGroupName string
-	WorkbookName      string
+	ResourceName      string
 	RevisionId        string
 }
 
 // NewRevisionID returns a new RevisionId struct
-func NewRevisionID(subscriptionId string, resourceGroupName string, workbookName string, revisionId string) RevisionId {
+func NewRevisionID(subscriptionId string, resourceGroupName string, resourceName string, revisionId string) RevisionId {
 	return RevisionId{
 		SubscriptionId:    subscriptionId,
 		ResourceGroupName: resourceGroupName,
-		WorkbookName:      workbookName,
+		ResourceName:      resourceName,
 		RevisionId:        revisionId,
 	}
 }
@@ -42,19 +39,19 @@ func ParseRevisionID(input string) (*RevisionId, error) {
 	id := RevisionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.WorkbookName, ok = parsed.Parsed["workbookName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "workbookName", *parsed)
+	if id.ResourceName, ok = parsed.Parsed["resourceName"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceName' was not found in the resource id %q", input)
 	}
 
 	if id.RevisionId, ok = parsed.Parsed["revisionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "revisionId", *parsed)
+		return nil, fmt.Errorf("the segment 'revisionId' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseRevisionIDInsensitively(input string) (*RevisionId, error) {
 	id := RevisionId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.WorkbookName, ok = parsed.Parsed["workbookName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "workbookName", *parsed)
+	if id.ResourceName, ok = parsed.Parsed["resourceName"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceName' was not found in the resource id %q", input)
 	}
 
 	if id.RevisionId, ok = parsed.Parsed["revisionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "revisionId", *parsed)
+		return nil, fmt.Errorf("the segment 'revisionId' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -109,7 +106,7 @@ func ValidateRevisionID(input interface{}, key string) (warnings []string, error
 // ID returns the formatted Revision ID
 func (id RevisionId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Insights/workbooks/%s/revisions/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.WorkbookName, id.RevisionId)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.ResourceName, id.RevisionId)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Revision ID
@@ -122,7 +119,7 @@ func (id RevisionId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftInsights", "Microsoft.Insights", "Microsoft.Insights"),
 		resourceids.StaticSegment("staticWorkbooks", "workbooks", "workbooks"),
-		resourceids.UserSpecifiedSegment("workbookName", "workbookValue"),
+		resourceids.UserSpecifiedSegment("resourceName", "resourceValue"),
 		resourceids.StaticSegment("staticRevisions", "revisions", "revisions"),
 		resourceids.UserSpecifiedSegment("revisionId", "revisionIdValue"),
 	}
@@ -133,7 +130,7 @@ func (id RevisionId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Workbook Name: %q", id.WorkbookName),
+		fmt.Sprintf("Resource Name: %q", id.ResourceName),
 		fmt.Sprintf("Revision: %q", id.RevisionId),
 	}
 	return fmt.Sprintf("Revision (%s)", strings.Join(components, "\n"))

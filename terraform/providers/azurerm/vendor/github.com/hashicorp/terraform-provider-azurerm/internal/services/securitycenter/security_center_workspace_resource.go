@@ -5,10 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
+	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	logAnalyticsParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
@@ -50,7 +51,7 @@ func resourceSecurityCenterWorkspace() *pluginsdk.Resource {
 			"workspace_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: workspaces.ValidateWorkspaceID,
+				ValidateFunc: azure.ValidateResourceID,
 				// @favoretti
 				// API returns RG name of log analytics workspace in all lowercase, suppressing useless diff
 				DiffSuppressFunc: suppress.CaseDifference,
@@ -81,7 +82,7 @@ func resourceSecurityCenterWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta
 		}
 	}
 
-	logAnalyticsWorkspaceId, err := workspaces.ParseWorkspaceID(d.Get("workspace_id").(string))
+	logAnalyticsWorkspaceId, err := logAnalyticsParse.LogAnalyticsWorkspaceID(d.Get("workspace_id").(string))
 	if err != nil {
 		return err
 	}
@@ -104,7 +105,7 @@ func resourceSecurityCenterWorkspaceCreateUpdate(d *pluginsdk.ResourceData, meta
 	// api returns "" for workspace id after an create/update and eventually the new value
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("internal-error: context had no deadline")
+		return fmt.Errorf("context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{"Waiting"},
@@ -158,7 +159,7 @@ func resourceSecurityCenterWorkspaceRead(d *pluginsdk.ResourceData, meta interfa
 		d.Set("scope", properties.Scope)
 		workspaceId := ""
 		if properties.WorkspaceID != nil {
-			id, err := workspaces.ParseWorkspaceIDInsensitively(*properties.WorkspaceID)
+			id, err := logAnalyticsParse.LogAnalyticsWorkspaceID(*properties.WorkspaceID)
 			if err != nil {
 				return fmt.Errorf("Reading Security Center Log Analytics Workspace ID: %+v", err)
 			}

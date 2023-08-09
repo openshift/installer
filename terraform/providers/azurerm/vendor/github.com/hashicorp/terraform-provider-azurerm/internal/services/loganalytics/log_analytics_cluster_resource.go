@@ -5,15 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/operationalinsights/mgmt/2020-08-01/operationalinsights"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/clusters"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -37,7 +35,7 @@ func resourceLogAnalyticsCluster() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := clusters.ParseClusterID(id)
+			_, err := parse.LogAnalyticsClusterID(id)
 			return err
 		}),
 
@@ -56,14 +54,9 @@ func resourceLogAnalyticsCluster() *pluginsdk.Resource {
 			"identity": commonschema.SystemAssignedIdentityRequiredForceNew(),
 
 			"size_gb": {
-				Type:     pluginsdk.TypeInt,
-				Optional: true,
-				Default: func() int {
-					if !features.FourPointOh() {
-						return 1000
-					}
-					return 500
-				}(),
+				Type:         pluginsdk.TypeInt,
+				Optional:     true,
+				Default:      1000,
 				ValidateFunc: validation.IntInSlice([]int{500, 1000, 2000, 5000}),
 			},
 
@@ -83,40 +76,54 @@ func resourceLogAnalyticsClusterCreate(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := clusters.NewClusterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	name := d.Get("name").(string)
+	resourceGroup := d.Get("resource_group_name").(string)
 
-	locks.ByID(id.ID())
-	defer locks.UnlockByID(id.ID())
+	id := parse.NewLogAnalyticsClusterID(subscriptionId, resourceGroup, name)
 
-	existing, err := client.Get(ctx, id)
+	existing, err := client.Get(ctx, resourceGroup, name)
 	if err != nil {
-		if !response.WasNotFound(existing.HttpResponse) {
-			return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
+		if !utils.ResponseWasNotFound(existing.Response) {
+			return fmt.Errorf("checking for presence of existing Log Analytics Cluster %q (Resource Group %q): %+v", name, resourceGroup, err)
 		}
 	}
-	if !response.WasNotFound(existing.HttpResponse) {
+	if !utils.ResponseWasNotFound(existing.Response) {
 		return tf.ImportAsExistsError("azurerm_log_analytics_cluster", id.ID())
 	}
 
-	expandedIdentity, err := identity.ExpandSystemAssigned(d.Get("identity").([]interface{}))
+	expandedIdentity, err := expandLogAnalyticsClusterIdentity(d.Get("identity").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
-
-	capacityReservation := clusters.ClusterSkuNameEnumCapacityReservation
-	parameters := clusters.Cluster{
-		Location: location.Normalize(d.Get("location").(string)),
+	parameters := operationalinsights.Cluster{
+		Location: utils.String(location.Normalize(d.Get("location").(string))),
 		Identity: expandedIdentity,
-		Sku: &clusters.ClusterSku{
+		Sku: &operationalinsights.ClusterSku{
 			Capacity: utils.Int64(int64(d.Get("size_gb").(int))),
-			Name:     &capacityReservation,
+			Name:     operationalinsights.CapacityReservation,
 		},
-		Tags: expandTags(d.Get("tags").(map[string]interface{})),
+		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
 
-	err = client.CreateOrUpdateThenPoll(ctx, id, parameters)
+	future, err := client.CreateOrUpdate(ctx, resourceGroup, name, parameters)
 	if err != nil {
-		return fmt.Errorf("creating %s: %+v", id, err)
+		return fmt.Errorf("creating Log Analytics Cluster %q (Resource Group %q): %+v", name, resourceGroup, err)
+	}
+
+	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting on creating future for Log Analytics Cluster %q (Resource Group %q): %+v", name, resourceGroup, err)
+	}
+
+	if _, err = client.Get(ctx, resourceGroup, name); err != nil {
+		return fmt.Errorf("retrieving Log Analytics Cluster %q (Resource Group %q): %+v", name, resourceGroup, err)
+	}
+
+	createWait, err := logAnalyticsClusterWaitForState(ctx, meta, id.ResourceGroup, id.ClusterName)
+	if err != nil {
+		return err
+	}
+	if _, err := createWait.WaitForStateContext(ctx); err != nil {
+		return fmt.Errorf("waiting for Log Analytics Cluster to finish updating %q (Resource Group %q): %v", id.ClusterName, id.ResourceGroup, err)
 	}
 
 	d.SetId(id.ID())
@@ -128,45 +135,39 @@ func resourceLogAnalyticsClusterRead(d *pluginsdk.ResourceData, meta interface{}
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := clusters.ParseClusterID(d.Id())
+	id, err := parse.LogAnalyticsClusterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.ClusterName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] Log Analytics %q does not exist - removing from state", d.Id())
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("retrieving Log Analytics Cluster %q (Resource Group %q): %+v", id.ClusterName, id.ResourceGroupName, err)
+		return fmt.Errorf("retrieving Log Analytics Cluster %q (Resource Group %q): %+v", id.ClusterName, id.ResourceGroup, err)
 	}
 	d.Set("name", id.ClusterName)
-	d.Set("resource_group_name", id.ResourceGroupName)
-
-	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(&model.Location))
-		if err = d.Set("identity", identity.FlattenSystemAssigned(model.Identity)); err != nil {
-			return fmt.Errorf("setting `identity`: %+v", err)
-		}
-		if props := model.Properties; props != nil {
-			d.Set("cluster_id", props.ClusterId)
-		}
-		capacity := 0
-		if sku := model.Sku; sku != nil {
-			if sku.Capacity != nil {
-				capacity = int(*sku.Capacity)
-			}
-		}
-		d.Set("size_gb", capacity)
-
-		if err = tags.FlattenAndSet(d, flattenTags(model.Tags)); err != nil {
-			return err
-		}
+	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("location", location.NormalizeNilable(resp.Location))
+	if err := d.Set("identity", flattenLogAnalyticsIdentity(resp.Identity)); err != nil {
+		return fmt.Errorf("setting `identity`: %+v", err)
+	}
+	if props := resp.ClusterProperties; props != nil {
+		d.Set("cluster_id", props.ClusterID)
 	}
 
-	return nil
+	capacity := 0
+	if sku := resp.Sku; sku != nil {
+		if sku.Capacity != nil {
+			capacity = int(*sku.Capacity)
+		}
+	}
+	d.Set("size_gb", capacity)
+
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceLogAnalyticsClusterUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -174,42 +175,39 @@ func resourceLogAnalyticsClusterUpdate(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := clusters.ParseClusterID(d.Id())
+	id, err := parse.LogAnalyticsClusterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	locks.ByID(id.ID())
-	defer locks.UnlockByID(id.ID())
+	parameters := operationalinsights.ClusterPatch{}
 
-	resp, err := client.Get(ctx, *id)
-	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			return fmt.Errorf("%s was not found", *id)
+	if d.HasChange("size_gb") {
+		parameters.Sku = &operationalinsights.ClusterSku{
+			Capacity: utils.Int64(int64(d.Get("size_gb").(int))),
+			Name:     operationalinsights.CapacityReservation,
 		}
-
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
-	}
-
-	model := resp.Model
-	if model == nil {
-		return fmt.Errorf("`azurerm_log_analytics_cluster` %s: `model` is nil", *id)
-	}
-
-	if props := model.Properties; props == nil {
-		return fmt.Errorf("`azurerm_log_analytics_cluster` %s: `Properties` is nil", *id)
-	}
-
-	if d.HasChange("size_gb") && model.Sku != nil && model.Sku.Capacity != nil {
-		model.Sku.Capacity = utils.Int64(int64(d.Get("size_gb").(int)))
 	}
 
 	if d.HasChange("tags") {
-		model.Tags = expandTags(d.Get("tags").(map[string]interface{}))
+		parameters.Tags = tags.Expand(d.Get("tags").(map[string]interface{}))
 	}
 
-	if err = client.CreateOrUpdateThenPoll(ctx, *id, *model); err != nil {
-		return fmt.Errorf("updating %s: %+v", id, err)
+	if _, err := client.Update(ctx, id.ResourceGroup, id.ClusterName, parameters); err != nil {
+		return fmt.Errorf("updating Log Analytics Cluster %q (Resource Group %q): %+v", id.ClusterName, id.ResourceGroup, err)
+	}
+
+	// Need to wait for the cluster to actually finish updating the resource before continuing
+	// since the service returns a 200 instantly while it's still updating in the background
+	log.Printf("[INFO] Checking for Log Analytics Cluster provisioning state")
+
+	updateWait, err := logAnalyticsClusterWaitForState(ctx, meta, id.ResourceGroup, id.ClusterName)
+	if err != nil {
+		return err
+	}
+
+	if _, err := updateWait.WaitForStateContext(ctx); err != nil {
+		return fmt.Errorf("waiting for Log Analytics Cluster to finish updating %q (Resource Group %q): %v", id.ClusterName, id.ResourceGroup, err)
 	}
 
 	return resourceLogAnalyticsClusterRead(d, meta)
@@ -220,18 +218,48 @@ func resourceLogAnalyticsClusterDelete(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := clusters.ParseClusterID(d.Id())
+	id, err := parse.LogAnalyticsClusterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	locks.ByID(id.ID())
-	defer locks.UnlockByID(id.ID())
-
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.ClusterName)
 	if err != nil {
-		return fmt.Errorf("deleting Log Analytics Cluster %q (Resource Group %q): %+v", id.ClusterName, id.ResourceGroupName, err)
+		return fmt.Errorf("deleting Log Analytics Cluster %q (Resource Group %q): %+v", id.ClusterName, id.ResourceGroup, err)
+	}
+
+	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting on deleting future for Log Analytics Cluster %q (Resource Group %q): %+v", id.ClusterName, id.ResourceGroup, err)
 	}
 
 	return nil
+}
+
+func expandLogAnalyticsClusterIdentity(input []interface{}) (*operationalinsights.Identity, error) {
+	expanded, err := identity.ExpandSystemAssigned(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return &operationalinsights.Identity{
+		Type: operationalinsights.IdentityType(string(expanded.Type)),
+	}, nil
+}
+
+func flattenLogAnalyticsIdentity(input *operationalinsights.Identity) []interface{} {
+	var transform *identity.SystemAssigned
+
+	if input != nil {
+		transform = &identity.SystemAssigned{
+			Type: identity.Type(string(input.Type)),
+		}
+		if input.PrincipalID != nil {
+			transform.PrincipalId = *input.PrincipalID
+		}
+		if input.TenantID != nil {
+			transform.TenantId = *input.TenantID
+		}
+	}
+
+	return identity.FlattenSystemAssigned(transform)
 }

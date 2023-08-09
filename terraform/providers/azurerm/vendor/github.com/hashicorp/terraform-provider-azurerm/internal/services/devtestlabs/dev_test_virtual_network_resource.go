@@ -6,12 +6,12 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualnetworks"
+	"github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2018-09-15/dtl"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -27,7 +27,7 @@ func resourceArmDevTestVirtualNetwork() *pluginsdk.Resource {
 		Update: resourceArmDevTestVirtualNetworkUpdate,
 		Delete: resourceArmDevTestVirtualNetworkDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := virtualnetworks.ParseVirtualNetworkID(id)
+			_, err := parse.DevTestVirtualNetworkID(id)
 			return err
 		}),
 
@@ -83,14 +83,14 @@ func resourceArmDevTestVirtualNetwork() *pluginsdk.Resource {
 						"use_in_virtual_machine_creation": {
 							Type:         pluginsdk.TypeString,
 							Optional:     true,
-							Default:      string(virtualnetworks.UsagePermissionTypeAllow),
+							Default:      string(dtl.Allow),
 							ValidateFunc: validate.DevTestVirtualNetworkUsagePermissionType(),
 						},
 
 						"use_public_ip_address": {
 							Type:         pluginsdk.TypeString,
 							Optional:     true,
-							Default:      string(virtualnetworks.UsagePermissionTypeAllow),
+							Default:      string(dtl.Allow),
 							ValidateFunc: validate.DevTestVirtualNetworkUsagePermissionType(),
 						},
 					},
@@ -115,36 +115,42 @@ func resourceArmDevTestVirtualNetworkCreate(d *pluginsdk.ResourceData, meta inte
 
 	log.Printf("[INFO] preparing arguments for DevTest Virtual Network creation")
 
-	id := virtualnetworks.NewVirtualNetworkID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("name").(string))
+	id := parse.NewDevTestVirtualNetworkID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id, virtualnetworks.GetOperationOptions{})
+		existing, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.VirtualNetworkName, "")
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_dev_test_virtual_network", id.ID())
 		}
 	}
 
 	description := d.Get("description").(string)
-	subnetsRaw := d.Get("subnet").([]interface{})
-	subnets := expandDevTestVirtualNetworkSubnets(subnetsRaw, subscriptionId, id.ResourceGroupName, id.VirtualNetworkName)
+	t := d.Get("tags").(map[string]interface{})
 
-	parameters := virtualnetworks.VirtualNetwork{
-		Tags: expandTags(d.Get("tags").(map[string]interface{})),
-		Properties: &virtualnetworks.VirtualNetworkProperties{
+	subnetsRaw := d.Get("subnet").([]interface{})
+	subnets := expandDevTestVirtualNetworkSubnets(subnetsRaw, subscriptionId, id.ResourceGroup, id.VirtualNetworkName)
+
+	parameters := dtl.VirtualNetwork{
+		Tags: tags.Expand(t),
+		VirtualNetworkProperties: &dtl.VirtualNetworkProperties{
 			Description:     utils.String(description),
 			SubnetOverrides: subnets,
 		},
 	}
 
-	err := client.CreateOrUpdateThenPoll(ctx, id, parameters)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.LabName, id.VirtualNetworkName, parameters)
 	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -157,14 +163,14 @@ func resourceArmDevTestVirtualNetworkRead(d *pluginsdk.ResourceData, meta interf
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := virtualnetworks.ParseVirtualNetworkID(d.Id())
+	id, err := parse.DevTestVirtualNetworkID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, virtualnetworks.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.VirtualNetworkName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			log.Printf("[DEBUG] %s was not found - removing from state!", *id)
 			d.SetId("")
 			return nil
@@ -175,26 +181,21 @@ func resourceArmDevTestVirtualNetworkRead(d *pluginsdk.ResourceData, meta interf
 
 	d.Set("name", id.VirtualNetworkName)
 	d.Set("lab_name", id.LabName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := read.Model; model != nil {
-		if props := model.Properties; props != nil {
-			d.Set("description", props.Description)
+	if props := read.VirtualNetworkProperties; props != nil {
+		d.Set("description", props.Description)
 
-			flattenedSubnets := flattenDevTestVirtualNetworkSubnets(props.SubnetOverrides)
-			if err := d.Set("subnet", flattenedSubnets); err != nil {
-				return fmt.Errorf("setting `subnet`: %+v", err)
-			}
-
-			// Computed fields
-			d.Set("unique_identifier", props.UniqueIdentifier)
+		flattenedSubnets := flattenDevTestVirtualNetworkSubnets(props.SubnetOverrides)
+		if err := d.Set("subnet", flattenedSubnets); err != nil {
+			return fmt.Errorf("setting `subnet`: %+v", err)
 		}
 
-		if err = tags.FlattenAndSet(d, flattenTags(model.Tags)); err != nil {
-			return err
-		}
+		// Computed fields
+		d.Set("unique_identifier", props.UniqueIdentifier)
 	}
-	return nil
+
+	return tags.FlattenAndSet(d, read.Tags)
 }
 
 func resourceArmDevTestVirtualNetworkUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -204,26 +205,30 @@ func resourceArmDevTestVirtualNetworkUpdate(d *pluginsdk.ResourceData, meta inte
 	defer cancel()
 
 	log.Printf("[INFO] preparing arguments for DevTest Virtual Network creation")
-	id, err := virtualnetworks.ParseVirtualNetworkID(d.Id())
-	if err != nil {
-		return err
-	}
+
+	id := parse.NewDevTestVirtualNetworkID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("name").(string))
 
 	description := d.Get("description").(string)
-	subnetsRaw := d.Get("subnet").([]interface{})
-	subnets := expandDevTestVirtualNetworkSubnets(subnetsRaw, subscriptionId, id.ResourceGroupName, id.VirtualNetworkName)
+	t := d.Get("tags").(map[string]interface{})
 
-	parameters := virtualnetworks.VirtualNetwork{
-		Tags: expandTags(d.Get("tags").(map[string]interface{})),
-		Properties: &virtualnetworks.VirtualNetworkProperties{
+	subnetsRaw := d.Get("subnet").([]interface{})
+	subnets := expandDevTestVirtualNetworkSubnets(subnetsRaw, subscriptionId, id.ResourceGroup, id.VirtualNetworkName)
+
+	parameters := dtl.VirtualNetwork{
+		Tags: tags.Expand(t),
+		VirtualNetworkProperties: &dtl.VirtualNetworkProperties{
 			Description:     utils.String(description),
 			SubnetOverrides: subnets,
 		},
 	}
 
-	err = client.CreateOrUpdateThenPoll(ctx, *id, parameters)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.LabName, id.VirtualNetworkName, parameters)
 	if err != nil {
 		return fmt.Errorf("updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -236,14 +241,14 @@ func resourceArmDevTestVirtualNetworkDelete(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := virtualnetworks.ParseVirtualNetworkID(d.Id())
+	id, err := parse.DevTestVirtualNetworkID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, virtualnetworks.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.VirtualNetworkName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			// deleted outside of TF
 			log.Printf("[DEBUG] %s was not found - assuming removed!", *id)
 			return nil
@@ -252,9 +257,13 @@ func resourceArmDevTestVirtualNetworkDelete(d *pluginsdk.ResourceData, meta inte
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.LabName, id.VirtualNetworkName)
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the deletion of %s: %+v", *id, err)
 	}
 
 	return err
@@ -266,20 +275,18 @@ func ValidateDevTestVirtualNetworkName() pluginsdk.SchemaValidateFunc {
 		"Virtual Network Name can only include alphanumeric characters, underscores, hyphens.")
 }
 
-func expandDevTestVirtualNetworkSubnets(input []interface{}, subscriptionId, resourceGroupName, virtualNetworkName string) *[]virtualnetworks.SubnetOverride {
-	results := make([]virtualnetworks.SubnetOverride, 0)
+func expandDevTestVirtualNetworkSubnets(input []interface{}, subscriptionId, resourceGroupName, virtualNetworkName string) *[]dtl.SubnetOverride {
+	results := make([]dtl.SubnetOverride, 0)
 	// default found from the Portal
 	name := fmt.Sprintf("%sSubnet", virtualNetworkName)
 	idFmt := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/virtualNetworks/%s/subnets/%s"
 	subnetId := fmt.Sprintf(idFmt, subscriptionId, resourceGroupName, virtualNetworkName, name)
-	allow := virtualnetworks.UsagePermissionTypeAllow
-
 	if len(input) == 0 {
-		result := virtualnetworks.SubnetOverride{
-			ResourceId:                   utils.String(subnetId),
+		result := dtl.SubnetOverride{
+			ResourceID:                   utils.String(subnetId),
 			LabSubnetName:                utils.String(name),
-			UsePublicIPAddressPermission: &allow,
-			UseInVMCreationPermission:    &allow,
+			UsePublicIPAddressPermission: dtl.Allow,
+			UseInVMCreationPermission:    dtl.Allow,
 		}
 		results = append(results, result)
 		return &results
@@ -287,14 +294,14 @@ func expandDevTestVirtualNetworkSubnets(input []interface{}, subscriptionId, res
 
 	for _, val := range input {
 		v := val.(map[string]interface{})
-		usePublicIPAddress := virtualnetworks.UsagePermissionType(v["use_public_ip_address"].(string))
-		useInVirtualMachineCreation := virtualnetworks.UsagePermissionType(v["use_in_virtual_machine_creation"].(string))
+		usePublicIPAddress := v["use_public_ip_address"].(string)
+		useInVirtualMachineCreation := v["use_in_virtual_machine_creation"].(string)
 
-		subnet := virtualnetworks.SubnetOverride{
-			ResourceId:                   utils.String(subnetId),
+		subnet := dtl.SubnetOverride{
+			ResourceID:                   utils.String(subnetId),
 			LabSubnetName:                utils.String(name),
-			UsePublicIPAddressPermission: &usePublicIPAddress,
-			UseInVMCreationPermission:    &useInVirtualMachineCreation,
+			UsePublicIPAddressPermission: dtl.UsagePermissionType(usePublicIPAddress),
+			UseInVMCreationPermission:    dtl.UsagePermissionType(useInVirtualMachineCreation),
 		}
 		results = append(results, subnet)
 	}
@@ -302,7 +309,7 @@ func expandDevTestVirtualNetworkSubnets(input []interface{}, subscriptionId, res
 	return &results
 }
 
-func flattenDevTestVirtualNetworkSubnets(input *[]virtualnetworks.SubnetOverride) []interface{} {
+func flattenDevTestVirtualNetworkSubnets(input *[]dtl.SubnetOverride) []interface{} {
 	outputs := make([]interface{}, 0)
 	if input == nil {
 		return outputs
@@ -313,8 +320,8 @@ func flattenDevTestVirtualNetworkSubnets(input *[]virtualnetworks.SubnetOverride
 		if v.LabSubnetName != nil {
 			output["name"] = *v.LabSubnetName
 		}
-		output["use_public_ip_address"] = v.UsePublicIPAddressPermission
-		output["use_in_virtual_machine_creation"] = v.UseInVMCreationPermission
+		output["use_public_ip_address"] = string(v.UsePublicIPAddressPermission)
+		output["use_in_virtual_machine_creation"] = string(v.UseInVMCreationPermission)
 
 		outputs = append(outputs, output)
 	}

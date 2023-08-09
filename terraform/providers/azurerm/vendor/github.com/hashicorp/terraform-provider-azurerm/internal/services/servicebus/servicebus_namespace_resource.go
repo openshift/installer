@@ -7,14 +7,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/servicebus/2021-06-01-preview/namespaces"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/servicebus/2021-06-01-preview/namespacesauthorizationrule"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/servicebus/2022-01-01-preview/namespaces"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
@@ -125,23 +124,6 @@ func resourceServiceBusNamespace() *pluginsdk.Resource {
 				Default:  true,
 			},
 
-			"public_network_access_enabled": {
-				Type:     pluginsdk.TypeBool,
-				Optional: true,
-				Default:  true,
-			},
-
-			"minimum_tls_version": {
-				Type:     pluginsdk.TypeString,
-				Optional: true,
-				Computed: true,
-				ValidateFunc: validation.StringInSlice([]string{
-					string(namespaces.TlsVersionOnePointZero),
-					string(namespaces.TlsVersionOnePointOne),
-					string(namespaces.TlsVersionOnePointTwo),
-				}, false),
-			},
-
 			"default_primary_connection_string": {
 				Type:      pluginsdk.TypeString,
 				Computed:  true,
@@ -172,32 +154,24 @@ func resourceServiceBusNamespace() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"endpoint": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
 			"tags": tags.Schema(),
 		},
 
-		CustomizeDiff: pluginsdk.CustomDiffWithAll(
-			pluginsdk.CustomizeDiffShim(func(ctx context.Context, diff *pluginsdk.ResourceDiff, v interface{}) error {
-				oldCustomerManagedKey, newCustomerManagedKey := diff.GetChange("customer_managed_key")
-				if len(oldCustomerManagedKey.([]interface{})) != 0 && len(newCustomerManagedKey.([]interface{})) == 0 {
-					diff.ForceNew("customer_managed_key")
-				}
+		CustomizeDiff: pluginsdk.CustomizeDiffShim(func(ctx context.Context, diff *pluginsdk.ResourceDiff, v interface{}) error {
+			oldCustomerManagedKey, newCustomerManagedKey := diff.GetChange("customer_managed_key")
+			if len(oldCustomerManagedKey.([]interface{})) != 0 && len(newCustomerManagedKey.([]interface{})) == 0 {
+				diff.ForceNew("customer_managed_key")
+			}
 
-				oldSku, newSku := diff.GetChange("sku")
-				if diff.HasChange("sku") {
-					if strings.EqualFold(newSku.(string), string(namespaces.SkuNamePremium)) || strings.EqualFold(oldSku.(string), string(namespaces.SkuNamePremium)) {
-						log.Printf("[DEBUG] cannot migrate a namespace from or to Premium SKU")
-						diff.ForceNew("sku")
-					}
+			oldSku, newSku := diff.GetChange("sku")
+			if diff.HasChange("sku") {
+				if strings.EqualFold(newSku.(string), string(namespaces.SkuNamePremium)) || strings.EqualFold(oldSku.(string), string(namespaces.SkuNamePremium)) {
+					log.Printf("[DEBUG] cannot migrate a namespace from or to Premium SKU")
+					diff.ForceNew("sku")
 				}
-				return nil
-			}),
-			pluginsdk.CustomizeDiffShim(servicebusTLSVersionDiff),
-		),
+			}
+			return nil
+		}),
 	}
 }
 
@@ -232,11 +206,6 @@ func resourceServiceBusNamespaceCreateUpdate(d *pluginsdk.ResourceData, meta int
 		return fmt.Errorf("expanding `identity`: %+v", err)
 	}
 
-	publicNetworkEnabled := namespaces.PublicNetworkAccessEnabled
-	if !d.Get("public_network_access_enabled").(bool) {
-		publicNetworkEnabled = namespaces.PublicNetworkAccessDisabled
-	}
-
 	s := namespaces.SkuTier(sku)
 	parameters := namespaces.SBNamespace{
 		Location: location,
@@ -246,17 +215,11 @@ func resourceServiceBusNamespaceCreateUpdate(d *pluginsdk.ResourceData, meta int
 			Tier: &s,
 		},
 		Properties: &namespaces.SBNamespaceProperties{
-			ZoneRedundant:       utils.Bool(d.Get("zone_redundant").(bool)),
-			Encryption:          expandServiceBusNamespaceEncryption(d.Get("customer_managed_key").([]interface{})),
-			DisableLocalAuth:    utils.Bool(!d.Get("local_auth_enabled").(bool)),
-			PublicNetworkAccess: &publicNetworkEnabled,
+			ZoneRedundant:    utils.Bool(d.Get("zone_redundant").(bool)),
+			Encryption:       expandServiceBusNamespaceEncryption(d.Get("customer_managed_key").([]interface{})),
+			DisableLocalAuth: utils.Bool(!d.Get("local_auth_enabled").(bool)),
 		},
 		Tags: expandTags(t),
-	}
-
-	if tlsValue := d.Get("minimum_tls_version").(string); tlsValue != "" {
-		minimumTls := namespaces.TlsVersion(tlsValue)
-		parameters.Properties.MinimumTlsVersion = &minimumTls
 	}
 
 	if capacity := d.Get("capacity"); capacity != nil {
@@ -323,30 +286,18 @@ func resourceServiceBusNamespaceRead(d *pluginsdk.ResourceData, meta interface{}
 			}
 			d.Set("sku", skuName)
 			d.Set("capacity", sku.Capacity)
+		}
 
-			if props := model.Properties; props != nil {
-				d.Set("zone_redundant", props.ZoneRedundant)
-				if customerManagedKey, err := flattenServiceBusNamespaceEncryption(props.Encryption); err == nil {
-					d.Set("customer_managed_key", customerManagedKey)
-				}
-				localAuthEnabled := true
-				if props.DisableLocalAuth != nil {
-					localAuthEnabled = !*props.DisableLocalAuth
-				}
-				d.Set("local_auth_enabled", localAuthEnabled)
-
-				publicNetworkAccess := true
-				if props.PublicNetworkAccess != nil && *props.PublicNetworkAccess == namespaces.PublicNetworkAccessDisabled {
-					publicNetworkAccess = false
-				}
-				d.Set("public_network_access_enabled", publicNetworkAccess)
-
-				if props.MinimumTlsVersion != nil {
-					d.Set("minimum_tls_version", string(pointer.From(props.MinimumTlsVersion)))
-				}
-
-				d.Set("endpoint", props.ServiceBusEndpoint)
+		if props := model.Properties; model != nil {
+			d.Set("zone_redundant", props.ZoneRedundant)
+			if customerManagedKey, err := flattenServiceBusNamespaceEncryption(props.Encryption); err == nil {
+				d.Set("customer_managed_key", customerManagedKey)
 			}
+			localAuthEnabled := true
+			if props.DisableLocalAuth != nil {
+				localAuthEnabled = !*props.DisableLocalAuth
+			}
+			d.Set("local_auth_enabled", localAuthEnabled)
 		}
 	}
 
@@ -374,11 +325,6 @@ func resourceServiceBusNamespaceDelete(d *pluginsdk.ResourceData, meta interface
 	id, err := namespaces.ParseNamespaceID(d.Id())
 	if err != nil {
 		return err
-	}
-
-	// need to wait the status to be ready before performing the deleting.
-	if err := waitForNamespaceStatusToBeReady(ctx, meta, *id, d.Timeout(pluginsdk.TimeoutUpdate)); err != nil {
-		return fmt.Errorf("waiting for serviceBus namespace %s state to be ready error: %+v", *id, err)
 	}
 
 	if err := client.DeleteThenPoll(ctx, *id); err != nil {
@@ -420,7 +366,7 @@ func flattenServiceBusNamespaceEncryption(encryption *namespaces.Encryption) ([]
 	var identityId string
 	if keyVaultProperties := encryption.KeyVaultProperties; keyVaultProperties != nil && len(*keyVaultProperties) != 0 {
 		props := (*keyVaultProperties)[0]
-		keyVaultKeyId, err := keyVaultParse.NewNestedItemID(*props.KeyVaultUri, keyVaultParse.NestedItemTypeKey, *props.KeyName, *props.KeyVersion)
+		keyVaultKeyId, err := keyVaultParse.NewNestedItemID(*props.KeyVaultUri, "keys", *props.KeyName, *props.KeyVersion)
 		if err != nil {
 			return nil, fmt.Errorf("parsing `key_vault_key_id`: %+v", err)
 		}
@@ -478,12 +424,4 @@ func expandSystemAndUserAssignedMap(input []interface{}) (*identity.SystemAndUse
 		Type:        identityType,
 		IdentityIds: identityIds,
 	}, nil
-}
-
-func servicebusTLSVersionDiff(ctx context.Context, d *pluginsdk.ResourceDiff, _ interface{}) (err error) {
-	old, new := d.GetChange("minimum_tls_version")
-	if old != "" && new == "" {
-		err = fmt.Errorf("`minimum_tls_version` has been set before, please set a valid value for this property ")
-	}
-	return
 }

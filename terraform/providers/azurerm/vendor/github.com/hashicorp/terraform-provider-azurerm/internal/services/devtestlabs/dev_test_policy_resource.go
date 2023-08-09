@@ -5,13 +5,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/policies"
+	"github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2018-09-15/dtl"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -27,7 +26,7 @@ func resourceArmDevTestPolicy() *pluginsdk.Resource {
 		Update: resourceArmDevTestPolicyCreateUpdate,
 		Delete: resourceArmDevTestPolicyDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := policies.ParsePolicyID(id)
+			_, err := parse.DevTestLabPolicyID(id)
 			return err
 		}),
 
@@ -49,14 +48,14 @@ func resourceArmDevTestPolicy() *pluginsdk.Resource {
 				Required: true,
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(policies.PolicyFactNameGalleryImage),
-					string(policies.PolicyFactNameLabPremiumVMCount),
-					string(policies.PolicyFactNameLabTargetCost),
-					string(policies.PolicyFactNameLabVMCount),
-					string(policies.PolicyFactNameLabVMSize),
-					string(policies.PolicyFactNameUserOwnedLabPremiumVMCount),
-					string(policies.PolicyFactNameUserOwnedLabVMCount),
-					string(policies.PolicyFactNameUserOwnedLabVMCountInSubnet),
+					string(dtl.PolicyFactNameGalleryImage),
+					string(dtl.PolicyFactNameLabPremiumVMCount),
+					string(dtl.PolicyFactNameLabTargetCost),
+					string(dtl.PolicyFactNameLabVMCount),
+					string(dtl.PolicyFactNameLabVMSize),
+					string(dtl.PolicyFactNameUserOwnedLabPremiumVMCount),
+					string(dtl.PolicyFactNameUserOwnedLabVMCount),
+					string(dtl.PolicyFactNameUserOwnedLabVMCountInSubnet),
 				}, false),
 			},
 
@@ -88,8 +87,8 @@ func resourceArmDevTestPolicy() *pluginsdk.Resource {
 				Required: true,
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(policies.PolicyEvaluatorTypeAllowedValuesPolicy),
-					string(policies.PolicyEvaluatorTypeMaxValuePolicy),
+					string(dtl.AllowedValuesPolicy),
+					string(dtl.MaxValuePolicy),
 				}, false),
 			},
 
@@ -116,40 +115,40 @@ func resourceArmDevTestPolicyCreateUpdate(d *pluginsdk.ResourceData, meta interf
 
 	log.Printf("[INFO] preparing arguments for DevTest Policy creation")
 
-	id := policies.NewPolicyID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("policy_set_name").(string), d.Get("name").(string))
+	id := parse.NewDevTestLabPolicyID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("policy_set_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id, policies.GetOperationOptions{})
+		existing, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.PolicySetName, id.PolicyName, "")
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_dev_test_policy", id.ID())
 		}
 	}
 
 	factData := d.Get("fact_data").(string)
 	threshold := d.Get("threshold").(string)
-	evaluatorType := policies.PolicyEvaluatorType(d.Get("evaluator_type").(string))
+	evaluatorType := d.Get("evaluator_type").(string)
 
 	description := d.Get("description").(string)
-	factName := policies.PolicyFactName(id.PolicyName)
+	t := d.Get("tags").(map[string]interface{})
 
-	parameters := policies.Policy{
-		Tags: expandTags(d.Get("tags").(map[string]interface{})),
-		Properties: policies.PolicyProperties{
-			FactName:      &factName,
+	parameters := dtl.Policy{
+		Tags: tags.Expand(t),
+		PolicyProperties: &dtl.PolicyProperties{
+			FactName:      dtl.PolicyFactName(id.PolicyName),
 			FactData:      utils.String(factData),
 			Description:   utils.String(description),
-			EvaluatorType: &evaluatorType,
+			EvaluatorType: dtl.PolicyEvaluatorType(evaluatorType),
 			Threshold:     utils.String(threshold),
 		},
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.LabName, id.PolicySetName, id.PolicyName, parameters); err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}
 
@@ -163,14 +162,14 @@ func resourceArmDevTestPolicyRead(d *pluginsdk.ResourceData, meta interface{}) e
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := policies.ParsePolicyID(d.Id())
+	id, err := parse.DevTestLabPolicyID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, policies.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.PolicySetName, id.PolicyName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			log.Printf("[DEBUG] %s was not found - removing from state!", *id)
 			d.SetId("")
 			return nil
@@ -182,20 +181,16 @@ func resourceArmDevTestPolicyRead(d *pluginsdk.ResourceData, meta interface{}) e
 	d.Set("name", id.PolicyName)
 	d.Set("policy_set_name", id.PolicySetName)
 	d.Set("lab_name", id.LabName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := read.Model; model != nil {
-		props := model.Properties
+	if props := read.PolicyProperties; props != nil {
 		d.Set("description", props.Description)
 		d.Set("fact_data", props.FactData)
-		d.Set("evaluator_type", string(pointer.From(props.EvaluatorType)))
+		d.Set("evaluator_type", string(props.EvaluatorType))
 		d.Set("threshold", props.Threshold)
-
-		if err = tags.FlattenAndSet(d, flattenTags(model.Tags)); err != nil {
-			return err
-		}
 	}
-	return nil
+
+	return tags.FlattenAndSet(d, read.Tags)
 }
 
 func resourceArmDevTestPolicyDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -203,14 +198,14 @@ func resourceArmDevTestPolicyDelete(d *pluginsdk.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := policies.ParsePolicyID(d.Id())
+	id, err := parse.DevTestLabPolicyID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, policies.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.PolicySetName, id.PolicyName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			// deleted outside of TF
 			log.Printf("[DEBUG] %s was not found  - assuming removed!", *id)
 			return nil
@@ -219,7 +214,7 @@ func resourceArmDevTestPolicyDelete(d *pluginsdk.ResourceData, meta interface{})
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	if _, err = client.Delete(ctx, *id); err != nil {
+	if _, err = client.Delete(ctx, id.ResourceGroup, id.LabName, id.PolicySetName, id.PolicyName); err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
 	}
 

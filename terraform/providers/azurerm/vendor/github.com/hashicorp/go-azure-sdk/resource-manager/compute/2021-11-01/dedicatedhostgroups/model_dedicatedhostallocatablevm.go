@@ -5,5 +5,5 @@ package dedicatedhostgroups
 
 type DedicatedHostAllocatableVM struct {
 	Count  *float64 `json:"count,omitempty"`
-	VMSize *string  `json:"vmSize,omitempty"`
+	VmSize *string  `json:"vmSize,omitempty"`
 }

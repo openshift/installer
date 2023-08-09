@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package main
 
 import (
@@ -22,7 +19,6 @@ func main() {
 	flag.Parse()
 
 	if debugMode {
-		//nolint:staticcheck
 		err := plugin.Debug(context.Background(), "registry.terraform.io/hashicorp/azurerm",
 			&plugin.ServeOpts{
 				ProviderFunc: provider.AzureProvider,

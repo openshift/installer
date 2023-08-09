@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/servicefabricmanagedcluster/2021-05-01/managedcluster"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/servicefabricmanagedcluster/2021-05-01/nodetype"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -48,8 +48,8 @@ type ADAuthentication struct {
 }
 
 type Authentication struct {
-	ADAuth             []ADAuthentication `tfschema:"active_directory"`
-	CertAuthentication []ThumbprintAuth   `tfschema:"certificate"`
+	ADAuth             ADAuthentication `tfschema:"active_directory"`
+	CertAuthentication []ThumbprintAuth `tfschema:"certificate"`
 }
 
 type PortRange struct {
@@ -64,7 +64,7 @@ type VaultCertificates struct {
 
 type VmSecrets struct {
 	SourceVault  string              `tfschema:"vault_id"`
-	Certificates []VaultCertificates `tfschema:"certificates"`
+	Certificates []VaultCertificates `tfschema:"certificate"`
 }
 
 type NodeType struct {
@@ -137,7 +137,7 @@ func (k ClusterResource) Arguments() map[string]*pluginsdk.Schema {
 			Type:     pluginsdk.TypeBool,
 			Optional: true,
 		},
-		"location": commonschema.Location(),
+		"location": azure.SchemaLocation(),
 		"name": {
 			Type:     pluginsdk.TypeString,
 			Required: true,
@@ -154,15 +154,17 @@ func (k ClusterResource) Arguments() map[string]*pluginsdk.Schema {
 				validation.StringMatch(regexp.MustCompile("^[^\\\\/\"\\[\\]:|<>+=;,?*$]{1,14}$"), "User names cannot contain special characters \\/\"\"[]:|<>+=;,$?*@")),
 		},
 		"password": {
-			Type:      pluginsdk.TypeString,
-			Optional:  true,
-			Sensitive: true,
+			Type:     pluginsdk.TypeString,
+			Optional: true,
 			ValidateFunc: validation.All(
 				validation.StringLenBetween(8, 123),
-				validation.StringIsNotWhiteSpace,
-			),
+				validation.StringIsNotWhiteSpace),
 		},
-		"resource_group_name": commonschema.ResourceGroupName(),
+		"resource_group_name": {
+			Type:         pluginsdk.TypeString,
+			Required:     true,
+			ValidateFunc: validation.StringIsNotWhiteSpace,
+		},
 
 		"node_type":      nodeTypeSchema(),
 		"authentication": authSchema(),
@@ -397,16 +399,16 @@ func (k ClusterResource) Read() sdk.ResourceFunc {
 				if response.WasNotFound(cluster.HttpResponse) {
 					return metadata.MarkAsGone(resourceId)
 				}
-				return fmt.Errorf("while reading data for cluster %q: %+v", resourceId.ManagedClusterName, err)
+				return fmt.Errorf("while reading data for cluster %q: %+v", resourceId.ClusterName, err)
 			}
 
 			nts, err := nodeTypeClient.ListByManagedClustersComplete(ctx, nodetype.ManagedClusterId{
-				SubscriptionId:     resourceId.SubscriptionId,
-				ResourceGroupName:  resourceId.ResourceGroupName,
-				ManagedClusterName: resourceId.ManagedClusterName,
+				SubscriptionId:    resourceId.SubscriptionId,
+				ResourceGroupName: resourceId.ResourceGroupName,
+				ClusterName:       resourceId.ClusterName,
 			})
 			if err != nil {
-				return fmt.Errorf("while listing NodeTypes for cluster %q: +%v", resourceId.ManagedClusterName, err)
+				return fmt.Errorf("while listing NodeTypes for cluster %q: +%v", resourceId.ClusterName, err)
 			}
 
 			model := flattenClusterProperties(cluster.Model)
@@ -607,7 +609,7 @@ func (k ClusterResource) CustomizeDiff() sdk.ResourceFunc {
 			for _, lbi := range rd.Get("lb_rule").([]interface{}) {
 				lb := lbi.(map[string]interface{})
 				probeProto := lb["probe_protocol"].(string)
-				if probeProto == string(managedcluster.ProbeProtocolHTTP) || probeProto == string(managedcluster.ProbeProtocolHTTPS) {
+				if probeProto == string(managedcluster.ProbeProtocolHttp) || probeProto == string(managedcluster.ProbeProtocolHttps) {
 					probePath := lb["probe_request_path"]
 					if probePath == nil || probePath.(string) == "" {
 						return fmt.Errorf("probe_request_path needs to be set if probe protocol is %q", probeProto)
@@ -678,15 +680,11 @@ func flattenClusterProperties(cluster *managedcluster.ManagedCluster) *ClusterRe
 
 	if aad := properties.AzureActiveDirectory; aad != nil {
 		model.Authentication = append(model.Authentication, Authentication{})
-		adModels := make([]ADAuthentication, 0)
-
 		adModel := ADAuthentication{}
 		adModel.ClientApp = utils.NormalizeNilableString(aad.ClientApplication)
 		adModel.ClusterApp = utils.NormalizeNilableString(aad.ClusterApplication)
 		adModel.TenantId = utils.NormalizeNilableString(aad.TenantId)
-
-		adModels = append(adModels, adModel)
-		model.Authentication[0].ADAuth = adModels
+		model.Authentication[0].ADAuth = adModel
 	}
 
 	if clients := properties.Clients; clients != nil {
@@ -713,8 +711,8 @@ func flattenClusterProperties(cluster *managedcluster.ManagedCluster) *ClusterRe
 		for _, fs := range *fss {
 			for _, param := range fs.Parameters {
 				cfs = append(cfs, CustomFabricSetting{
-					Section:   fs.Name,
-					Parameter: param.Name,
+					Parameter: fs.Name,
+					Section:   param.Name,
 					Value:     param.Value,
 				})
 			}
@@ -723,7 +721,7 @@ func flattenClusterProperties(cluster *managedcluster.ManagedCluster) *ClusterRe
 	}
 
 	model.ClientConnectionPort = utils.NormaliseNilableInt64(properties.ClientConnectionPort)
-	model.HTTPGatewayPort = utils.NormaliseNilableInt64(properties.HTTPGatewayConnectionPort)
+	model.HTTPGatewayPort = utils.NormaliseNilableInt64(properties.HttpGatewayConnectionPort)
 
 	if lbrules := properties.LoadBalancingRules; lbrules != nil {
 		model.LBRules = make([]LBRule, len(*lbrules))
@@ -762,21 +760,15 @@ func flattenNodetypeProperties(nt nodetype.NodeType) NodeType {
 		DataDiskSize:     nt.Properties.DataDiskSizeGB,
 		Name:             utils.NormalizeNilableString(nt.Name),
 		Primary:          props.IsPrimary,
-		VmImageOffer:     utils.NormalizeNilableString(props.VMImageOffer),
-		VmImagePublisher: utils.NormalizeNilableString(props.VMImagePublisher),
-		VmImageSku:       utils.NormalizeNilableString(props.VMImageSku),
-		VmImageVersion:   utils.NormalizeNilableString(props.VMImageVersion),
-		VmInstanceCount:  props.VMInstanceCount,
-		VmSize:           utils.NormalizeNilableString(props.VMSize),
+		VmImageOffer:     utils.NormalizeNilableString(props.VmImageOffer),
+		VmImagePublisher: utils.NormalizeNilableString(props.VmImagePublisher),
+		VmImageSku:       utils.NormalizeNilableString(props.VmImageSku),
+		VmImageVersion:   utils.NormalizeNilableString(props.VmImageVersion),
+		VmInstanceCount:  props.VmInstanceCount,
+		VmSize:           utils.NormalizeNilableString(props.VmSize),
+		ApplicationPorts: fmt.Sprintf("%d-%d", props.ApplicationPorts.StartPort, props.ApplicationPorts.EndPort),
+		EphemeralPorts:   fmt.Sprintf("%d-%d", props.EphemeralPorts.StartPort, props.EphemeralPorts.EndPort),
 		Id:               utils.NormalizeNilableString(nt.Id),
-	}
-
-	if appPorts := props.ApplicationPorts; appPorts != nil {
-		out.ApplicationPorts = fmt.Sprintf("%d-%d", appPorts.StartPort, appPorts.EndPort)
-	}
-
-	if ephemeralPorts := props.EphemeralPorts; ephemeralPorts != nil {
-		out.EphemeralPorts = fmt.Sprintf("%d-%d", ephemeralPorts.StartPort, ephemeralPorts.EndPort)
 	}
 
 	if mpg := props.MultiplePlacementGroups; mpg != nil {
@@ -807,7 +799,7 @@ func flattenNodetypeProperties(nt nodetype.NodeType) NodeType {
 		out.PlacementProperties = placements
 	}
 
-	if secrets := props.VMSecrets; secrets != nil {
+	if secrets := props.VmSecrets; secrets != nil {
 		secs := make([]VmSecrets, len(*secrets))
 		for idx, sec := range *secrets {
 			certs := make([]VaultCertificates, len(sec.VaultCertificates))
@@ -848,13 +840,12 @@ func expandClusterProperties(model *ClusterResourceModel) *managedcluster.Manage
 	}
 
 	if auth := model.Authentication; len(auth) > 0 {
-		if adAuth := auth[0].ADAuth; len(adAuth) > 0 {
-			if adAuth[0].ClientApp != "" && adAuth[0].ClusterApp != "" && adAuth[0].TenantId != "" {
-				out.AzureActiveDirectory = &managedcluster.AzureActiveDirectory{
-					ClientApplication:  utils.String(adAuth[0].ClientApp),
-					ClusterApplication: utils.String(adAuth[0].ClusterApp),
-					TenantId:           utils.String(adAuth[0].TenantId),
-				}
+		adAuth := auth[0].ADAuth
+		if adAuth.ClientApp != "" && adAuth.ClusterApp != "" && adAuth.TenantId != "" {
+			out.AzureActiveDirectory = &managedcluster.AzureActiveDirectory{
+				ClientApplication:  utils.String(adAuth.ClientApp),
+				ClusterApplication: utils.String(adAuth.ClusterApp),
+				TenantId:           utils.String(adAuth.TenantId),
 			}
 		}
 		if certs := auth[0].CertAuthentication; len(certs) > 0 {
@@ -874,6 +865,8 @@ func expandClusterProperties(model *ClusterResourceModel) *managedcluster.Manage
 	out.ClusterUpgradeCadence = &model.UpgradeWave
 
 	if customSettings := model.CustomFabricSettings; len(customSettings) > 0 {
+		fs := make([]managedcluster.SettingsSectionDescription, len(customSettings))
+
 		// First we build a map of all settings per section
 		fsMap := make(map[string][]managedcluster.SettingsParameterDescription)
 		for _, cs := range customSettings {
@@ -885,7 +878,6 @@ func expandClusterProperties(model *ClusterResourceModel) *managedcluster.Manage
 		}
 
 		// Then we update the properties struct
-		fs := make([]managedcluster.SettingsSectionDescription, 0)
 		for k, v := range fsMap {
 			fs = append(fs, managedcluster.SettingsSectionDescription{
 				Name:       k,
@@ -895,7 +887,7 @@ func expandClusterProperties(model *ClusterResourceModel) *managedcluster.Manage
 		out.FabricSettings = &fs
 	}
 
-	out.HTTPGatewayConnectionPort = &model.HTTPGatewayPort
+	out.HttpGatewayConnectionPort = &model.HTTPGatewayPort
 
 	if rules := model.LBRules; len(rules) > 0 {
 		lbRules := make([]managedcluster.LoadBalancingRule, len(rules))
@@ -977,13 +969,13 @@ func expandNodeTypeProperties(nt *NodeType) (*nodetype.NodeTypeProperties, error
 		IsStateless:             &nt.Stateless,
 		MultiplePlacementGroups: &nt.MultiplePlacementGroupsEnabled,
 		PlacementProperties:     &nt.PlacementProperties,
-		VMImageOffer:            &nt.VmImageOffer,
-		VMImagePublisher:        &nt.VmImagePublisher,
-		VMImageSku:              &nt.VmImageSku,
-		VMImageVersion:          &nt.VmImageVersion,
-		VMInstanceCount:         nt.VmInstanceCount,
-		VMSecrets:               &vmSecrets,
-		VMSize:                  &nt.VmSize,
+		VmImageOffer:            &nt.VmImageOffer,
+		VmImagePublisher:        &nt.VmImagePublisher,
+		VmImageSku:              &nt.VmImageSku,
+		VmImageVersion:          &nt.VmImageVersion,
+		VmInstanceCount:         nt.VmInstanceCount,
+		VmSecrets:               &vmSecrets,
+		VmSize:                  &nt.VmSize,
 	}
 
 	return nodeTypeProperties, nil
@@ -1220,8 +1212,8 @@ func lbRulesSchema() *pluginsdk.Schema {
 					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
-						string(managedcluster.ProbeProtocolHTTP),
-						string(managedcluster.ProbeProtocolHTTPS),
+						string(managedcluster.ProbeProtocolHttp),
+						string(managedcluster.ProbeProtocolHttps),
 						string(managedcluster.ProbeProtocolTcp),
 					}, false),
 				},

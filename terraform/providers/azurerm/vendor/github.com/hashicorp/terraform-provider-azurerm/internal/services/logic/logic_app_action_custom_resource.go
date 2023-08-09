@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflows"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -42,7 +42,7 @@ func resourceLogicAppActionCustom() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: workflows.ValidateWorkflowID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"body": {
@@ -56,12 +56,12 @@ func resourceLogicAppActionCustom() *pluginsdk.Resource {
 }
 
 func resourceLogicAppActionCustomCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	workflowId, err := workflows.ParseWorkflowID(d.Get("logic_app_id").(string))
+	workflowId, err := parse.WorkflowID(d.Get("logic_app_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := parse.NewActionID(workflowId.SubscriptionId, workflowId.ResourceGroupName, workflowId.WorkflowName, d.Get("name").(string))
+	id := parse.NewActionID(workflowId.SubscriptionId, workflowId.ResourceGroup, workflowId.Name, d.Get("name").(string))
 
 	bodyRaw := d.Get("body").(string)
 
@@ -83,9 +83,7 @@ func resourceLogicAppActionCustomRead(d *pluginsdk.ResourceData, meta interface{
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroup, id.WorkflowName)
-
-	t, app, err := retrieveLogicAppAction(d, meta, workflowId, id.Name)
+	t, app, err := retrieveLogicAppAction(d, meta, id.ResourceGroup, id.WorkflowName, id.Name)
 	if err != nil {
 		return err
 	}
@@ -99,7 +97,7 @@ func resourceLogicAppActionCustomRead(d *pluginsdk.ResourceData, meta interface{
 	action := *t
 
 	d.Set("name", id.Name)
-	d.Set("logic_app_id", app.Id)
+	d.Set("logic_app_id", app.ID)
 
 	body, err := json.Marshal(action)
 	if err != nil {
@@ -119,9 +117,7 @@ func resourceLogicAppActionCustomDelete(d *pluginsdk.ResourceData, meta interfac
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroup, id.WorkflowName)
-
-	err = resourceLogicAppActionRemove(d, meta, workflowId, id.Name)
+	err = resourceLogicAppActionRemove(d, meta, id.ResourceGroup, id.WorkflowName, id.Name)
 	if err != nil {
 		return fmt.Errorf("removing Action %s: %+v", id, err)
 	}

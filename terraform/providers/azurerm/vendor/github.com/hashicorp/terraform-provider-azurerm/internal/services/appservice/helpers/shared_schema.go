@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/appservice/validate"
+	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/web/2022-09-01/web"
 )
 
 type IpRestriction struct {
@@ -48,15 +46,20 @@ func (v IpRestriction) Validate() error {
 
 func IpRestrictionSchema() *pluginsdk.Schema {
 	return &pluginsdk.Schema{
-		Type:     pluginsdk.TypeList,
-		Optional: true,
+		Type:       pluginsdk.TypeList,
+		Optional:   true,
+		Computed:   true,
+		ConfigMode: pluginsdk.SchemaConfigModeAttr,
 		Elem: &pluginsdk.Resource{
 			Schema: map[string]*pluginsdk.Schema{
 				"ip_address": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					ValidateFunc: validate.IsIpOrCIDRRangeList,
-					Description:  "The CIDR notation of the IP or IP Range to match. For example: `10.0.0.0/24` or `192.168.10.1/32` or `fe80::/64` or `13.107.6.152/31,13.107.128.0/22`",
+					Type:     pluginsdk.TypeString,
+					Optional: true,
+					ValidateFunc: validation.Any(
+						validation.IsCIDR,
+						validation.IsIPAddress,
+					),
+					Description: "The CIDR notation of the IP or IP Range to match. For example: `10.0.0.0/24` or `192.168.10.1/32` or `fe80::/64`",
 				},
 
 				"service_tag": {
@@ -69,7 +72,7 @@ func IpRestrictionSchema() *pluginsdk.Schema {
 				"virtual_network_subnet_id": {
 					Type:         pluginsdk.TypeString,
 					Optional:     true,
-					ValidateFunc: commonids.ValidateSubnetID,
+					ValidateFunc: networkValidate.SubnetID,
 					Description:  "The Virtual Network Subnet ID used for this IP Restriction.",
 				},
 
@@ -271,8 +274,7 @@ func CorsSettingsSchema() *pluginsdk.Schema {
 			Schema: map[string]*pluginsdk.Schema{
 				"allowed_origins": {
 					Type:     pluginsdk.TypeSet,
-					Optional: true,
-					MinItems: 1,
+					Required: true,
 					Elem: &pluginsdk.Schema{
 						Type: pluginsdk.TypeString,
 					},
@@ -315,34 +317,6 @@ func CorsSettingsSchemaComputed() *pluginsdk.Schema {
 	}
 }
 
-func FlattenCorsSettings(input *web.CorsSettings) []CorsSetting {
-	if input == nil {
-		return []CorsSetting{}
-	}
-
-	cors := *input
-	if len(pointer.From(cors.AllowedOrigins)) == 0 && !pointer.From(cors.SupportCredentials) {
-		return []CorsSetting{}
-	}
-
-	return []CorsSetting{{
-		SupportCredentials: pointer.From(cors.SupportCredentials),
-		AllowedOrigins:     pointer.From(cors.AllowedOrigins),
-	}}
-}
-
-func ExpandCorsSettings(input []CorsSetting) *web.CorsSettings {
-	if len(input) != 1 {
-		return &web.CorsSettings{}
-	}
-	cors := input[0]
-
-	return &web.CorsSettings{
-		AllowedOrigins:     pointer.To(cors.AllowedOrigins),
-		SupportCredentials: pointer.To(cors.SupportCredentials),
-	}
-}
-
 type SourceControl struct {
 	RepoURL           string `tfschema:"repo_url"`
 	Branch            string `tfschema:"branch"`
@@ -358,15 +332,13 @@ type SiteCredential struct {
 
 func SiteCredentialSchema() *pluginsdk.Schema { // TODO - This can apparently be disabled as a security option for the service?
 	return &pluginsdk.Schema{
-		Type:      pluginsdk.TypeList,
-		Computed:  true,
-		Sensitive: true,
+		Type:     pluginsdk.TypeList,
+		Computed: true,
 		Elem: &pluginsdk.Resource{
 			Schema: map[string]*pluginsdk.Schema{
 				"name": {
 					Type:        pluginsdk.TypeString,
 					Computed:    true,
-					Sensitive:   true,
 					Description: "The Site Credentials Username used for publishing.",
 				},
 
@@ -403,6 +375,7 @@ func AuthSettingsSchema() *pluginsdk.Schema {
 	return &pluginsdk.Schema{
 		Type:     pluginsdk.TypeList,
 		Optional: true,
+		Computed: true,
 		MaxItems: 1,
 		Elem: &pluginsdk.Resource{
 			Schema: map[string]*pluginsdk.Schema{
@@ -1124,7 +1097,7 @@ func GithubAuthSettingsSchemaComputed() *pluginsdk.Schema {
 }
 
 func ExpandIpRestrictions(restrictions []IpRestriction) (*[]web.IPSecurityRestriction, error) {
-	expanded := make([]web.IPSecurityRestriction, 0)
+	var expanded []web.IPSecurityRestriction
 	if len(restrictions) == 0 {
 		return &expanded, nil
 	}
@@ -1186,6 +1159,23 @@ func expandIpRestrictionHeaders(headers []IpRestrictionHeaders) map[string][]str
 	}
 
 	return result
+}
+
+func ExpandCorsSettings(input []CorsSetting) *web.CorsSettings {
+	if len(input) == 0 {
+		return &web.CorsSettings{
+			AllowedOrigins: &[]string{},
+		}
+	}
+	var result web.CorsSettings
+	for _, v := range input {
+		if v.SupportCredentials {
+			result.SupportCredentials = utils.Bool(v.SupportCredentials)
+		}
+
+		result.AllowedOrigins = &v.AllowedOrigins
+	}
+	return &result
 }
 
 func ExpandAuthSettings(auth []AuthSettings) *web.SiteAuthSettings {
@@ -1289,8 +1279,8 @@ func ExpandAuthSettings(auth []AuthSettings) *web.SiteAuthSettings {
 }
 
 func FlattenAuthSettings(auth web.SiteAuthSettings) []AuthSettings {
-	if auth.SiteAuthSettingsProperties == nil || !pointer.From(auth.Enabled) || strings.ToLower(pointer.From(auth.ConfigVersion)) != "v1" {
-		return []AuthSettings{}
+	if auth.SiteAuthSettingsProperties == nil {
+		return nil
 	}
 
 	props := *auth.SiteAuthSettingsProperties
@@ -1454,7 +1444,7 @@ func FlattenAuthSettings(auth web.SiteAuthSettings) []AuthSettings {
 
 func FlattenIpRestrictions(ipRestrictionsList *[]web.IPSecurityRestriction) []IpRestriction {
 	if ipRestrictionsList == nil {
-		return []IpRestriction{}
+		return nil
 	}
 
 	var ipRestrictions []IpRestriction
@@ -1499,7 +1489,7 @@ func FlattenIpRestrictions(ipRestrictionsList *[]web.IPSecurityRestriction) []Ip
 
 func flattenIpRestrictionHeaders(headers map[string][]string) []IpRestrictionHeaders {
 	if len(headers) == 0 {
-		return []IpRestrictionHeaders{}
+		return nil
 	}
 	ipRestrictionHeader := IpRestrictionHeaders{}
 	if xForwardFor, ok := headers["x-forwarded-for"]; ok {

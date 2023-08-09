@@ -12,12 +12,7 @@ func GetProviderSchema_Request(in *tfprotov5.GetProviderSchemaRequest) (*tfplugi
 }
 
 func GetProviderSchema_Response(in *tfprotov5.GetProviderSchemaResponse) (*tfplugin5.GetProviderSchema_Response, error) {
-	if in == nil {
-		return nil, nil
-	}
-	resp := tfplugin5.GetProviderSchema_Response{
-		ServerCapabilities: GetProviderSchema_ServerCapabilities(in.ServerCapabilities),
-	}
+	var resp tfplugin5.GetProviderSchema_Response
 	if in.Provider != nil {
 		schema, err := Schema(in.Provider)
 		if err != nil {

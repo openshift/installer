@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/dns/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
@@ -40,11 +39,6 @@ func resourceDnsCNameRecord() *pluginsdk.Resource {
 				return fmt.Errorf("this resource only supports 'CNAME' records")
 			}
 			return nil
-		}),
-
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.CNAMERecordV0ToV1{},
 		}),
 
 		Schema: map[string]*pluginsdk.Schema{
@@ -156,7 +150,7 @@ func resourceDnsCNameRecordRead(d *pluginsdk.ResourceData, meta interface{}) err
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := recordsets.ParseRecordTypeID(d.Id())
+	id, err := recordsets.ParseRecordTypeIDInsensitively(d.Id())
 	if err != nil {
 		return err
 	}
@@ -172,7 +166,7 @@ func resourceDnsCNameRecordRead(d *pluginsdk.ResourceData, meta interface{}) err
 
 	d.Set("name", id.RelativeRecordSetName)
 	d.Set("resource_group_name", id.ResourceGroupName)
-	d.Set("zone_name", id.DnsZoneName)
+	d.Set("zone_name", id.ZoneName)
 
 	if model := resp.Model; model != nil {
 		if props := model.Properties; props != nil {

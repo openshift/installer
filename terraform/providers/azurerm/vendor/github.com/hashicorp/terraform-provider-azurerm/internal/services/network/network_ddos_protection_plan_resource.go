@@ -5,8 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -16,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 const azureNetworkDDoSProtectionPlanResourceName = "azurerm_network_ddos_protection_plan"
@@ -47,9 +45,9 @@ func resourceNetworkDDoSProtectionPlan() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"virtual_network_ids": {
 				Type:     pluginsdk.TypeList,
@@ -206,13 +204,13 @@ func expandNetworkDDoSProtectionPlanVnetNames(d *pluginsdk.ResourceData) (*[]str
 	vnetNames := make([]string, 0)
 
 	for _, vnetID := range vnetIDs {
-		vnetResourceID, err := commonids.ParseVirtualNetworkID(vnetID.(string))
+		vnetResourceID, err := parse.VirtualNetworkID(vnetID.(string))
 		if err != nil {
 			return nil, err
 		}
 
-		if !utils.SliceContainsValue(vnetNames, vnetResourceID.VirtualNetworkName) {
-			vnetNames = append(vnetNames, vnetResourceID.VirtualNetworkName)
+		if !utils.SliceContainsValue(vnetNames, vnetResourceID.Name) {
+			vnetNames = append(vnetNames, vnetResourceID.Name)
 		}
 	}
 
@@ -240,13 +238,13 @@ func extractVnetNames(d *pluginsdk.ResourceData) (*[]string, error) {
 	vnetNames := make([]string, 0)
 
 	for _, vnetID := range vnetIDs {
-		vnetResourceID, err := commonids.ParseVirtualNetworkID(vnetID.(string))
+		vnetResourceID, err := parse.VirtualNetworkID(vnetID.(string))
 		if err != nil {
 			return nil, err
 		}
 
-		if !utils.SliceContainsValue(vnetNames, vnetResourceID.VirtualNetworkName) {
-			vnetNames = append(vnetNames, vnetResourceID.VirtualNetworkName)
+		if !utils.SliceContainsValue(vnetNames, vnetResourceID.Name) {
+			vnetNames = append(vnetNames, vnetResourceID.Name)
 		}
 	}
 

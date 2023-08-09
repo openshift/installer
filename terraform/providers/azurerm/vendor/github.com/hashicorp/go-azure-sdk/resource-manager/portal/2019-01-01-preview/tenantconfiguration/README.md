@@ -20,7 +20,7 @@ client.Client.Authorizer = authorizer
 ```
 
 
-### Example Usage: `TenantConfigurationClient.Create`
+### Example Usage: `TenantConfigurationClient.TenantConfigurationsCreate`
 
 ```go
 ctx := context.TODO()
@@ -30,7 +30,7 @@ payload := tenantconfiguration.Configuration{
 }
 
 
-read, err := client.Create(ctx, payload)
+read, err := client.TenantConfigurationsCreate(ctx, payload)
 if err != nil {
 	// handle the error
 }
@@ -40,13 +40,13 @@ if model := read.Model; model != nil {
 ```
 
 
-### Example Usage: `TenantConfigurationClient.Delete`
+### Example Usage: `TenantConfigurationClient.TenantConfigurationsDelete`
 
 ```go
 ctx := context.TODO()
 
 
-read, err := client.Delete(ctx)
+read, err := client.TenantConfigurationsDelete(ctx)
 if err != nil {
 	// handle the error
 }
@@ -56,13 +56,13 @@ if model := read.Model; model != nil {
 ```
 
 
-### Example Usage: `TenantConfigurationClient.Get`
+### Example Usage: `TenantConfigurationClient.TenantConfigurationsGet`
 
 ```go
 ctx := context.TODO()
 
 
-read, err := client.Get(ctx)
+read, err := client.TenantConfigurationsGet(ctx)
 if err != nil {
 	// handle the error
 }
@@ -72,13 +72,13 @@ if model := read.Model; model != nil {
 ```
 
 
-### Example Usage: `TenantConfigurationClient.List`
+### Example Usage: `TenantConfigurationClient.TenantConfigurationsList`
 
 ```go
 ctx := context.TODO()
 
 
-read, err := client.List(ctx)
+read, err := client.TenantConfigurationsList(ctx)
 if err != nil {
 	// handle the error
 }

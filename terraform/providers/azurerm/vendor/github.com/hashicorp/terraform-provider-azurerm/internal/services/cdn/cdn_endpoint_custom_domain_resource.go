@@ -6,8 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2020-09-01/cdn" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2020-09-01/cdn"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
@@ -473,7 +472,7 @@ func expandArmCdnEndpointCustomDomainUserManagedHttpsSettings(ctx context.Contex
 	if keyVaultIdRaw == nil {
 		return nil, fmt.Errorf("unexpected nil Key Vault ID retrieved at URL %q", keyVaultSecretId.KeyVaultBaseUrl)
 	}
-	keyVaultId, err := commonids.ParseKeyVaultID(*keyVaultIdRaw)
+	keyVaultId, err := keyvaultParse.VaultID(*keyVaultIdRaw)
 	if err != nil {
 		return nil, err
 	}
@@ -482,8 +481,8 @@ func expandArmCdnEndpointCustomDomainUserManagedHttpsSettings(ctx context.Contex
 		CertificateSourceParameters: &cdn.KeyVaultCertificateSourceParameters{
 			OdataType:         utils.String("#Microsoft.Azure.Cdn.Models.KeyVaultCertificateSourceParameters"),
 			SubscriptionID:    &keyVaultId.SubscriptionId,
-			ResourceGroupName: &keyVaultId.ResourceGroupName,
-			VaultName:         &keyVaultId.VaultName,
+			ResourceGroupName: &keyVaultId.ResourceGroup,
+			VaultName:         &keyVaultId.Name,
 			SecretName:        &keyVaultSecretId.Name,
 			SecretVersion:     &keyVaultSecretId.Version,
 			UpdateRule:        utils.String("NoAction"),
@@ -543,7 +542,7 @@ func flattenArmCdnEndpointCustomDomainUserManagedHttpsSettings(ctx context.Conte
 		secretVersion = *params.SecretVersion
 	}
 
-	keyVaultId := commonids.NewKeyVaultID(subscriptionId, resourceGroupName, vaultName)
+	keyVaultId := keyvaultParse.NewVaultID(subscriptionId, resourceGroupName, vaultName)
 	keyVaultBaseUrl, err := keyVaultsClient.BaseUriForKeyVault(ctx, keyVaultId)
 	if err != nil {
 		return nil, fmt.Errorf("looking up Key Vault Secret %q vault url from id %q: %+v", vaultName, keyVaultId, err)
@@ -580,7 +579,9 @@ func flattenArmCdnEndpointCustomDomainUserManagedHttpsSettings(ctx context.Conte
 	var certIdLiteral string
 	cert, err := keyVaultsClient.ManagementClient.GetCertificate(ctx, *keyVaultBaseUrl, secretName, secretVersion)
 	if err == nil && cert.ID != nil {
-		certId, _ := keyvaultParse.ParseOptionallyVersionedNestedItemID(*cert.ID)
+		certId, err := keyvaultParse.ParseOptionallyVersionedNestedItemID(*cert.ID)
+		if err == nil {
+		}
 		certIdLiteral = certId.ID()
 		if !isVersioned {
 			certIdLiteral = certId.VersionlessID()

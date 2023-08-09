@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -19,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceVirtualNetworkGateway() *pluginsdk.Resource {
@@ -53,9 +53,9 @@ func resourceVirtualNetworkGatewaySchema() map[string]*pluginsdk.Schema {
 			ValidateFunc: validation.StringIsNotEmpty,
 		},
 
-		"resource_group_name": commonschema.ResourceGroupName(),
+		"resource_group_name": azure.SchemaResourceGroupName(),
 
-		"location": commonschema.Location(),
+		"location": azure.SchemaLocation(),
 
 		"type": {
 			Type:     pluginsdk.TypeString,
@@ -161,7 +161,7 @@ func resourceVirtualNetworkGatewaySchema() map[string]*pluginsdk.Schema {
 					"public_ip_address_id": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: validate.PublicIpAddressID,
+						ValidateFunc: azure.ValidateResourceIDOrEmpty,
 					},
 				},
 			},
@@ -383,7 +383,7 @@ func resourceVirtualNetworkGatewaySchema() map[string]*pluginsdk.Schema {
 		"default_local_network_gateway_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
-			ValidateFunc: validate.LocalNetworkGatewayID,
+			ValidateFunc: azure.ValidateResourceIDOrEmpty,
 		},
 
 		"tags": tags.Schema(),
@@ -838,7 +838,7 @@ func flattenVirtualNetworkGatewayBgpPeeringAddresses(input *[]network.IPConfigur
 	for _, e := range *input {
 		var ipConfigName string
 		if e.IpconfigurationID != nil {
-			id, err := parse.VirtualNetworkGatewayIpConfigurationIDInsensitively(*e.IpconfigurationID)
+			id, err := parse.VirtualNetworkGatewayIpConfigurationID(*e.IpconfigurationID)
 			if err != nil {
 				return nil, err
 			}

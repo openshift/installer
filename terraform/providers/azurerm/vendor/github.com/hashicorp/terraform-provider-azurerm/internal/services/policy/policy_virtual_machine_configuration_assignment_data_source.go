@@ -5,13 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/guestconfiguration/mgmt/2020-06-25/guestconfiguration"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/guestconfiguration/2020-06-25/guestconfigurationassignments"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/policy/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourcePolicyVirtualMachineConfigurationAssignment() *pluginsdk.Resource {
@@ -78,10 +78,11 @@ func dataSourcePolicyVirtualMachineConfigurationAssignmentRead(d *pluginsdk.Reso
 	vmName := d.Get("virtual_machine_name").(string)
 	name := d.Get("name").(string)
 
-	id := guestconfigurationassignments.NewProviders2GuestConfigurationAssignmentID(subscriptionId, resourceGroup, vmName, name)
-	resp, err := client.Get(ctx, id)
+	id := parse.NewVirtualMachineConfigurationAssignmentID(subscriptionId, resourceGroup, vmName, name)
+
+	resp, err := client.Get(ctx, id.ResourceGroup, id.GuestConfigurationAssignmentName, id.VirtualMachineName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] guestConfiguration %q was not found", id.GuestConfigurationAssignmentName)
 			return nil
 		}
@@ -94,29 +95,37 @@ func dataSourcePolicyVirtualMachineConfigurationAssignmentRead(d *pluginsdk.Reso
 	d.Set("resource_group_name", resourceGroup)
 	d.Set("virtual_machine_name", vmName)
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
+	if props := resp.Properties; props != nil {
+		if v := props.AssignmentHash; v != nil {
+			d.Set("assignment_hash", v)
+		}
 
-			d.Set("assignment_hash", pointer.From(props.AssignmentHash))
-			d.Set("compliance_status", string(pointer.From(props.ComplianceStatus)))
-			d.Set("latest_report_id", pointer.From(props.LatestReportId))
-			d.Set("last_compliance_status_checked", pointer.From(props.LastComplianceStatusChecked))
+		if v := string(props.ComplianceStatus); v != "" {
+			d.Set("compliance_status", v)
+		}
 
-			contentHash, contentUri := dataSourceFlattenGuestConfigurationAssignment(props.GuestConfiguration)
+		if v := props.LatestReportID; v != nil {
+			d.Set("latest_report_id", v)
+		}
 
-			if contentHash != nil {
-				d.Set("content_hash", contentHash)
-			}
+		if v := props.LastComplianceStatusChecked; v != nil {
+			d.Set("last_compliance_status_checked", v.Format(time.RFC3339))
+		}
 
-			if contentUri != nil {
-				d.Set("content_uri", contentUri)
-			}
+		contentHash, contentUri := dataSourceFlattenGuestConfigurationAssignment(props.GuestConfiguration)
+
+		if contentHash != nil {
+			d.Set("content_hash", contentHash)
+		}
+
+		if contentUri != nil {
+			d.Set("content_uri", contentUri)
 		}
 	}
 	return nil
 }
 
-func dataSourceFlattenGuestConfigurationAssignment(input *guestconfigurationassignments.GuestConfigurationNavigation) (*string, *string) {
+func dataSourceFlattenGuestConfigurationAssignment(input *guestconfiguration.Navigation) (*string, *string) {
 	if input == nil {
 		return nil, nil
 	}
@@ -126,8 +135,8 @@ func dataSourceFlattenGuestConfigurationAssignment(input *guestconfigurationassi
 		contentHash = input.ContentHash
 	}
 	var contentUri *string
-	if input.ContentUri != nil {
-		contentUri = input.ContentUri
+	if input.ContentURI != nil {
+		contentUri = input.ContentURI
 	}
 
 	return contentHash, contentUri

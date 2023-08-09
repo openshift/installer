@@ -5,12 +5,12 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/timeseriesinsights/2020-05-15/accesspolicies"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/timeseriesinsights/2020-05-15/environments"
+	"github.com/Azure/azure-sdk-for-go/services/timeseriesinsights/mgmt/2020-05-15/timeseriesinsights"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iottimeseriesinsights/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iottimeseriesinsights/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iottimeseriesinsights/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -24,7 +24,7 @@ func resourceIoTTimeSeriesInsightsAccessPolicy() *pluginsdk.Resource {
 		Update: resourceIoTTimeSeriesInsightsAccessPolicyCreateUpdate,
 		Delete: resourceIoTTimeSeriesInsightsAccessPolicyDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := accesspolicies.ParseAccessPolicyID(id)
+			_, err := parse.AccessPolicyID(id)
 			return err
 		}),
 
@@ -55,7 +55,7 @@ func resourceIoTTimeSeriesInsightsAccessPolicy() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: environments.ValidateEnvironmentID,
+				ValidateFunc: validate.TimeSeriesInsightsEnvironmentID,
 			},
 
 			"principal_object_id": {
@@ -77,8 +77,8 @@ func resourceIoTTimeSeriesInsightsAccessPolicy() *pluginsdk.Resource {
 				Elem: &pluginsdk.Schema{
 					Type: pluginsdk.TypeString,
 					ValidateFunc: validation.StringInSlice([]string{
-						string(accesspolicies.AccessPolicyRoleContributor),
-						string(accesspolicies.AccessPolicyRoleReader),
+						string(timeseriesinsights.Contributor),
+						string(timeseriesinsights.Reader),
 					}, false),
 				},
 			},
@@ -87,113 +87,115 @@ func resourceIoTTimeSeriesInsightsAccessPolicy() *pluginsdk.Resource {
 }
 
 func resourceIoTTimeSeriesInsightsAccessPolicyCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).IoTTimeSeriesInsights.AccessPolicies
+	client := meta.(*clients.Client).IoTTimeSeriesInsights.AccessPoliciesClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	environmentId, err := environments.ParseEnvironmentID(d.Get("time_series_insights_environment_id").(string))
+	name := d.Get("name").(string)
+	environmentId, err := parse.EnvironmentID(d.Get("time_series_insights_environment_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := accesspolicies.NewAccessPolicyID(subscriptionId, environmentId.ResourceGroupName, environmentId.EnvironmentName, d.Get("name").(string))
+	resourceId := parse.NewAccessPolicyID(subscriptionId, environmentId.ResourceGroup, environmentId.Name, name)
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, environmentId.ResourceGroup, environmentId.Name, name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
-				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
+			if !utils.ResponseWasNotFound(existing.Response) {
+				return fmt.Errorf("checking for presence of existing IoT Time Series Insights Access Policy %q (Resource Group %q): %s", name, environmentId.ResourceGroup, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
-			return tf.ImportAsExistsError("azurerm_iot_time_series_insights_access_policy", id.ID())
+		if !utils.ResponseWasNotFound(existing.Response) {
+			return tf.ImportAsExistsError("azurerm_iot_time_series_insights_access_policy", resourceId.ID())
 		}
 	}
 
-	payload := accesspolicies.AccessPolicyCreateOrUpdateParameters{
-		Properties: accesspolicies.AccessPolicyResourceProperties{
+	policy := timeseriesinsights.AccessPolicyCreateOrUpdateParameters{
+		AccessPolicyResourceProperties: &timeseriesinsights.AccessPolicyResourceProperties{
 			Description:       utils.String(d.Get("description").(string)),
-			PrincipalObjectId: utils.String(d.Get("principal_object_id").(string)),
+			PrincipalObjectID: utils.String(d.Get("principal_object_id").(string)),
 			Roles:             expandIoTTimeSeriesInsightsAccessPolicyRoles(d.Get("roles").(*pluginsdk.Set).List()),
 		},
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, payload); err != nil {
-		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	if _, err := client.CreateOrUpdate(ctx, environmentId.ResourceGroup, environmentId.Name, name, policy); err != nil {
+		return fmt.Errorf("creating/updating IoT Time Series Insights Access Policy %q (Resource Group %q): %+v", name, environmentId.ResourceGroup, err)
 	}
 
-	d.SetId(id.ID())
+	d.SetId(resourceId.ID())
 	return resourceIoTTimeSeriesInsightsAccessPolicyRead(d, meta)
 }
 
 func resourceIoTTimeSeriesInsightsAccessPolicyRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).IoTTimeSeriesInsights.AccessPolicies
+	client := meta.(*clients.Client).IoTTimeSeriesInsights.AccessPoliciesClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := accesspolicies.ParseAccessPolicyID(d.Id())
+	id, err := parse.AccessPolicyID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.EnvironmentName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("retrieving IoT Time Series Insights Access Policy %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.AccessPolicyName)
-	d.Set("time_series_insights_environment_id", environments.NewEnvironmentID(id.SubscriptionId, id.ResourceGroupName, id.EnvironmentName).ID())
+	environmentId := parse.NewEnvironmentID(id.SubscriptionId, id.ResourceGroup, id.EnvironmentName).ID()
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			d.Set("description", props.Description)
-			d.Set("principal_object_id", props.PrincipalObjectId)
-			if err := d.Set("roles", flattenIoTTimeSeriesInsightsAccessPolicyRoles(props.Roles)); err != nil {
-				return fmt.Errorf("setting `roles`: %+v", err)
-			}
-		}
+	d.Set("name", resp.Name)
+	d.Set("time_series_insights_environment_id", environmentId)
+
+	if props := resp.AccessPolicyResourceProperties; props != nil {
+		d.Set("description", props.Description)
+		d.Set("principal_object_id", props.PrincipalObjectID)
+		d.Set("roles", flattenIoTTimeSeriesInsightsAccessPolicyRoles(resp.Roles))
 	}
 
 	return nil
 }
 
 func resourceIoTTimeSeriesInsightsAccessPolicyDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).IoTTimeSeriesInsights.AccessPolicies
+	client := meta.(*clients.Client).IoTTimeSeriesInsights.AccessPoliciesClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := accesspolicies.ParseAccessPolicyID(d.Id())
+	id, err := parse.AccessPolicyID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err := client.Delete(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	response, err := client.Delete(ctx, id.ResourceGroup, id.EnvironmentName, id.Name)
+	if err != nil {
+		if !utils.ResponseWasNotFound(response) {
+			return fmt.Errorf("deleting IoT Time Series Insights Access Policy %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
+		}
 	}
 
 	return nil
 }
 
-func expandIoTTimeSeriesInsightsAccessPolicyRoles(input []interface{}) *[]accesspolicies.AccessPolicyRole {
-	roles := make([]accesspolicies.AccessPolicyRole, 0)
+func expandIoTTimeSeriesInsightsAccessPolicyRoles(input []interface{}) *[]timeseriesinsights.AccessPolicyRole {
+	roles := make([]timeseriesinsights.AccessPolicyRole, 0)
 
 	for _, v := range input {
 		if v == nil {
 			continue
 		}
-		roles = append(roles, accesspolicies.AccessPolicyRole(v.(string)))
+		roles = append(roles, timeseriesinsights.AccessPolicyRole(v.(string)))
 	}
 
 	return &roles
 }
 
-func flattenIoTTimeSeriesInsightsAccessPolicyRoles(input *[]accesspolicies.AccessPolicyRole) []interface{} {
+func flattenIoTTimeSeriesInsightsAccessPolicyRoles(input *[]timeseriesinsights.AccessPolicyRole) []interface{} {
 	result := make([]interface{}, 0)
 	if input != nil {
 		for _, item := range *input {

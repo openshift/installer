@@ -1,15 +1,15 @@
 package kusto
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/kusto/2022-12-29/clusters" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/kusto/mgmt/2022-02-01/kusto"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-func expandTrustedExternalTenants(input []interface{}) *[]clusters.TrustedExternalTenant {
-	output := make([]clusters.TrustedExternalTenant, 0)
+func expandTrustedExternalTenants(input []interface{}) *[]kusto.TrustedExternalTenant {
+	output := make([]kusto.TrustedExternalTenant, 0)
 
 	for _, v := range input {
-		output = append(output, clusters.TrustedExternalTenant{
+		output = append(output, kusto.TrustedExternalTenant{
 			Value: utils.String(v.(string)),
 		})
 	}
@@ -17,7 +17,7 @@ func expandTrustedExternalTenants(input []interface{}) *[]clusters.TrustedExtern
 	return &output
 }
 
-func flattenTrustedExternalTenants(input *[]clusters.TrustedExternalTenant) []interface{} {
+func flattenTrustedExternalTenants(input *[]kusto.TrustedExternalTenant) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}

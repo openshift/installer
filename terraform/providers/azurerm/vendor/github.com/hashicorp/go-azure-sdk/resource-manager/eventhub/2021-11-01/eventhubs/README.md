@@ -24,7 +24,7 @@ client.Client.Authorizer = authorizer
 
 ```go
 ctx := context.TODO()
-id := eventhubs.NewEventhubID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventhubValue")
+id := eventhubs.NewEventhubID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventHubValue")
 
 payload := eventhubs.Eventhub{
 	// ...
@@ -45,7 +45,7 @@ if model := read.Model; model != nil {
 
 ```go
 ctx := context.TODO()
-id := eventhubs.NewEventhubID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventhubValue")
+id := eventhubs.NewEventhubID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventHubValue")
 
 read, err := client.Delete(ctx, id)
 if err != nil {
@@ -61,7 +61,7 @@ if model := read.Model; model != nil {
 
 ```go
 ctx := context.TODO()
-id := eventhubs.NewEventhubAuthorizationRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventhubValue", "authorizationRuleValue")
+id := eventhubs.NewEventhubAuthorizationRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventHubValue", "authorizationRuleValue")
 
 read, err := client.DeleteAuthorizationRule(ctx, id)
 if err != nil {
@@ -77,7 +77,7 @@ if model := read.Model; model != nil {
 
 ```go
 ctx := context.TODO()
-id := eventhubs.NewEventhubID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventhubValue")
+id := eventhubs.NewEventhubID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventHubValue")
 
 read, err := client.Get(ctx, id)
 if err != nil {
@@ -93,7 +93,7 @@ if model := read.Model; model != nil {
 
 ```go
 ctx := context.TODO()
-id := eventhubs.NewEventhubAuthorizationRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventhubValue", "authorizationRuleValue")
+id := eventhubs.NewEventhubAuthorizationRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "namespaceValue", "eventHubValue", "authorizationRuleValue")
 
 read, err := client.GetAuthorizationRule(ctx, id)
 if err != nil {

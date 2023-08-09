@@ -5,11 +5,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/resourceid"
 	"github.com/tombuildsstuff/giovanni/storage/2019-12-12/queue/queues"
 )
 
-var _ resourceids.Id = StorageQueueDataPlaneId{}
+// TODO: tests for this
+var _ resourceid.Formatter = StorageQueueDataPlaneId{}
 
 type StorageQueueDataPlaneId struct {
 	AccountName  string
@@ -17,15 +18,7 @@ type StorageQueueDataPlaneId struct {
 	Name         string
 }
 
-func (id StorageQueueDataPlaneId) String() string {
-	components := []string{
-		fmt.Sprintf("Account Name %q", id.AccountName),
-		fmt.Sprintf("Domain Suffix %q", id.DomainSuffix),
-		fmt.Sprintf("Name %q", id.Name),
-	}
-	return fmt.Sprintf("Storage Queue %s", strings.Join(components, " / "))
-}
-
+// only present to comply with the interface
 func (id StorageQueueDataPlaneId) ID() string {
 	return fmt.Sprintf("https://%s.queue.%s/%s", id.AccountName, id.DomainSuffix, id.Name)
 }

@@ -5,10 +5,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/azuresdkhacks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -17,8 +16,14 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
+// seems you can only set one contact:
+// Invalid security contact name was provided - only 'defaultX' is allowed where X is an index
+// Invalid security contact name 'default0' was provided. Expected 'default1'
+// Message="Invalid security contact name 'default2' was provided. Expected 'default1'"
+const securityCenterContactName = "default1"
+
 func resourceSecurityCenterContact() *pluginsdk.Resource {
-	resource := &pluginsdk.Resource{
+	return &pluginsdk.Resource{
 		Create: resourceSecurityCenterContactCreateUpdate,
 		Read:   resourceSecurityCenterContactRead,
 		Update: resourceSecurityCenterContactCreateUpdate,
@@ -37,14 +42,6 @@ func resourceSecurityCenterContact() *pluginsdk.Resource {
 		},
 
 		Schema: map[string]*pluginsdk.Schema{
-			// This becomes Required and ForceNew in 4.0 - override happens further down
-			"name": {
-				Type:         pluginsdk.TypeString,
-				Optional:     true,
-				Default:      "default1",
-				ValidateFunc: validation.StringIsNotEmpty,
-			},
-
 			"email": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
@@ -68,17 +65,6 @@ func resourceSecurityCenterContact() *pluginsdk.Resource {
 			},
 		},
 	}
-
-	if features.FourPointOh() {
-		resource.Schema["name"] = &pluginsdk.Schema{
-			Type:         pluginsdk.TypeString,
-			Required:     true,
-			ForceNew:     true,
-			ValidateFunc: validation.StringIsNotEmpty,
-		}
-	}
-
-	return resource
 }
 
 func resourceSecurityCenterContactCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -88,10 +74,9 @@ func resourceSecurityCenterContactCreateUpdate(d *pluginsdk.ResourceData, meta i
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := parse.NewContactID(subscriptionId, d.Get("name").(string))
-
+	id := parse.NewContactID(subscriptionId, securityCenterContactName)
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id.SecurityContactName)
+		existing, err := client.Get(ctx, id.SubscriptionId)
 		if err != nil {
 			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
@@ -157,7 +142,6 @@ func resourceSecurityCenterContactRead(d *pluginsdk.ResourceData, meta interface
 
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
-	d.Set("name", id.SecurityContactName)
 
 	if props := resp.ContactProperties; props != nil {
 		d.Set("email", props.Email)

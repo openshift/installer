@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -39,7 +36,7 @@ func (id RulesEngineId) String() string {
 }
 
 func (id RulesEngineId) ID() string {
-	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/frontdoors/%s/rulesEngines/%s"
+	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/frontdoors/%s/rulesengines/%s"
 	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.FrontdoorName, id.Name)
 }
 
@@ -47,7 +44,7 @@ func (id RulesEngineId) ID() string {
 func RulesEngineID(input string) (*RulesEngineId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an RulesEngine ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := RulesEngineId{
@@ -66,7 +63,7 @@ func RulesEngineID(input string) (*RulesEngineId, error) {
 	if resourceId.FrontdoorName, err = id.PopSegment("frontdoors"); err != nil {
 		return nil, err
 	}
-	if resourceId.Name, err = id.PopSegment("rulesEngines"); err != nil {
+	if resourceId.Name, err = id.PopSegment("rulesengines"); err != nil {
 		return nil, err
 	}
 
@@ -114,15 +111,15 @@ func RulesEngineIDInsensitively(input string) (*RulesEngineId, error) {
 		return nil, err
 	}
 
-	// find the correct casing for the 'rulesEngines' segment
-	rulesEnginesKey := "rulesEngines"
+	// find the correct casing for the 'rulesengines' segment
+	rulesenginesKey := "rulesengines"
 	for key := range id.Path {
-		if strings.EqualFold(key, rulesEnginesKey) {
-			rulesEnginesKey = key
+		if strings.EqualFold(key, rulesenginesKey) {
+			rulesenginesKey = key
 			break
 		}
 	}
-	if resourceId.Name, err = id.PopSegment(rulesEnginesKey); err != nil {
+	if resourceId.Name, err = id.PopSegment(rulesenginesKey); err != nil {
 		return nil, err
 	}
 

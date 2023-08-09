@@ -68,7 +68,7 @@ func resourceDataProtectionBackupInstancePostgreSQL() *pluginsdk.Resource {
 			"backup_policy_id": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: backuppolicies.ValidateBackupPolicyID,
+				ValidateFunc: backuppolicies.ValidateBackupPoliciesID,
 			},
 
 			"database_credential_key_vault_secret_id": {
@@ -89,7 +89,7 @@ func resourceDataProtectionBackupInstancePostgreSQLCreateUpdate(d *schema.Resour
 	name := d.Get("name").(string)
 	vaultId, _ := backupinstances.ParseBackupVaultID(d.Get("vault_id").(string))
 
-	id := backupinstances.NewBackupInstanceID(subscriptionId, vaultId.ResourceGroupName, vaultId.BackupVaultName, name)
+	id := backupinstances.NewBackupInstanceID(subscriptionId, vaultId.ResourceGroupName, vaultId.VaultName, name)
 
 	if d.IsNewResource() {
 		existing, err := client.Get(ctx, id)
@@ -106,7 +106,7 @@ func resourceDataProtectionBackupInstancePostgreSQLCreateUpdate(d *schema.Resour
 	databaseId, _ := databases.ParseDatabaseID(d.Get("database_id").(string))
 	location := location.Normalize(d.Get("location").(string))
 	serverId := servers.NewServerID(databaseId.SubscriptionId, databaseId.ResourceGroupName, databaseId.ServerName)
-	policyId, _ := backuppolicies.ParseBackupPolicyID(d.Get("backup_policy_id").(string))
+	policyId, _ := backuppolicies.ParseBackupPoliciesID(d.Get("backup_policy_id").(string))
 
 	parameters := backupinstances.BackupInstanceResource{
 		Properties: &backupinstances.BackupInstance{
@@ -151,7 +151,7 @@ func resourceDataProtectionBackupInstancePostgreSQLCreateUpdate(d *schema.Resour
 
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("internal-error: context had no deadline")
+		return fmt.Errorf("context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(backupinstances.StatusConfiguringProtection), "UpdatingProtection"},
@@ -188,7 +188,7 @@ func resourceDataProtectionBackupInstancePostgreSQLRead(d *schema.ResourceData, 
 		}
 		return fmt.Errorf("retrieving DataProtection BackupInstance (%q): %+v", id, err)
 	}
-	vaultId := backupinstances.NewBackupVaultID(id.SubscriptionId, id.ResourceGroupName, id.BackupVaultName)
+	vaultId := backupinstances.NewBackupVaultID(id.SubscriptionId, id.ResourceGroupName, id.VaultName)
 	d.Set("name", id.BackupInstanceName)
 	d.Set("vault_id", vaultId.ID())
 

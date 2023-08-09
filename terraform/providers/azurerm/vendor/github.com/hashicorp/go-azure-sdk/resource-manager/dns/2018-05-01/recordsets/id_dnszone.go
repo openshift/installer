@@ -7,24 +7,21 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = DnsZoneId{}
 
 // DnsZoneId is a struct representing the Resource ID for a Dns Zone
 type DnsZoneId struct {
 	SubscriptionId    string
 	ResourceGroupName string
-	DnsZoneName       string
+	ZoneName          string
 }
 
 // NewDnsZoneID returns a new DnsZoneId struct
-func NewDnsZoneID(subscriptionId string, resourceGroupName string, dnsZoneName string) DnsZoneId {
+func NewDnsZoneID(subscriptionId string, resourceGroupName string, zoneName string) DnsZoneId {
 	return DnsZoneId{
 		SubscriptionId:    subscriptionId,
 		ResourceGroupName: resourceGroupName,
-		DnsZoneName:       dnsZoneName,
+		ZoneName:          zoneName,
 	}
 }
 
@@ -40,15 +37,15 @@ func ParseDnsZoneID(input string) (*DnsZoneId, error) {
 	id := DnsZoneId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.DnsZoneName, ok = parsed.Parsed["dnsZoneName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "dnsZoneName", *parsed)
+	if id.ZoneName, ok = parsed.Parsed["zoneName"]; !ok {
+		return nil, fmt.Errorf("the segment 'zoneName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseDnsZoneIDInsensitively(input string) (*DnsZoneId, error) {
 	id := DnsZoneId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.DnsZoneName, ok = parsed.Parsed["dnsZoneName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "dnsZoneName", *parsed)
+	if id.ZoneName, ok = parsed.Parsed["zoneName"]; !ok {
+		return nil, fmt.Errorf("the segment 'zoneName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -99,7 +96,7 @@ func ValidateDnsZoneID(input interface{}, key string) (warnings []string, errors
 // ID returns the formatted Dns Zone ID
 func (id DnsZoneId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/dnsZones/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.DnsZoneName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.ZoneName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Dns Zone ID
@@ -112,7 +109,7 @@ func (id DnsZoneId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftNetwork", "Microsoft.Network", "Microsoft.Network"),
 		resourceids.StaticSegment("staticDnsZones", "dnsZones", "dnsZones"),
-		resourceids.UserSpecifiedSegment("dnsZoneName", "dnsZoneValue"),
+		resourceids.UserSpecifiedSegment("zoneName", "zoneValue"),
 	}
 }
 
@@ -121,7 +118,7 @@ func (id DnsZoneId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Dns Zone Name: %q", id.DnsZoneName),
+		fmt.Sprintf("Zone Name: %q", id.ZoneName),
 	}
 	return fmt.Sprintf("Dns Zone (%s)", strings.Join(components, "\n"))
 }

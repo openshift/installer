@@ -7,26 +7,23 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = DisasterRecoveryConfigId{}
 
 // DisasterRecoveryConfigId is a struct representing the Resource ID for a Disaster Recovery Config
 type DisasterRecoveryConfigId struct {
-	SubscriptionId             string
-	ResourceGroupName          string
-	NamespaceName              string
-	DisasterRecoveryConfigName string
+	SubscriptionId    string
+	ResourceGroupName string
+	NamespaceName     string
+	Alias             string
 }
 
 // NewDisasterRecoveryConfigID returns a new DisasterRecoveryConfigId struct
-func NewDisasterRecoveryConfigID(subscriptionId string, resourceGroupName string, namespaceName string, disasterRecoveryConfigName string) DisasterRecoveryConfigId {
+func NewDisasterRecoveryConfigID(subscriptionId string, resourceGroupName string, namespaceName string, alias string) DisasterRecoveryConfigId {
 	return DisasterRecoveryConfigId{
-		SubscriptionId:             subscriptionId,
-		ResourceGroupName:          resourceGroupName,
-		NamespaceName:              namespaceName,
-		DisasterRecoveryConfigName: disasterRecoveryConfigName,
+		SubscriptionId:    subscriptionId,
+		ResourceGroupName: resourceGroupName,
+		NamespaceName:     namespaceName,
+		Alias:             alias,
 	}
 }
 
@@ -42,19 +39,19 @@ func ParseDisasterRecoveryConfigID(input string) (*DisasterRecoveryConfigId, err
 	id := DisasterRecoveryConfigId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.NamespaceName, ok = parsed.Parsed["namespaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "namespaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'namespaceName' was not found in the resource id %q", input)
 	}
 
-	if id.DisasterRecoveryConfigName, ok = parsed.Parsed["disasterRecoveryConfigName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "disasterRecoveryConfigName", *parsed)
+	if id.Alias, ok = parsed.Parsed["alias"]; !ok {
+		return nil, fmt.Errorf("the segment 'alias' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -73,19 +70,19 @@ func ParseDisasterRecoveryConfigIDInsensitively(input string) (*DisasterRecovery
 	id := DisasterRecoveryConfigId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
 	if id.NamespaceName, ok = parsed.Parsed["namespaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "namespaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'namespaceName' was not found in the resource id %q", input)
 	}
 
-	if id.DisasterRecoveryConfigName, ok = parsed.Parsed["disasterRecoveryConfigName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "disasterRecoveryConfigName", *parsed)
+	if id.Alias, ok = parsed.Parsed["alias"]; !ok {
+		return nil, fmt.Errorf("the segment 'alias' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -109,7 +106,7 @@ func ValidateDisasterRecoveryConfigID(input interface{}, key string) (warnings [
 // ID returns the formatted Disaster Recovery Config ID
 func (id DisasterRecoveryConfigId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.EventHub/namespaces/%s/disasterRecoveryConfigs/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.NamespaceName, id.DisasterRecoveryConfigName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.NamespaceName, id.Alias)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Disaster Recovery Config ID
@@ -124,7 +121,7 @@ func (id DisasterRecoveryConfigId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticNamespaces", "namespaces", "namespaces"),
 		resourceids.UserSpecifiedSegment("namespaceName", "namespaceValue"),
 		resourceids.StaticSegment("staticDisasterRecoveryConfigs", "disasterRecoveryConfigs", "disasterRecoveryConfigs"),
-		resourceids.UserSpecifiedSegment("disasterRecoveryConfigName", "disasterRecoveryConfigValue"),
+		resourceids.UserSpecifiedSegment("alias", "aliasValue"),
 	}
 }
 
@@ -134,7 +131,7 @@ func (id DisasterRecoveryConfigId) String() string {
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
 		fmt.Sprintf("Namespace Name: %q", id.NamespaceName),
-		fmt.Sprintf("Disaster Recovery Config Name: %q", id.DisasterRecoveryConfigName),
+		fmt.Sprintf("Alias: %q", id.Alias),
 	}
 	return fmt.Sprintf("Disaster Recovery Config (%s)", strings.Join(components, "\n"))
 }

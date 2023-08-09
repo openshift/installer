@@ -87,7 +87,7 @@ func dataSourcePrivateDnsMxRecordRead(d *pluginsdk.ResourceData, meta interface{
 
 	d.Set("name", id.RelativeRecordSetName)
 	d.Set("resource_group_name", id.ResourceGroupName)
-	d.Set("zone_name", id.PrivateDnsZoneName)
+	d.Set("zone_name", id.PrivateZoneName)
 
 	if model := resp.Model; model != nil {
 		if props := model.Properties; props != nil {

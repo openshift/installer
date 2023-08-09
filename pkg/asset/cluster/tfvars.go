@@ -373,11 +373,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			bootstrapIgnStub = string(shim)
 		}
 
-		managedBy := installConfig.Config.Platform.Azure.ManagedBy
-		if managedBy == "" {
-			managedBy = "Openshift"
-		}
-
 		data, err := azuretfvars.TFVars(
 			azuretfvars.TFVarsSources{
 				Auth:                            auth,
@@ -397,7 +392,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				HyperVGeneration:                hyperVGeneration,
 				VMArchitecture:                  installConfig.Config.ControlPlane.Architecture,
 				InfrastructureName:              clusterID.InfraID,
-				ManagedBy:                       managedBy,
 			},
 		)
 		if err != nil {

@@ -5,11 +5,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 )
-
-var _ resourceids.Id = ManagementGroupTemplateDeploymentId{}
 
 type ManagementGroupTemplateDeploymentId struct {
 	ManagementGroupName string

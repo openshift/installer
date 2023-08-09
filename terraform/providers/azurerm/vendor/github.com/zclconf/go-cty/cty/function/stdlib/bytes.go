@@ -30,7 +30,6 @@ func BytesVal(buf []byte) cty.Value {
 // BytesLen is a Function that returns the length of the buffer encapsulated
 // in a Bytes value.
 var BytesLenFunc = function.New(&function.Spec{
-	Description: `Returns the total number of bytes in the given buffer.`,
 	Params: []function.Parameter{
 		{
 			Name:             "buf",
@@ -38,8 +37,7 @@ var BytesLenFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type:         function.StaticReturnType(cty.Number),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.Number),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		bufPtr := args[0].EncapsulatedValue().(*[]byte)
 		return cty.NumberIntVal(int64(len(*bufPtr))), nil
@@ -48,7 +46,6 @@ var BytesLenFunc = function.New(&function.Spec{
 
 // BytesSlice is a Function that returns a slice of the given Bytes value.
 var BytesSliceFunc = function.New(&function.Spec{
-	Description: `Extracts a subslice from the given buffer.`,
 	Params: []function.Parameter{
 		{
 			Name:             "buf",
@@ -66,8 +63,7 @@ var BytesSliceFunc = function.New(&function.Spec{
 			AllowDynamicType: true,
 		},
 	},
-	Type:         function.StaticReturnType(Bytes),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(Bytes),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		bufPtr := args[0].EncapsulatedValue().(*[]byte)
 

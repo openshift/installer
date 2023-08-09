@@ -119,10 +119,7 @@ func (lv *LatestVersion) Install(ctx context.Context) (string, error) {
 	if lv.apiBaseURL != "" {
 		d.BaseURL = lv.apiBaseURL
 	}
-	zipFilePath, err := d.DownloadAndUnpack(ctx, versionToInstall, dstDir)
-	if zipFilePath != "" {
-		lv.pathsToRemove = append(lv.pathsToRemove, zipFilePath)
-	}
+	err = d.DownloadAndUnpack(ctx, versionToInstall, dstDir)
 	if err != nil {
 		return "", err
 	}

@@ -5,11 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/Azure/azure-sdk-for-go/services/preview/containerregistry/mgmt/2021-08-01-preview/containerregistry"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/connectedregistries"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/registries"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/tokens"
 	tfvalidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/parse"
@@ -58,21 +55,21 @@ func (r ContainerConnectedRegistryResource) Arguments() map[string]*pluginsdk.Sc
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: registries.ValidateRegistryID,
+			ValidateFunc: validate.RegistryID,
 		},
 
 		"parent_registry_id": {
 			Type:         pluginsdk.TypeString,
 			Optional:     true,
 			ForceNew:     true,
-			ValidateFunc: validation.Any(connectedregistries.ValidateConnectedRegistryID, registries.ValidateRegistryID),
+			ValidateFunc: validation.Any(validate.ContainerConnectedRegistryID, validate.RegistryID),
 		},
 
 		"sync_token_id": {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: tokens.ValidateTokenID,
+			ValidateFunc: validate.ContainerRegistryTokenID,
 		},
 
 		"sync_schedule": {
@@ -99,13 +96,13 @@ func (r ContainerConnectedRegistryResource) Arguments() map[string]*pluginsdk.Sc
 			Type:     pluginsdk.TypeString,
 			Optional: true,
 			ForceNew: true,
-			Default:  string(connectedregistries.ConnectedRegistryModeReadWrite),
+			Default:  string(containerregistry.ConnectedRegistryModeReadWrite),
 			ValidateFunc: validation.StringInSlice(
 				[]string{
-					string(connectedregistries.ConnectedRegistryModeMirror),
-					string(connectedregistries.ConnectedRegistryModeReadOnly),
-					string(connectedregistries.ConnectedRegistryModeReadWrite),
-					string(connectedregistries.ConnectedRegistryModeRegistry),
+					string(containerregistry.ConnectedRegistryModeMirror),
+					string(containerregistry.ConnectedRegistryModeReadOnly),
+					string(containerregistry.ConnectedRegistryModeReadWrite),
+					string(containerregistry.ConnectedRegistryModeRegistry),
 				},
 				false,
 			),
@@ -149,21 +146,21 @@ func (r ContainerConnectedRegistryResource) Arguments() map[string]*pluginsdk.Sc
 			Optional: true,
 			Elem: &pluginsdk.Schema{
 				Type:         pluginsdk.TypeString,
-				ValidateFunc: tokens.ValidateTokenID,
+				ValidateFunc: validate.ContainerRegistryTokenID,
 			},
 		},
 
 		"log_level": {
 			Type:     pluginsdk.TypeString,
 			Optional: true,
-			Default:  connectedregistries.LogLevelNone,
+			Default:  containerregistry.LogLevelNone,
 			ValidateFunc: validation.StringInSlice(
 				[]string{
-					string(connectedregistries.LogLevelNone),
-					string(connectedregistries.LogLevelDebug),
-					string(connectedregistries.LogLevelInformation),
-					string(connectedregistries.LogLevelWarning),
-					string(connectedregistries.LogLevelError),
+					string(containerregistry.LogLevelNone),
+					string(containerregistry.LogLevelDebug),
+					string(containerregistry.LogLevelInformation),
+					string(containerregistry.LogLevelWarning),
+					string(containerregistry.LogLevelError),
 				},
 				false,
 			),
@@ -190,38 +187,38 @@ func (r ContainerConnectedRegistryResource) ModelObject() interface{} {
 }
 
 func (r ContainerConnectedRegistryResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return connectedregistries.ValidateConnectedRegistryID
+	return validate.ContainerConnectedRegistryID
 }
 
 func (r ContainerConnectedRegistryResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.Containers.ContainerRegistryClient_v2021_08_01_preview.ConnectedRegistries
+			client := metadata.Client.Containers.ConnectedRegistriesClient
 
 			var model ContainerConnectedRegistryModel
 			if err := metadata.Decode(&model); err != nil {
 				return fmt.Errorf("decoding %+v", err)
 			}
 
-			rid, err := registries.ParseRegistryID(model.ContainerRegistryId)
+			rid, err := parse.RegistryID(model.ContainerRegistryId)
 			if err != nil {
 				return fmt.Errorf("parsing parent container registry id: %v", err)
 			}
-			id := connectedregistries.NewConnectedRegistryID(rid.SubscriptionId, rid.ResourceGroupName, rid.RegistryName, model.Name)
-			existing, err := client.Get(ctx, id)
+			id := parse.NewContainerConnectedRegistryID(rid.SubscriptionId, rid.ResourceGroup, rid.Name, model.Name)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.RegistryName, id.ConnectedRegistryName)
 			if err != nil {
-				if !response.WasNotFound(existing.HttpResponse) {
+				if !utils.ResponseWasNotFound(existing.Response) {
 					return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 				}
 			}
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			auditLogStatus := connectedregistries.AuditLogStatusDisabled
+			auditLogStatus := containerregistry.AuditLogStatusDisabled
 			if model.AuditLogEnabled {
-				auditLogStatus = connectedregistries.AuditLogStatusEnabled
+				auditLogStatus = containerregistry.AuditLogStatusEnabled
 			}
 
 			notifications, err := r.expandRepoNotifications(model.RepoNotifications)
@@ -229,36 +226,40 @@ func (r ContainerConnectedRegistryResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("expanding `notification`: %+v", err)
 			}
 
-			params := connectedregistries.ConnectedRegistry{
-				Properties: &connectedregistries.ConnectedRegistryProperties{
-					Mode: connectedregistries.ConnectedRegistryMode(model.Mode),
-					Parent: connectedregistries.ParentProperties{
-						SyncProperties: connectedregistries.SyncProperties{
-							TokenId:    model.SyncTokenId,
+			params := containerregistry.ConnectedRegistry{
+				ConnectedRegistryProperties: &containerregistry.ConnectedRegistryProperties{
+					Mode: containerregistry.ConnectedRegistryMode(model.Mode),
+					Parent: &containerregistry.ParentProperties{
+						SyncProperties: &containerregistry.SyncProperties{
+							TokenID:    utils.String(model.SyncTokenId),
 							Schedule:   utils.String(model.SyncSchedule),
 							SyncWindow: utils.String(model.SyncWindow),
-							MessageTtl: model.SyncMessageTTL,
+							MessageTTL: utils.String(model.SyncMessageTTL),
 						},
 					},
 					ClientTokenIds: &model.ClientTokenIds,
-					Logging: &connectedregistries.LoggingProperties{
-						LogLevel:       pointer.To(connectedregistries.LogLevel(model.LogLevel)),
-						AuditLogStatus: pointer.To(auditLogStatus),
+					Logging: &containerregistry.LoggingProperties{
+						LogLevel:       containerregistry.LogLevel(model.LogLevel),
+						AuditLogStatus: auditLogStatus,
 					},
 					NotificationsList: notifications,
 				},
 			}
 
 			if model.ParentRegistryId != "" {
-				if pid, err := registries.ParseRegistryID(model.ParentRegistryId); err == nil {
-					params.Properties.Parent.Id = utils.String(pid.ID())
-				} else if pid, err := connectedregistries.ParseConnectedRegistryID(model.ParentRegistryId); err == nil {
-					params.Properties.Parent.Id = utils.String(pid.ID())
+				if pid, err := parse.RegistryID(model.ParentRegistryId); err == nil {
+					params.ConnectedRegistryProperties.Parent.ID = utils.String(pid.ID())
+				} else if pid, err := parse.ContainerConnectedRegistryID(model.ParentRegistryId); err == nil {
+					params.ConnectedRegistryProperties.Parent.ID = utils.String(pid.ID())
 				}
 			}
 
-			if err := client.CreateThenPoll(ctx, id, params); err != nil {
+			future, err := client.Create(ctx, id.ResourceGroup, id.RegistryName, id.ConnectedRegistryName, params)
+			if err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
+			}
+			if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+				return fmt.Errorf("waiting for creation of %s: %+v", id, err)
 			}
 
 			metadata.SetID(id)
@@ -272,21 +273,21 @@ func (r ContainerConnectedRegistryResource) Read() sdk.ResourceFunc {
 		Timeout: 5 * time.Minute,
 
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.Containers.ContainerRegistryClient_v2021_08_01_preview.ConnectedRegistries
-			id, err := connectedregistries.ParseConnectedRegistryID(metadata.ResourceData.Id())
+			client := metadata.Client.Containers.ConnectedRegistriesClient
+			id, err := parse.ContainerConnectedRegistryID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			existing, err := client.Get(ctx, *id)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.RegistryName, id.ConnectedRegistryName)
 			if err != nil {
-				if response.WasNotFound(existing.HttpResponse) {
+				if utils.ResponseWasNotFound(existing.Response) {
 					return metadata.MarkAsGone(id)
 				}
 				return fmt.Errorf("retrieving %s: %+v", id, err)
 			}
 
-			rid := registries.NewRegistryID(id.SubscriptionId, id.ResourceGroupName, id.RegistryName)
+			rid := parse.NewRegistryID(id.SubscriptionId, id.ResourceGroup, id.RegistryName)
 
 			var (
 				mode             string
@@ -301,43 +302,39 @@ func (r ContainerConnectedRegistryResource) Read() sdk.ResourceFunc {
 				auditLogEnabled  bool
 			)
 
-			if model := existing.Model; model != nil {
-				if props := model.Properties; props != nil {
-					mode = string(props.Mode)
-
-					if props.NotificationsList != nil {
-						notificationList = *props.NotificationsList
-					}
-
-					if props.ClientTokenIds != nil {
-						clientTokenIds = *props.ClientTokenIds
-					}
-
-					if logging := props.Logging; logging != nil {
-						logLevel = string(*logging.LogLevel)
-						auditLogEnabled = *logging.AuditLogStatus == connectedregistries.AuditLogStatusEnabled
-					}
-
-					parent := props.Parent
-					if parent.Id != nil {
-						if pid, err := registries.ParseRegistryIDInsensitively(*parent.Id); err == nil {
+			if props := existing.ConnectedRegistryProperties; props != nil {
+				mode = string(props.Mode)
+				if props.NotificationsList != nil {
+					notificationList = *props.NotificationsList
+				}
+				if props.ClientTokenIds != nil {
+					clientTokenIds = *props.ClientTokenIds
+				}
+				if logging := props.Logging; logging != nil {
+					logLevel = string(logging.LogLevel)
+					auditLogEnabled = logging.AuditLogStatus == containerregistry.AuditLogStatusEnabled
+				}
+				if parent := props.Parent; parent != nil {
+					if parent.ID != nil {
+						if pid, err := parse.RegistryID(*parent.ID); err == nil {
 							parentRegistryId = pid.ID()
-						} else if pid, err := connectedregistries.ParseConnectedRegistryID(*parent.Id); err == nil {
+						} else if pid, err := parse.ContainerConnectedRegistryID(*parent.ID); err == nil {
 							parentRegistryId = pid.ID()
 						}
 					}
-
-					sync := parent.SyncProperties
-
-					syncTokenId = sync.TokenId
-					syncMessageTTL = sync.MessageTtl
-
-					if sync.Schedule != nil {
-						syncSchedule = *sync.Schedule
-					}
-
-					if sync.SyncWindow != nil {
-						syncWindow = *sync.SyncWindow
+					if sync := parent.SyncProperties; sync != nil {
+						if sync.TokenID != nil {
+							syncTokenId = *sync.TokenID
+						}
+						if sync.Schedule != nil {
+							syncSchedule = *sync.Schedule
+						}
+						if sync.MessageTTL != nil {
+							syncMessageTTL = *sync.MessageTTL
+						}
+						if sync.SyncWindow != nil {
+							syncWindow = *sync.SyncWindow
+						}
 					}
 				}
 			}
@@ -346,7 +343,6 @@ func (r ContainerConnectedRegistryResource) Read() sdk.ResourceFunc {
 			if err != nil {
 				return fmt.Errorf("flattening `notification`: %+v", err)
 			}
-
 			model := ContainerConnectedRegistryModel{
 				Name:                id.ConnectedRegistryName,
 				ContainerRegistryId: rid.ID(),
@@ -371,15 +367,22 @@ func (r ContainerConnectedRegistryResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.Containers.ContainerRegistryClient_v2021_08_01_preview.ConnectedRegistries
+			client := metadata.Client.Containers.ConnectedRegistriesClient
 
-			id, err := connectedregistries.ParseConnectedRegistryID(metadata.ResourceData.Id())
+			id, err := parse.ContainerConnectedRegistryID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			if err := client.DeleteThenPoll(ctx, *id); err != nil {
+			future, err := client.Delete(ctx, id.ResourceGroup, id.RegistryName, id.ConnectedRegistryName)
+			if err != nil {
 				return fmt.Errorf("deleting %s: %+v", id, err)
+			}
+
+			if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+				if !response.WasNotFound(future.Response()) {
+					return fmt.Errorf("waiting for removal of %s: %+v", id, err)
+				}
 			}
 
 			return nil
@@ -391,7 +394,7 @@ func (r ContainerConnectedRegistryResource) Update() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			id, err := connectedregistries.ParseConnectedRegistryID(metadata.ResourceData.Id())
+			id, err := parse.ContainerConnectedRegistryID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
@@ -401,17 +404,16 @@ func (r ContainerConnectedRegistryResource) Update() sdk.ResourceFunc {
 				return err
 			}
 
-			client := metadata.Client.Containers.ContainerRegistryClient_v2021_08_01_preview.ConnectedRegistries
+			client := metadata.Client.Containers.ConnectedRegistriesClient
 
-			existing, err := client.Get(ctx, *id)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.RegistryName, id.ConnectedRegistryName)
 			if err != nil {
 				return fmt.Errorf("retrieving %s: %+v", id, err)
 			}
 
-			if existing.Model != nil && existing.Model.Properties != nil {
-				props := existing.Model.Properties
+			if props := existing.ConnectedRegistryProperties; props != nil {
 				if metadata.ResourceData.HasChange("mode") {
-					props.Mode = connectedregistries.ConnectedRegistryMode(state.Mode)
+					props.Mode = containerregistry.ConnectedRegistryMode(state.Mode)
 				}
 				if metadata.ResourceData.HasChange("notification") {
 					notifications, err := r.expandRepoNotifications(state.RepoNotifications)
@@ -425,33 +427,39 @@ func (r ContainerConnectedRegistryResource) Update() sdk.ResourceFunc {
 				}
 				if logging := props.Logging; logging != nil {
 					if metadata.ResourceData.HasChange("log_level") {
-						logging.LogLevel = pointer.To(connectedregistries.LogLevel(state.LogLevel))
+						logging.LogLevel = containerregistry.LogLevel(state.LogLevel)
 					}
 					if metadata.ResourceData.HasChange("audit_log_enabled") {
-						logging.AuditLogStatus = pointer.To(connectedregistries.AuditLogStatusDisabled)
+						logging.AuditLogStatus = containerregistry.AuditLogStatusDisabled
 						if state.AuditLogEnabled {
-							logging.AuditLogStatus = pointer.To(connectedregistries.AuditLogStatusEnabled)
+							logging.AuditLogStatus = containerregistry.AuditLogStatusEnabled
 						}
 					}
 				}
-
-				sync := props.Parent.SyncProperties
-				if metadata.ResourceData.HasChange("sync_token_id") {
-					sync.TokenId = state.SyncTokenId
-				}
-				if metadata.ResourceData.HasChange("sync_schedule") {
-					sync.Schedule = &state.SyncSchedule
-				}
-				if metadata.ResourceData.HasChange("sync_message_ttl") {
-					sync.MessageTtl = state.SyncMessageTTL
-				}
-				if metadata.ResourceData.HasChange("sync_window") {
-					sync.SyncWindow = &state.SyncWindow
+				if parent := props.Parent; parent != nil {
+					if sync := parent.SyncProperties; sync != nil {
+						if metadata.ResourceData.HasChange("sync_token_id") {
+							sync.TokenID = &state.SyncTokenId
+						}
+						if metadata.ResourceData.HasChange("sync_schedule") {
+							sync.Schedule = &state.SyncSchedule
+						}
+						if metadata.ResourceData.HasChange("sync_message_ttl") {
+							sync.MessageTTL = &state.SyncMessageTTL
+						}
+						if metadata.ResourceData.HasChange("sync_window") {
+							sync.SyncWindow = &state.SyncWindow
+						}
+					}
 				}
 			}
 
-			if err := client.CreateThenPoll(ctx, *id, *existing.Model); err != nil {
+			future, err := client.Create(ctx, id.ResourceGroup, id.RegistryName, id.ConnectedRegistryName, existing)
+			if err != nil {
 				return fmt.Errorf("updating %s: %+v", id, err)
+			}
+			if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+				return fmt.Errorf("waiting for update of %s: %+v", id, err)
 			}
 
 			return nil

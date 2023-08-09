@@ -1,19 +1,19 @@
 package common
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/cosmosdb/2023-04-15/cosmosdb"
+	"github.com/Azure/azure-sdk-for-go/services/cosmos-db/mgmt/2021-10-15/documentdb"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-func ExpandCosmosDbConflicResolutionPolicy(inputs []interface{}) *cosmosdb.ConflictResolutionPolicy {
+func ExpandCosmosDbConflicResolutionPolicy(inputs []interface{}) *documentdb.ConflictResolutionPolicy {
 	if len(inputs) == 0 || inputs[0] == nil {
 		return nil
 	}
 
 	input := inputs[0].(map[string]interface{})
-	conflictResolutionMode := cosmosdb.ConflictResolutionMode(input["mode"].(string))
-	conflict := &cosmosdb.ConflictResolutionPolicy{
-		Mode: &conflictResolutionMode,
+	conflictResolutionMode := input["mode"].(string)
+	conflict := &documentdb.ConflictResolutionPolicy{
+		Mode: documentdb.ConflictResolutionMode(conflictResolutionMode),
 	}
 
 	if conflictResolutionPath, ok := input["conflict_resolution_path"].(string); ok {
@@ -27,13 +27,13 @@ func ExpandCosmosDbConflicResolutionPolicy(inputs []interface{}) *cosmosdb.Confl
 	return conflict
 }
 
-func FlattenCosmosDbConflictResolutionPolicy(input *cosmosdb.ConflictResolutionPolicy) []interface{} {
+func FlattenCosmosDbConflictResolutionPolicy(input *documentdb.ConflictResolutionPolicy) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
 	conflictResolutionPolicy := make(map[string]interface{})
 
-	conflictResolutionPolicy["mode"] = input.Mode
+	conflictResolutionPolicy["mode"] = string(input.Mode)
 	var path, procedure string
 	if input.ConflictResolutionPath != nil {
 		path = *input.ConflictResolutionPath
@@ -44,7 +44,7 @@ func FlattenCosmosDbConflictResolutionPolicy(input *cosmosdb.ConflictResolutionP
 
 	return []interface{}{
 		map[string]interface{}{
-			"mode":                          input.Mode,
+			"mode":                          string(input.Mode),
 			"conflict_resolution_path":      path,
 			"conflict_resolution_procedure": procedure,
 		},

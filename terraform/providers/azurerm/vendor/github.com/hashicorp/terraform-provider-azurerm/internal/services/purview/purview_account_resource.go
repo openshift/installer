@@ -119,6 +119,7 @@ func resourcePurviewAccountRead(d *pluginsdk.ResourceData, meta interface{}) err
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
+
 		d.Set("location", location.NormalizeNilable(model.Location))
 
 		flattenedIdentity, err := identity.FlattenSystemOrUserAssignedMap(model.Identity)

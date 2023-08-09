@@ -5,7 +5,8 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/zclconf/go-cty/cty/ctystrings"
+	"golang.org/x/text/unicode/norm"
+
 	"github.com/zclconf/go-cty/cty/set"
 )
 
@@ -106,7 +107,7 @@ func StringVal(v string) Value {
 // A return value from this function can be meaningfully compared byte-for-byte
 // with a Value.AsString result.
 func NormalizeString(s string) string {
-	return ctystrings.Normalize(s)
+	return norm.NFC.String(s)
 }
 
 // ObjectVal returns a Value of an object type whose structure is defined
@@ -286,7 +287,7 @@ func SetVal(vals []Value) Value {
 		rawList[i] = val.v
 	}
 
-	rawVal := set.NewSetFromSlice(set.Rules[interface{}](setRules{elementType}), rawList)
+	rawVal := set.NewSetFromSlice(setRules{elementType}, rawList)
 
 	return Value{
 		ty: Set(elementType),
@@ -333,7 +334,7 @@ func SetValFromValueSet(s ValueSet) Value {
 func SetValEmpty(element Type) Value {
 	return Value{
 		ty: Set(element),
-		v:  set.NewSet(set.Rules[interface{}](setRules{element})),
+		v:  set.NewSet(setRules{element}),
 	}
 }
 

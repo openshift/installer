@@ -2,13 +2,11 @@ package releasesjson
 
 import (
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"net/url"
 	"strings"
 
@@ -44,7 +42,7 @@ func HashSumFromHexDigest(hexDigest string) (HashSum, error) {
 	return HashSum(sumBytes), nil
 }
 
-func (cd *ChecksumDownloader) DownloadAndVerifyChecksums(ctx context.Context) (ChecksumFileMap, error) {
+func (cd *ChecksumDownloader) DownloadAndVerifyChecksums() (ChecksumFileMap, error) {
 	sigFilename, err := cd.findSigFilename(cd.ProductVersion)
 	if err != nil {
 		return nil, err
@@ -56,12 +54,7 @@ func (cd *ChecksumDownloader) DownloadAndVerifyChecksums(ctx context.Context) (C
 		url.PathEscape(cd.ProductVersion.RawVersion),
 		url.PathEscape(sigFilename))
 	cd.Logger.Printf("downloading signature from %s", sigURL)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, sigURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request for %q: %w", sigURL, err)
-	}
-	sigResp, err := client.Do(req)
+	sigResp, err := client.Get(sigURL)
 	if err != nil {
 		return nil, err
 	}
@@ -77,12 +70,7 @@ func (cd *ChecksumDownloader) DownloadAndVerifyChecksums(ctx context.Context) (C
 		url.PathEscape(cd.ProductVersion.RawVersion),
 		url.PathEscape(cd.ProductVersion.SHASUMS))
 	cd.Logger.Printf("downloading checksums from %s", shasumsURL)
-
-	req, err = http.NewRequestWithContext(ctx, http.MethodGet, shasumsURL, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request for %q: %w", shasumsURL, err)
-	}
-	sumsResp, err := client.Do(req)
+	sumsResp, err := client.Get(shasumsURL)
 	if err != nil {
 		return nil, err
 	}

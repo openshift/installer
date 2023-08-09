@@ -1,23 +1,18 @@
 package client
 
 import (
-	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2020-01-01/mysql"                // nolint: staticcheck
-	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2021-05-01/mysqlflexibleservers" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-sdk/resource-manager/mysql/2021-05-01/serverfailover"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/mysql/2021-05-01/servers"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/mysql/2022-01-01/azureadadministrators"
+	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2020-01-01/mysql"
+	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2021-05-01/mysqlflexibleservers"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	AzureADAdministratorsClient        *azureadadministrators.AzureADAdministratorsClient
 	ConfigurationsClient               *mysql.ConfigurationsClient
 	DatabasesClient                    *mysql.DatabasesClient
 	FirewallRulesClient                *mysql.FirewallRulesClient
 	FlexibleDatabasesClient            *mysqlflexibleservers.DatabasesClient
 	FlexibleServerConfigurationsClient *mysqlflexibleservers.ConfigurationsClient
-	FlexibleServerClient               *servers.ServersClient
-	FlexibleServerFailoverClient       *serverfailover.ServerFailoverClient
+	FlexibleServerClient               *mysqlflexibleservers.ServersClient
 	FlexibleServerFirewallRulesClient  *mysqlflexibleservers.FirewallRulesClient
 	ServersClient                      *mysql.ServersClient
 	ServerKeysClient                   *mysql.ServerKeysClient
@@ -27,9 +22,6 @@ type Client struct {
 }
 
 func NewClient(o *common.ClientOptions) *Client {
-	azureADAdministratorsClient := azureadadministrators.NewAzureADAdministratorsClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&azureADAdministratorsClient.Client, o.ResourceManagerAuthorizer)
-
 	ConfigurationsClient := mysql.NewConfigurationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&ConfigurationsClient.Client, o.ResourceManagerAuthorizer)
 
@@ -42,11 +34,8 @@ func NewClient(o *common.ClientOptions) *Client {
 	flexibleDatabasesClient := mysqlflexibleservers.NewDatabasesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&flexibleDatabasesClient.Client, o.ResourceManagerAuthorizer)
 
-	flexibleServerClient := servers.NewServersClientWithBaseURI(o.ResourceManagerEndpoint)
+	flexibleServerClient := mysqlflexibleservers.NewServersClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&flexibleServerClient.Client, o.ResourceManagerAuthorizer)
-
-	flexibleServerFailoverClient := serverfailover.NewServerFailoverClientWithBaseURI(o.ResourceManagerEndpoint)
-	o.ConfigureClient(&flexibleServerFailoverClient.Client, o.ResourceManagerAuthorizer)
 
 	flexibleServerFirewallRulesClient := mysqlflexibleservers.NewFirewallRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&flexibleServerFirewallRulesClient.Client, o.ResourceManagerAuthorizer)
@@ -70,13 +59,11 @@ func NewClient(o *common.ClientOptions) *Client {
 	o.ConfigureClient(&serverAdministratorsClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{
-		AzureADAdministratorsClient:        &azureADAdministratorsClient,
 		ConfigurationsClient:               &ConfigurationsClient,
 		DatabasesClient:                    &DatabasesClient,
 		FirewallRulesClient:                &FirewallRulesClient,
 		FlexibleDatabasesClient:            &flexibleDatabasesClient,
 		FlexibleServerClient:               &flexibleServerClient,
-		FlexibleServerFailoverClient:       &flexibleServerFailoverClient,
 		FlexibleServerFirewallRulesClient:  &flexibleServerFirewallRulesClient,
 		FlexibleServerConfigurationsClient: &flexibleServerConfigurationsClient,
 		ServersClient:                      &ServersClient,

@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package utils
 
 // NormaliseNilableInt takes a pointer to an int and returns a zero value or

@@ -203,7 +203,7 @@ func (r ApplicationInsightsWorkbookResource) Update() sdk.ResourceFunc {
 			}
 
 			properties := resp.Model
-			if properties == nil || properties.Properties == nil {
+			if properties == nil {
 				return fmt.Errorf("retrieving %s: properties was nil", id)
 			}
 
@@ -217,9 +217,6 @@ func (r ApplicationInsightsWorkbookResource) Update() sdk.ResourceFunc {
 
 			if metadata.ResourceData.HasChange("display_name") {
 				properties.Properties.DisplayName = model.DisplayName
-				if properties.Tags != nil {
-					delete(*properties.Tags, "hidden-title")
-				}
 			}
 
 			if metadata.ResourceData.HasChange("data_json") {
@@ -265,7 +262,7 @@ func (r ApplicationInsightsWorkbookResource) Read() sdk.ResourceFunc {
 			}
 
 			state := ApplicationInsightsWorkbookModel{
-				Name:              id.WorkbookName,
+				Name:              id.ResourceName,
 				ResourceGroupName: id.ResourceGroupName,
 				Location:          location.NormalizeNilable(model.Location),
 			}
@@ -301,7 +298,10 @@ func (r ApplicationInsightsWorkbookResource) Read() sdk.ResourceFunc {
 
 			if model.Tags != nil {
 				// The backend returns a tags with key `hidden-title` by default. Since it has the same value with `display_name` and will cause inconsistency with user's configuration, remove it as a workaround.
-				delete(*model.Tags, "hidden-title")
+				if _, ok := (*model.Tags)["hidden-title"]; ok {
+					delete(*model.Tags, "hidden-title")
+				}
+
 				state.Tags = *model.Tags
 			}
 

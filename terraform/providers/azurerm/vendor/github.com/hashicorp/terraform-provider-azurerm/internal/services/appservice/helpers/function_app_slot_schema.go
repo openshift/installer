@@ -5,13 +5,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
+	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	apimValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/apimanagement/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/web/2022-09-01/web"
 )
 
 type SiteConfigWindowsFunctionAppSlot struct {
@@ -95,17 +94,23 @@ func SiteConfigSchemaWindowsFunctionAppSlot() *pluginsdk.Schema {
 				},
 
 				"application_insights_key": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					Sensitive:    true,
+					Type:      pluginsdk.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					RequiredWith: []string{
+						"site_config.0.application_insights_connection_string",
+					},
 					ValidateFunc: validation.StringIsNotEmpty,
 					Description:  "The Instrumentation Key for connecting the Windows Function App to Application Insights.",
 				},
 
 				"application_insights_connection_string": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					Sensitive:    true,
+					Type:      pluginsdk.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					RequiredWith: []string{
+						"site_config.0.application_insights_key",
+					},
 					ValidateFunc: validation.StringIsNotEmpty,
 					Description:  "The Connection String for linking the Windows Function App to Application Insights.",
 				},
@@ -202,9 +207,8 @@ func SiteConfigSchemaWindowsFunctionAppSlot() *pluginsdk.Schema {
 					ValidateFunc: validation.StringInSlice([]string{
 						"VS2017",
 						"VS2019",
-						"VS2022",
 					}, false),
-					Description: "The Remote Debugging Version. Possible values include `VS2017`, `VS2019`, and `VS2022`",
+					Description: "The Remote Debugging Version. Possible values include `VS2017` and `VS2019`",
 				},
 
 				"runtime_scale_monitoring_enabled": {
@@ -254,7 +258,7 @@ func SiteConfigSchemaWindowsFunctionAppSlot() *pluginsdk.Schema {
 				"health_check_eviction_time_in_min": { // NOTE: Will evict the only node in single node configurations.
 					Type:         pluginsdk.TypeInt,
 					Optional:     true,
-					Default:      0,
+					Computed:     true,
 					ValidateFunc: validation.IntBetween(2, 10),
 					Description:  "The amount of time in minutes that a node is unhealthy before being removed from the load balancer. Possible values are between `2` and `10`. Defaults to `10`. Only valid in conjunction with `health_check_path`",
 				},
@@ -399,17 +403,23 @@ func SiteConfigSchemaLinuxFunctionAppSlot() *pluginsdk.Schema {
 				},
 
 				"application_insights_key": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					Sensitive:    true,
+					Type:      pluginsdk.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					RequiredWith: []string{
+						"site_config.0.application_insights_connection_string",
+					},
 					ValidateFunc: validation.StringIsNotEmpty,
 					Description:  "The Instrumentation Key for connecting the Linux Function App to Application Insights.",
 				},
 
 				"application_insights_connection_string": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					Sensitive:    true,
+					Type:      pluginsdk.TypeString,
+					Optional:  true,
+					Sensitive: true,
+					RequiredWith: []string{
+						"site_config.0.application_insights_key",
+					},
 					ValidateFunc: validation.StringIsNotEmpty,
 					Description:  "The Connection String for linking the Linux Function App to Application Insights.",
 				},
@@ -520,9 +530,8 @@ func SiteConfigSchemaLinuxFunctionAppSlot() *pluginsdk.Schema {
 					ValidateFunc: validation.StringInSlice([]string{
 						"VS2017",
 						"VS2019",
-						"VS2022",
 					}, false),
-					Description: "The Remote Debugging Version. Possible values include `VS2017`, `VS2019`, and `VS2022`",
+					Description: "The Remote Debugging Version. Possible values include `VS2017` and `VS2019`",
 				},
 
 				"runtime_scale_monitoring_enabled": {
@@ -572,7 +581,7 @@ func SiteConfigSchemaLinuxFunctionAppSlot() *pluginsdk.Schema {
 				"health_check_eviction_time_in_min": { // NOTE: Will evict the only node in single node configurations.
 					Type:         pluginsdk.TypeInt,
 					Optional:     true,
-					Default:      0,
+					Computed:     true,
 					ValidateFunc: validation.IntBetween(2, 10),
 					Description:  "The amount of time in minutes that a node is unhealthy before being removed from the load balancer. Possible values are between `2` and `10`. Defaults to `10`. Only valid in conjunction with `health_check_path`",
 				},
@@ -642,7 +651,7 @@ func ExpandSiteConfigWindowsFunctionAppSlot(siteConfig []SiteConfigWindowsFuncti
 	if existing != nil {
 		expanded = existing
 		// need to zero fxversion to re-calculate based on changes below or removing app_stack doesn't apply
-		expanded.WindowsFxVersion = utils.String("")
+		expanded.LinuxFxVersion = utils.String("")
 	}
 
 	appSettings := make([]web.NameValuePair, 0)
@@ -666,12 +675,13 @@ func ExpandSiteConfigWindowsFunctionAppSlot(siteConfig []SiteConfigWindowsFuncti
 
 	windowsSlotSiteConfig := siteConfig[0]
 
-	if metadata.ResourceData.HasChange("site_config.0.health_check_path") || metadata.ResourceData.HasChange("site_config.0.health_check_eviction_time_in_min") {
-		v := strconv.Itoa(windowsSlotSiteConfig.HealthCheckEvictionTime)
-		if v == "0" || windowsSlotSiteConfig.HealthCheckPath == "" {
-			appSettings = updateOrAppendAppSettings(appSettings, "WEBSITE_HEALTHCHECK_MAXPINGFAILURES", v, true)
-		} else {
-			appSettings = updateOrAppendAppSettings(appSettings, "WEBSITE_HEALTHCHECK_MAXPINGFAILURES", v, false)
+	if metadata.ResourceData.HasChange("site_config.0.health_check_path") {
+		if windowsSlotSiteConfig.HealthCheckPath != "" && metadata.ResourceData.HasChange("site_config.0.health_check_eviction_time_in_min") {
+			v := strconv.Itoa(windowsSlotSiteConfig.HealthCheckEvictionTime)
+			appSettings = append(appSettings, web.NameValuePair{
+				Name:  utils.String("WEBSITE_HEALTHCHECK_MAXPINGFAILURES"),
+				Value: utils.String(v),
+			})
 		}
 	}
 
@@ -715,39 +725,68 @@ func ExpandSiteConfigWindowsFunctionAppSlot(siteConfig []SiteConfigWindowsFuncti
 		expanded.AppCommandLine = utils.String(windowsSlotSiteConfig.AppCommandLine)
 	}
 
-	if len(windowsSlotSiteConfig.ApplicationStack) > 0 {
-		windowsAppStack := windowsSlotSiteConfig.ApplicationStack[0]
-		if windowsAppStack.DotNetVersion != "" {
-			if windowsAppStack.DotNetIsolated {
-				appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "dotnet-isolated", false)
-			} else {
-				appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "dotnet", false)
+	if metadata.ResourceData.HasChange("site_config.0.application_stack") && len(windowsSlotSiteConfig.ApplicationStack) > 0 {
+		if len(windowsSlotSiteConfig.ApplicationStack) > 0 {
+			windowsAppStack := windowsSlotSiteConfig.ApplicationStack[0]
+			if windowsAppStack.DotNetVersion != "" {
+				if windowsAppStack.DotNetIsolated {
+					appSettings = append(appSettings, web.NameValuePair{
+						Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+						Value: utils.String("dotnet-isolated"),
+					})
+					expanded.WindowsFxVersion = utils.String(fmt.Sprintf("DOTNET-ISOLATED|%s", windowsAppStack.DotNetVersion))
+
+				} else {
+					appSettings = append(appSettings, web.NameValuePair{
+						Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+						Value: utils.String("dotnet"),
+					})
+					expanded.WindowsFxVersion = utils.String(fmt.Sprintf("DOTNET|%s", windowsAppStack.DotNetVersion))
+				}
 			}
-			expanded.NetFrameworkVersion = pointer.To(windowsAppStack.DotNetVersion)
-		}
 
-		if windowsAppStack.NodeVersion != "" {
-			appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "node", false)
-			appSettings = updateOrAppendAppSettings(appSettings, "WEBSITE_NODE_DEFAULT_VERSION", windowsAppStack.NodeVersion, false)
-		}
+			if windowsAppStack.NodeVersion != "" {
+				appSettings = append(appSettings, web.NameValuePair{
+					Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+					Value: utils.String("node"),
+				})
+				appSettings = append(appSettings, web.NameValuePair{
+					Name:  utils.String("WEBSITE_NODE_DEFAULT_VERSION"),
+					Value: utils.String(windowsAppStack.NodeVersion),
+				})
+				expanded.WindowsFxVersion = utils.String(fmt.Sprintf("Node|%s", windowsAppStack.NodeVersion))
+			}
 
-		if windowsAppStack.JavaVersion != "" {
-			appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "java", false)
-			expanded.JavaVersion = pointer.To(windowsAppStack.JavaVersion)
-		}
+			if windowsAppStack.JavaVersion != "" {
+				appSettings = append(appSettings, web.NameValuePair{
+					Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+					Value: utils.String("java"),
+				})
+				expanded.WindowsFxVersion = utils.String(fmt.Sprintf("Java|%s", windowsAppStack.JavaVersion))
+			}
 
-		if windowsAppStack.PowerShellCoreVersion != "" {
-			appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "powershell", false)
-			expanded.PowerShellVersion = pointer.To(strings.TrimPrefix(windowsAppStack.PowerShellCoreVersion, "~"))
-		}
+			if windowsAppStack.PowerShellCoreVersion != "" {
+				appSettings = append(appSettings, web.NameValuePair{
+					Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+					Value: utils.String("powershell"),
+				})
+				expanded.WindowsFxVersion = utils.String(fmt.Sprintf("PowerShell|%s", windowsAppStack.PowerShellCoreVersion))
+			}
 
-		if windowsAppStack.CustomHandler {
-			appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "custom", false)
-			expanded.WindowsFxVersion = utils.String("") // Custom needs an explicit empty string here
+			if windowsAppStack.CustomHandler {
+				appSettings = append(appSettings, web.NameValuePair{
+					Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+					Value: utils.String("custom"),
+				})
+				expanded.WindowsFxVersion = utils.String("") // Custom needs an explicit empty string here
+			}
+		} else {
+			appSettings = append(appSettings, web.NameValuePair{
+				Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
+				Value: utils.String(""),
+			})
+			expanded.WindowsFxVersion = utils.String("")
 		}
-	} else {
-		appSettings = updateOrAppendAppSettings(appSettings, "FUNCTIONS_WORKER_RUNTIME", "", true)
-		expanded.WindowsFxVersion = utils.String("")
 	}
 
 	expanded.VnetRouteAllEnabled = utils.Bool(windowsSlotSiteConfig.VnetRouteAllEnabled)
@@ -788,10 +827,6 @@ func ExpandSiteConfigWindowsFunctionAppSlot(siteConfig []SiteConfigWindowsFuncti
 
 	if metadata.ResourceData.HasChange("site_config.0.remote_debugging_version") {
 		expanded.RemoteDebuggingVersion = utils.String(windowsSlotSiteConfig.RemoteDebuggingVersion)
-	}
-
-	if metadata.ResourceData.HasChange("site_config.0.runtime_scale_monitoring_enabled") {
-		expanded.FunctionsRuntimeScaleMonitoringEnabled = utils.Bool(windowsSlotSiteConfig.RuntimeScaleMonitoring)
 	}
 
 	expanded.Use32BitWorkerProcess = utils.Bool(windowsSlotSiteConfig.Use32BitWorker)
@@ -844,7 +879,6 @@ func FlattenSiteConfigWindowsFunctionAppSlot(functionAppSlotSiteConfig *web.Site
 		AppCommandLine:          utils.NormalizeNilableString(functionAppSlotSiteConfig.AppCommandLine),
 		AppScaleLimit:           int(utils.NormaliseNilableInt32(functionAppSlotSiteConfig.FunctionAppScaleLimit)),
 		AutoSwapSlotName:        utils.NormalizeNilableString(functionAppSlotSiteConfig.AutoSwapSlotName),
-		Cors:                    FlattenCorsSettings(functionAppSlotSiteConfig.Cors),
 		DetailedErrorLogging:    utils.NormaliseNilableBool(functionAppSlotSiteConfig.DetailedErrorLoggingEnabled),
 		HealthCheckPath:         utils.NormalizeNilableString(functionAppSlotSiteConfig.HealthCheckPath),
 		Http2Enabled:            utils.NormaliseNilableBool(functionAppSlotSiteConfig.HTTP20Enabled),
@@ -887,22 +921,28 @@ func FlattenSiteConfigWindowsFunctionAppSlot(functionAppSlotSiteConfig *web.Site
 		result.DefaultDocuments = *v
 	}
 
-	powershellVersion := ""
-	if p := functionAppSlotSiteConfig.PowerShellVersion; p != nil {
-		powershellVersion = *p
-		if powershellVersion == "~7" {
-			powershellVersion = "7"
+	if functionAppSlotSiteConfig.Cors != nil {
+		corsSettings := functionAppSlotSiteConfig.Cors
+		cors := CorsSetting{}
+		if corsSettings.SupportCredentials != nil {
+			cors.SupportCredentials = *corsSettings.SupportCredentials
+		}
+
+		if corsSettings.AllowedOrigins != nil && len(*corsSettings.AllowedOrigins) != 0 {
+			cors.AllowedOrigins = *corsSettings.AllowedOrigins
+			result.Cors = []CorsSetting{cors}
 		}
 	}
 
-	result.ApplicationStack = []ApplicationStackWindowsFunctionApp{{
-		DotNetVersion:         pointer.From(functionAppSlotSiteConfig.NetFrameworkVersion),
-		DotNetIsolated:        false, // Note: this is set later from app_settings.FUNCTIONS_WORKER_RUNTIME in unpackWindowsFunctionAppSettings
-		NodeVersion:           "",    // Note: this will be set from app_settings later in unpackWindowsFunctionAppSettings
-		JavaVersion:           pointer.From(functionAppSlotSiteConfig.JavaVersion),
-		PowerShellCoreVersion: powershellVersion,
-		CustomHandler:         false, // Note: this is set later from app_settings
-	}}
+	var appStack []ApplicationStackWindowsFunctionApp
+	if functionAppSlotSiteConfig.WindowsFxVersion != nil {
+		decoded, err := DecodeFunctionAppWindowsFxVersion(*functionAppSlotSiteConfig.WindowsFxVersion)
+		if err != nil {
+			return nil, fmt.Errorf("flattening site config: %s", err)
+		}
+		appStack = decoded
+	}
+	result.ApplicationStack = appStack
 
 	return result, nil
 }
@@ -940,12 +980,13 @@ func ExpandSiteConfigLinuxFunctionAppSlot(siteConfig []SiteConfigLinuxFunctionAp
 
 	linuxSlotSiteConfig := siteConfig[0]
 
-	if metadata.ResourceData.HasChange("site_config.0.health_check_path") || metadata.ResourceData.HasChange("site_config.0.health_check_eviction_time_in_min") {
-		v := strconv.Itoa(linuxSlotSiteConfig.HealthCheckEvictionTime)
-		if v == "0" || linuxSlotSiteConfig.HealthCheckPath == "" {
-			appSettings = updateOrAppendAppSettings(appSettings, "WEBSITE_HEALTHCHECK_MAXPINGFAILURES", v, true)
-		} else {
-			appSettings = updateOrAppendAppSettings(appSettings, "WEBSITE_HEALTHCHECK_MAXPINGFAILURES", v, false)
+	if metadata.ResourceData.HasChange("site_config.0.health_check_path") {
+		if linuxSlotSiteConfig.HealthCheckPath != "" && metadata.ResourceData.HasChange("site_config.0.health_check_eviction_time_in_min") {
+			v := strconv.Itoa(linuxSlotSiteConfig.HealthCheckEvictionTime)
+			appSettings = append(appSettings, web.NameValuePair{
+				Name:  utils.String("WEBSITE_HEALTHCHECK_MAXPINGFAILURES"),
+				Value: utils.String(v),
+			})
 		}
 	}
 
@@ -1067,6 +1108,7 @@ func ExpandSiteConfigLinuxFunctionAppSlot(siteConfig []SiteConfigLinuxFunctionAp
 			})
 			expanded.LinuxFxVersion = utils.String(fmt.Sprintf("DOCKER|%s/%s:%s", dockerConfig.RegistryURL, dockerConfig.ImageName, dockerConfig.ImageTag))
 		}
+
 	} else {
 		appSettings = append(appSettings, web.NameValuePair{
 			Name:  utils.String("FUNCTIONS_WORKER_RUNTIME"),
@@ -1123,10 +1165,6 @@ func ExpandSiteConfigLinuxFunctionAppSlot(siteConfig []SiteConfigLinuxFunctionAp
 		expanded.RemoteDebuggingVersion = utils.String(linuxSlotSiteConfig.RemoteDebuggingVersion)
 	}
 
-	if metadata.ResourceData.HasChange("site_config.0.runtime_scale_monitoring_enabled") {
-		expanded.FunctionsRuntimeScaleMonitoringEnabled = utils.Bool(linuxSlotSiteConfig.RuntimeScaleMonitoring)
-	}
-
 	expanded.Use32BitWorkerProcess = utils.Bool(linuxSlotSiteConfig.Use32BitWorker)
 
 	expanded.WebSocketsEnabled = utils.Bool(linuxSlotSiteConfig.WebSockets)
@@ -1176,7 +1214,6 @@ func FlattenSiteConfigLinuxFunctionAppSlot(functionAppSlotSiteConfig *web.SiteCo
 		AppScaleLimit:           int(utils.NormaliseNilableInt32(functionAppSlotSiteConfig.FunctionAppScaleLimit)),
 		AutoSwapSlotName:        utils.NormalizeNilableString(functionAppSlotSiteConfig.AutoSwapSlotName),
 		ContainerRegistryMSI:    utils.NormalizeNilableString(functionAppSlotSiteConfig.AcrUserManagedIdentityID),
-		Cors:                    FlattenCorsSettings(functionAppSlotSiteConfig.Cors),
 		DetailedErrorLogging:    utils.NormaliseNilableBool(functionAppSlotSiteConfig.DetailedErrorLoggingEnabled),
 		HealthCheckPath:         utils.NormalizeNilableString(functionAppSlotSiteConfig.HealthCheckPath),
 		Http2Enabled:            utils.NormaliseNilableBool(functionAppSlotSiteConfig.HTTP20Enabled),
@@ -1218,6 +1255,19 @@ func FlattenSiteConfigLinuxFunctionAppSlot(functionAppSlotSiteConfig *web.SiteCo
 
 	if v := functionAppSlotSiteConfig.DefaultDocuments; v != nil {
 		result.DefaultDocuments = *v
+	}
+
+	if functionAppSlotSiteConfig.Cors != nil {
+		corsSettings := functionAppSlotSiteConfig.Cors
+		cors := CorsSetting{}
+		if corsSettings.SupportCredentials != nil {
+			cors.SupportCredentials = *corsSettings.SupportCredentials
+		}
+
+		if corsSettings.AllowedOrigins != nil && len(*corsSettings.AllowedOrigins) != 0 {
+			cors.AllowedOrigins = *corsSettings.AllowedOrigins
+			result.Cors = []CorsSetting{cors}
+		}
 	}
 
 	var appStack []ApplicationStackLinuxFunctionApp

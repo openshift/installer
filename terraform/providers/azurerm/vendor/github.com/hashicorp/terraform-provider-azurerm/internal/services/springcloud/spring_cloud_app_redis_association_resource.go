@@ -6,17 +6,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/redis/2023-04-01/redis"
+	"github.com/Azure/azure-sdk-for-go/services/preview/appplatform/mgmt/2022-05-01-preview/appplatform"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/springcloud/migration"
+	redisValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/redis/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/springcloud/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/springcloud/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/appplatform/2023-05-01-preview/appplatform"
 )
 
 const springCloudAppRedisAssociationKeySSL = "useSsl"
@@ -27,11 +26,6 @@ func resourceSpringCloudAppRedisAssociation() *pluginsdk.Resource {
 		Read:   resourceSpringCloudAppRedisAssociationRead,
 		Update: resourceSpringCloudAppRedisAssociationCreateUpdate,
 		Delete: resourceSpringCloudAppRedisAssociationDelete,
-
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.SpringCloudAppRedisAssociationV0ToV1{},
-		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceIdThen(func(id string) error {
 			_, err := parse.SpringCloudAppAssociationID(id)
@@ -64,7 +58,7 @@ func resourceSpringCloudAppRedisAssociation() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: redis.ValidateRediID,
+				ValidateFunc: redisValidate.CacheID,
 			},
 
 			"redis_access_key": {
@@ -107,8 +101,8 @@ func resourceSpringCloudAppRedisAssociationCreateUpdate(d *pluginsdk.ResourceDat
 
 	bindingResource := appplatform.BindingResource{
 		Properties: &appplatform.BindingResourceProperties{
-			BindingParameters: map[string]*string{
-				springCloudAppRedisAssociationKeySSL: utils.String(fmt.Sprintf("%t", d.Get("ssl_enabled").(bool))),
+			BindingParameters: map[string]interface{}{
+				springCloudAppRedisAssociationKeySSL: d.Get("ssl_enabled").(bool),
 			},
 			Key:        utils.String(d.Get("redis_access_key").(string)),
 			ResourceID: utils.String(d.Get("redis_cache_id").(string)),
@@ -153,8 +147,8 @@ func resourceSpringCloudAppRedisAssociationRead(d *pluginsdk.ResourceData, meta 
 		d.Set("redis_cache_id", props.ResourceID)
 
 		enableSSL := "false"
-		if v, ok := props.BindingParameters[springCloudAppRedisAssociationKeySSL]; ok && v != nil {
-			enableSSL = *v
+		if v, ok := props.BindingParameters[springCloudAppRedisAssociationKeySSL]; ok {
+			enableSSL = v.(string)
 		}
 		d.Set("ssl_enabled", strings.EqualFold(enableSSL, "true"))
 	}

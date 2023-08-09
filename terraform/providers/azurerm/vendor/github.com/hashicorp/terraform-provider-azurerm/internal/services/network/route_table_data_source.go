@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/network/2022-09-01/routetables"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceRouteTable() *pluginsdk.Resource {
@@ -69,7 +70,7 @@ func dataSourceRouteTable() *pluginsdk.Resource {
 				Set:      pluginsdk.HashString,
 			},
 
-			"tags": commonschema.TagsDataSource(),
+			"tags": tags.SchemaDataSource(),
 		},
 	}
 }
@@ -80,11 +81,11 @@ func dataSourceRouteTableRead(d *pluginsdk.ResourceData, meta interface{}) error
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := routetables.NewRouteTableID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewRouteTableID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 
-	resp, err := client.Get(ctx, id, routetables.DefaultGetOperationOptions())
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name, "")
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("%s was not found", id)
 		}
 		return fmt.Errorf("making Read request on %s: %+v", id, err)
@@ -92,29 +93,25 @@ func dataSourceRouteTableRead(d *pluginsdk.ResourceData, meta interface{}) error
 
 	d.SetId(id.ID())
 
-	d.Set("name", id.RouteTableName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(model.Location))
+	d.Set("location", location.NormalizeNilable(resp.Location))
 
-		if props := model.Properties; props != nil {
-			if err := d.Set("route", flattenRouteTableDataSourceRoutes(props.Routes)); err != nil {
-				return err
-			}
-
-			if err := d.Set("subnets", flattenRouteTableDataSourceSubnets(props.Subnets)); err != nil {
-				return err
-			}
+	if props := resp.RouteTablePropertiesFormat; props != nil {
+		if err := d.Set("route", flattenRouteTableDataSourceRoutes(props.Routes)); err != nil {
+			return err
 		}
 
-		return tags.FlattenAndSet(d, model.Tags)
+		if err := d.Set("subnets", flattenRouteTableDataSourceSubnets(props.Subnets)); err != nil {
+			return err
+		}
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
-func flattenRouteTableDataSourceRoutes(input *[]routetables.Route) []interface{} {
+func flattenRouteTableDataSourceRoutes(input *[]network.Route) []interface{} {
 	results := make([]interface{}, 0)
 
 	if routes := input; routes != nil {
@@ -123,7 +120,7 @@ func flattenRouteTableDataSourceRoutes(input *[]routetables.Route) []interface{}
 
 			r["name"] = *route.Name
 
-			if props := route.Properties; props != nil {
+			if props := route.RoutePropertiesFormat; props != nil {
 				r["address_prefix"] = *props.AddressPrefix
 				r["next_hop_type"] = string(props.NextHopType)
 				if ip := props.NextHopIPAddress; ip != nil {
@@ -138,12 +135,12 @@ func flattenRouteTableDataSourceRoutes(input *[]routetables.Route) []interface{}
 	return results
 }
 
-func flattenRouteTableDataSourceSubnets(subnets *[]routetables.Subnet) []string {
+func flattenRouteTableDataSourceSubnets(subnets *[]network.Subnet) []string {
 	output := make([]string, 0)
 
 	if subnets != nil {
 		for _, subnet := range *subnets {
-			output = append(output, *subnet.Id)
+			output = append(output, *subnet.ID)
 		}
 	}
 

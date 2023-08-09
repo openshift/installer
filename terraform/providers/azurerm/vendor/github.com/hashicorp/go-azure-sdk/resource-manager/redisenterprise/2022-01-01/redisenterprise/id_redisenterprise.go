@@ -7,24 +7,21 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = RedisEnterpriseId{}
 
 // RedisEnterpriseId is a struct representing the Resource ID for a Redis Enterprise
 type RedisEnterpriseId struct {
-	SubscriptionId      string
-	ResourceGroupName   string
-	RedisEnterpriseName string
+	SubscriptionId    string
+	ResourceGroupName string
+	ClusterName       string
 }
 
 // NewRedisEnterpriseID returns a new RedisEnterpriseId struct
-func NewRedisEnterpriseID(subscriptionId string, resourceGroupName string, redisEnterpriseName string) RedisEnterpriseId {
+func NewRedisEnterpriseID(subscriptionId string, resourceGroupName string, clusterName string) RedisEnterpriseId {
 	return RedisEnterpriseId{
-		SubscriptionId:      subscriptionId,
-		ResourceGroupName:   resourceGroupName,
-		RedisEnterpriseName: redisEnterpriseName,
+		SubscriptionId:    subscriptionId,
+		ResourceGroupName: resourceGroupName,
+		ClusterName:       clusterName,
 	}
 }
 
@@ -40,15 +37,15 @@ func ParseRedisEnterpriseID(input string) (*RedisEnterpriseId, error) {
 	id := RedisEnterpriseId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.RedisEnterpriseName, ok = parsed.Parsed["redisEnterpriseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "redisEnterpriseName", *parsed)
+	if id.ClusterName, ok = parsed.Parsed["clusterName"]; !ok {
+		return nil, fmt.Errorf("the segment 'clusterName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseRedisEnterpriseIDInsensitively(input string) (*RedisEnterpriseId, erro
 	id := RedisEnterpriseId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.RedisEnterpriseName, ok = parsed.Parsed["redisEnterpriseName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "redisEnterpriseName", *parsed)
+	if id.ClusterName, ok = parsed.Parsed["clusterName"]; !ok {
+		return nil, fmt.Errorf("the segment 'clusterName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -99,7 +96,7 @@ func ValidateRedisEnterpriseID(input interface{}, key string) (warnings []string
 // ID returns the formatted Redis Enterprise ID
 func (id RedisEnterpriseId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Cache/redisEnterprise/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.RedisEnterpriseName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.ClusterName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Redis Enterprise ID
@@ -112,7 +109,7 @@ func (id RedisEnterpriseId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftCache", "Microsoft.Cache", "Microsoft.Cache"),
 		resourceids.StaticSegment("staticRedisEnterprise", "redisEnterprise", "redisEnterprise"),
-		resourceids.UserSpecifiedSegment("redisEnterpriseName", "redisEnterpriseValue"),
+		resourceids.UserSpecifiedSegment("clusterName", "clusterValue"),
 	}
 }
 
@@ -121,7 +118,7 @@ func (id RedisEnterpriseId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Redis Enterprise Name: %q", id.RedisEnterpriseName),
+		fmt.Sprintf("Cluster Name: %q", id.ClusterName),
 	}
 	return fmt.Sprintf("Redis Enterprise (%s)", strings.Join(components, "\n"))
 }

@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
+	logAnalyticsValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -20,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceNetworkConnectionMonitor() *pluginsdk.Resource {
@@ -61,7 +59,7 @@ func resourceNetworkConnectionMonitorSchema() map[string]*pluginsdk.Schema {
 			ValidateFunc: networkValidate.NetworkWatcherID,
 		},
 
-		"location": commonschema.Location(),
+		"location": azure.SchemaLocation(),
 
 		"endpoint": {
 			Type:     pluginsdk.TypeSet,
@@ -169,9 +167,9 @@ func resourceNetworkConnectionMonitorSchema() map[string]*pluginsdk.Schema {
 						Computed: true,
 						ValidateFunc: validation.Any(
 							computeValidate.VirtualMachineID,
-							workspaces.ValidateWorkspaceID,
-							commonids.ValidateSubnetID,
-							commonids.ValidateVirtualNetworkID,
+							logAnalyticsValidate.LogAnalyticsWorkspaceID,
+							networkValidate.SubnetID,
+							networkValidate.VirtualNetworkID,
 						),
 					},
 
@@ -302,7 +300,7 @@ func resourceNetworkConnectionMonitorSchema() map[string]*pluginsdk.Schema {
 						}, false),
 					},
 
-					// lintignore:XS003
+					//lintignore:XS003
 					"success_threshold": {
 						Type:     pluginsdk.TypeList,
 						Optional: true,
@@ -424,7 +422,7 @@ func resourceNetworkConnectionMonitorSchema() map[string]*pluginsdk.Schema {
 			ConfigMode: pluginsdk.SchemaConfigModeAttr,
 			Elem: &pluginsdk.Schema{
 				Type:         pluginsdk.TypeString,
-				ValidateFunc: workspaces.ValidateWorkspaceID,
+				ValidateFunc: logAnalyticsValidate.LogAnalyticsWorkspaceID,
 			},
 		},
 
@@ -470,7 +468,11 @@ func resourceNetworkConnectionMonitorCreateUpdate(d *pluginsdk.ResourceData, met
 		},
 	}
 
-	properties.ConnectionMonitorParameters.Endpoints = expandNetworkConnectionMonitorEndpoint(d.Get("endpoint").(*pluginsdk.Set).List())
+	if v, err := expandNetworkConnectionMonitorEndpoint(d.Get("endpoint").(*pluginsdk.Set).List()); err == nil {
+		properties.ConnectionMonitorParameters.Endpoints = v
+	} else {
+		return err
+	}
 
 	if notes, ok := d.GetOk("notes"); ok {
 		properties.Notes = utils.String(notes.(string))
@@ -569,7 +571,7 @@ func resourceNetworkConnectionMonitorDelete(d *pluginsdk.ResourceData, meta inte
 	return nil
 }
 
-func expandNetworkConnectionMonitorEndpoint(input []interface{}) *[]network.ConnectionMonitorEndpoint {
+func expandNetworkConnectionMonitorEndpoint(input []interface{}) (*[]network.ConnectionMonitorEndpoint, error) {
 	results := make([]network.ConnectionMonitorEndpoint, 0)
 
 	for _, item := range input {
@@ -625,7 +627,7 @@ func expandNetworkConnectionMonitorEndpoint(input []interface{}) *[]network.Conn
 		results = append(results, result)
 	}
 
-	return &results
+	return &results, nil
 }
 
 func expandNetworkConnectionMonitorEndpointFilter(input []interface{}) *network.ConnectionMonitorEndpointFilter {

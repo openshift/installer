@@ -7,11 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/v5.0/sql" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/preview/sql/mgmt/v5.0/sql"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	keyVaultParser "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mssql/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mssql/parse"
 	mssqlValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/mssql/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -39,11 +38,6 @@ func resourceMsSqlTransparentDataEncryption() *pluginsdk.Resource {
 			Delete: pluginsdk.DefaultTimeout(30 * time.Minute),
 		},
 
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.MsSqlTransparentDataEncryptionV0ToV1{},
-		}),
-
 		Schema: map[string]*pluginsdk.Schema{
 			"server_id": {
 				Type:         pluginsdk.TypeString,
@@ -51,17 +45,10 @@ func resourceMsSqlTransparentDataEncryption() *pluginsdk.Resource {
 				ForceNew:     true,
 				ValidateFunc: mssqlValidate.ServerID,
 			},
-
 			"key_vault_key_id": {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ValidateFunc: keyVaultValidate.NestedItemId,
-			},
-
-			"auto_rotation_enabled": {
-				Type:     pluginsdk.TypeBool,
-				Optional: true,
-				Default:  false,
 			},
 		},
 	}
@@ -100,9 +87,8 @@ func resourceMsSqlTransparentDataEncryptionCreateUpdate(d *pluginsdk.ResourceDat
 
 		// Set the SQL Server Key properties
 		serverKeyProperties := sql.ServerKeyProperties{
-			ServerKeyType:       serverKeyType,
-			URI:                 &keyVaultKeyId,
-			AutoRotationEnabled: utils.Bool(d.Get("auto_rotation_enabled").(bool)),
+			ServerKeyType: serverKeyType,
+			URI:           &keyVaultKeyId,
 		}
 		serverKey.ServerKeyProperties = &serverKeyProperties
 
@@ -113,7 +99,7 @@ func resourceMsSqlTransparentDataEncryptionCreateUpdate(d *pluginsdk.ResourceDat
 		}
 
 		// Make sure it's a key, if not, throw an error
-		if keyId.NestedItemType == keyVaultParser.NestedItemTypeKey {
+		if keyId.NestedItemType == "keys" {
 			keyName := keyId.Name
 			keyVersion := keyId.Version
 
@@ -135,9 +121,8 @@ func resourceMsSqlTransparentDataEncryptionCreateUpdate(d *pluginsdk.ResourceDat
 
 	// Service managed doesn't require a key name
 	encryptionProtectorProperties := sql.EncryptionProtectorProperties{
-		ServerKeyType:       serverKeyType,
-		ServerKeyName:       &serverKeyName,
-		AutoRotationEnabled: utils.Bool(d.Get("auto_rotation_enabled").(bool)),
+		ServerKeyType: serverKeyType,
+		ServerKeyName: &serverKeyName,
 	}
 
 	// Only create a server key if the properties have been set
@@ -200,25 +185,16 @@ func resourceMsSqlTransparentDataEncryptionRead(d *pluginsdk.ResourceData, meta 
 	log.Printf("[INFO] Encryption protector key type is %s", resp.EncryptionProtectorProperties.ServerKeyType)
 
 	keyVaultKeyId := ""
-	autoRotationEnabled := false
+
 	// Only set the key type if it's an AKV key. For service managed, we can omit the setting the key_vault_key_id
 	if resp.EncryptionProtectorProperties != nil && resp.EncryptionProtectorProperties.ServerKeyType == sql.ServerKeyTypeAzureKeyVault {
 		log.Printf("[INFO] Setting Key Vault URI to %s", *resp.EncryptionProtectorProperties.URI)
 
 		keyVaultKeyId = *resp.EncryptionProtectorProperties.URI
-
-		// autoRotation is only for AKV keys
-		if resp.EncryptionProtectorProperties.AutoRotationEnabled != nil {
-			autoRotationEnabled = *resp.EncryptionProtectorProperties.AutoRotationEnabled
-		}
 	}
 
 	if err := d.Set("key_vault_key_id", keyVaultKeyId); err != nil {
-		return fmt.Errorf("setting `key_vault_key_id`: %+v", err)
-	}
-
-	if err := d.Set("auto_rotation_enabled", autoRotationEnabled); err != nil {
-		return fmt.Errorf("setting `auto_rotation_enabled`: %+v", err)
+		return fmt.Errorf("setting key_vault_key_id`: %+v", err)
 	}
 
 	return nil

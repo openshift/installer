@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package provider
 
 import (
@@ -17,27 +14,6 @@ func schemaFeatures(supportLegacyTestSuite bool) *pluginsdk.Schema {
 	featuresMap := map[string]*pluginsdk.Schema{
 		//lintignore:XS003
 		"api_management": {
-			Type:     pluginsdk.TypeList,
-			Optional: true,
-			MaxItems: 1,
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*pluginsdk.Schema{
-					"purge_soft_delete_on_destroy": {
-						Type:     pluginsdk.TypeBool,
-						Optional: true,
-						Default:  true,
-					},
-
-					"recover_soft_deleted": {
-						Type:     pluginsdk.TypeBool,
-						Optional: true,
-						Default:  true,
-					},
-				},
-			},
-		},
-
-		"app_configuration": {
 			Type:     pluginsdk.TypeList,
 			Optional: true,
 			MaxItems: 1,
@@ -169,7 +145,21 @@ func schemaFeatures(supportLegacyTestSuite bool) *pluginsdk.Schema {
 					"permanently_delete_on_destroy": {
 						Type:     pluginsdk.TypeBool,
 						Optional: true,
-						Default:  !features.FourPointOhBeta(),
+						Default:  true,
+					},
+				},
+			},
+		},
+
+		"network": {
+			Type:     pluginsdk.TypeList,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &pluginsdk.Resource{
+				Schema: map[string]*pluginsdk.Schema{
+					"relaxed_locking": {
+						Type:     pluginsdk.TypeBool,
+						Required: true,
 					},
 				},
 			},
@@ -253,21 +243,6 @@ func schemaFeatures(supportLegacyTestSuite bool) *pluginsdk.Schema {
 				},
 			},
 		},
-
-		"managed_disk": {
-			Type:     pluginsdk.TypeList,
-			Optional: true,
-			MaxItems: 1,
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*pluginsdk.Schema{
-					"expand_without_downtime": {
-						Type:     pluginsdk.TypeBool,
-						Optional: true,
-						Default:  true,
-					},
-				},
-			},
-		},
 	}
 
 	// this is a temporary hack to enable us to gradually add provider blocks to test configurations
@@ -312,19 +287,6 @@ func expandFeatures(input []interface{}) features.UserFeatures {
 			}
 			if v, ok := apimRaw["recover_soft_deleted"]; ok {
 				featuresMap.ApiManagement.RecoverSoftDeleted = v.(bool)
-			}
-		}
-	}
-
-	if raw, ok := val["app_configuration"]; ok {
-		items := raw.([]interface{})
-		if len(items) > 0 && items[0] != nil {
-			appConfRaw := items[0].(map[string]interface{})
-			if v, ok := appConfRaw["purge_soft_delete_on_destroy"]; ok {
-				featuresMap.AppConfiguration.PurgeSoftDeleteOnDestroy = v.(bool)
-			}
-			if v, ok := appConfRaw["recover_soft_deleted"]; ok {
-				featuresMap.AppConfiguration.RecoverSoftDeleted = v.(bool)
 			}
 		}
 	}
@@ -441,16 +403,6 @@ func expandFeatures(input []interface{}) features.UserFeatures {
 			resourceGroupRaw := items[0].(map[string]interface{})
 			if v, ok := resourceGroupRaw["prevent_deletion_if_contains_resources"]; ok {
 				featuresMap.ResourceGroup.PreventDeletionIfContainsResources = v.(bool)
-			}
-		}
-	}
-
-	if raw, ok := val["managed_disk"]; ok {
-		items := raw.([]interface{})
-		if len(items) > 0 {
-			managedDiskRaw := items[0].(map[string]interface{})
-			if v, ok := managedDiskRaw["expand_without_downtime"]; ok {
-				featuresMap.ManagedDisk.ExpandWithoutDowntime = v.(bool)
 			}
 		}
 	}

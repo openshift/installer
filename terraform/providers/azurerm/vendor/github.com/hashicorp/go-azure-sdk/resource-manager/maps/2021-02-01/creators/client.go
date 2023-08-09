@@ -1,26 +1,18 @@
 package creators
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type CreatorsClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewCreatorsClientWithBaseURI(api environments.Api) (*CreatorsClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "creators", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating CreatorsClient: %+v", err)
+func NewCreatorsClientWithBaseURI(endpoint string) CreatorsClient {
+	return CreatorsClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &CreatorsClient{
-		Client: client,
-	}, nil
 }

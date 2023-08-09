@@ -6,9 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2020-01-01/mysql" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/mysql/mgmt/2020-01-01/mysql"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/mysql/parse"
@@ -46,7 +45,7 @@ func resourceMySQLVirtualNetworkRule() *pluginsdk.Resource {
 				ValidateFunc: networkValidate.VirtualNetworkRuleName,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"server_name": {
 				Type:         pluginsdk.TypeString,
@@ -58,7 +57,7 @@ func resourceMySQLVirtualNetworkRule() *pluginsdk.Resource {
 			"subnet_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 		},
 	}

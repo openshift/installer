@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/synapse/mgmt/v2.0/synapse" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/synapse/mgmt/2021-03-01/synapse"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -118,9 +118,7 @@ func resourceSynapseSqlPool() *pluginsdk.Resource {
 				ConflictsWith: []string{"restore"},
 				ValidateFunc: validation.Any(
 					validate.SqlPoolID,
-					validate.SqlPoolRecoverableDatabaseID,
 					mssqlValidate.DatabaseID,
-					mssqlValidate.RecoverableDatabaseID,
 				),
 			},
 
@@ -157,12 +155,6 @@ func resourceSynapseSqlPool() *pluginsdk.Resource {
 				Optional: true,
 			},
 
-			"geo_backup_policy_enabled": {
-				Type:     pluginsdk.TypeBool,
-				Default:  true,
-				Optional: true,
-			},
-
 			"tags": tags.Schema(),
 		},
 	}
@@ -172,7 +164,6 @@ func resourceSynapseSqlPoolCreate(d *pluginsdk.ResourceData, meta interface{}) e
 	sqlClient := meta.(*clients.Client).Synapse.SqlPoolClient
 	sqlPTDEClient := meta.(*clients.Client).Synapse.SqlPoolTransparentDataEncryptionClient
 	workspaceClient := meta.(*clients.Client).Synapse.WorkspaceClient
-	geoBackUpClient := meta.(*clients.Client).Synapse.SqlPoolGeoBackupPoliciesClient
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -194,14 +185,14 @@ func resourceSynapseSqlPoolCreate(d *pluginsdk.ResourceData, meta interface{}) e
 
 	workspace, err := workspaceClient.Get(ctx, workspaceId.ResourceGroup, workspaceId.Name)
 	if err != nil {
-		return fmt.Errorf("retrieving %s: %+v", workspaceId, err)
+		return fmt.Errorf("retrieving Synapse Workspace %q (Resource Group %q): %+v", workspaceId.Name, workspaceId.ResourceGroup, err)
 	}
 
 	mode := d.Get("create_mode").(string)
 	sqlPoolInfo := synapse.SQLPool{
 		Location: workspace.Location,
 		SQLPoolResourceProperties: &synapse.SQLPoolResourceProperties{
-			CreateMode: synapse.CreateMode(*utils.String(mode)),
+			CreateMode: utils.String(mode),
 		},
 		Sku: &synapse.Sku{
 			Name: utils.String(d.Get("sku_name").(string)),
@@ -252,18 +243,6 @@ func resourceSynapseSqlPoolCreate(d *pluginsdk.ResourceData, meta interface{}) e
 		}
 	}
 
-	if !d.Get("geo_backup_policy_enabled").(bool) {
-		geoBackupParams := synapse.GeoBackupPolicy{
-			GeoBackupPolicyProperties: &synapse.GeoBackupPolicyProperties{
-				State: synapse.GeoBackupPolicyStateDisabled,
-			},
-		}
-
-		if _, err := geoBackUpClient.CreateOrUpdate(ctx, id.ResourceGroup, id.WorkspaceName, id.Name, geoBackupParams); err != nil {
-			return fmt.Errorf("setting `geo_backup_policy_enabled`: %+v", err)
-		}
-	}
-
 	d.SetId(id.ID())
 	return resourceSynapseSqlPoolRead(d, meta)
 }
@@ -271,7 +250,6 @@ func resourceSynapseSqlPoolCreate(d *pluginsdk.ResourceData, meta interface{}) e
 func resourceSynapseSqlPoolUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	sqlClient := meta.(*clients.Client).Synapse.SqlPoolClient
 	sqlPTDEClient := meta.(*clients.Client).Synapse.SqlPoolTransparentDataEncryptionClient
-	geoBackUpClient := meta.(*clients.Client).Synapse.SqlPoolGeoBackupPoliciesClient
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -296,22 +274,6 @@ func resourceSynapseSqlPoolUpdate(d *pluginsdk.ResourceData, meta interface{}) e
 		}
 	}
 
-	if d.HasChange("geo_backup_policy_enabled") {
-		state := synapse.GeoBackupPolicyStateEnabled
-		if !d.Get("geo_backup_policy_enabled").(bool) {
-			state = synapse.GeoBackupPolicyStateDisabled
-		}
-
-		geoBackupParams := synapse.GeoBackupPolicy{
-			GeoBackupPolicyProperties: &synapse.GeoBackupPolicyProperties{
-				State: state,
-			},
-		}
-		if _, err := geoBackUpClient.CreateOrUpdate(ctx, id.ResourceGroup, id.WorkspaceName, id.Name, geoBackupParams); err != nil {
-			return fmt.Errorf("updating `geo_backup_policy_enabled`: %+v", err)
-		}
-	}
-
 	if d.HasChanges("sku_name", "tags") {
 		sqlPoolInfo := synapse.SQLPoolPatchInfo{
 			Sku: &synapse.Sku{
@@ -328,7 +290,7 @@ func resourceSynapseSqlPoolUpdate(d *pluginsdk.ResourceData, meta interface{}) e
 		if d.HasChange("sku_name") {
 			deadline, ok := ctx.Deadline()
 			if !ok {
-				return fmt.Errorf("internal-error: context had no deadline")
+				return fmt.Errorf("context had no deadline")
 			}
 			stateConf := &pluginsdk.StateChangeConf{
 				Pending: []string{
@@ -354,7 +316,6 @@ func resourceSynapseSqlPoolUpdate(d *pluginsdk.ResourceData, meta interface{}) e
 func resourceSynapseSqlPoolRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	sqlClient := meta.(*clients.Client).Synapse.SqlPoolClient
 	sqlPTDEClient := meta.(*clients.Client).Synapse.SqlPoolTransparentDataEncryptionClient
-	geoBackUpClient := meta.(*clients.Client).Synapse.SqlPoolGeoBackupPoliciesClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -376,12 +337,7 @@ func resourceSynapseSqlPoolRead(d *pluginsdk.ResourceData, meta interface{}) err
 
 	transparentDataEncryption, err := sqlPTDEClient.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
 	if err != nil {
-		return fmt.Errorf("retrieving Transparent Data Encryption settings of %s: %+v", *id, err)
-	}
-
-	geoBackupPolicy, err := geoBackUpClient.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
-	if err != nil {
-		return fmt.Errorf("retrieving Geo Backup Policy of %s: %+v", *id, err)
+		return fmt.Errorf("retrieving Transparent Data Encryption settings of Synapse SqlPool %q (Workspace %q / Resource Group %q): %+v", id.Name, id.WorkspaceName, id.ResourceGroup, err)
 	}
 
 	workspaceId := parse.NewWorkspaceID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName).ID()
@@ -393,15 +349,8 @@ func resourceSynapseSqlPoolRead(d *pluginsdk.ResourceData, meta interface{}) err
 	if props := resp.SQLPoolResourceProperties; props != nil {
 		d.Set("collation", props.Collation)
 	}
-
-	geoBackupEnabled := true
-	if geoBackupProps := geoBackupPolicy.GeoBackupPolicyProperties; geoBackupProps != nil {
-		geoBackupEnabled = geoBackupProps.State == synapse.GeoBackupPolicyStateEnabled
-	}
-	d.Set("geo_backup_policy_enabled", geoBackupEnabled)
-
-	if tdeProps := transparentDataEncryption.TransparentDataEncryptionProperties; tdeProps != nil {
-		d.Set("data_encrypted", tdeProps.Status == synapse.TransparentDataEncryptionStatusEnabled)
+	if props := transparentDataEncryption.TransparentDataEncryptionProperties; props != nil {
+		d.Set("data_encrypted", props.Status == synapse.TransparentDataEncryptionStatusEnabled)
 	}
 
 	// whole "restore" block is not returned. to avoid conflict, so set it from the old state
@@ -422,11 +371,11 @@ func resourceSynapseSqlPoolDelete(d *pluginsdk.ResourceData, meta interface{}) e
 
 	future, err := sqlClient.Delete(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
 	if err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+		return fmt.Errorf("deleting Synapse Sql Pool %q (Workspace %q / Resource Group %q): %+v", id.Name, id.WorkspaceName, id.ResourceGroup, err)
 	}
 
 	if err = future.WaitForCompletionRef(ctx, sqlClient.Client); err != nil {
-		return fmt.Errorf("waiting for deletion of %s: %+v", *id, err)
+		return fmt.Errorf("waiting for deletion of Synapse Sql Pool %q (Workspace %q / Resource Group %q): %+v", id.Name, id.WorkspaceName, id.ResourceGroup, err)
 	}
 	return nil
 }

@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	batchDataplane "github.com/Azure/azure-sdk-for-go/services/batch/2020-03-01.11.0/batch"
 	"github.com/Azure/go-autorest/autorest/date"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/batchaccount"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/pool"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	batchDataplane "github.com/tombuildsstuff/kermit/sdk/batch/2022-01.15.0/batch"
 )
 
 type BatchJobResource struct{}
@@ -42,7 +40,7 @@ func (r BatchJobResource) Arguments() map[string]*pluginsdk.Schema {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: pool.ValidatePoolID,
+			ValidateFunc: validate.PoolID,
 		},
 		"display_name": {
 			Type:         pluginsdk.TypeString,
@@ -97,18 +95,18 @@ func (r BatchJobResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("decoding %+v", err)
 			}
 
-			poolId, err := pool.ParsePoolID(model.BatchPoolId)
+			poolId, err := parse.PoolID(model.BatchPoolId)
 			if err != nil {
 				return err
 			}
 
-			accountId := batchaccount.NewBatchAccountID(poolId.SubscriptionId, poolId.ResourceGroupName, poolId.BatchAccountName)
+			accountId := parse.NewAccountID(poolId.SubscriptionId, poolId.ResourceGroup, poolId.BatchAccountName)
 			client, err := metadata.Client.Batch.JobClient(ctx, accountId)
 			if err != nil {
 				return err
 			}
 
-			id := parse.NewJobID(poolId.SubscriptionId, poolId.ResourceGroupName, poolId.BatchAccountName, poolId.PoolName, model.Name)
+			id := parse.NewJobID(poolId.SubscriptionId, poolId.ResourceGroup, poolId.BatchAccountName, poolId.Name, model.Name)
 
 			existing, err := r.getJob(ctx, client, id)
 			if err != nil {
@@ -129,7 +127,7 @@ func (r BatchJobResource) Create() sdk.ResourceFunc {
 				},
 				CommonEnvironmentSettings: r.expandEnvironmentSettings(model.CommonEnvironmentProperties),
 				PoolInfo: &batchDataplane.PoolInformation{
-					PoolID: &poolId.PoolName,
+					PoolID: &poolId.Name,
 				},
 			}
 
@@ -151,7 +149,7 @@ func (r BatchJobResource) Read() sdk.ResourceFunc {
 			if err != nil {
 				return err
 			}
-			accountId := batchaccount.NewBatchAccountID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName)
+			accountId := parse.NewAccountID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName)
 			client, err := metadata.Client.Batch.JobClient(ctx, accountId)
 			if err != nil {
 				return err
@@ -167,7 +165,7 @@ func (r BatchJobResource) Read() sdk.ResourceFunc {
 
 			model := BatchJobModel{
 				Name:             id.Name,
-				BatchPoolId:      pool.NewPoolID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName, id.PoolName).ID(),
+				BatchPoolId:      parse.NewPoolID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName, id.PoolName).ID(),
 				TaskRetryMaximum: 0,
 			}
 
@@ -218,7 +216,7 @@ func (r BatchJobResource) Update() sdk.ResourceFunc {
 			if err != nil {
 				return err
 			}
-			accountId := batchaccount.NewBatchAccountID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName)
+			accountId := parse.NewAccountID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName)
 			client, err := metadata.Client.Batch.JobClient(ctx, accountId)
 			if err != nil {
 				return err
@@ -240,7 +238,7 @@ func (r BatchJobResource) Delete() sdk.ResourceFunc {
 			if err != nil {
 				return err
 			}
-			accountId := batchaccount.NewBatchAccountID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName)
+			accountId := parse.NewAccountID(id.SubscriptionId, id.ResourceGroup, id.BatchAccountName)
 			client, err := metadata.Client.Batch.JobClient(ctx, accountId)
 			if err != nil {
 				return err

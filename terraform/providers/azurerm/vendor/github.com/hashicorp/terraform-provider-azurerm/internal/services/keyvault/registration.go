@@ -38,7 +38,6 @@ func (r Registration) SupportedDataSources() map[string]*pluginsdk.Resource {
 		"azurerm_key_vault_secret":                           dataSourceKeyVaultSecret(),
 		"azurerm_key_vault_secrets":                          dataSourceKeyVaultSecrets(),
 		"azurerm_key_vault":                                  dataSourceKeyVault(),
-		"azurerm_key_vault_certificates":                     dataSourceKeyVaultCertificates(),
 	}
 }
 
@@ -64,7 +63,5 @@ func (r Registration) DataSources() []sdk.DataSource {
 }
 
 func (r Registration) Resources() []sdk.Resource {
-	return []sdk.Resource{
-		KeyVaultCertificateContactsResource{},
-	}
+	return []sdk.Resource{}
 }

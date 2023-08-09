@@ -6,11 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/savedsearches"
+	"github.com/Azure/azure-sdk-for-go/services/operationalinsights/mgmt/2020-08-01/operationalinsights"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -25,7 +26,7 @@ func resourceLogAnalyticsSavedSearch() *pluginsdk.Resource {
 		Delete: resourceLogAnalyticsSavedSearchDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := savedsearches.ParseSavedSearchID(id)
+			_, err := parse.LogAnalyticsSavedSearchID(id)
 			return err
 		}),
 
@@ -46,7 +47,7 @@ func resourceLogAnalyticsSavedSearch() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: savedsearches.ValidateWorkspaceID,
+				ValidateFunc: validate.LogAnalyticsWorkspaceID,
 			},
 
 			"name": {
@@ -106,30 +107,30 @@ func resourceLogAnalyticsSavedSearchCreate(d *pluginsdk.ResourceData, meta inter
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	workspaceId, err := savedsearches.ParseWorkspaceID(d.Get("log_analytics_workspace_id").(string))
+	workspaceId, err := parse.LogAnalyticsWorkspaceID(d.Get("log_analytics_workspace_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := savedsearches.NewSavedSearchID(workspaceId.SubscriptionId, workspaceId.ResourceGroupName, workspaceId.WorkspaceName, d.Get("name").(string))
+	id := parse.NewLogAnalyticsSavedSearchID(workspaceId.SubscriptionId, workspaceId.ResourceGroup, workspaceId.WorkspaceName, d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.SavedSearcheName)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_log_analytics_saved_search", id.ID())
 		}
 	}
 
-	parameters := savedsearches.SavedSearch{
-		Properties: savedsearches.SavedSearchProperties{
-			Category:      d.Get("category").(string),
-			DisplayName:   d.Get("display_name").(string),
-			Query:         d.Get("query").(string),
+	parameters := operationalinsights.SavedSearch{
+		SavedSearchProperties: &operationalinsights.SavedSearchProperties{
+			Category:      utils.String(d.Get("category").(string)),
+			DisplayName:   utils.String(d.Get("display_name").(string)),
+			Query:         utils.String(d.Get("query").(string)),
 			FunctionAlias: utils.String(d.Get("function_alias").(string)),
 			Tags:          expandSavedSearchTag(d.Get("tags").(map[string]interface{})), // expand tags because it's defined as object set in service
 		},
@@ -143,10 +144,10 @@ func resourceLogAnalyticsSavedSearchCreate(d *pluginsdk.ResourceData, meta inter
 				result = append(result, item.(string))
 			}
 		}
-		parameters.Properties.FunctionParameters = utils.String(strings.Join(result, ", "))
+		parameters.SavedSearchProperties.FunctionParameters = utils.String(strings.Join(result, ", "))
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.WorkspaceName, id.SavedSearcheName, parameters); err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
@@ -158,36 +159,28 @@ func resourceLogAnalyticsSavedSearchRead(d *pluginsdk.ResourceData, meta interfa
 	client := meta.(*clients.Client).LogAnalytics.SavedSearchesClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-	id, err := savedsearches.ParseSavedSearchID(d.Id())
+	id, err := parse.LogAnalyticsSavedSearchID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.SavedSearcheName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("retrieving %s: %s", id, err)
+		return fmt.Errorf("retrieving Saved Search %q (Log Analytics Workspace %q / Resource Group %q): %s", id.WorkspaceName, id.WorkspaceName, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.SavedSearchId)
-	d.Set("log_analytics_workspace_id", savedsearches.NewWorkspaceID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName).ID())
+	d.Set("name", id.SavedSearcheName)
+	d.Set("log_analytics_workspace_id", parse.NewLogAnalyticsWorkspaceID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName).ID())
 
-	if model := resp.Model; model != nil {
-		props := model.Properties
-
+	if props := resp.SavedSearchProperties; props != nil {
 		d.Set("display_name", props.DisplayName)
 		d.Set("category", props.Category)
 		d.Set("query", props.Query)
-
-		functionAlias := ""
-		if props.FunctionAlias != nil {
-			functionAlias = *props.FunctionAlias
-		}
-		d.Set("function_alias", functionAlias)
-
+		d.Set("function_alias", props.FunctionAlias)
 		functionParams := make([]string, 0)
 		if props.FunctionParameters != nil {
 			functionParams = strings.Split(*props.FunctionParameters, ", ")
@@ -207,38 +200,46 @@ func resourceLogAnalyticsSavedSearchDelete(d *pluginsdk.ResourceData, meta inter
 	client := meta.(*clients.Client).LogAnalytics.SavedSearchesClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-	id, err := savedsearches.ParseSavedSearchID(d.Id())
+	id, err := parse.LogAnalyticsSavedSearchID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err = client.Delete(ctx, *id); err != nil {
+	if _, err = client.Delete(ctx, id.ResourceGroup, id.WorkspaceName, id.SavedSearcheName); err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
 	}
 
 	return nil
 }
 
-func expandSavedSearchTag(input map[string]interface{}) *[]savedsearches.Tag {
-	results := make([]savedsearches.Tag, 0)
+func expandSavedSearchTag(input map[string]interface{}) *[]operationalinsights.Tag {
+	results := make([]operationalinsights.Tag, 0)
 	for key, value := range input {
-		result := savedsearches.Tag{
-			Name:  key,
-			Value: value.(string),
+		result := operationalinsights.Tag{
+			Name:  utils.String(key),
+			Value: utils.String(value.(string)),
 		}
 		results = append(results, result)
 	}
 	return &results
 }
 
-func flattenSavedSearchTag(input *[]savedsearches.Tag) map[string]interface{} {
+func flattenSavedSearchTag(input *[]operationalinsights.Tag) map[string]interface{} {
 	results := make(map[string]interface{})
 	if input == nil {
 		return results
 	}
 
 	for _, item := range *input {
-		results[item.Name] = item.Value
+		var key string
+		if item.Name != nil {
+			key = *item.Name
+		}
+		var value string
+		if item.Value != nil {
+			value = *item.Value
+		}
+		results[key] = value
 	}
 	return results
 }

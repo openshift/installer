@@ -147,7 +147,7 @@ func resourcePrivateDnsPtrRecordRead(d *pluginsdk.ResourceData, meta interface{}
 	}
 
 	d.Set("name", id.RelativeRecordSetName)
-	d.Set("zone_name", id.PrivateDnsZoneName)
+	d.Set("zone_name", id.PrivateZoneName)
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
@@ -162,6 +162,7 @@ func resourcePrivateDnsPtrRecordRead(d *pluginsdk.ResourceData, meta interface{}
 			}
 
 			return tags.FlattenAndSet(d, props.Metadata)
+
 		}
 	}
 

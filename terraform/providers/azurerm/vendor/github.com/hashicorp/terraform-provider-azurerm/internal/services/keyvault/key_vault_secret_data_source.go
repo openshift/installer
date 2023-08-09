@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
@@ -31,7 +29,11 @@ func dataSourceKeyVaultSecret() *pluginsdk.Resource {
 				ValidateFunc: keyVaultValidate.NestedItemName,
 			},
 
-			"key_vault_id": commonschema.ResourceIDReferenceRequired(commonids.KeyVaultId{}),
+			"key_vault_id": {
+				Type:         pluginsdk.TypeString,
+				Required:     true,
+				ValidateFunc: keyVaultValidate.VaultID,
+			},
 
 			"value": {
 				Type:      pluginsdk.TypeString,
@@ -44,19 +46,9 @@ func dataSourceKeyVaultSecret() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"not_before_date": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
-			"expiration_date": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
 			"version": {
 				Type:     pluginsdk.TypeString,
-				Optional: true,
+				Computed: true,
 			},
 
 			"versionless_id": {
@@ -86,8 +78,7 @@ func dataSourceKeyVaultSecretRead(d *pluginsdk.ResourceData, meta interface{}) e
 	defer cancel()
 
 	name := d.Get("name").(string)
-	version := d.Get("version").(string)
-	keyVaultId, err := commonids.ParseKeyVaultID(d.Get("key_vault_id").(string))
+	keyVaultId, err := parse.VaultID(d.Get("key_vault_id").(string))
 	if err != nil {
 		return err
 	}
@@ -97,7 +88,8 @@ func dataSourceKeyVaultSecretRead(d *pluginsdk.ResourceData, meta interface{}) e
 		return fmt.Errorf("looking up Secret %q vault url from id %q: %+v", name, *keyVaultId, err)
 	}
 
-	resp, err := client.GetSecret(ctx, *keyVaultBaseUri, name, version)
+	// we always want to get the latest version
+	resp, err := client.GetSecret(ctx, *keyVaultBaseUri, name, "")
 	if err != nil {
 		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("KeyVault Secret %q (KeyVault URI %q) does not exist", name, *keyVaultBaseUri)
@@ -118,18 +110,10 @@ func dataSourceKeyVaultSecretRead(d *pluginsdk.ResourceData, meta interface{}) e
 	d.Set("value", resp.Value)
 	d.Set("version", respID.Version)
 	d.Set("content_type", resp.ContentType)
-	if attributes := resp.Attributes; attributes != nil {
-		if notBefore := attributes.NotBefore; notBefore != nil {
-			d.Set("not_before_date", time.Time(*notBefore).Format(time.RFC3339))
-		}
-		if expires := attributes.Expires; expires != nil {
-			d.Set("expiration_date", time.Time(*expires).Format(time.RFC3339))
-		}
-	}
 	d.Set("versionless_id", respID.VersionlessID())
 
-	d.Set("resource_id", parse.NewSecretID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroupName, keyVaultId.VaultName, respID.Name, respID.Version).ID())
-	d.Set("resource_versionless_id", parse.NewSecretVersionlessID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroupName, keyVaultId.VaultName, respID.Name).ID())
+	d.Set("resource_id", parse.NewSecretID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroup, keyVaultId.Name, respID.Name, respID.Version).ID())
+	d.Set("resource_versionless_id", parse.NewSecretVersionlessID(keyVaultId.SubscriptionId, keyVaultId.ResourceGroup, keyVaultId.Name, respID.Name).ID())
 
 	return tags.FlattenAndSet(d, resp.Tags)
 }

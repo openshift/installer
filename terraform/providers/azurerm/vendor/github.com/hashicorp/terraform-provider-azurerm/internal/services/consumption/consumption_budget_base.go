@@ -5,16 +5,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/consumption/mgmt/2019-10-01/consumption"
 	"github.com/Azure/go-autorest/autorest/date"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/consumption/2019-10-01/budgets"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/consumption/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/consumption/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
+	"github.com/shopspring/decimal"
 )
 
 type consumptionBudgetBaseResource struct{}
@@ -128,6 +128,78 @@ func (br consumptionBudgetBaseResource) arguments(fields map[string]*pluginsdk.S
 							},
 						},
 					},
+					"not": {
+						Type:         pluginsdk.TypeList,
+						Optional:     true,
+						MaxItems:     1,
+						AtLeastOneOf: []string{"filter.0.dimension", "filter.0.tag", "filter.0.not"},
+						Elem: &pluginsdk.Resource{
+							Schema: map[string]*pluginsdk.Schema{
+								"dimension": {
+									Type:         pluginsdk.TypeList,
+									MaxItems:     1,
+									Optional:     true,
+									ExactlyOneOf: []string{"filter.0.not.0.tag"},
+									Elem: &pluginsdk.Resource{
+										Schema: map[string]*pluginsdk.Schema{
+											"name": {
+												Type:         pluginsdk.TypeString,
+												Required:     true,
+												ValidateFunc: validation.StringInSlice(getDimensionNames(), false),
+											},
+											"operator": {
+												Type:     pluginsdk.TypeString,
+												Optional: true,
+												Default:  "In",
+												ValidateFunc: validation.StringInSlice([]string{
+													"In",
+												}, false),
+											},
+											"values": {
+												Type:     pluginsdk.TypeList,
+												MinItems: 1,
+												Required: true,
+												Elem: &pluginsdk.Schema{
+													Type:         pluginsdk.TypeString,
+													ValidateFunc: validation.StringIsNotEmpty,
+												},
+											},
+										},
+									},
+								},
+								"tag": {
+									Type:         pluginsdk.TypeList,
+									MaxItems:     1,
+									Optional:     true,
+									ExactlyOneOf: []string{"filter.0.not.0.dimension"},
+									Elem: &pluginsdk.Resource{
+										Schema: map[string]*pluginsdk.Schema{
+											"name": {
+												Type:     pluginsdk.TypeString,
+												Required: true,
+											},
+											"operator": {
+												Type:     pluginsdk.TypeString,
+												Optional: true,
+												Default:  "In",
+												ValidateFunc: validation.StringInSlice([]string{
+													"In",
+												}, false),
+											},
+											"values": {
+												Type:     pluginsdk.TypeList,
+												Required: true,
+												Elem: &pluginsdk.Schema{
+													Type:         pluginsdk.TypeString,
+													ValidateFunc: validation.StringIsNotEmpty,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -155,10 +227,10 @@ func (br consumptionBudgetBaseResource) arguments(fields map[string]*pluginsdk.S
 					"threshold_type": {
 						Type:     pluginsdk.TypeString,
 						Optional: true,
-						Default:  string(budgets.ThresholdTypeActual),
+						Default:  string(consumption.ThresholdTypeActual),
 						ForceNew: true, // TODO: remove this when the above issue is fixed
 						ValidateFunc: validation.StringInSlice([]string{
-							string(budgets.ThresholdTypeActual),
+							string(consumption.ThresholdTypeActual),
 							"Forecasted",
 						}, false),
 					},
@@ -166,9 +238,9 @@ func (br consumptionBudgetBaseResource) arguments(fields map[string]*pluginsdk.S
 						Type:     pluginsdk.TypeString,
 						Required: true,
 						ValidateFunc: validation.StringInSlice([]string{
-							string(budgets.OperatorTypeEqualTo),
-							string(budgets.OperatorTypeGreaterThan),
-							string(budgets.OperatorTypeGreaterThanOrEqualTo),
+							string(consumption.OperatorTypeEqualTo),
+							string(consumption.OperatorTypeGreaterThan),
+							string(consumption.OperatorTypeGreaterThanOrEqualTo),
 						}, false),
 					},
 
@@ -205,15 +277,15 @@ func (br consumptionBudgetBaseResource) arguments(fields map[string]*pluginsdk.S
 		"time_grain": {
 			Type:     pluginsdk.TypeString,
 			Optional: true,
-			Default:  string(budgets.TimeGrainTypeMonthly),
+			Default:  string(consumption.TimeGrainTypeMonthly),
 			ForceNew: true,
 			ValidateFunc: validation.StringInSlice([]string{
-				string(budgets.TimeGrainTypeBillingAnnual),
-				string(budgets.TimeGrainTypeBillingMonth),
-				string(budgets.TimeGrainTypeBillingQuarter),
-				string(budgets.TimeGrainTypeAnnually),
-				string(budgets.TimeGrainTypeMonthly),
-				string(budgets.TimeGrainTypeQuarterly),
+				string(consumption.TimeGrainTypeBillingAnnual),
+				string(consumption.TimeGrainTypeBillingMonth),
+				string(consumption.TimeGrainTypeBillingQuarter),
+				string(consumption.TimeGrainTypeAnnually),
+				string(consumption.TimeGrainTypeMonthly),
+				string(consumption.TimeGrainTypeQuarterly),
 			}, false),
 		},
 
@@ -240,83 +312,6 @@ func (br consumptionBudgetBaseResource) arguments(fields map[string]*pluginsdk.S
 			},
 		},
 	}
-
-	if !features.FourPointOhBeta() {
-		output["filter"].Elem.(*pluginsdk.Resource).Schema["not"] = &pluginsdk.Schema{
-			Type:         pluginsdk.TypeList,
-			Optional:     true,
-			MaxItems:     1,
-			Deprecated:   "This property has been deprecated as the API no longer supports it and will be removed in version 4.0 of the provider.",
-			AtLeastOneOf: []string{"filter.0.dimension", "filter.0.tag", "filter.0.not"},
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*pluginsdk.Schema{
-					"dimension": {
-						Type:         pluginsdk.TypeList,
-						MaxItems:     1,
-						Optional:     true,
-						ExactlyOneOf: []string{"filter.0.not.0.tag"},
-						Elem: &pluginsdk.Resource{
-							Schema: map[string]*pluginsdk.Schema{
-								"name": {
-									Type:         pluginsdk.TypeString,
-									Required:     true,
-									ValidateFunc: validation.StringInSlice(getDimensionNames(), false),
-								},
-								"operator": {
-									Type:     pluginsdk.TypeString,
-									Optional: true,
-									Default:  "In",
-									ValidateFunc: validation.StringInSlice([]string{
-										"In",
-									}, false),
-								},
-								"values": {
-									Type:     pluginsdk.TypeList,
-									MinItems: 1,
-									Required: true,
-									Elem: &pluginsdk.Schema{
-										Type:         pluginsdk.TypeString,
-										ValidateFunc: validation.StringIsNotEmpty,
-									},
-								},
-							},
-						},
-					},
-					"tag": {
-						Type:         pluginsdk.TypeList,
-						MaxItems:     1,
-						Optional:     true,
-						ExactlyOneOf: []string{"filter.0.not.0.dimension"},
-						Elem: &pluginsdk.Resource{
-							Schema: map[string]*pluginsdk.Schema{
-								"name": {
-									Type:     pluginsdk.TypeString,
-									Required: true,
-								},
-								"operator": {
-									Type:     pluginsdk.TypeString,
-									Optional: true,
-									Default:  "In",
-									ValidateFunc: validation.StringInSlice([]string{
-										"In",
-									}, false),
-								},
-								"values": {
-									Type:     pluginsdk.TypeList,
-									Required: true,
-									Elem: &pluginsdk.Schema{
-										Type:         pluginsdk.TypeString,
-										ValidateFunc: validation.StringIsNotEmpty,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		}
-	}
-
 	// Consumption Budgets for Management Groups have a different notification schema,
 	// here we override the notification schema in the base resource
 	for k, v := range fields {
@@ -339,16 +334,16 @@ func (br consumptionBudgetBaseResource) createFunc(resourceName, scopeFieldName 
 			var err error
 			scope := metadata.ResourceData.Get(scopeFieldName).(string)
 
-			id := budgets.NewScopedBudgetID(scope, metadata.ResourceData.Get("name").(string))
+			id := parse.NewConsumptionBudgetId(scope, metadata.ResourceData.Get("name").(string))
 
-			existing, err := client.Get(ctx, id)
+			existing, err := client.Get(ctx, id.Scope, id.Name)
 			if err != nil {
-				if !response.WasNotFound(existing.HttpResponse) {
+				if !utils.ResponseWasNotFound(existing.Response) {
 					return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 				}
 			}
 
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return tf.ImportAsExistsError(resourceName, id.ID())
 			}
 
@@ -367,38 +362,38 @@ func (br consumptionBudgetBaseResource) readFunc(scopeFieldName string) sdk.Reso
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Consumption.BudgetsClient
-			id, err := budgets.ParseScopedBudgetID(metadata.ResourceData.Id())
+			id, err := parse.ConsumptionBudgetID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			resp, err := client.Get(ctx, *id)
+			resp, err := client.Get(ctx, id.Scope, id.Name)
 			if err != nil {
-				if response.WasNotFound(resp.HttpResponse) {
+				if utils.ResponseWasNotFound(resp.Response) {
 					return metadata.MarkAsGone(id)
 				}
 				return fmt.Errorf("reading %s, %+v", *id, err)
 			}
 
-			metadata.ResourceData.Set("name", id.BudgetName)
+			metadata.ResourceData.Set("name", id.Name)
 			//lintignore:R001
 			metadata.ResourceData.Set(scopeFieldName, id.Scope)
 
-			if model := resp.Model; model != nil {
-				eTag := ""
-				if v := model.ETag; v != nil {
-					eTag = *v
-				}
-				metadata.ResourceData.Set("etag", eTag)
-
-				if props := model.Properties; props != nil {
-					metadata.ResourceData.Set("amount", props.Amount)
-					metadata.ResourceData.Set("time_grain", string(props.TimeGrain))
-					metadata.ResourceData.Set("time_period", flattenConsumptionBudgetTimePeriod(&props.TimePeriod))
-					metadata.ResourceData.Set("notification", flattenConsumptionBudgetNotifications(props.Notifications, scopeFieldName))
-					metadata.ResourceData.Set("filter", flattenConsumptionBudgetFilter(props.Filter))
-				}
+			amount := 0.0
+			if v := resp.Amount; v != nil {
+				amount, _ = v.Float64()
 			}
+			metadata.ResourceData.Set("amount", amount)
+
+			eTag := ""
+			if v := resp.ETag; v != nil {
+				eTag = *v
+			}
+			metadata.ResourceData.Set("etag", eTag)
+			metadata.ResourceData.Set("time_grain", string(resp.TimeGrain))
+			metadata.ResourceData.Set("time_period", flattenConsumptionBudgetTimePeriod(resp.TimePeriod))
+			metadata.ResourceData.Set("notification", flattenConsumptionBudgetNotifications(resp.Notifications, scopeFieldName))
+			metadata.ResourceData.Set("filter", flattenConsumptionBudgetFilter(resp.Filter))
 
 			return nil
 		},
@@ -410,12 +405,12 @@ func (br consumptionBudgetBaseResource) deleteFunc() sdk.ResourceFunc {
 		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Consumption.BudgetsClient
-			id, err := budgets.ParseScopedBudgetID(metadata.ResourceData.Id())
+			id, err := parse.ConsumptionBudgetID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			if _, err = client.Delete(ctx, *id); err != nil {
+			if _, err = client.Delete(ctx, id.Scope, id.Name); err != nil {
 				return fmt.Errorf("deleting %s: %+v", *id, err)
 			}
 
@@ -430,7 +425,7 @@ func (br consumptionBudgetBaseResource) updateFunc() sdk.ResourceFunc {
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Consumption.BudgetsClient
 
-			id, err := budgets.ParseScopedBudgetID(metadata.ResourceData.Id())
+			id, err := parse.ConsumptionBudgetID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
@@ -444,18 +439,33 @@ func (br consumptionBudgetBaseResource) updateFunc() sdk.ResourceFunc {
 	}
 }
 
-func (br consumptionBudgetBaseResource) importerFunc() sdk.ResourceRunFunc {
+func (br consumptionBudgetBaseResource) importerFunc(expectScope string) sdk.ResourceRunFunc {
 	return func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-		_, err := budgets.ParseScopedBudgetID(metadata.ResourceData.Id())
+		var err error
+		id, err := parse.ConsumptionBudgetID(metadata.ResourceData.Id())
 		if err != nil {
 			return err
+		}
+
+		switch expectScope {
+		case "subscription":
+			_, err = parse.ConsumptionBudgetSubscriptionID(metadata.ResourceData.Id())
+		case "resource_group":
+			_, err = parse.ConsumptionBudgetResourceGroupID(metadata.ResourceData.Id())
+		case "management_group":
+			_, err = parse.ConsumptionBudgetManagementGroupID(metadata.ResourceData.Id())
+		}
+
+		if err != nil {
+			return fmt.Errorf("budget has mismatched scope, expected a budget with %s scope, got %s", expectScope, id.Scope)
 		}
 
 		return nil
 	}
 }
 
-func createOrUpdateConsumptionBudget(ctx context.Context, client *budgets.BudgetsClient, metadata sdk.ResourceMetaData, id budgets.ScopedBudgetId) error {
+func createOrUpdateConsumptionBudget(ctx context.Context, client *consumption.BudgetsClient, metadata sdk.ResourceMetaData, id parse.ConsumptionBudgetId) error {
+	amount := decimal.NewFromFloat(metadata.ResourceData.Get("amount").(float64))
 	timePeriod, err := expandConsumptionBudgetTimePeriod(metadata.ResourceData.Get("time_period").([]interface{}))
 	if err != nil {
 		return fmt.Errorf("expanding `time_period`: %+v", err)
@@ -463,16 +473,16 @@ func createOrUpdateConsumptionBudget(ctx context.Context, client *budgets.Budget
 
 	// The Consumption Budget API requires the category type field to be set in a budget's properties.
 	// 'Cost' is the only valid Budget type today according to the API spec.
-
-	parameters := budgets.Budget{
-		Name: utils.String(id.BudgetName),
-		Properties: &budgets.BudgetProperties{
-			Amount:        metadata.ResourceData.Get("amount").(float64),
-			Category:      budgets.CategoryTypeCost,
+	category := "Cost"
+	parameters := consumption.Budget{
+		Name: utils.String(id.Name),
+		BudgetProperties: &consumption.BudgetProperties{
+			Amount:        &amount,
+			Category:      &category,
 			Filter:        expandConsumptionBudgetFilter(metadata.ResourceData.Get("filter").([]interface{})),
 			Notifications: expandConsumptionBudgetNotifications(metadata.ResourceData.Get("notification").(*pluginsdk.Set).List()),
-			TimeGrain:     budgets.TimeGrainType(metadata.ResourceData.Get("time_grain").(string)),
-			TimePeriod:    *timePeriod,
+			TimeGrain:     consumption.TimeGrainType(metadata.ResourceData.Get("time_grain").(string)),
+			TimePeriod:    timePeriod,
 		},
 	}
 
@@ -480,7 +490,7 @@ func createOrUpdateConsumptionBudget(ctx context.Context, client *budgets.Budget
 		parameters.ETag = utils.String(v.(string))
 	}
 
-	_, err = client.CreateOrUpdate(ctx, id, parameters)
+	_, err = client.CreateOrUpdate(ctx, id.Scope, id.Name, parameters)
 	if err != nil {
 		return err
 	}
@@ -488,48 +498,56 @@ func createOrUpdateConsumptionBudget(ctx context.Context, client *budgets.Budget
 	return nil
 }
 
-func expandConsumptionBudgetTimePeriod(i []interface{}) (*budgets.BudgetTimePeriod, error) {
+func expandConsumptionBudgetTimePeriod(i []interface{}) (*consumption.BudgetTimePeriod, error) {
 	if len(i) == 0 || i[0] == nil {
 		return nil, nil
 	}
 
 	input := i[0].(map[string]interface{})
-	timePeriod := budgets.BudgetTimePeriod{}
+	timePeriod := consumption.BudgetTimePeriod{}
 
 	if startDateInput, ok := input["start_date"].(string); ok {
-		_, err := date.ParseTime(time.RFC3339, startDateInput)
+		startDate, err := date.ParseTime(time.RFC3339, startDateInput)
 		if err != nil {
 			return nil, fmt.Errorf("start_date '%s' was not in the correct format: %+v", startDateInput, err)
 		}
-		timePeriod.StartDate = input["start_date"].(string)
+
+		timePeriod.StartDate = &date.Time{
+			Time: startDate,
+		}
 	}
 
 	if endDateInput, ok := input["end_date"].(string); ok {
 		if endDateInput != "" {
-			_, err := date.ParseTime(time.RFC3339, endDateInput)
+			endDate, err := date.ParseTime(time.RFC3339, endDateInput)
 			if err != nil {
 				return nil, fmt.Errorf("end_date '%s' was not in the correct format: %+v", endDateInput, err)
 			}
 
-			timePeriod.EndDate = utils.String(input["end_date"].(string))
+			timePeriod.EndDate = &date.Time{
+				Time: endDate,
+			}
 		}
 	}
 
 	return &timePeriod, nil
 }
 
-func flattenConsumptionBudgetTimePeriod(input *budgets.BudgetTimePeriod) []interface{} {
+func flattenConsumptionBudgetTimePeriod(input *consumption.BudgetTimePeriod) []interface{} {
 	timePeriod := make([]interface{}, 0)
 
 	if input == nil {
 		return timePeriod
 	}
 
-	startDate := input.StartDate
+	startDate := ""
+	if v := input.StartDate; v != nil {
+		startDate = v.String()
+	}
 
 	endDate := ""
 	if v := input.EndDate; v != nil {
-		endDate = *v
+		endDate = v.String()
 	}
 
 	return append(timePeriod, map[string]interface{}{
@@ -538,28 +556,27 @@ func flattenConsumptionBudgetTimePeriod(input *budgets.BudgetTimePeriod) []inter
 	})
 }
 
-func expandConsumptionBudgetNotifications(input []interface{}) *map[string]budgets.Notification {
+func expandConsumptionBudgetNotifications(input []interface{}) map[string]*consumption.Notification {
 	if len(input) == 0 {
 		return nil
 	}
 
-	notifications := make(map[string]budgets.Notification)
+	notifications := make(map[string]*consumption.Notification)
 
 	for _, v := range input {
 		if v != nil {
 			notificationRaw := v.(map[string]interface{})
-			notification := budgets.Notification{}
+			notification := consumption.Notification{}
 
-			notification.Enabled = notificationRaw["enabled"].(bool)
-			notification.Operator = budgets.OperatorType(notificationRaw["operator"].(string))
+			notification.Enabled = utils.Bool(notificationRaw["enabled"].(bool))
+			notification.Operator = consumption.OperatorType(notificationRaw["operator"].(string))
 
-			notification.Threshold = float64(notificationRaw["threshold"].(int))
+			thresholdDecimal := decimal.NewFromInt(int64(notificationRaw["threshold"].(int)))
+			notification.Threshold = &thresholdDecimal
 
-			thresholdType := budgets.ThresholdType(notificationRaw["threshold_type"].(string))
-			notification.ThresholdType = &thresholdType
+			notification.ThresholdType = consumption.ThresholdType(notificationRaw["threshold_type"].(string))
 
-			contactEmails := utils.ExpandStringSlice(notificationRaw["contact_emails"].([]interface{}))
-			notification.ContactEmails = *contactEmails
+			notification.ContactEmails = utils.ExpandStringSlice(notificationRaw["contact_emails"].([]interface{}))
 
 			// contact_roles cannot be set on consumption budgets for management groups
 			if _, ok := notificationRaw["contact_roles"]; ok {
@@ -571,98 +588,110 @@ func expandConsumptionBudgetNotifications(input []interface{}) *map[string]budge
 				notification.ContactGroups = utils.ExpandStringSlice(notificationRaw["contact_groups"].([]interface{}))
 			}
 
-			notificationKey := fmt.Sprintf("%s_%s_%f_Percent", string(thresholdType), string(notification.Operator), notification.Threshold)
-			notifications[notificationKey] = notification
+			notificationKey := fmt.Sprintf("actual_%s_%s_Percent", string(notification.Operator), notification.Threshold.StringFixed(0))
+			notifications[notificationKey] = &notification
 		}
-	}
-
-	return &notifications
-}
-
-func flattenConsumptionBudgetNotifications(input *map[string]budgets.Notification, scope string) []interface{} {
-	if input == nil {
-		return []interface{}{}
-	}
-
-	notifications := make([]interface{}, 0)
-	for _, n := range *input {
-		block := make(map[string]interface{})
-
-		block["enabled"] = n.Enabled
-
-		operator := ""
-		if v := n.Operator; v != "" {
-			operator = string(v)
-		}
-		block["operator"] = operator
-
-		block["threshold"] = n.Threshold
-
-		thresholdType := string(budgets.ThresholdTypeActual)
-		if v := n.ThresholdType; v != nil {
-			thresholdType = string(*v)
-		}
-		block["threshold_type"] = thresholdType
-
-		var emails []interface{}
-		if v := n.ContactEmails; v != nil {
-			emails = utils.FlattenStringSlice(&v)
-		}
-		block["contact_emails"] = emails
-
-		if scope != "management_group_id" {
-			var roles []interface{}
-			if v := n.ContactRoles; v != nil {
-				roles = utils.FlattenStringSlice(v)
-			}
-			block["contact_roles"] = roles
-
-			var groups []interface{}
-			if v := n.ContactGroups; v != nil {
-				groups = utils.FlattenStringSlice(v)
-			}
-			block["contact_groups"] = groups
-		}
-
-		notifications = append(notifications, block)
 	}
 
 	return notifications
 }
 
-func expandConsumptionBudgetComparisonExpression(input interface{}) *budgets.BudgetComparisonExpression {
+func flattenConsumptionBudgetNotifications(input map[string]*consumption.Notification, scope string) []interface{} {
+	if input == nil {
+		return []interface{}{}
+	}
+
+	notifications := make([]interface{}, 0)
+	for _, n := range input {
+		if n != nil {
+			block := make(map[string]interface{})
+
+			enabled := true
+			if v := n.Enabled; v != nil && !*v {
+				enabled = false
+			}
+			block["enabled"] = enabled
+
+			operator := ""
+			if v := n.Operator; v != "" {
+				operator = string(v)
+			}
+			block["operator"] = operator
+
+			threshold := 0
+			if v := n.Threshold; v != nil {
+				t, _ := v.Float64()
+				threshold = int(t)
+			}
+			block["threshold"] = threshold
+
+			thresholdType := string(consumption.ThresholdTypeActual)
+			if v := n.ThresholdType; v != consumption.ThresholdTypeActual {
+				t := v
+				thresholdType = string(t)
+			}
+			block["threshold_type"] = thresholdType
+
+			var emails []interface{}
+			if v := n.ContactEmails; v != nil {
+				emails = utils.FlattenStringSlice(v)
+			}
+			block["contact_emails"] = emails
+
+			if scope != "management_group_id" {
+				var roles []interface{}
+				if v := n.ContactRoles; v != nil {
+					roles = utils.FlattenStringSlice(v)
+				}
+				block["contact_roles"] = roles
+
+				var groups []interface{}
+				if v := n.ContactGroups; v != nil {
+					groups = utils.FlattenStringSlice(v)
+				}
+				block["contact_groups"] = groups
+			}
+
+			notifications = append(notifications, block)
+		}
+	}
+
+	return notifications
+}
+
+func expandConsumptionBudgetComparisonExpression(input interface{}) *consumption.BudgetComparisonExpression {
 	if input == nil {
 		return nil
 	}
 
 	v := input.(map[string]interface{})
 
-	return &budgets.BudgetComparisonExpression{
-		Name:     v["name"].(string),
-		Operator: budgets.BudgetOperatorType(v["operator"].(string)),
-		Values:   *utils.ExpandStringSlice(v["values"].([]interface{})),
+	return &consumption.BudgetComparisonExpression{
+		Name:     utils.String(v["name"].(string)),
+		Operator: utils.String(v["operator"].(string)),
+		Values:   utils.ExpandStringSlice(v["values"].([]interface{})),
 	}
 }
 
-func flattenConsumptionBudgetComparisonExpression(input *budgets.BudgetComparisonExpression) *map[string]interface{} {
+func flattenConsumptionBudgetComparisonExpression(input *consumption.BudgetComparisonExpression) *map[string]interface{} {
 	consumptionBudgetComparisonExpression := make(map[string]interface{})
 
 	consumptionBudgetComparisonExpression["name"] = input.Name
 	consumptionBudgetComparisonExpression["operator"] = input.Operator
-	consumptionBudgetComparisonExpression["values"] = utils.FlattenStringSlice(&input.Values)
+	consumptionBudgetComparisonExpression["values"] = utils.FlattenStringSlice(input.Values)
 
 	return &consumptionBudgetComparisonExpression
 }
 
-func expandConsumptionBudgetFilterDimensions(input []interface{}) []budgets.BudgetFilterProperties {
+func expandConsumptionBudgetFilterDimensions(input []interface{}) []consumption.BudgetFilterProperties {
 	if len(input) == 0 {
 		return nil
 	}
 
-	dimensions := make([]budgets.BudgetFilterProperties, 0)
+	dimensions := make([]consumption.BudgetFilterProperties, 0)
 
 	for _, v := range input {
-		dimension := budgets.BudgetFilterProperties{
+		dimension := consumption.BudgetFilterProperties{
 			Dimensions: expandConsumptionBudgetComparisonExpression(v),
 		}
 		dimensions = append(dimensions, dimension)
@@ -671,15 +700,15 @@ func expandConsumptionBudgetFilterDimensions(input []interface{}) []budgets.Budg
 	return dimensions
 }
 
-func expandConsumptionBudgetFilterTag(input []interface{}) []budgets.BudgetFilterProperties {
+func expandConsumptionBudgetFilterTag(input []interface{}) []consumption.BudgetFilterProperties {
 	if len(input) == 0 {
 		return nil
 	}
 
-	tags := make([]budgets.BudgetFilterProperties, 0)
+	tags := make([]consumption.BudgetFilterProperties, 0)
 
 	for _, v := range input {
-		tag := budgets.BudgetFilterProperties{
+		tag := consumption.BudgetFilterProperties{
 			Tags: expandConsumptionBudgetComparisonExpression(v),
 		}
 
@@ -689,13 +718,13 @@ func expandConsumptionBudgetFilterTag(input []interface{}) []budgets.BudgetFilte
 	return tags
 }
 
-func expandConsumptionBudgetFilter(i []interface{}) *budgets.BudgetFilter {
+func expandConsumptionBudgetFilter(i []interface{}) *consumption.BudgetFilter {
 	if len(i) == 0 || i[0] == nil {
 		return nil
 	}
 	input := i[0].(map[string]interface{})
 
-	filter := budgets.BudgetFilter{}
+	filter := consumption.BudgetFilter{}
 
 	notBlock := input["not"].([]interface{})
 	if len(notBlock) != 0 && notBlock[0] != nil {
@@ -739,7 +768,7 @@ func expandConsumptionBudgetFilter(i []interface{}) *budgets.BudgetFilter {
 	return &filter
 }
 
-func flattenConsumptionBudgetFilter(input *budgets.BudgetFilter) []interface{} {
+func flattenConsumptionBudgetFilter(input *consumption.BudgetFilter) []interface{} {
 	filter := make([]interface{}, 0)
 
 	if input == nil {

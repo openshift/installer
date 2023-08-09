@@ -24,7 +24,7 @@ client.Client.Authorizer = authorizer
 
 ```go
 ctx := context.TODO()
-id := rules.NewTagRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "monitorValue", "tagRuleValue")
+id := rules.NewTagRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "monitorValue", "ruleSetValue")
 
 payload := rules.MonitoringTagRules{
 	// ...
@@ -45,7 +45,7 @@ if model := read.Model; model != nil {
 
 ```go
 ctx := context.TODO()
-id := rules.NewTagRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "monitorValue", "tagRuleValue")
+id := rules.NewTagRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "monitorValue", "ruleSetValue")
 
 if err := client.TagRulesDeleteThenPoll(ctx, id); err != nil {
 	// handle the error
@@ -57,7 +57,7 @@ if err := client.TagRulesDeleteThenPoll(ctx, id); err != nil {
 
 ```go
 ctx := context.TODO()
-id := rules.NewTagRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "monitorValue", "tagRuleValue")
+id := rules.NewTagRuleID("12345678-1234-9876-4563-123456789012", "example-resource-group", "monitorValue", "ruleSetValue")
 
 read, err := client.TagRulesGet(ctx, id)
 if err != nil {

@@ -7,24 +7,21 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = VideoAnalyzerId{}
 
 // VideoAnalyzerId is a struct representing the Resource ID for a Video Analyzer
 type VideoAnalyzerId struct {
 	SubscriptionId    string
 	ResourceGroupName string
-	VideoAnalyzerName string
+	AccountName       string
 }
 
 // NewVideoAnalyzerID returns a new VideoAnalyzerId struct
-func NewVideoAnalyzerID(subscriptionId string, resourceGroupName string, videoAnalyzerName string) VideoAnalyzerId {
+func NewVideoAnalyzerID(subscriptionId string, resourceGroupName string, accountName string) VideoAnalyzerId {
 	return VideoAnalyzerId{
 		SubscriptionId:    subscriptionId,
 		ResourceGroupName: resourceGroupName,
-		VideoAnalyzerName: videoAnalyzerName,
+		AccountName:       accountName,
 	}
 }
 
@@ -40,15 +37,15 @@ func ParseVideoAnalyzerID(input string) (*VideoAnalyzerId, error) {
 	id := VideoAnalyzerId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.VideoAnalyzerName, ok = parsed.Parsed["videoAnalyzerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "videoAnalyzerName", *parsed)
+	if id.AccountName, ok = parsed.Parsed["accountName"]; !ok {
+		return nil, fmt.Errorf("the segment 'accountName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseVideoAnalyzerIDInsensitively(input string) (*VideoAnalyzerId, error) {
 	id := VideoAnalyzerId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.VideoAnalyzerName, ok = parsed.Parsed["videoAnalyzerName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "videoAnalyzerName", *parsed)
+	if id.AccountName, ok = parsed.Parsed["accountName"]; !ok {
+		return nil, fmt.Errorf("the segment 'accountName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -99,7 +96,7 @@ func ValidateVideoAnalyzerID(input interface{}, key string) (warnings []string, 
 // ID returns the formatted Video Analyzer ID
 func (id VideoAnalyzerId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Media/videoAnalyzers/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.VideoAnalyzerName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.AccountName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Video Analyzer ID
@@ -112,7 +109,7 @@ func (id VideoAnalyzerId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftMedia", "Microsoft.Media", "Microsoft.Media"),
 		resourceids.StaticSegment("staticVideoAnalyzers", "videoAnalyzers", "videoAnalyzers"),
-		resourceids.UserSpecifiedSegment("videoAnalyzerName", "videoAnalyzerValue"),
+		resourceids.UserSpecifiedSegment("accountName", "accountValue"),
 	}
 }
 
@@ -121,7 +118,7 @@ func (id VideoAnalyzerId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Video Analyzer Name: %q", id.VideoAnalyzerName),
+		fmt.Sprintf("Account Name: %q", id.AccountName),
 	}
 	return fmt.Sprintf("Video Analyzer (%s)", strings.Join(components, "\n"))
 }

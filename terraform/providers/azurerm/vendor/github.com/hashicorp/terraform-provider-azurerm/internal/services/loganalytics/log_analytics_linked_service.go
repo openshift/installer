@@ -6,29 +6,31 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/linkedservices"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-func logAnalyticsLinkedServiceDeleteWaitForState(ctx context.Context, client *linkedservices.LinkedServicesClient, timeout time.Duration, id linkedservices.LinkedServiceId) *pluginsdk.StateChangeConf {
+func logAnalyticsLinkedServiceDeleteWaitForState(ctx context.Context, meta interface{}, timeout time.Duration, resourceGroup string, workspaceName string, serviceType string) *pluginsdk.StateChangeConf {
 	return &pluginsdk.StateChangeConf{
 		Pending:    []string{"Deleting"},
 		Target:     []string{"Deleted"},
 		MinTimeout: 30 * time.Second,
 		Timeout:    timeout,
-		Refresh:    logAnalyticsLinkedServiceRefresh(ctx, client, id),
+		Refresh:    logAnalyticsLinkedServiceRefresh(ctx, meta, resourceGroup, workspaceName, serviceType),
 	}
 }
 
-func logAnalyticsLinkedServiceRefresh(ctx context.Context, client *linkedservices.LinkedServicesClient, id linkedservices.LinkedServiceId) pluginsdk.StateRefreshFunc {
+func logAnalyticsLinkedServiceRefresh(ctx context.Context, meta interface{}, resourceGroup string, workspaceName string, serviceType string) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		log.Printf("[INFO] checking on state of %s", id)
+		client := meta.(*clients.Client).LogAnalytics.LinkedServicesClient
 
-		resp, err := client.Get(ctx, id)
+		log.Printf("[INFO] checking on state of Log Analytics Linked Service '%s/%s' (Resource Group %q)", workspaceName, serviceType, resourceGroup)
+
+		resp, err := client.Get(ctx, resourceGroup, workspaceName, serviceType)
 		if err != nil {
-			if !response.WasNotFound(resp.HttpResponse) {
-				return nil, "nil", fmt.Errorf("polling for the status of %s: %+v", id, err)
+			if !utils.ResponseWasNotFound(resp.Response) {
+				return nil, "nil", fmt.Errorf("polling for the status of Log Analytics Linked Service '%s/%s' (Resource Group %q): %+v", workspaceName, serviceType, resourceGroup, err)
 			}
 
 			return resp, "Deleted", nil
@@ -36,7 +38,7 @@ func logAnalyticsLinkedServiceRefresh(ctx context.Context, client *linkedservice
 
 		// (@WodansSon) - The service returns status code 200 even if the resource does not exist
 		// instead it returns an empty slice...
-		if resp.Model == nil {
+		if props := resp.LinkedServiceProperties; props == nil {
 			return resp, "Deleted", nil
 		}
 

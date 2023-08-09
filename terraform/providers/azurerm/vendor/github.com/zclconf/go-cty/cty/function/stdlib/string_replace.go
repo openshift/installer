@@ -12,26 +12,21 @@ import (
 // substring, and replaces each occurence with a given replacement string.
 // The substr argument is a simple string.
 var ReplaceFunc = function.New(&function.Spec{
-	Description: `Replaces all instances of the given substring in the given string with the given replacement string.`,
 	Params: []function.Parameter{
 		{
-			Name:        "str",
-			Description: `The string to search within.`,
-			Type:        cty.String,
+			Name: "str",
+			Type: cty.String,
 		},
 		{
-			Name:        "substr",
-			Description: `The substring to search for.`,
-			Type:        cty.String,
+			Name: "substr",
+			Type: cty.String,
 		},
 		{
-			Name:        "replace",
-			Description: `The new substring to replace substr with.`,
-			Type:        cty.String,
+			Name: "replace",
+			Type: cty.String,
 		},
 	},
-	Type:         function.StaticReturnType(cty.String),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (cty.Value, error) {
 		str := args[0].AsString()
 		substr := args[1].AsString()
@@ -45,14 +40,13 @@ var ReplaceFunc = function.New(&function.Spec{
 // given substring, and replaces each occurence with a given replacement
 // string. The substr argument must be a valid regular expression.
 var RegexReplaceFunc = function.New(&function.Spec{
-	Description: `Applies the given regular expression pattern to the given string and replaces all matches with the given replacement string.`,
 	Params: []function.Parameter{
 		{
 			Name: "str",
 			Type: cty.String,
 		},
 		{
-			Name: "pattern",
+			Name: "substr",
 			Type: cty.String,
 		},
 		{
@@ -60,8 +54,7 @@ var RegexReplaceFunc = function.New(&function.Spec{
 			Type: cty.String,
 		},
 	},
-	Type:         function.StaticReturnType(cty.String),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.String),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		str := args[0].AsString()
 		substr := args[1].AsString()

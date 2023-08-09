@@ -5,14 +5,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/preview/security/mgmt/v3.0/security"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/workspaces"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	iothubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/validate"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/migration"
+	loganalyticsValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/securitycenter/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
@@ -36,11 +36,6 @@ func resourceIotSecuritySolution() *pluginsdk.Resource {
 			return err
 		}),
 
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.SecurityCenterIotSecuritySolutionV0ToV1{},
-		}),
-
 		Timeouts: &pluginsdk.ResourceTimeout{
 			Create: pluginsdk.DefaultTimeout(30 * time.Minute),
 			Read:   pluginsdk.DefaultTimeout(5 * time.Minute),
@@ -56,7 +51,7 @@ func resourceIotSecuritySolution() *pluginsdk.Resource {
 				ValidateFunc: validate.IotSecuritySolutionName,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"location": commonschema.Location(),
 
@@ -96,7 +91,7 @@ func resourceIotSecuritySolution() *pluginsdk.Resource {
 						"workspace_id": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: workspaces.ValidateWorkspaceID,
+							ValidateFunc: loganalyticsValidate.LogAnalyticsWorkspaceID,
 						},
 					},
 				},
@@ -116,7 +111,7 @@ func resourceIotSecuritySolution() *pluginsdk.Resource {
 			"log_analytics_workspace_id": {
 				Type:             pluginsdk.TypeString,
 				Optional:         true,
-				ValidateFunc:     workspaces.ValidateWorkspaceID,
+				ValidateFunc:     loganalyticsValidate.LogAnalyticsWorkspaceID,
 				DiffSuppressFunc: suppress.CaseDifference,
 			},
 

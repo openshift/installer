@@ -7,10 +7,7 @@ import (
 
 type Registration struct{}
 
-var (
-	_ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
-	_ sdk.TypedServiceRegistration                   = Registration{}
-)
+var _ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
 
 func (r Registration) AssociatedGitHubLabel() string {
 	return "service/vmware"
@@ -42,14 +39,4 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 		"azurerm_vmware_cluster":                     resourceVmwareCluster(),
 		"azurerm_vmware_express_route_authorization": resourceVmwareExpressRouteAuthorization(),
 	}
-}
-
-func (r Registration) Resources() []sdk.Resource {
-	return []sdk.Resource{
-		NetappFileVolumeAttachmentResource{},
-	}
-}
-
-func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{}
 }

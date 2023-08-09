@@ -89,7 +89,7 @@ func dataSourceDnsMxRecordRead(d *pluginsdk.ResourceData, meta interface{}) erro
 
 	d.Set("name", id.RelativeRecordSetName)
 	d.Set("resource_group_name", id.ResourceGroupName)
-	d.Set("zone_name", id.DnsZoneName)
+	d.Set("zone_name", id.ZoneName)
 
 	if model := resp.Model; model != nil {
 		if props := model.Properties; props != nil {

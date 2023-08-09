@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package storage
 
 import (
@@ -22,7 +19,6 @@ const (
 
 // ComputeAccountSASToken computes the SAS Token for a Storage Account based on the
 // access key & given permissions
-// See: https://docs.microsoft.com/en-us/rest/api/storageservices/create-account-sas
 func ComputeAccountSASToken(accountName string,
 	accountKey string,
 	permissions string,
@@ -33,7 +29,6 @@ func ComputeAccountSASToken(accountName string,
 	signedProtocol string,
 	signedIp string, // nolint: unparam
 	signedVersion string, // nolint: unparam
-	signedEncryptionScope string, // nolint: unparam
 ) (string, error) {
 
 	// UTF-8 by default...
@@ -46,10 +41,6 @@ func ComputeAccountSASToken(accountName string,
 	stringToSign += signedIp + "\n"
 	stringToSign += signedProtocol + "\n"
 	stringToSign += signedVersion + "\n"
-
-	if signedVersion >= "2020-12-06" {
-		stringToSign += signedEncryptionScope + "\n"
-	}
 
 	binaryKey, err := base64.StdEncoding.DecodeString(accountKey)
 	if err != nil {
@@ -149,8 +140,8 @@ func ComputeContainerSASToken(signedPermissions string,
 
 	sasToken := "?sv=" + signedVersion
 	sasToken += "&sr=" + signedResource
-	sasToken += "&st=" + signedStart
-	sasToken += "&se=" + signedExpiry
+	sasToken += "&st=" + url.QueryEscape(signedStart)
+	sasToken += "&se=" + url.QueryEscape(signedExpiry)
 	sasToken += "&sp=" + signedPermissions
 
 	if len(signedIp) > 0 {

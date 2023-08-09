@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/preview/securityinsight/mgmt/2021-09-01-preview/securityinsight"
 	"github.com/google/uuid"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/securityinsights/2022-11-01/watchlistitems"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/securityinsights/2022-11-01/watchlists"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/sentinel/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/sentinel/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 type WatchlistItemResource struct{}
@@ -37,7 +38,7 @@ func (r WatchlistItemResource) Arguments() map[string]*pluginsdk.Schema {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: watchlists.ValidateWatchlistID,
+			ValidateFunc: validate.WatchlistID,
 		},
 		"properties": {
 			Type:     pluginsdk.TypeMap,
@@ -62,7 +63,7 @@ func (r WatchlistItemResource) ModelObject() interface{} {
 }
 
 func (r WatchlistItemResource) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return watchlistitems.ValidateWatchlistItemID
+	return validate.WatchlistItemID
 }
 
 func (r WatchlistItemResource) Create() sdk.ResourceFunc {
@@ -71,40 +72,40 @@ func (r WatchlistItemResource) Create() sdk.ResourceFunc {
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Sentinel.WatchlistItemsClient
 
-			var watchListItem WatchlistItemModel
-			if err := metadata.Decode(&watchListItem); err != nil {
+			var model WatchlistItemModel
+			if err := metadata.Decode(&model); err != nil {
 				return fmt.Errorf("decoding %+v", err)
 			}
 
 			// Generate a random UUID as the resource name if the user doesn't specify it.
-			if watchListItem.Name == "" {
-				watchListItem.Name = uuid.New().String()
+			if model.Name == "" {
+				model.Name = uuid.New().String()
 			}
 
-			watchlistId, err := watchlists.ParseWatchlistID(watchListItem.WatchlistID)
+			watchlistId, err := parse.WatchlistID(model.WatchlistID)
 			if err != nil {
 				return err
 			}
 
-			id := watchlistitems.NewWatchlistItemID(watchlistId.SubscriptionId, watchlistId.ResourceGroupName, watchlistId.WorkspaceName, watchlistId.WatchlistAlias, watchListItem.Name)
+			id := parse.NewWatchlistItemID(watchlistId.SubscriptionId, watchlistId.ResourceGroup, watchlistId.WorkspaceName, watchlistId.Name, model.Name)
 
-			existing, err := client.Get(ctx, id)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.WatchlistName, id.Name)
 			if err != nil {
-				if !response.WasNotFound(existing.HttpResponse) {
+				if !utils.ResponseWasNotFound(existing.Response) {
 					return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 				}
 			}
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return metadata.ResourceRequiresImport(r.ResourceType(), id)
 			}
 
-			params := watchlistitems.WatchlistItem{
-				Properties: &watchlistitems.WatchlistItemProperties{
-					ItemsKeyValue: watchListItem.Properties,
+			params := securityinsight.WatchlistItem{
+				WatchlistItemProperties: &securityinsight.WatchlistItemProperties{
+					ItemsKeyValue: model.Properties,
 				},
 			}
 
-			if _, err = client.CreateOrUpdate(ctx, id, params); err != nil {
+			if _, err = client.CreateOrUpdate(ctx, id.ResourceGroup, id.WorkspaceName, id.WatchlistName, id.Name, params); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
@@ -120,36 +121,54 @@ func (r WatchlistItemResource) Read() sdk.ResourceFunc {
 
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			client := metadata.Client.Sentinel.WatchlistItemsClient
-			id, err := watchlistitems.ParseWatchlistItemID(metadata.ResourceData.Id())
+			id, err := parse.WatchlistItemID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
 
-			resp, err := client.Get(ctx, *id)
+			resp, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.WatchlistName, id.Name)
 			if err != nil {
-				if response.WasNotFound(resp.HttpResponse) {
+				if utils.ResponseWasNotFound(resp.Response) {
 					return metadata.MarkAsGone(id)
 				}
 				return fmt.Errorf("retrieving %s: %+v", id, err)
 			}
 
-			watchlistId := watchlists.NewWatchlistID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName, id.WatchlistAlias)
+			watchlistId := parse.NewWatchlistID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName, id.WatchlistName)
 
 			var properties map[string]interface{}
-			if model := resp.Model; model != nil {
-				if props := model.Properties; props != nil {
-					if itemsKV := props.ItemsKeyValue; itemsKV != nil {
-						properties = itemsKV.(map[string]interface{})
-					}
+			if props := resp.WatchlistItemProperties; props != nil {
+				if itemsKV := props.ItemsKeyValue; itemsKV != nil {
+					properties = itemsKV.(map[string]interface{})
 				}
 			}
-
-			watchListItem := WatchlistItemModel{
+			model := WatchlistItemModel{
 				WatchlistID: watchlistId.ID(),
-				Name:        id.WatchlistItemId,
+				Name:        id.Name,
 				Properties:  properties,
 			}
-			return metadata.Encode(&watchListItem)
+
+			return metadata.Encode(&model)
+		},
+	}
+}
+
+func (r WatchlistItemResource) Delete() sdk.ResourceFunc {
+	return sdk.ResourceFunc{
+		Timeout: 30 * time.Minute,
+		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
+			client := metadata.Client.Sentinel.WatchlistItemsClient
+
+			id, err := parse.WatchlistItemID(metadata.ResourceData.Id())
+			if err != nil {
+				return err
+			}
+
+			if _, err := client.Delete(ctx, id.ResourceGroup, id.WorkspaceName, id.WatchlistName, id.Name); err != nil {
+				return fmt.Errorf("deleting %s: %+v", id, err)
+			}
+
+			return nil
 		},
 	}
 }
@@ -165,54 +184,33 @@ func (r WatchlistItemResource) Update() sdk.ResourceFunc {
 				return fmt.Errorf("decoding %+v", err)
 			}
 
-			watchlistId, err := watchlistitems.ParseWatchlistID(model.WatchlistID)
+			watchlistId, err := parse.WatchlistID(model.WatchlistID)
 			if err != nil {
 				return err
 			}
-			id := watchlistitems.NewWatchlistItemID(watchlistId.SubscriptionId, watchlistId.ResourceGroupName, watchlistId.WorkspaceName, watchlistId.WatchlistAlias, model.Name)
+			id := parse.NewWatchlistItemID(watchlistId.SubscriptionId, watchlistId.ResourceGroup, watchlistId.WorkspaceName, watchlistId.Name, model.Name)
 
-			existing, err := client.Get(ctx, id)
+			existing, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.WatchlistName, id.Name)
 			if err != nil {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 
-			update := watchlistitems.WatchlistItem{}
-
-			if model := existing.Model; model != nil {
-				update.Properties = model.Properties
+			update := securityinsight.WatchlistItem{
+				WatchlistItemProperties: existing.WatchlistItemProperties,
 			}
+
 			if metadata.ResourceData.HasChange("properties") {
-				if update.Properties == nil {
-					update.Properties = &watchlistitems.WatchlistItemProperties{}
+				if update.WatchlistItemProperties == nil {
+					update.WatchlistItemProperties = &securityinsight.WatchlistItemProperties{}
 				}
-				update.Properties.ItemsKeyValue = model.Properties
+				update.WatchlistItemProperties.ItemsKeyValue = model.Properties
 			}
 
-			if _, err = client.CreateOrUpdate(ctx, id, update); err != nil {
+			if _, err = client.CreateOrUpdate(ctx, id.ResourceGroup, id.WorkspaceName, id.WatchlistName, id.Name, update); err != nil {
 				return fmt.Errorf("creating %s: %+v", id, err)
 			}
 
 			metadata.SetID(id)
-			return nil
-		},
-	}
-}
-
-func (r WatchlistItemResource) Delete() sdk.ResourceFunc {
-	return sdk.ResourceFunc{
-		Timeout: 30 * time.Minute,
-		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			client := metadata.Client.Sentinel.WatchlistItemsClient
-
-			id, err := watchlistitems.ParseWatchlistItemID(metadata.ResourceData.Id())
-			if err != nil {
-				return err
-			}
-
-			if _, err := client.Delete(ctx, *id); err != nil {
-				return fmt.Errorf("deleting %s: %+v", id, err)
-			}
-
 			return nil
 		},
 	}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -26,10 +25,6 @@ func dataSourceResourceGroup() *pluginsdk.Resource {
 			"name":     commonschema.ResourceGroupNameForDataSource(),
 			"location": commonschema.LocationComputed(),
 			"tags":     tags.SchemaDataSource(),
-			"managed_by": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
 		},
 	}
 }
@@ -55,6 +50,5 @@ func dataSourceResourceGroupRead(d *pluginsdk.ResourceData, meta interface{}) er
 
 	d.Set("name", resp.Name)
 	d.Set("location", location.NormalizeNilable(resp.Location))
-	d.Set("managed_by", pointer.From(resp.ManagedBy))
 	return tags.FlattenAndSet(d, resp.Tags)
 }

@@ -106,7 +106,7 @@ func redisEnterpriseDatabaseSchema() map[string]*pluginsdk.Schema {
 			Type:     pluginsdk.TypeList,
 			Optional: true,
 			ForceNew: true,
-			MaxItems: 4,
+			MaxItems: 3,
 			Elem: &pluginsdk.Resource{
 				Schema: map[string]*pluginsdk.Schema{
 					"name": {
@@ -117,7 +117,6 @@ func redisEnterpriseDatabaseSchema() map[string]*pluginsdk.Schema {
 							"RedisBloom",
 							"RedisTimeSeries",
 							"RediSearch",
-							"RedisJSON",
 						}, false),
 					},
 
@@ -232,7 +231,7 @@ func resourceRedisEnterpriseDatabaseCreate(d *pluginsdk.ResourceData, meta inter
 		return fmt.Errorf("parsing `cluster_id`: %+v", err)
 	}
 
-	id := databases.NewDatabaseID(subscriptionId, clusterId.ResourceGroupName, clusterId.RedisEnterpriseName, d.Get("name").(string))
+	id := databases.NewDatabaseID(subscriptionId, clusterId.ResourceGroupName, clusterId.ClusterName, d.Get("name").(string))
 	if d.IsNewResource() {
 		existing, err := client.Get(ctx, id)
 		if err != nil {
@@ -296,7 +295,7 @@ func resourceRedisEnterpriseDatabaseCreate(d *pluginsdk.ResourceData, meta inter
 				return fmt.Errorf("retrieving %s: %+v", *clusterId, err)
 			}
 
-			if resp.Model != nil && strings.Contains(strings.ToLower(string(resp.Model.Sku.Name)), "flash") {
+			if strings.Contains(strings.ToLower(string(resp.Model.Sku.Name)), "flash") {
 				return fmt.Errorf("creating a Redis Enterprise Database with modules in a Redis Enterprise Cluster that has an incompatible Flash SKU type %q - please remove the Redis Enterprise Database modules or change the Redis Enterprise Cluster SKU type %s", string(resp.Model.Sku.Name), id)
 			}
 		}
@@ -304,7 +303,7 @@ func resourceRedisEnterpriseDatabaseCreate(d *pluginsdk.ResourceData, meta inter
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
-	if err := future.Poller.PollUntilDone(ctx); err != nil {
+	if err := future.Poller.PollUntilDone(); err != nil {
 		return fmt.Errorf("waiting for creation of %s: %+v", id, err)
 	}
 
@@ -339,7 +338,7 @@ func resourceRedisEnterpriseDatabaseRead(d *pluginsdk.ResourceData, meta interfa
 
 	d.Set("name", id.DatabaseName)
 	d.Set("resource_group_name", id.ResourceGroupName)
-	clusterId := redisenterprise.NewRedisEnterpriseID(id.SubscriptionId, id.ResourceGroupName, id.RedisEnterpriseName)
+	clusterId := redisenterprise.NewRedisEnterpriseID(id.SubscriptionId, id.ResourceGroupName, id.ClusterName)
 	d.Set("cluster_id", clusterId.ID())
 
 	if !features.FourPointOhBeta() {
@@ -402,7 +401,7 @@ func resourceRedisEnterpriseDatabaseUpdate(d *pluginsdk.ResourceData, meta inter
 		return fmt.Errorf("parsing `cluster_id`: %+v", err)
 	}
 
-	id := databases.NewDatabaseID(subscriptionId, clusterId.ResourceGroupName, clusterId.RedisEnterpriseName, d.Get("name").(string))
+	id := databases.NewDatabaseID(subscriptionId, clusterId.ResourceGroupName, clusterId.ClusterName, d.Get("name").(string))
 
 	clusteringPolicy := databases.ClusteringPolicy(d.Get("clustering_policy").(string))
 	evictionPolicy := databases.EvictionPolicy(d.Get("eviction_policy").(string))
@@ -442,8 +441,13 @@ func resourceRedisEnterpriseDatabaseUpdate(d *pluginsdk.ResourceData, meta inter
 		},
 	}
 
-	if err := client.CreateThenPoll(ctx, id, parameters); err != nil {
+	future, err := client.Create(ctx, id, parameters)
+	if err != nil {
 		return fmt.Errorf("updatig %s: %+v", id, err)
+	}
+
+	if err := future.Poller.PollUntilDone(); err != nil {
+		return fmt.Errorf("waiting for update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -461,8 +465,8 @@ func resourceRedisEnterpriseDatabaseDelete(d *pluginsdk.ResourceData, meta inter
 		return err
 	}
 
-	dbId := databases.NewDatabaseID(id.SubscriptionId, id.ResourceGroupName, id.RedisEnterpriseName, id.DatabaseName)
-	clusterId := redisenterprise.NewRedisEnterpriseID(id.SubscriptionId, id.ResourceGroupName, id.RedisEnterpriseName)
+	dbId := databases.NewDatabaseID(id.SubscriptionId, id.ResourceGroupName, id.ClusterName, id.DatabaseName)
+	clusterId := redisenterprise.NewRedisEnterpriseID(id.SubscriptionId, id.ResourceGroupName, id.ClusterName)
 
 	if _, err := client.Delete(ctx, *id); err != nil {
 		return fmt.Errorf("deleting %s: %+v", id, err)

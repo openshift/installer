@@ -2,10 +2,9 @@ package network
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	multierror "github.com/hashicorp/go-multierror"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
@@ -18,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 var networkSecurityGroupResourceName = "azurerm_network_security_group"
@@ -49,9 +47,9 @@ func resourceNetworkSecurityGroup() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"security_rule": {
 				Type:       pluginsdk.TypeSet,
@@ -396,13 +394,6 @@ func expandAzureRmSecurityRules(d *pluginsdk.ResourceData) ([]network.SecurityRu
 func flattenNetworkSecurityRules(rules *[]network.SecurityRule) []map[string]interface{} {
 	result := make([]map[string]interface{}, 0)
 
-	// For fixing the case insensitive issue for the NSR protocol in Azure
-	// See: https://github.com/hashicorp/terraform-provider-azurerm/issues/16092
-	protocolMap := map[string]network.SecurityRuleProtocol{}
-	for _, protocol := range network.PossibleSecurityRuleProtocolValues() {
-		protocolMap[strings.ToLower(string(protocol))] = protocol
-	}
-
 	if rules != nil {
 		for _, rule := range *rules {
 			sgRule := make(map[string]interface{})
@@ -456,7 +447,7 @@ func flattenNetworkSecurityRules(rules *[]network.SecurityRule) []map[string]int
 					sgRule["source_port_ranges"] = set.FromStringSlice(*props.SourcePortRanges)
 				}
 
-				sgRule["protocol"] = string(protocolMap[strings.ToLower(string(props.Protocol))])
+				sgRule["protocol"] = string(props.Protocol)
 				sgRule["priority"] = int(*props.Priority)
 				sgRule["access"] = string(props.Access)
 				sgRule["direction"] = string(props.Direction)

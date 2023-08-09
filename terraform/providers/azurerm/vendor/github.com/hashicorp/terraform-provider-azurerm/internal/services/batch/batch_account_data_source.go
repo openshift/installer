@@ -4,17 +4,17 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/batch/mgmt/2022-01-01/batch"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/batch/2022-10-01/batchaccount"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/batch/validate"
 	keyVaultValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceBatchAccount() *pluginsdk.Resource {
@@ -81,13 +81,13 @@ func dataSourceBatchAccount() *pluginsdk.Resource {
 						"key_vault_key_id": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: keyVaultValidate.NestedItemIdWithOptionalVersion,
+							ValidateFunc: keyVaultValidate.NestedItemId,
 						},
 					},
 				},
 			},
 
-			"tags": commonschema.TagsDataSource(),
+			"tags": tags.SchemaDataSource(),
 		},
 	}
 }
@@ -98,57 +98,52 @@ func dataSourceBatchAccountRead(d *pluginsdk.ResourceData, meta interface{}) err
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := batchaccount.NewBatchAccountID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewAccountID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 
-	resp, err := client.Get(ctx, id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.BatchAccountName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("%s was not found", id)
 		}
-		return fmt.Errorf("reading %s: %+v", id, err)
+		return fmt.Errorf("making Read request on %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
 
 	d.Set("name", id.BatchAccountName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.NormalizeNilable(model.Location))
+	d.Set("account_endpoint", resp.AccountEndpoint)
+	d.Set("location", location.NormalizeNilable(resp.Location))
 
-		if props := model.Properties; props != nil {
-			d.Set("account_endpoint", props.AccountEndpoint)
+	if props := resp.AccountProperties; props != nil {
+		if autoStorage := props.AutoStorage; autoStorage != nil {
+			d.Set("storage_account_id", autoStorage.StorageAccountID)
+		}
+		d.Set("pool_allocation_mode", props.PoolAllocationMode)
+		poolAllocationMode := d.Get("pool_allocation_mode").(string)
 
-			if autoStorage := props.AutoStorage; autoStorage != nil {
-				d.Set("storage_account_id", autoStorage.StorageAccountId)
+		if encryption := props.Encryption; encryption != nil {
+			d.Set("encryption", flattenEncryption(encryption))
+		}
+
+		if poolAllocationMode == string(batch.PoolAllocationModeBatchService) {
+			keys, err := client.GetKeys(ctx, id.ResourceGroup, id.BatchAccountName)
+			if err != nil {
+				return fmt.Errorf("cannot read keys for %s: %v", id, err)
 			}
-			d.Set("pool_allocation_mode", string(pointer.From(props.PoolAllocationMode)))
-			poolAllocationMode := d.Get("pool_allocation_mode").(string)
 
-			if encryption := props.Encryption; encryption != nil {
-				d.Set("encryption", flattenEncryption(encryption))
-			}
+			d.Set("primary_access_key", keys.Primary)
+			d.Set("secondary_access_key", keys.Secondary)
 
-			if poolAllocationMode == string(batchaccount.PoolAllocationModeBatchService) {
-				keys, err := client.GetKeys(ctx, id)
-				if err != nil {
-					return fmt.Errorf("cannot read keys for %s: %v", id, err)
-				}
-
-				if keysModel := keys.Model; keysModel != nil {
-					d.Set("primary_access_key", keysModel.Primary)
-					d.Set("secondary_access_key", keysModel.Secondary)
-				}
-
-				// set empty keyvault reference which is not needed in Batch Service allocation mode.
-				d.Set("key_vault_reference", []interface{}{})
-			} else if poolAllocationMode == string(batchaccount.PoolAllocationModeUserSubscription) {
-				if err := d.Set("key_vault_reference", flattenBatchAccountKeyvaultReference(props.KeyVaultReference)); err != nil {
-					return fmt.Errorf("flattening `key_vault_reference`: %+v", err)
-				}
+			// set empty keyvault reference which is not needed in Batch Service allocation mode.
+			d.Set("key_vault_reference", []interface{}{})
+		} else if poolAllocationMode == string(batch.PoolAllocationModeUserSubscription) {
+			if err := d.Set("key_vault_reference", flattenBatchAccountKeyvaultReference(props.KeyVaultReference)); err != nil {
+				return fmt.Errorf("flattening `key_vault_reference`: %+v", err)
 			}
 		}
-		return tags.FlattenAndSet(d, model.Tags)
 	}
-	return nil
+
+	return tags.FlattenAndSet(d, resp.Tags)
 }

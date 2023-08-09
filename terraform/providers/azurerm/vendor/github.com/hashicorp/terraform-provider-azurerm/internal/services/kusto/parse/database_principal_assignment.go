@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -42,7 +39,7 @@ func (id DatabasePrincipalAssignmentId) String() string {
 }
 
 func (id DatabasePrincipalAssignmentId) ID() string {
-	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Kusto/clusters/%s/databases/%s/principalAssignments/%s"
+	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Kusto/Clusters/%s/Databases/%s/PrincipalAssignments/%s"
 	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.ClusterName, id.DatabaseName, id.PrincipalAssignmentName)
 }
 
@@ -50,48 +47,6 @@ func (id DatabasePrincipalAssignmentId) ID() string {
 func DatabasePrincipalAssignmentID(input string) (*DatabasePrincipalAssignmentId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an DatabasePrincipalAssignment ID: %+v", input, err)
-	}
-
-	resourceId := DatabasePrincipalAssignmentId{
-		SubscriptionId: id.SubscriptionID,
-		ResourceGroup:  id.ResourceGroup,
-	}
-
-	if resourceId.SubscriptionId == "" {
-		return nil, fmt.Errorf("ID was missing the 'subscriptions' element")
-	}
-
-	if resourceId.ResourceGroup == "" {
-		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
-	}
-
-	if resourceId.ClusterName, err = id.PopSegment("clusters"); err != nil {
-		return nil, err
-	}
-	if resourceId.DatabaseName, err = id.PopSegment("databases"); err != nil {
-		return nil, err
-	}
-	if resourceId.PrincipalAssignmentName, err = id.PopSegment("principalAssignments"); err != nil {
-		return nil, err
-	}
-
-	if err := id.ValidateNoEmptySegments(input); err != nil {
-		return nil, err
-	}
-
-	return &resourceId, nil
-}
-
-// DatabasePrincipalAssignmentIDInsensitively parses an DatabasePrincipalAssignment ID into an DatabasePrincipalAssignmentId struct, insensitively
-// This should only be used to parse an ID for rewriting, the DatabasePrincipalAssignmentID
-// method should be used instead for validation etc.
-//
-// Whilst this may seem strange, this enables Terraform have consistent casing
-// which works around issues in Core, whilst handling broken API responses.
-func DatabasePrincipalAssignmentIDInsensitively(input string) (*DatabasePrincipalAssignmentId, error) {
-	id, err := resourceids.ParseAzureResourceID(input)
-	if err != nil {
 		return nil, err
 	}
 
@@ -108,39 +63,13 @@ func DatabasePrincipalAssignmentIDInsensitively(input string) (*DatabasePrincipa
 		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
 	}
 
-	// find the correct casing for the 'clusters' segment
-	clustersKey := "clusters"
-	for key := range id.Path {
-		if strings.EqualFold(key, clustersKey) {
-			clustersKey = key
-			break
-		}
-	}
-	if resourceId.ClusterName, err = id.PopSegment(clustersKey); err != nil {
+	if resourceId.ClusterName, err = id.PopSegment("Clusters"); err != nil {
 		return nil, err
 	}
-
-	// find the correct casing for the 'databases' segment
-	databasesKey := "databases"
-	for key := range id.Path {
-		if strings.EqualFold(key, databasesKey) {
-			databasesKey = key
-			break
-		}
-	}
-	if resourceId.DatabaseName, err = id.PopSegment(databasesKey); err != nil {
+	if resourceId.DatabaseName, err = id.PopSegment("Databases"); err != nil {
 		return nil, err
 	}
-
-	// find the correct casing for the 'principalAssignments' segment
-	principalAssignmentsKey := "principalAssignments"
-	for key := range id.Path {
-		if strings.EqualFold(key, principalAssignmentsKey) {
-			principalAssignmentsKey = key
-			break
-		}
-	}
-	if resourceId.PrincipalAssignmentName, err = id.PopSegment(principalAssignmentsKey); err != nil {
+	if resourceId.PrincipalAssignmentName, err = id.PopSegment("PrincipalAssignments"); err != nil {
 		return nil, err
 	}
 

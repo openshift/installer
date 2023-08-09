@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -44,7 +41,7 @@ func (id CassandraClusterId) ID() string {
 func CassandraClusterID(input string) (*CassandraClusterId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an CassandraCluster ID: %+v", input, err)
+		return nil, err
 	}
 
 	resourceId := CassandraClusterId{

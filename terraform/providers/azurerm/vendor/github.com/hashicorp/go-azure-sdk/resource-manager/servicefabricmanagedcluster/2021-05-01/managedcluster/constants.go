@@ -248,8 +248,8 @@ type NsgProtocol string
 const (
 	NsgProtocolAh    NsgProtocol = "ah"
 	NsgProtocolEsp   NsgProtocol = "esp"
-	NsgProtocolHTTP  NsgProtocol = "http"
-	NsgProtocolHTTPS NsgProtocol = "https"
+	NsgProtocolHttp  NsgProtocol = "http"
+	NsgProtocolHttps NsgProtocol = "https"
 	NsgProtocolIcmp  NsgProtocol = "icmp"
 	NsgProtocolTcp   NsgProtocol = "tcp"
 	NsgProtocolUdp   NsgProtocol = "udp"
@@ -259,8 +259,8 @@ func PossibleValuesForNsgProtocol() []string {
 	return []string{
 		string(NsgProtocolAh),
 		string(NsgProtocolEsp),
-		string(NsgProtocolHTTP),
-		string(NsgProtocolHTTPS),
+		string(NsgProtocolHttp),
+		string(NsgProtocolHttps),
 		string(NsgProtocolIcmp),
 		string(NsgProtocolTcp),
 		string(NsgProtocolUdp),
@@ -271,8 +271,8 @@ func parseNsgProtocol(input string) (*NsgProtocol, error) {
 	vals := map[string]NsgProtocol{
 		"ah":    NsgProtocolAh,
 		"esp":   NsgProtocolEsp,
-		"http":  NsgProtocolHTTP,
-		"https": NsgProtocolHTTPS,
+		"http":  NsgProtocolHttp,
+		"https": NsgProtocolHttps,
 		"icmp":  NsgProtocolIcmp,
 		"tcp":   NsgProtocolTcp,
 		"udp":   NsgProtocolUdp,
@@ -289,23 +289,23 @@ func parseNsgProtocol(input string) (*NsgProtocol, error) {
 type ProbeProtocol string
 
 const (
-	ProbeProtocolHTTP  ProbeProtocol = "http"
-	ProbeProtocolHTTPS ProbeProtocol = "https"
+	ProbeProtocolHttp  ProbeProtocol = "http"
+	ProbeProtocolHttps ProbeProtocol = "https"
 	ProbeProtocolTcp   ProbeProtocol = "tcp"
 )
 
 func PossibleValuesForProbeProtocol() []string {
 	return []string{
-		string(ProbeProtocolHTTP),
-		string(ProbeProtocolHTTPS),
+		string(ProbeProtocolHttp),
+		string(ProbeProtocolHttps),
 		string(ProbeProtocolTcp),
 	}
 }
 
 func parseProbeProtocol(input string) (*ProbeProtocol, error) {
 	vals := map[string]ProbeProtocol{
-		"http":  ProbeProtocolHTTP,
-		"https": ProbeProtocolHTTPS,
+		"http":  ProbeProtocolHttp,
+		"https": ProbeProtocolHttps,
 		"tcp":   ProbeProtocolTcp,
 	}
 	if v, ok := vals[strings.ToLower(input)]; ok {

@@ -2,7 +2,6 @@ package compute
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
@@ -40,7 +39,6 @@ func dataSourceVirtualMachine() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
 			},
-
 			"private_ip_addresses": {
 				Type:     pluginsdk.TypeList,
 				Computed: true,
@@ -48,23 +46,16 @@ func dataSourceVirtualMachine() *pluginsdk.Resource {
 					Type: pluginsdk.TypeString,
 				},
 			},
-
 			"public_ip_address": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
 			},
-
 			"public_ip_addresses": {
 				Type:     pluginsdk.TypeList,
 				Computed: true,
 				Elem: &pluginsdk.Schema{
 					Type: pluginsdk.TypeString,
 				},
-			},
-
-			"power_state": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
 			},
 		},
 	}
@@ -93,18 +84,6 @@ func dataSourceVirtualMachineRead(d *pluginsdk.ResourceData, meta interface{}) e
 	d.SetId(id.ID())
 
 	d.Set("location", location.NormalizeNilable(resp.Location))
-
-	if prop := resp.VirtualMachineProperties; prop != nil {
-		if instance := prop.InstanceView; instance != nil {
-			if statues := instance.Statuses; statues != nil {
-				for _, status := range *statues {
-					if status.Code != nil && strings.HasPrefix(strings.ToLower(*status.Code), "powerstate/") {
-						d.Set("power_state", strings.SplitN(*status.Code, "/", 2)[1])
-					}
-				}
-			}
-		}
-	}
 
 	connectionInfo := retrieveConnectionInformation(ctx, networkInterfacesClient, publicIPAddressesClient, resp.VirtualMachineProperties)
 	err = d.Set("private_ip_address", connectionInfo.primaryPrivateAddress)

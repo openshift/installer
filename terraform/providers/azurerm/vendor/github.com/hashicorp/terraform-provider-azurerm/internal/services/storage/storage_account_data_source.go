@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-09-01/storage" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/storage/mgmt/2021-09-01/storage"
 	azautorest "github.com/Azure/go-autorest/autorest"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
@@ -280,51 +280,6 @@ func dataSourceStorageAccount() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"azure_files_authentication": {
-				Type:     pluginsdk.TypeList,
-				Computed: true,
-				Elem: &pluginsdk.Resource{
-					Schema: map[string]*pluginsdk.Schema{
-						"directory_type": {
-							Type:     pluginsdk.TypeString,
-							Computed: true,
-						},
-						"active_directory": {
-							Type:     pluginsdk.TypeList,
-							Computed: true,
-							Elem: &pluginsdk.Resource{
-								Schema: map[string]*pluginsdk.Schema{
-									"domain_name": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-									"netbios_domain_name": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-									"forest_name": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-									"domain_guid": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-									"domain_sid": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-									"storage_sid": {
-										Type:     pluginsdk.TypeString,
-										Computed: true,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-
 			"tags": tags.SchemaDataSource(),
 		},
 	}
@@ -333,13 +288,9 @@ func dataSourceStorageAccount() *pluginsdk.Resource {
 func dataSourceStorageAccountRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Storage.AccountsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
+	endpointSuffix := meta.(*clients.Client).Account.Environment.StorageEndpointSuffix
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-
-	storageDomainSuffix, ok := meta.(*clients.Client).Account.Environment.Storage.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine Storage domain suffix for environment %q", meta.(*clients.Client).Account.Environment.Name)
-	}
 
 	id := parse.NewStorageAccountID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	resp, err := client.GetProperties(ctx, id.ResourceGroup, id.Name, "")
@@ -368,7 +319,7 @@ func dataSourceStorageAccountRead(d *pluginsdk.ResourceData, meta interface{}) e
 		if e, ok := err.(azautorest.DetailedError); ok {
 			if status, ok := e.StatusCode.(int); ok {
 				hasWriteLock = status == http.StatusConflict
-				doesntHavePermissions = (status == http.StatusUnauthorized || status == http.StatusForbidden)
+				doesntHavePermissions = status == http.StatusUnauthorized
 			}
 		}
 
@@ -406,12 +357,12 @@ func dataSourceStorageAccountRead(d *pluginsdk.ResourceData, meta interface{}) e
 		if accessKeys := keys.Keys; accessKeys != nil {
 			storageAccessKeys := *accessKeys
 			if len(storageAccessKeys) > 0 {
-				pcs := fmt.Sprintf("DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s;EndpointSuffix=%s", *resp.Name, *storageAccessKeys[0].Value, *storageDomainSuffix)
+				pcs := fmt.Sprintf("DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s;EndpointSuffix=%s", *resp.Name, *storageAccessKeys[0].Value, endpointSuffix)
 				d.Set("primary_connection_string", pcs)
 			}
 
 			if len(storageAccessKeys) > 1 {
-				scs := fmt.Sprintf("DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s;EndpointSuffix=%s", *resp.Name, *storageAccessKeys[1].Value, *storageDomainSuffix)
+				scs := fmt.Sprintf("DefaultEndpointsProtocol=https;AccountName=%s;AccountKey=%s;EndpointSuffix=%s", *resp.Name, *storageAccessKeys[1].Value, endpointSuffix)
 				d.Set("secondary_connection_string", scs)
 			}
 		}
@@ -462,10 +413,6 @@ func dataSourceStorageAccountRead(d *pluginsdk.ResourceData, meta interface{}) e
 			infrastructureEncryption = *encryption.RequireInfrastructureEncryption
 		}
 		d.Set("infrastructure_encryption_enabled", infrastructureEncryption)
-
-		if err := d.Set("azure_files_authentication", flattenArmStorageAccountAzureFilesAuthentication(props.AzureFilesIdentityBasedAuthentication)); err != nil {
-			return fmt.Errorf("setting `azure_files_authentication`: %+v", err)
-		}
 	}
 
 	if accessKeys := keys.Keys; accessKeys != nil {

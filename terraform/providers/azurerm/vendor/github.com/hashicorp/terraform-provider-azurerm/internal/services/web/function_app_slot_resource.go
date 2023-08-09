@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/validate"
 	webValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/web/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -51,9 +52,9 @@ func resourceFunctionAppSlot() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"identity": commonschema.SystemAssignedUserAssignedIdentityOptional(),
 
@@ -68,7 +69,7 @@ func resourceFunctionAppSlot() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: webValidate.AppServicePlanID,
+				ValidateFunc: validate.AppServicePlanID,
 			},
 
 			"version": {
@@ -219,13 +220,9 @@ func resourceFunctionAppSlot() *pluginsdk.Resource {
 func resourceFunctionAppSlotCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Web.AppServicesClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
+	endpointSuffix := meta.(*clients.Client).Account.Environment.StorageEndpointSuffix
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-
-	storageDomainSuffix, ok := meta.(*clients.Client).Account.Environment.Storage.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine Storage domain suffix for environment %q", meta.(*clients.Client).Account.Environment.Name)
-	}
 
 	log.Printf("[INFO] preparing arguments for AzureRM Function App Slot creation.")
 
@@ -263,7 +260,7 @@ func resourceFunctionAppSlotCreate(d *pluginsdk.ResourceData, meta interface{}) 
 		return err
 	}
 
-	basicAppSettings := getBasicFunctionAppSlotAppSettings(d, appServiceTier, *storageDomainSuffix, nil)
+	basicAppSettings := getBasicFunctionAppSlotAppSettings(d, appServiceTier, endpointSuffix, nil)
 
 	siteConfig, err := expandFunctionAppSiteConfig(d)
 	if err != nil {
@@ -322,13 +319,9 @@ func resourceFunctionAppSlotCreate(d *pluginsdk.ResourceData, meta interface{}) 
 
 func resourceFunctionAppSlotUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Web.AppServicesClient
+	endpointSuffix := meta.(*clients.Client).Account.Environment.StorageEndpointSuffix
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
-
-	storageDomainSuffix, ok := meta.(*clients.Client).Account.Environment.Storage.DomainSuffix()
-	if !ok {
-		return fmt.Errorf("could not determine Storage domain suffix for environment %q", meta.(*clients.Client).Account.Environment.Name)
-	}
 
 	id, err := parse.FunctionAppSlotID(d.Id())
 	if err != nil {
@@ -363,7 +356,7 @@ func resourceFunctionAppSlotUpdate(d *pluginsdk.ResourceData, meta interface{}) 
 		currentAppSettings = appSettingsList.Properties
 	}
 
-	basicAppSettings := getBasicFunctionAppSlotAppSettings(d, appServiceTier, *storageDomainSuffix, currentAppSettings)
+	basicAppSettings := getBasicFunctionAppSlotAppSettings(d, appServiceTier, endpointSuffix, currentAppSettings)
 
 	siteConfig, err := expandFunctionAppSiteConfig(d)
 	if err != nil {

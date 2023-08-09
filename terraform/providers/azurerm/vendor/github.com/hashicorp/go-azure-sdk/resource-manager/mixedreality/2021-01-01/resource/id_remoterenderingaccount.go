@@ -7,24 +7,21 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = RemoteRenderingAccountId{}
 
 // RemoteRenderingAccountId is a struct representing the Resource ID for a Remote Rendering Account
 type RemoteRenderingAccountId struct {
-	SubscriptionId             string
-	ResourceGroupName          string
-	RemoteRenderingAccountName string
+	SubscriptionId    string
+	ResourceGroupName string
+	AccountName       string
 }
 
 // NewRemoteRenderingAccountID returns a new RemoteRenderingAccountId struct
-func NewRemoteRenderingAccountID(subscriptionId string, resourceGroupName string, remoteRenderingAccountName string) RemoteRenderingAccountId {
+func NewRemoteRenderingAccountID(subscriptionId string, resourceGroupName string, accountName string) RemoteRenderingAccountId {
 	return RemoteRenderingAccountId{
-		SubscriptionId:             subscriptionId,
-		ResourceGroupName:          resourceGroupName,
-		RemoteRenderingAccountName: remoteRenderingAccountName,
+		SubscriptionId:    subscriptionId,
+		ResourceGroupName: resourceGroupName,
+		AccountName:       accountName,
 	}
 }
 
@@ -40,15 +37,15 @@ func ParseRemoteRenderingAccountID(input string) (*RemoteRenderingAccountId, err
 	id := RemoteRenderingAccountId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.RemoteRenderingAccountName, ok = parsed.Parsed["remoteRenderingAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "remoteRenderingAccountName", *parsed)
+	if id.AccountName, ok = parsed.Parsed["accountName"]; !ok {
+		return nil, fmt.Errorf("the segment 'accountName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -67,15 +64,15 @@ func ParseRemoteRenderingAccountIDInsensitively(input string) (*RemoteRenderingA
 	id := RemoteRenderingAccountId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.RemoteRenderingAccountName, ok = parsed.Parsed["remoteRenderingAccountName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "remoteRenderingAccountName", *parsed)
+	if id.AccountName, ok = parsed.Parsed["accountName"]; !ok {
+		return nil, fmt.Errorf("the segment 'accountName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -99,7 +96,7 @@ func ValidateRemoteRenderingAccountID(input interface{}, key string) (warnings [
 // ID returns the formatted Remote Rendering Account ID
 func (id RemoteRenderingAccountId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.MixedReality/remoteRenderingAccounts/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.RemoteRenderingAccountName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.AccountName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Remote Rendering Account ID
@@ -112,7 +109,7 @@ func (id RemoteRenderingAccountId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftMixedReality", "Microsoft.MixedReality", "Microsoft.MixedReality"),
 		resourceids.StaticSegment("staticRemoteRenderingAccounts", "remoteRenderingAccounts", "remoteRenderingAccounts"),
-		resourceids.UserSpecifiedSegment("remoteRenderingAccountName", "remoteRenderingAccountValue"),
+		resourceids.UserSpecifiedSegment("accountName", "accountValue"),
 	}
 }
 
@@ -121,7 +118,7 @@ func (id RemoteRenderingAccountId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Remote Rendering Account Name: %q", id.RemoteRenderingAccountName),
+		fmt.Sprintf("Account Name: %q", id.AccountName),
 	}
 	return fmt.Sprintf("Remote Rendering Account (%s)", strings.Join(components, "\n"))
 }

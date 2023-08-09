@@ -31,9 +31,10 @@ func (d Diagnostics) ErrorCount() int {
 
 // Log will log every diagnostic:
 //
-//   - Error severity at ERROR level
-//   - Warning severity at WARN level
-//   - Invalid/Unknown severity at WARN level
+//    - Error severity at ERROR level
+//    - Warning severity at WARN level
+//    - Invalid/Unknown severity at WARN level
+//
 func (d Diagnostics) Log(ctx context.Context) {
 	for _, diagnostic := range d {
 		if diagnostic == nil {

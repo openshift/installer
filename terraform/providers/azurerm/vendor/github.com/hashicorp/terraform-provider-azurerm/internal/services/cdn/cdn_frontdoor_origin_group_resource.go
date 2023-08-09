@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2021-06-01/cdn" // nolint: staticcheck
+	"github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2021-06-01/cdn"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/cdn/azuresdkhacks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/cdn/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/cdn/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -145,12 +144,12 @@ func resourceCdnFrontDoorOriginGroupCreate(d *pluginsdk.ResourceData, meta inter
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	profile, err := parse.FrontDoorProfileID(d.Get("cdn_frontdoor_profile_id").(string))
+	profileId, err := parse.FrontDoorProfileID(d.Get("cdn_frontdoor_profile_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := parse.NewFrontDoorOriginGroupID(profile.SubscriptionId, profile.ResourceGroup, profile.ProfileName, d.Get("name").(string))
+	id := parse.NewFrontDoorOriginGroupID(profileId.SubscriptionId, profileId.ResourceGroup, profileId.ProfileName, d.Get("name").(string))
 	existing, err := client.Get(ctx, id.ResourceGroup, id.ProfileName, id.OriginGroupName)
 	if err != nil {
 		if !utils.ResponseWasNotFound(existing.Response) {
@@ -208,11 +207,11 @@ func resourceCdnFrontDoorOriginGroupRead(d *pluginsdk.ResourceData, meta interfa
 
 	if props := resp.AFDOriginGroupProperties; props != nil {
 		if err := d.Set("health_probe", flattenCdnFrontDoorOriginGroupHealthProbeParameters(props.HealthProbeSettings)); err != nil {
-			return fmt.Errorf("setting 'health_probe': %+v", err)
+			return fmt.Errorf("setting `health_probe`: %+v", err)
 		}
 
 		if err := d.Set("load_balancing", flattenCdnFrontDoorOriginGroupLoadBalancingSettingsParameters(props.LoadBalancingSettings)); err != nil {
-			return fmt.Errorf("setting 'load_balancing': %+v", err)
+			return fmt.Errorf("setting `load_balancing`: %+v", err)
 		}
 
 		d.Set("session_affinity_enabled", flattenEnabledBool(props.SessionAffinityState))
@@ -224,7 +223,6 @@ func resourceCdnFrontDoorOriginGroupRead(d *pluginsdk.ResourceData, meta interfa
 
 func resourceCdnFrontDoorOriginGroupUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Cdn.FrontDoorOriginGroupsClient
-	workaroundClient := azuresdkhacks.NewCdnFrontDoorOriginGroupsWorkaroundClient(client)
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -233,10 +231,8 @@ func resourceCdnFrontDoorOriginGroupUpdate(d *pluginsdk.ResourceData, meta inter
 		return err
 	}
 
-	params := &azuresdkhacks.AFDOriginGroupUpdatePropertiesParameters{}
+	params := &cdn.AFDOriginGroupUpdatePropertiesParameters{}
 
-	// The API requires that an explicit null be passed as the 'health_probe' value to disable the health probe
-	// e.g. {"properties":{"healthProbeSettings":null}}
 	if d.HasChange("health_probe") {
 		params.HealthProbeSettings = expandCdnFrontDoorOriginGroupHealthProbeParameters(d.Get("health_probe").([]interface{}))
 	}
@@ -253,11 +249,11 @@ func resourceCdnFrontDoorOriginGroupUpdate(d *pluginsdk.ResourceData, meta inter
 		params.SessionAffinityState = expandEnabledBool(d.Get("session_affinity_enabled").(bool))
 	}
 
-	payload := &azuresdkhacks.AFDOriginGroupUpdateParameters{
+	payload := cdn.AFDOriginGroupUpdateParameters{
 		AFDOriginGroupUpdatePropertiesParameters: params,
 	}
 
-	future, err := workaroundClient.Update(ctx, id.ResourceGroup, id.ProfileName, id.OriginGroupName, *payload)
+	future, err := client.Update(ctx, id.ResourceGroup, id.ProfileName, id.OriginGroupName, payload)
 	if err != nil {
 		return fmt.Errorf("updating %s: %+v", *id, err)
 	}

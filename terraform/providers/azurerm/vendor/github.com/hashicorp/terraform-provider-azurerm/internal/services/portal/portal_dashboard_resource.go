@@ -47,17 +47,17 @@ func resourcePortalDashboard() *pluginsdk.Resource {
 				ValidateFunc: validate.DashboardName,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"tags": commonschema.Tags(),
 
 			"dashboard_properties": {
-				Type:         pluginsdk.TypeString,
-				Required:     true,
-				ValidateFunc: validate.DashboardProperties,
-				StateFunc:    utils.NormalizeJson,
+				Type:      pluginsdk.TypeString,
+				Optional:  true,
+				Computed:  true,
+				StateFunc: utils.NormalizeJson,
 			},
 		},
 	}

@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/servicebus/2021-06-01-preview/namespaces"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/servicebus/2021-06-01-preview/namespacesauthorizationrule"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/servicebus/2022-01-01-preview/namespaces"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -76,11 +76,6 @@ func dataSourceServiceBusNamespace() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"endpoint": {
-				Type:     pluginsdk.TypeString,
-				Computed: true,
-			},
-
 			"tags": tags.SchemaDataSource(),
 		},
 	}
@@ -114,7 +109,6 @@ func dataSourceServiceBusNamespaceRead(d *pluginsdk.ResourceData, meta interface
 
 		if props := model.Properties; props != nil {
 			d.Set("zone_redundant", props.ZoneRedundant)
-			d.Set("endpoint", props.ServiceBusEndpoint)
 		}
 	}
 

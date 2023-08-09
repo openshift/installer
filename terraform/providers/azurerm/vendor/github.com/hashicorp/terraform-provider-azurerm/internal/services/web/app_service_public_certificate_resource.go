@@ -6,7 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/parse"
@@ -14,13 +15,13 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/web/2022-09-01/web"
 )
 
 func resourceAppServicePublicCertificate() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
-		Create: resourceAppServicePublicCertificateCreate,
+		Create: resourceAppServicePublicCertificateCreateUpdate,
 		Read:   resourceAppServicePublicCertificateRead,
+		Update: resourceAppServicePublicCertificateCreateUpdate,
 		Delete: resourceAppServicePublicCertificateDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
 			_, err := parse.PublicCertificateID(id)
@@ -34,7 +35,7 @@ func resourceAppServicePublicCertificate() *pluginsdk.Resource {
 			Delete: pluginsdk.DefaultTimeout(30 * time.Minute),
 		},
 		Schema: map[string]*pluginsdk.Schema{
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"app_service_name": {
 				Type:     pluginsdk.TypeString,
@@ -52,7 +53,6 @@ func resourceAppServicePublicCertificate() *pluginsdk.Resource {
 			"certificate_location": {
 				Type:     pluginsdk.TypeString,
 				Required: true,
-				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					string(web.PublicCertificateLocationLocalMachineMy),
 					string(web.PublicCertificateLocationCurrentUserMy),
@@ -75,7 +75,7 @@ func resourceAppServicePublicCertificate() *pluginsdk.Resource {
 	}
 }
 
-func resourceAppServicePublicCertificateCreate(d *pluginsdk.ResourceData, meta interface{}) error {
+func resourceAppServicePublicCertificateCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).AppService.WebAppsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
@@ -85,15 +85,17 @@ func resourceAppServicePublicCertificateCreate(d *pluginsdk.ResourceData, meta i
 	certificateLocation := d.Get("certificate_location").(string)
 	blob := d.Get("blob").(string)
 
-	existing, err := client.GetPublicCertificate(ctx, id.ResourceGroup, id.SiteName, id.Name)
-	if err != nil {
-		if !utils.ResponseWasNotFound(existing.Response) {
-			return fmt.Errorf("checking for presence of existing %s: %s", id, err)
+	if d.IsNewResource() {
+		existing, err := client.GetPublicCertificate(ctx, id.ResourceGroup, id.SiteName, id.Name)
+		if err != nil {
+			if !utils.ResponseWasNotFound(existing.Response) {
+				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
+			}
 		}
-	}
 
-	if !utils.ResponseWasNotFound(existing.Response) {
-		return tf.ImportAsExistsError("azurerm_app_service_public_certificate", id.ID())
+		if !utils.ResponseWasNotFound(existing.Response) {
+			return tf.ImportAsExistsError("azurerm_app_service_public_certificate", id.ID())
+		}
 	}
 
 	certificate := web.PublicCertificate{
@@ -112,38 +114,6 @@ func resourceAppServicePublicCertificateCreate(d *pluginsdk.ResourceData, meta i
 
 	if _, err := client.CreateOrUpdatePublicCertificate(ctx, id.ResourceGroup, id.SiteName, id.Name, certificate); err != nil {
 		return fmt.Errorf("creating/updating %s: %s", id, err)
-	}
-
-	deadline, ok := ctx.Deadline()
-	if !ok {
-		return fmt.Errorf("could not determine context deadline for create for %s", id)
-	}
-
-	// (@jackofallops) - The ok on the create call above can in some cases return before the resource is retrievable by
-	// the `GetPublicCertificate` call, so we'll check it is actually created before progressing to read to prevent
-	// false negative removal there.
-	createWait := &pluginsdk.StateChangeConf{
-		Pending:                   []string{"notfound"},
-		Target:                    []string{"ok"},
-		MinTimeout:                10 * time.Second,
-		Timeout:                   time.Until(deadline),
-		NotFoundChecks:            10,
-		ContinuousTargetOccurence: 3,
-		Refresh: func() (interface{}, string, error) {
-			resp, err := client.GetPublicCertificate(ctx, id.ResourceGroup, id.SiteName, id.Name)
-			if err != nil {
-				if utils.ResponseWasNotFound(resp.Response) {
-					return nil, "notfound", nil
-				} else {
-					return nil, "error", err
-				}
-			}
-			return resp, "ok", nil
-		},
-	}
-
-	if _, err := createWait.WaitForStateContext(ctx); err != nil {
-		return fmt.Errorf("waiting for creation of %s: %s", id, err)
 	}
 
 	d.SetId(id.ID())

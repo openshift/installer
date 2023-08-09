@@ -7,18 +7,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/preview/resources/mgmt/2021-06-01-preview/policy"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	assignments "github.com/hashicorp/go-azure-sdk/resource-manager/resources/2022-06-01/policyassignments"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/policy/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 type AssignmentDataSource struct{}
@@ -150,40 +150,34 @@ func (AssignmentDataSource) Read() sdk.ResourceFunc {
 				return fmt.Errorf("decoding %+v", err)
 			}
 
-			id := assignments.NewScopedPolicyAssignmentID(plan.ScopeId, plan.Name)
-			resp, err := client.Get(ctx, id)
+			id := parse.NewPolicyAssignmentId(plan.ScopeId, plan.Name)
+			resp, err := client.Get(ctx, id.Scope, id.Name)
 			if err != nil {
-				if response.WasNotFound(resp.HttpResponse) {
-					return fmt.Errorf("%s was not found", id)
+				if utils.ResponseWasNotFound(resp.Response) {
+					return metadata.MarkAsGone(id)
 				}
 				return fmt.Errorf("retrieving %s: %+v", id, err)
 			}
-			respModel := resp.Model
-			if respModel == nil {
-				return fmt.Errorf("reading a nil model")
-			}
 
 			model := AssignmentDataSourceModel{
-				Name:     id.PolicyAssignmentName,
+				Name:     id.Name,
 				ScopeId:  id.Scope,
-				Location: location.NormalizeNilable(respModel.Location),
+				Location: location.NormalizeNilable(resp.Location),
 			}
 
-			if err = model.flattenIdentity(respModel.Identity); err != nil {
+			if err := model.flattenIdentity(resp.Identity); err != nil {
 				return fmt.Errorf("flatten `identity`: %v", err)
 			}
 
-			if props := respModel.Properties; props != nil {
+			if props := resp.AssignmentProperties; props != nil {
 				if v := props.Description; v != nil {
 					model.Description = *v
 				}
 				if v := props.DisplayName; v != nil {
 					model.DisplayName = *v
 				}
-				if mode := props.EnforcementMode; mode != nil {
-					model.Enforce = *mode == assignments.EnforcementModeDefault
-				}
-				model.Metadata = flattenJSON(pointer.From(props.Metadata))
+				model.Enforce = props.EnforcementMode == policy.EnforcementModeDefault
+				model.Metadata = flattenJSON(props.Metadata)
 				if v := props.NotScopes; v != nil {
 					model.NotScopes = *v
 				}
@@ -191,7 +185,7 @@ func (AssignmentDataSource) Read() sdk.ResourceFunc {
 				if err := model.flattenParameter(props.Parameters); err != nil {
 					return fmt.Errorf("flatten `parameters`: %v", err)
 				}
-				if v := props.PolicyDefinitionId; v != nil {
+				if v := props.PolicyDefinitionID; v != nil {
 					model.PolicyDefinitionId = *v
 				}
 			}
@@ -207,22 +201,61 @@ func (AssignmentDataSource) Read() sdk.ResourceFunc {
 	}
 }
 
-func (m *AssignmentDataSourceModel) flattenNonComplianceMessages(input *[]assignments.NonComplianceMessage) {
+func (m *AssignmentDataSourceModel) flattenIdentity(input *policy.Identity) error {
+	if input == nil {
+		return nil
+	}
+	config := identity.SystemOrUserAssignedMap{
+		Type:        identity.Type(string(input.Type)),
+		IdentityIds: make(map[string]identity.UserAssignedIdentityDetails),
+	}
+
+	if input.PrincipalID != nil {
+		config.PrincipalId = *input.PrincipalID
+	}
+	if input.TenantID != nil {
+		config.TenantId = *input.TenantID
+	}
+	for k, v := range input.UserAssignedIdentities {
+		config.IdentityIds[k] = identity.UserAssignedIdentityDetails{
+			ClientId:    v.ClientID,
+			PrincipalId: v.PrincipalID,
+		}
+	}
+	model, err := identity.FlattenSystemOrUserAssignedMapToModel(&config)
+	if err != nil {
+		return err
+	}
+
+	m.Identity = *model
+
+	return nil
+}
+
+func (m *AssignmentDataSourceModel) flattenNonComplianceMessages(input *[]policy.NonComplianceMessage) {
 	if input == nil {
 		return
 	}
 
 	m.NonComplianceMessage = make([]NonComplianceMessage, len(*input))
 	for i, v := range *input {
+		content := ""
+		if v.Message != nil {
+			content = *v.Message
+		}
+		policyDefinitionReferenceId := ""
+		if v.PolicyDefinitionReferenceID != nil {
+			policyDefinitionReferenceId = *v.PolicyDefinitionReferenceID
+		}
 		m.NonComplianceMessage[i] = NonComplianceMessage{
-			Content:                     v.Message,
-			PolicyDefinitionReferenceId: pointer.From(v.PolicyDefinitionReferenceId),
+			Content:                     content,
+			PolicyDefinitionReferenceId: policyDefinitionReferenceId,
 		}
 	}
 }
 
-func (m *AssignmentDataSourceModel) flattenParameter(input *map[string]assignments.ParameterValuesValue) error {
-	if input == nil || len(*input) == 0 {
+func (m *AssignmentDataSourceModel) flattenParameter(input map[string]*policy.ParameterValuesValue) error {
+	if len(input) == 0 {
 		return nil
 	}
 
@@ -237,15 +270,5 @@ func (m *AssignmentDataSourceModel) flattenParameter(input *map[string]assignmen
 	}
 
 	m.Parameters = compactJson.String()
-	return nil
-}
-
-func (m *AssignmentDataSourceModel) flattenIdentity(input *identity.SystemOrUserAssignedMap) error {
-	model, err := identity.FlattenSystemOrUserAssignedMapToModel(input)
-	if err != nil {
-		return err
-	}
-
-	m.Identity = *model
 	return nil
 }

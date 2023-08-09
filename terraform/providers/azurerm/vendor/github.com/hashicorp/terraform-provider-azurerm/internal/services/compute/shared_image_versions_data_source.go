@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -12,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
 )
 
 func dataSourceSharedImageVersions() *pluginsdk.Resource {
@@ -45,11 +45,6 @@ func dataSourceSharedImageVersions() *pluginsdk.Resource {
 				Computed: true,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
-						"id": {
-							Type:     pluginsdk.TypeString,
-							Computed: true,
-						},
-
 						"name": {
 							Type:     pluginsdk.TypeString,
 							Computed: true,
@@ -146,7 +141,7 @@ func flattenSharedImageVersions(input []compute.GalleryImageVersion, filterTags 
 	results := make([]interface{}, 0)
 
 	for _, imageVersion := range input {
-		flattenedImageVersion := flattenSharedImageVersion(imageVersion)
+		flattenedIPAddress := flattenSharedImageVersion(imageVersion)
 		found := true
 		// Loop through our filter tags and see if they match
 		for k, v := range filterTags {
@@ -154,13 +149,12 @@ func flattenSharedImageVersions(input []compute.GalleryImageVersion, filterTags 
 				// If the tags don't match, return false
 				if imageVersion.Tags[k] == nil || *v != *imageVersion.Tags[k] {
 					found = false
-					break
 				}
 			}
 		}
 
 		if found {
-			results = append(results, flattenedImageVersion)
+			results = append(results, flattenedIPAddress)
 		}
 	}
 
@@ -170,7 +164,6 @@ func flattenSharedImageVersions(input []compute.GalleryImageVersion, filterTags 
 func flattenSharedImageVersion(input compute.GalleryImageVersion) map[string]interface{} {
 	output := make(map[string]interface{})
 
-	output["id"] = input.ID
 	output["name"] = input.Name
 	output["location"] = location.NormalizeNilable(input.Location)
 

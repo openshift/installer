@@ -174,8 +174,8 @@ var getvCoreMaxGB = map[string]map[string]map[int]float64{
 		"gen5": {
 			4:  1024,
 			6:  1536,
-			8:  2048,
-			10: 2048,
+			8:  1536,
+			10: 1536,
 			12: 3072,
 			14: 3072,
 			16: 3072,
@@ -191,23 +191,6 @@ var getvCoreMaxGB = map[string]map[string]map[int]float64{
 			4: 768,
 			6: 768,
 			8: 768,
-		},
-	},
-	"hyperscale": {
-		"gen5": {
-			4:  1024,
-			6:  1536,
-			8:  2048,
-			10: 2048,
-			12: 3072,
-			14: 3072,
-			16: 3072,
-			18: 3072,
-			20: 3072,
-			24: 4096,
-			32: 4096,
-			40: 4096,
-			80: 4096,
 		},
 	},
 }
@@ -229,7 +212,6 @@ var getTierFromName = map[string]string{
 	"bc_gen4":      "BusinessCritical",
 	"bc_gen5":      "BusinessCritical",
 	"bc_dc":        "BusinessCritical",
-	"hs_gen5":      "HyperScale",
 }
 
 func MSSQLElasticPoolValidateSKU(diff *pluginsdk.ResourceDiff) error {
@@ -260,7 +242,7 @@ func MSSQLElasticPoolValidateSKU(diff *pluginsdk.ResourceDiff) error {
 	}
 
 	// Check to see if the name describes a vCore type SKU
-	if strings.HasPrefix(strings.ToLower(s.Name), "gp_") || strings.HasPrefix(strings.ToLower(s.Name), "bc_") || strings.HasPrefix(strings.ToLower(s.Name), "hs_") {
+	if strings.HasPrefix(strings.ToLower(s.Name), "gp_") || strings.HasPrefix(strings.ToLower(s.Name), "bc_") {
 		s.SkuType = VCore
 	}
 
@@ -357,7 +339,9 @@ func buildErrorString(stub string, m map[int]float64) string {
 	}
 
 	// copy the values of the map of keys into a slice of ints
-	a = append(a, p...)
+	for v := range p {
+		a = append(a, p[v])
+	}
 
 	// sort the slice to get them in order
 	sort.Ints(a)
@@ -421,7 +405,7 @@ func doVCoreSKUValidation(s sku) error {
 		return fmt.Errorf("service tier '%s' %s with a 'capacity' of %d vCores must have a 'max_size_gb' between 5 GB and %d GB, got %d GB", s.Tier, s.Family, s.Capacity, int(s.MaxAllowedGB), int(s.MaxSizeGb))
 	}
 
-	if s.Tier != "Hyperscale" && int(s.MaxSizeGb) < 5 {
+	if int(s.MaxSizeGb) < 5 {
 		return fmt.Errorf("service tier '%s' must have a 'max_size_gb' value equal to or greater than 5 GB, got %d GB", s.Tier, int(s.MaxSizeGb))
 	}
 

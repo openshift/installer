@@ -5,17 +5,14 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/labs"
+	"github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2018-09-15/dtl"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/validate"
+	keyvaultParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/keyvault/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -24,13 +21,13 @@ import (
 )
 
 func resourceDevTestLab() *pluginsdk.Resource {
-	resource := &pluginsdk.Resource{
+	return &pluginsdk.Resource{
 		Create: resourceDevTestLabCreateUpdate,
 		Read:   resourceDevTestLabRead,
 		Update: resourceDevTestLabCreateUpdate,
 		Delete: resourceDevTestLabDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := labs.ParseLabID(id)
+			_, err := parse.DevTestLabID(id)
 			return err
 		}),
 
@@ -54,7 +51,7 @@ func resourceDevTestLab() *pluginsdk.Resource {
 				ValidateFunc: validate.DevTestLabName(),
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			// There's a bug in the Azure API where this is returned in lower-case
 			// BUG: https://github.com/Azure/azure-rest-api-specs/issues/3964
@@ -63,10 +60,10 @@ func resourceDevTestLab() *pluginsdk.Resource {
 			"storage_type": {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
-				Default:  string(labs.StorageTypePremium),
+				Default:  string(dtl.Premium),
 				ValidateFunc: validation.StringInSlice([]string{
-					string(labs.StorageTypeStandard),
-					string(labs.StorageTypePremium),
+					string(dtl.Standard),
+					string(dtl.Premium),
 				}, false),
 			},
 
@@ -103,21 +100,6 @@ func resourceDevTestLab() *pluginsdk.Resource {
 			},
 		},
 	}
-
-	if !features.FourPointOhBeta() {
-		resource.Schema["storage_type"] = &pluginsdk.Schema{
-			Type:     pluginsdk.TypeString,
-			Optional: true,
-			Default:  string(labs.StorageTypePremium),
-			ValidateFunc: validation.StringInSlice([]string{
-				string(labs.StorageTypeStandard),
-				string(labs.StorageTypePremium),
-			}, false),
-			Deprecated: "`storage_type` is deprecated in version 3.0 of the AzureRM provider and will be removed in version 4.0.",
-		}
-	}
-
-	return resource
 }
 
 func resourceDevTestLabCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -128,38 +110,40 @@ func resourceDevTestLabCreateUpdate(d *pluginsdk.ResourceData, meta interface{})
 
 	log.Printf("[INFO] preparing arguments for DevTest Lab creation")
 
-	id := labs.NewLabID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewDevTestLabID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id, labs.GetOperationOptions{})
+		existing, err := client.Get(ctx, id.ResourceGroup, id.LabName, "")
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_dev_test_lab", id.ID())
 		}
 	}
 
 	location := azure.NormalizeLocation(d.Get("location").(string))
+	storageType := d.Get("storage_type").(string)
+	t := d.Get("tags").(map[string]interface{})
 
-	parameters := labs.Lab{
+	parameters := dtl.Lab{
 		Location: utils.String(location),
-		Tags:     expandTags(d.Get("tags").(map[string]interface{})),
+		Tags:     tags.Expand(t),
+		LabProperties: &dtl.LabProperties{
+			LabStorageType: dtl.StorageType(storageType),
+		},
 	}
 
-	if !features.FourPointOhBeta() {
-		storageType := labs.StorageType(d.Get("storage_type").(string))
-		parameters.Properties = &labs.LabProperties{
-			LabStorageType: &storageType,
-		}
-	}
-
-	err := client.CreateOrUpdateThenPoll(ctx, id, parameters)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.LabName, parameters)
 	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation/update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -172,14 +156,14 @@ func resourceDevTestLabRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := labs.ParseLabID(d.Id())
+	id, err := parse.DevTestLabID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, labs.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			log.Printf("[DEBUG] %s was not found - removing from state!", *id)
 			d.SetId("")
 			return nil
@@ -189,39 +173,33 @@ func resourceDevTestLabRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", id.LabName)
-	d.Set("resource_group_name", id.ResourceGroupName)
-
-	if model := read.Model; model != nil {
-		if location := model.Location; location != nil {
-			d.Set("location", azure.NormalizeLocation(*location))
-		}
-
-		if props := model.Properties; props != nil {
-			if !features.FourPointOhBeta() {
-				d.Set("storage_type", string(pointer.From(props.LabStorageType)))
-			}
-			// Computed fields
-			d.Set("artifacts_storage_account_id", props.ArtifactsStorageAccount)
-			d.Set("default_storage_account_id", props.DefaultStorageAccount)
-			d.Set("default_premium_storage_account_id", props.DefaultPremiumStorageAccount)
-
-			kvId := ""
-			if props.VaultName != nil {
-				id, err := commonids.ParseKeyVaultIDInsensitively(*props.VaultName)
-				if err != nil {
-					return fmt.Errorf("parsing %q: %+v", *props.VaultName, err)
-				}
-				kvId = id.ID()
-			}
-			d.Set("key_vault_id", kvId)
-			d.Set("premium_data_disk_storage_account_id", props.PremiumDataDiskStorageAccount)
-			d.Set("unique_identifier", props.UniqueIdentifier)
-		}
-		if err = tags.FlattenAndSet(d, flattenTags(model.Tags)); err != nil {
-			return err
-		}
+	d.Set("resource_group_name", id.ResourceGroup)
+	if location := read.Location; location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
 	}
-	return nil
+
+	if props := read.LabProperties; props != nil {
+		d.Set("storage_type", string(props.LabStorageType))
+
+		// Computed fields
+		d.Set("artifacts_storage_account_id", props.ArtifactsStorageAccount)
+		d.Set("default_storage_account_id", props.DefaultStorageAccount)
+		d.Set("default_premium_storage_account_id", props.DefaultPremiumStorageAccount)
+
+		kvId := ""
+		if props.VaultName != nil {
+			id, err := keyvaultParse.VaultID(*props.VaultName)
+			if err != nil {
+				return fmt.Errorf("parsing %q: %+v", *props.VaultName, err)
+			}
+			kvId = id.ID()
+		}
+		d.Set("key_vault_id", kvId)
+		d.Set("premium_data_disk_storage_account_id", props.PremiumDataDiskStorageAccount)
+		d.Set("unique_identifier", props.UniqueIdentifier)
+	}
+
+	return tags.FlattenAndSet(d, read.Tags)
 }
 
 func resourceDevTestLabDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -229,14 +207,14 @@ func resourceDevTestLabDelete(d *pluginsdk.ResourceData, meta interface{}) error
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := labs.ParseLabID(d.Id())
+	id, err := parse.DevTestLabID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, labs.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			// deleted outside of TF
 			log.Printf("[DEBUG] %s was not found - assuming removed!", *id)
 			return nil
@@ -245,9 +223,13 @@ func resourceDevTestLabDelete(d *pluginsdk.ResourceData, meta interface{}) error
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.LabName)
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the deletion of %s: %+v", *id, err)
 	}
 
 	return err

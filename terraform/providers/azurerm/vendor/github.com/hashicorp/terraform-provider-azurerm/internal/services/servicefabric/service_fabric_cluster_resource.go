@@ -5,15 +5,16 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/servicefabric/mgmt/2021-06-01/servicefabric"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/servicefabric/2021-06-01/cluster"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/servicefabric/parse"
 	serviceFabricValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/servicefabric/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -36,7 +37,7 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := cluster.ParseClusterID(id)
+			_, err := parse.ClusterID(id)
 			return err
 		}),
 
@@ -47,19 +48,19 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"reliability_level": {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(cluster.ReliabilityLevelNone),
-					string(cluster.ReliabilityLevelBronze),
-					string(cluster.ReliabilityLevelSilver),
-					string(cluster.ReliabilityLevelGold),
-					string(cluster.ReliabilityLevelPlatinum),
+					string(servicefabric.ReliabilityLevelNone),
+					string(servicefabric.ReliabilityLevelBronze),
+					string(servicefabric.ReliabilityLevelSilver),
+					string(servicefabric.ReliabilityLevelGold),
+					string(servicefabric.ReliabilityLevelPlatinum),
 				}, false),
 			},
 
@@ -67,8 +68,8 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(cluster.UpgradeModeAutomatic),
-					string(cluster.UpgradeModeManual),
+					string(servicefabric.UpgradeModeAutomatic),
+					string(servicefabric.UpgradeModeManual),
 				}, false),
 			},
 
@@ -76,8 +77,8 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(cluster.SfZonalUpgradeModeHierarchical),
-					string(cluster.SfZonalUpgradeModeParallel),
+					string(servicefabric.SfZonalUpgradeModeHierarchical),
+					string(servicefabric.SfZonalUpgradeModeParallel),
 				}, false),
 			},
 
@@ -85,8 +86,8 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Optional: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					string(cluster.VMSSZonalUpgradeModeHierarchical),
-					string(cluster.VMSSZonalUpgradeModeParallel),
+					string(servicefabric.VmssZonalUpgradeModeHierarchical),
+					string(servicefabric.VmssZonalUpgradeModeParallel),
 				}, false),
 			},
 
@@ -501,11 +502,11 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 						"durability_level": {
 							Type:     pluginsdk.TypeString,
 							Optional: true,
-							Default:  string(cluster.DurabilityLevelBronze),
+							Default:  string(servicefabric.DurabilityLevelBronze),
 							ValidateFunc: validation.StringInSlice([]string{
-								string(cluster.DurabilityLevelBronze),
-								string(cluster.DurabilityLevelSilver),
-								string(cluster.DurabilityLevelGold),
+								string(servicefabric.DurabilityLevelBronze),
+								string(servicefabric.DurabilityLevelSilver),
+								string(servicefabric.DurabilityLevelGold),
 							}, false),
 						},
 
@@ -550,7 +551,7 @@ func resourceServiceFabricCluster() *pluginsdk.Resource {
 				},
 			},
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 
 			"cluster_endpoint": {
 				Type:     pluginsdk.TypeString,
@@ -566,16 +567,16 @@ func resourceServiceFabricClusterCreateUpdate(d *pluginsdk.ResourceData, meta in
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := cluster.NewClusterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewClusterID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_service_fabric_cluster", id.ID())
 		}
 	}
@@ -599,68 +600,71 @@ func resourceServiceFabricClusterCreateUpdate(d *pluginsdk.ResourceData, meta in
 	nodeTypes := expandServiceFabricClusterNodeTypes(nodeTypesRaw)
 
 	location := d.Get("location").(string)
-	reliabilityLevel := cluster.ReliabilityLevel(d.Get("reliability_level").(string))
+	reliabilityLevel := d.Get("reliability_level").(string)
 	managementEndpoint := d.Get("management_endpoint").(string)
-	upgradeMode := cluster.UpgradeMode(d.Get("upgrade_mode").(string))
+	upgradeMode := d.Get("upgrade_mode").(string)
 	clusterCodeVersion := d.Get("cluster_code_version").(string)
 	vmImage := d.Get("vm_image").(string)
 	t := d.Get("tags").(map[string]interface{})
 
-	clusterModel := cluster.Cluster{
-		Location: location,
+	cluster := servicefabric.Cluster{
+		Location: utils.String(location),
 		Tags:     tags.Expand(t),
-		Properties: &cluster.ClusterProperties{
+		ClusterProperties: &servicefabric.ClusterProperties{
 			AddOnFeatures:                      addOnFeatures,
 			AzureActiveDirectory:               azureActiveDirectory,
 			CertificateCommonNames:             expandServiceFabricClusterCertificateCommonNames(d),
 			ReverseProxyCertificateCommonNames: expandServiceFabricClusterReverseProxyCertificateCommonNames(d),
 			DiagnosticsStorageAccountConfig:    diagnostics,
 			FabricSettings:                     fabricSettings,
-			ManagementEndpoint:                 managementEndpoint,
+			ManagementEndpoint:                 utils.String(managementEndpoint),
 			NodeTypes:                          nodeTypes,
-			ReliabilityLevel:                   &reliabilityLevel,
+			ReliabilityLevel:                   servicefabric.ReliabilityLevel(reliabilityLevel),
 			UpgradeDescription:                 upgradePolicy,
-			UpgradeMode:                        &upgradeMode,
-			VmImage:                            utils.String(vmImage),
+			UpgradeMode:                        servicefabric.UpgradeMode(upgradeMode),
+			VMImage:                            utils.String(vmImage),
 		},
 	}
 
 	if sfZonalUpgradeMode, ok := d.GetOk("service_fabric_zonal_upgrade_mode"); ok {
-		mode := cluster.SfZonalUpgradeMode(sfZonalUpgradeMode.(string))
-		clusterModel.Properties.SfZonalUpgradeMode = &mode
+		cluster.ClusterProperties.SfZonalUpgradeMode = servicefabric.SfZonalUpgradeMode(sfZonalUpgradeMode.(string))
 	}
 
 	if vmssZonalUpgradeMode, ok := d.GetOk("vmss_zonal_upgrade_mode"); ok {
-		mode := cluster.VMSSZonalUpgradeMode(vmssZonalUpgradeMode.(string))
-		clusterModel.Properties.VMSSZonalUpgradeMode = &mode
+		cluster.ClusterProperties.VmssZonalUpgradeMode = servicefabric.VmssZonalUpgradeMode(vmssZonalUpgradeMode.(string))
 	}
 
 	if certificateRaw, ok := d.GetOk("certificate"); ok {
 		certificate := expandServiceFabricClusterCertificate(certificateRaw.([]interface{}))
-		clusterModel.Properties.Certificate = certificate
+		cluster.ClusterProperties.Certificate = certificate
 	}
 
 	if reverseProxyCertificateRaw, ok := d.GetOk("reverse_proxy_certificate"); ok {
 		reverseProxyCertificate := expandServiceFabricClusterReverseProxyCertificate(reverseProxyCertificateRaw.([]interface{}))
-		clusterModel.Properties.ReverseProxyCertificate = reverseProxyCertificate
+		cluster.ClusterProperties.ReverseProxyCertificate = reverseProxyCertificate
 	}
 
 	if clientCertificateThumbprintRaw, ok := d.GetOk("client_certificate_thumbprint"); ok {
 		clientCertificateThumbprints := expandServiceFabricClusterClientCertificateThumbprints(clientCertificateThumbprintRaw.([]interface{}))
-		clusterModel.Properties.ClientCertificateThumbprints = clientCertificateThumbprints
+		cluster.ClusterProperties.ClientCertificateThumbprints = clientCertificateThumbprints
 	}
 
 	if clientCertificateCommonNamesRaw, ok := d.GetOk("client_certificate_common_name"); ok {
 		clientCertificateCommonNames := expandServiceFabricClusterClientCertificateCommonNames(clientCertificateCommonNamesRaw.([]interface{}))
-		clusterModel.Properties.ClientCertificateCommonNames = clientCertificateCommonNames
+		cluster.ClusterProperties.ClientCertificateCommonNames = clientCertificateCommonNames
 	}
 
 	if clusterCodeVersion != "" {
-		clusterModel.Properties.ClusterCodeVersion = utils.String(clusterCodeVersion)
+		cluster.ClusterProperties.ClusterCodeVersion = utils.String(clusterCodeVersion)
 	}
 
-	if err := client.CreateOrUpdateThenPoll(ctx, id, clusterModel); err != nil {
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, cluster)
+	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the creation of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -672,123 +676,98 @@ func resourceServiceFabricClusterRead(d *pluginsdk.ResourceData, meta interface{
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := cluster.ParseClusterID(d.Id())
+	id, err := parse.ClusterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
-			log.Printf("[WARN] %s was not found - removing from state!", id.ID())
+		if utils.ResponseWasNotFound(resp.Response) {
+			log.Printf("[WARN] Service Fabric Cluster %q (Resource Group %q) was not found - removing from state!", id.Name, id.ResourceGroup)
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("retrieving %s: %+v", id.ID(), err)
+		return fmt.Errorf("retrieving Service Fabric Cluster %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 	}
 
-	d.Set("name", id.ClusterName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("location", location.NormalizeNilable(resp.Location))
 
-	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
+	if props := resp.ClusterProperties; props != nil {
+		d.Set("cluster_code_version", props.ClusterCodeVersion)
+		d.Set("cluster_endpoint", props.ClusterEndpoint)
+		d.Set("management_endpoint", props.ManagementEndpoint)
+		d.Set("reliability_level", string(props.ReliabilityLevel))
+		d.Set("vm_image", props.VMImage)
+		d.Set("upgrade_mode", string(props.UpgradeMode))
+		d.Set("service_fabric_zonal_upgrade_mode", string(props.SfZonalUpgradeMode))
+		d.Set("vmss_zonal_upgrade_mode", string(props.VmssZonalUpgradeMode))
 
-		if props := model.Properties; props != nil {
-			d.Set("cluster_code_version", props.ClusterCodeVersion)
-			d.Set("cluster_endpoint", props.ClusterEndpoint)
-			d.Set("management_endpoint", props.ManagementEndpoint)
-			d.Set("vm_image", props.VmImage)
-
-			reliabilityLevel := ""
-			if props.ReliabilityLevel != nil {
-				reliabilityLevel = string(*props.ReliabilityLevel)
-			}
-			d.Set("reliability_level", reliabilityLevel)
-
-			upgradeMode := ""
-			if props.UpgradeMode != nil {
-				upgradeMode = string(*props.UpgradeMode)
-			}
-			d.Set("upgrade_mode", upgradeMode)
-
-			sfZonalMode := ""
-			if props.SfZonalUpgradeMode != nil {
-				sfZonalMode = string(*props.SfZonalUpgradeMode)
-			}
-			d.Set("service_fabric_zonal_upgrade_mode", sfZonalMode)
-
-			vmssZonalMode := ""
-			if props.VMSSZonalUpgradeMode != nil {
-				vmssZonalMode = string(*props.VMSSZonalUpgradeMode)
-			}
-			d.Set("vmss_zonal_upgrade_mode", vmssZonalMode)
-
-			addOnFeatures := flattenServiceFabricClusterAddOnFeatures(props.AddOnFeatures)
-			if err := d.Set("add_on_features", pluginsdk.NewSet(pluginsdk.HashString, addOnFeatures)); err != nil {
-				return fmt.Errorf("setting `add_on_features`: %+v", err)
-			}
-
-			azureActiveDirectory := flattenServiceFabricClusterAzureActiveDirectory(props.AzureActiveDirectory)
-			if err := d.Set("azure_active_directory", azureActiveDirectory); err != nil {
-				return fmt.Errorf("setting `azure_active_directory`: %+v", err)
-			}
-
-			certificate := flattenServiceFabricClusterCertificate(props.Certificate)
-			if err := d.Set("certificate", certificate); err != nil {
-				return fmt.Errorf("setting `certificate`: %+v", err)
-			}
-
-			certificateCommonNames := flattenServiceFabricClusterCertificateCommonNames(props.CertificateCommonNames)
-			if err := d.Set("certificate_common_names", certificateCommonNames); err != nil {
-				return fmt.Errorf("setting `certificate_common_names`: %+v", err)
-			}
-
-			reverseProxyCertificate := flattenServiceFabricClusterReverseProxyCertificate(props.ReverseProxyCertificate)
-			if err := d.Set("reverse_proxy_certificate", reverseProxyCertificate); err != nil {
-				return fmt.Errorf("setting `reverse_proxy_certificate`: %+v", err)
-			}
-
-			reverseProxyCertificateCommonNames := flattenServiceFabricClusterCertificateCommonNames(props.ReverseProxyCertificateCommonNames)
-			if err := d.Set("reverse_proxy_certificate_common_names", reverseProxyCertificateCommonNames); err != nil {
-				return fmt.Errorf("setting `reverse_proxy_certificate_common_names`: %+v", err)
-			}
-
-			clientCertificateThumbprints := flattenServiceFabricClusterClientCertificateThumbprints(props.ClientCertificateThumbprints)
-			if err := d.Set("client_certificate_thumbprint", clientCertificateThumbprints); err != nil {
-				return fmt.Errorf("setting `client_certificate_thumbprint`: %+v", err)
-			}
-
-			clientCertificateCommonNames := flattenServiceFabricClusterClientCertificateCommonNames(props.ClientCertificateCommonNames)
-			if err := d.Set("client_certificate_common_name", clientCertificateCommonNames); err != nil {
-				return fmt.Errorf("setting `client_certificate_common_name`: %+v", err)
-			}
-
-			diagnostics := flattenServiceFabricClusterDiagnosticsConfig(props.DiagnosticsStorageAccountConfig)
-			if err := d.Set("diagnostics_config", diagnostics); err != nil {
-				return fmt.Errorf("setting `diagnostics_config`: %+v", err)
-			}
-
-			upgradePolicy := flattenServiceFabricClusterUpgradePolicy(props.UpgradeDescription)
-			if err := d.Set("upgrade_policy", upgradePolicy); err != nil {
-				return fmt.Errorf("setting `upgrade_policy`: %+v", err)
-			}
-
-			fabricSettings := flattenServiceFabricClusterFabricSettings(props.FabricSettings)
-			if err := d.Set("fabric_settings", fabricSettings); err != nil {
-				return fmt.Errorf("setting `fabric_settings`: %+v", err)
-			}
-
-			nodeTypes := flattenServiceFabricClusterNodeTypes(props.NodeTypes)
-			if err := d.Set("node_type", nodeTypes); err != nil {
-				return fmt.Errorf("setting `node_type`: %+v", err)
-			}
+		addOnFeatures := flattenServiceFabricClusterAddOnFeatures(props.AddOnFeatures)
+		if err := d.Set("add_on_features", pluginsdk.NewSet(pluginsdk.HashString, addOnFeatures)); err != nil {
+			return fmt.Errorf("setting `add_on_features`: %+v", err)
 		}
 
-		return tags.FlattenAndSet(d, model.Tags)
+		azureActiveDirectory := flattenServiceFabricClusterAzureActiveDirectory(props.AzureActiveDirectory)
+		if err := d.Set("azure_active_directory", azureActiveDirectory); err != nil {
+			return fmt.Errorf("setting `azure_active_directory`: %+v", err)
+		}
+
+		certificate := flattenServiceFabricClusterCertificate(props.Certificate)
+		if err := d.Set("certificate", certificate); err != nil {
+			return fmt.Errorf("setting `certificate`: %+v", err)
+		}
+
+		certificateCommonNames := flattenServiceFabricClusterCertificateCommonNames(props.CertificateCommonNames)
+		if err := d.Set("certificate_common_names", certificateCommonNames); err != nil {
+			return fmt.Errorf("setting `certificate_common_names`: %+v", err)
+		}
+
+		reverseProxyCertificate := flattenServiceFabricClusterReverseProxyCertificate(props.ReverseProxyCertificate)
+		if err := d.Set("reverse_proxy_certificate", reverseProxyCertificate); err != nil {
+			return fmt.Errorf("setting `reverse_proxy_certificate`: %+v", err)
+		}
+
+		reverseProxyCertificateCommonNames := flattenServiceFabricClusterCertificateCommonNames(props.ReverseProxyCertificateCommonNames)
+		if err := d.Set("reverse_proxy_certificate_common_names", reverseProxyCertificateCommonNames); err != nil {
+			return fmt.Errorf("setting `reverse_proxy_certificate_common_names`: %+v", err)
+		}
+
+		clientCertificateThumbprints := flattenServiceFabricClusterClientCertificateThumbprints(props.ClientCertificateThumbprints)
+		if err := d.Set("client_certificate_thumbprint", clientCertificateThumbprints); err != nil {
+			return fmt.Errorf("setting `client_certificate_thumbprint`: %+v", err)
+		}
+
+		clientCertificateCommonNames := flattenServiceFabricClusterClientCertificateCommonNames(props.ClientCertificateCommonNames)
+		if err := d.Set("client_certificate_common_name", clientCertificateCommonNames); err != nil {
+			return fmt.Errorf("setting `client_certificate_common_name`: %+v", err)
+		}
+
+		diagnostics := flattenServiceFabricClusterDiagnosticsConfig(props.DiagnosticsStorageAccountConfig)
+		if err := d.Set("diagnostics_config", diagnostics); err != nil {
+			return fmt.Errorf("setting `diagnostics_config`: %+v", err)
+		}
+
+		upgradePolicy := flattenServiceFabricClusterUpgradePolicy(props.UpgradeDescription)
+		if err := d.Set("upgrade_policy", upgradePolicy); err != nil {
+			return fmt.Errorf("setting `upgrade_policy`: %+v", err)
+		}
+
+		fabricSettings := flattenServiceFabricClusterFabricSettings(props.FabricSettings)
+		if err := d.Set("fabric_settings", fabricSettings); err != nil {
+			return fmt.Errorf("setting `fabric_settings`: %+v", err)
+		}
+
+		nodeTypes := flattenServiceFabricClusterNodeTypes(props.NodeTypes)
+		if err := d.Set("node_type", nodeTypes); err != nil {
+			return fmt.Errorf("setting `node_type`: %+v", err)
+		}
 	}
 
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceServiceFabricClusterDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -796,34 +775,34 @@ func resourceServiceFabricClusterDelete(d *pluginsdk.ResourceData, meta interfac
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := cluster.ParseClusterID(d.Id())
+	id, err := parse.ClusterID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	log.Printf("[DEBUG] Deleting %s", id.ID())
+	log.Printf("[DEBUG] Deleting Service Fabric Cluster %q (Resource Group %q)", id.Name, id.ResourceGroup)
 
-	resp, err := client.Delete(ctx, *id)
+	resp, err := client.Delete(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if !response.WasNotFound(resp.HttpResponse) {
-			return fmt.Errorf("deleting %s: %+v", id.ID(), err)
+		if !response.WasNotFound(resp.Response) {
+			return fmt.Errorf("deleting Service Fabric Cluster %q (Resource Group %q): %+v", id.Name, id.ResourceGroup, err)
 		}
 	}
 
 	return nil
 }
 
-func expandServiceFabricClusterAddOnFeatures(input []interface{}) *[]cluster.AddOnFeatures {
-	output := make([]cluster.AddOnFeatures, 0)
+func expandServiceFabricClusterAddOnFeatures(input []interface{}) *[]string {
+	output := make([]string, 0)
 
 	for _, v := range input {
-		output = append(output, cluster.AddOnFeatures(v.(string)))
+		output = append(output, v.(string))
 	}
 
 	return &output
 }
 
-func expandServiceFabricClusterAzureActiveDirectory(input []interface{}) *cluster.AzureActiveDirectory {
+func expandServiceFabricClusterAzureActiveDirectory(input []interface{}) *servicefabric.AzureActiveDirectory {
 	if len(input) == 0 {
 		return nil
 	}
@@ -834,21 +813,21 @@ func expandServiceFabricClusterAzureActiveDirectory(input []interface{}) *cluste
 	clusterApplication := v["cluster_application_id"].(string)
 	clientApplication := v["client_application_id"].(string)
 
-	config := cluster.AzureActiveDirectory{
-		TenantId:           utils.String(tenantId),
+	config := servicefabric.AzureActiveDirectory{
+		TenantID:           utils.String(tenantId),
 		ClusterApplication: utils.String(clusterApplication),
 		ClientApplication:  utils.String(clientApplication),
 	}
 	return &config
 }
 
-func flattenServiceFabricClusterAzureActiveDirectory(input *cluster.AzureActiveDirectory) []interface{} {
+func flattenServiceFabricClusterAzureActiveDirectory(input *servicefabric.AzureActiveDirectory) []interface{} {
 	results := make([]interface{}, 0)
 
 	if v := input; v != nil {
 		output := make(map[string]interface{})
 
-		if name := v.TenantId; name != nil {
+		if name := v.TenantID; name != nil {
 			output["tenant_id"] = *name
 		}
 
@@ -866,19 +845,19 @@ func flattenServiceFabricClusterAzureActiveDirectory(input *cluster.AzureActiveD
 	return results
 }
 
-func flattenServiceFabricClusterAddOnFeatures(input *[]cluster.AddOnFeatures) []interface{} {
+func flattenServiceFabricClusterAddOnFeatures(input *[]string) []interface{} {
 	output := make([]interface{}, 0)
 
 	if input != nil {
 		for _, v := range *input {
-			output = append(output, string(v))
+			output = append(output, v)
 		}
 	}
 
 	return output
 }
 
-func expandServiceFabricClusterCertificate(input []interface{}) *cluster.CertificateDescription {
+func expandServiceFabricClusterCertificate(input []interface{}) *servicefabric.CertificateDescription {
 	if len(input) == 0 {
 		return nil
 	}
@@ -886,11 +865,11 @@ func expandServiceFabricClusterCertificate(input []interface{}) *cluster.Certifi
 	v := input[0].(map[string]interface{})
 
 	thumbprint := v["thumbprint"].(string)
-	x509StoreName := cluster.X509StoreName(v["x509_store_name"].(string))
+	x509StoreName := v["x509_store_name"].(string)
 
-	result := cluster.CertificateDescription{
-		Thumbprint:    thumbprint,
-		X509StoreName: &x509StoreName,
+	result := servicefabric.CertificateDescription{
+		Thumbprint:    utils.String(thumbprint),
+		X509StoreName: servicefabric.X509StoreName(x509StoreName),
 	}
 
 	if thumb, ok := v["thumbprint_secondary"]; ok {
@@ -900,26 +879,28 @@ func expandServiceFabricClusterCertificate(input []interface{}) *cluster.Certifi
 	return &result
 }
 
-func flattenServiceFabricClusterCertificate(input *cluster.CertificateDescription) []interface{} {
+func flattenServiceFabricClusterCertificate(input *servicefabric.CertificateDescription) []interface{} {
 	results := make([]interface{}, 0)
 
 	if v := input; v != nil {
 		output := make(map[string]interface{})
 
-		output["thumbprint"] = input.Thumbprint
+		if thumbprint := input.Thumbprint; thumbprint != nil {
+			output["thumbprint"] = *thumbprint
+		}
 
 		if thumbprint := input.ThumbprintSecondary; thumbprint != nil {
 			output["thumbprint_secondary"] = *thumbprint
 		}
 
-		output["x509_store_name"] = input.X509StoreName
+		output["x509_store_name"] = string(input.X509StoreName)
 		results = append(results, output)
 	}
 
 	return results
 }
 
-func expandServiceFabricClusterCertificateCommonNames(d *pluginsdk.ResourceData) *cluster.ServerCertificateCommonNames {
+func expandServiceFabricClusterCertificateCommonNames(d *pluginsdk.ResourceData) *servicefabric.ServerCertificateCommonNames {
 	i := d.Get("certificate_common_names").([]interface{})
 	if len(i) == 0 || i[0] == nil {
 		return nil
@@ -927,30 +908,32 @@ func expandServiceFabricClusterCertificateCommonNames(d *pluginsdk.ResourceData)
 	input := i[0].(map[string]interface{})
 
 	commonNamesRaw := input["common_names"].(*pluginsdk.Set).List()
-	commonNames := make([]cluster.ServerCertificateCommonName, 0)
+	commonNames := make([]servicefabric.ServerCertificateCommonName, 0)
 
 	for _, commonName := range commonNamesRaw {
 		commonNameDetails := commonName.(map[string]interface{})
+		certificateCommonName := commonNameDetails["certificate_common_name"].(string)
+		certificateIssuerThumbprint := commonNameDetails["certificate_issuer_thumbprint"].(string)
 
-		commonName := cluster.ServerCertificateCommonName{
-			CertificateCommonName:       commonNameDetails["certificate_common_name"].(string),
-			CertificateIssuerThumbprint: commonNameDetails["certificate_issuer_thumbprint"].(string),
+		commonName := servicefabric.ServerCertificateCommonName{
+			CertificateCommonName:       &certificateCommonName,
+			CertificateIssuerThumbprint: &certificateIssuerThumbprint,
 		}
 
 		commonNames = append(commonNames, commonName)
 	}
 
-	x509StoreName := cluster.X509StoreName(input["x509_store_name"].(string))
+	x509StoreName := input["x509_store_name"].(string)
 
-	output := cluster.ServerCertificateCommonNames{
+	output := servicefabric.ServerCertificateCommonNames{
 		CommonNames:   &commonNames,
-		X509StoreName: &x509StoreName,
+		X509StoreName: servicefabric.X509StoreName1(x509StoreName),
 	}
 
 	return &output
 }
 
-func expandServiceFabricClusterReverseProxyCertificateCommonNames(d *pluginsdk.ResourceData) *cluster.ServerCertificateCommonNames {
+func expandServiceFabricClusterReverseProxyCertificateCommonNames(d *pluginsdk.ResourceData) *servicefabric.ServerCertificateCommonNames {
 	i := d.Get("reverse_proxy_certificate_common_names").([]interface{})
 	if len(i) == 0 || i[0] == nil {
 		return nil
@@ -958,30 +941,32 @@ func expandServiceFabricClusterReverseProxyCertificateCommonNames(d *pluginsdk.R
 	input := i[0].(map[string]interface{})
 
 	commonNamesRaw := input["common_names"].(*pluginsdk.Set).List()
-	commonNames := make([]cluster.ServerCertificateCommonName, 0)
+	commonNames := make([]servicefabric.ServerCertificateCommonName, 0)
 
 	for _, commonName := range commonNamesRaw {
 		commonNameDetails := commonName.(map[string]interface{})
+		certificateCommonName := commonNameDetails["certificate_common_name"].(string)
+		certificateIssuerThumbprint := commonNameDetails["certificate_issuer_thumbprint"].(string)
 
-		commonName := cluster.ServerCertificateCommonName{
-			CertificateCommonName:       commonNameDetails["certificate_common_name"].(string),
-			CertificateIssuerThumbprint: commonNameDetails["certificate_issuer_thumbprint"].(string),
+		commonName := servicefabric.ServerCertificateCommonName{
+			CertificateCommonName:       &certificateCommonName,
+			CertificateIssuerThumbprint: &certificateIssuerThumbprint,
 		}
 
 		commonNames = append(commonNames, commonName)
 	}
 
-	x509StoreName := cluster.X509StoreName(input["x509_store_name"].(string))
+	x509StoreName := input["x509_store_name"].(string)
 
-	output := cluster.ServerCertificateCommonNames{
+	output := servicefabric.ServerCertificateCommonNames{
 		CommonNames:   &commonNames,
-		X509StoreName: &x509StoreName,
+		X509StoreName: servicefabric.X509StoreName1(x509StoreName),
 	}
 
 	return &output
 }
 
-func flattenServiceFabricClusterCertificateCommonNames(in *cluster.ServerCertificateCommonNames) []interface{} {
+func flattenServiceFabricClusterCertificateCommonNames(in *servicefabric.ServerCertificateCommonNames) []interface{} {
 	if in == nil {
 		return []interface{}{}
 	}
@@ -993,8 +978,13 @@ func flattenServiceFabricClusterCertificateCommonNames(in *cluster.ServerCertifi
 		for _, i := range *commonNames {
 			commonName := make(map[string]interface{})
 
-			commonName["certificate_common_name"] = i.CertificateCommonName
-			commonName["certificate_issuer_thumbprint"] = i.CertificateIssuerThumbprint
+			if i.CertificateCommonName != nil {
+				commonName["certificate_common_name"] = *i.CertificateCommonName
+			}
+
+			if i.CertificateIssuerThumbprint != nil {
+				commonName["certificate_issuer_thumbprint"] = *i.CertificateIssuerThumbprint
+			}
 
 			common_names = append(common_names, commonName)
 		}
@@ -1002,23 +992,24 @@ func flattenServiceFabricClusterCertificateCommonNames(in *cluster.ServerCertifi
 		output["common_names"] = common_names
 	}
 
-	output["x509_store_name"] = in.X509StoreName
+	output["x509_store_name"] = string(in.X509StoreName)
 
 	return []interface{}{output}
 }
 
-func expandServiceFabricClusterReverseProxyCertificate(input []interface{}) *cluster.CertificateDescription {
+func expandServiceFabricClusterReverseProxyCertificate(input []interface{}) *servicefabric.CertificateDescription {
 	if len(input) == 0 {
 		return nil
 	}
 
 	v := input[0].(map[string]interface{})
 
-	x509StoreName := cluster.X509StoreName(v["x509_store_name"].(string))
+	thumbprint := v["thumbprint"].(string)
+	x509StoreName := v["x509_store_name"].(string)
 
-	result := cluster.CertificateDescription{
-		Thumbprint:    v["thumbprint"].(string),
-		X509StoreName: &x509StoreName,
+	result := servicefabric.CertificateDescription{
+		Thumbprint:    utils.String(thumbprint),
+		X509StoreName: servicefabric.X509StoreName(x509StoreName),
 	}
 
 	if thumb, ok := v["thumbprint_secondary"]; ok {
@@ -1028,74 +1019,39 @@ func expandServiceFabricClusterReverseProxyCertificate(input []interface{}) *clu
 	return &result
 }
 
-func flattenServiceFabricClusterReverseProxyCertificate(input *cluster.CertificateDescription) []interface{} {
+func flattenServiceFabricClusterReverseProxyCertificate(input *servicefabric.CertificateDescription) []interface{} {
 	results := make([]interface{}, 0)
 
 	if v := input; v != nil {
 		output := make(map[string]interface{})
 
-		output["thumbprint"] = input.Thumbprint
+		if thumbprint := input.Thumbprint; thumbprint != nil {
+			output["thumbprint"] = *thumbprint
+		}
 
 		if thumbprint := input.ThumbprintSecondary; thumbprint != nil {
 			output["thumbprint_secondary"] = *thumbprint
 		}
 
-		output["x509_store_name"] = input.X509StoreName
+		output["x509_store_name"] = string(input.X509StoreName)
 		results = append(results, output)
 	}
 
 	return results
 }
 
-func expandServiceFabricClusterClientCertificateThumbprints(input []interface{}) *[]cluster.ClientCertificateThumbprint {
-	results := make([]cluster.ClientCertificateThumbprint, 0)
+func expandServiceFabricClusterClientCertificateThumbprints(input []interface{}) *[]servicefabric.ClientCertificateThumbprint {
+	results := make([]servicefabric.ClientCertificateThumbprint, 0)
 
 	for _, v := range input {
 		val := v.(map[string]interface{})
 
-		result := cluster.ClientCertificateThumbprint{
-			CertificateThumbprint: val["thumbprint"].(string),
-			IsAdmin:               val["is_admin"].(bool),
-		}
-		results = append(results, result)
-	}
-
-	return &results
-}
-
-func flattenServiceFabricClusterClientCertificateThumbprints(input *[]cluster.ClientCertificateThumbprint) []interface{} {
-	if input == nil {
-		return []interface{}{}
-	}
-
-	results := make([]interface{}, 0)
-
-	for _, v := range *input {
-		result := make(map[string]interface{})
-
-		result["thumbprint"] = v.CertificateThumbprint
-		result["is_admin"] = v.IsAdmin
-
-		results = append(results, result)
-	}
-
-	return results
-}
-
-func expandServiceFabricClusterClientCertificateCommonNames(input []interface{}) *[]cluster.ClientCertificateCommonName {
-	results := make([]cluster.ClientCertificateCommonName, 0)
-
-	for _, v := range input {
-		val := v.(map[string]interface{})
-
-		certificateCommonName := val["common_name"].(string)
-		certificateIssuerThumbprint := val["issuer_thumbprint"].(string)
+		thumbprint := val["thumbprint"].(string)
 		isAdmin := val["is_admin"].(bool)
 
-		result := cluster.ClientCertificateCommonName{
-			CertificateCommonName:       certificateCommonName,
-			CertificateIssuerThumbprint: certificateIssuerThumbprint,
-			IsAdmin:                     isAdmin,
+		result := servicefabric.ClientCertificateThumbprint{
+			CertificateThumbprint: utils.String(thumbprint),
+			IsAdmin:               utils.Bool(isAdmin),
 		}
 		results = append(results, result)
 	}
@@ -1103,7 +1059,7 @@ func expandServiceFabricClusterClientCertificateCommonNames(input []interface{})
 	return &results
 }
 
-func flattenServiceFabricClusterClientCertificateCommonNames(input *[]cluster.ClientCertificateCommonName) []interface{} {
+func flattenServiceFabricClusterClientCertificateThumbprints(input *[]servicefabric.ClientCertificateThumbprint) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
@@ -1113,9 +1069,13 @@ func flattenServiceFabricClusterClientCertificateCommonNames(input *[]cluster.Cl
 	for _, v := range *input {
 		result := make(map[string]interface{})
 
-		result["common_name"] = v.CertificateCommonName
-		result["issuer_thumbprint"] = v.CertificateIssuerThumbprint
-		result["is_admin"] = v.IsAdmin
+		if thumbprint := v.CertificateThumbprint; thumbprint != nil {
+			result["thumbprint"] = *thumbprint
+		}
+
+		if isAdmin := v.IsAdmin; isAdmin != nil {
+			result["is_admin"] = *isAdmin
+		}
 
 		results = append(results, result)
 	}
@@ -1123,34 +1083,102 @@ func flattenServiceFabricClusterClientCertificateCommonNames(input *[]cluster.Cl
 	return results
 }
 
-func expandServiceFabricClusterDiagnosticsConfig(input []interface{}) *cluster.DiagnosticsStorageAccountConfig {
+func expandServiceFabricClusterClientCertificateCommonNames(input []interface{}) *[]servicefabric.ClientCertificateCommonName {
+	results := make([]servicefabric.ClientCertificateCommonName, 0)
+
+	for _, v := range input {
+		val := v.(map[string]interface{})
+
+		certificate_common_name := val["common_name"].(string)
+		certificate_issuer_thumbprint := val["issuer_thumbprint"].(string)
+		isAdmin := val["is_admin"].(bool)
+
+		result := servicefabric.ClientCertificateCommonName{
+			CertificateCommonName:       utils.String(certificate_common_name),
+			CertificateIssuerThumbprint: utils.String(certificate_issuer_thumbprint),
+			IsAdmin:                     utils.Bool(isAdmin),
+		}
+		results = append(results, result)
+	}
+
+	return &results
+}
+
+func flattenServiceFabricClusterClientCertificateCommonNames(input *[]servicefabric.ClientCertificateCommonName) []interface{} {
+	if input == nil {
+		return []interface{}{}
+	}
+
+	results := make([]interface{}, 0)
+
+	for _, v := range *input {
+		result := make(map[string]interface{})
+
+		if certificate_common_name := v.CertificateCommonName; certificate_common_name != nil {
+			result["common_name"] = *certificate_common_name
+		}
+
+		if certificate_issuer_thumbprint := v.CertificateIssuerThumbprint; certificate_issuer_thumbprint != nil {
+			result["issuer_thumbprint"] = *certificate_issuer_thumbprint
+		}
+
+		if isAdmin := v.IsAdmin; isAdmin != nil {
+			result["is_admin"] = *isAdmin
+		}
+		results = append(results, result)
+	}
+
+	return results
+}
+
+func expandServiceFabricClusterDiagnosticsConfig(input []interface{}) *servicefabric.DiagnosticsStorageAccountConfig {
 	if len(input) == 0 {
 		return nil
 	}
 
 	v := input[0].(map[string]interface{})
 
-	config := cluster.DiagnosticsStorageAccountConfig{
-		StorageAccountName:      v["storage_account_name"].(string),
-		ProtectedAccountKeyName: v["protected_account_key_name"].(string),
-		BlobEndpoint:            v["blob_endpoint"].(string),
-		QueueEndpoint:           v["queue_endpoint"].(string),
-		TableEndpoint:           v["table_endpoint"].(string),
+	storageAccountName := v["storage_account_name"].(string)
+	protectedAccountKeyName := v["protected_account_key_name"].(string)
+	blobEndpoint := v["blob_endpoint"].(string)
+	queueEndpoint := v["queue_endpoint"].(string)
+	tableEndpoint := v["table_endpoint"].(string)
+
+	config := servicefabric.DiagnosticsStorageAccountConfig{
+		StorageAccountName:      utils.String(storageAccountName),
+		ProtectedAccountKeyName: utils.String(protectedAccountKeyName),
+		BlobEndpoint:            utils.String(blobEndpoint),
+		QueueEndpoint:           utils.String(queueEndpoint),
+		TableEndpoint:           utils.String(tableEndpoint),
 	}
 	return &config
 }
 
-func flattenServiceFabricClusterDiagnosticsConfig(input *cluster.DiagnosticsStorageAccountConfig) []interface{} {
+func flattenServiceFabricClusterDiagnosticsConfig(input *servicefabric.DiagnosticsStorageAccountConfig) []interface{} {
 	results := make([]interface{}, 0)
 
 	if v := input; v != nil {
 		output := make(map[string]interface{})
 
-		output["storage_account_name"] = v.StorageAccountName
-		output["protected_account_key_name"] = v.ProtectedAccountKeyName
-		output["blob_endpoint"] = v.BlobEndpoint
-		output["queue_endpoint"] = v.QueueEndpoint
-		output["table_endpoint"] = v.TableEndpoint
+		if name := v.StorageAccountName; name != nil {
+			output["storage_account_name"] = *name
+		}
+
+		if name := v.ProtectedAccountKeyName; name != nil {
+			output["protected_account_key_name"] = *name
+		}
+
+		if endpoint := v.BlobEndpoint; endpoint != nil {
+			output["blob_endpoint"] = *endpoint
+		}
+
+		if endpoint := v.QueueEndpoint; endpoint != nil {
+			output["queue_endpoint"] = *endpoint
+		}
+
+		if endpoint := v.TableEndpoint; endpoint != nil {
+			output["table_endpoint"] = *endpoint
+		}
 
 		results = append(results, output)
 	}
@@ -1158,48 +1186,48 @@ func flattenServiceFabricClusterDiagnosticsConfig(input *cluster.DiagnosticsStor
 	return results
 }
 
-func expandServiceFabricClusterUpgradePolicyDeltaHealthPolicy(input []interface{}) *cluster.ClusterUpgradeDeltaHealthPolicy {
+func expandServiceFabricClusterUpgradePolicyDeltaHealthPolicy(input []interface{}) *servicefabric.ClusterUpgradeDeltaHealthPolicy {
 	if len(input) == 0 || input[0] == nil {
 		return nil
 	}
 
-	deltaHealthPolicy := &cluster.ClusterUpgradeDeltaHealthPolicy{}
+	deltaHealthPolicy := &servicefabric.ClusterUpgradeDeltaHealthPolicy{}
 	v := input[0].(map[string]interface{})
-	deltaHealthPolicy.MaxPercentDeltaUnhealthyNodes = int64(v["max_delta_unhealthy_nodes_percent"].(int))
-	deltaHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes = int64(v["max_upgrade_domain_delta_unhealthy_nodes_percent"].(int))
-	deltaHealthPolicy.MaxPercentDeltaUnhealthyApplications = int64(v["max_delta_unhealthy_applications_percent"].(int))
+	deltaHealthPolicy.MaxPercentDeltaUnhealthyNodes = utils.Int32(int32(v["max_delta_unhealthy_nodes_percent"].(int)))
+	deltaHealthPolicy.MaxPercentUpgradeDomainDeltaUnhealthyNodes = utils.Int32(int32(v["max_upgrade_domain_delta_unhealthy_nodes_percent"].(int)))
+	deltaHealthPolicy.MaxPercentDeltaUnhealthyApplications = utils.Int32(int32(v["max_delta_unhealthy_applications_percent"].(int)))
 
 	return deltaHealthPolicy
 }
 
-func expandServiceFabricClusterUpgradePolicyHealthPolicy(input []interface{}) cluster.ClusterHealthPolicy {
-	healthPolicy := cluster.ClusterHealthPolicy{}
-	if len(input) == 0 || input[0] == nil {
-		return healthPolicy
-	}
-
-	v := input[0].(map[string]interface{})
-	healthPolicy.MaxPercentUnhealthyApplications = utils.Int64(int64(v["max_unhealthy_applications_percent"].(int)))
-	healthPolicy.MaxPercentUnhealthyNodes = utils.Int64(int64(v["max_unhealthy_nodes_percent"].(int)))
-
-	return healthPolicy
-}
-
-func expandServiceFabricClusterUpgradePolicy(input []interface{}) *cluster.ClusterUpgradePolicy {
+func expandServiceFabricClusterUpgradePolicyHealthPolicy(input []interface{}) *servicefabric.ClusterHealthPolicy {
 	if len(input) == 0 || input[0] == nil {
 		return nil
 	}
 
-	policy := &cluster.ClusterUpgradePolicy{}
+	healthPolicy := &servicefabric.ClusterHealthPolicy{}
+	v := input[0].(map[string]interface{})
+	healthPolicy.MaxPercentUnhealthyApplications = utils.Int32(int32(v["max_unhealthy_applications_percent"].(int)))
+	healthPolicy.MaxPercentUnhealthyNodes = utils.Int32(int32(v["max_unhealthy_nodes_percent"].(int)))
+
+	return healthPolicy
+}
+
+func expandServiceFabricClusterUpgradePolicy(input []interface{}) *servicefabric.ClusterUpgradePolicy {
+	if len(input) == 0 || input[0] == nil {
+		return nil
+	}
+
+	policy := &servicefabric.ClusterUpgradePolicy{}
 	v := input[0].(map[string]interface{})
 
 	policy.ForceRestart = utils.Bool(v["force_restart_enabled"].(bool))
-	policy.HealthCheckStableDuration = v["health_check_stable_duration"].(string)
-	policy.UpgradeDomainTimeout = v["upgrade_domain_timeout"].(string)
-	policy.UpgradeReplicaSetCheckTimeout = v["upgrade_replica_set_check_timeout"].(string)
-	policy.UpgradeTimeout = v["upgrade_timeout"].(string)
-	policy.HealthCheckRetryTimeout = v["health_check_retry_timeout"].(string)
-	policy.HealthCheckWaitDuration = v["health_check_wait_duration"].(string)
+	policy.HealthCheckStableDuration = utils.String(v["health_check_stable_duration"].(string))
+	policy.UpgradeDomainTimeout = utils.String(v["upgrade_domain_timeout"].(string))
+	policy.UpgradeReplicaSetCheckTimeout = utils.String(v["upgrade_replica_set_check_timeout"].(string))
+	policy.UpgradeTimeout = utils.String(v["upgrade_timeout"].(string))
+	policy.HealthCheckRetryTimeout = utils.String(v["health_check_retry_timeout"].(string))
+	policy.HealthCheckWaitDuration = utils.String(v["health_check_wait_duration"].(string))
 
 	if v["health_policy"] != nil {
 		policy.HealthPolicy = expandServiceFabricClusterUpgradePolicyHealthPolicy(v["health_policy"].([]interface{}))
@@ -1211,7 +1239,7 @@ func expandServiceFabricClusterUpgradePolicy(input []interface{}) *cluster.Clust
 	return policy
 }
 
-func flattenServiceFabricClusterUpgradePolicy(input *cluster.ClusterUpgradePolicy) []interface{} {
+func flattenServiceFabricClusterUpgradePolicy(input *servicefabric.ClusterUpgradePolicy) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
@@ -1222,12 +1250,29 @@ func flattenServiceFabricClusterUpgradePolicy(input *cluster.ClusterUpgradePolic
 		output["force_restart_enabled"] = *forceRestart
 	}
 
-	output["health_check_retry_timeout"] = input.HealthCheckRetryTimeout
-	output["health_check_stable_duration"] = input.HealthCheckStableDuration
-	output["health_check_wait_duration"] = input.HealthCheckWaitDuration
-	output["upgrade_domain_timeout"] = input.UpgradeDomainTimeout
-	output["upgrade_replica_set_check_timeout"] = input.UpgradeReplicaSetCheckTimeout
-	output["upgrade_timeout"] = input.UpgradeTimeout
+	if healthCheckRetryTimeout := input.HealthCheckRetryTimeout; healthCheckRetryTimeout != nil {
+		output["health_check_retry_timeout"] = *healthCheckRetryTimeout
+	}
+
+	if healthCheckStableDuration := input.HealthCheckStableDuration; healthCheckStableDuration != nil {
+		output["health_check_stable_duration"] = *healthCheckStableDuration
+	}
+
+	if healthCheckWaitDuration := input.HealthCheckWaitDuration; healthCheckWaitDuration != nil {
+		output["health_check_wait_duration"] = *healthCheckWaitDuration
+	}
+
+	if upgradeDomainTimeout := input.UpgradeDomainTimeout; upgradeDomainTimeout != nil {
+		output["upgrade_domain_timeout"] = *upgradeDomainTimeout
+	}
+
+	if upgradeReplicaSetCheckTimeout := input.UpgradeReplicaSetCheckTimeout; upgradeReplicaSetCheckTimeout != nil {
+		output["upgrade_replica_set_check_timeout"] = *upgradeReplicaSetCheckTimeout
+	}
+
+	if upgradeTimeout := input.UpgradeTimeout; upgradeTimeout != nil {
+		output["upgrade_timeout"] = *upgradeTimeout
+	}
 
 	output["health_policy"] = flattenServiceFabricClusterUpgradePolicyHealthPolicy(input.HealthPolicy)
 	output["delta_health_policy"] = flattenServiceFabricClusterUpgradePolicyDeltaHealthPolicy(input.DeltaHealthPolicy)
@@ -1235,7 +1280,11 @@ func flattenServiceFabricClusterUpgradePolicy(input *cluster.ClusterUpgradePolic
 	return []interface{}{output}
 }
 
-func flattenServiceFabricClusterUpgradePolicyHealthPolicy(input cluster.ClusterHealthPolicy) []interface{} {
+func flattenServiceFabricClusterUpgradePolicyHealthPolicy(input *servicefabric.ClusterHealthPolicy) []interface{} {
+	if input == nil {
+		return []interface{}{}
+	}
+
 	output := make(map[string]interface{})
 
 	if input.MaxPercentUnhealthyApplications != nil {
@@ -1249,40 +1298,48 @@ func flattenServiceFabricClusterUpgradePolicyHealthPolicy(input cluster.ClusterH
 	return []interface{}{output}
 }
 
-func flattenServiceFabricClusterUpgradePolicyDeltaHealthPolicy(input *cluster.ClusterUpgradeDeltaHealthPolicy) []interface{} {
+func flattenServiceFabricClusterUpgradePolicyDeltaHealthPolicy(input *servicefabric.ClusterUpgradeDeltaHealthPolicy) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
 
 	output := make(map[string]interface{})
 
-	output["max_delta_unhealthy_applications_percent"] = input.MaxPercentDeltaUnhealthyApplications
-	output["max_delta_unhealthy_nodes_percent"] = input.MaxPercentDeltaUnhealthyNodes
-	output["max_upgrade_domain_delta_unhealthy_nodes_percent"] = input.MaxPercentUpgradeDomainDeltaUnhealthyNodes
+	if input.MaxPercentDeltaUnhealthyApplications != nil {
+		output["max_delta_unhealthy_applications_percent"] = input.MaxPercentDeltaUnhealthyApplications
+	}
+
+	if input.MaxPercentDeltaUnhealthyNodes != nil {
+		output["max_delta_unhealthy_nodes_percent"] = input.MaxPercentDeltaUnhealthyNodes
+	}
+
+	if input.MaxPercentUpgradeDomainDeltaUnhealthyNodes != nil {
+		output["max_upgrade_domain_delta_unhealthy_nodes_percent"] = input.MaxPercentUpgradeDomainDeltaUnhealthyNodes
+	}
 
 	return []interface{}{output}
 }
 
-func expandServiceFabricClusterFabricSettings(input []interface{}) *[]cluster.SettingsSectionDescription {
-	results := make([]cluster.SettingsSectionDescription, 0)
+func expandServiceFabricClusterFabricSettings(input []interface{}) *[]servicefabric.SettingsSectionDescription {
+	results := make([]servicefabric.SettingsSectionDescription, 0)
 
 	for _, v := range input {
 		val := v.(map[string]interface{})
 
 		name := val["name"].(string)
-		params := make([]cluster.SettingsParameterDescription, 0)
+		params := make([]servicefabric.SettingsParameterDescription, 0)
 		paramsRaw := val["parameters"].(map[string]interface{})
 		for k, v := range paramsRaw {
-			param := cluster.SettingsParameterDescription{
-				Name:  k,
-				Value: v.(string),
+			param := servicefabric.SettingsParameterDescription{
+				Name:  utils.String(k),
+				Value: utils.String(v.(string)),
 			}
 			params = append(params, param)
 		}
 
-		result := cluster.SettingsSectionDescription{
-			Name:       name,
-			Parameters: params,
+		result := servicefabric.SettingsSectionDescription{
+			Name:       utils.String(name),
+			Parameters: &params,
 		}
 		results = append(results, result)
 	}
@@ -1290,7 +1347,7 @@ func expandServiceFabricClusterFabricSettings(input []interface{}) *[]cluster.Se
 	return &results
 }
 
-func flattenServiceFabricClusterFabricSettings(input *[]cluster.SettingsSectionDescription) []interface{} {
+func flattenServiceFabricClusterFabricSettings(input *[]servicefabric.SettingsSectionDescription) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
@@ -1300,12 +1357,18 @@ func flattenServiceFabricClusterFabricSettings(input *[]cluster.SettingsSectionD
 	for _, v := range *input {
 		result := make(map[string]interface{})
 
-		result["name"] = v.Name
+		if name := v.Name; name != nil {
+			result["name"] = *name
+		}
 
 		parameters := make(map[string]interface{})
 		if paramsRaw := v.Parameters; paramsRaw != nil {
-			for _, p := range paramsRaw {
-				parameters[p.Name] = p.Value
+			for _, p := range *paramsRaw {
+				if p.Name == nil || p.Value == nil {
+					continue
+				}
+
+				parameters[*p.Name] = *p.Value
 			}
 		}
 		result["parameters"] = parameters
@@ -1315,21 +1378,26 @@ func flattenServiceFabricClusterFabricSettings(input *[]cluster.SettingsSectionD
 	return results
 }
 
-func expandServiceFabricClusterNodeTypes(input []interface{}) []cluster.NodeTypeDescription {
-	results := make([]cluster.NodeTypeDescription, 0)
+func expandServiceFabricClusterNodeTypes(input []interface{}) *[]servicefabric.NodeTypeDescription {
+	results := make([]servicefabric.NodeTypeDescription, 0)
 
 	for _, v := range input {
 		node := v.(map[string]interface{})
 
-		durabilityLevel := cluster.DurabilityLevel(node["durability_level"].(string))
+		name := node["name"].(string)
+		instanceCount := node["instance_count"].(int)
+		clientEndpointPort := node["client_endpoint_port"].(int)
+		httpEndpointPort := node["http_endpoint_port"].(int)
+		isPrimary := node["is_primary"].(bool)
+		durabilityLevel := node["durability_level"].(string)
 
-		result := cluster.NodeTypeDescription{
-			Name:                         node["name"].(string),
-			VMInstanceCount:              int64(node["instance_count"].(int)),
-			IsPrimary:                    node["is_primary"].(bool),
-			ClientConnectionEndpointPort: int64(node["client_endpoint_port"].(int)),
-			HTTPGatewayEndpointPort:      int64(node["http_endpoint_port"].(int)),
-			DurabilityLevel:              &durabilityLevel,
+		result := servicefabric.NodeTypeDescription{
+			Name:                         utils.String(name),
+			VMInstanceCount:              utils.Int32(int32(instanceCount)),
+			IsPrimary:                    utils.Bool(isPrimary),
+			ClientConnectionEndpointPort: utils.Int32(int32(clientEndpointPort)),
+			HTTPGatewayEndpointPort:      utils.Int32(int32(httpEndpointPort)),
+			DurabilityLevel:              servicefabric.DurabilityLevel(durabilityLevel),
 		}
 
 		if isStateless, ok := node["is_stateless"]; ok {
@@ -1341,34 +1409,37 @@ func expandServiceFabricClusterNodeTypes(input []interface{}) []cluster.NodeType
 		}
 
 		if props, ok := node["placement_properties"]; ok {
-			placementProperties := make(map[string]string)
+			placementProperties := make(map[string]*string)
 			for key, value := range props.(map[string]interface{}) {
-				placementProperties[key] = value.(string)
+				placementProperties[key] = utils.String(value.(string))
 			}
 
-			result.PlacementProperties = &placementProperties
+			result.PlacementProperties = placementProperties
 		}
 
 		if caps, ok := node["capacities"]; ok {
-			capacities := make(map[string]string)
+			capacities := make(map[string]*string)
 			for key, value := range caps.(map[string]interface{}) {
-				capacities[key] = value.(string)
+				capacities[key] = utils.String(value.(string))
 			}
 
-			result.Capacities = &capacities
+			result.Capacities = capacities
 		}
 
-		if v := int64(node["reverse_proxy_endpoint_port"].(int)); v != 0 {
-			result.ReverseProxyEndpointPort = utils.Int64(v)
+		if v := int32(node["reverse_proxy_endpoint_port"].(int)); v != 0 {
+			result.ReverseProxyEndpointPort = utils.Int32(v)
 		}
 
 		applicationPortsRaw := node["application_ports"].([]interface{})
 		if len(applicationPortsRaw) > 0 {
 			portsRaw := applicationPortsRaw[0].(map[string]interface{})
 
-			result.ApplicationPorts = &cluster.EndpointRangeDescription{
-				StartPort: int64(portsRaw["start_port"].(int)),
-				EndPort:   int64(portsRaw["end_port"].(int)),
+			startPort := portsRaw["start_port"].(int)
+			endPort := portsRaw["end_port"].(int)
+
+			result.ApplicationPorts = &servicefabric.EndpointRangeDescription{
+				StartPort: utils.Int32(int32(startPort)),
+				EndPort:   utils.Int32(int32(endPort)),
 			}
 		}
 
@@ -1376,40 +1447,57 @@ func expandServiceFabricClusterNodeTypes(input []interface{}) []cluster.NodeType
 		if len(ephemeralPortsRaw) > 0 {
 			portsRaw := ephemeralPortsRaw[0].(map[string]interface{})
 
-			result.EphemeralPorts = &cluster.EndpointRangeDescription{
-				StartPort: int64(portsRaw["start_port"].(int)),
-				EndPort:   int64(portsRaw["end_port"].(int)),
+			startPort := portsRaw["start_port"].(int)
+			endPort := portsRaw["end_port"].(int)
+
+			result.EphemeralPorts = &servicefabric.EndpointRangeDescription{
+				StartPort: utils.Int32(int32(startPort)),
+				EndPort:   utils.Int32(int32(endPort)),
 			}
 		}
 
 		results = append(results, result)
 	}
 
-	return results
+	return &results
 }
 
-func flattenServiceFabricClusterNodeTypes(input []cluster.NodeTypeDescription) []interface{} {
+func flattenServiceFabricClusterNodeTypes(input *[]servicefabric.NodeTypeDescription) []interface{} {
 	if input == nil {
 		return []interface{}{}
 	}
 
 	results := make([]interface{}, 0)
 
-	for _, v := range input {
+	for _, v := range *input {
 		output := make(map[string]interface{})
 
-		output["name"] = v.Name
-		output["instance_count"] = v.VMInstanceCount
-		output["is_primary"] = v.IsPrimary
-		output["client_endpoint_port"] = v.ClientConnectionEndpointPort
-		output["http_endpoint_port"] = v.HTTPGatewayEndpointPort
+		if name := v.Name; name != nil {
+			output["name"] = *name
+		}
 
 		if placementProperties := v.PlacementProperties; placementProperties != nil {
-			output["placement_properties"] = *placementProperties
+			output["placement_properties"] = placementProperties
 		}
 
 		if capacities := v.Capacities; capacities != nil {
-			output["capacities"] = *capacities
+			output["capacities"] = capacities
+		}
+
+		if count := v.VMInstanceCount; count != nil {
+			output["instance_count"] = int(*count)
+		}
+
+		if primary := v.IsPrimary; primary != nil {
+			output["is_primary"] = *primary
+		}
+
+		if port := v.ClientConnectionEndpointPort; port != nil {
+			output["client_endpoint_port"] = *port
+		}
+
+		if port := v.HTTPGatewayEndpointPort; port != nil {
+			output["http_endpoint_port"] = *port
 		}
 
 		if port := v.ReverseProxyEndpointPort; port != nil {
@@ -1424,15 +1512,17 @@ func flattenServiceFabricClusterNodeTypes(input []cluster.NodeTypeDescription) [
 			output["multiple_availability_zones"] = *multipleAvailabilityZones
 		}
 
-		if durabilityLevel := v.DurabilityLevel; durabilityLevel != nil {
-			output["durability_level"] = string(*v.DurabilityLevel)
-		}
+		output["durability_level"] = string(v.DurabilityLevel)
 
 		applicationPorts := make([]interface{}, 0)
 		if ports := v.ApplicationPorts; ports != nil {
 			r := make(map[string]interface{})
-			r["start_port"] = int(ports.StartPort)
-			r["end_port"] = int(ports.EndPort)
+			if start := ports.StartPort; start != nil {
+				r["start_port"] = int(*start)
+			}
+			if end := ports.EndPort; end != nil {
+				r["end_port"] = int(*end)
+			}
 			applicationPorts = append(applicationPorts, r)
 		}
 		output["application_ports"] = applicationPorts
@@ -1440,8 +1530,12 @@ func flattenServiceFabricClusterNodeTypes(input []cluster.NodeTypeDescription) [
 		ephemeralPorts := make([]interface{}, 0)
 		if ports := v.EphemeralPorts; ports != nil {
 			r := make(map[string]interface{})
-			r["start_port"] = int(ports.StartPort)
-			r["end_port"] = int(ports.EndPort)
+			if start := ports.StartPort; start != nil {
+				r["start_port"] = int(*start)
+			}
+			if end := ports.EndPort; end != nil {
+				r["end_port"] = int(*end)
+			}
 			ephemeralPorts = append(ephemeralPorts, r)
 		}
 		output["ephemeral_ports"] = ephemeralPorts

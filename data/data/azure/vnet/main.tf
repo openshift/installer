@@ -26,10 +26,9 @@ provider "azurerm" {
 resource "azurerm_resource_group" "main" {
   count = var.azure_resource_group_name == "" ? 1 : 0
 
-  name       = "${var.cluster_id}-rg"
-  location   = var.azure_region
-  tags       = var.azure_extra_tags
-  managed_by = var.azure_managed_by
+  name     = "${var.cluster_id}-rg"
+  location = var.azure_region
+  tags     = var.azure_extra_tags
 }
 
 data "azurerm_resource_group" "main" {

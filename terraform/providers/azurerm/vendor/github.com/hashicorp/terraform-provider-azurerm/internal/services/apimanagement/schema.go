@@ -49,16 +49,6 @@ func apiManagementResourceHostnameSchema() map[string]*pluginsdk.Schema {
 			ValidateFunc: validation.IsUUID,
 		},
 
-		"certificate_source": {
-			Type:     pluginsdk.TypeString,
-			Computed: true,
-		},
-
-		"certificate_status": {
-			Type:     pluginsdk.TypeString,
-			Computed: true,
-		},
-
 		"expiry": {
 			Type:     pluginsdk.TypeString,
 			Computed: true,

@@ -7,25 +7,22 @@ import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 )
 
-// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License. See NOTICE.txt in the project root for license information.
-
 var _ resourceids.ResourceId = ZoneId{}
 
 // ZoneId is a struct representing the Resource ID for a Zone
 type ZoneId struct {
 	SubscriptionId    string
 	ResourceGroupName string
-	DnsZoneName       string
+	ZoneName          string
 	RecordType        RecordType
 }
 
 // NewZoneID returns a new ZoneId struct
-func NewZoneID(subscriptionId string, resourceGroupName string, dnsZoneName string, recordType RecordType) ZoneId {
+func NewZoneID(subscriptionId string, resourceGroupName string, zoneName string, recordType RecordType) ZoneId {
 	return ZoneId{
 		SubscriptionId:    subscriptionId,
 		ResourceGroupName: resourceGroupName,
-		DnsZoneName:       dnsZoneName,
+		ZoneName:          zoneName,
 		RecordType:        recordType,
 	}
 }
@@ -42,20 +39,20 @@ func ParseZoneID(input string) (*ZoneId, error) {
 	id := ZoneId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.DnsZoneName, ok = parsed.Parsed["dnsZoneName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "dnsZoneName", *parsed)
+	if id.ZoneName, ok = parsed.Parsed["zoneName"]; !ok {
+		return nil, fmt.Errorf("the segment 'zoneName' was not found in the resource id %q", input)
 	}
 
 	if v, ok := parsed.Parsed["recordType"]; true {
 		if !ok {
-			return nil, resourceids.NewSegmentNotSpecifiedError(id, "recordType", *parsed)
+			return nil, fmt.Errorf("the segment 'recordType' was not found in the resource id %q", input)
 		}
 
 		recordType, err := parseRecordType(v)
@@ -81,20 +78,20 @@ func ParseZoneIDInsensitively(input string) (*ZoneId, error) {
 	id := ZoneId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
 	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+		return nil, fmt.Errorf("the segment 'resourceGroupName' was not found in the resource id %q", input)
 	}
 
-	if id.DnsZoneName, ok = parsed.Parsed["dnsZoneName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "dnsZoneName", *parsed)
+	if id.ZoneName, ok = parsed.Parsed["zoneName"]; !ok {
+		return nil, fmt.Errorf("the segment 'zoneName' was not found in the resource id %q", input)
 	}
 
 	if v, ok := parsed.Parsed["recordType"]; true {
 		if !ok {
-			return nil, resourceids.NewSegmentNotSpecifiedError(id, "recordType", *parsed)
+			return nil, fmt.Errorf("the segment 'recordType' was not found in the resource id %q", input)
 		}
 
 		recordType, err := parseRecordType(v)
@@ -125,7 +122,7 @@ func ValidateZoneID(input interface{}, key string) (warnings []string, errors []
 // ID returns the formatted Zone ID
 func (id ZoneId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/dnsZones/%s/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.DnsZoneName, string(id.RecordType))
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.ZoneName, string(id.RecordType))
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Zone ID
@@ -138,7 +135,7 @@ func (id ZoneId) Segments() []resourceids.Segment {
 		resourceids.StaticSegment("staticProviders", "providers", "providers"),
 		resourceids.ResourceProviderSegment("staticMicrosoftNetwork", "Microsoft.Network", "Microsoft.Network"),
 		resourceids.StaticSegment("staticDnsZones", "dnsZones", "dnsZones"),
-		resourceids.UserSpecifiedSegment("dnsZoneName", "dnsZoneValue"),
+		resourceids.UserSpecifiedSegment("zoneName", "zoneValue"),
 		resourceids.ConstantSegment("recordType", PossibleValuesForRecordType(), "A"),
 	}
 }
@@ -148,7 +145,7 @@ func (id ZoneId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
 		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
-		fmt.Sprintf("Dns Zone Name: %q", id.DnsZoneName),
+		fmt.Sprintf("Zone Name: %q", id.ZoneName),
 		fmt.Sprintf("Record Type: %q", string(id.RecordType)),
 	}
 	return fmt.Sprintf("Zone (%s)", strings.Join(components, "\n"))

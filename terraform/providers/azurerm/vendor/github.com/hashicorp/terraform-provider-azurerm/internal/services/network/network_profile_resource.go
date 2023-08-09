@@ -5,8 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -17,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 const azureNetworkProfileResourceName = "azurerm_network_profile"
@@ -48,9 +46,9 @@ func resourceNetworkProfile() *pluginsdk.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"container_network_interface": {
 				Type:     pluginsdk.TypeList,
@@ -76,7 +74,7 @@ func resourceNetworkProfile() *pluginsdk.Resource {
 									"subnet_id": {
 										Type:         pluginsdk.TypeString,
 										Required:     true,
-										ValidateFunc: commonids.ValidateSubnetID,
+										ValidateFunc: azure.ValidateResourceID,
 									},
 								},
 							},
@@ -297,13 +295,13 @@ func expandNetworkProfileVirtualNetworkSubnetNames(d *pluginsdk.ResourceData) (*
 			ipData := ipConfig.(map[string]interface{})
 			subnetID := ipData["subnet_id"].(string)
 
-			subnetResourceID, err := commonids.ParseSubnetID(subnetID)
+			subnetResourceID, err := parse.SubnetID(subnetID)
 			if err != nil {
 				return nil, nil, err
 			}
 
-			if !utils.SliceContainsValue(subnetNames, subnetResourceID.SubnetName) {
-				subnetNames = append(subnetNames, subnetResourceID.SubnetName)
+			if !utils.SliceContainsValue(subnetNames, subnetResourceID.Name) {
+				subnetNames = append(subnetNames, subnetResourceID.Name)
 			}
 
 			if !utils.SliceContainsValue(vnetNames, subnetResourceID.VirtualNetworkName) {

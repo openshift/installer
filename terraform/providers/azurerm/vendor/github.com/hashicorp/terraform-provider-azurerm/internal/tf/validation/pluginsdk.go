@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package validation
 
 import (
@@ -23,7 +20,6 @@ func All(validators ...schema.SchemaValidateFunc) schema.SchemaValidateFunc { //
 
 // Any returns a SchemaValidateFunc which tests if the provided value
 // passes any of the provided SchemaValidateFunc
-//
 //lint:ignore SA1019 SDKv2 migration - staticcheck's own linter directives are currently being ignored under golanci-lint
 func Any(validators ...schema.SchemaValidateFunc) schema.SchemaValidateFunc { //nolint:staticcheck
 	return validation.Any(validators...)

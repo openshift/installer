@@ -5,11 +5,11 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountschemas"
+	"github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -32,7 +32,7 @@ func resourceLogicAppIntegrationAccountSchema() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := integrationaccountschemas.ParseSchemaID(id)
+			_, err := parse.IntegrationAccountSchemaID(id)
 			return err
 		}),
 
@@ -44,7 +44,7 @@ func resourceLogicAppIntegrationAccountSchema() *pluginsdk.Resource {
 				ValidateFunc: validate.IntegrationAccountSchemaName(),
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"integration_account_name": {
 				Type:         pluginsdk.TypeString,
@@ -81,37 +81,38 @@ func resourceLogicAppIntegrationAccountSchemaCreateUpdate(d *pluginsdk.ResourceD
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := integrationaccountschemas.NewSchemaID(subscriptionId, d.Get("resource_group_name").(string), d.Get("integration_account_name").(string), d.Get("name").(string))
+	id := parse.NewIntegrationAccountSchemaID(subscriptionId, d.Get("resource_group_name").(string), d.Get("integration_account_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.IntegrationAccountName, id.SchemaName)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_logic_app_integration_account_schema", id.ID())
 		}
 	}
 
-	parameters := integrationaccountschemas.IntegrationAccountSchema{
-		Properties: integrationaccountschemas.IntegrationAccountSchemaProperties{
-			SchemaType:  integrationaccountschemas.SchemaTypeXml,
+	parameters := logic.IntegrationAccountSchema{
+		IntegrationAccountSchemaProperties: &logic.IntegrationAccountSchemaProperties{
+			SchemaType:  logic.SchemaTypeXML,
 			Content:     utils.String(d.Get("content").(string)),
 			ContentType: utils.String("application/xml"),
 		},
 	}
 
 	if v, ok := d.GetOk("file_name"); ok {
-		parameters.Properties.FileName = utils.String(v.(string))
+		parameters.IntegrationAccountSchemaProperties.FileName = utils.String(v.(string))
 	}
 
 	if v, ok := d.GetOk("metadata"); ok {
-		parameters.Properties.Metadata = &v
+		metadata, _ := pluginsdk.ExpandJsonFromString(v.(string))
+		parameters.IntegrationAccountSchemaProperties.Metadata = metadata
 	}
 
-	if _, err := client.CreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.IntegrationAccountName, id.SchemaName, parameters); err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
 	}
 
@@ -124,14 +125,14 @@ func resourceLogicAppIntegrationAccountSchemaRead(d *pluginsdk.ResourceData, met
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := integrationaccountschemas.ParseSchemaID(d.Id())
+	id, err := parse.IntegrationAccountSchemaID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.IntegrationAccountName, id.SchemaName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[DEBUG] %s was not found - removing from state", *id)
 			d.SetId("")
 			return nil
@@ -140,16 +141,17 @@ func resourceLogicAppIntegrationAccountSchemaRead(d *pluginsdk.ResourceData, met
 	}
 
 	d.Set("name", id.SchemaName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("integration_account_name", id.IntegrationAccountName)
 
-	if model := resp.Model; model != nil {
-		props := model.Properties
+	if props := resp.IntegrationAccountSchemaProperties; props != nil {
 		d.Set("content", d.Get("content").(string))
 		d.Set("file_name", d.Get("file_name").(string))
 
 		if props.Metadata != nil {
-			d.Set("metadata", props.Metadata)
+			metadataValue := props.Metadata.(map[string]interface{})
+			metadataStr, _ := pluginsdk.FlattenJsonToString(metadataValue)
+			d.Set("metadata", metadataStr)
 		}
 	}
 
@@ -161,12 +163,12 @@ func resourceLogicAppIntegrationAccountSchemaDelete(d *pluginsdk.ResourceData, m
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := integrationaccountschemas.ParseSchemaID(d.Id())
+	id, err := parse.IntegrationAccountSchemaID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err := client.Delete(ctx, *id); err != nil {
+	if _, err := client.Delete(ctx, id.ResourceGroup, id.IntegrationAccountName, id.SchemaName); err != nil {
 		return fmt.Errorf("deleting %s: %+v", id, err)
 	}
 

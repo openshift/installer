@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
@@ -16,6 +15,7 @@ import (
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/hsm/validate"
+	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -59,12 +59,6 @@ func resourceDedicatedHardwareSecurityModule() *pluginsdk.Resource {
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
 					string(dedicatedhsms.SkuNameSafeNetLunaNetworkHSMASevenNineZero),
-					string(dedicatedhsms.SkuNamePayShieldOneZeroKLMKOneCPSSixZero),
-					string(dedicatedhsms.SkuNamePayShieldOneZeroKLMKOneCPSTwoFiveZero),
-					string(dedicatedhsms.SkuNamePayShieldOneZeroKLMKOneCPSTwoFiveZeroZero),
-					string(dedicatedhsms.SkuNamePayShieldOneZeroKLMKTwoCPSSixZero),
-					string(dedicatedhsms.SkuNamePayShieldOneZeroKLMKTwoCPSTwoFiveZero),
-					string(dedicatedhsms.SkuNamePayShieldOneZeroKLMKTwoCPSTwoFiveZeroZero),
 				}, false),
 			},
 
@@ -88,33 +82,7 @@ func resourceDedicatedHardwareSecurityModule() *pluginsdk.Resource {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: commonids.ValidateSubnetID,
-						},
-					},
-				},
-			},
-
-			"management_network_profile": {
-				Type:     pluginsdk.TypeList,
-				Optional: true,
-				MaxItems: 1,
-				Elem: &pluginsdk.Resource{
-					Schema: map[string]*pluginsdk.Schema{
-						"network_interface_private_ip_addresses": {
-							Type:     pluginsdk.TypeSet,
-							Required: true,
-							ForceNew: true,
-							Elem: &pluginsdk.Schema{
-								Type:         pluginsdk.TypeString,
-								ValidateFunc: azValidate.IPv4Address,
-							},
-						},
-
-						"subnet_id": {
-							Type:         pluginsdk.TypeString,
-							Required:     true,
-							ForceNew:     true,
-							ValidateFunc: commonids.ValidateSubnetID,
+							ValidateFunc: networkValidate.SubnetID,
 						},
 					},
 				},
@@ -155,17 +123,10 @@ func resourceDedicatedHardwareSecurityModuleCreate(d *pluginsdk.ResourceData, me
 	}
 
 	skuName := dedicatedhsms.SkuName(d.Get("sku_name").(string))
-	if _, ok := d.GetOk("management_network_profile"); ok {
-		if skuName == dedicatedhsms.SkuNameSafeNetLunaNetworkHSMASevenNineZero {
-			return fmt.Errorf("management_network_profile should not be specified when sku_name is %s", skuName)
-		}
-	}
-
 	parameters := dedicatedhsms.DedicatedHsm{
 		Location: location.Normalize(d.Get("location").(string)),
 		Properties: dedicatedhsms.DedicatedHsmProperties{
-			NetworkProfile:           expandDedicatedHsmNetworkProfile(d.Get("network_profile").([]interface{})),
-			ManagementNetworkProfile: expandDedicatedHsmNetworkProfile(d.Get("management_network_profile").([]interface{})),
+			NetworkProfile: expandDedicatedHsmNetworkProfile(d.Get("network_profile").([]interface{})),
 		},
 		Sku: dedicatedhsms.Sku{
 			Name: &skuName,
@@ -178,7 +139,7 @@ func resourceDedicatedHardwareSecurityModuleCreate(d *pluginsdk.ResourceData, me
 	}
 
 	if v, ok := d.GetOk("zones"); ok {
-		zones := zones.ExpandUntyped(v.(*pluginsdk.Set).List())
+		zones := zones.Expand(v.(*pluginsdk.Set).List())
 		if len(zones) > 0 {
 			parameters.Zones = &zones
 		}
@@ -213,18 +174,14 @@ func resourceDedicatedHardwareSecurityModuleRead(d *pluginsdk.ResourceData, meta
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.DedicatedHSMName)
+	d.Set("name", id.Name)
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
 		d.Set("location", location.Normalize(model.Location))
-		d.Set("zones", zones.FlattenUntyped(model.Zones))
+		d.Set("zones", zones.Flatten(model.Zones))
 
 		props := model.Properties
-
-		if err := d.Set("management_network_profile", flattenDedicatedHsmNetworkProfile(props.ManagementNetworkProfile)); err != nil {
-			return fmt.Errorf("setting management_network_profile: %+v", err)
-		}
 
 		if err := d.Set("network_profile", flattenDedicatedHsmNetworkProfile(props.NetworkProfile)); err != nil {
 			return fmt.Errorf("setting network_profile: %+v", err)

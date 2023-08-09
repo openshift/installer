@@ -1,26 +1,18 @@
 package queuesauthorizationrule
 
-import (
-	"fmt"
-
-	"github.com/hashicorp/go-azure-sdk/sdk/client/resourcemanager"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
-)
+import "github.com/Azure/go-autorest/autorest"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
 
 type QueuesAuthorizationRuleClient struct {
-	Client *resourcemanager.Client
+	Client  autorest.Client
+	baseUri string
 }
 
-func NewQueuesAuthorizationRuleClientWithBaseURI(api environments.Api) (*QueuesAuthorizationRuleClient, error) {
-	client, err := resourcemanager.NewResourceManagerClient(api, "queuesauthorizationrule", defaultApiVersion)
-	if err != nil {
-		return nil, fmt.Errorf("instantiating QueuesAuthorizationRuleClient: %+v", err)
+func NewQueuesAuthorizationRuleClientWithBaseURI(endpoint string) QueuesAuthorizationRuleClient {
+	return QueuesAuthorizationRuleClient{
+		Client:  autorest.NewClientWithUserAgent(userAgent()),
+		baseUri: endpoint,
 	}
-
-	return &QueuesAuthorizationRuleClient{
-		Client: client,
-	}, nil
 }

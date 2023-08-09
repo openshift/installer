@@ -1,10 +1,6 @@
 package backuppolicies
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -27,19 +23,6 @@ func PossibleValuesForAbsoluteMarker() []string {
 		string(AbsoluteMarkerFirstOfWeek),
 		string(AbsoluteMarkerFirstOfYear),
 	}
-}
-
-func (s *AbsoluteMarker) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseAbsoluteMarker(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseAbsoluteMarker(input string) (*AbsoluteMarker, error) {
@@ -73,19 +56,6 @@ func PossibleValuesForDataStoreTypes() []string {
 		string(DataStoreTypesOperationalStore),
 		string(DataStoreTypesVaultStore),
 	}
-}
-
-func (s *DataStoreTypes) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseDataStoreTypes(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseDataStoreTypes(input string) (*DataStoreTypes, error) {
@@ -125,19 +95,6 @@ func PossibleValuesForDayOfWeek() []string {
 		string(DayOfWeekTuesday),
 		string(DayOfWeekWednesday),
 	}
-}
-
-func (s *DayOfWeek) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseDayOfWeek(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseDayOfWeek(input string) (*DayOfWeek, error) {
@@ -193,19 +150,6 @@ func PossibleValuesForMonth() []string {
 	}
 }
 
-func (s *Month) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseMonth(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseMonth(input string) (*Month, error) {
 	vals := map[string]Month{
 		"april":     MonthApril,
@@ -248,19 +192,6 @@ func PossibleValuesForWeekNumber() []string {
 		string(WeekNumberSecond),
 		string(WeekNumberThird),
 	}
-}
-
-func (s *WeekNumber) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseWeekNumber(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseWeekNumber(input string) (*WeekNumber, error) {

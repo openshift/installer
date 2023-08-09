@@ -5,13 +5,16 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/securityinsights/2022-10-01-preview/alertrules"
+	"github.com/Azure/azure-sdk-for-go/services/preview/securityinsight/mgmt/2021-09-01-preview/securityinsight"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	loganalyticsParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/parse"
+	loganalyticsValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/loganalytics/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/sentinel/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceSentinelAlertRuleMLBehaviorAnalytics() *pluginsdk.Resource {
@@ -22,9 +25,9 @@ func resourceSentinelAlertRuleMLBehaviorAnalytics() *pluginsdk.Resource {
 		Delete: resourceSentinelAlertRuleMLBehaviorAnalyticsDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceIdThen(func(id string) error {
-			_, err := alertrules.ParseAlertRuleID(id)
+			_, err := parse.AlertRuleID(id)
 			return err
-		}, importSentinelAlertRule(alertrules.AlertRuleKindMLBehaviorAnalytics)),
+		}, importSentinelAlertRule(securityinsight.AlertRuleKindMLBehaviorAnalytics)),
 
 		Timeouts: &pluginsdk.ResourceTimeout{
 			Create: pluginsdk.DefaultTimeout(30 * time.Minute),
@@ -45,7 +48,7 @@ func resourceSentinelAlertRuleMLBehaviorAnalytics() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: alertrules.ValidateWorkspaceID,
+				ValidateFunc: loganalyticsValidate.LogAnalyticsWorkspaceID,
 			},
 
 			"alert_rule_template_guid": {
@@ -71,44 +74,46 @@ func resourceSentinelAlertRuleMLBehaviorAnalyticsCreateUpdate(d *pluginsdk.Resou
 
 	name := d.Get("name").(string)
 
-	workspaceID, err := alertrules.ParseWorkspaceID(d.Get("log_analytics_workspace_id").(string))
+	workspaceID, err := loganalyticsParse.LogAnalyticsWorkspaceID(d.Get("log_analytics_workspace_id").(string))
 	if err != nil {
 		return err
 	}
-	id := alertrules.NewAlertRuleID(workspaceID.SubscriptionId, workspaceID.ResourceGroupName, workspaceID.WorkspaceName, name)
+	id := parse.NewAlertRuleID(workspaceID.SubscriptionId, workspaceID.ResourceGroup, workspaceID.WorkspaceName, name)
 
 	if d.IsNewResource() {
-		resp, err := client.AlertRulesGet(ctx, id)
+		resp, err := client.Get(ctx, workspaceID.ResourceGroup, workspaceID.WorkspaceName, name)
 		if err != nil {
-			if !response.WasNotFound(resp.HttpResponse) {
+			if !utils.ResponseWasNotFound(resp.Response) {
 				return fmt.Errorf("checking for existing Sentinel Alert Rule MLBehaviorAnalytics %q: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(resp.HttpResponse) {
-			return tf.ImportAsExistsError("azurerm_sentinel_alert_rule_machine_learning_behavior_analytics", id.ID())
+		id := alertRuleID(resp.Value)
+		if id != nil && *id != "" {
+			return tf.ImportAsExistsError("azurerm_sentinel_alert_rule_machine_learning_behavior_analytics", *id)
 		}
 	}
 
-	params := alertrules.MLBehaviorAnalyticsAlertRule{
-		Properties: &alertrules.MLBehaviorAnalyticsAlertRuleProperties{
-			AlertRuleTemplateName: d.Get("alert_rule_template_guid").(string),
-			Enabled:               d.Get("enabled").(bool),
+	params := securityinsight.MLBehaviorAnalyticsAlertRule{
+		Kind: securityinsight.KindBasicAlertRuleKindMLBehaviorAnalytics,
+		MLBehaviorAnalyticsAlertRuleProperties: &securityinsight.MLBehaviorAnalyticsAlertRuleProperties{
+			AlertRuleTemplateName: utils.String(d.Get("alert_rule_template_guid").(string)),
+			Enabled:               utils.Bool(d.Get("enabled").(bool)),
 		},
 	}
 
 	if !d.IsNewResource() {
-		resp, err := client.AlertRulesGet(ctx, id)
+		resp, err := client.Get(ctx, workspaceID.ResourceGroup, workspaceID.WorkspaceName, name)
 		if err != nil {
 			return fmt.Errorf("retrieving Sentinel Alert Rule MLBehaviorAnalytics %q: %+v", id, err)
 		}
 
-		if err := assertAlertRuleKind(resp.Model, alertrules.AlertRuleKindMLBehaviorAnalytics); err != nil {
+		if err := assertAlertRuleKind(resp.Value, securityinsight.AlertRuleKindMLBehaviorAnalytics); err != nil {
 			return fmt.Errorf("asserting alert rule of %q: %+v", id, err)
 		}
 	}
 
-	if _, err := client.AlertRulesCreateOrUpdate(ctx, id, params); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, workspaceID.ResourceGroup, workspaceID.WorkspaceName, name, params); err != nil {
 		return fmt.Errorf("creating Sentinel Alert Rule MLBehaviorAnalytics %q: %+v", id, err)
 	}
 
@@ -122,14 +127,14 @@ func resourceSentinelAlertRuleMLBehaviorAnalyticsRead(d *pluginsdk.ResourceData,
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := alertrules.ParseAlertRuleID(d.Id())
+	id, err := parse.AlertRuleID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.AlertRulesGet(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.WorkspaceName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[DEBUG] Sentinel Alert Rule MLBehaviorAnalytics %q was not found - removing from state!", id)
 			d.SetId("")
 			return nil
@@ -138,22 +143,19 @@ func resourceSentinelAlertRuleMLBehaviorAnalyticsRead(d *pluginsdk.ResourceData,
 		return fmt.Errorf("retrieving Sentinel Alert Rule MLBehaviorAnalytics %q: %+v", id, err)
 	}
 
-	if err := assertAlertRuleKind(resp.Model, alertrules.AlertRuleKindMLBehaviorAnalytics); err != nil {
+	if err := assertAlertRuleKind(resp.Value, securityinsight.AlertRuleKindMLBehaviorAnalytics); err != nil {
 		return fmt.Errorf("asserting alert rule of %q: %+v", id, err)
 	}
-	if model := resp.Model; model != nil {
-		modelPtr := *model
-		rule := modelPtr.(alertrules.MLBehaviorAnalyticsAlertRule)
+	rule := resp.Value.(securityinsight.MLBehaviorAnalyticsAlertRule)
 
-		d.Set("name", id.RuleId)
+	d.Set("name", id.Name)
 
-		workspaceId := alertrules.NewWorkspaceID(id.SubscriptionId, id.ResourceGroupName, id.WorkspaceName)
-		d.Set("log_analytics_workspace_id", workspaceId.ID())
+	workspaceId := loganalyticsParse.NewLogAnalyticsWorkspaceID(id.SubscriptionId, id.ResourceGroup, id.WorkspaceName)
+	d.Set("log_analytics_workspace_id", workspaceId.ID())
 
-		if prop := rule.Properties; prop != nil {
-			d.Set("enabled", prop.Enabled)
-			d.Set("alert_rule_template_guid", prop.AlertRuleTemplateName)
-		}
+	if prop := rule.MLBehaviorAnalyticsAlertRuleProperties; prop != nil {
+		d.Set("enabled", prop.Enabled)
+		d.Set("alert_rule_template_guid", prop.AlertRuleTemplateName)
 	}
 
 	return nil
@@ -164,12 +166,12 @@ func resourceSentinelAlertRuleMLBehaviorAnalyticsDelete(d *pluginsdk.ResourceDat
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := alertrules.ParseAlertRuleID(d.Id())
+	id, err := parse.AlertRuleID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err := client.AlertRulesDelete(ctx, *id); err != nil {
+	if _, err := client.Delete(ctx, id.ResourceGroup, id.WorkspaceName, id.Name); err != nil {
 		return fmt.Errorf("deleting Sentinel Alert Rule MLBehaviorAnalytics %q: %+v", id, err)
 	}
 

@@ -6,16 +6,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2023-04-02-preview/agentpools"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2023-04-02-preview/managedclusters"
+	"github.com/Azure/azure-sdk-for-go/services/preview/containerservice/mgmt/2022-03-02-preview/containerservice"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/client"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
-func validateKubernetesCluster(d *pluginsdk.ResourceData, cluster *managedclusters.ManagedCluster, resourceGroup, name string) error {
+func validateKubernetesCluster(d *pluginsdk.ResourceData, cluster *containerservice.ManagedCluster, resourceGroup, name string) error {
 	if v, exists := d.GetOk("network_profile"); exists {
 		rawProfiles := v.([]interface{})
 
@@ -24,30 +22,19 @@ func validateKubernetesCluster(d *pluginsdk.ResourceData, cluster *managedcluste
 			profile := rawProfiles[0].(map[string]interface{})
 
 			if networkPlugin := profile["network_plugin"].(string); networkPlugin != "" {
+				dockerBridgeCidr := profile["docker_bridge_cidr"].(string)
 				dnsServiceIP := profile["dns_service_ip"].(string)
 				serviceCidr := profile["service_cidr"].(string)
 				podCidr := profile["pod_cidr"].(string)
-				podCidrs := profile["pod_cidrs"].([]interface{})
-				serviceCidrs := profile["service_cidrs"].([]interface{})
-				networkPluginMode := profile["network_plugin_mode"].(string)
-				isServiceCidrSet := serviceCidr != "" || len(serviceCidrs) != 0
 
 				// Azure network plugin is not compatible with pod_cidr
-				if podCidr != "" && strings.EqualFold(networkPlugin, "azure") && !strings.EqualFold(networkPluginMode, string(managedclusters.NetworkPluginModeOverlay)) {
-					return fmt.Errorf("`pod_cidr` and `azure` cannot be set together unless specifying `network_plugin_mode` to `overlay`")
+				if podCidr != "" && networkPlugin == "azure" {
+					return fmt.Errorf("`pod_cidr` and `azure` cannot be set together")
 				}
 
 				// if not All empty values or All set values.
-				if !(dnsServiceIP == "" && !isServiceCidrSet) && !(dnsServiceIP != "" && isServiceCidrSet) {
-					return fmt.Errorf("`dns_service_ip` and `service_cidr` should all be empty or both should be set")
-				}
-
-				ipVersions := profile["ip_versions"].([]interface{})
-				if len(serviceCidrs) == 2 && len(ipVersions) != 2 {
-					return fmt.Errorf("dual-stack networking must be enabled and `ip_versions` must be set to [\"IPv4\", \"IPv6\"] in order to specify multiple values in `service_cidrs`")
-				}
-				if len(podCidrs) == 2 && len(ipVersions) != 2 {
-					return fmt.Errorf("dual-stack networking must be enabled and `ip_versions` must be set to [\"IPv4\", \"IPv6\"] in order to specify multiple values in `pod_cidrs`")
+				if !(dockerBridgeCidr == "" && dnsServiceIP == "" && serviceCidr == "") && !(dockerBridgeCidr != "" && dnsServiceIP != "" && serviceCidr != "") {
+					return fmt.Errorf("`docker_bridge_cidr`, `dns_service_ip` and `service_cidr` should all be empty or all should be set")
 				}
 			}
 		}
@@ -71,11 +58,11 @@ func validateKubernetesCluster(d *pluginsdk.ResourceData, cluster *managedcluste
 		// defined locally, if so, we need to error out
 		if cluster != nil {
 			servicePrincipalExists := false
-			if props := cluster.Properties; props != nil {
+			if props := cluster.ManagedClusterProperties; props != nil {
 				if sp := props.ServicePrincipalProfile; sp != nil {
-					if cid := sp.ClientId; cid != "" {
+					if cid := sp.ClientID; cid != nil {
 						// if it's MSI we ignore the block
-						servicePrincipalExists = !strings.EqualFold(cid, "msi")
+						servicePrincipalExists = !strings.EqualFold(*cid, "msi")
 					}
 				}
 			}
@@ -104,10 +91,10 @@ func validateKubernetesCluster(d *pluginsdk.ResourceData, cluster *managedcluste
 	} else {
 		// for an existing cluster
 		servicePrincipalIsMsi := false
-		if props := cluster.Properties; props != nil {
+		if props := cluster.ManagedClusterProperties; props != nil {
 			if sp := props.ServicePrincipalProfile; sp != nil {
-				if cid := sp.ClientId; cid != "" {
-					servicePrincipalIsMsi = strings.EqualFold(cid, "msi")
+				if cid := sp.ClientID; cid != nil {
+					servicePrincipalIsMsi = strings.EqualFold(*cid, "msi")
 				}
 			}
 		}
@@ -118,8 +105,8 @@ func validateKubernetesCluster(d *pluginsdk.ResourceData, cluster *managedcluste
 		}
 
 		hasIdentity := false
-		if clusterIdentity := cluster.Identity; clusterIdentity != nil {
-			hasIdentity = clusterIdentity.Type != identity.TypeNone
+		if identity := cluster.Identity; identity != nil {
+			hasIdentity = identity.Type != containerservice.ResourceIdentityTypeNone
 		}
 
 		if hasIdentity {
@@ -264,10 +251,9 @@ details can be found at https://aka.ms/version-skew-policy.
 `, desiredNodePoolVersion, nodePoolName, clusterName, resourceGroup, clusterVersionDetails, versionsList)
 }
 
-func validateNodePoolSupportsVersion(ctx context.Context, client *client.Client, currentNodePoolVersion string, defaultNodePoolId agentpools.AgentPoolId, desiredNodePoolVersion string) error {
+func validateNodePoolSupportsVersion(ctx context.Context, client *client.Client, currentNodePoolVersion string, defaultNodePoolId parse.NodePoolId, desiredNodePoolVersion string) error {
 	// confirm the version being used is >= the version of the control plane
-	clusterId := commonids.NewKubernetesClusterID(defaultNodePoolId.SubscriptionId, defaultNodePoolId.ResourceGroupName, defaultNodePoolId.ManagedClusterName)
-	resp, err := client.AgentPoolsClient.GetAvailableAgentPoolVersions(ctx, clusterId)
+	versions, err := client.AgentPoolsClient.GetAvailableAgentPoolVersions(ctx, defaultNodePoolId.ResourceGroup, defaultNodePoolId.ManagedClusterName)
 	if err != nil {
 		return fmt.Errorf("retrieving Available Agent Pool Versions for %s: %+v", defaultNodePoolId, err)
 	}
@@ -280,8 +266,8 @@ func validateNodePoolSupportsVersion(ctx context.Context, client *client.Client,
 	}
 
 	// when creating a new cluster or upgrading the desired version should be supported
-	if versions := resp.Model; !versionExists && versions != nil && versions.Properties.AgentPoolVersions != nil {
-		for _, version := range *versions.Properties.AgentPoolVersions {
+	if !versionExists && versions.AgentPoolAvailableVersionsProperties != nil && versions.AgentPoolAvailableVersionsProperties.AgentPoolVersions != nil {
+		for _, version := range *versions.AgentPoolAvailableVersionsProperties.AgentPoolVersions {
 			if version.KubernetesVersion == nil {
 				continue
 			}
@@ -296,21 +282,21 @@ func validateNodePoolSupportsVersion(ctx context.Context, client *client.Client,
 	}
 
 	if !versionExists {
-		clusterId := commonids.NewKubernetesClusterID(defaultNodePoolId.SubscriptionId, defaultNodePoolId.ResourceGroupName, defaultNodePoolId.ManagedClusterName)
-		cluster, err := client.KubernetesClustersClient.Get(ctx, clusterId)
+		clusterId := parse.NewClusterID(defaultNodePoolId.SubscriptionId, defaultNodePoolId.ResourceGroup, defaultNodePoolId.ManagedClusterName)
+		cluster, err := client.KubernetesClustersClient.Get(ctx, clusterId.ResourceGroup, clusterId.ManagedClusterName)
 		if err != nil {
-			if !response.WasStatusCode(cluster.HttpResponse, http.StatusUnauthorized) {
+			if !utils.ResponseWasStatusCode(cluster.Response, http.StatusUnauthorized) {
 				return fmt.Errorf("retrieving %s: %+v", clusterId, err)
 			}
 		}
 
 		// nilable since a user may not necessarily have access, and this is trying to be helpful
 		var clusterVersion *string
-		if clusterModel := cluster.Model; clusterModel != nil && clusterModel.Properties != nil {
-			clusterVersion = clusterModel.Properties.CurrentKubernetesVersion
+		if props := cluster.ManagedClusterProperties; props != nil {
+			clusterVersion = props.CurrentKubernetesVersion
 		}
 
-		return clusterControlPlaneMustBeUpgradedError(defaultNodePoolId.ResourceGroupName, defaultNodePoolId.ManagedClusterName, defaultNodePoolId.AgentPoolName, clusterVersion, desiredNodePoolVersion, supportedVersions)
+		return clusterControlPlaneMustBeUpgradedError(defaultNodePoolId.ResourceGroup, defaultNodePoolId.ManagedClusterName, defaultNodePoolId.AgentPoolName, clusterVersion, desiredNodePoolVersion, supportedVersions)
 	}
 
 	return nil

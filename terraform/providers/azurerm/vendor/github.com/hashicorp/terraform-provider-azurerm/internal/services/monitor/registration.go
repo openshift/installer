@@ -17,22 +17,13 @@ func (r Registration) AssociatedGitHubLabel() string {
 }
 
 func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{
-		DataCollectionEndpointDataSource{},
-		DataCollectionRuleDataSource{},
-	}
+	return []sdk.DataSource{}
 }
 
 func (r Registration) Resources() []sdk.Resource {
 	return []sdk.Resource{
-		AlertProcessingRuleActionGroupResource{},
-		AlertProcessingRuleSuppressionResource{},
-		DataCollectionEndpointResource{},
-		DataCollectionRuleAssociationResource{},
 		DataCollectionRuleResource{},
-		ScheduledQueryRulesAlertV2Resource{},
-		AlertPrometheusRuleGroupResource{},
-		WorkspaceResource{},
+		DataCollectionEndpointResource{},
 	}
 }
 

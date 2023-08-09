@@ -354,7 +354,7 @@ func resourceStorageDataLakeGen2FileSystemRead(d *pluginsdk.ResourceData, meta i
 			if err != nil {
 				return fmt.Errorf("parsing response ACL %q: %s", pathResponse.ACL, err)
 			}
-			ace = FlattenDataLakeGen2AceList(d, acl)
+			ace = FlattenDataLakeGen2AceList(acl)
 			owner = pathResponse.Owner
 			group = pathResponse.Group
 		}

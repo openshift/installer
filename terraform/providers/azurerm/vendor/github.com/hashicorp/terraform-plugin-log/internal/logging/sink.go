@@ -13,13 +13,7 @@ func GetSink(ctx context.Context) hclog.Logger {
 	if logger == nil {
 		return nil
 	}
-
-	hclogger, ok := logger.(hclog.Logger)
-	if !ok {
-		return nil
-	}
-
-	return hclogger
+	return logger.(hclog.Logger)
 }
 
 // GetSinkOptions returns the root logger options used for

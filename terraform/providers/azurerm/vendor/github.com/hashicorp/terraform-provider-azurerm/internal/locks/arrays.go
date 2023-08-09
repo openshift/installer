@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package locks
 
 // Remove duplicates from the input array and return unify array (without duplicated elements)

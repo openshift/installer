@@ -8,12 +8,14 @@ import (
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/dataprotection/2022-04-01/backupinstances"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/dataprotection/2022-04-01/backuppolicies"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	computeParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
+	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
 	resourceParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/resource/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	azSchema "github.com/hashicorp/terraform-provider-azurerm/internal/tf/schema"
@@ -60,15 +62,15 @@ func resourceDataProtectionBackupInstanceDisk() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: disks.ValidateDiskID,
+				ValidateFunc: computeValidate.ManagedDiskID,
 			},
 
-			"snapshot_resource_group_name": commonschema.ResourceGroupName(),
+			"snapshot_resource_group_name": azure.SchemaResourceGroupName(),
 
 			"backup_policy_id": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: backuppolicies.ValidateBackupPolicyID,
+				ValidateFunc: backuppolicies.ValidateBackupPoliciesID,
 			},
 		},
 	}
@@ -82,7 +84,7 @@ func resourceDataProtectionBackupInstanceDiskCreateUpdate(d *schema.ResourceData
 
 	name := d.Get("name").(string)
 	vaultId, _ := backupinstances.ParseBackupVaultID(d.Get("vault_id").(string))
-	id := backupinstances.NewBackupInstanceID(subscriptionId, vaultId.ResourceGroupName, vaultId.BackupVaultName, name)
+	id := backupinstances.NewBackupInstanceID(subscriptionId, vaultId.ResourceGroupName, vaultId.VaultName, name)
 
 	if d.IsNewResource() {
 		existing, err := client.Get(ctx, id)
@@ -96,9 +98,9 @@ func resourceDataProtectionBackupInstanceDiskCreateUpdate(d *schema.ResourceData
 		}
 	}
 
-	diskId, _ := disks.ParseDiskID(d.Get("disk_id").(string))
+	diskId, _ := computeParse.ManagedDiskID(d.Get("disk_id").(string))
 	location := location.Normalize(d.Get("location").(string))
-	policyId, _ := backuppolicies.ParseBackupPolicyID(d.Get("backup_policy_id").(string))
+	policyId, _ := backuppolicies.ParseBackupPoliciesID(d.Get("backup_policy_id").(string))
 	snapshotResourceGroupId := resourceParse.NewResourceGroupID(subscriptionId, d.Get("snapshot_resource_group_name").(string))
 
 	parameters := backupinstances.BackupInstanceResource{
@@ -134,7 +136,7 @@ func resourceDataProtectionBackupInstanceDiskCreateUpdate(d *schema.ResourceData
 
 	deadline, ok := ctx.Deadline()
 	if !ok {
-		return fmt.Errorf("internal-error: context had no deadline")
+		return fmt.Errorf("context had no deadline")
 	}
 	stateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(backupinstances.StatusConfiguringProtection)},
@@ -171,7 +173,7 @@ func resourceDataProtectionBackupInstanceDiskRead(d *schema.ResourceData, meta i
 		}
 		return fmt.Errorf("retrieving DataProtection BackupInstance (%q): %+v", id, err)
 	}
-	vaultId := backupinstances.NewBackupVaultID(id.SubscriptionId, id.ResourceGroupName, id.BackupVaultName)
+	vaultId := backupinstances.NewBackupVaultID(id.SubscriptionId, id.ResourceGroupName, id.VaultName)
 	d.Set("name", id.BackupInstanceName)
 	d.Set("vault_id", vaultId.ID())
 
@@ -185,7 +187,7 @@ func resourceDataProtectionBackupInstanceDiskRead(d *schema.ResourceData, meta i
 				parameter := (*props.PolicyInfo.PolicyParameters.DataStoreParametersList)[0].(backupinstances.AzureOperationalStoreParameters)
 
 				if parameter.ResourceGroupId != nil {
-					resourceGroupId, err := resourceParse.ResourceGroupIDInsensitively(*parameter.ResourceGroupId)
+					resourceGroupId, err := resourceParse.ResourceGroupID(*parameter.ResourceGroupId)
 					if err != nil {
 						return err
 					}

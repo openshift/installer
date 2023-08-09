@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
@@ -12,7 +13,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceExpressRouteConnection() *pluginsdk.Resource {
@@ -68,12 +68,6 @@ func resourceExpressRouteConnection() *pluginsdk.Resource {
 				Optional: true,
 			},
 
-			"express_route_gateway_bypass_enabled": {
-				Type:     pluginsdk.TypeBool,
-				Optional: true,
-				Default:  false,
-			},
-
 			"routing": {
 				Type:     pluginsdk.TypeList,
 				Optional: true,
@@ -81,18 +75,6 @@ func resourceExpressRouteConnection() *pluginsdk.Resource {
 				MaxItems: 1,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
-						"inbound_route_map_id": {
-							Type:         pluginsdk.TypeString,
-							Optional:     true,
-							ValidateFunc: validate.RouteMapID,
-						},
-
-						"outbound_route_map_id": {
-							Type:         pluginsdk.TypeString,
-							Optional:     true,
-							ValidateFunc: validate.RouteMapID,
-						},
-
 						"associated_route_table_id": {
 							Type:         pluginsdk.TypeString,
 							Optional:     true,
@@ -176,10 +158,9 @@ func resourceExpressRouteConnectionCreate(d *pluginsdk.ResourceData, meta interf
 			ExpressRouteCircuitPeering: &network.ExpressRouteCircuitPeeringID{
 				ID: utils.String(d.Get("express_route_circuit_peering_id").(string)),
 			},
-			EnableInternetSecurity:    utils.Bool(d.Get("enable_internet_security").(bool)),
-			RoutingConfiguration:      expandExpressRouteConnectionRouting(d.Get("routing").([]interface{})),
-			RoutingWeight:             utils.Int32(int32(d.Get("routing_weight").(int))),
-			ExpressRouteGatewayBypass: utils.Bool(d.Get("express_route_gateway_bypass_enabled").(bool)),
+			EnableInternetSecurity: utils.Bool(d.Get("enable_internet_security").(bool)),
+			RoutingConfiguration:   expandExpressRouteConnectionRouting(d.Get("routing").([]interface{})),
+			RoutingWeight:          utils.Int32(int32(d.Get("routing_weight").(int))),
 		},
 	}
 
@@ -228,15 +209,11 @@ func resourceExpressRouteConnectionRead(d *pluginsdk.ResourceData, meta interfac
 		d.Set("authorization_key", props.AuthorizationKey)
 		d.Set("enable_internet_security", props.EnableInternetSecurity)
 
-		if props.ExpressRouteGatewayBypass != nil {
-			d.Set("express_route_gateway_bypass_enabled", props.ExpressRouteGatewayBypass)
-		}
-
 		circuitPeeringID := ""
 		if v := props.ExpressRouteCircuitPeering; v != nil {
 			circuitPeeringID = *v.ID
 		}
-		peeringId, err := parse.ExpressRouteCircuitPeeringIDInsensitively(circuitPeeringID)
+		peeringId, err := parse.ExpressRouteCircuitPeeringID(circuitPeeringID)
 		if err != nil {
 			return err
 		}
@@ -270,10 +247,9 @@ func resourceExpressRouteConnectionUpdate(d *pluginsdk.ResourceData, meta interf
 			ExpressRouteCircuitPeering: &network.ExpressRouteCircuitPeeringID{
 				ID: utils.String(d.Get("express_route_circuit_peering_id").(string)),
 			},
-			EnableInternetSecurity:    utils.Bool(d.Get("enable_internet_security").(bool)),
-			RoutingConfiguration:      expandExpressRouteConnectionRouting(d.Get("routing").([]interface{})),
-			RoutingWeight:             utils.Int32(int32(d.Get("routing_weight").(int))),
-			ExpressRouteGatewayBypass: utils.Bool(d.Get("express_route_gateway_bypass_enabled").(bool)),
+			EnableInternetSecurity: utils.Bool(d.Get("enable_internet_security").(bool)),
+			RoutingConfiguration:   expandExpressRouteConnectionRouting(d.Get("routing").([]interface{})),
+			RoutingWeight:          utils.Int32(int32(d.Get("routing_weight").(int))),
 		},
 	}
 
@@ -329,18 +305,6 @@ func expandExpressRouteConnectionRouting(input []interface{}) *network.RoutingCo
 		}
 	}
 
-	if inboundRouteMapId := v["inbound_route_map_id"].(string); inboundRouteMapId != "" {
-		result.InboundRouteMap = &network.SubResource{
-			ID: utils.String(inboundRouteMapId),
-		}
-	}
-
-	if outboundRouteMapId := v["outbound_route_map_id"].(string); outboundRouteMapId != "" {
-		result.OutboundRouteMap = &network.SubResource{
-			ID: utils.String(outboundRouteMapId),
-		}
-	}
-
 	if propagatedRouteTable := v["propagated_route_table"].([]interface{}); len(propagatedRouteTable) != 0 {
 		result.PropagatedRouteTables = expandExpressRouteConnectionPropagatedRouteTable(propagatedRouteTable)
 	}
@@ -377,25 +341,17 @@ func flattenExpressRouteConnectionRouting(input *network.RoutingConfiguration) (
 	if input.AssociatedRouteTable != nil && input.AssociatedRouteTable.ID != nil {
 		associatedRouteTableId = *input.AssociatedRouteTable.ID
 	}
-	routeTableId, err := parse.HubRouteTableIDInsensitively(associatedRouteTableId)
+	routeTableId, err := parse.HubRouteTableID(associatedRouteTableId)
 	if err != nil {
 		return nil, err
 	}
 
-	result := map[string]interface{}{
-		"associated_route_table_id": routeTableId.ID(),
-		"propagated_route_table":    flattenExpressRouteConnectionPropagatedRouteTable(input.PropagatedRouteTables),
-	}
-
-	if input.InboundRouteMap != nil && input.InboundRouteMap.ID != nil {
-		result["inbound_route_map_id"] = input.InboundRouteMap.ID
-	}
-
-	if input.OutboundRouteMap != nil && input.OutboundRouteMap.ID != nil {
-		result["outbound_route_map_id"] = input.OutboundRouteMap.ID
-	}
-
-	return []interface{}{result}, nil
+	return []interface{}{
+		map[string]interface{}{
+			"associated_route_table_id": routeTableId.ID(),
+			"propagated_route_table":    flattenExpressRouteConnectionPropagatedRouteTable(input.PropagatedRouteTables),
+		},
+	}, nil
 }
 
 func flattenExpressRouteConnectionPropagatedRouteTable(input *network.PropagatedRouteTable) []interface{} {

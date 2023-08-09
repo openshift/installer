@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datamigration/2018-04-19/projectresource"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/databasemigration/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/databasemigration/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceDatabaseMigrationProject() *pluginsdk.Resource {
@@ -50,7 +50,7 @@ func dataSourceDatabaseMigrationProject() *pluginsdk.Resource {
 				Computed: true,
 			},
 
-			"tags": commonschema.TagsDataSource(),
+			"tags": tags.SchemaDataSource(),
 		},
 	}
 }
@@ -61,10 +61,10 @@ func dataSourceDatabaseMigrationProjectRead(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := projectresource.NewProjectID(subscriptionId, d.Get("resource_group_name").(string), d.Get("service_name").(string), d.Get("name").(string))
-	resp, err := client.ProjectsGet(ctx, id)
+	id := parse.NewProjectID(subscriptionId, d.Get("resource_group_name").(string), d.Get("service_name").(string), d.Get("name").(string))
+	resp, err := client.Get(ctx, id.ResourceGroup, id.ServiceName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("%s was not found", id)
 		}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
@@ -72,17 +72,11 @@ func dataSourceDatabaseMigrationProjectRead(d *pluginsdk.ResourceData, meta inte
 
 	d.SetId(id.ID())
 
-	d.Set("name", id.ProjectName)
-	d.Set("service_name", id.ServiceName)
-	d.Set("resource_group_name", id.ResourceGroupName)
-
-	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
-		if props := model.Properties; props != nil {
-			d.Set("source_platform", string(props.SourcePlatform))
-			d.Set("target_platform", string(props.TargetPlatform))
-		}
-		return tags.FlattenAndSet(d, model.Tags)
+	d.Set("location", location.NormalizeNilable(resp.Location))
+	if prop := resp.ProjectProperties; prop != nil {
+		d.Set("source_platform", string(prop.SourcePlatform))
+		d.Set("target_platform", string(prop.TargetPlatform))
 	}
-	return nil
+
+	return tags.FlattenAndSet(d, resp.Tags)
 }

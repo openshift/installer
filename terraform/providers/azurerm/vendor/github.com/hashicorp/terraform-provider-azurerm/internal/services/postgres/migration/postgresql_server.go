@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/postgresql/2017-12-01/servers"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/postgres/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -25,9 +26,9 @@ func (PostgresqlServerV0ToV1) Schema() map[string]*pluginsdk.Schema {
 			ValidateFunc: validate.ServerName,
 		},
 
-		"location": commonschema.Location(),
+		"location": azure.SchemaLocation(),
 
-		"resource_group_name": commonschema.ResourceGroupName(),
+		"resource_group_name": azure.SchemaResourceGroupName(),
 
 		"sku_name": {
 			Type:     pluginsdk.TypeString,

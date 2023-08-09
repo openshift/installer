@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/go-azure-sdk/resource-manager/dns/2018-05-01/recordsets"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/dns/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 )
@@ -40,11 +39,6 @@ func resourceDnsMxRecord() *pluginsdk.Resource {
 				return fmt.Errorf("this resource only supports 'MX' records")
 			}
 			return nil
-		}),
-
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.MXRecordV0ToV1{},
 		}),
 
 		Schema: map[string]*pluginsdk.Schema{
@@ -147,7 +141,7 @@ func resourceDnsMxRecordRead(d *pluginsdk.ResourceData, meta interface{}) error 
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := recordsets.ParseRecordTypeID(d.Id())
+	id, err := recordsets.ParseRecordTypeIDInsensitively(d.Id())
 	if err != nil {
 		return err
 	}
@@ -163,7 +157,7 @@ func resourceDnsMxRecordRead(d *pluginsdk.ResourceData, meta interface{}) error 
 
 	d.Set("name", id.RelativeRecordSetName)
 	d.Set("resource_group_name", id.ResourceGroupName)
-	d.Set("zone_name", id.DnsZoneName)
+	d.Set("zone_name", id.ZoneName)
 
 	if model := resp.Model; model != nil {
 		if props := model.Properties; props != nil {

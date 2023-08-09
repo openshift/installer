@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package parse
 
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
@@ -39,7 +36,7 @@ func (id EnrichmentId) String() string {
 }
 
 func (id EnrichmentId) ID() string {
-	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Devices/iotHubs/%s/enrichments/%s"
+	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Devices/IotHubs/%s/Enrichments/%s"
 	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.IotHubName, id.Name)
 }
 
@@ -47,45 +44,6 @@ func (id EnrichmentId) ID() string {
 func EnrichmentID(input string) (*EnrichmentId, error) {
 	id, err := resourceids.ParseAzureResourceID(input)
 	if err != nil {
-		return nil, fmt.Errorf("parsing %q as an Enrichment ID: %+v", input, err)
-	}
-
-	resourceId := EnrichmentId{
-		SubscriptionId: id.SubscriptionID,
-		ResourceGroup:  id.ResourceGroup,
-	}
-
-	if resourceId.SubscriptionId == "" {
-		return nil, fmt.Errorf("ID was missing the 'subscriptions' element")
-	}
-
-	if resourceId.ResourceGroup == "" {
-		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
-	}
-
-	if resourceId.IotHubName, err = id.PopSegment("iotHubs"); err != nil {
-		return nil, err
-	}
-	if resourceId.Name, err = id.PopSegment("enrichments"); err != nil {
-		return nil, err
-	}
-
-	if err := id.ValidateNoEmptySegments(input); err != nil {
-		return nil, err
-	}
-
-	return &resourceId, nil
-}
-
-// EnrichmentIDInsensitively parses an Enrichment ID into an EnrichmentId struct, insensitively
-// This should only be used to parse an ID for rewriting, the EnrichmentID
-// method should be used instead for validation etc.
-//
-// Whilst this may seem strange, this enables Terraform have consistent casing
-// which works around issues in Core, whilst handling broken API responses.
-func EnrichmentIDInsensitively(input string) (*EnrichmentId, error) {
-	id, err := resourceids.ParseAzureResourceID(input)
-	if err != nil {
 		return nil, err
 	}
 
@@ -102,27 +60,10 @@ func EnrichmentIDInsensitively(input string) (*EnrichmentId, error) {
 		return nil, fmt.Errorf("ID was missing the 'resourceGroups' element")
 	}
 
-	// find the correct casing for the 'iotHubs' segment
-	iotHubsKey := "iotHubs"
-	for key := range id.Path {
-		if strings.EqualFold(key, iotHubsKey) {
-			iotHubsKey = key
-			break
-		}
-	}
-	if resourceId.IotHubName, err = id.PopSegment(iotHubsKey); err != nil {
+	if resourceId.IotHubName, err = id.PopSegment("IotHubs"); err != nil {
 		return nil, err
 	}
-
-	// find the correct casing for the 'enrichments' segment
-	enrichmentsKey := "enrichments"
-	for key := range id.Path {
-		if strings.EqualFold(key, enrichmentsKey) {
-			enrichmentsKey = key
-			break
-		}
-	}
-	if resourceId.Name, err = id.PopSegment(enrichmentsKey); err != nil {
+	if resourceId.Name, err = id.PopSegment("Enrichments"); err != nil {
 		return nil, err
 	}
 

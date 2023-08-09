@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -28,8 +28,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
 	"github.com/tombuildsstuff/giovanni/storage/2019-12-12/blob/blobs"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 	"golang.org/x/net/context"
 )
 
@@ -49,9 +47,8 @@ func userDataStateFunc(v interface{}) string {
 }
 
 // NOTE: the `azurerm_virtual_machine` resource has been superseded by the `azurerm_linux_virtual_machine` and
-//
-//	`azurerm_windows_virtual_machine` resources - as such this resource is feature-frozen and new
-//	functionality will be added to these new resources instead.
+// 		 `azurerm_windows_virtual_machine` resources - as such this resource is feature-frozen and new
+//		 functionality will be added to these new resources instead.
 func resourceVirtualMachine() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
 		Create: resourceVirtualMachineCreateUpdate,
@@ -77,21 +74,12 @@ func resourceVirtualMachine() *pluginsdk.Resource {
 				ForceNew: true,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"zones": {
-				// @tombuildsstuff: since this is the legacy VM resource this is intentionally not using commonschema for consistency
-				Type:     pluginsdk.TypeList,
-				Optional: true,
-				ForceNew: true,
-				MaxItems: 1,
-				Elem: &pluginsdk.Schema{
-					Type:         pluginsdk.TypeString,
-					ValidateFunc: validation.StringIsNotEmpty,
-				},
-			},
+			// @tombuildsstuff: since this is the legacy VM this is intentionally not being updated albeit it's semantically wrong
+			"zones": azure.SchemaSingleZone(),
 
 			"plan": {
 				Type:     pluginsdk.TypeList,
@@ -660,7 +648,7 @@ func resourceVirtualMachineCreateUpdate(d *pluginsdk.ResourceData, meta interfac
 	location := azure.NormalizeLocation(d.Get("location").(string))
 	t := d.Get("tags").(map[string]interface{})
 	expandedTags := tags.Expand(t)
-	zones := expandZones(d.Get("zones").([]interface{}))
+	zones := azure.ExpandZones(d.Get("zones").([]interface{}))
 
 	osDisk, err := expandAzureRmVirtualMachineOsDisk(d)
 	if err != nil {
@@ -1076,18 +1064,18 @@ func resourceVirtualMachineDeleteManagedDisk(d *pluginsdk.ResourceData, disk *co
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := disks.ParseDiskID(managedDiskID)
+	id, err := parse.ManagedDiskID(managedDiskID)
 	if err != nil {
 		return err
 	}
 
-	future, err := client.Delete(ctx, id.ResourceGroupName, id.DiskName)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.DiskName)
 	if err != nil {
-		return fmt.Errorf("deleting Managed Disk %s: %+v", *id, err)
+		return fmt.Errorf("deleting Managed Disk %q (Resource Group %q) %+v", id.DiskName, id.ResourceGroup, err)
 	}
 
 	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
-		return fmt.Errorf("waiting for deletion of %s: %+v", *id, err)
+		return fmt.Errorf("waiting for deletion of Managed Disk %q (Resource Group %q) %+v", id.DiskName, id.ResourceGroup, err)
 	}
 
 	return nil
@@ -1444,9 +1432,9 @@ func expandAzureRmVirtualMachineIdentity(d *pluginsdk.ResourceData) *compute.Vir
 	identity := identities[0].(map[string]interface{})
 	identityType := compute.ResourceIdentityType(identity["type"].(string))
 
-	identityIds := make(map[string]*compute.UserAssignedIdentitiesValue)
+	identityIds := make(map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue)
 	for _, id := range identity["identity_ids"].([]interface{}) {
-		identityIds[id.(string)] = &compute.UserAssignedIdentitiesValue{}
+		identityIds[id.(string)] = &compute.VirtualMachineIdentityUserAssignedIdentitiesValue{}
 	}
 
 	vmIdentity := compute.VirtualMachineIdentity{
@@ -1964,14 +1952,14 @@ func resourceVirtualMachineGetManagedDiskInfo(d *pluginsdk.ResourceData, disk *c
 	}
 
 	diskId := *disk.ID
-	id, err := disks.ParseDiskIDInsensitively(diskId)
+	id, err := parse.ManagedDiskID(diskId)
 	if err != nil {
 		return nil, fmt.Errorf("parsing Disk ID %q: %+v", diskId, err)
 	}
 
-	diskResp, err := client.Get(ctx, id.ResourceGroupName, id.DiskName)
+	diskResp, err := client.Get(ctx, id.ResourceGroup, id.DiskName)
 	if err != nil {
-		return nil, fmt.Errorf("retrieving %s: %+v", *id, err)
+		return nil, fmt.Errorf("retrieving Disk %q : %+v", id.String(), err)
 	}
 
 	return &diskResp, nil

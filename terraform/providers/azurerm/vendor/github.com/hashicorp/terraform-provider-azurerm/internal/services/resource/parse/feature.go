@@ -4,11 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 )
-
-var _ resourceids.Id = FeatureId{}
 
 type FeatureId struct {
 	SubscriptionId    string

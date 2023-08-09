@@ -6,41 +6,44 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/operationalinsights/2020-08-01/clusters"
+	"github.com/Azure/azure-sdk-for-go/services/operationalinsights/mgmt/2020-08-01/operationalinsights"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 )
 
-func logAnalyticsClusterWaitForState(ctx context.Context, client *clusters.ClustersClient, clusterId clusters.ClusterId) (*pluginsdk.StateChangeConf, error) {
+func logAnalyticsClusterWaitForState(ctx context.Context, meta interface{}, resourceGroup string, clusterName string) (*pluginsdk.StateChangeConf, error) {
 	deadline, ok := ctx.Deadline()
 	if !ok {
 		return nil, fmt.Errorf("context had no deadline")
 	}
 	return &pluginsdk.StateChangeConf{
-		Pending:    []string{string(clusters.ClusterEntityStatusUpdating)},
-		Target:     []string{string(clusters.ClusterEntityStatusSucceeded)},
+		Pending:    []string{string(operationalinsights.Updating)},
+		Target:     []string{string(operationalinsights.Succeeded)},
 		MinTimeout: 1 * time.Minute,
 		Timeout:    time.Until(deadline),
-		Refresh:    logAnalyticsClusterRefresh(ctx, client, clusterId),
+		Refresh:    logAnalyticsClusterRefresh(ctx, meta, resourceGroup, clusterName),
 	}, nil
 }
 
-func logAnalyticsClusterRefresh(ctx context.Context, client *clusters.ClustersClient, clusterId clusters.ClusterId) pluginsdk.StateRefreshFunc {
+func logAnalyticsClusterRefresh(ctx context.Context, meta interface{}, resourceGroup string, clusterName string) pluginsdk.StateRefreshFunc {
 	return func() (interface{}, string, error) {
-		log.Printf("[INFO] checking on state of Log Analytics Cluster %q", clusterId.ClusterName)
+		client := meta.(*clients.Client).LogAnalytics.ClusterClient
 
-		resp, err := client.Get(ctx, clusterId)
+		log.Printf("[INFO] checking on state of Log Analytics Cluster %q", clusterName)
+
+		resp, err := client.Get(ctx, resourceGroup, clusterName)
 		if err != nil {
-			return nil, "nil", fmt.Errorf("polling for the status of %q: %v", clusterId, err)
+			return nil, "nil", fmt.Errorf("polling for the status of Log Analytics Cluster %q (Resource Group %q): %v", clusterName, resourceGroup, err)
 		}
 
-		if resp.Model != nil && resp.Model.Properties != nil {
-			if resp.Model.Properties.ProvisioningState != nil {
-				if *resp.Model.Properties.ProvisioningState != clusters.ClusterEntityStatusUpdating && *resp.Model.Properties.ProvisioningState != clusters.ClusterEntityStatusSucceeded {
-					return nil, "nil", fmt.Errorf("%q unexpected Provisioning State encountered: %q", clusterId, string(*resp.Model.Properties.ProvisioningState))
-				}
-				return resp, string(*resp.Model.Properties.ProvisioningState), nil
+		if resp.ClusterProperties != nil {
+			if resp.ClusterProperties.ProvisioningState != operationalinsights.Updating && resp.ClusterProperties.ProvisioningState != operationalinsights.Succeeded {
+				return nil, "nil", fmt.Errorf("log analytics Cluster %q (Resource Group %q) unexpected Provisioning State encountered: %q", clusterName, resourceGroup, string(resp.ClusterProperties.ProvisioningState))
 			}
+
+			return resp, string(resp.ClusterProperties.ProvisioningState), nil
 		}
+
 		// I am not returning an error here as this might have just been a bad get
 		return resp, "nil", nil
 	}

@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package commonids
 
 import (
@@ -15,7 +12,7 @@ var _ resourceids.ResourceId = VirtualMachineScaleSetPublicIPAddressId{}
 // VirtualMachineScaleSetPublicIPAddressId is a struct representing the Resource ID for a Virtual Machine Scale Set Public I P Address
 type VirtualMachineScaleSetPublicIPAddressId struct {
 	SubscriptionId             string
-	ResourceGroupName          string
+	ResourceGroup              string
 	VirtualMachineScaleSetName string
 	VirtualMachineIndex        string
 	NetworkInterfaceName       string
@@ -24,10 +21,10 @@ type VirtualMachineScaleSetPublicIPAddressId struct {
 }
 
 // NewVirtualMachineScaleSetPublicIPAddressID returns a new VirtualMachineScaleSetPublicIPAddressId struct
-func NewVirtualMachineScaleSetPublicIPAddressID(subscriptionId string, resourceGroupName string, virtualMachineScaleSetName string, virtualMachineIndex string, networkInterfaceName string, ipConfigurationName string, publicIpAddressName string) VirtualMachineScaleSetPublicIPAddressId {
+func NewVirtualMachineScaleSetPublicIPAddressID(subscriptionId string, resourceGroup string, virtualMachineScaleSetName string, virtualMachineIndex string, networkInterfaceName string, ipConfigurationName string, publicIpAddressName string) VirtualMachineScaleSetPublicIPAddressId {
 	return VirtualMachineScaleSetPublicIPAddressId{
 		SubscriptionId:             subscriptionId,
-		ResourceGroupName:          resourceGroupName,
+		ResourceGroup:              resourceGroup,
 		VirtualMachineScaleSetName: virtualMachineScaleSetName,
 		VirtualMachineIndex:        virtualMachineIndex,
 		NetworkInterfaceName:       networkInterfaceName,
@@ -48,31 +45,31 @@ func ParseVirtualMachineScaleSetPublicIPAddressID(input string) (*VirtualMachine
 	id := VirtualMachineScaleSetPublicIPAddressId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualMachineScaleSetName, ok = parsed.Parsed["virtualMachineScaleSetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualMachineScaleSetName", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualMachineScaleSetName' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualMachineIndex, ok = parsed.Parsed["virtualMachineIndex"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualMachineIndex", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualMachineIndex' was not found in the resource id %q", input)
 	}
 
 	if id.NetworkInterfaceName, ok = parsed.Parsed["networkInterfaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "networkInterfaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'networkInterfaceName' was not found in the resource id %q", input)
 	}
 
 	if id.IpConfigurationName, ok = parsed.Parsed["ipConfigurationName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigurationName", *parsed)
+		return nil, fmt.Errorf("the segment 'ipConfigurationName' was not found in the resource id %q", input)
 	}
 
 	if id.PublicIpAddressName, ok = parsed.Parsed["publicIpAddressName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "publicIpAddressName", *parsed)
+		return nil, fmt.Errorf("the segment 'publicIpAddressName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -91,31 +88,31 @@ func ParseVirtualMachineScaleSetPublicIPAddressIDInsensitively(input string) (*V
 	id := VirtualMachineScaleSetPublicIPAddressId{}
 
 	if id.SubscriptionId, ok = parsed.Parsed["subscriptionId"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "subscriptionId", *parsed)
+		return nil, fmt.Errorf("the segment 'subscriptionId' was not found in the resource id %q", input)
 	}
 
-	if id.ResourceGroupName, ok = parsed.Parsed["resourceGroupName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "resourceGroupName", *parsed)
+	if id.ResourceGroup, ok = parsed.Parsed["resourceGroup"]; !ok {
+		return nil, fmt.Errorf("the segment 'resourceGroup' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualMachineScaleSetName, ok = parsed.Parsed["virtualMachineScaleSetName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualMachineScaleSetName", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualMachineScaleSetName' was not found in the resource id %q", input)
 	}
 
 	if id.VirtualMachineIndex, ok = parsed.Parsed["virtualMachineIndex"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "virtualMachineIndex", *parsed)
+		return nil, fmt.Errorf("the segment 'virtualMachineIndex' was not found in the resource id %q", input)
 	}
 
 	if id.NetworkInterfaceName, ok = parsed.Parsed["networkInterfaceName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "networkInterfaceName", *parsed)
+		return nil, fmt.Errorf("the segment 'networkInterfaceName' was not found in the resource id %q", input)
 	}
 
 	if id.IpConfigurationName, ok = parsed.Parsed["ipConfigurationName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "ipConfigurationName", *parsed)
+		return nil, fmt.Errorf("the segment 'ipConfigurationName' was not found in the resource id %q", input)
 	}
 
 	if id.PublicIpAddressName, ok = parsed.Parsed["publicIpAddressName"]; !ok {
-		return nil, resourceids.NewSegmentNotSpecifiedError(id, "publicIpAddressName", *parsed)
+		return nil, fmt.Errorf("the segment 'publicIpAddressName' was not found in the resource id %q", input)
 	}
 
 	return &id, nil
@@ -136,10 +133,10 @@ func ValidateVirtualMachineScaleSetPublicIPAddressID(input interface{}, key stri
 	return
 }
 
-// ID returns the formatted Virtual Machine Scale Set Public IP Address ID
+// ID returns the formatted Virtual Machine Scale Set Public I P Address ID
 func (id VirtualMachineScaleSetPublicIPAddressId) ID() string {
 	fmtString := "/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/virtualMachineScaleSets/%s/virtualMachines/%s/networkInterfaces/%s/ipConfigurations/%s/publicIPAddresses/%s"
-	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroupName, id.VirtualMachineScaleSetName, id.VirtualMachineIndex, id.NetworkInterfaceName, id.IpConfigurationName, id.PublicIpAddressName)
+	return fmt.Sprintf(fmtString, id.SubscriptionId, id.ResourceGroup, id.VirtualMachineScaleSetName, id.VirtualMachineIndex, id.NetworkInterfaceName, id.IpConfigurationName, id.PublicIpAddressName)
 }
 
 // Segments returns a slice of Resource ID Segments which comprise this Virtual Machine Scale Set Public I P Address ID
@@ -148,7 +145,7 @@ func (id VirtualMachineScaleSetPublicIPAddressId) Segments() []resourceids.Segme
 		resourceids.StaticSegment("subscriptions", "subscriptions", "subscriptions"),
 		resourceids.SubscriptionIdSegment("subscriptionId", "12345678-1234-9876-4563-123456789012"),
 		resourceids.StaticSegment("resourceGroups", "resourceGroups", "resourceGroups"),
-		resourceids.ResourceGroupSegment("resourceGroupName", "example-resource-group"),
+		resourceids.ResourceGroupSegment("resourceGroup", "example-resource-group"),
 		resourceids.StaticSegment("providers", "providers", "providers"),
 		resourceids.ResourceProviderSegment("resourceProvider", "Microsoft.Compute", "Microsoft.Compute"),
 		resourceids.StaticSegment("virtualMachineScaleSets", "virtualMachineScaleSets", "virtualMachineScaleSets"),
@@ -168,7 +165,7 @@ func (id VirtualMachineScaleSetPublicIPAddressId) Segments() []resourceids.Segme
 func (id VirtualMachineScaleSetPublicIPAddressId) String() string {
 	components := []string{
 		fmt.Sprintf("Subscription: %q", id.SubscriptionId),
-		fmt.Sprintf("Resource Group Name: %q", id.ResourceGroupName),
+		fmt.Sprintf("Resource Group: %q", id.ResourceGroup),
 		fmt.Sprintf("Virtual Machine Scale Set Name: %q", id.VirtualMachineScaleSetName),
 		fmt.Sprintf("Virtual Machine Index: %q", id.VirtualMachineIndex),
 		fmt.Sprintf("Network Interface Name: %q", id.NetworkInterfaceName),

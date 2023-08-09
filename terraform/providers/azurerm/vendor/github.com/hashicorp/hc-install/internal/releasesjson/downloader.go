@@ -8,12 +8,10 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/hashicorp/hc-install/internal/httpclient"
 )
@@ -25,14 +23,14 @@ type Downloader struct {
 	BaseURL          string
 }
 
-func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, dstDir string) (zipFilePath string, err error) {
+func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, dstDir string) error {
 	if len(pv.Builds) == 0 {
-		return "", fmt.Errorf("no builds found for %s %s", pv.Name, pv.Version)
+		return fmt.Errorf("no builds found for %s %s", pv.Name, pv.Version)
 	}
 
 	pb, ok := pv.Builds.FilterBuild(runtime.GOOS, runtime.GOARCH, "zip")
 	if !ok {
-		return "", fmt.Errorf("no ZIP archive found for %s %s %s/%s",
+		return fmt.Errorf("no ZIP archive found for %s %s %s/%s",
 			pv.Name, pv.Version, runtime.GOOS, runtime.GOARCH)
 	}
 
@@ -44,14 +42,14 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 			Logger:           d.Logger,
 			ArmoredPublicKey: d.ArmoredPublicKey,
 		}
-		verifiedChecksums, err := v.DownloadAndVerifyChecksums(ctx)
+		verifiedChecksums, err := v.DownloadAndVerifyChecksums()
 		if err != nil {
-			return "", err
+			return err
 		}
 		var ok bool
 		verifiedChecksum, ok = verifiedChecksums[pb.Filename]
 		if !ok {
-			return "", fmt.Errorf("no checksum found for %q", pb.Filename)
+			return fmt.Errorf("no checksum found for %q", pb.Filename)
 		}
 	}
 
@@ -63,12 +61,12 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 		// are still pointing to the mock server if one is set
 		baseURL, err := url.Parse(d.BaseURL)
 		if err != nil {
-			return "", err
+			return err
 		}
 
 		u, err := url.Parse(archiveURL)
 		if err != nil {
-			return "", err
+			return err
 		}
 		u.Scheme = baseURL.Scheme
 		u.Host = baseURL.Host
@@ -76,18 +74,13 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 	}
 
 	d.Logger.Printf("downloading archive from %s", archiveURL)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, archiveURL, nil)
+	resp, err := client.Get(archiveURL)
 	if err != nil {
-		return "", fmt.Errorf("failed to create request for %q: %w", archiveURL, err)
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
+		return err
 	}
 
 	if resp.StatusCode != 200 {
-		return "", fmt.Errorf("failed to download ZIP archive from %q: %s", archiveURL, resp.Status)
+		return fmt.Errorf("failed to download ZIP archive from %q: %s", archiveURL, resp.Status)
 	}
 
 	defer resp.Body.Close()
@@ -97,7 +90,7 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 
 	contentType := resp.Header.Get("content-type")
 	if !contentTypeIsZip(contentType) {
-		return "", fmt.Errorf("unexpected content-type: %s (expected any of %q)",
+		return fmt.Errorf("unexpected content-type: %s (expected any of %q)",
 			contentType, zipMimeTypes)
 	}
 
@@ -112,16 +105,15 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 
 		err := compareChecksum(d.Logger, r, verifiedChecksum, pb.Filename, expectedSize)
 		if err != nil {
-			return "", err
+			return err
 		}
 	}
 
 	pkgFile, err := ioutil.TempFile("", pb.Filename)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer pkgFile.Close()
-	pkgFilePath, err := filepath.Abs(pkgFile.Name())
 
 	d.Logger.Printf("copying %q (%d bytes) to %s", pb.Filename, expectedSize, pkgFile.Name())
 	// Unless the bytes were already downloaded above for checksum verification
@@ -130,48 +122,43 @@ func (d *Downloader) DownloadAndUnpack(ctx context.Context, pv *ProductVersion, 
 	// on demand over the network.
 	bytesCopied, err := io.Copy(pkgFile, pkgReader)
 	if err != nil {
-		return pkgFilePath, err
+		return err
 	}
 	d.Logger.Printf("copied %d bytes to %s", bytesCopied, pkgFile.Name())
 
 	if expectedSize != 0 && bytesCopied != int64(expectedSize) {
-		return pkgFilePath, fmt.Errorf("unexpected size (downloaded: %d, expected: %d)",
+		return fmt.Errorf("unexpected size (downloaded: %d, expected: %d)",
 			bytesCopied, expectedSize)
 	}
 
 	r, err := zip.OpenReader(pkgFile.Name())
 	if err != nil {
-		return pkgFilePath, err
+		return err
 	}
 	defer r.Close()
 
 	for _, f := range r.File {
-		if strings.Contains(f.Name, "..") {
-			// While we generally trust the source ZIP file
-			// we still reject path traversal attempts as a precaution.
-			continue
-		}
 		srcFile, err := f.Open()
 		if err != nil {
-			return pkgFilePath, err
+			return err
 		}
 
 		d.Logger.Printf("unpacking %s to %s", f.Name, dstDir)
 		dstPath := filepath.Join(dstDir, f.Name)
 		dstFile, err := os.Create(dstPath)
 		if err != nil {
-			return pkgFilePath, err
+			return err
 		}
 
 		_, err = io.Copy(dstFile, srcFile)
 		if err != nil {
-			return pkgFilePath, err
+			return err
 		}
 		srcFile.Close()
 		dstFile.Close()
 	}
 
-	return pkgFilePath, nil
+	return nil
 }
 
 // The production release site uses consistent single mime type

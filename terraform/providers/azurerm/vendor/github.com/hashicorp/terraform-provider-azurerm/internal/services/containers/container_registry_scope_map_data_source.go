@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerregistry/2021-08-01-preview/scopemaps"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -49,36 +48,28 @@ func dataSourceContainerRegistryScopeMap() *pluginsdk.Resource {
 }
 
 func dataSourceContainerRegistryScopeMapRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).Containers.ContainerRegistryClient_v2021_08_01_preview.ScopeMaps
+	client := meta.(*clients.Client).Containers.ScopeMapsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := scopemaps.NewScopeMapID(subscriptionId, d.Get("resource_group_name").(string), d.Get("container_registry_name").(string), d.Get("name").(string))
+	id := parse.NewContainerRegistryScopeMapID(subscriptionId, d.Get("resource_group_name").(string), d.Get("container_registry_name").(string), d.Get("name").(string))
 
-	resp, err := client.Get(ctx, id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.RegistryName, id.ScopeMapName)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			return fmt.Errorf("%s was not found", id)
 		}
 
-		return fmt.Errorf("retrieving %s: %+v", id, err)
+		return fmt.Errorf("making Read request on %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
-	d.Set("name", id.ScopeMapName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", resp.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("container_registry_name", id.RegistryName)
+	d.Set("description", resp.Description)
+	d.Set("actions", utils.FlattenStringSlice(resp.Actions))
 
-	if model := resp.Model; model != nil {
-		if props := model.Properties; props != nil {
-			description := ""
-			if v := props.Description; v != nil {
-				description = *v
-			}
-			d.Set("description", description)
-			d.Set("actions", utils.FlattenStringSlice(&props.Actions))
-		}
-	}
 	return nil
 }

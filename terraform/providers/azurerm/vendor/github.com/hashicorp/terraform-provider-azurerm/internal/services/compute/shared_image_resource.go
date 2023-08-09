@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/Azure/go-autorest/autorest/date"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
 )
 
 func resourceSharedImage() *pluginsdk.Resource {
@@ -57,9 +56,9 @@ func resourceSharedImage() *pluginsdk.Resource {
 				ValidateFunc: validate.SharedImageGalleryName,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"architecture": {
 				Type:     pluginsdk.TypeString,
@@ -122,19 +121,19 @@ func resourceSharedImage() *pluginsdk.Resource {
 							Type:         pluginsdk.TypeString,
 							ForceNew:     true,
 							Required:     true,
-							ValidateFunc: validate.SharedImageIdentifierAttribute(128),
+							ValidateFunc: validate.SharedImageIdentifierAttribute,
 						},
 						"offer": {
 							Type:         pluginsdk.TypeString,
 							ForceNew:     true,
 							Required:     true,
-							ValidateFunc: validate.SharedImageIdentifierAttribute(64),
+							ValidateFunc: validate.SharedImageIdentifierAttribute,
 						},
 						"sku": {
 							Type:         pluginsdk.TypeString,
 							ForceNew:     true,
 							Required:     true,
-							ValidateFunc: validate.SharedImageIdentifierAttribute(64),
+							ValidateFunc: validate.SharedImageIdentifierAttribute,
 						},
 					},
 				},
@@ -221,24 +220,9 @@ func resourceSharedImage() *pluginsdk.Resource {
 			},
 
 			"trusted_launch_enabled": {
-				Type:          pluginsdk.TypeBool,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"confidential_vm_supported", "confidential_vm_enabled"},
-			},
-
-			"confidential_vm_supported": {
-				Type:          pluginsdk.TypeBool,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"trusted_launch_enabled", "confidential_vm_enabled"},
-			},
-
-			"confidential_vm_enabled": {
-				Type:          pluginsdk.TypeBool,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"trusted_launch_enabled", "confidential_vm_supported"},
+				Type:     pluginsdk.TypeBool,
+				Optional: true,
+				ForceNew: true,
 			},
 
 			"accelerated_network_support_enabled": {
@@ -280,6 +264,20 @@ func resourceSharedImageCreateUpdate(d *pluginsdk.ResourceData, meta interface{}
 		}
 	}
 
+	var features []compute.GalleryImageFeature
+	if d.Get("trusted_launch_enabled").(bool) {
+		features = append(features, compute.GalleryImageFeature{
+			Name:  utils.String("SecurityType"),
+			Value: utils.String("TrustedLaunch"),
+		})
+	}
+	if d.Get("accelerated_network_support_enabled").(bool) {
+		features = append(features, compute.GalleryImageFeature{
+			Name:  utils.String("IsAcceleratedNetworkSupported"),
+			Value: utils.String("true"),
+		})
+	}
+
 	recommended, err := expandGalleryImageRecommended(d)
 	if err != nil {
 		return err
@@ -297,7 +295,7 @@ func resourceSharedImageCreateUpdate(d *pluginsdk.ResourceData, meta interface{}
 			OsType:              compute.OperatingSystemTypes(d.Get("os_type").(string)),
 			HyperVGeneration:    compute.HyperVGeneration(d.Get("hyper_v_generation").(string)),
 			PurchasePlan:        expandGalleryImagePurchasePlan(d.Get("purchase_plan").([]interface{})),
-			Features:            expandSharedImageFeatures(d),
+			Features:            &features,
 			Recommended:         recommended,
 		},
 		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
@@ -368,7 +366,9 @@ func resourceSharedImageRead(d *pluginsdk.ResourceData, meta interface{}) error 
 		diskTypesNotAllowed := make([]string, 0)
 		if disallowed := props.Disallowed; disallowed != nil {
 			if disallowed.DiskTypes != nil {
-				diskTypesNotAllowed = append(diskTypesNotAllowed, *disallowed.DiskTypes...)
+				for _, v := range *disallowed.DiskTypes {
+					diskTypesNotAllowed = append(diskTypesNotAllowed, v)
+				}
 			}
 		}
 		d.Set("disk_types_not_allowed", diskTypesNotAllowed)
@@ -407,13 +407,7 @@ func resourceSharedImageRead(d *pluginsdk.ResourceData, meta interface{}) error 
 		d.Set("min_recommended_memory_in_gb", minRecommendedMemoryInGB)
 
 		d.Set("os_type", string(props.OsType))
-
-		architecture := string((compute.ArchitectureTypesX64))
-		if props.Architecture != "" {
-			architecture = string(props.Architecture)
-		}
-		d.Set("architecture", architecture)
-
+		d.Set("architecture", string(props.Architecture))
 		d.Set("specialized", props.OsState == compute.OperatingSystemStateTypesSpecialized)
 		d.Set("hyper_v_generation", string(props.HyperVGeneration))
 		d.Set("privacy_statement_uri", props.PrivacyStatementURI)
@@ -428,8 +422,6 @@ func resourceSharedImageRead(d *pluginsdk.ResourceData, meta interface{}) error 
 		}
 
 		trustedLaunchEnabled := false
-		cvmEnabled := false
-		cvmSupported := false
 		acceleratedNetworkSupportEnabled := false
 		if features := props.Features; features != nil {
 			for _, feature := range *features {
@@ -439,8 +431,6 @@ func resourceSharedImageRead(d *pluginsdk.ResourceData, meta interface{}) error 
 
 				if strings.EqualFold(*feature.Name, "SecurityType") {
 					trustedLaunchEnabled = strings.EqualFold(*feature.Value, "TrustedLaunch")
-					cvmSupported = strings.EqualFold(*feature.Value, "ConfidentialVmSupported")
-					cvmEnabled = strings.EqualFold(*feature.Value, "ConfidentialVm")
 				}
 
 				if strings.EqualFold(*feature.Name, "IsAcceleratedNetworkSupported") {
@@ -448,8 +438,6 @@ func resourceSharedImageRead(d *pluginsdk.ResourceData, meta interface{}) error 
 				}
 			}
 		}
-		d.Set("confidential_vm_supported", cvmSupported)
-		d.Set("confidential_vm_enabled", cvmEnabled)
 		d.Set("trusted_launch_enabled", trustedLaunchEnabled)
 		d.Set("accelerated_network_support_enabled", acceleratedNetworkSupportEnabled)
 	}
@@ -650,37 +638,4 @@ func expandGalleryImageRecommended(d *pluginsdk.ResourceData) (*compute.Recommen
 	}
 
 	return result, nil
-}
-
-func expandSharedImageFeatures(d *pluginsdk.ResourceData) *[]compute.GalleryImageFeature {
-	var features []compute.GalleryImageFeature
-	if d.Get("accelerated_network_support_enabled").(bool) {
-		features = append(features, compute.GalleryImageFeature{
-			Name:  utils.String("IsAcceleratedNetworkSupported"),
-			Value: utils.String("true"),
-		})
-	}
-
-	if tvmEnabled := d.Get("trusted_launch_enabled").(bool); tvmEnabled {
-		features = append(features, compute.GalleryImageFeature{
-			Name:  utils.String("SecurityType"),
-			Value: utils.String("TrustedLaunch"),
-		})
-	}
-
-	if cvmSupported := d.Get("confidential_vm_supported").(bool); cvmSupported {
-		features = append(features, compute.GalleryImageFeature{
-			Name:  utils.String("SecurityType"),
-			Value: utils.String("ConfidentialVmSupported"),
-		})
-	}
-
-	if cvmEnabled := d.Get("confidential_vm_enabled").(bool); cvmEnabled {
-		features = append(features, compute.GalleryImageFeature{
-			Name:  utils.String("SecurityType"),
-			Value: utils.String("ConfidentialVM"),
-		})
-	}
-
-	return &features
 }

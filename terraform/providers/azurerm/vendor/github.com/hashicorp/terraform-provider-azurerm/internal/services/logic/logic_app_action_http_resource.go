@@ -8,9 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflowrunactions"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflows"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -47,7 +46,7 @@ func resourceLogicAppActionHTTP() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: workflows.ValidateWorkflowID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"method": {
@@ -68,14 +67,10 @@ func resourceLogicAppActionHTTP() *pluginsdk.Resource {
 			},
 
 			"body": {
-				Type:     pluginsdk.TypeString,
-				Optional: true,
-				DiffSuppressFunc: func(k, oldValue, newValue string, d *schema.ResourceData) bool {
-					if json.Valid([]byte(oldValue)) && json.Valid([]byte(newValue)) {
-						return pluginsdk.SuppressJsonDiff(k, oldValue, newValue, d)
-					}
-					return false
-				},
+				Type:             pluginsdk.TypeString,
+				Optional:         true,
+				ValidateFunc:     validation.StringIsJSON,
+				DiffSuppressFunc: pluginsdk.SuppressJsonDiff,
 			},
 
 			"headers": {
@@ -85,15 +80,6 @@ func resourceLogicAppActionHTTP() *pluginsdk.Resource {
 					Type: pluginsdk.TypeString,
 				},
 			},
-
-			"queries": {
-				Type:     pluginsdk.TypeMap,
-				Optional: true,
-				Elem: &pluginsdk.Schema{
-					Type: pluginsdk.TypeString,
-				},
-			},
-
 			"run_after": {
 				Type:     pluginsdk.TypeSet,
 				Optional: true,
@@ -108,10 +94,10 @@ func resourceLogicAppActionHTTP() *pluginsdk.Resource {
 							Type:     pluginsdk.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
-								string(workflowrunactions.WorkflowStatusSucceeded),
-								string(workflowrunactions.WorkflowStatusFailed),
-								string(workflowrunactions.WorkflowStatusSkipped),
-								string(workflowrunactions.WorkflowStatusTimedOut),
+								string(logic.WorkflowStatusSucceeded),
+								string(logic.WorkflowStatusFailed),
+								string(logic.WorkflowStatusSkipped),
+								string(logic.WorkflowStatusTimedOut),
 							}, false),
 						},
 					},
@@ -122,21 +108,15 @@ func resourceLogicAppActionHTTP() *pluginsdk.Resource {
 }
 
 func resourceLogicAppActionHTTPCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	workflowId, err := workflows.ParseWorkflowID(d.Get("logic_app_id").(string))
+	workflowId, err := parse.WorkflowID(d.Get("logic_app_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := parse.NewActionID(workflowId.SubscriptionId, workflowId.ResourceGroupName, workflowId.WorkflowName, d.Get("name").(string))
+	id := parse.NewActionID(workflowId.SubscriptionId, workflowId.ResourceGroup, workflowId.Name, d.Get("name").(string))
 
 	headersRaw := d.Get("headers").(map[string]interface{})
 	headers, err := expandLogicAppActionHttpHeaders(headersRaw)
-	if err != nil {
-		return err
-	}
-
-	queriesRaw := d.Get("queries").(map[string]interface{})
-	queries, err := expandLogicAppActionHttpQueries(queriesRaw)
 	if err != nil {
 		return err
 	}
@@ -145,21 +125,15 @@ func resourceLogicAppActionHTTPCreateUpdate(d *pluginsdk.ResourceData, meta inte
 		"method":  d.Get("method").(string),
 		"uri":     d.Get("uri").(string),
 		"headers": headers,
-		"queries": queries,
 	}
 
-	// if it's json object then storing action's body in json object to keep consistent with azure portal
-	// if starts with dynamic function (starts with "@") then store it as string
+	// storing action's body in json object to keep consistent with azure portal
 	if bodyRaw, ok := d.GetOk("body"); ok {
-		if json.Valid([]byte(bodyRaw.(string))) {
-			var body map[string]interface{}
-			if err := json.Unmarshal([]byte(bodyRaw.(string)), &body); err != nil {
-				return fmt.Errorf("unmarshalling JSON for Action %q: %+v", id.Name, err)
-			}
-			inputs["body"] = body
-		} else {
-			inputs["body"] = bodyRaw.(string)
+		var body map[string]interface{}
+		if err := json.Unmarshal([]byte(bodyRaw.(string)), &body); err != nil {
+			return fmt.Errorf("unmarshalling JSON for Action %q: %+v", id.Name, err)
 		}
+		inputs["body"] = body
 	}
 
 	action := map[string]interface{}{
@@ -185,9 +159,7 @@ func resourceLogicAppActionHTTPRead(d *pluginsdk.ResourceData, meta interface{})
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroup, id.WorkflowName)
-
-	t, app, err := retrieveLogicAppAction(d, meta, workflowId, id.Name)
+	t, app, err := retrieveLogicAppAction(d, meta, id.ResourceGroup, id.WorkflowName, id.Name)
 	if err != nil {
 		return err
 	}
@@ -201,7 +173,7 @@ func resourceLogicAppActionHTTPRead(d *pluginsdk.ResourceData, meta interface{})
 	action := *t
 
 	d.Set("name", id.Name)
-	d.Set("logic_app_id", app.Id)
+	d.Set("logic_app_id", app.ID)
 
 	actionType := action["type"].(string)
 	if !strings.EqualFold(actionType, "http") {
@@ -227,30 +199,18 @@ func resourceLogicAppActionHTTPRead(d *pluginsdk.ResourceData, meta interface{})
 	}
 
 	if body := inputs["body"]; body != nil {
-		switch body.(type) {
-		case map[string]interface{}:
-			// if user edit workflow in portal, the body becomes json object
-			v, err := json.Marshal(body)
-			if err != nil {
-				return fmt.Errorf("serializing `body` for Action %q: %+v", id.Name, err)
-			}
-			d.Set("body", string(v))
-		case string:
-			d.Set("body", body)
+		// if user edit workflow in portal, the body becomes json object
+		v, err := json.Marshal(body)
+		if err != nil {
+			return fmt.Errorf("serializing `body` for Action %q: %+v", id.Name, err)
 		}
+		d.Set("body", string(v))
 	}
 
 	if headers := inputs["headers"]; headers != nil {
 		hv := headers.(map[string]interface{})
 		if err := d.Set("headers", hv); err != nil {
 			return fmt.Errorf("setting `headers` for HTTP Action %q: %+v", id.Name, err)
-		}
-	}
-
-	if queries := inputs["queries"]; queries != nil {
-		qv := queries.(map[string]interface{})
-		if err := d.Set("queries", qv); err != nil {
-			return fmt.Errorf("setting `queries` for HTTP Action %q: %+v", id.Name, err)
 		}
 	}
 
@@ -274,9 +234,7 @@ func resourceLogicAppActionHTTPDelete(d *pluginsdk.ResourceData, meta interface{
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroup, id.WorkflowName)
-
-	err = resourceLogicAppActionRemove(d, meta, workflowId, id.Name)
+	err = resourceLogicAppActionRemove(d, meta, id.ResourceGroup, id.WorkflowName, id.Name)
 	if err != nil {
 		return fmt.Errorf("removing Action %s: %+v", id, err)
 	}
@@ -297,19 +255,4 @@ func expandLogicAppActionHttpHeaders(headersRaw map[string]interface{}) (*map[st
 	}
 
 	return &headers, nil
-}
-
-func expandLogicAppActionHttpQueries(queriesRaw map[string]interface{}) (*map[string]string, error) {
-	queries := make(map[string]string)
-
-	for i, v := range queriesRaw {
-		value, err := tags.TagValueToString(v)
-		if err != nil {
-			return nil, err
-		}
-
-		queries[i] = value
-	}
-
-	return &queries, nil
 }

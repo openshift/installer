@@ -80,19 +80,13 @@ func conversionObjectToObject(in, out cty.Type, unsafe bool) conversion {
 				}
 			}
 
-			if val.IsNull() {
-				// Strip optional attributes out of the embedded type for null
-				// values.
-				val = cty.NullVal(val.Type().WithoutOptionalAttributesDeep())
-			}
-
 			attrVals[name] = val
 		}
 
 		for name := range outOptionals {
 			if _, exists := attrVals[name]; !exists {
 				wantTy := outAtys[name]
-				attrVals[name] = cty.NullVal(wantTy.WithoutOptionalAttributesDeep())
+				attrVals[name] = cty.NullVal(wantTy)
 			}
 		}
 

@@ -6,18 +6,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2021-07-02/devices"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	devices "github.com/tombuildsstuff/kermit/sdk/iothub/2022-04-30-preview/iothub"
 )
 
 func resourceIotHubRoute() *pluginsdk.Resource {
@@ -26,11 +25,6 @@ func resourceIotHubRoute() *pluginsdk.Resource {
 		Read:   resourceIotHubRouteRead,
 		Update: resourceIotHubRouteCreateUpdate,
 		Delete: resourceIotHubRouteDelete,
-
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.IoTHubRouteV0ToV1{},
-		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
 			_, err := parse.RouteID(id)
@@ -48,14 +42,13 @@ func resourceIotHubRoute() *pluginsdk.Resource {
 			"name": {
 				Type:     pluginsdk.TypeString,
 				Required: true,
-				ForceNew: true,
 				ValidateFunc: validation.StringMatch(
 					regexp.MustCompile("^[-_.a-zA-Z0-9]{1,64}$"),
 					"Route Name name can only include alphanumeric characters, periods, underscores, hyphens, has a maximum length of 64 characters, and must be unique.",
 				),
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"iothub_name": {
 				Type:         pluginsdk.TypeString,
@@ -72,7 +65,6 @@ func resourceIotHubRoute() *pluginsdk.Resource {
 					string(devices.RoutingSourceDeviceJobLifecycleEvents),
 					string(devices.RoutingSourceDeviceLifecycleEvents),
 					string(devices.RoutingSourceDeviceMessages),
-					string(devices.RoutingSourceDigitalTwinChangeEvents),
 					string(devices.RoutingSourceInvalid),
 					string(devices.RoutingSourceTwinChangeEvents),
 				}, false),
@@ -104,7 +96,7 @@ func resourceIotHubRoute() *pluginsdk.Resource {
 
 func resourceIotHubRouteCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).IoTHub.ResourceClient
-	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
+	subscriptionId := meta.(*clients.Client).IoTHub.DPSResourceClient.SubscriptionID
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
@@ -197,10 +189,6 @@ func resourceIotHubRouteRead(d *pluginsdk.ResourceData, meta interface{}) error 
 
 	iothub, err := client.Get(ctx, id.ResourceGroup, id.IotHubName)
 	if err != nil {
-		if utils.ResponseWasNotFound(iothub.Response) {
-			d.SetId("")
-			return nil
-		}
 		return fmt.Errorf("loading IotHub %q (Resource Group %q): %+v", id.IotHubName, id.ResourceGroup, err)
 	}
 
@@ -209,17 +197,13 @@ func resourceIotHubRouteRead(d *pluginsdk.ResourceData, meta interface{}) error 
 	d.Set("resource_group_name", id.ResourceGroup)
 
 	if iothub.Properties == nil || iothub.Properties.Routing == nil {
-		d.SetId("")
 		return nil
 	}
-
-	exist := false
 
 	if routes := iothub.Properties.Routing.Routes; routes != nil {
 		for _, route := range *routes {
 			if route.Name != nil {
 				if strings.EqualFold(*route.Name, id.Name) {
-					exist = true
 					d.Set("source", route.Source)
 					d.Set("condition", route.Condition)
 					d.Set("enabled", route.IsEnabled)
@@ -227,10 +211,6 @@ func resourceIotHubRouteRead(d *pluginsdk.ResourceData, meta interface{}) error 
 				}
 			}
 		}
-	}
-
-	if !exist {
-		d.SetId("")
 	}
 
 	return nil

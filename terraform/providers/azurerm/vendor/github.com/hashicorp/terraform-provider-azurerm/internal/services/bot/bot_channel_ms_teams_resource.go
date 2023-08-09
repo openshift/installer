@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/preview/botservice/mgmt/2021-05-01-preview/botservice"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/botservice/2021-05-01-preview/botservice"
 )
 
 func resourceBotChannelMsTeams() *pluginsdk.Resource {
@@ -40,9 +39,9 @@ func resourceBotChannelMsTeams() *pluginsdk.Resource {
 		},
 
 		Schema: map[string]*pluginsdk.Schema{
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"bot_name": {
 				Type:         pluginsdk.TypeString,
@@ -103,7 +102,7 @@ func resourceBotChannelMsTeamsCreate(d *pluginsdk.ResourceData, meta interface{}
 
 	if v, ok := d.GetOk("calling_web_hook"); ok {
 		channel, _ := channel.Properties.AsMsTeamsChannel()
-		channel.Properties.CallingWebhook = utils.String(v.(string))
+		channel.Properties.CallingWebHook = utils.String(v.(string))
 	}
 
 	if _, err := client.Create(ctx, resourceId.ResourceGroup, resourceId.BotServiceName, botservice.ChannelNameMsTeamsChannel, channel); err != nil {
@@ -142,7 +141,7 @@ func resourceBotChannelMsTeamsRead(d *pluginsdk.ResourceData, meta interface{}) 
 	if props := resp.Properties; props != nil {
 		if channel, ok := props.AsMsTeamsChannel(); ok {
 			if channelProps := channel.Properties; channelProps != nil {
-				d.Set("calling_web_hook", channelProps.CallingWebhook)
+				d.Set("calling_web_hook", channelProps.CallingWebHook)
 				d.Set("enable_calling", channelProps.EnableCalling)
 			}
 		}
@@ -165,7 +164,7 @@ func resourceBotChannelMsTeamsUpdate(d *pluginsdk.ResourceData, meta interface{}
 		Properties: botservice.MsTeamsChannel{
 			Properties: &botservice.MsTeamsChannelProperties{
 				EnableCalling:  utils.Bool(d.Get("enable_calling").(bool)),
-				CallingWebhook: utils.String(d.Get("calling_web_hook").(string)),
+				CallingWebHook: utils.String(d.Get("calling_web_hook").(string)),
 				IsEnabled:      utils.Bool(true),
 			},
 			ChannelName: botservice.ChannelNameBasicChannelChannelNameMsTeamsChannel,

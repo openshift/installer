@@ -5,7 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
@@ -15,7 +16,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceFirewallNatRuleCollection() *pluginsdk.Resource {
@@ -51,7 +51,7 @@ func resourceFirewallNatRuleCollection() *pluginsdk.Resource {
 				ValidateFunc: validate.FirewallName,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"priority": {
 				Type:         pluginsdk.TypeInt,
@@ -140,8 +140,8 @@ func resourceFirewallNatRuleCollectionCreateUpdate(d *pluginsdk.ResourceData, me
 	firewallName := d.Get("azure_firewall_name").(string)
 	resourceGroup := d.Get("resource_group_name").(string)
 
-	locks.ByName(firewallName, AzureFirewallResourceName)
-	defer locks.UnlockByName(firewallName, AzureFirewallResourceName)
+	locks.ByName(firewallName, azureFirewallResourceName)
+	defer locks.UnlockByName(firewallName, azureFirewallResourceName)
 
 	firewall, err := client.Get(ctx, resourceGroup, firewallName)
 	if err != nil {
@@ -322,8 +322,8 @@ func resourceFirewallNatRuleCollectionDelete(d *pluginsdk.ResourceData, meta int
 		return err
 	}
 
-	locks.ByName(id.AzureFirewallName, AzureFirewallResourceName)
-	defer locks.UnlockByName(id.AzureFirewallName, AzureFirewallResourceName)
+	locks.ByName(id.AzureFirewallName, azureFirewallResourceName)
+	defer locks.UnlockByName(id.AzureFirewallName, azureFirewallResourceName)
 
 	firewall, err := client.Get(ctx, id.ResourceGroup, id.AzureFirewallName)
 	if err != nil {

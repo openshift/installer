@@ -9,8 +9,7 @@ import (
 )
 
 var ConcatFunc = function.New(&function.Spec{
-	Description: `Concatenates together all of the given lists or tuples into a single sequence, preserving the input order.`,
-	Params:      []function.Parameter{},
+	Params: []function.Parameter{},
 	VarParam: &function.Parameter{
 		Name:        "seqs",
 		Type:        cty.DynamicPseudoType,
@@ -74,7 +73,6 @@ var ConcatFunc = function.New(&function.Spec{
 		}
 		return cty.Tuple(etys), nil
 	},
-	RefineResult: refineNonNull,
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		switch {
 		case retType.IsListType():
@@ -139,13 +137,11 @@ var ConcatFunc = function.New(&function.Spec{
 })
 
 var RangeFunc = function.New(&function.Spec{
-	Description: `Returns a list of numbers spread evenly over a particular range.`,
 	VarParam: &function.Parameter{
 		Name: "params",
 		Type: cty.Number,
 	},
-	Type:         function.StaticReturnType(cty.List(cty.Number)),
-	RefineResult: refineNonNull,
+	Type: function.StaticReturnType(cty.List(cty.Number)),
 	Impl: func(args []cty.Value, retType cty.Type) (ret cty.Value, err error) {
 		var start, end, step cty.Value
 		switch len(args) {

@@ -1,6 +1,3 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package utils
 
 func Bool(input bool) *bool {
@@ -24,16 +21,5 @@ func Float(input float64) *float64 {
 }
 
 func String(input string) *string {
-	return &input
-}
-
-func ToPtr[E any](e E) *E {
-	return &e
-}
-
-func StringSlice(input []string) *[]string {
-	if input == nil {
-		return nil
-	}
 	return &input
 }

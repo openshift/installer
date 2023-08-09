@@ -4,17 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/identity"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-03/galleryapplicationversions"
 	azValidate "github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/suppress"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/compute/2023-03-01/compute"
 )
 
 func virtualMachineAdditionalCapabilitiesSchema() *pluginsdk.Schema {
@@ -79,9 +77,9 @@ func expandVirtualMachineIdentity(input []interface{}) (*compute.VirtualMachineI
 		Type: compute.ResourceIdentityType(string(expanded.Type)),
 	}
 	if expanded.Type == identity.TypeUserAssigned || expanded.Type == identity.TypeSystemAssignedUserAssigned {
-		out.UserAssignedIdentities = make(map[string]*compute.UserAssignedIdentitiesValue)
+		out.UserAssignedIdentities = make(map[string]*compute.VirtualMachineIdentityUserAssignedIdentitiesValue)
 		for k := range expanded.IdentityIds {
-			out.UserAssignedIdentities[k] = &compute.UserAssignedIdentitiesValue{
+			out.UserAssignedIdentities[k] = &compute.VirtualMachineIdentityUserAssignedIdentitiesValue{
 				// intentionally empty
 			}
 		}
@@ -170,7 +168,7 @@ func virtualMachineOSDiskSchema() *pluginsdk.Schema {
 					// Changing property 'osDisk.managedDisk.storageAccountType' is not allowed
 					ForceNew: true,
 					ValidateFunc: validation.StringInSlice([]string{
-						// note: OS Disks don't support Ultra SSDs or PremiumV2_LRS
+						// note: OS Disks don't support Ultra SSDs
 						string(compute.StorageAccountTypesPremiumLRS),
 						string(compute.StorageAccountTypesStandardLRS),
 						string(compute.StorageAccountTypesStandardSSDLRS),
@@ -323,7 +321,7 @@ func expandVirtualMachineOSDisk(input []interface{}, osType compute.OperatingSys
 	return &disk, nil
 }
 
-func flattenVirtualMachineOSDisk(ctx context.Context, disksClient *disks.DisksClient, input *compute.OSDisk) ([]interface{}, error) {
+func flattenVirtualMachineOSDisk(ctx context.Context, disksClient *compute.DisksClient, input *compute.OSDisk) ([]interface{}, error) {
 	if input == nil {
 		return []interface{}{}, nil
 	}
@@ -360,15 +358,15 @@ func flattenVirtualMachineOSDisk(ctx context.Context, disksClient *disks.DisksCl
 		storageAccountType = string(input.ManagedDisk.StorageAccountType)
 
 		if input.ManagedDisk.ID != nil {
-			id, err := disks.ParseDiskID(*input.ManagedDisk.ID)
+			id, err := parse.ManagedDiskID(*input.ManagedDisk.ID)
 			if err != nil {
 				return nil, err
 			}
 
-			disk, err := disksClient.Get(ctx, *id)
+			disk, err := disksClient.Get(ctx, id.ResourceGroup, id.DiskName)
 			if err != nil {
 				// turns out ephemeral disks aren't returned/available here
-				if !response.WasNotFound(disk.HttpResponse) {
+				if !utils.ResponseWasNotFound(disk.Response) {
 					return nil, err
 				}
 			}
@@ -376,21 +374,21 @@ func flattenVirtualMachineOSDisk(ctx context.Context, disksClient *disks.DisksCl
 			// Ephemeral Disks get an ARM ID but aren't available via the regular API
 			// ergo fingers crossed we've got it from the resource because ¯\_(ツ)_/¯
 			// where else we'd be able to pull it from
-			if !response.WasNotFound(disk.HttpResponse) {
+			if !utils.ResponseWasNotFound(disk.Response) {
 				// whilst this is available as `input.ManagedDisk.StorageAccountType` it's not returned there
 				// however it's only available there for ephemeral os disks
-				if disk.Model.Sku != nil && storageAccountType == "" {
-					storageAccountType = string(*disk.Model.Sku.Name)
+				if disk.Sku != nil && storageAccountType == "" {
+					storageAccountType = string(disk.Sku.Name)
 				}
 
 				// same goes for Disk Size GB apparently
-				if diskSizeGb == 0 && disk.Model.Properties != nil && disk.Model.Properties.DiskSizeGB != nil {
-					diskSizeGb = int(*disk.Model.Properties.DiskSizeGB)
+				if diskSizeGb == 0 && disk.DiskProperties != nil && disk.DiskProperties.DiskSizeGB != nil {
+					diskSizeGb = int(*disk.DiskProperties.DiskSizeGB)
 				}
 
 				// same goes for Disk Encryption Set Id apparently
-				if disk.Model.Properties.Encryption != nil && disk.Model.Properties.Encryption.DiskEncryptionSetId != nil {
-					diskEncryptionSetId = *disk.Model.Properties.Encryption.DiskEncryptionSetId
+				if disk.Encryption != nil && disk.Encryption.DiskEncryptionSetID != nil {
+					diskEncryptionSetId = *disk.Encryption.DiskEncryptionSetID
 				}
 			}
 		}
@@ -486,107 +484,4 @@ func flattenVirtualMachineScheduledEventsProfile(input *compute.ScheduledEventsP
 			"timeout": timeout,
 		},
 	}
-}
-
-func VirtualMachineGalleryApplicationSchema() *pluginsdk.Schema {
-	return &pluginsdk.Schema{
-		Type:     pluginsdk.TypeList,
-		Optional: true,
-		MaxItems: 100,
-		Elem: &pluginsdk.Resource{
-			Schema: map[string]*pluginsdk.Schema{
-				"version_id": {
-					Type:         pluginsdk.TypeString,
-					Required:     true,
-					ValidateFunc: galleryapplicationversions.ValidateApplicationVersionID,
-				},
-
-				// Example: https://mystorageaccount.blob.core.windows.net/configurations/settings.config
-				"configuration_blob_uri": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					ValidateFunc: validation.IsURLWithHTTPorHTTPS,
-				},
-
-				"order": {
-					Type:         pluginsdk.TypeInt,
-					Optional:     true,
-					Default:      0,
-					ValidateFunc: validation.IntBetween(0, 2147483647),
-				},
-
-				// NOTE: Per the service team, "this is a pass through value that we just add to the model but don't depend on. It can be any string."
-				"tag": {
-					Type:         pluginsdk.TypeString,
-					Optional:     true,
-					ValidateFunc: validation.StringIsNotEmpty,
-				},
-			},
-		},
-	}
-}
-
-func expandVirtualMachineGalleryApplication(input []interface{}) *[]compute.VMGalleryApplication {
-	out := make([]compute.VMGalleryApplication, 0)
-	if len(input) == 0 {
-		return &out
-	}
-
-	for _, v := range input {
-		packageReferenceId := v.(map[string]interface{})["version_id"].(string)
-		configurationReference := v.(map[string]interface{})["configuration_blob_uri"].(string)
-		order := v.(map[string]interface{})["order"].(int)
-		tag := v.(map[string]interface{})["tag"].(string)
-
-		app := &compute.VMGalleryApplication{
-			PackageReferenceID:     utils.String(packageReferenceId),
-			ConfigurationReference: utils.String(configurationReference),
-			Order:                  utils.Int32(int32(order)),
-			Tags:                   utils.String(tag),
-		}
-
-		out = append(out, *app)
-	}
-
-	return &out
-}
-
-func flattenVirtualMachineGalleryApplication(input *[]compute.VMGalleryApplication) []interface{} {
-	if len(*input) == 0 {
-		return nil
-	}
-
-	out := make([]interface{}, 0)
-
-	for _, v := range *input {
-		var packageReferenceId, configurationReference, tag string
-		var order int
-
-		if v.PackageReferenceID != nil {
-			packageReferenceId = *v.PackageReferenceID
-		}
-
-		if v.ConfigurationReference != nil {
-			configurationReference = *v.ConfigurationReference
-		}
-
-		if v.Order != nil {
-			order = int(*v.Order)
-		}
-
-		if v.Tags != nil {
-			tag = *v.Tags
-		}
-
-		app := map[string]interface{}{
-			"version_id":             packageReferenceId,
-			"configuration_blob_uri": configurationReference,
-			"order":                  order,
-			"tag":                    tag,
-		}
-
-		out = append(out, app)
-	}
-
-	return out
 }

@@ -5,16 +5,13 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
+	"github.com/Azure/azure-sdk-for-go/services/compute/mgmt/2021-11-01/compute"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservationgroups"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-01/capacityreservations"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -36,7 +33,7 @@ func resourceCapacityReservation() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := capacityreservations.ParseCapacityReservationID(id)
+			_, err := parse.CapacityReservationID(id)
 			return err
 		}),
 
@@ -52,7 +49,7 @@ func resourceCapacityReservation() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: capacityreservationgroups.ValidateCapacityReservationGroupID,
+				ValidateFunc: validate.CapacityReservationGroupID,
 			},
 
 			"zone": commonschema.ZoneSingleOptionalForceNew(),
@@ -79,55 +76,58 @@ func resourceCapacityReservation() *pluginsdk.Resource {
 				},
 			},
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 		},
 	}
 }
 
 func resourceCapacityReservationCreate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Compute.CapacityReservationsClient
-	groupsClient := meta.(*clients.Client).Compute.CapacityReservationGroupsClient
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	capacityReservationGroupId, err := capacityreservationgroups.ParseCapacityReservationGroupID(d.Get("capacity_reservation_group_id").(string))
+	capacityReservationGroupId, err := parse.CapacityReservationGroupID(d.Get("capacity_reservation_group_id").(string))
 	if err != nil {
 		return err
 	}
 
-	capacityReservationGroup, err := groupsClient.Get(ctx, *capacityReservationGroupId, capacityreservationgroups.DefaultGetOperationOptions())
+	capacityReservationGroupClient := meta.(*clients.Client).Compute.CapacityReservationGroupsClient
+	capacityReservationGroup, err := capacityReservationGroupClient.Get(ctx, capacityReservationGroupId.ResourceGroup, capacityReservationGroupId.Name, "")
 	if err != nil {
-		return fmt.Errorf("retrieving %s: %+v", *capacityReservationGroupId, err)
-	}
-	if capacityReservationGroup.Model == nil {
-		return fmt.Errorf("retrieving %s: model was nil", *capacityReservationGroupId)
+		return err
 	}
 
-	id := capacityreservations.NewCapacityReservationID(subscriptionId, capacityReservationGroupId.ResourceGroupName, capacityReservationGroupId.CapacityReservationGroupName, d.Get("name").(string))
-	existing, err := client.Get(ctx, id, capacityreservations.DefaultGetOperationOptions())
+	id := parse.NewCapacityReservationID(subscriptionId, capacityReservationGroupId.ResourceGroup, capacityReservationGroupId.Name, d.Get("name").(string))
+	existing, err := client.Get(ctx, id.ResourceGroup, id.CapacityReservationGroupName, id.Name, "")
 	if err != nil {
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return fmt.Errorf("checking for existing %s: %+v", id, err)
 		}
 	}
-	if !response.WasNotFound(existing.HttpResponse) {
+	if !utils.ResponseWasNotFound(existing.Response) {
 		return tf.ImportAsExistsError("azurerm_capacity_reservation", id.ID())
 	}
 
-	payload := capacityreservations.CapacityReservation{
-		Location: location.Normalize(capacityReservationGroup.Model.Location),
+	parameters := compute.CapacityReservation{
+		Location: capacityReservationGroup.Location,
 		Sku:      expandCapacityReservationSku(d.Get("sku").([]interface{})),
 		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
+
 	if v, ok := d.GetOk("zone"); ok {
-		payload.Zones = &[]string{
+		parameters.Zones = &[]string{
 			v.(string),
 		}
 	}
 
-	if err := client.CreateOrUpdateThenPoll(ctx, id, payload); err != nil {
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.CapacityReservationGroupName, id.Name, parameters)
+	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
+	}
+
+	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -139,14 +139,14 @@ func resourceCapacityReservationRead(d *pluginsdk.ResourceData, meta interface{}
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := capacityreservations.ParseCapacityReservationID(d.Id())
+	id, err := parse.CapacityReservationID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id, capacityreservations.DefaultGetOperationOptions())
+	resp, err := client.Get(ctx, id.ResourceGroup, id.CapacityReservationGroupName, id.Name, "")
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] %s was not found - removing from state", *id)
 			d.SetId("")
 			return nil
@@ -154,28 +154,21 @@ func resourceCapacityReservationRead(d *pluginsdk.ResourceData, meta interface{}
 		return fmt.Errorf("retrieving %s: %+v", id, err)
 	}
 
-	d.Set("name", id.CapacityReservationName)
-	groupId := capacityreservationgroups.NewCapacityReservationGroupID(id.SubscriptionId, id.ResourceGroupName, id.CapacityReservationGroupName)
-	d.Set("capacity_reservation_group_id", groupId.ID())
-
-	if model := resp.Model; model != nil {
-		if err := d.Set("sku", flattenCapacityReservationSku(model.Sku)); err != nil {
-			return fmt.Errorf("setting `sku`: %+v", err)
-		}
-
-		zone := ""
-		if model.Zones != nil && len(*model.Zones) > 0 {
-			z := *model.Zones
-			zone = z[0]
-		}
-		d.Set("zone", zone)
-
-		if err := tags.FlattenAndSet(d, model.Tags); err != nil {
-			return fmt.Errorf("setting `tags`: %+v", err)
-		}
+	capacityReservationReservationGroupId := parse.NewCapacityReservationGroupID(id.SubscriptionId, id.ResourceGroup, id.CapacityReservationGroupName)
+	d.Set("name", resp.Name)
+	d.Set("capacity_reservation_group_id", capacityReservationReservationGroupId.ID())
+	if err := d.Set("sku", flattenCapacityReservationSku(resp.Sku)); err != nil {
+		return fmt.Errorf("setting `sku`: %+v", err)
 	}
 
-	return nil
+	zone := ""
+	if resp.Zones != nil && len(*resp.Zones) > 0 {
+		z := *resp.Zones
+		zone = z[0]
+	}
+	d.Set("zone", zone)
+
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceCapacityReservationUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -183,23 +176,28 @@ func resourceCapacityReservationUpdate(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := capacityreservations.ParseCapacityReservationID(d.Id())
+	id, err := parse.CapacityReservationID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	payload := capacityreservations.CapacityReservationUpdate{}
+	parameters := compute.CapacityReservationUpdate{}
 	if d.HasChange("sku") {
-		payload.Sku = pointer.To(expandCapacityReservationSku(d.Get("sku").([]interface{})))
-	}
-	if d.HasChange("tags") {
-		payload.Tags = tags.Expand(d.Get("tags").(map[string]interface{}))
+		parameters.Sku = expandCapacityReservationSku(d.Get("sku").([]interface{}))
 	}
 
-	if err := client.UpdateThenPoll(ctx, *id, payload); err != nil {
+	if d.HasChange("tags") {
+		parameters.Tags = tags.Expand(d.Get("tags").(map[string]interface{}))
+	}
+
+	future, err := client.Update(ctx, id.ResourceGroup, id.CapacityReservationGroupName, id.Name, parameters)
+	if err != nil {
 		return fmt.Errorf("updating %s: %+v", id, err)
 	}
 
+	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for update of %s: %+v", id, err)
+	}
 	return resourceCapacityReservationRead(d, meta)
 }
 
@@ -208,27 +206,40 @@ func resourceCapacityReservationDelete(d *pluginsdk.ResourceData, meta interface
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := capacityreservations.ParseCapacityReservationID(d.Id())
+	id, err := parse.CapacityReservationID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err := client.DeleteThenPoll(ctx, *id); err != nil {
+	future, err := client.Delete(ctx, id.ResourceGroup, id.CapacityReservationGroupName, id.Name)
+	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the deletion of %s: %+v", *id, err)
 	}
 
 	return nil
 }
 
-func expandCapacityReservationSku(input []interface{}) capacityreservations.Sku {
+func expandCapacityReservationSku(input []interface{}) *compute.Sku {
+	if len(input) == 0 {
+		return &compute.Sku{}
+	}
+
 	v := input[0].(map[string]interface{})
-	return capacityreservations.Sku{
+	return &compute.Sku{
 		Name:     utils.String(v["name"].(string)),
 		Capacity: utils.Int64(int64(v["capacity"].(int))),
 	}
 }
 
-func flattenCapacityReservationSku(input capacityreservations.Sku) []interface{} {
+func flattenCapacityReservationSku(input *compute.Sku) []interface{} {
+	if input == nil {
+		return make([]interface{}, 0)
+	}
+
 	var name string
 	if input.Name != nil {
 		name = *input.Name

@@ -5,17 +5,18 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/dataset"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datashare/2019-11-01/share"
+	"github.com/Azure/azure-sdk-for-go/services/datashare/mgmt/2019-11-01/datashare"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datashare/helper"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datashare/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/datashare/validate"
 	storageValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func resourceDataShareDataSetBlobStorage() *pluginsdk.Resource {
@@ -31,7 +32,7 @@ func resourceDataShareDataSetBlobStorage() *pluginsdk.Resource {
 		},
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := dataset.ParseDataSetID(id)
+			_, err := parse.DataSetID(id)
 			return err
 		}),
 
@@ -47,7 +48,7 @@ func resourceDataShareDataSetBlobStorage() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: share.ValidateShareID,
+				ValidateFunc: validate.ShareID,
 			},
 
 			"container_name": {
@@ -72,7 +73,7 @@ func resourceDataShareDataSetBlobStorage() *pluginsdk.Resource {
 							ValidateFunc: storageValidate.StorageAccountName,
 						},
 
-						"resource_group_name": commonschema.ResourceGroupName(),
+						"resource_group_name": azure.SchemaResourceGroupName(),
 
 						"subscription_id": {
 							Type:         pluginsdk.TypeString,
@@ -113,55 +114,59 @@ func resourceDataShareDataSetBlobStorageCreate(d *pluginsdk.ResourceData, meta i
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	shareId, err := share.ParseShareID(d.Get("data_share_id").(string))
+	shareId, err := parse.ShareID(d.Get("data_share_id").(string))
 	if err != nil {
 		return err
 	}
-	id := dataset.NewDataSetID(shareId.SubscriptionId, shareId.ResourceGroupName, shareId.AccountName, shareId.ShareName, d.Get("name").(string))
+	id := parse.NewDataSetID(shareId.SubscriptionId, shareId.ResourceGroup, shareId.AccountName, shareId.Name, d.Get("name").(string))
 
-	existing, err := client.Get(ctx, id)
+	existing, err := client.Get(ctx, id.ResourceGroup, id.AccountName, id.ShareName, id.Name)
 	if err != nil {
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return fmt.Errorf("checking for presence of %s: %+v", id, err)
 		}
 	}
-	if !response.WasNotFound(existing.HttpResponse) {
-		return tf.ImportAsExistsError("azurerm_data_share_dataset_blob_storage", id.ID())
+	existingId := helper.GetAzurermDataShareDataSetId(existing.Value)
+	if existingId != nil && *existingId != "" {
+		return tf.ImportAsExistsError("azurerm_data_share_dataset_blob_storage", *existingId)
 	}
 
-	var dataSet dataset.DataSet
+	var dataSet datashare.BasicDataSet
 	if filePath, ok := d.GetOk("file_path"); ok {
-		dataSet = dataset.BlobDataSet{
-			Properties: dataset.BlobProperties{
-				ContainerName:      d.Get("container_name").(string),
-				StorageAccountName: d.Get("storage_account.0.name").(string),
-				ResourceGroup:      d.Get("storage_account.0.resource_group_name").(string),
-				SubscriptionId:     d.Get("storage_account.0.subscription_id").(string),
-				FilePath:           filePath.(string),
+		dataSet = datashare.BlobDataSet{
+			Kind: datashare.KindBlob,
+			BlobProperties: &datashare.BlobProperties{
+				ContainerName:      utils.String(d.Get("container_name").(string)),
+				StorageAccountName: utils.String(d.Get("storage_account.0.name").(string)),
+				ResourceGroup:      utils.String(d.Get("storage_account.0.resource_group_name").(string)),
+				SubscriptionID:     utils.String(d.Get("storage_account.0.subscription_id").(string)),
+				FilePath:           utils.String(filePath.(string)),
 			},
 		}
 	} else if folderPath, ok := d.GetOk("folder_path"); ok {
-		dataSet = dataset.BlobFolderDataSet{
-			Properties: dataset.BlobFolderProperties{
-				ContainerName:      d.Get("container_name").(string),
-				StorageAccountName: d.Get("storage_account.0.name").(string),
-				ResourceGroup:      d.Get("storage_account.0.resource_group_name").(string),
-				SubscriptionId:     d.Get("storage_account.0.subscription_id").(string),
-				Prefix:             folderPath.(string),
+		dataSet = datashare.BlobFolderDataSet{
+			Kind: datashare.KindBlobFolder,
+			BlobFolderProperties: &datashare.BlobFolderProperties{
+				ContainerName:      utils.String(d.Get("container_name").(string)),
+				StorageAccountName: utils.String(d.Get("storage_account.0.name").(string)),
+				ResourceGroup:      utils.String(d.Get("storage_account.0.resource_group_name").(string)),
+				SubscriptionID:     utils.String(d.Get("storage_account.0.subscription_id").(string)),
+				Prefix:             utils.String(folderPath.(string)),
 			},
 		}
 	} else {
-		dataSet = dataset.BlobContainerDataSet{
-			Properties: dataset.BlobContainerProperties{
-				ContainerName:      d.Get("container_name").(string),
-				StorageAccountName: d.Get("storage_account.0.name").(string),
-				ResourceGroup:      d.Get("storage_account.0.resource_group_name").(string),
-				SubscriptionId:     d.Get("storage_account.0.subscription_id").(string),
+		dataSet = datashare.BlobContainerDataSet{
+			Kind: datashare.KindContainer,
+			BlobContainerProperties: &datashare.BlobContainerProperties{
+				ContainerName:      utils.String(d.Get("container_name").(string)),
+				StorageAccountName: utils.String(d.Get("storage_account.0.name").(string)),
+				ResourceGroup:      utils.String(d.Get("storage_account.0.resource_group_name").(string)),
+				SubscriptionID:     utils.String(d.Get("storage_account.0.subscription_id").(string)),
 			},
 		}
 	}
 
-	if _, err := client.Create(ctx, id, dataSet); err != nil {
+	if _, err := client.Create(ctx, id.ResourceGroup, id.AccountName, id.ShareName, id.Name, dataSet); err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
 	}
 
@@ -171,58 +176,68 @@ func resourceDataShareDataSetBlobStorageCreate(d *pluginsdk.ResourceData, meta i
 
 func resourceDataShareDataSetBlobStorageRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).DataShare.DataSetClient
+	shareClient := meta.(*clients.Client).DataShare.SharesClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dataset.ParseDataSetID(d.Id())
+	id, err := parse.DataSetID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.AccountName, id.ShareName, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] DataShare %q does not exist - removing from state", d.Id())
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("retrieving DataShare Blob Storage DataSet %q (Resource Group %q / accountName %q / shareName %q): %+v", id.Name, id.ResourceGroup, id.AccountName, id.ShareName, err)
 	}
 
-	d.Set("name", id.DataSetName)
+	d.Set("name", id.Name)
+	shareResp, err := shareClient.Get(ctx, id.ResourceGroup, id.AccountName, id.ShareName)
+	if err != nil {
+		return fmt.Errorf("retrieving DataShare %q (Resource Group %q / accountName %q): %+v", id.ShareName, id.ResourceGroup, id.AccountName, err)
+	}
+	if shareResp.ID == nil || *shareResp.ID == "" {
+		return fmt.Errorf("empty or nil ID returned for DataShare %q (Resource Group %q / accountName %q)", id.ShareName, id.ResourceGroup, id.AccountName)
+	}
 
-	shareId := share.NewShareID(id.SubscriptionId, id.ResourceGroupName, id.AccountName, id.ShareName)
-	d.Set("data_share_id", shareId.ID())
+	d.Set("data_share_id", shareResp.ID)
 
-	if model := resp.Model; model != nil {
-		m := *model
-		if ds, ok := m.(dataset.BlobDataSet); ok {
-			props := ds.Properties
+	switch resp := resp.Value.(type) {
+	case datashare.BlobDataSet:
+		if props := resp.BlobProperties; props != nil {
 			d.Set("container_name", props.ContainerName)
-			if err := d.Set("storage_account", flattenAzureRmDataShareDataSetBlobStorageAccount(props.StorageAccountName, props.ResourceGroup, props.SubscriptionId)); err != nil {
+			if err := d.Set("storage_account", flattenAzureRmDataShareDataSetBlobStorageAccount(props.StorageAccountName, props.ResourceGroup, props.SubscriptionID)); err != nil {
 				return fmt.Errorf("setting `storage_account`: %+v", err)
 			}
 			d.Set("file_path", props.FilePath)
-			d.Set("display_name", props.DataSetId)
+			d.Set("display_name", props.DataSetID)
+		}
 
-		} else if ds, ok := m.(dataset.BlobFolderDataSet); ok {
-			props := ds.Properties
+	case datashare.BlobFolderDataSet:
+		if props := resp.BlobFolderProperties; props != nil {
 			d.Set("container_name", props.ContainerName)
-			if err := d.Set("storage_account", flattenAzureRmDataShareDataSetBlobStorageAccount(props.StorageAccountName, props.ResourceGroup, props.SubscriptionId)); err != nil {
+			if err := d.Set("storage_account", flattenAzureRmDataShareDataSetBlobStorageAccount(props.StorageAccountName, props.ResourceGroup, props.SubscriptionID)); err != nil {
 				return fmt.Errorf("setting `storage_account`: %+v", err)
 			}
 			d.Set("folder_path", props.Prefix)
-			d.Set("display_name", props.DataSetId)
-		} else if ds, ok := m.(dataset.BlobContainerDataSet); ok {
-			props := ds.Properties
+			d.Set("display_name", props.DataSetID)
+		}
+
+	case datashare.BlobContainerDataSet:
+		if props := resp.BlobContainerProperties; props != nil {
 			d.Set("container_name", props.ContainerName)
-			if err := d.Set("storage_account", flattenAzureRmDataShareDataSetBlobStorageAccount(props.StorageAccountName, props.ResourceGroup, props.SubscriptionId)); err != nil {
+			if err := d.Set("storage_account", flattenAzureRmDataShareDataSetBlobStorageAccount(props.StorageAccountName, props.ResourceGroup, props.SubscriptionID)); err != nil {
 				return fmt.Errorf("setting `storage_account`: %+v", err)
 			}
-			d.Set("display_name", props.DataSetId)
-		} else {
-			return fmt.Errorf("%s is not a blob storage dataset", *id)
+			d.Set("display_name", props.DataSetID)
 		}
+
+	default:
+		return fmt.Errorf("data share dataset %q (Resource Group %q / accountName %q / shareName %q) is not a blob storage dataset", id.Name, id.ResourceGroup, id.AccountName, id.ShareName)
 	}
 
 	return nil
@@ -233,19 +248,36 @@ func resourceDataShareDataSetBlobStorageDelete(d *pluginsdk.ResourceData, meta i
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := dataset.ParseDataSetID(d.Id())
+	id, err := parse.DataSetID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if err := client.DeleteThenPoll(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.AccountName, id.ShareName, id.Name)
+	if err != nil {
+		return fmt.Errorf("deleting DataShare Blob Storage DataSet %q (Resource Group %q / accountName %q / shareName %q): %+v", id.Name, id.ResourceGroup, id.AccountName, id.ShareName, err)
 	}
 
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for deletion of DataShare Blob Storage DataSet %q (Resource Group %q / accountName %q / shareName %q): %+v", id.Name, id.ResourceGroup, id.AccountName, id.ShareName, err)
+	}
 	return nil
 }
 
-func flattenAzureRmDataShareDataSetBlobStorageAccount(name, rg, subs string) []interface{} {
+func flattenAzureRmDataShareDataSetBlobStorageAccount(strName, strRG, strSubs *string) []interface{} {
+	var name, rg, subs string
+	if strName != nil {
+		name = *strName
+	}
+
+	if strRG != nil {
+		rg = *strRG
+	}
+
+	if strSubs != nil {
+		subs = *strSubs
+	}
+
 	return []interface{}{
 		map[string]interface{}{
 			"name":                name,

@@ -5,15 +5,13 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/timeseriesinsights/2020-05-15/environments"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/timeseriesinsights/2020-05-15/eventsources"
+	"github.com/Azure/azure-sdk-for-go/services/timeseriesinsights/mgmt/2020-05-15/timeseriesinsights"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	eventhubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/eventhub/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iottimeseriesinsights/parse"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -27,7 +25,7 @@ func resourceIoTTimeSeriesInsightsEventSourceEventhub() *pluginsdk.Resource {
 		Update: resourceIoTTimeSeriesInsightsEventSourceEventhubCreateUpdate,
 		Delete: resourceIoTTimeSeriesInsightsEventSourceEventhubDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := eventsources.ParseEventSourceID(id)
+			_, err := parse.EventSourceID(id)
 			return err
 		}),
 
@@ -49,13 +47,13 @@ func resourceIoTTimeSeriesInsightsEventSourceEventhub() *pluginsdk.Resource {
 				),
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"environment_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: environments.ValidateEnvironmentID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"eventhub_name": {
@@ -101,115 +99,133 @@ func resourceIoTTimeSeriesInsightsEventSourceEventhub() *pluginsdk.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 		},
 	}
 }
 
 func resourceIoTTimeSeriesInsightsEventSourceEventhubCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).IoTTimeSeriesInsights.EventSources
+	client := meta.(*clients.Client).IoTTimeSeriesInsights.EventSourcesClient
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	environmentID, err := environments.ParseEnvironmentID(d.Get("environment_id").(string))
+	location := azure.NormalizeLocation(d.Get("location").(string))
+	environmentID, err := parse.EnvironmentID(d.Get("environment_id").(string))
 	if err != nil {
 		return fmt.Errorf("unable to parse `environment_id`: %+v", err)
 	}
 
-	id := eventsources.NewEventSourceID(environmentID.SubscriptionId, environmentID.ResourceGroupName, environmentID.EnvironmentName, d.Get("name").(string))
+	id := parse.NewEventSourceID(environmentID.SubscriptionId, environmentID.ResourceGroup, environmentID.Name, d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.EnvironmentName, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing IoT Time Series Insights Event Source %q: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
-			return tf.ImportAsExistsError("azurerm_iot_time_series_insights_event_source_eventhub", id.ID())
+		if existing.Value != nil {
+			eventSource, ok := existing.Value.AsEventHubEventSourceResource()
+			if !ok {
+				return fmt.Errorf("exisiting resource was not an IoT Time Series Insights IoTHub Event Source %q", id)
+			}
+
+			if eventSource.ID != nil && *eventSource.ID != "" {
+				return tf.ImportAsExistsError("azurerm_iot_time_series_insights_event_source_eventhub", *eventSource.ID)
+			}
 		}
 	}
 
-	payload := eventsources.EventHubEventSourceCreateOrUpdateParameters{
-		Location: location.Normalize(d.Get("location").(string)),
+	eventSource := timeseriesinsights.EventHubEventSourceCreateOrUpdateParameters{
+		Location: &location,
 		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
-		Properties: eventsources.EventHubEventSourceCreationProperties{
-			EventHubName:          d.Get("eventhub_name").(string),
-			ServiceBusNamespace:   d.Get("namespace_name").(string),
-			SharedAccessKey:       d.Get("shared_access_key").(string),
-			ConsumerGroupName:     d.Get("consumer_group_name").(string),
-			KeyName:               d.Get("shared_access_key_name").(string),
-			EventSourceResourceId: utils.String(d.Get("event_source_resource_id").(string)),
+		EventHubEventSourceCreationProperties: &timeseriesinsights.EventHubEventSourceCreationProperties{
+			EventHubName:          utils.String(d.Get("eventhub_name").(string)),
+			ServiceBusNamespace:   utils.String(d.Get("namespace_name").(string)),
+			SharedAccessKey:       utils.String(d.Get("shared_access_key").(string)),
+			ConsumerGroupName:     utils.String(d.Get("consumer_group_name").(string)),
+			KeyName:               utils.String(d.Get("shared_access_key_name").(string)),
+			EventSourceResourceID: utils.String(d.Get("event_source_resource_id").(string)),
 			TimestampPropertyName: utils.String(d.Get("timestamp_property_name").(string)),
 		},
 	}
 
-	if _, err = client.CreateOrUpdate(ctx, id, payload); err != nil {
-		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	if _, err = client.CreateOrUpdate(ctx, id.ResourceGroup, id.EnvironmentName, id.Name, eventSource); err != nil {
+		return fmt.Errorf("creating/updating IoT Time Series Insights EventHub Event Source %q: %+v", id, err)
+	}
+
+	resp, err := client.Get(ctx, id.ResourceGroup, id.EnvironmentName, id.Name)
+	if err != nil {
+		return fmt.Errorf("retrieving IoT Time Series Insights EventHub EventSource %q: %+v", id, err)
+	}
+
+	if _, ok := resp.Value.AsEventHubEventSourceResource(); !ok {
+		return fmt.Errorf("created resource was not an IoT Time Series Insights EventHub Event Source %q", id)
 	}
 
 	d.SetId(id.ID())
+
 	return resourceIoTTimeSeriesInsightsEventSourceEventhubRead(d, meta)
 }
 
 func resourceIoTTimeSeriesInsightsEventSourceEventhubRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).IoTTimeSeriesInsights.EventSources
+	client := meta.(*clients.Client).IoTTimeSeriesInsights.EventSourcesClient
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := eventsources.ParseEventSourceID(d.Id())
+	id, err := parse.EventSourceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.Get(ctx, *id)
-	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+	resp, err := client.Get(ctx, id.ResourceGroup, id.EnvironmentName, id.Name)
+	if err != nil || resp.Value == nil {
+		if utils.ResponseWasNotFound(resp.Response) {
 			d.SetId("")
 			return nil
 		}
 
-		return fmt.Errorf("retrieving %s: %+v", *id, err)
+		return fmt.Errorf("retrieving IoT Time Series Insights EventHub EventSource %q: %+v", id, err)
 	}
 
-	d.Set("name", id.EventSourceName)
-	d.Set("environment_id", environments.NewEnvironmentID(id.SubscriptionId, id.ResourceGroupName, id.EnvironmentName).ID())
-
-	if model := resp.Model; model != nil {
-		eventSource, ok := (*model).(eventsources.EventHubEventSourceResource)
-		if !ok {
-			return fmt.Errorf("retrieving %s: expected an EventHubEventSourceResource but got: %+v", *id, *model)
-		}
-
-		d.Set("location", location.Normalize(eventSource.Location))
-
-		d.Set("consumer_group_name", eventSource.Properties.ConsumerGroupName)
-		d.Set("eventhub_name", eventSource.Properties.EventHubName)
-		d.Set("namespace_name", eventSource.Properties.ServiceBusNamespace)
-		d.Set("event_source_resource_id", eventSource.Properties.EventSourceResourceId)
-		d.Set("shared_access_key_name", eventSource.Properties.KeyName)
-		d.Set("timestamp_property_name", eventSource.Properties.TimestampPropertyName)
-
-		if err := tags.FlattenAndSet(d, eventSource.Tags); err != nil {
-			return fmt.Errorf("setting `tags`: %+v", err)
-		}
+	eventSource, ok := resp.Value.AsEventHubEventSourceResource()
+	if !ok {
+		return fmt.Errorf("exisiting resource was not a IoT Time Series Insights EventHub EventSource %q", id)
 	}
 
-	return nil
+	d.Set("name", eventSource.Name)
+	d.Set("environment_id", parse.NewEnvironmentID(id.SubscriptionId, id.ResourceGroup, id.EnvironmentName).ID())
+	if location := eventSource.Location; location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
+	}
+
+	if props := eventSource.EventHubEventSourceResourceProperties; props != nil {
+		d.Set("eventhub_name", props.EventHubName)
+		d.Set("namespace_name", props.ServiceBusNamespace)
+		d.Set("consumer_group_name", props.ConsumerGroupName)
+		d.Set("shared_access_key_name", props.KeyName)
+		d.Set("event_source_resource_id", props.EventSourceResourceID)
+		d.Set("timestamp_property_name", props.TimestampPropertyName)
+	}
+
+	return tags.FlattenAndSet(d, eventSource.Tags)
 }
 
 func resourceIoTTimeSeriesInsightsEventSourceEventhubDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	client := meta.(*clients.Client).IoTTimeSeriesInsights.EventSources
+	client := meta.(*clients.Client).IoTTimeSeriesInsights.EventSourcesClient
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := eventsources.ParseEventSourceID(d.Id())
+	id, err := parse.EventSourceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	if _, err := client.Delete(ctx, *id); err != nil {
-		return fmt.Errorf("deleting %s: %+v", *id, err)
+	response, err := client.Delete(ctx, id.ResourceGroup, id.EnvironmentName, id.Name)
+	if err != nil {
+		if !utils.ResponseWasNotFound(response) {
+			return fmt.Errorf("deleting IoT Time Series Insights EventHub Event Source %q: %+v", id, err)
+		}
 	}
 
 	return nil

@@ -28,10 +28,9 @@ func resourceDnsZone() *pluginsdk.Resource {
 		Update: resourceDnsZoneCreateUpdate,
 		Delete: resourceDnsZoneDelete,
 
-		SchemaVersion: 2,
+		SchemaVersion: 1,
 		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
 			0: migration.DnsZoneV0ToV1{},
-			1: migration.DnsZoneV1ToV2{},
 		}),
 
 		Timeouts: &pluginsdk.ResourceTimeout{
@@ -190,11 +189,11 @@ func resourceDnsZoneCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) er
 			},
 		}
 
-		if len(id.DnsZoneName+strings.TrimSuffix(*rsParameters.Properties.SOARecord.Email, ".")) > 253 {
+		if len(id.ZoneName+strings.TrimSuffix(*rsParameters.Properties.SOARecord.Email, ".")) > 253 {
 			return fmt.Errorf("`email` which is concatenated with DNS Zone `name` cannot exceed 253 characters excluding a trailing period")
 		}
 
-		soaRecordId := recordsets.NewRecordTypeID(id.SubscriptionId, id.ResourceGroupName, id.DnsZoneName, recordsets.RecordTypeSOA, "@")
+		soaRecordId := recordsets.NewRecordTypeID(id.SubscriptionId, id.ResourceGroupName, id.ZoneName, recordsets.RecordTypeSOA, "@")
 		if _, err := recordSetsClient.CreateOrUpdate(ctx, soaRecordId, rsParameters, recordsets.DefaultCreateOrUpdateOperationOptions()); err != nil {
 			return fmt.Errorf("creating/updating %s: %+v", soaRecordId, err)
 		}
@@ -211,7 +210,7 @@ func resourceDnsZoneRead(d *pluginsdk.ResourceData, meta interface{}) error {
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := zones.ParseDnsZoneID(d.Id())
+	id, err := zones.ParseDnsZoneIDInsensitively(d.Id())
 	if err != nil {
 		return err
 	}
@@ -225,7 +224,7 @@ func resourceDnsZoneRead(d *pluginsdk.ResourceData, meta interface{}) error {
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	soaRecord := recordsets.NewRecordTypeID(id.SubscriptionId, id.ResourceGroupName, id.DnsZoneName, recordsets.RecordTypeSOA, "@")
+	soaRecord := recordsets.NewRecordTypeID(id.SubscriptionId, id.ResourceGroupName, id.ZoneName, recordsets.RecordTypeSOA, "@")
 	soaRecordResp, err := recordSetsClient.Get(ctx, soaRecord)
 	if err != nil {
 		return fmt.Errorf("retrieving %s: %+v", id, err)
@@ -235,7 +234,7 @@ func resourceDnsZoneRead(d *pluginsdk.ResourceData, meta interface{}) error {
 		return fmt.Errorf("setting `soa_record`: %+v", err)
 	}
 
-	d.Set("name", id.DnsZoneName)
+	d.Set("name", id.ZoneName)
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {

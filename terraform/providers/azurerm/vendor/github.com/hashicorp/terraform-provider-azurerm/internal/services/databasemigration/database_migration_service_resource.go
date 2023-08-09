@@ -5,16 +5,15 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/datamigration/mgmt/2018-04-19/datamigration"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/datamigration/2018-04-19/serviceresource"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/databasemigration/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/databasemigration/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -29,7 +28,7 @@ func resourceDatabaseMigrationService() *pluginsdk.Resource {
 		Delete: resourceDatabaseMigrationServiceDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := serviceresource.ParseServiceID(id)
+			_, err := parse.ServiceID(id)
 			return err
 		}),
 
@@ -48,15 +47,15 @@ func resourceDatabaseMigrationService() *pluginsdk.Resource {
 				ValidateFunc: validate.ServiceName,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"subnet_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"sku_name": {
@@ -73,7 +72,7 @@ func resourceDatabaseMigrationService() *pluginsdk.Resource {
 				}, false),
 			},
 
-			"tags": commonschema.Tags(),
+			"tags": tags.Schema(),
 		},
 	}
 }
@@ -84,26 +83,30 @@ func resourceDatabaseMigrationServiceCreate(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForCreate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := serviceresource.NewServiceID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewServiceID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 	if d.IsNewResource() {
-		existing, err := client.ServicesGet(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %+v", id, err)
 			}
 		}
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_database_migration_service", id.ID())
 		}
 	}
 
-	parameters := serviceresource.DataMigrationService{
-		Location: azure.NormalizeLocation(d.Get("location").(string)),
-		Properties: &serviceresource.DataMigrationServiceProperties{
-			VirtualSubnetId: d.Get("subnet_id").(string),
+	skuName := d.Get("sku_name").(string)
+	subnetID := d.Get("subnet_id").(string)
+	location := azure.NormalizeLocation(d.Get("location").(string))
+
+	parameters := datamigration.Service{
+		Location: utils.String(location),
+		ServiceProperties: &datamigration.ServiceProperties{
+			VirtualSubnetID: utils.String(subnetID),
 		},
-		Sku: &serviceresource.ServiceSku{
-			Name: utils.String(d.Get("sku_name").(string)),
+		Sku: &datamigration.ServiceSku{
+			Name: utils.String(skuName),
 		},
 		Kind: utils.String("Cloud"), // currently only "Cloud" is supported, hence hardcode here
 	}
@@ -111,8 +114,12 @@ func resourceDatabaseMigrationServiceCreate(d *pluginsdk.ResourceData, meta inte
 		parameters.Tags = tags.Expand(t.(map[string]interface{}))
 	}
 
-	if err := client.ServicesCreateOrUpdateThenPoll(ctx, id, parameters); err != nil {
+	future, err := client.CreateOrUpdate(ctx, parameters, id.ResourceGroup, id.Name)
+	if err != nil {
 		return fmt.Errorf("creating %s: %+v", id, err)
+	}
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -124,14 +131,14 @@ func resourceDatabaseMigrationServiceRead(d *pluginsdk.ResourceData, meta interf
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := serviceresource.ParseServiceID(d.Id())
+	id, err := parse.ServiceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.ServicesGet(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if utils.ResponseWasNotFound(resp.Response) {
 			log.Printf("[INFO] %s does not exist - removing from state", *id)
 			d.SetId("")
 			return nil
@@ -139,19 +146,17 @@ func resourceDatabaseMigrationServiceRead(d *pluginsdk.ResourceData, meta interf
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.ServiceName)
-	d.Set("resource_group_name", id.ResourceGroupName)
-
-	if model := resp.Model; model != nil {
-		d.Set("location", location.Normalize(model.Location))
-		if props := model.Properties; props != nil {
-			d.Set("subnet_id", props.VirtualSubnetId)
-		}
-		d.Set("sku_name", model.Sku.Name)
-
-		return tags.FlattenAndSet(d, model.Tags)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
+	d.Set("location", location.NormalizeNilable(resp.Location))
+	if serviceProperties := resp.ServiceProperties; serviceProperties != nil {
+		d.Set("subnet_id", serviceProperties.VirtualSubnetID)
 	}
-	return nil
+	if resp.Sku != nil {
+		d.Set("sku_name", resp.Sku.Name)
+	}
+
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceDatabaseMigrationServiceUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -159,19 +164,21 @@ func resourceDatabaseMigrationServiceUpdate(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := serviceresource.ParseServiceID(d.Id())
+	id, err := parse.ServiceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	parameters := serviceresource.DataMigrationService{
-		// location isn't update-able but if we don't supply the current value the SDK sends an empty string instead which errors on the API side
-		Location: azure.NormalizeLocation(d.Get("location").(string)),
-		Tags:     tags.Expand(d.Get("tags").(map[string]interface{})),
+	parameters := datamigration.Service{
+		Tags: tags.Expand(d.Get("tags").(map[string]interface{})),
 	}
 
-	if err := client.ServicesUpdateThenPoll(ctx, *id, parameters); err != nil {
+	future, err := client.Update(ctx, parameters, id.ResourceGroup, id.Name)
+	if err != nil {
 		return fmt.Errorf("updating %s: %+v", *id, err)
+	}
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for update of %s: %+v", *id, err)
 	}
 
 	return resourceDatabaseMigrationServiceRead(d, meta)
@@ -182,16 +189,20 @@ func resourceDatabaseMigrationServiceDelete(d *pluginsdk.ResourceData, meta inte
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := serviceresource.ParseServiceID(d.Id())
+	id, err := parse.ServiceID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	opts := serviceresource.ServicesDeleteOperationOptions{
-		DeleteRunningTasks: utils.Bool(false),
-	}
-	if err := client.ServicesDeleteThenPoll(ctx, *id, opts); err != nil {
+	future, err := client.Delete(ctx, id.ResourceGroup, id.Name, utils.Bool(true))
+	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		if !response.WasNotFound(future.Response()) {
+			return fmt.Errorf("waiting for the deletion of %s: %+v", *id, err)
+		}
 	}
 
 	return nil

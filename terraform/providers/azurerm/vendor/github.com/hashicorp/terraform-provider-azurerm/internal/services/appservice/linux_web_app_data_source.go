@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
@@ -27,13 +26,10 @@ type LinuxWebAppDataSourceModel struct {
 	ServicePlanId                 string                     `tfschema:"service_plan_id"`
 	AppSettings                   map[string]string          `tfschema:"app_settings"`
 	AuthSettings                  []helpers.AuthSettings     `tfschema:"auth_settings"`
-	AuthV2Settings                []helpers.AuthV2Settings   `tfschema:"auth_settings_v2"`
-	Availability                  string                     `tfschema:"availability"`
 	Backup                        []helpers.Backup           `tfschema:"backup"`
 	ClientAffinityEnabled         bool                       `tfschema:"client_affinity_enabled"`
 	ClientCertEnabled             bool                       `tfschema:"client_certificate_enabled"`
 	ClientCertMode                string                     `tfschema:"client_certificate_mode"`
-	ClientCertExclusionPaths      string                     `tfschema:"client_certificate_exclusion_paths"`
 	Enabled                       bool                       `tfschema:"enabled"`
 	HttpsOnly                     bool                       `tfschema:"https_only"`
 	KeyVaultReferenceIdentityID   string                     `tfschema:"key_vault_reference_identity_id"`
@@ -45,15 +41,12 @@ type LinuxWebAppDataSourceModel struct {
 	ConnectionStrings             []helpers.ConnectionString `tfschema:"connection_string"`
 	Tags                          map[string]string          `tfschema:"tags"`
 	CustomDomainVerificationId    string                     `tfschema:"custom_domain_verification_id"`
-	HostingEnvId                  string                     `tfschema:"hosting_environment_id"`
 	DefaultHostname               string                     `tfschema:"default_hostname"`
 	Kind                          string                     `tfschema:"kind"`
 	OutboundIPAddresses           string                     `tfschema:"outbound_ip_addresses"`
 	OutboundIPAddressList         []string                   `tfschema:"outbound_ip_address_list"`
 	PossibleOutboundIPAddresses   string                     `tfschema:"possible_outbound_ip_addresses"`
 	PossibleOutboundIPAddressList []string                   `tfschema:"possible_outbound_ip_address_list"`
-	PublicNetworkAccess           bool                       `tfschema:"public_network_access_enabled"`
-	Usage                         string                     `tfschema:"usage"`
 	SiteCredentials               []helpers.SiteCredential   `tfschema:"site_credential"`
 	VirtualNetworkSubnetID        string                     `tfschema:"virtual_network_subnet_id"`
 }
@@ -100,14 +93,7 @@ func (r LinuxWebAppDataSource) Attributes() map[string]*pluginsdk.Schema {
 			},
 		},
 
-		"availability": {
-			Type:     pluginsdk.TypeString,
-			Computed: true,
-		},
-
 		"auth_settings": helpers.AuthSettingsSchemaComputed(),
-
-		"auth_settings_v2": helpers.AuthV2SettingsComputedSchema(),
 
 		"backup": helpers.BackupSchemaComputed(),
 
@@ -126,12 +112,6 @@ func (r LinuxWebAppDataSource) Attributes() map[string]*pluginsdk.Schema {
 			Computed: true,
 		},
 
-		"client_certificate_exclusion_paths": {
-			Type:        pluginsdk.TypeString,
-			Computed:    true,
-			Description: "Paths to exclude when using client certificates, separated by ;",
-		},
-
 		"connection_string": helpers.ConnectionStringSchemaComputed(),
 
 		"custom_domain_verification_id": {
@@ -141,11 +121,6 @@ func (r LinuxWebAppDataSource) Attributes() map[string]*pluginsdk.Schema {
 		},
 
 		"default_hostname": {
-			Type:     pluginsdk.TypeString,
-			Computed: true,
-		},
-
-		"hosting_environment_id": {
 			Type:     pluginsdk.TypeString,
 			Computed: true,
 		},
@@ -198,16 +173,6 @@ func (r LinuxWebAppDataSource) Attributes() map[string]*pluginsdk.Schema {
 			Elem: &pluginsdk.Schema{
 				Type: pluginsdk.TypeString,
 			},
-		},
-
-		"usage": {
-			Type:     pluginsdk.TypeString,
-			Computed: true,
-		},
-
-		"public_network_access_enabled": {
-			Type:     pluginsdk.TypeBool,
-			Computed: true,
 		},
 
 		"site_credential": helpers.SiteCredentialSchema(),
@@ -264,11 +229,6 @@ func (r LinuxWebAppDataSource) Read() sdk.ResourceFunc {
 				return fmt.Errorf("reading Auth Settings for Linux %s: %+v", id, err)
 			}
 
-			authV2, err := client.GetAuthSettingsV2(ctx, id.ResourceGroup, id.SiteName)
-			if err != nil {
-				return fmt.Errorf("reading authV2 settings for Linux %s: %+v", id, err)
-			}
-
 			backup, err := client.GetBackupConfiguration(ctx, id.ResourceGroup, id.SiteName)
 			if err != nil {
 				if !utils.ResponseWasNotFound(backup.Response) {
@@ -314,12 +274,12 @@ func (r LinuxWebAppDataSource) Read() sdk.ResourceFunc {
 				return fmt.Errorf("reading Site Publishing Credential information for Linux %s: %+v", id, err)
 			}
 
-			webApp.AppSettings = helpers.FlattenWebStringDictionary(appSettings)
-			webApp.Kind = pointer.From(existing.Kind)
+			var healthCheckCount *int
+			webApp.AppSettings, healthCheckCount = helpers.FlattenAppSettings(appSettings)
+			webApp.Kind = utils.NormalizeNilableString(existing.Kind)
 			webApp.Location = location.NormalizeNilable(existing.Location)
 			webApp.Tags = tags.ToTypedObject(existing.Tags)
 			if props := existing.SiteProperties; props != nil {
-				webApp.Availability = string(props.AvailabilityState)
 				if props.ClientAffinityEnabled != nil {
 					webApp.ClientAffinityEnabled = *props.ClientAffinityEnabled
 				}
@@ -327,50 +287,28 @@ func (r LinuxWebAppDataSource) Read() sdk.ResourceFunc {
 					webApp.ClientCertEnabled = *props.ClientCertEnabled
 				}
 				webApp.ClientCertMode = string(props.ClientCertMode)
-				webApp.ClientCertExclusionPaths = pointer.From(props.ClientCertExclusionPaths)
-				webApp.CustomDomainVerificationId = pointer.From(props.CustomDomainVerificationID)
-				webApp.DefaultHostname = pointer.From(props.DefaultHostName)
+				webApp.CustomDomainVerificationId = utils.NormalizeNilableString(props.CustomDomainVerificationID)
+				webApp.DefaultHostname = utils.NormalizeNilableString(props.DefaultHostName)
 				if props.Enabled != nil {
 					webApp.Enabled = *props.Enabled
 				}
 				if props.HTTPSOnly != nil {
 					webApp.HttpsOnly = *props.HTTPSOnly
 				}
-				webApp.ServicePlanId = pointer.From(props.ServerFarmID)
-				webApp.OutboundIPAddresses = pointer.From(props.OutboundIPAddresses)
+				webApp.ServicePlanId = utils.NormalizeNilableString(props.ServerFarmID)
+				webApp.OutboundIPAddresses = utils.NormalizeNilableString(props.OutboundIPAddresses)
 				webApp.OutboundIPAddressList = strings.Split(webApp.OutboundIPAddresses, ",")
-				webApp.PossibleOutboundIPAddresses = pointer.From(props.PossibleOutboundIPAddresses)
+				webApp.PossibleOutboundIPAddresses = utils.NormalizeNilableString(props.PossibleOutboundIPAddresses)
 				webApp.PossibleOutboundIPAddressList = strings.Split(webApp.PossibleOutboundIPAddresses, ",")
-				webApp.Usage = string(props.UsageState)
-				if hostingEnv := props.HostingEnvironmentProfile; hostingEnv != nil {
-					webApp.HostingEnvId = pointer.From(hostingEnv.ID)
-				}
-				if subnetId := pointer.From(props.VirtualNetworkSubnetID); subnetId != "" {
-					webApp.VirtualNetworkSubnetID = subnetId
-				}
-				webApp.PublicNetworkAccess = !strings.EqualFold(pointer.From(props.PublicNetworkAccess), helpers.PublicNetworkAccessDisabled)
 			}
 
 			webApp.AuthSettings = helpers.FlattenAuthSettings(auth)
-
-			webApp.AuthV2Settings = helpers.FlattenAuthV2Settings(authV2)
 
 			webApp.Backup = helpers.FlattenBackupConfig(backup)
 
 			webApp.LogsConfig = helpers.FlattenLogsConfig(logsConfig)
 
-			siteConfig := helpers.SiteConfigLinux{}
-			siteConfig.Flatten(webAppSiteConfig.SiteConfig)
-			siteConfig.SetHealthCheckEvictionTime(webApp.AppSettings)
-
-			if helpers.FxStringHasPrefix(siteConfig.LinuxFxVersion, helpers.FxStringPrefixDocker) {
-				siteConfig.DecodeDockerAppStack(webApp.AppSettings)
-			}
-
-			webApp.SiteConfig = []helpers.SiteConfigLinux{siteConfig}
-
-			// Filter out all settings we've consumed above
-			webApp.AppSettings = helpers.FilterManagedAppSettings(webApp.AppSettings)
+			webApp.SiteConfig = helpers.FlattenSiteConfigLinux(webAppSiteConfig.SiteConfig, healthCheckCount)
 
 			webApp.StorageAccounts = helpers.FlattenStorageAccounts(storageAccounts)
 

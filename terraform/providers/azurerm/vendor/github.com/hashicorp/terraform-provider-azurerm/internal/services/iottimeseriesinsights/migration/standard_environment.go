@@ -3,8 +3,8 @@ package migration
 import (
 	"context"
 	"log"
+	"strings"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/timeseriesinsights/2020-05-15/accesspolicies"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 )
 
@@ -51,11 +51,7 @@ func (StandardEnvironmentAccessPolicyV0ToV1) UpgradeFunc() pluginsdk.StateUpgrad
 	return func(ctx context.Context, rawState map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 		log.Println("[DEBUG] Migrating ResourceType from v0 to v1 format")
 		oldId := rawState["id"].(string)
-		accessPolicyId, err := accesspolicies.ParseAccessPolicyIDInsensitively(oldId)
-		if err != nil {
-			return nil, err
-		}
-		newId := accessPolicyId.ID()
+		newId := strings.Replace(oldId, "/accesspolicies/", "/accessPolicies/", 1)
 
 		log.Printf("[DEBUG] Updating ID from %q to %q", oldId, newId)
 

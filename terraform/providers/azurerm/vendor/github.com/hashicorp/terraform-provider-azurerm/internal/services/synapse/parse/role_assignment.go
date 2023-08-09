@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/resourceid"
 )
 
-var _ resourceids.Id = RoleAssignmentId{}
+var _ resourceid.Formatter = RoleAssignmentId{}
 
 type RoleAssignmentId struct {
 	Scope                 string
@@ -19,14 +19,6 @@ func NewRoleAssignmentId(scope string, dataPlaneAssignmentId string) RoleAssignm
 		Scope:                 scope,
 		DataPlaneAssignmentId: dataPlaneAssignmentId,
 	}
-}
-
-func (id RoleAssignmentId) String() string {
-	components := []string{
-		fmt.Sprintf("Scope %q", id.Scope),
-		fmt.Sprintf("Data Plane Assignment ID %q", id.DataPlaneAssignmentId),
-	}
-	return fmt.Sprintf("Role Assignment %s", strings.Join(components, " / "))
 }
 
 func (id RoleAssignmentId) ID() string {

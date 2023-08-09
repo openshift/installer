@@ -7,26 +7,10 @@ import (
 
 type Registration struct{}
 
-var (
-	_ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
-	_ sdk.TypedServiceRegistrationWithAGitHubLabel   = Registration{}
-)
+var _ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
 
 func (r Registration) AssociatedGitHubLabel() string {
 	return "service/signalr"
-}
-
-func (r Registration) Resources() []sdk.Resource {
-	return []sdk.Resource{
-		CustomDomainSignalrServiceResource{},
-		CustomDomainWebPubsubResource{},
-		CustomCertWebPubsubResource{},
-		CustomCertSignalrServiceResource{},
-	}
-}
-
-func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{}
 }
 
 // Name is the name of this Service
@@ -58,8 +42,8 @@ func (r Registration) SupportedResources() map[string]*pluginsdk.Resource {
 		"azurerm_signalr_service_network_acl":             resourceArmSignalRServiceNetworkACL(),
 		"azurerm_signalr_shared_private_link_resource":    resourceSignalRSharedPrivateLinkResource(),
 		"azurerm_web_pubsub":                              resourceWebPubSub(),
-		"azurerm_web_pubsub_hub":                          resourceWebPubSubHub(),
+		"azurerm_web_pubsub_hub":                          resourceWebPubsubHub(),
 		"azurerm_web_pubsub_network_acl":                  resourceWebpubsubNetworkACL(),
-		"azurerm_web_pubsub_shared_private_link_resource": resourceWebPubSubSharedPrivateLinkService(),
+		"azurerm_web_pubsub_shared_private_link_resource": resourceWebpubsubSharedPrivateLinkService(),
 	}
 }

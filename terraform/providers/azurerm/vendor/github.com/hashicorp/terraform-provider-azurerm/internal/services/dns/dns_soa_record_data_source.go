@@ -103,7 +103,7 @@ func dataSourceDnsSoaRecordRead(d *pluginsdk.ResourceData, meta interface{}) err
 	d.SetId(id.ID())
 
 	d.Set("resource_group_name", id.ResourceGroupName)
-	d.Set("zone_name", id.DnsZoneName)
+	d.Set("zone_name", id.ZoneName)
 
 	if model := resp.Model; model != nil {
 		if props := model.Properties; props != nil {
@@ -122,6 +122,7 @@ func dataSourceDnsSoaRecordRead(d *pluginsdk.ResourceData, meta interface{}) err
 
 			return tags.FlattenAndSet(d, props.Metadata)
 		}
+
 	}
 
 	return nil

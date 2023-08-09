@@ -1,71 +1,60 @@
 package client
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountagreements"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountassemblies"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountbatchconfigurations"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountcertificates"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountmaps"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountpartners"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccounts"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountschemas"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationaccountsessions"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/integrationserviceenvironments"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflows"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflowtriggers"
+	"github.com/Azure/azure-sdk-for-go/services/logic/mgmt/2019-05-01/logic"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/common"
 )
 
 type Client struct {
-	IntegrationAccountClient                   *integrationaccounts.IntegrationAccountsClient
-	IntegrationAccountAgreementClient          *integrationaccountagreements.IntegrationAccountAgreementsClient
-	IntegrationAccountAssemblyClient           *integrationaccountassemblies.IntegrationAccountAssembliesClient
-	IntegrationAccountBatchConfigurationClient *integrationaccountbatchconfigurations.IntegrationAccountBatchConfigurationsClient
-	IntegrationAccountCertificateClient        *integrationaccountcertificates.IntegrationAccountCertificatesClient
-	IntegrationAccountMapClient                *integrationaccountmaps.IntegrationAccountMapsClient
-	IntegrationAccountPartnerClient            *integrationaccountpartners.IntegrationAccountPartnersClient
-	IntegrationAccountSchemaClient             *integrationaccountschemas.IntegrationAccountSchemasClient
-	IntegrationAccountSessionClient            *integrationaccountsessions.IntegrationAccountSessionsClient
-	IntegrationServiceEnvironmentClient        *integrationserviceenvironments.IntegrationServiceEnvironmentsClient
-	WorkflowClient                             *workflows.WorkflowsClient
-	TriggersClient                             *workflowtriggers.WorkflowTriggersClient
+	IntegrationAccountClient                   *logic.IntegrationAccountsClient
+	IntegrationAccountAgreementClient          *logic.IntegrationAccountAgreementsClient
+	IntegrationAccountAssemblyClient           *logic.IntegrationAccountAssembliesClient
+	IntegrationAccountBatchConfigurationClient *logic.IntegrationAccountBatchConfigurationsClient
+	IntegrationAccountCertificateClient        *logic.IntegrationAccountCertificatesClient
+	IntegrationAccountMapClient                *logic.IntegrationAccountMapsClient
+	IntegrationAccountPartnerClient            *logic.IntegrationAccountPartnersClient
+	IntegrationAccountSchemaClient             *logic.IntegrationAccountSchemasClient
+	IntegrationAccountSessionClient            *logic.IntegrationAccountSessionsClient
+	IntegrationServiceEnvironmentClient        *logic.IntegrationServiceEnvironmentsClient
+	WorkflowClient                             *logic.WorkflowsClient
+	TriggersClient                             *logic.WorkflowTriggersClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
-	integrationAccountClient := integrationaccounts.NewIntegrationAccountsClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountClient := logic.NewIntegrationAccountsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountAgreementClient := integrationaccountagreements.NewIntegrationAccountAgreementsClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountAgreementClient := logic.NewIntegrationAccountAgreementsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountAgreementClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountAssemblyClient := integrationaccountassemblies.NewIntegrationAccountAssembliesClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountAssemblyClient := logic.NewIntegrationAccountAssembliesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountAssemblyClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountBatchConfigurationClient := integrationaccountbatchconfigurations.NewIntegrationAccountBatchConfigurationsClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountBatchConfigurationClient := logic.NewIntegrationAccountBatchConfigurationsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountBatchConfigurationClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountCertificateClient := integrationaccountcertificates.NewIntegrationAccountCertificatesClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountCertificateClient := logic.NewIntegrationAccountCertificatesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountCertificateClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountMapClient := integrationaccountmaps.NewIntegrationAccountMapsClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountMapClient := logic.NewIntegrationAccountMapsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountMapClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountPartnerClient := integrationaccountpartners.NewIntegrationAccountPartnersClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountPartnerClient := logic.NewIntegrationAccountPartnersClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountPartnerClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountSchemaClient := integrationaccountschemas.NewIntegrationAccountSchemasClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountSchemaClient := logic.NewIntegrationAccountSchemasClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountSchemaClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationAccountSessionClient := integrationaccountsessions.NewIntegrationAccountSessionsClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationAccountSessionClient := logic.NewIntegrationAccountSessionsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationAccountSessionClient.Client, o.ResourceManagerAuthorizer)
 
-	integrationServiceEnvironmentClient := integrationserviceenvironments.NewIntegrationServiceEnvironmentsClientWithBaseURI(o.ResourceManagerEndpoint)
+	integrationServiceEnvironmentClient := logic.NewIntegrationServiceEnvironmentsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&integrationServiceEnvironmentClient.Client, o.ResourceManagerAuthorizer)
 
-	workflowClient := workflows.NewWorkflowsClientWithBaseURI(o.ResourceManagerEndpoint)
+	workflowClient := logic.NewWorkflowsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&workflowClient.Client, o.ResourceManagerAuthorizer)
 
-	triggersClient := workflowtriggers.NewWorkflowTriggersClientWithBaseURI(o.ResourceManagerEndpoint)
+	triggersClient := logic.NewWorkflowTriggersClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&triggersClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{

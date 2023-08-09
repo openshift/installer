@@ -1,18 +1,17 @@
 package network
 
 import (
-	"encoding/base64"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func dataSourcePublicIPs() *pluginsdk.Resource {
@@ -98,20 +97,17 @@ func dataSourcePublicIPsRead(d *pluginsdk.ResourceData, meta interface{}) error 
 		return fmt.Errorf("listing Public IP Addresses in the Resource Group %q: %v", resourceGroup, err)
 	}
 
-	prefix := d.Get("name_prefix").(string)
-	attachmentStatus, attachmentStatusOk := d.GetOk("attachment_status")
-	allocationType := d.Get("allocation_type").(string)
-
 	filteredIPAddresses := make([]network.PublicIPAddress, 0)
 	for _, element := range resp.Values() {
 		nicIsAttached := element.IPConfiguration != nil || element.NatGateway != nil
 
-		if prefix != "" {
+		if prefix := d.Get("name_prefix").(string); prefix != "" {
 			if !strings.HasPrefix(*element.Name, prefix) {
 				continue
 			}
 		}
 
+		attachmentStatus, attachmentStatusOk := d.GetOk("attachment_status")
 		if attachmentStatusOk && attachmentStatus.(string) == "Attached" && !nicIsAttached {
 			continue
 		}
@@ -119,7 +115,7 @@ func dataSourcePublicIPsRead(d *pluginsdk.ResourceData, meta interface{}) error 
 			continue
 		}
 
-		if allocationType != "" {
+		if allocationType := d.Get("allocation_type").(string); allocationType != "" {
 			allocation := network.IPAllocationMethod(allocationType)
 			if element.PublicIPAllocationMethod != allocation {
 				continue
@@ -129,8 +125,7 @@ func dataSourcePublicIPsRead(d *pluginsdk.ResourceData, meta interface{}) error 
 		filteredIPAddresses = append(filteredIPAddresses, element)
 	}
 
-	id := fmt.Sprintf("networkPublicIPs/resourceGroup/%s/namePrefix=%s;attachmentStatus=%s;allocationType=%s", resourceGroup, prefix, attachmentStatus, allocationType)
-	d.SetId(base64.StdEncoding.EncodeToString([]byte(id)))
+	d.SetId(time.Now().UTC().String())
 
 	results := flattenDataSourcePublicIPs(filteredIPAddresses)
 	if err := d.Set("public_ips", results); err != nil {

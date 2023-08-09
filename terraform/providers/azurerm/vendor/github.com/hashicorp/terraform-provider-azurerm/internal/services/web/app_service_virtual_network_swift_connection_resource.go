@@ -4,18 +4,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web" // nolint: staticcheck
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
+	azureNetwork "github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
+	"github.com/Azure/azure-sdk-for-go/services/web/mgmt/2021-02-01/web"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/network"
+	networkParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/parse"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/web/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	azureNetwork "github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourceAppServiceVirtualNetworkSwiftConnection() *pluginsdk.Resource {
@@ -42,12 +42,12 @@ func resourceAppServiceVirtualNetworkSwiftConnection() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validate.AppServiceID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 			"subnet_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: commonids.ValidateSubnetID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 		},
 	}
@@ -65,14 +65,14 @@ func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.Re
 		return fmt.Errorf("parsing App Service Resource ID %q", appID)
 	}
 
-	subnetID, err := commonids.ParseSubnetID(d.Get("subnet_id").(string))
+	subnetID, err := networkParse.SubnetID(d.Get("subnet_id").(string))
 	if err != nil {
 		return fmt.Errorf("parsing Subnet Resource ID %q", subnetID)
 	}
 
 	resourceGroup := appID.ResourceGroup
 	name := appID.SiteName
-	subnetName := subnetID.SubnetName
+	subnetName := subnetID.Name
 	virtualNetworkName := subnetID.VirtualNetworkName
 
 	if d.IsNewResource() {
@@ -124,7 +124,7 @@ func resourceAppServiceVirtualNetworkSwiftConnectionCreateUpdate(d *pluginsdk.Re
 		return fmt.Errorf("waiting for provisioning state of subnet for App Service VNet association between %q (Resource Group %q) and Virtual Network %q: %s", name, resourceGroup, virtualNetworkName, err)
 	}
 
-	vnetId := commonids.NewVirtualNetworkID(subnetID.SubscriptionId, subnetID.ResourceGroupName, subnetID.VirtualNetworkName)
+	vnetId := networkParse.NewVirtualNetworkID(subnetID.SubscriptionId, subnetID.ResourceGroup, subnetID.VirtualNetworkName)
 	vnetStateConf := &pluginsdk.StateChangeConf{
 		Pending:    []string{string(azureNetwork.ProvisioningStateUpdating)},
 		Target:     []string{string(azureNetwork.ProvisioningStateSucceeded)},
@@ -196,11 +196,11 @@ func resourceAppServiceVirtualNetworkSwiftConnectionDelete(d *pluginsdk.Resource
 		return err
 	}
 
-	subnetID, err := commonids.ParseSubnetID(d.Get("subnet_id").(string))
+	subnetID, err := networkParse.SubnetID(d.Get("subnet_id").(string))
 	if err != nil {
 		return fmt.Errorf("parsing Subnet Resource ID %q", subnetID)
 	}
-	subnetName := subnetID.SubnetName
+	subnetName := subnetID.Name
 	virtualNetworkName := subnetID.VirtualNetworkName
 
 	locks.ByName(virtualNetworkName, network.VirtualNetworkResourceName)

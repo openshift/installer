@@ -1,13 +1,12 @@
 package network
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
@@ -18,13 +17,7 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
-
-var skuWeight = map[string]int8{
-	"Basic":    1,
-	"Standard": 2,
-}
 
 func resourceBastionHost() *pluginsdk.Resource {
 	return &pluginsdk.Resource{
@@ -53,9 +46,9 @@ func resourceBastionHost() *pluginsdk.Resource {
 				ValidateFunc: validate.BastionHostName,
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"copy_paste_enabled": {
 				Type:     pluginsdk.TypeBool,
@@ -72,7 +65,7 @@ func resourceBastionHost() *pluginsdk.Resource {
 			"ip_configuration": {
 				Type:     pluginsdk.TypeList,
 				ForceNew: true,
-				Required: true,
+				Optional: true,
 				MaxItems: 1,
 				Elem: &pluginsdk.Resource{
 					Schema: map[string]*pluginsdk.Schema{
@@ -92,7 +85,7 @@ func resourceBastionHost() *pluginsdk.Resource {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: validate.PublicIpAddressID,
+							ValidateFunc: azure.ValidateResourceID,
 						},
 					},
 				},
@@ -140,16 +133,6 @@ func resourceBastionHost() *pluginsdk.Resource {
 
 			"tags": tags.Schema(),
 		},
-
-		CustomizeDiff: pluginsdk.CustomDiffWithAll(
-			pluginsdk.ForceNewIfChange("sku", func(ctx context.Context, old, new, meta interface{}) bool {
-				// downgrade the SKU is not supported, recreate the resource
-				if old.(string) != "" && new.(string) != "" {
-					return skuWeight[old.(string)] > skuWeight[new.(string)]
-				}
-				return false
-			}),
-		),
 	}
 }
 

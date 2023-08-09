@@ -1,5 +1,3 @@
-Copyright (c) 2018 HashiCorp, Inc.
-
 Mozilla Public License, version 2.0
 
 1. Definitions

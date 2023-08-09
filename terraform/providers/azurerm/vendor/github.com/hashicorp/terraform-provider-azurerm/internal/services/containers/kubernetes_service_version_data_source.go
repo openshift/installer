@@ -6,15 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/pointer"
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/containerservice/2019-08-01/containerservices"
 	"github.com/hashicorp/go-version"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/containers/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
+	"github.com/hashicorp/terraform-provider-azurerm/utils"
 )
 
 func dataSourceKubernetesServiceVersions() *pluginsdk.Resource {
@@ -26,7 +24,7 @@ func dataSourceKubernetesServiceVersions() *pluginsdk.Resource {
 		},
 
 		Schema: map[string]*pluginsdk.Schema{
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"version_prefix": {
 				Type:     pluginsdk.TypeString,
@@ -59,12 +57,11 @@ func dataSourceKubernetesServiceVersionsRead(d *pluginsdk.ResourceData, meta int
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := containerservices.NewLocationID(subscriptionId, location.Normalize(d.Get("location").(string)))
-	options := containerservices.DefaultListOrchestratorsOperationOptions()
-	options.ResourceType = pointer.To("managedClusters")
-	listResp, err := client.ListOrchestrators(ctx, id, options)
+	id := parse.NewServiceVersionID(subscriptionId, azure.NormalizeLocation(d.Get("location").(string)))
+
+	listResp, err := client.ListOrchestrators(ctx, id.LocationName, "managedClusters")
 	if err != nil {
-		if response.WasNotFound(listResp.HttpResponse) {
+		if utils.ResponseWasNotFound(listResp.Response) {
 			return fmt.Errorf("Error: No Kubernetes Service versions found for location %q", id.LocationName)
 		}
 		return fmt.Errorf("retrieving Kubernetes Versions in %q: %+v", id.LocationName, err)
@@ -79,43 +76,49 @@ func dataSourceKubernetesServiceVersionsRead(d *pluginsdk.ResourceData, meta int
 	versionPrefix := d.Get("version_prefix").(string)
 	includePreview := d.Get("include_preview").(bool)
 
-	if model := listResp.Model; model != nil {
-		for _, rawV := range model.Properties.Orchestrators {
-			isPreview := false
-			orchestratorType := rawV.OrchestratorType
-			kubeVersion := rawV.OrchestratorVersion
+	if props := listResp.OrchestratorVersionProfileProperties; props != nil {
+		if orchestrators := props.Orchestrators; orchestrators != nil {
+			for _, rawV := range *orchestrators {
+				if rawV.OrchestratorType == nil || rawV.OrchestratorVersion == nil {
+					continue
+				}
 
-			if rawV.IsPreview == nil {
-				log.Printf("[DEBUG] IsPreview is nil")
-			} else {
-				isPreview = *rawV.IsPreview
-				log.Printf("[DEBUG] IsPreview is %t", isPreview)
-			}
+				isPreview := false
+				orchestratorType := *rawV.OrchestratorType
+				kubeVersion := *rawV.OrchestratorVersion
 
-			if !strings.EqualFold(orchestratorType, "Kubernetes") {
-				log.Printf("[DEBUG] Orchestrator %q was not Kubernetes", orchestratorType)
-				continue
-			}
+				if rawV.IsPreview == nil {
+					log.Printf("[DEBUG] IsPreview is nil")
+				} else {
+					isPreview = *rawV.IsPreview
+					log.Printf("[DEBUG] IsPreview is %t", isPreview)
+				}
 
-			if versionPrefix != "" && !strings.HasPrefix(kubeVersion, versionPrefix) {
-				log.Printf("[DEBUG] Version %q doesn't match the prefix %q", kubeVersion, versionPrefix)
-				continue
-			}
+				if !strings.EqualFold(orchestratorType, "Kubernetes") {
+					log.Printf("[DEBUG] Orchestrator %q was not Kubernetes", orchestratorType)
+					continue
+				}
 
-			if isPreview && !includePreview {
-				log.Printf("[DEBUG] Orchestrator %q is a preview release, ignoring", kubeVersion)
-				continue
-			}
+				if versionPrefix != "" && !strings.HasPrefix(kubeVersion, versionPrefix) {
+					log.Printf("[DEBUG] Version %q doesn't match the prefix %q", kubeVersion, versionPrefix)
+					continue
+				}
 
-			versions = append(versions, kubeVersion)
-			v, err := version.NewVersion(kubeVersion)
-			if err != nil {
-				log.Printf("[WARN] Cannot parse orchestrator version %q - skipping: %s", kubeVersion, err)
-				continue
-			}
+				if isPreview && !includePreview {
+					log.Printf("[DEBUG] Orchestrator %q is a preview release, ignoring", kubeVersion)
+					continue
+				}
 
-			if v.GreaterThan(lv) {
-				lv = v
+				versions = append(versions, kubeVersion)
+				v, err := version.NewVersion(kubeVersion)
+				if err != nil {
+					log.Printf("[WARN] Cannot parse orchestrator version %q - skipping: %s", kubeVersion, err)
+					continue
+				}
+
+				if v.GreaterThan(lv) {
+					lv = v
+				}
 			}
 		}
 	}

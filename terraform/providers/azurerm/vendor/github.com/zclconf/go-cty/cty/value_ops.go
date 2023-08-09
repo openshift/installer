@@ -33,17 +33,7 @@ func (val Value) GoString() string {
 		return "cty.DynamicVal"
 	}
 	if !val.IsKnown() {
-		rfn := val.v.(*unknownType).refinement
-		var suffix string
-		if rfn != nil {
-			calls := rfn.GoString()
-			if calls == ".NotNull()" {
-				suffix = ".RefineNotNull()"
-			} else {
-				suffix = ".Refine()" + rfn.GoString() + ".NewValue()"
-			}
-		}
-		return fmt.Sprintf("cty.UnknownVal(%#v)%s", val.ty, suffix)
+		return fmt.Sprintf("cty.UnknownVal(%#v)", val.ty)
 	}
 
 	// By the time we reach here we've dealt with all of the exceptions around
@@ -57,9 +47,6 @@ func (val Value) GoString() string {
 		}
 		return "cty.False"
 	case Number:
-		if f, ok := val.v.(big.Float); ok {
-			panic(fmt.Sprintf("number value contains big.Float value %s, rather than pointer to big.Float", f.Text('g', -1)))
-		}
 		fv := val.v.(*big.Float)
 		// We'll try to use NumberIntVal or NumberFloatVal if we can, since
 		// the fully-general initializer call is pretty ugly-looking.
@@ -135,38 +122,13 @@ func (val Value) Equals(other Value) Value {
 		return val.Equals(other).WithMarks(valMarks, otherMarks)
 	}
 
-	// Some easy cases with comparisons to null.
-	switch {
-	case val.IsNull() && definitelyNotNull(other):
-		return False
-	case other.IsNull() && definitelyNotNull(val):
-		return False
-	}
-	// If we have one known value and one unknown value then we may be
-	// able to quickly disqualify equality based on the range of the unknown
-	// value.
-	if val.IsKnown() && !other.IsKnown() {
-		otherRng := other.Range()
-		if ok := otherRng.Includes(val); ok.IsKnown() && ok.False() {
-			return False
-		}
-	} else if other.IsKnown() && !val.IsKnown() {
-		valRng := val.Range()
-		if ok := valRng.Includes(other); ok.IsKnown() && ok.False() {
-			return False
-		}
-	}
-
-	// We need to deal with unknown values before anything else with nulls
-	// because any unknown value that hasn't yet been refined as non-null
-	// could become null, and nulls of any types are equal to one another.
-	unknownResult := func() Value {
-		return UnknownVal(Bool).Refine().NotNull().NewValue()
-	}
+	// Start by handling Unknown values before considering types.
+	// This needs to be done since Null values are always equal regardless of
+	// type.
 	switch {
 	case !val.IsKnown() && !other.IsKnown():
 		// both unknown
-		return unknownResult()
+		return UnknownVal(Bool)
 	case val.IsKnown() && !other.IsKnown():
 		switch {
 		case val.IsNull(), other.ty.HasDynamicTypes():
@@ -174,13 +136,13 @@ func (val Value) Equals(other Value) Value {
 			// nulls of any type are equal.
 			// An unknown with a dynamic type compares as unknown, which we need
 			// to check before the type comparison below.
-			return unknownResult()
+			return UnknownVal(Bool)
 		case !val.ty.Equals(other.ty):
 			// There is no null comparison or dynamic types, so unequal types
 			// will never be equal.
 			return False
 		default:
-			return unknownResult()
+			return UnknownVal(Bool)
 		}
 	case other.IsKnown() && !val.IsKnown():
 		switch {
@@ -189,13 +151,13 @@ func (val Value) Equals(other Value) Value {
 			// nulls of any type are equal.
 			// An unknown with a dynamic type compares as unknown, which we need
 			// to check before the type comparison below.
-			return unknownResult()
+			return UnknownVal(Bool)
 		case !other.ty.Equals(val.ty):
 			// There's no null comparison or dynamic types, so unequal types
 			// will never be equal.
 			return False
 		default:
-			return unknownResult()
+			return UnknownVal(Bool)
 		}
 	}
 
@@ -217,7 +179,7 @@ func (val Value) Equals(other Value) Value {
 			return BoolVal(false)
 		}
 
-		return unknownResult()
+		return UnknownVal(Bool)
 	}
 
 	if !val.ty.Equals(other.ty) {
@@ -251,7 +213,7 @@ func (val Value) Equals(other Value) Value {
 			}
 			eq := lhs.Equals(rhs)
 			if !eq.IsKnown() {
-				return unknownResult()
+				return UnknownVal(Bool)
 			}
 			if eq.False() {
 				result = false
@@ -272,7 +234,7 @@ func (val Value) Equals(other Value) Value {
 			}
 			eq := lhs.Equals(rhs)
 			if !eq.IsKnown() {
-				return unknownResult()
+				return UnknownVal(Bool)
 			}
 			if eq.False() {
 				result = false
@@ -294,7 +256,7 @@ func (val Value) Equals(other Value) Value {
 				}
 				eq := lhs.Equals(rhs)
 				if !eq.IsKnown() {
-					return unknownResult()
+					return UnknownVal(Bool)
 				}
 				if eq.False() {
 					result = false
@@ -303,16 +265,16 @@ func (val Value) Equals(other Value) Value {
 			}
 		}
 	case ty.IsSetType():
-		s1 := val.v.(set.Set[interface{}])
-		s2 := other.v.(set.Set[interface{}])
+		s1 := val.v.(set.Set)
+		s2 := other.v.(set.Set)
 		equal := true
 
 		// Two sets are equal if all of their values are known and all values
 		// in one are also in the other.
 		for it := s1.Iterator(); it.Next(); {
 			rv := it.Value()
-			if _, unknown := rv.(*unknownType); unknown { // "*unknownType" is the internal representation of unknown-ness
-				return unknownResult()
+			if rv == unknown { // "unknown" is the internal representation of unknown-ness
+				return UnknownVal(Bool)
 			}
 			if !s2.Has(rv) {
 				equal = false
@@ -320,8 +282,8 @@ func (val Value) Equals(other Value) Value {
 		}
 		for it := s2.Iterator(); it.Next(); {
 			rv := it.Value()
-			if _, unknown := rv.(*unknownType); unknown { // "*unknownType" is the internal representation of unknown-ness
-				return unknownResult()
+			if rv == unknown { // "unknown" is the internal representation of unknown-ness
+				return UnknownVal(Bool)
 			}
 			if !s1.Has(rv) {
 				equal = false
@@ -348,7 +310,7 @@ func (val Value) Equals(other Value) Value {
 				}
 				eq := lhs.Equals(rhs)
 				if !eq.IsKnown() {
-					return unknownResult()
+					return UnknownVal(Bool)
 				}
 				if eq.False() {
 					result = false
@@ -428,17 +390,7 @@ func (val Value) RawEquals(other Value) bool {
 	other = other.unmarkForce()
 
 	if (!val.IsKnown()) && (!other.IsKnown()) {
-		// If either unknown value has refinements then they must match.
-		valRfn := val.v.(*unknownType).refinement
-		otherRfn := other.v.(*unknownType).refinement
-		switch {
-		case (valRfn == nil) != (otherRfn == nil):
-			return false
-		case valRfn != nil:
-			return valRfn.rawEqual(otherRfn)
-		default:
-			return true
-		}
+		return true
 	}
 	if (val.IsKnown() && !other.IsKnown()) || (other.IsKnown() && !val.IsKnown()) {
 		return false
@@ -593,8 +545,7 @@ func (val Value) Add(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Add, val.Range(), other.Range()))
-		return ret.RefineNotNull()
+		return *shortCircuit
 	}
 
 	ret := new(big.Float)
@@ -613,8 +564,7 @@ func (val Value) Subtract(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Subtract, val.Range(), other.Range()))
-		return ret.RefineNotNull()
+		return *shortCircuit
 	}
 
 	return val.Add(other.Negate())
@@ -630,7 +580,7 @@ func (val Value) Negate() Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	ret := new(big.Float).Neg(val.v.(*big.Float))
@@ -647,14 +597,8 @@ func (val Value) Multiply(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
-		// If either value is exactly zero then the result must either be
-		// zero or an error.
-		if val == Zero || other == Zero {
-			return Zero
-		}
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		ret := shortCircuit.RefineWith(numericRangeArithmetic(Value.Multiply, val.Range(), other.Range()))
-		return ret.RefineNotNull()
+		return *shortCircuit
 	}
 
 	// find the larger precision of the arguments
@@ -699,10 +643,7 @@ func (val Value) Divide(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		// TODO: We could potentially refine the range of the result here, but
-		// we don't right now because our division operation is not monotone
-		// if the denominator could potentially be zero.
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	ret := new(big.Float)
@@ -734,7 +675,7 @@ func (val Value) Modulo(other Value) Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val, other); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	// We cheat a bit here with infinities, just abusing the Multiply operation
@@ -772,7 +713,7 @@ func (val Value) Absolute() Value {
 
 	if shortCircuit := mustTypeCheck(Number, Number, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Number)
-		return (*shortCircuit).Refine().NotNull().NumberRangeInclusive(Zero, UnknownVal(Number)).NewValue()
+		return *shortCircuit
 	}
 
 	ret := (&big.Float{}).Abs(val.v.(*big.Float))
@@ -945,23 +886,23 @@ func (val Value) HasIndex(key Value) Value {
 	}
 
 	if val.ty == DynamicPseudoType {
-		return UnknownVal(Bool).RefineNotNull()
+		return UnknownVal(Bool)
 	}
 
 	switch {
 	case val.Type().IsListType():
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 
 		if key.Type() != Number {
 			return False
 		}
 		if !key.IsKnown() {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 		if !val.IsKnown() {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -972,17 +913,17 @@ func (val Value) HasIndex(key Value) Value {
 		return BoolVal(int(index) < len(val.v.([]interface{})) && index >= 0)
 	case val.Type().IsMapType():
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 
 		if key.Type() != String {
 			return False
 		}
 		if !key.IsKnown() {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 		if !val.IsKnown() {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 
 		keyStr := key.v.(string)
@@ -991,14 +932,14 @@ func (val Value) HasIndex(key Value) Value {
 		return BoolVal(exists)
 	case val.Type().IsTupleType():
 		if key.Type() == DynamicPseudoType {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 
 		if key.Type() != Number {
 			return False
 		}
 		if !key.IsKnown() {
-			return UnknownVal(Bool).RefineNotNull()
+			return UnknownVal(Bool)
 		}
 
 		index, accuracy := key.v.(*big.Float).Int64()
@@ -1033,16 +974,16 @@ func (val Value) HasElement(elem Value) Value {
 		panic("not a set type")
 	}
 	if !val.IsKnown() || !elem.IsKnown() {
-		return UnknownVal(Bool).RefineNotNull()
+		return UnknownVal(Bool)
 	}
 	if val.IsNull() {
-		panic("can't call HasElement on a null value")
+		panic("can't call HasElement on a nil value")
 	}
 	if !ty.ElementType().Equals(elem.Type()) {
 		return False
 	}
 
-	s := val.v.(set.Set[interface{}])
+	s := val.v.(set.Set)
 	return BoolVal(s.Has(elem.v))
 }
 
@@ -1068,10 +1009,7 @@ func (val Value) Length() Value {
 	}
 
 	if !val.IsKnown() {
-		// If the whole collection isn't known then the length isn't known
-		// either, but we can still put some bounds on the range of the result.
-		rng := val.Range()
-		return UnknownVal(Number).RefineWith(valueRefineLengthResult(rng))
+		return UnknownVal(Number)
 	}
 	if val.Type().IsSetType() {
 		// The Length rules are a little different for sets because if any
@@ -1079,7 +1017,7 @@ func (val Value) Length() Value {
 		// may or may not be equal to other elements in the set, and thus they
 		// may or may not coalesce with other elements and produce fewer
 		// items in the resulting set.
-		storeLength := int64(val.v.(set.Set[interface{}]).Length())
+		storeLength := int64(val.v.(set.Set).Length())
 		if storeLength == 1 || val.IsWhollyKnown() {
 			// If our set is wholly known then we know its length.
 			//
@@ -1089,24 +1027,11 @@ func (val Value) Length() Value {
 			// unknown value cannot represent more than one known value.
 			return NumberIntVal(storeLength)
 		}
-		// Otherwise, we cannot predict the length exactly but we can at
-		// least constrain both bounds of its range, because value coalescing
-		// can only ever reduce the number of elements in the set.
-		return UnknownVal(Number).Refine().NotNull().NumberRangeInclusive(NumberIntVal(1), NumberIntVal(storeLength)).NewValue()
+		// Otherwise, we cannot predict the length.
+		return UnknownVal(Number)
 	}
 
 	return NumberIntVal(int64(val.LengthInt()))
-}
-
-func valueRefineLengthResult(collRng ValueRange) func(*RefinementBuilder) *RefinementBuilder {
-	return func(b *RefinementBuilder) *RefinementBuilder {
-		return b.
-			NotNull().
-			NumberRangeInclusive(
-				NumberIntVal(int64(collRng.LengthLowerBound())),
-				NumberIntVal(int64(collRng.LengthUpperBound())),
-			)
-	}
 }
 
 // LengthInt is like Length except it returns an int. It has the same behavior
@@ -1153,7 +1078,7 @@ func (val Value) LengthInt() int {
 		// compatibility with callers that were relying on LengthInt rather
 		// than calling Length. Instead of panicking when a set contains an
 		// unknown value, LengthInt returns the largest possible length.
-		return val.v.(set.Set[interface{}]).Length()
+		return val.v.(set.Set).Length()
 
 	case val.ty.IsMapType():
 		return len(val.v.(map[string]interface{}))
@@ -1239,7 +1164,7 @@ func (val Value) Not() Value {
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val); shortCircuit != nil {
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	return BoolVal(!val.v.(bool))
@@ -1255,14 +1180,8 @@ func (val Value) And(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
-		// If either value is known to be exactly False then it doesn't
-		// matter what the other value is, because the final result must
-		// either be False or an error.
-		if val == False || other == False {
-			return False
-		}
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	return BoolVal(val.v.(bool) && other.v.(bool))
@@ -1278,14 +1197,8 @@ func (val Value) Or(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Bool, Bool, val, other); shortCircuit != nil {
-		// If either value is known to be exactly True then it doesn't
-		// matter what the other value is, because the final result must
-		// either be True or an error.
-		if val == True || other == True {
-			return True
-		}
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	return BoolVal(val.v.(bool) || other.v.(bool))
@@ -1301,30 +1214,8 @@ func (val Value) LessThan(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
-		// We might be able to return a known answer even with unknown inputs.
-		// FIXME: This is more conservative than it needs to be, because it
-		// treats all bounds as exclusive bounds.
-		valRng := val.Range()
-		otherRng := other.Range()
-		if valRng.TypeConstraint() == Number && other.Range().TypeConstraint() == Number {
-			valMax, _ := valRng.NumberUpperBound()
-			otherMin, _ := otherRng.NumberLowerBound()
-			if valMax.IsKnown() && otherMin.IsKnown() {
-				if r := valMax.LessThan(otherMin); r.True() {
-					return True
-				}
-			}
-			valMin, _ := valRng.NumberLowerBound()
-			otherMax, _ := otherRng.NumberUpperBound()
-			if valMin.IsKnown() && otherMax.IsKnown() {
-				if r := valMin.GreaterThan(otherMax); r.True() {
-					return False
-				}
-			}
-		}
-
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	return BoolVal(val.v.(*big.Float).Cmp(other.v.(*big.Float)) < 0)
@@ -1340,30 +1231,8 @@ func (val Value) GreaterThan(other Value) Value {
 	}
 
 	if shortCircuit := mustTypeCheck(Number, Bool, val, other); shortCircuit != nil {
-		// We might be able to return a known answer even with unknown inputs.
-		// FIXME: This is more conservative than it needs to be, because it
-		// treats all bounds as exclusive bounds.
-		valRng := val.Range()
-		otherRng := other.Range()
-		if valRng.TypeConstraint() == Number && other.Range().TypeConstraint() == Number {
-			valMin, _ := valRng.NumberLowerBound()
-			otherMax, _ := otherRng.NumberUpperBound()
-			if valMin.IsKnown() && otherMax.IsKnown() {
-				if r := valMin.GreaterThan(otherMax); r.True() {
-					return True
-				}
-			}
-			valMax, _ := valRng.NumberUpperBound()
-			otherMin, _ := otherRng.NumberLowerBound()
-			if valMax.IsKnown() && otherMin.IsKnown() {
-				if r := valMax.LessThan(otherMin); r.True() {
-					return False
-				}
-			}
-		}
-
 		shortCircuit = forceShortCircuitType(shortCircuit, Bool)
-		return (*shortCircuit).RefineNotNull()
+		return *shortCircuit
 	}
 
 	return BoolVal(val.v.(*big.Float).Cmp(other.v.(*big.Float)) > 0)

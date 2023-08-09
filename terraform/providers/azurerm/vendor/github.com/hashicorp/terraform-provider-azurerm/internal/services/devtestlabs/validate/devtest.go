@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualnetworks"
+	"github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2018-09-15/dtl"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
@@ -51,8 +51,8 @@ func DevTestVirtualMachineName(maxLength int) pluginsdk.SchemaValidateFunc {
 
 func DevTestVirtualNetworkUsagePermissionType() pluginsdk.SchemaValidateFunc {
 	return validation.StringInSlice([]string{
-		string(virtualnetworks.UsagePermissionTypeAllow),
-		string(virtualnetworks.UsagePermissionTypeDefault),
-		string(virtualnetworks.UsagePermissionTypeDeny),
+		string(dtl.Allow),
+		string(dtl.Default),
+		string(dtl.Deny),
 	}, false)
 }

@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 const virtualHubResourceName = "azurerm_virtual_hub"
@@ -51,9 +50,9 @@ func resourceVirtualHub() *pluginsdk.Resource {
 				ValidateFunc: networkValidate.VirtualHubName,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"address_prefix": {
 				Type:         pluginsdk.TypeString,
@@ -76,7 +75,7 @@ func resourceVirtualHub() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: networkValidate.VirtualWanID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"virtual_router_asn": {
@@ -116,27 +115,9 @@ func resourceVirtualHub() *pluginsdk.Resource {
 
 			"tags": tags.Schema(),
 
-			"hub_routing_preference": {
-				Type:     pluginsdk.TypeString,
-				Optional: true,
-				Default:  string(network.HubRoutingPreferenceExpressRoute),
-				ValidateFunc: validation.StringInSlice([]string{
-					string(network.HubRoutingPreferenceExpressRoute),
-					string(network.HubRoutingPreferenceVpnGateway),
-					string(network.HubRoutingPreferenceASPath),
-				}, false),
-			},
-
 			"default_route_table_id": {
 				Type:     pluginsdk.TypeString,
 				Computed: true,
-			},
-
-			"virtual_router_auto_scale_min_capacity": {
-				Type:         pluginsdk.TypeInt,
-				Optional:     true,
-				ValidateFunc: validation.IntAtLeast(2),
-				Default:      2,
 			},
 		},
 	}
@@ -173,13 +154,10 @@ func resourceVirtualHubCreateUpdate(d *pluginsdk.ResourceData, meta interface{})
 	route := d.Get("route").(*pluginsdk.Set).List()
 	t := d.Get("tags").(map[string]interface{})
 
-	hubRoutingPreference := d.Get("hub_routing_preference").(string)
-
 	parameters := network.VirtualHub{
 		Location: utils.String(location),
 		VirtualHubProperties: &network.VirtualHubProperties{
-			RouteTable:           expandVirtualHubRoute(route),
-			HubRoutingPreference: network.HubRoutingPreference(hubRoutingPreference),
+			RouteTable: expandVirtualHubRoute(route),
 		},
 		Tags: tags.Expand(t),
 	}
@@ -195,12 +173,6 @@ func resourceVirtualHubCreateUpdate(d *pluginsdk.ResourceData, meta interface{})
 	if v, ok := d.GetOk("virtual_wan_id"); ok {
 		parameters.VirtualHubProperties.VirtualWan = &network.SubResource{
 			ID: utils.String(v.(string)),
-		}
-	}
-
-	if v, ok := d.GetOk("virtual_router_auto_scale_min_capacity"); ok {
-		parameters.VirtualHubProperties.VirtualRouterAutoScaleConfiguration = &network.VirtualRouterAutoScaleConfiguration{
-			MinCapacity: utils.Int32(int32(v.(int))),
 		}
 	}
 
@@ -270,8 +242,6 @@ func resourceVirtualHubRead(d *pluginsdk.ResourceData, meta interface{}) error {
 			return fmt.Errorf("setting `route`: %+v", err)
 		}
 
-		d.Set("hub_routing_preference", props.HubRoutingPreference)
-
 		var virtualWanId *string
 		if props.VirtualWan != nil {
 			virtualWanId = props.VirtualWan.ID
@@ -289,8 +259,6 @@ func resourceVirtualHubRead(d *pluginsdk.ResourceData, meta interface{}) error {
 			virtualRouterIps = props.VirtualRouterIps
 		}
 		d.Set("virtual_router_ips", virtualRouterIps)
-
-		d.Set("virtual_router_auto_scale_min_capacity", props.VirtualRouterAutoScaleConfiguration.MinCapacity)
 	}
 
 	defaultRouteTable := parse.NewHubRouteTableID(id.SubscriptionId, id.ResourceGroup, id.Name, "defaultRouteTable")

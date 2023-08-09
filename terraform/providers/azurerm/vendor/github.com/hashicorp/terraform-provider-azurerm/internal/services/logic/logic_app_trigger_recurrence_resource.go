@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflows"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/logic/2019-05-01/workflowtriggers"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/logic/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -20,7 +20,7 @@ func resourceLogicAppTriggerRecurrence() *pluginsdk.Resource {
 		Delete: resourceLogicAppTriggerRecurrenceDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := workflowtriggers.ParseTriggerID(id)
+			_, err := parse.TriggerID(id)
 			return err
 		}),
 
@@ -42,7 +42,7 @@ func resourceLogicAppTriggerRecurrence() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: workflows.ValidateWorkflowID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"frequency": {
@@ -146,12 +146,12 @@ func resourceLogicAppTriggerRecurrenceCreateUpdate(d *pluginsdk.ResourceData, me
 		trigger["recurrence"].(map[string]interface{})["schedule"] = expandLogicAppTriggerRecurrenceSchedule(v.([]interface{}))
 	}
 
-	workflowId, err := workflows.ParseWorkflowID(d.Get("logic_app_id").(string))
+	workflowId, err := parse.WorkflowID(d.Get("logic_app_id").(string))
 	if err != nil {
 		return err
 	}
 
-	id := workflowtriggers.NewTriggerID(workflowId.SubscriptionId, workflowId.ResourceGroupName, workflowId.WorkflowName, d.Get("name").(string))
+	id := parse.NewTriggerID(workflowId.SubscriptionId, workflowId.ResourceGroup, workflowId.Name, d.Get("name").(string))
 
 	if err := resourceLogicAppTriggerUpdate(d, meta, *workflowId, id, trigger, "azurerm_logic_app_trigger_recurrence"); err != nil {
 		return err
@@ -161,28 +161,26 @@ func resourceLogicAppTriggerRecurrenceCreateUpdate(d *pluginsdk.ResourceData, me
 }
 
 func resourceLogicAppTriggerRecurrenceRead(d *pluginsdk.ResourceData, meta interface{}) error {
-	id, err := workflowtriggers.ParseTriggerID(d.Id())
+	id, err := parse.TriggerID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroupName, id.WorkflowName)
-
-	t, app, err := retrieveLogicAppTrigger(d, meta, workflowId, id.TriggerName)
+	t, app, err := retrieveLogicAppTrigger(d, meta, id.ResourceGroup, id.WorkflowName, id.Name)
 	if err != nil {
 		return err
 	}
 
 	if t == nil {
-		log.Printf("[DEBUG] Logic App %q (Resource Group %q) does not contain %s - removing from state", id.WorkflowName, id.ResourceGroupName, id.ID())
+		log.Printf("[DEBUG] Logic App %q (Resource Group %q) does not contain Trigger %q - removing from state", id.WorkflowName, id.ResourceGroup, id.Name)
 		d.SetId("")
 		return nil
 	}
 
 	trigger := *t
 
-	d.Set("name", id.TriggerName)
-	d.Set("logic_app_id", app.Id)
+	d.Set("name", id.Name)
+	d.Set("logic_app_id", app.ID)
 
 	v := trigger["recurrence"]
 	if v == nil {
@@ -218,14 +216,12 @@ func resourceLogicAppTriggerRecurrenceRead(d *pluginsdk.ResourceData, meta inter
 }
 
 func resourceLogicAppTriggerRecurrenceDelete(d *pluginsdk.ResourceData, meta interface{}) error {
-	id, err := workflowtriggers.ParseTriggerID(d.Id())
+	id, err := parse.TriggerID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	workflowId := workflows.NewWorkflowID(id.SubscriptionId, id.ResourceGroupName, id.WorkflowName)
-
-	err = resourceLogicAppTriggerRemove(d, meta, workflowId, id.TriggerName)
+	err = resourceLogicAppTriggerRemove(d, meta, id.ResourceGroup, id.WorkflowName, id.Name)
 	if err != nil {
 		return fmt.Errorf("removing Trigger %s: %+v", id, err)
 	}

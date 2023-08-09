@@ -1,23 +1,18 @@
 package monitor
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/preview/monitor/mgmt/2021-09-01-preview/insights"
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/location"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/automation/2021-06-22/automationaccount"
 	"github.com/hashicorp/go-azure-sdk/resource-manager/eventhub/2021-11-01/eventhubs"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/insights/2023-01-01/actiongroupsapis"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/features"
-	appServiceValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/appservice/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/monitor/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/monitor/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/monitor/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -27,14 +22,14 @@ import (
 )
 
 func resourceMonitorActionGroup() *pluginsdk.Resource {
-	resource := &pluginsdk.Resource{
+	return &pluginsdk.Resource{
 		Create: resourceMonitorActionGroupCreateUpdate,
 		Read:   resourceMonitorActionGroupRead,
 		Update: resourceMonitorActionGroupCreateUpdate,
 		Delete: resourceMonitorActionGroupDelete,
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := actiongroupsapis.ParseActionGroupID(id)
+			_, err := parse.ActionGroupID(id)
 			return err
 		}),
 
@@ -58,22 +53,7 @@ func resourceMonitorActionGroup() *pluginsdk.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
-
-			"location": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "global",
-				ValidateFunc: validation.Any(
-					location.EnhancedValidate,
-					validation.StringInSlice([]string{
-						"global",
-					}, false),
-				),
-				StateFunc:        location.StateFunc,
-				DiffSuppressFunc: location.DiffSuppressFunc,
-			},
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"short_name": {
 				Type:         pluginsdk.TypeString,
@@ -254,7 +234,7 @@ func resourceMonitorActionGroup() *pluginsdk.Resource {
 						"automation_account_id": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: automationaccount.ValidateAutomationAccountID,
+							ValidateFunc: azure.ValidateResourceID,
 						},
 						"runbook_name": {
 							Type:         pluginsdk.TypeString,
@@ -346,11 +326,10 @@ func resourceMonitorActionGroup() *pluginsdk.Resource {
 							Required:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
-						// TODO: this should be `_id` and not `_resource_id`
 						"function_app_resource_id": {
 							Type:         pluginsdk.TypeString,
 							Required:     true,
-							ValidateFunc: appServiceValidate.FunctionAppID,
+							ValidateFunc: azure.ValidateResourceID,
 						},
 						"function_name": {
 							Type:         pluginsdk.TypeString,
@@ -393,122 +372,57 @@ func resourceMonitorActionGroup() *pluginsdk.Resource {
 				},
 			},
 
+			"event_hub_receiver": {
+				Type:     pluginsdk.TypeList,
+				Optional: true,
+				Elem: &pluginsdk.Resource{
+					Schema: map[string]*pluginsdk.Schema{
+						"name": {
+							Type:         pluginsdk.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
+						},
+						"event_hub_id": {
+							Type:         pluginsdk.TypeString,
+							Required:     true,
+							ValidateFunc: eventhubs.ValidateEventhubID,
+						},
+						"tenant_id": {
+							Type:         pluginsdk.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ValidateFunc: validation.IsUUID,
+						},
+						"use_common_alert_schema": {
+							Type:     pluginsdk.TypeBool,
+							Optional: true,
+						},
+					},
+				},
+			},
 			"tags": tags.Schema(),
 		},
 	}
-
-	if !features.FourPointOhBeta() {
-		resource.Schema["event_hub_receiver"] = &pluginsdk.Schema{
-			Type:     pluginsdk.TypeList,
-			Optional: true,
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*pluginsdk.Schema{
-					"name": {
-						Type:         pluginsdk.TypeString,
-						Required:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-					"event_hub_id": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: eventhubs.ValidateEventhubID,
-						Deprecated:   "This property is deprecated and will be removed in version 4.0 of the provider, please use 'event_hub_name' and 'event_hub_namespace' instead.",
-					},
-					"event_hub_name": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-					"event_hub_namespace": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-					"tenant_id": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: validation.IsUUID,
-					},
-					"use_common_alert_schema": {
-						Type:     pluginsdk.TypeBool,
-						Optional: true,
-					},
-					"subscription_id": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: validation.IsUUID,
-					},
-				},
-			},
-		}
-	} else {
-		resource.Schema["event_hub_receiver"] = &pluginsdk.Schema{
-			Type:     pluginsdk.TypeList,
-			Optional: true,
-			Elem: &pluginsdk.Resource{
-				Schema: map[string]*pluginsdk.Schema{
-					"name": {
-						Type:         pluginsdk.TypeString,
-						Required:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-					"event_hub_name": {
-						Type:         pluginsdk.TypeString,
-						Required:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-					"event_hub_namespace": {
-						Type:         pluginsdk.TypeString,
-						Required:     true,
-						ValidateFunc: validation.StringIsNotEmpty,
-					},
-					"tenant_id": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: validation.IsUUID,
-					},
-					"use_common_alert_schema": {
-						Type:     pluginsdk.TypeBool,
-						Optional: true,
-					},
-					"subscription_id": {
-						Type:         pluginsdk.TypeString,
-						Optional:     true,
-						Computed:     true,
-						ValidateFunc: validation.IsUUID,
-					},
-				},
-			},
-		}
-	}
-	return resource
 }
 
 func resourceMonitorActionGroupCreateUpdate(d *pluginsdk.ResourceData, meta interface{}) error {
 	client := meta.(*clients.Client).Monitor.ActionGroupsClient
 	tenantId := meta.(*clients.Client).Account.TenantId
 	subscriptionId := meta.(*clients.Client).Account.SubscriptionId
-	location := location.Normalize(d.Get("location").(string))
 	ctx, cancel := timeouts.ForCreateUpdate(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id := actiongroupsapis.NewActionGroupID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
+	id := parse.NewActionGroupID(subscriptionId, d.Get("resource_group_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.ActionGroupsGet(ctx, id)
+		existing, err := client.Get(ctx, id.ResourceGroup, id.Name)
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing Monitor %s: %+v", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_monitor_action_group", id.ID())
 		}
 	}
@@ -526,27 +440,24 @@ func resourceMonitorActionGroupCreateUpdate(d *pluginsdk.ResourceData, meta inte
 	logicAppReceiversRaw := d.Get("logic_app_receiver").([]interface{})
 	azureFunctionReceiversRaw := d.Get("azure_function_receiver").([]interface{})
 	armRoleReceiversRaw := d.Get("arm_role_receiver").([]interface{})
+	eventHubReceiversRaw := d.Get("event_hub_receiver").([]interface{})
 
-	expandedEventHubReceiver, err := expandMonitorActionGroupEventHubReceiver(tenantId, subscriptionId, d)
-	if err != nil {
-		return err
-	}
-
-	expandedItsmReceiver, err := expandMonitorActionGroupItsmReceiver(itsmReceiversRaw)
+	expandedEventHubReceiver, err := expandMonitorActionGroupEventHubReceiver(tenantId, eventHubReceiversRaw)
 	if err != nil {
 		return err
 	}
 
 	t := d.Get("tags").(map[string]interface{})
+	expandedTags := tags.Expand(t)
 
-	parameters := actiongroupsapis.ActionGroupResource{
-		Location: location,
-		Properties: &actiongroupsapis.ActionGroup{
-			GroupShortName:             shortName,
-			Enabled:                    enabled,
+	parameters := insights.ActionGroupResource{
+		Location: utils.String(azure.NormalizeLocation("Global")),
+		ActionGroup: &insights.ActionGroup{
+			GroupShortName:             utils.String(shortName),
+			Enabled:                    utils.Bool(enabled),
 			EmailReceivers:             expandMonitorActionGroupEmailReceiver(emailReceiversRaw),
 			AzureAppPushReceivers:      expandMonitorActionGroupAzureAppPushReceiver(azureAppPushReceiversRaw),
-			ItsmReceivers:              expandedItsmReceiver,
+			ItsmReceivers:              expandMonitorActionGroupItsmReceiver(itsmReceiversRaw),
 			SmsReceivers:               expandMonitorActionGroupSmsReceiver(smsReceiversRaw),
 			WebhookReceivers:           expandMonitorActionGroupWebHookReceiver(tenantId, webhookReceiversRaw),
 			AutomationRunbookReceivers: expandMonitorActionGroupAutomationRunbookReceiver(automationRunbookReceiversRaw),
@@ -556,10 +467,10 @@ func resourceMonitorActionGroupCreateUpdate(d *pluginsdk.ResourceData, meta inte
 			ArmRoleReceivers:           expandMonitorActionGroupRoleReceiver(armRoleReceiversRaw),
 			EventHubReceivers:          expandedEventHubReceiver,
 		},
-		Tags: utils.ExpandPtrMapStringString(t),
+		Tags: expandedTags,
 	}
 
-	if _, err := client.ActionGroupsCreateOrUpdate(ctx, id, parameters); err != nil {
+	if _, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.Name, parameters); err != nil {
 		return fmt.Errorf("creating or updating %s: %+v", id, err)
 	}
 
@@ -573,78 +484,70 @@ func resourceMonitorActionGroupRead(d *pluginsdk.ResourceData, meta interface{})
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := actiongroupsapis.ParseActionGroupID(d.Id())
+	id, err := parse.ActionGroupID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.ActionGroupsGet(ctx, *id)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if response.WasNotFound(resp.HttpResponse) {
+		if response.WasNotFound(resp.Response.Response) {
 			d.SetId("")
 			return nil
 		}
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.ActionGroupName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("name", id.Name)
+	d.Set("resource_group_name", id.ResourceGroup)
 
-	if model := resp.Model; model != nil {
+	if group := resp.ActionGroup; group != nil {
+		d.Set("short_name", group.GroupShortName)
+		d.Set("enabled", group.Enabled)
 
-		d.Set("location", location.Normalize(model.Location))
-
-		if props := model.Properties; props != nil {
-			d.Set("short_name", props.GroupShortName)
-			d.Set("enabled", props.Enabled)
-
-			if err = d.Set("email_receiver", flattenMonitorActionGroupEmailReceiver(props.EmailReceivers)); err != nil {
-				return fmt.Errorf("setting `email_receiver`: %+v", err)
-			}
-
-			if err = d.Set("itsm_receiver", flattenMonitorActionGroupItsmReceiver(props.ItsmReceivers)); err != nil {
-				return fmt.Errorf("setting `itsm_receiver`: %+v", err)
-			}
-
-			if err = d.Set("azure_app_push_receiver", flattenMonitorActionGroupAzureAppPushReceiver(props.AzureAppPushReceivers)); err != nil {
-				return fmt.Errorf("setting `azure_app_push_receiver`: %+v", err)
-			}
-
-			if err = d.Set("sms_receiver", flattenMonitorActionGroupSmsReceiver(props.SmsReceivers)); err != nil {
-				return fmt.Errorf("setting `sms_receiver`: %+v", err)
-			}
-
-			if err = d.Set("webhook_receiver", flattenMonitorActionGroupWebHookReceiver(props.WebhookReceivers)); err != nil {
-				return fmt.Errorf("setting `webhook_receiver`: %+v", err)
-			}
-
-			if err = d.Set("automation_runbook_receiver", flattenMonitorActionGroupAutomationRunbookReceiver(props.AutomationRunbookReceivers)); err != nil {
-				return fmt.Errorf("setting `automation_runbook_receiver`: %+v", err)
-			}
-
-			if err = d.Set("voice_receiver", flattenMonitorActionGroupVoiceReceiver(props.VoiceReceivers)); err != nil {
-				return fmt.Errorf("setting `voice_receiver`: %+v", err)
-			}
-
-			if err = d.Set("logic_app_receiver", flattenMonitorActionGroupLogicAppReceiver(props.LogicAppReceivers)); err != nil {
-				return fmt.Errorf("setting `logic_app_receiver`: %+v", err)
-			}
-
-			if err = d.Set("azure_function_receiver", flattenMonitorActionGroupAzureFunctionReceiver(props.AzureFunctionReceivers)); err != nil {
-				return fmt.Errorf("setting `azure_function_receiver`: %+v", err)
-			}
-			if err = d.Set("arm_role_receiver", flattenMonitorActionGroupRoleReceiver(props.ArmRoleReceivers)); err != nil {
-				return fmt.Errorf("setting `arm_role_receiver`: %+v", err)
-			}
-			if err = d.Set("event_hub_receiver", flattenMonitorActionGroupEventHubReceiver(id.ResourceGroupName, props.EventHubReceivers)); err != nil {
-				return fmt.Errorf("setting `event_hub_receiver`: %+v", err)
-			}
+		if err = d.Set("email_receiver", flattenMonitorActionGroupEmailReceiver(group.EmailReceivers)); err != nil {
+			return fmt.Errorf("setting `email_receiver`: %+v", err)
 		}
-		if err = d.Set("tags", utils.FlattenPtrMapStringString(model.Tags)); err != nil {
-			return err
+
+		if err = d.Set("itsm_receiver", flattenMonitorActionGroupItsmReceiver(group.ItsmReceivers)); err != nil {
+			return fmt.Errorf("setting `itsm_receiver`: %+v", err)
+		}
+
+		if err = d.Set("azure_app_push_receiver", flattenMonitorActionGroupAzureAppPushReceiver(group.AzureAppPushReceivers)); err != nil {
+			return fmt.Errorf("setting `azure_app_push_receiver`: %+v", err)
+		}
+
+		if err = d.Set("sms_receiver", flattenMonitorActionGroupSmsReceiver(group.SmsReceivers)); err != nil {
+			return fmt.Errorf("setting `sms_receiver`: %+v", err)
+		}
+
+		if err = d.Set("webhook_receiver", flattenMonitorActionGroupWebHookReceiver(group.WebhookReceivers)); err != nil {
+			return fmt.Errorf("setting `webhook_receiver`: %+v", err)
+		}
+
+		if err = d.Set("automation_runbook_receiver", flattenMonitorActionGroupAutomationRunbookReceiver(group.AutomationRunbookReceivers)); err != nil {
+			return fmt.Errorf("setting `automation_runbook_receiver`: %+v", err)
+		}
+
+		if err = d.Set("voice_receiver", flattenMonitorActionGroupVoiceReceiver(group.VoiceReceivers)); err != nil {
+			return fmt.Errorf("setting `voice_receiver`: %+v", err)
+		}
+
+		if err = d.Set("logic_app_receiver", flattenMonitorActionGroupLogicAppReceiver(group.LogicAppReceivers)); err != nil {
+			return fmt.Errorf("setting `logic_app_receiver`: %+v", err)
+		}
+
+		if err = d.Set("azure_function_receiver", flattenMonitorActionGroupAzureFunctionReceiver(group.AzureFunctionReceivers)); err != nil {
+			return fmt.Errorf("setting `azure_function_receiver`: %+v", err)
+		}
+		if err = d.Set("arm_role_receiver", flattenMonitorActionGroupRoleReceiver(group.ArmRoleReceivers)); err != nil {
+			return fmt.Errorf("setting `arm_role_receiver`: %+v", err)
+		}
+		if err = d.Set("event_hub_receiver", flattenMonitorActionGroupEventHubReceiver(id.ResourceGroup, group.EventHubReceivers)); err != nil {
+			return fmt.Errorf("setting `event_hub_receiver`: %+v", err)
 		}
 	}
-	return nil
+	return tags.FlattenAndSet(d, resp.Tags)
 }
 
 func resourceMonitorActionGroupDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -652,14 +555,14 @@ func resourceMonitorActionGroupDelete(d *pluginsdk.ResourceData, meta interface{
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := actiongroupsapis.ParseActionGroupID(d.Id())
+	id, err := parse.ActionGroupID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	resp, err := client.ActionGroupsDelete(ctx, *id)
+	resp, err := client.Delete(ctx, id.ResourceGroup, id.Name)
 	if err != nil {
-		if !response.WasNotFound(resp.HttpResponse) {
+		if !response.WasNotFound(resp.Response) {
 			return fmt.Errorf("deleting %s: %+v", *id, err)
 		}
 	}
@@ -667,13 +570,13 @@ func resourceMonitorActionGroupDelete(d *pluginsdk.ResourceData, meta interface{
 	return nil
 }
 
-func expandMonitorActionGroupEmailReceiver(v []interface{}) *[]actiongroupsapis.EmailReceiver {
-	receivers := make([]actiongroupsapis.EmailReceiver, 0)
+func expandMonitorActionGroupEmailReceiver(v []interface{}) *[]insights.EmailReceiver {
+	receivers := make([]insights.EmailReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.EmailReceiver{
-			Name:                 val["name"].(string),
-			EmailAddress:         val["email_address"].(string),
+		receiver := insights.EmailReceiver{
+			Name:                 utils.String(val["name"].(string)),
+			EmailAddress:         utils.String(val["email_address"].(string)),
 			UseCommonAlertSchema: utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
 		receivers = append(receivers, receiver)
@@ -681,82 +584,67 @@ func expandMonitorActionGroupEmailReceiver(v []interface{}) *[]actiongroupsapis.
 	return &receivers
 }
 
-func expandMonitorActionGroupItsmReceiver(v []interface{}) (*[]actiongroupsapis.ItsmReceiver, error) {
-	receivers := make([]actiongroupsapis.ItsmReceiver, 0)
+func expandMonitorActionGroupItsmReceiver(v []interface{}) *[]insights.ItsmReceiver {
+	receivers := make([]insights.ItsmReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		ticketConfiguration := val["ticket_configuration"].(string)
-		receiver := actiongroupsapis.ItsmReceiver{
-			Name:                val["name"].(string),
-			WorkspaceId:         val["workspace_id"].(string),
-			ConnectionId:        val["connection_id"].(string),
-			TicketConfiguration: ticketConfiguration,
-			Region:              azure.NormalizeLocation(val["region"].(string)),
-		}
-
-		// https://github.com/Azure/azure-rest-api-specs/issues/20488 ticket_configuration should have `PayloadRevision` and `WorkItemType` keys
-
-		j := make(map[string]interface{})
-		err := json.Unmarshal([]byte(ticketConfiguration), &j)
-		if err != nil {
-			return nil, fmt.Errorf("`itsm_receiver.ticket_configuration` %s unmarshall json error: %+v", ticketConfiguration, err)
-		}
-
-		_, existKeyPayloadRevision := j["PayloadRevision"]
-		_, existKeyWorkItemType := j["WorkItemType"]
-		if !(existKeyPayloadRevision && existKeyWorkItemType) {
-			return nil, fmt.Errorf("`itsm_receiver.ticket_configuration` should be JSON blob with `PayloadRevision` and `WorkItemType` keys")
-		}
-		receivers = append(receivers, receiver)
-	}
-	return &receivers, nil
-}
-
-func expandMonitorActionGroupAzureAppPushReceiver(v []interface{}) *[]actiongroupsapis.AzureAppPushReceiver {
-	receivers := make([]actiongroupsapis.AzureAppPushReceiver, 0)
-	for _, receiverValue := range v {
-		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.AzureAppPushReceiver{
-			Name:         val["name"].(string),
-			EmailAddress: val["email_address"].(string),
+		receiver := insights.ItsmReceiver{
+			Name:                utils.String(val["name"].(string)),
+			WorkspaceID:         utils.String(val["workspace_id"].(string)),
+			ConnectionID:        utils.String(val["connection_id"].(string)),
+			TicketConfiguration: utils.String(val["ticket_configuration"].(string)),
+			Region:              utils.String(azure.NormalizeLocation(val["region"].(string))),
 		}
 		receivers = append(receivers, receiver)
 	}
 	return &receivers
 }
 
-func expandMonitorActionGroupSmsReceiver(v []interface{}) *[]actiongroupsapis.SmsReceiver {
-	receivers := make([]actiongroupsapis.SmsReceiver, 0)
+func expandMonitorActionGroupAzureAppPushReceiver(v []interface{}) *[]insights.AzureAppPushReceiver {
+	receivers := make([]insights.AzureAppPushReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.SmsReceiver{
-			Name:        val["name"].(string),
-			CountryCode: val["country_code"].(string),
-			PhoneNumber: val["phone_number"].(string),
+		receiver := insights.AzureAppPushReceiver{
+			Name:         utils.String(val["name"].(string)),
+			EmailAddress: utils.String(val["email_address"].(string)),
 		}
 		receivers = append(receivers, receiver)
 	}
 	return &receivers
 }
 
-func expandMonitorActionGroupWebHookReceiver(tenantId string, v []interface{}) *[]actiongroupsapis.WebhookReceiver {
-	receivers := make([]actiongroupsapis.WebhookReceiver, 0)
+func expandMonitorActionGroupSmsReceiver(v []interface{}) *[]insights.SmsReceiver {
+	receivers := make([]insights.SmsReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.WebhookReceiver{
-			Name:                 val["name"].(string),
-			ServiceUri:           val["service_uri"].(string),
+		receiver := insights.SmsReceiver{
+			Name:        utils.String(val["name"].(string)),
+			CountryCode: utils.String(val["country_code"].(string)),
+			PhoneNumber: utils.String(val["phone_number"].(string)),
+		}
+		receivers = append(receivers, receiver)
+	}
+	return &receivers
+}
+
+func expandMonitorActionGroupWebHookReceiver(tenantId string, v []interface{}) *[]insights.WebhookReceiver {
+	receivers := make([]insights.WebhookReceiver, 0)
+	for _, receiverValue := range v {
+		val := receiverValue.(map[string]interface{})
+		receiver := insights.WebhookReceiver{
+			Name:                 utils.String(val["name"].(string)),
+			ServiceURI:           utils.String(val["service_uri"].(string)),
 			UseCommonAlertSchema: utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
 		if v, ok := val["aad_auth"].([]interface{}); ok && len(v) > 0 {
 			secureWebhook := v[0].(map[string]interface{})
 			receiver.UseAadAuth = utils.Bool(true)
-			receiver.ObjectId = utils.String(secureWebhook["object_id"].(string))
-			receiver.IdentifierUri = utils.String(secureWebhook["identifier_uri"].(string))
+			receiver.ObjectID = utils.String(secureWebhook["object_id"].(string))
+			receiver.IdentifierURI = utils.String(secureWebhook["identifier_uri"].(string))
 			if v := secureWebhook["tenant_id"].(string); v != "" {
-				receiver.TenantId = utils.String(v)
+				receiver.TenantID = utils.String(v)
 			} else {
-				receiver.TenantId = utils.String(tenantId)
+				receiver.TenantID = utils.String(tenantId)
 			}
 		}
 		receivers = append(receivers, receiver)
@@ -764,17 +652,17 @@ func expandMonitorActionGroupWebHookReceiver(tenantId string, v []interface{}) *
 	return &receivers
 }
 
-func expandMonitorActionGroupAutomationRunbookReceiver(v []interface{}) *[]actiongroupsapis.AutomationRunbookReceiver {
-	receivers := make([]actiongroupsapis.AutomationRunbookReceiver, 0)
+func expandMonitorActionGroupAutomationRunbookReceiver(v []interface{}) *[]insights.AutomationRunbookReceiver {
+	receivers := make([]insights.AutomationRunbookReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.AutomationRunbookReceiver{
+		receiver := insights.AutomationRunbookReceiver{
 			Name:                 utils.String(val["name"].(string)),
-			AutomationAccountId:  val["automation_account_id"].(string),
-			RunbookName:          val["runbook_name"].(string),
-			WebhookResourceId:    val["webhook_resource_id"].(string),
-			IsGlobalRunbook:      val["is_global_runbook"].(bool),
-			ServiceUri:           utils.String(val["service_uri"].(string)),
+			AutomationAccountID:  utils.String(val["automation_account_id"].(string)),
+			RunbookName:          utils.String(val["runbook_name"].(string)),
+			WebhookResourceID:    utils.String(val["webhook_resource_id"].(string)),
+			IsGlobalRunbook:      utils.Bool(val["is_global_runbook"].(bool)),
+			ServiceURI:           utils.String(val["service_uri"].(string)),
 			UseCommonAlertSchema: utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
 		receivers = append(receivers, receiver)
@@ -782,28 +670,28 @@ func expandMonitorActionGroupAutomationRunbookReceiver(v []interface{}) *[]actio
 	return &receivers
 }
 
-func expandMonitorActionGroupVoiceReceiver(v []interface{}) *[]actiongroupsapis.VoiceReceiver {
-	receivers := make([]actiongroupsapis.VoiceReceiver, 0)
+func expandMonitorActionGroupVoiceReceiver(v []interface{}) *[]insights.VoiceReceiver {
+	receivers := make([]insights.VoiceReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.VoiceReceiver{
-			Name:        val["name"].(string),
-			CountryCode: val["country_code"].(string),
-			PhoneNumber: val["phone_number"].(string),
+		receiver := insights.VoiceReceiver{
+			Name:        utils.String(val["name"].(string)),
+			CountryCode: utils.String(val["country_code"].(string)),
+			PhoneNumber: utils.String(val["phone_number"].(string)),
 		}
 		receivers = append(receivers, receiver)
 	}
 	return &receivers
 }
 
-func expandMonitorActionGroupLogicAppReceiver(v []interface{}) *[]actiongroupsapis.LogicAppReceiver {
-	receivers := make([]actiongroupsapis.LogicAppReceiver, 0)
+func expandMonitorActionGroupLogicAppReceiver(v []interface{}) *[]insights.LogicAppReceiver {
+	receivers := make([]insights.LogicAppReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.LogicAppReceiver{
-			Name:                 val["name"].(string),
-			ResourceId:           val["resource_id"].(string),
-			CallbackUrl:          val["callback_url"].(string),
+		receiver := insights.LogicAppReceiver{
+			Name:                 utils.String(val["name"].(string)),
+			ResourceID:           utils.String(val["resource_id"].(string)),
+			CallbackURL:          utils.String(val["callback_url"].(string)),
 			UseCommonAlertSchema: utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
 		receivers = append(receivers, receiver)
@@ -811,15 +699,15 @@ func expandMonitorActionGroupLogicAppReceiver(v []interface{}) *[]actiongroupsap
 	return &receivers
 }
 
-func expandMonitorActionGroupAzureFunctionReceiver(v []interface{}) *[]actiongroupsapis.AzureFunctionReceiver {
-	receivers := make([]actiongroupsapis.AzureFunctionReceiver, 0)
+func expandMonitorActionGroupAzureFunctionReceiver(v []interface{}) *[]insights.AzureFunctionReceiver {
+	receivers := make([]insights.AzureFunctionReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.AzureFunctionReceiver{
-			Name:                  val["name"].(string),
-			FunctionAppResourceId: val["function_app_resource_id"].(string),
-			FunctionName:          val["function_name"].(string),
-			HTTPTriggerUrl:        val["http_trigger_url"].(string),
+		receiver := insights.AzureFunctionReceiver{
+			Name:                  utils.String(val["name"].(string)),
+			FunctionAppResourceID: utils.String(val["function_app_resource_id"].(string)),
+			FunctionName:          utils.String(val["function_name"].(string)),
+			HTTPTriggerURL:        utils.String(val["http_trigger_url"].(string)),
 			UseCommonAlertSchema:  utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
 		receivers = append(receivers, receiver)
@@ -827,13 +715,13 @@ func expandMonitorActionGroupAzureFunctionReceiver(v []interface{}) *[]actiongro
 	return &receivers
 }
 
-func expandMonitorActionGroupRoleReceiver(v []interface{}) *[]actiongroupsapis.ArmRoleReceiver {
-	receivers := make([]actiongroupsapis.ArmRoleReceiver, 0)
+func expandMonitorActionGroupRoleReceiver(v []interface{}) *[]insights.ArmRoleReceiver {
+	receivers := make([]insights.ArmRoleReceiver, 0)
 	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
-		receiver := actiongroupsapis.ArmRoleReceiver{
-			Name:                 val["name"].(string),
-			RoleId:               val["role_id"].(string),
+		receiver := insights.ArmRoleReceiver{
+			Name:                 utils.String(val["name"].(string)),
+			RoleID:               utils.String(val["role_id"].(string)),
 			UseCommonAlertSchema: utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
 		receivers = append(receivers, receiver)
@@ -841,77 +729,44 @@ func expandMonitorActionGroupRoleReceiver(v []interface{}) *[]actiongroupsapis.A
 	return &receivers
 }
 
-func expandMonitorActionGroupEventHubReceiver(tenantId string, subscriptionId string, d *pluginsdk.ResourceData) (*[]actiongroupsapis.EventHubReceiver, error) {
-	receivers := make([]actiongroupsapis.EventHubReceiver, 0)
-	eventHubReceiver := d.Get("event_hub_receiver").([]interface{})
-	for i, receiverValue := range eventHubReceiver {
+func expandMonitorActionGroupEventHubReceiver(tenantId string, v []interface{}) (*[]insights.EventHubReceiver, error) {
+	receivers := make([]insights.EventHubReceiver, 0)
+	for _, receiverValue := range v {
 		val := receiverValue.(map[string]interface{})
 
-		eventHubNameSpace, eventHubName, subId := val["event_hub_namespace"].(string), val["event_hub_name"].(string), val["subscription_id"].(string)
-
-		if !features.FourPointOhBeta() {
-			eventHubReceiverRaw := d.GetRawConfig().AsValueMap()["event_hub_receiver"].AsValueSlice()[i].AsValueMap()
-			eventHubIdRaw := eventHubReceiverRaw["event_hub_id"]
-
-			hasSetId := !eventHubIdRaw.IsNull()
-			hasSetName := !eventHubReceiverRaw["event_hub_name"].IsNull()
-			hasSetNamespace := !eventHubReceiverRaw["event_hub_namespace"].IsNull()
-			hasSetSubscriptionId := !eventHubReceiverRaw["subscription_id"].IsNull()
-
-			if hasSetName != hasSetNamespace {
-				return nil, fmt.Errorf("in event_hub_receiver, event_hub_name and event_hub_namespace must be set together")
-			}
-
-			if hasSetId == hasSetName {
-				return nil, fmt.Errorf("in event_hub_receiver, exactly one of event_hub_id or (event_hub_namespace, event_hub_name) must be set")
-			}
-
-			if hasSetId && hasSetSubscriptionId {
-				return nil, fmt.Errorf("in event_hub_receiver, event_hub_id and subscription_id cannot be set together")
-			}
-
-			if hasSetId {
-				eventHubId, err := eventhubs.ParseEventhubID(eventHubIdRaw.AsString())
-				if err != nil {
-					return nil, err
-				}
-				eventHubNameSpace, eventHubName, subId = eventHubId.NamespaceName, eventHubId.EventhubName, eventHubId.SubscriptionId
-			}
+		eventHubId, err := eventhubs.ParseEventhubID(*utils.String(val["event_hub_id"].(string)))
+		if err != nil {
+			return nil, err
 		}
 
-		receiver := actiongroupsapis.EventHubReceiver{
-			EventHubNameSpace:    eventHubNameSpace,
-			EventHubName:         eventHubName,
-			Name:                 val["name"].(string),
+		receiver := insights.EventHubReceiver{
+			Name:                 utils.String(val["name"].(string)),
+			EventHubNameSpace:    &eventHubId.NamespaceName,
+			EventHubName:         &eventHubId.EventHubName,
 			UseCommonAlertSchema: utils.Bool(val["use_common_alert_schema"].(bool)),
 		}
-
 		if v := val["tenant_id"].(string); v != "" {
-			receiver.TenantId = utils.String(v)
+			receiver.TenantID = utils.String(v)
 		} else {
-			receiver.TenantId = utils.String(tenantId)
+			receiver.TenantID = utils.String(tenantId)
 		}
-
-		if subId != "" {
-			receiver.SubscriptionId = subId
-		} else {
-			receiver.SubscriptionId = subscriptionId
-		}
-
+		receiver.SubscriptionID = &eventHubId.SubscriptionId
 		receivers = append(receivers, receiver)
 	}
 	return &receivers, nil
 }
 
-func flattenMonitorActionGroupEmailReceiver(receivers *[]actiongroupsapis.EmailReceiver) []interface{} {
+func flattenMonitorActionGroupEmailReceiver(receivers *[]insights.EmailReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["email_address"] = receiver.EmailAddress
-
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.EmailAddress != nil {
+				val["email_address"] = *receiver.EmailAddress
+			}
 			if receiver.UseCommonAlertSchema != nil {
 				val["use_common_alert_schema"] = *receiver.UseCommonAlertSchema
 			}
@@ -921,17 +776,63 @@ func flattenMonitorActionGroupEmailReceiver(receivers *[]actiongroupsapis.EmailR
 	return result
 }
 
-func flattenMonitorActionGroupItsmReceiver(receivers *[]actiongroupsapis.ItsmReceiver) []interface{} {
+func flattenMonitorActionGroupItsmReceiver(receivers *[]insights.ItsmReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.WorkspaceID != nil {
+				val["workspace_id"] = *receiver.WorkspaceID
+			}
+			if receiver.ConnectionID != nil {
+				val["connection_id"] = *receiver.ConnectionID
+			}
+			if receiver.TicketConfiguration != nil {
+				val["ticket_configuration"] = *receiver.TicketConfiguration
+			}
+			if receiver.Region != nil {
+				val["region"] = azure.NormalizeLocation(*receiver.Region)
+			}
+			result = append(result, val)
+		}
+	}
+	return result
+}
 
-			val["name"] = receiver.Name
-			val["workspace_id"] = receiver.WorkspaceId
-			val["connection_id"] = receiver.ConnectionId
-			val["ticket_configuration"] = receiver.TicketConfiguration
-			val["region"] = azure.NormalizeLocation(receiver.Region)
+func flattenMonitorActionGroupAzureAppPushReceiver(receivers *[]insights.AzureAppPushReceiver) []interface{} {
+	result := make([]interface{}, 0)
+	if receivers != nil {
+		for _, receiver := range *receivers {
+			val := make(map[string]interface{})
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.EmailAddress != nil {
+				val["email_address"] = *receiver.EmailAddress
+			}
+			result = append(result, val)
+		}
+	}
+	return result
+}
+
+func flattenMonitorActionGroupSmsReceiver(receivers *[]insights.SmsReceiver) []interface{} {
+	result := make([]interface{}, 0)
+	if receivers != nil {
+		for _, receiver := range *receivers {
+			val := make(map[string]interface{})
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.CountryCode != nil {
+				val["country_code"] = *receiver.CountryCode
+			}
+			if receiver.PhoneNumber != nil {
+				val["phone_number"] = *receiver.PhoneNumber
+			}
 
 			result = append(result, val)
 		}
@@ -939,49 +840,25 @@ func flattenMonitorActionGroupItsmReceiver(receivers *[]actiongroupsapis.ItsmRec
 	return result
 }
 
-func flattenMonitorActionGroupAzureAppPushReceiver(receivers *[]actiongroupsapis.AzureAppPushReceiver) []interface{} {
-	result := make([]interface{}, 0)
-	if receivers != nil {
-		for _, receiver := range *receivers {
-			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["email_address"] = receiver.EmailAddress
-
-			result = append(result, val)
-		}
-	}
-	return result
-}
-
-func flattenMonitorActionGroupSmsReceiver(receivers *[]actiongroupsapis.SmsReceiver) []interface{} {
-	result := make([]interface{}, 0)
-	if receivers != nil {
-		for _, receiver := range *receivers {
-			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["country_code"] = receiver.CountryCode
-			val["phone_number"] = receiver.PhoneNumber
-
-			result = append(result, val)
-		}
-	}
-	return result
-}
-
-func flattenMonitorActionGroupWebHookReceiver(receivers *[]actiongroupsapis.WebhookReceiver) []interface{} {
+func flattenMonitorActionGroupWebHookReceiver(receivers *[]insights.WebhookReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			var useCommonAlert bool
+			var name, serviceUri string
+			if receiver.Name != nil {
+				name = *receiver.Name
+			}
+			if receiver.ServiceURI != nil {
+				serviceUri = *receiver.ServiceURI
+			}
 			if receiver.UseCommonAlertSchema != nil {
 				useCommonAlert = *receiver.UseCommonAlertSchema
 			}
 
 			result = append(result, map[string]interface{}{
-				"name":                    receiver.Name,
-				"service_uri":             receiver.ServiceUri,
+				"name":                    name,
+				"service_uri":             serviceUri,
 				"use_common_alert_schema": useCommonAlert,
 				"aad_auth":                flattenMonitorActionGroupSecureWebHookReceiver(receiver),
 			})
@@ -990,20 +867,20 @@ func flattenMonitorActionGroupWebHookReceiver(receivers *[]actiongroupsapis.Webh
 	return result
 }
 
-func flattenMonitorActionGroupSecureWebHookReceiver(receiver actiongroupsapis.WebhookReceiver) []interface{} {
+func flattenMonitorActionGroupSecureWebHookReceiver(receiver insights.WebhookReceiver) []interface{} {
 	if receiver.UseAadAuth == nil || !*receiver.UseAadAuth {
 		return []interface{}{}
 	}
 
 	var objectId, identifierUri, tenantId string
 
-	if v := receiver.ObjectId; v != nil {
+	if v := receiver.ObjectID; v != nil {
 		objectId = *v
 	}
-	if v := receiver.IdentifierUri; v != nil {
+	if v := receiver.IdentifierURI; v != nil {
 		identifierUri = *v
 	}
-	if v := receiver.TenantId; v != nil {
+	if v := receiver.TenantID; v != nil {
 		tenantId = *v
 	}
 	return []interface{}{
@@ -1015,7 +892,7 @@ func flattenMonitorActionGroupSecureWebHookReceiver(receiver actiongroupsapis.We
 	}
 }
 
-func flattenMonitorActionGroupAutomationRunbookReceiver(receivers *[]actiongroupsapis.AutomationRunbookReceiver) []interface{} {
+func flattenMonitorActionGroupAutomationRunbookReceiver(receivers *[]insights.AutomationRunbookReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
@@ -1023,14 +900,20 @@ func flattenMonitorActionGroupAutomationRunbookReceiver(receivers *[]actiongroup
 			if receiver.Name != nil {
 				val["name"] = *receiver.Name
 			}
-
-			val["automation_account_id"] = receiver.AutomationAccountId
-			val["runbook_name"] = receiver.RunbookName
-			val["webhook_resource_id"] = receiver.WebhookResourceId
-			val["is_global_runbook"] = receiver.IsGlobalRunbook
-
-			if receiver.ServiceUri != nil {
-				val["service_uri"] = *receiver.ServiceUri
+			if receiver.AutomationAccountID != nil {
+				val["automation_account_id"] = *receiver.AutomationAccountID
+			}
+			if receiver.RunbookName != nil {
+				val["runbook_name"] = *receiver.RunbookName
+			}
+			if receiver.WebhookResourceID != nil {
+				val["webhook_resource_id"] = *receiver.WebhookResourceID
+			}
+			if receiver.IsGlobalRunbook != nil {
+				val["is_global_runbook"] = *receiver.IsGlobalRunbook
+			}
+			if receiver.ServiceURI != nil {
+				val["service_uri"] = *receiver.ServiceURI
 			}
 			if receiver.UseCommonAlertSchema != nil {
 				val["use_common_alert_schema"] = *receiver.UseCommonAlertSchema
@@ -1041,32 +924,40 @@ func flattenMonitorActionGroupAutomationRunbookReceiver(receivers *[]actiongroup
 	return result
 }
 
-func flattenMonitorActionGroupVoiceReceiver(receivers *[]actiongroupsapis.VoiceReceiver) []interface{} {
+func flattenMonitorActionGroupVoiceReceiver(receivers *[]insights.VoiceReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["country_code"] = receiver.CountryCode
-			val["phone_number"] = receiver.PhoneNumber
-
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.CountryCode != nil {
+				val["country_code"] = *receiver.CountryCode
+			}
+			if receiver.PhoneNumber != nil {
+				val["phone_number"] = *receiver.PhoneNumber
+			}
 			result = append(result, val)
 		}
 	}
 	return result
 }
 
-func flattenMonitorActionGroupLogicAppReceiver(receivers *[]actiongroupsapis.LogicAppReceiver) []interface{} {
+func flattenMonitorActionGroupLogicAppReceiver(receivers *[]insights.LogicAppReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["resource_id"] = receiver.ResourceId
-			val["callback_url"] = receiver.CallbackUrl
-
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.ResourceID != nil {
+				val["resource_id"] = *receiver.ResourceID
+			}
+			if receiver.CallbackURL != nil {
+				val["callback_url"] = *receiver.CallbackURL
+			}
 			if receiver.UseCommonAlertSchema != nil {
 				val["use_common_alert_schema"] = *receiver.UseCommonAlertSchema
 			}
@@ -1076,17 +967,23 @@ func flattenMonitorActionGroupLogicAppReceiver(receivers *[]actiongroupsapis.Log
 	return result
 }
 
-func flattenMonitorActionGroupAzureFunctionReceiver(receivers *[]actiongroupsapis.AzureFunctionReceiver) []interface{} {
+func flattenMonitorActionGroupAzureFunctionReceiver(receivers *[]insights.AzureFunctionReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["function_app_resource_id"] = receiver.FunctionAppResourceId
-			val["function_name"] = receiver.FunctionName
-			val["http_trigger_url"] = receiver.HTTPTriggerUrl
-
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.FunctionAppResourceID != nil {
+				val["function_app_resource_id"] = *receiver.FunctionAppResourceID
+			}
+			if receiver.FunctionName != nil {
+				val["function_name"] = *receiver.FunctionName
+			}
+			if receiver.HTTPTriggerURL != nil {
+				val["http_trigger_url"] = *receiver.HTTPTriggerURL
+			}
 			if receiver.UseCommonAlertSchema != nil {
 				val["use_common_alert_schema"] = *receiver.UseCommonAlertSchema
 			}
@@ -1096,15 +993,17 @@ func flattenMonitorActionGroupAzureFunctionReceiver(receivers *[]actiongroupsapi
 	return result
 }
 
-func flattenMonitorActionGroupRoleReceiver(receivers *[]actiongroupsapis.ArmRoleReceiver) []interface{} {
+func flattenMonitorActionGroupRoleReceiver(receivers *[]insights.ArmRoleReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-			val["role_id"] = receiver.RoleId
-
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
+			}
+			if receiver.RoleID != nil {
+				val["role_id"] = *receiver.RoleID
+			}
 			if receiver.UseCommonAlertSchema != nil {
 				val["use_common_alert_schema"] = *receiver.UseCommonAlertSchema
 			}
@@ -1114,27 +1013,26 @@ func flattenMonitorActionGroupRoleReceiver(receivers *[]actiongroupsapis.ArmRole
 	return result
 }
 
-func flattenMonitorActionGroupEventHubReceiver(resourceGroup string, receivers *[]actiongroupsapis.EventHubReceiver) []interface{} {
+func flattenMonitorActionGroupEventHubReceiver(resourceGroup string, receivers *[]insights.EventHubReceiver) []interface{} {
 	result := make([]interface{}, 0)
 	if receivers != nil {
 		for _, receiver := range *receivers {
 			val := make(map[string]interface{})
-
-			val["name"] = receiver.Name
-
-			eventHubNamespace := receiver.EventHubNameSpace
-			eventHubName := receiver.EventHubName
-			subscriptionId := receiver.SubscriptionId
-			if !features.FourPointOhBeta() {
-				val["event_hub_id"] = eventhubs.NewEventhubID(subscriptionId, resourceGroup, eventHubNamespace, eventHubName).ID()
+			if receiver.Name != nil {
+				val["name"] = *receiver.Name
 			}
-			val["subscription_id"], val["event_hub_namespace"], val["event_hub_name"] = subscriptionId, eventHubNamespace, eventHubName
+			if receiver.EventHubNameSpace != nil && receiver.EventHubName != nil && receiver.SubscriptionID != nil {
+				event_hub_namespace := *receiver.EventHubNameSpace
+				event_hub_name := *receiver.EventHubName
+				subscription_id := *receiver.SubscriptionID
 
+				val["event_hub_id"] = eventhubs.NewEventhubID(subscription_id, resourceGroup, event_hub_namespace, event_hub_name).ID()
+			}
 			if receiver.UseCommonAlertSchema != nil {
 				val["use_common_alert_schema"] = *receiver.UseCommonAlertSchema
 			}
-			if receiver.TenantId != nil {
-				val["tenant_id"] = *receiver.TenantId
+			if receiver.TenantID != nil {
+				val["tenant_id"] = *receiver.TenantID
 			}
 			result = append(result, val)
 		}

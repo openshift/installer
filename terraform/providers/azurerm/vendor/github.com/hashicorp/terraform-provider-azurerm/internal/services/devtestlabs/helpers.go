@@ -1,7 +1,7 @@
 package devtestlabs
 
 import (
-	"github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualmachines"
+	"github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2018-09-15/dtl"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
@@ -20,8 +20,8 @@ func schemaDevTestVirtualMachineInboundNatRule() *pluginsdk.Schema {
 					Type:     pluginsdk.TypeString,
 					Required: true,
 					ValidateFunc: validation.StringInSlice([]string{
-						string(virtualmachines.TransportProtocolTcp),
-						string(virtualmachines.TransportProtocolUdp),
+						string(dtl.TCP),
+						string(dtl.UDP),
 					}, false),
 				},
 
@@ -41,8 +41,8 @@ func schemaDevTestVirtualMachineInboundNatRule() *pluginsdk.Schema {
 	}
 }
 
-func expandDevTestLabVirtualMachineNatRules(input *pluginsdk.Set) []virtualmachines.InboundNatRule {
-	rules := make([]virtualmachines.InboundNatRule, 0)
+func expandDevTestLabVirtualMachineNatRules(input *pluginsdk.Set) []dtl.InboundNatRule {
+	rules := make([]dtl.InboundNatRule, 0)
 	if input == nil {
 		return rules
 	}
@@ -50,11 +50,11 @@ func expandDevTestLabVirtualMachineNatRules(input *pluginsdk.Set) []virtualmachi
 	for _, val := range input.List() {
 		v := val.(map[string]interface{})
 		backendPort := v["backend_port"].(int)
-		protocol := virtualmachines.TransportProtocol(v["protocol"].(string))
+		protocol := v["protocol"].(string)
 
-		rule := virtualmachines.InboundNatRule{
-			TransportProtocol: &protocol,
-			BackendPort:       utils.Int64(int64(backendPort)),
+		rule := dtl.InboundNatRule{
+			TransportProtocol: dtl.TransportProtocol(protocol),
+			BackendPort:       utils.Int32(int32(backendPort)),
 		}
 
 		rules = append(rules, rule)
@@ -63,7 +63,7 @@ func expandDevTestLabVirtualMachineNatRules(input *pluginsdk.Set) []virtualmachi
 	return rules
 }
 
-func expandDevTestLabVirtualMachineGalleryImageReference(input []interface{}, osType string) *virtualmachines.GalleryImageReference {
+func expandDevTestLabVirtualMachineGalleryImageReference(input []interface{}, osType string) *dtl.GalleryImageReference {
 	if len(input) == 0 {
 		return nil
 	}
@@ -74,7 +74,7 @@ func expandDevTestLabVirtualMachineGalleryImageReference(input []interface{}, os
 	sku := v["sku"].(string)
 	version := v["version"].(string)
 
-	return &virtualmachines.GalleryImageReference{
+	return &dtl.GalleryImageReference{
 		Offer:     utils.String(offer),
 		OsType:    utils.String(osType),
 		Publisher: utils.String(publisher),
@@ -115,7 +115,7 @@ func schemaDevTestVirtualMachineGalleryImageReference() *pluginsdk.Schema {
 	}
 }
 
-func flattenDevTestVirtualMachineGalleryImage(input *virtualmachines.GalleryImageReference) []interface{} {
+func flattenDevTestVirtualMachineGalleryImage(input *dtl.GalleryImageReference) []interface{} {
 	results := make([]interface{}, 0)
 
 	if input != nil {

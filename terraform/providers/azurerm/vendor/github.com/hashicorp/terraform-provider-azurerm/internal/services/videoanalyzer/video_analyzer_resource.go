@@ -49,9 +49,9 @@ func resourceVideoAnalyzer() *pluginsdk.Resource {
 				ValidateFunc: validate.VideoAnalyzerName(),
 			},
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
 			"storage_account": {
 				Type:     pluginsdk.TypeList,
@@ -143,20 +143,21 @@ func resourceVideoAnalyzerRead(d *pluginsdk.ResourceData, meta interface{}) erro
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	d.Set("name", id.VideoAnalyzerName)
+	d.Set("name", id.AccountName)
 	d.Set("resource_group_name", id.ResourceGroupName)
 
 	if model := resp.Model; model != nil {
 		d.Set("location", azure.NormalizeLocation(model.Location))
 
-		if props := model.Properties; props != nil {
+		props := resp.Model.Properties
+		if props != nil {
 			accounts := flattenVideoAnalyzerStorageAccounts(props.StorageAccounts)
 			if err := d.Set("storage_account", accounts); err != nil {
 				return fmt.Errorf("flattening `storage_account`: %s", err)
 			}
 		}
 
-		flattenedIdentity, err := flattenAzureRmVideoServiceIdentity(model.Identity)
+		flattenedIdentity, err := flattenAzureRmVideoServiceIdentity(resp.Model.Identity)
 		if err != nil {
 			return fmt.Errorf("flattening `identity`: %s", err)
 		}

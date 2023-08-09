@@ -222,11 +222,8 @@ func dataSourceStorageAccountSasRead(d *pluginsdk.ResourceData, _ interface{}) e
 		signedProtocol = "https"
 	}
 
-	// TODO: implement support for signedEncryptionScope
-	signedEncryptionScope := ""
-
 	sasToken, err := storage.ComputeAccountSASToken(accountName, accountKey, permissions, services, resourceTypes,
-		start, expiry, signedProtocol, ipAddresses, signedVersion, signedEncryptionScope)
+		start, expiry, signedProtocol, ipAddresses, signedVersion)
 	if err != nil {
 		return err
 	}

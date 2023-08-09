@@ -189,7 +189,11 @@ func (r ApplicationInsightsWorkbookTemplateResource) Create() sdk.ResourceFunc {
 				properties.Properties.Localized = &localizedValue
 			}
 
-			galleriesValue := expandWorkbookTemplateGalleryModel(model.Galleries)
+			galleriesValue, err := expandWorkbookTemplateGalleryModel(model.Galleries)
+			if err != nil {
+				return err
+			}
+
 			if galleriesValue != nil {
 				properties.Properties.Galleries = *galleriesValue
 			}
@@ -235,7 +239,11 @@ func (r ApplicationInsightsWorkbookTemplateResource) Update() sdk.ResourceFunc {
 			}
 
 			if metadata.ResourceData.HasChange("galleries") {
-				galleriesValue := expandWorkbookTemplateGalleryModel(model.Galleries)
+				galleriesValue, err := expandWorkbookTemplateGalleryModel(model.Galleries)
+				if err != nil {
+					return err
+				}
+
 				if galleriesValue != nil {
 					properties.Properties.Galleries = *galleriesValue
 				}
@@ -303,7 +311,7 @@ func (r ApplicationInsightsWorkbookTemplateResource) Read() sdk.ResourceFunc {
 			}
 
 			state := ApplicationInsightsWorkbookTemplateModel{
-				Name:              id.WorkbookTemplateName,
+				Name:              id.ResourceName,
 				ResourceGroupName: id.ResourceGroupName,
 				Location:          location.Normalize(model.Location),
 			}
@@ -313,7 +321,12 @@ func (r ApplicationInsightsWorkbookTemplateResource) Read() sdk.ResourceFunc {
 					state.Author = *properties.Author
 				}
 
-				state.Galleries = flattenWorkbookTemplateGalleryModel(&properties.Galleries)
+				galleriesValue, err := flattenWorkbookTemplateGalleryModel(&properties.Galleries)
+				if err != nil {
+					return err
+				}
+
+				state.Galleries = galleriesValue
 
 				if properties.Priority != nil {
 					state.Priority = *properties.Priority
@@ -367,7 +380,7 @@ func (r ApplicationInsightsWorkbookTemplateResource) Delete() sdk.ResourceFunc {
 	}
 }
 
-func expandWorkbookTemplateGalleryModel(inputList []WorkbookTemplateGalleryModel) *[]workbooktemplates.WorkbookTemplateGallery {
+func expandWorkbookTemplateGalleryModel(inputList []WorkbookTemplateGalleryModel) (*[]workbooktemplates.WorkbookTemplateGallery, error) {
 	var outputList []workbooktemplates.WorkbookTemplateGallery
 	for _, input := range inputList {
 		output := workbooktemplates.WorkbookTemplateGallery{
@@ -381,13 +394,13 @@ func expandWorkbookTemplateGalleryModel(inputList []WorkbookTemplateGalleryModel
 		outputList = append(outputList, output)
 	}
 
-	return &outputList
+	return &outputList, nil
 }
 
-func flattenWorkbookTemplateGalleryModel(inputList *[]workbooktemplates.WorkbookTemplateGallery) []WorkbookTemplateGalleryModel {
+func flattenWorkbookTemplateGalleryModel(inputList *[]workbooktemplates.WorkbookTemplateGallery) ([]WorkbookTemplateGalleryModel, error) {
 	var outputList []WorkbookTemplateGalleryModel
 	if inputList == nil {
-		return outputList
+		return outputList, nil
 	}
 
 	for _, input := range *inputList {
@@ -416,5 +429,5 @@ func flattenWorkbookTemplateGalleryModel(inputList *[]workbooktemplates.Workbook
 		outputList = append(outputList, output)
 	}
 
-	return outputList
+	return outputList, nil
 }

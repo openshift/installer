@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/Azure/azure-sdk-for-go/services/network/mgmt/2021-08-01/network"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
@@ -17,7 +17,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	"github.com/tombuildsstuff/kermit/sdk/network/2022-07-01/network"
 )
 
 func resourcePointToSiteVPNGateway() *pluginsdk.Resource {
@@ -46,9 +45,9 @@ func resourcePointToSiteVPNGateway() *pluginsdk.Resource {
 				ValidateFunc: validation.StringIsNotEmpty,
 			},
 
-			"resource_group_name": commonschema.ResourceGroupName(),
+			"resource_group_name": azure.SchemaResourceGroupName(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"virtual_hub_id": {
 				Type:         pluginsdk.TypeString,
@@ -109,18 +108,6 @@ func resourcePointToSiteVPNGateway() *pluginsdk.Resource {
 										ValidateFunc: networkValidate.HubRouteTableID,
 									},
 
-									"inbound_route_map_id": {
-										Type:         pluginsdk.TypeString,
-										Optional:     true,
-										ValidateFunc: networkValidate.RouteMapID,
-									},
-
-									"outbound_route_map_id": {
-										Type:         pluginsdk.TypeString,
-										Optional:     true,
-										ValidateFunc: networkValidate.RouteMapID,
-									},
-
 									"propagated_route_table": {
 										Type:     pluginsdk.TypeList,
 										Optional: true,
@@ -164,13 +151,6 @@ func resourcePointToSiteVPNGateway() *pluginsdk.Resource {
 				Type:         pluginsdk.TypeInt,
 				Required:     true,
 				ValidateFunc: validation.IntAtLeast(0),
-			},
-
-			"routing_preference_internet_enabled": {
-				Type:     pluginsdk.TypeBool,
-				Optional: true,
-				ForceNew: true,
-				Default:  false,
 			},
 
 			"dns_servers": {
@@ -220,7 +200,6 @@ func resourcePointToSiteVPNGatewayCreateUpdate(d *pluginsdk.ResourceData, meta i
 	parameters := network.P2SVpnGateway{
 		Location: utils.String(location),
 		P2SVpnGatewayProperties: &network.P2SVpnGatewayProperties{
-			IsRoutingPreferenceInternet: utils.Bool(d.Get("routing_preference_internet_enabled").(bool)),
 			P2SConnectionConfigurations: connectionConfigurations,
 			VpnServerConfiguration: &network.SubResource{
 				ID: utils.String(vpnServerConfigurationId),
@@ -303,12 +282,6 @@ func resourcePointToSiteVPNGatewayRead(d *pluginsdk.ResourceData, meta interface
 			vpnServerConfigurationId = *props.VpnServerConfiguration.ID
 		}
 		d.Set("vpn_server_configuration_id", vpnServerConfigurationId)
-
-		routingPreferenceInternetEnabled := false
-		if props.IsRoutingPreferenceInternet != nil {
-			routingPreferenceInternetEnabled = *props.IsRoutingPreferenceInternet
-		}
-		d.Set("routing_preference_internet_enabled", routingPreferenceInternetEnabled)
 	}
 
 	return tags.FlattenAndSet(d, resp.Tags)
@@ -374,29 +347,13 @@ func expandPointToSiteVPNGatewayConnectionRouteConfiguration(input []interface{}
 	if len(input) == 0 {
 		return nil
 	}
-
 	v := input[0].(map[string]interface{})
-
-	routingConfiguration := &network.RoutingConfiguration{
+	return &network.RoutingConfiguration{
 		AssociatedRouteTable: &network.SubResource{
 			ID: utils.String(v["associated_route_table_id"].(string)),
 		},
 		PropagatedRouteTables: expandPointToSiteVPNGatewayConnectionRouteConfigurationPropagatedRouteTable(v["propagated_route_table"].([]interface{})),
 	}
-
-	if inboundRouteMapId := v["inbound_route_map_id"].(string); inboundRouteMapId != "" {
-		routingConfiguration.InboundRouteMap = &network.SubResource{
-			ID: utils.String(inboundRouteMapId),
-		}
-	}
-
-	if outboundRouteMapId := v["outbound_route_map_id"].(string); outboundRouteMapId != "" {
-		routingConfiguration.OutboundRouteMap = &network.SubResource{
-			ID: utils.String(outboundRouteMapId),
-		}
-	}
-
-	return routingConfiguration
 }
 
 func expandPointToSiteVPNGatewayConnectionRouteConfigurationPropagatedRouteTable(input []interface{}) *network.PropagatedRouteTable {
@@ -467,27 +424,13 @@ func flattenPointToSiteVPNGatewayConnectionRouteConfiguration(input *network.Rou
 	if input == nil {
 		return []interface{}{}
 	}
-
 	var associatedRouteTableId string
 	if input.AssociatedRouteTable != nil && input.AssociatedRouteTable.ID != nil {
 		associatedRouteTableId = *input.AssociatedRouteTable.ID
 	}
-
-	var inboundRouteMapId string
-	if input.InboundRouteMap != nil && input.InboundRouteMap.ID != nil {
-		inboundRouteMapId = *input.InboundRouteMap.ID
-	}
-
-	var outboundRouteMapId string
-	if input.OutboundRouteMap != nil && input.OutboundRouteMap.ID != nil {
-		outboundRouteMapId = *input.OutboundRouteMap.ID
-	}
-
 	return []interface{}{
 		map[string]interface{}{
 			"associated_route_table_id": associatedRouteTableId,
-			"inbound_route_map_id":      inboundRouteMapId,
-			"outbound_route_map_id":     outboundRouteMapId,
 			"propagated_route_table":    flattenPointToSiteVPNGatewayConnectionRouteConfigurationPropagatedRouteTable(input.PropagatedRouteTables),
 		},
 	}

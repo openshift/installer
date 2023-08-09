@@ -1,10 +1,6 @@
 package accounts
 
-import (
-	"encoding/json"
-	"fmt"
-	"strings"
-)
+import "strings"
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License. See NOTICE.txt in the project root for license information.
@@ -21,19 +17,6 @@ func PossibleValuesForKeyType() []string {
 		string(KeyTypePrimary),
 		string(KeyTypeSecondary),
 	}
-}
-
-func (s *KeyType) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseKeyType(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseKeyType(input string) (*KeyType, error) {
@@ -64,19 +47,6 @@ func PossibleValuesForKind() []string {
 	}
 }
 
-func (s *Kind) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseKind(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
-}
-
 func parseKind(input string) (*Kind, error) {
 	vals := map[string]Kind{
 		"gen1": KindGenOne,
@@ -105,19 +75,6 @@ func PossibleValuesForName() []string {
 		string(NameSOne),
 		string(NameSZero),
 	}
-}
-
-func (s *Name) UnmarshalJSON(bytes []byte) error {
-	var decoded string
-	if err := json.Unmarshal(bytes, &decoded); err != nil {
-		return fmt.Errorf("unmarshaling: %+v", err)
-	}
-	out, err := parseName(decoded)
-	if err != nil {
-		return fmt.Errorf("parsing %q: %+v", decoded, err)
-	}
-	*s = *out
-	return nil
 }
 
 func parseName(input string) (*Name, error) {

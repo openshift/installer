@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/databricks/2023-02-01/workspaces"
+	"github.com/hashicorp/go-azure-sdk/resource-manager/databricks/2021-04-01-preview/workspaces"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
-	networkValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/network/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 )
@@ -24,13 +24,13 @@ func dataSourceDatabricksWorkspacePrivateEndpointConnection() *pluginsdk.Resourc
 			"workspace_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: workspaces.ValidateWorkspaceID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"private_endpoint_id": {
 				Type:         pluginsdk.TypeString,
 				Required:     true,
-				ValidateFunc: networkValidate.PrivateEndpointID,
+				ValidateFunc: azure.ValidateResourceID,
 			},
 
 			"connections": {
@@ -111,37 +111,28 @@ func flattenPrivateEndpointConnections(input *[]workspaces.PrivateEndpointConnec
 	}
 
 	for _, v := range *input {
-		name := ""
-		if v.Name != nil {
-			name = *v.Name
+		result := make(map[string]interface{})
+
+		if name := v.Name; name != nil {
+			result["name"] = *name
 		}
 
-		workspacePrivateEndpointId := ""
-		if v.Id != nil {
-			workspacePrivateEndpointId = *v.Id
+		if id := v.Id; id != nil {
+			result["workspace_private_endpoint_id"] = *id
 		}
 
 		connState := v.Properties.PrivateLinkServiceConnectionState
-		actionRequired := ""
-		if connState.ActionsRequired != nil {
-			actionRequired = *connState.ActionsRequired
+		if description := connState.Description; description != nil {
+			result["description"] = *description
 		}
-		description := ""
-		if connState.Description != nil {
-			description = *connState.Description
+		if status := connState.Status; status != "" {
+			result["status"] = status
 		}
-		status := ""
-		if connState.Status != "" {
-			status = string(connState.Status)
+		if actionReq := connState.ActionRequired; actionReq != nil {
+			result["action_required"] = *actionReq
 		}
 
-		results = append(results, map[string]interface{}{
-			"action_required":               actionRequired,
-			"description":                   description,
-			"name":                          name,
-			"status":                        status,
-			"workspace_private_endpoint_id": workspacePrivateEndpointId,
-		})
+		results = append(results, result)
 	}
 
 	return results

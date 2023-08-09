@@ -1,11 +1,8 @@
-// Copyright (c) HashiCorp, Inc.
-// SPDX-License-Identifier: MPL-2.0
-
 package sdk
 
-import "github.com/hashicorp/go-azure-helpers/resourcemanager/resourceids"
+import "github.com/hashicorp/terraform-provider-azurerm/internal/resourceid"
 
 // SetID uses the specified ID Formatter to set the Resource ID
-func (rmd ResourceMetaData) SetID(formatter resourceids.Id) {
+func (rmd ResourceMetaData) SetID(formatter resourceid.Formatter) {
 	rmd.ResourceData.SetId(formatter.ID())
 }

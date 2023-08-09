@@ -10,14 +10,14 @@ import (
 	"github.com/hashicorp/go-azure-helpers/lang/response"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/tags"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/frontdoor/2020-05-01/frontdoors"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/frontdoor/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/frontdoor/parse"
-	frontDoorValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/frontdoor/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/frontdoor/sdk/2020-05-01/frontdoors"
+	azValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/frontdoor/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
@@ -135,16 +135,18 @@ func resourceFrontDoorUpdate(d *pluginsdk.ResourceData, meta interface{}) error 
 	// remove in 3.0
 	// due to a change in the RP, if a Frontdoor exists in a location other than 'Global' it may continue to
 	// exist in that location, if this is a brand new Frontdoor it must be created in the 'Global' location
-	var location string
+	location := "Global"
+	cfgLocation, hasLocation := d.GetOk("location")
 
 	exists, err := client.Get(ctx, id)
 	if err != nil || exists.Model == nil {
-		return fmt.Errorf("locating %s: %+v", id, err)
+		if !response.WasNotFound(exists.HttpResponse) {
+			return fmt.Errorf("locating %s: %+v", id, err)
+		}
 	} else {
 		location = azure.NormalizeLocation(*exists.Model.Location)
 	}
 
-	cfgLocation, hasLocation := d.GetOk("location")
 	if hasLocation {
 		if location != azure.NormalizeLocation(cfgLocation) {
 			return fmt.Errorf("the Front Door %q (Resource Group %q) already exists in %q and cannot be moved to the %q location", name, resourceGroup, location, cfgLocation)
@@ -485,8 +487,8 @@ func expandFrontDoorBackend(input []interface{}) *[]frontdoors.Backend {
 			Address:           utils.String(address),
 			BackendHostHeader: utils.String(hostHeader),
 			EnabledState:      &enabled,
-			HTTPPort:          utils.Int64(httpPort),
-			HTTPSPort:         utils.Int64(httpsPort),
+			HttpPort:          utils.Int64(httpPort),
+			HttpsPort:         utils.Int64(httpsPort),
 			Priority:          utils.Int64(priority),
 			Weight:            utils.Int64(weight),
 		}
@@ -693,9 +695,9 @@ func expandFrontDoorAcceptedProtocols(input []interface{}) *[]frontdoors.FrontDo
 	output := make([]frontdoors.FrontDoorProtocol, 0)
 
 	for _, ap := range input {
-		result := frontdoors.FrontDoorProtocolHTTPS
-		if ap.(string) == string(frontdoors.FrontDoorProtocolHTTP) {
-			result = frontdoors.FrontDoorProtocolHTTP
+		result := frontdoors.FrontDoorProtocolHttps
+		if ap.(string) == string(frontdoors.FrontDoorProtocolHttp) {
+			result = frontdoors.FrontDoorProtocolHttp
 		}
 		output = append(output, result)
 	}
@@ -1063,10 +1065,10 @@ func flattenFrontDoorBackend(input *[]frontdoors.Backend) []interface{} {
 		if v.EnabledState != nil {
 			result["enabled"] = *v.EnabledState == frontdoors.BackendEnabledStateEnabled
 		}
-		if httpPort := v.HTTPPort; httpPort != nil {
+		if httpPort := v.HttpPort; httpPort != nil {
 			result["http_port"] = int(*httpPort)
 		}
-		if httpsPort := v.HTTPSPort; httpsPort != nil {
+		if httpsPort := v.HttpsPort; httpsPort != nil {
 			result["https_port"] = int(*httpsPort)
 		}
 		if priority := v.Priority; priority != nil {
@@ -1723,7 +1725,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: frontDoorValidate.FrontDoorName,
+			ValidateFunc: azValidate.FrontDoorName,
 		},
 
 		"cname": {
@@ -1762,7 +1764,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"name": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: frontDoorValidate.BackendPoolRoutingRuleName,
+						ValidateFunc: azValidate.BackendPoolRoutingRuleName,
 					},
 					"enabled": {
 						Type:     pluginsdk.TypeBool,
@@ -1776,8 +1778,8 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 						Elem: &pluginsdk.Schema{
 							Type: pluginsdk.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{
-								string(frontdoors.FrontDoorProtocolHTTP),
-								string(frontdoors.FrontDoorProtocolHTTPS),
+								string(frontdoors.FrontDoorProtocolHttp),
+								string(frontdoors.FrontDoorProtocolHttps),
 							}, false),
 						},
 					},
@@ -1825,8 +1827,8 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 									Type:     pluginsdk.TypeString,
 									Required: true,
 									ValidateFunc: validation.StringInSlice([]string{
-										string(frontdoors.FrontDoorRedirectProtocolHTTPOnly),
-										string(frontdoors.FrontDoorRedirectProtocolHTTPSOnly),
+										string(frontdoors.FrontDoorRedirectProtocolHttpOnly),
+										string(frontdoors.FrontDoorRedirectProtocolHttpsOnly),
 										string(frontdoors.FrontDoorRedirectProtocolMatchRequest),
 									}, false),
 								},
@@ -1852,7 +1854,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 								"backend_pool_name": {
 									Type:         pluginsdk.TypeString,
 									Required:     true,
-									ValidateFunc: frontDoorValidate.BackendPoolRoutingRuleName,
+									ValidateFunc: azValidate.BackendPoolRoutingRuleName,
 								},
 								"cache_enabled": {
 									Type:     pluginsdk.TypeBool,
@@ -1896,10 +1898,10 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 								"forwarding_protocol": {
 									Type:     pluginsdk.TypeString,
 									Optional: true,
-									Default:  string(frontdoors.FrontDoorForwardingProtocolHTTPSOnly),
+									Default:  string(frontdoors.FrontDoorForwardingProtocolHttpsOnly),
 									ValidateFunc: validation.StringInSlice([]string{
-										string(frontdoors.FrontDoorForwardingProtocolHTTPOnly),
-										string(frontdoors.FrontDoorForwardingProtocolHTTPSOnly),
+										string(frontdoors.FrontDoorForwardingProtocolHttpOnly),
+										string(frontdoors.FrontDoorForwardingProtocolHttpsOnly),
 										string(frontdoors.FrontDoorForwardingProtocolMatchRequest),
 									}, false),
 								},
@@ -1923,7 +1925,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"name": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: frontDoorValidate.BackendPoolRoutingRuleName,
+						ValidateFunc: azValidate.BackendPoolRoutingRuleName,
 					},
 					"sample_size": {
 						Type:     pluginsdk.TypeInt,
@@ -1957,7 +1959,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"name": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: frontDoorValidate.BackendPoolRoutingRuleName,
+						ValidateFunc: azValidate.BackendPoolRoutingRuleName,
 					},
 					"enabled": {
 						Type:     pluginsdk.TypeBool,
@@ -1972,10 +1974,10 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"protocol": {
 						Type:     pluginsdk.TypeString,
 						Optional: true,
-						Default:  string(frontdoors.FrontDoorProtocolHTTP),
+						Default:  string(frontdoors.FrontDoorProtocolHttp),
 						ValidateFunc: validation.StringInSlice([]string{
-							string(frontdoors.FrontDoorProtocolHTTP),
-							string(frontdoors.FrontDoorProtocolHTTPS),
+							string(frontdoors.FrontDoorProtocolHttp),
+							string(frontdoors.FrontDoorProtocolHttps),
 						}, false),
 					},
 					"probe_method": {
@@ -2052,7 +2054,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"name": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: frontDoorValidate.BackendPoolRoutingRuleName,
+						ValidateFunc: azValidate.BackendPoolRoutingRuleName,
 					},
 					"health_probe_name": {
 						Type:     pluginsdk.TypeString,
@@ -2099,7 +2101,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"name": {
 						Type:         pluginsdk.TypeString,
 						Required:     true,
-						ValidateFunc: frontDoorValidate.BackendPoolRoutingRuleName,
+						ValidateFunc: azValidate.BackendPoolRoutingRuleName,
 					},
 					"host_name": {
 						Type:     pluginsdk.TypeString,
@@ -2118,7 +2120,7 @@ func resourceFrontDoorSchema() map[string]*pluginsdk.Schema {
 					"web_application_firewall_policy_link_id": {
 						Type:         pluginsdk.TypeString,
 						Optional:     true,
-						ValidateFunc: frontDoorValidate.WebApplicationFirewallPolicyID,
+						ValidateFunc: azure.ValidateResourceID,
 					},
 				},
 			},

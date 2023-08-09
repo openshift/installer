@@ -16,24 +16,7 @@ import (
 // terraform-plugin-go.  Third parties should not use it, and its behavior is
 // not covered under the API compatibility guarantees. Don't use this.
 func ValueFromJSON(data []byte, typ Type) (Value, error) {
-	return jsonUnmarshal(data, typ, NewAttributePath(), ValueFromJSONOpts{})
-}
-
-// ValueFromJSONOpts contains options that can be used to modify the behaviour when
-// unmarshalling JSON.
-type ValueFromJSONOpts struct {
-	// IgnoreUndefinedAttributes is used to ignore any attributes which appear in the
-	// JSON but do not have a corresponding entry in the schema. For example, raw state
-	// where an attribute has been removed from the schema.
-	IgnoreUndefinedAttributes bool
-}
-
-// ValueFromJSONWithOpts is identical to ValueFromJSON with the exception that it
-// accepts ValueFromJSONOpts which can be used to modify the unmarshalling behaviour, such
-// as ignoring undefined attributes, for instance. This can occur when the JSON
-// being unmarshalled does not have a corresponding attribute in the schema.
-func ValueFromJSONWithOpts(data []byte, typ Type, opts ValueFromJSONOpts) (Value, error) {
-	return jsonUnmarshal(data, typ, NewAttributePath(), opts)
+	return jsonUnmarshal(data, typ, NewAttributePath())
 }
 
 func jsonByteDecoder(buf []byte) *json.Decoder {
@@ -43,7 +26,7 @@ func jsonByteDecoder(buf []byte) *json.Decoder {
 	return dec
 }
 
-func jsonUnmarshal(buf []byte, typ Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshal(buf []byte, typ Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 
 	tok, err := dec.Token()
@@ -63,17 +46,18 @@ func jsonUnmarshal(buf []byte, typ Type, p *AttributePath, opts ValueFromJSONOpt
 	case typ.Is(Bool):
 		return jsonUnmarshalBool(buf, typ, p)
 	case typ.Is(DynamicPseudoType):
-		return jsonUnmarshalDynamicPseudoType(buf, typ, p, opts)
+		return jsonUnmarshalDynamicPseudoType(buf, typ, p)
 	case typ.Is(List{}):
-		return jsonUnmarshalList(buf, typ.(List).ElementType, p, opts)
+		return jsonUnmarshalList(buf, typ.(List).ElementType, p)
 	case typ.Is(Set{}):
-		return jsonUnmarshalSet(buf, typ.(Set).ElementType, p, opts)
+		return jsonUnmarshalSet(buf, typ.(Set).ElementType, p)
+
 	case typ.Is(Map{}):
-		return jsonUnmarshalMap(buf, typ.(Map).ElementType, p, opts)
+		return jsonUnmarshalMap(buf, typ.(Map).ElementType, p)
 	case typ.Is(Tuple{}):
-		return jsonUnmarshalTuple(buf, typ.(Tuple).ElementTypes, p, opts)
+		return jsonUnmarshalTuple(buf, typ.(Tuple).ElementTypes, p)
 	case typ.Is(Object{}):
-		return jsonUnmarshalObject(buf, typ.(Object).AttributeTypes, p, opts)
+		return jsonUnmarshalObject(buf, typ.(Object).AttributeTypes, p)
 	}
 	return Value{}, p.NewErrorf("unknown type %s", typ)
 }
@@ -156,7 +140,7 @@ func jsonUnmarshalBool(buf []byte, _ Type, p *AttributePath) (Value, error) {
 	return Value{}, p.NewErrorf("unsupported type %T sent as %s", tok, Bool)
 }
 
-func jsonUnmarshalDynamicPseudoType(buf []byte, _ Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshalDynamicPseudoType(buf []byte, _ Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 	tok, err := dec.Token()
 	if err != nil {
@@ -206,10 +190,10 @@ func jsonUnmarshalDynamicPseudoType(buf []byte, _ Type, p *AttributePath, opts V
 	if valBody == nil {
 		return Value{}, p.NewErrorf("missing value in dynamically-typed value")
 	}
-	return jsonUnmarshal(valBody, t, p, opts)
+	return jsonUnmarshal(valBody, t, p)
 }
 
-func jsonUnmarshalList(buf []byte, elementType Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshalList(buf []byte, elementType Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 
 	tok, err := dec.Token()
@@ -243,7 +227,7 @@ func jsonUnmarshalList(buf []byte, elementType Type, p *AttributePath, opts Valu
 		if err != nil {
 			return Value{}, innerPath.NewErrorf("error decoding value: %w", err)
 		}
-		val, err := jsonUnmarshal(rawVal, elementType, innerPath, opts)
+		val, err := jsonUnmarshal(rawVal, elementType, innerPath)
 		if err != nil {
 			return Value{}, err
 		}
@@ -270,7 +254,7 @@ func jsonUnmarshalList(buf []byte, elementType Type, p *AttributePath, opts Valu
 	}, vals), nil
 }
 
-func jsonUnmarshalSet(buf []byte, elementType Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshalSet(buf []byte, elementType Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 
 	tok, err := dec.Token()
@@ -300,7 +284,7 @@ func jsonUnmarshalSet(buf []byte, elementType Type, p *AttributePath, opts Value
 		if err != nil {
 			return Value{}, innerPath.NewErrorf("error decoding value: %w", err)
 		}
-		val, err := jsonUnmarshal(rawVal, elementType, innerPath, opts)
+		val, err := jsonUnmarshal(rawVal, elementType, innerPath)
 		if err != nil {
 			return Value{}, err
 		}
@@ -326,7 +310,7 @@ func jsonUnmarshalSet(buf []byte, elementType Type, p *AttributePath, opts Value
 	}, vals), nil
 }
 
-func jsonUnmarshalMap(buf []byte, attrType Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshalMap(buf []byte, attrType Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 
 	tok, err := dec.Token()
@@ -357,7 +341,7 @@ func jsonUnmarshalMap(buf []byte, attrType Type, p *AttributePath, opts ValueFro
 		if err != nil {
 			return Value{}, innerPath.NewErrorf("error decoding value: %w", err)
 		}
-		val, err := jsonUnmarshal(rawVal, attrType, innerPath, opts)
+		val, err := jsonUnmarshal(rawVal, attrType, innerPath)
 		if err != nil {
 			return Value{}, err
 		}
@@ -376,7 +360,7 @@ func jsonUnmarshalMap(buf []byte, attrType Type, p *AttributePath, opts ValueFro
 	}, vals), nil
 }
 
-func jsonUnmarshalTuple(buf []byte, elementTypes []Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshalTuple(buf []byte, elementTypes []Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 
 	tok, err := dec.Token()
@@ -414,7 +398,7 @@ func jsonUnmarshalTuple(buf []byte, elementTypes []Type, p *AttributePath, opts 
 		if err != nil {
 			return Value{}, innerPath.NewErrorf("error decoding value: %w", err)
 		}
-		val, err := jsonUnmarshal(rawVal, elementType, innerPath, opts)
+		val, err := jsonUnmarshal(rawVal, elementType, innerPath)
 		if err != nil {
 			return Value{}, err
 		}
@@ -438,9 +422,7 @@ func jsonUnmarshalTuple(buf []byte, elementTypes []Type, p *AttributePath, opts 
 	}, vals), nil
 }
 
-// jsonUnmarshalObject attempts to decode JSON object structure to tftypes.Value object.
-// opts contains fields that can be used to modify the behaviour of JSON unmarshalling.
-func jsonUnmarshalObject(buf []byte, attrTypes map[string]Type, p *AttributePath, opts ValueFromJSONOpts) (Value, error) {
+func jsonUnmarshalObject(buf []byte, attrTypes map[string]Type, p *AttributePath) (Value, error) {
 	dec := jsonByteDecoder(buf)
 
 	tok, err := dec.Token()
@@ -453,32 +435,27 @@ func jsonUnmarshalObject(buf []byte, attrTypes map[string]Type, p *AttributePath
 
 	vals := map[string]Value{}
 	for dec.More() {
+		innerPath := p.WithElementKeyValue(NewValue(String, UnknownValue))
 		tok, err := dec.Token()
 		if err != nil {
-			return Value{}, p.NewErrorf("error reading object attribute key token: %w", err)
+			return Value{}, innerPath.NewErrorf("error reading token: %w", err)
 		}
 		key, ok := tok.(string)
 		if !ok {
-			return Value{}, p.NewErrorf("object attribute key was %T with value %v, not string", tok, tok)
+			return Value{}, innerPath.NewErrorf("object attribute key was %T, not string", tok)
 		}
-		innerPath := p.WithAttributeName(key)
 		attrType, ok := attrTypes[key]
 		if !ok {
-			if opts.IgnoreUndefinedAttributes {
-				// We are trying to ignore the key and value of any unsupported attribute.
-				_ = dec.Decode(new(json.RawMessage))
-				continue
-			}
-
 			return Value{}, innerPath.NewErrorf("unsupported attribute %q", key)
 		}
+		innerPath = p.WithAttributeName(key)
 
 		var rawVal json.RawMessage
 		err = dec.Decode(&rawVal)
 		if err != nil {
 			return Value{}, innerPath.NewErrorf("error decoding value: %w", err)
 		}
-		val, err := jsonUnmarshal(rawVal, attrType, innerPath, opts)
+		val, err := jsonUnmarshal(rawVal, attrType, innerPath)
 		if err != nil {
 			return Value{}, err
 		}

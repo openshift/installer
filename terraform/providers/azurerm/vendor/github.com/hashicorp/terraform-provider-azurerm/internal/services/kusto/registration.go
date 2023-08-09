@@ -9,18 +9,6 @@ type Registration struct{}
 
 var _ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
 
-var _ sdk.TypedServiceRegistrationWithAGitHubLabel = Registration{}
-
-func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{}
-}
-
-func (r Registration) Resources() []sdk.Resource {
-	return []sdk.Resource{
-		CosmosDBDataConnectionResource{},
-	}
-}
-
 func (r Registration) AssociatedGitHubLabel() string {
 	return "service/kusto"
 }

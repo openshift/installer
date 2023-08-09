@@ -5,13 +5,12 @@ import (
 	"log"
 	"time"
 
-	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/devtestlab/2018-09-15/virtualmachines"
+	"github.com/Azure/azure-sdk-for-go/services/devtestlabs/mgmt/2018-09-15/dtl"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/migration"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/parse"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/devtestlabs/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tags"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
@@ -27,7 +26,7 @@ func resourceArmDevTestWindowsVirtualMachine() *pluginsdk.Resource {
 		Update: resourceArmDevTestWindowsVirtualMachineCreateUpdate,
 		Delete: resourceArmDevTestWindowsVirtualMachineDelete,
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
-			_, err := virtualmachines.ParseVirtualMachineID(id)
+			_, err := parse.DevTestVirtualMachineID(id)
 			return err
 		}),
 
@@ -62,7 +61,7 @@ func resourceArmDevTestWindowsVirtualMachine() *pluginsdk.Resource {
 			// BUG: https://github.com/Azure/azure-rest-api-specs/issues/3964
 			"resource_group_name": azure.SchemaResourceGroupNameDiffSuppress(),
 
-			"location": commonschema.Location(),
+			"location": azure.SchemaLocation(),
 
 			"size": {
 				Type:     pluginsdk.TypeString,
@@ -81,8 +80,7 @@ func resourceArmDevTestWindowsVirtualMachine() *pluginsdk.Resource {
 				Type:     pluginsdk.TypeString,
 				Required: true,
 				// since this isn't returned from the API
-				ForceNew:  true,
-				Sensitive: true,
+				ForceNew: true,
 			},
 
 			"storage_type": {
@@ -152,20 +150,22 @@ func resourceArmDevTestWindowsVirtualMachineCreateUpdate(d *pluginsdk.ResourceDa
 
 	log.Printf("[INFO] preparing arguments for DevTest Windows Virtual Machine creation")
 
-	id := virtualmachines.NewVirtualMachineID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("name").(string))
+	id := parse.NewDevTestVirtualMachineID(subscriptionId, d.Get("resource_group_name").(string), d.Get("lab_name").(string), d.Get("name").(string))
 
 	if d.IsNewResource() {
-		existing, err := client.Get(ctx, id, virtualmachines.GetOperationOptions{})
+		existing, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.VirtualMachineName, "")
 		if err != nil {
-			if !response.WasNotFound(existing.HttpResponse) {
+			if !utils.ResponseWasNotFound(existing.Response) {
 				return fmt.Errorf("checking for presence of existing %s: %s", id, err)
 			}
 		}
 
-		if !response.WasNotFound(existing.HttpResponse) {
+		if !utils.ResponseWasNotFound(existing.Response) {
 			return tf.ImportAsExistsError("azurerm_dev_test_windows_virtual_machine", id.ID())
 		}
 	}
+
+	t := d.Get("tags").(map[string]interface{})
 
 	allowClaim := d.Get("allow_claim").(bool)
 	disallowPublicIPAddress := d.Get("disallow_public_ip_address").(bool)
@@ -185,25 +185,25 @@ func resourceArmDevTestWindowsVirtualMachineCreateUpdate(d *pluginsdk.ResourceDa
 	natRules := expandDevTestLabVirtualMachineNatRules(natRulesRaw)
 
 	if len(natRules) > 0 && !disallowPublicIPAddress {
-		return fmt.Errorf("if `inbound_nat_rule` is specified then `disallow_public_ip_address` must be set to true")
+		return fmt.Errorf("If `inbound_nat_rule` is specified then `disallow_public_ip_address` must be set to true.")
 	}
 
-	nic := virtualmachines.NetworkInterfaceProperties{}
+	nic := dtl.NetworkInterfaceProperties{}
 	if disallowPublicIPAddress {
-		nic.SharedPublicIPAddressConfiguration = &virtualmachines.SharedPublicIPAddressConfiguration{
+		nic.SharedPublicIPAddressConfiguration = &dtl.SharedPublicIPAddressConfiguration{
 			InboundNatRules: &natRules,
 		}
 	}
 
-	parameters := virtualmachines.LabVirtualMachine{
+	parameters := dtl.LabVirtualMachine{
 		Location: utils.String(location),
-		Properties: virtualmachines.LabVirtualMachineProperties{
+		LabVirtualMachineProperties: &dtl.LabVirtualMachineProperties{
 			AllowClaim:                 utils.Bool(allowClaim),
-			IsAuthenticationWithSshKey: utils.Bool(false),
+			IsAuthenticationWithSSHKey: utils.Bool(false),
 			DisallowPublicIPAddress:    utils.Bool(disallowPublicIPAddress),
 			GalleryImageReference:      galleryImageReference,
 			LabSubnetName:              utils.String(labSubnetName),
-			LabVirtualNetworkId:        utils.String(labVirtualNetworkId),
+			LabVirtualNetworkID:        utils.String(labVirtualNetworkId),
 			NetworkInterface:           &nic,
 			OsType:                     utils.String("Windows"),
 			Notes:                      utils.String(notes),
@@ -212,12 +212,16 @@ func resourceArmDevTestWindowsVirtualMachineCreateUpdate(d *pluginsdk.ResourceDa
 			StorageType:                utils.String(storageType),
 			UserName:                   utils.String(username),
 		},
-		Tags: expandTags(d.Get("tags").(map[string]interface{})),
+		Tags: tags.Expand(t),
 	}
 
-	err := client.CreateOrUpdateThenPoll(ctx, id, parameters)
+	future, err := client.CreateOrUpdate(ctx, id.ResourceGroup, id.LabName, id.VirtualMachineName, parameters)
 	if err != nil {
 		return fmt.Errorf("creating/updating %s: %+v", id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for creation/update of %s: %+v", id, err)
 	}
 
 	d.SetId(id.ID())
@@ -230,14 +234,14 @@ func resourceArmDevTestWindowsVirtualMachineRead(d *pluginsdk.ResourceData, meta
 	ctx, cancel := timeouts.ForRead(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := virtualmachines.ParseVirtualMachineID(d.Id())
+	id, err := parse.DevTestVirtualMachineID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, virtualmachines.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.VirtualMachineName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			log.Printf("[DEBUG] %s was not found - removing from state!", *id)
 			d.SetId("")
 			return nil
@@ -248,14 +252,12 @@ func resourceArmDevTestWindowsVirtualMachineRead(d *pluginsdk.ResourceData, meta
 
 	d.Set("name", id.VirtualMachineName)
 	d.Set("lab_name", id.LabName)
-	d.Set("resource_group_name", id.ResourceGroupName)
+	d.Set("resource_group_name", id.ResourceGroup)
+	if location := read.Location; location != nil {
+		d.Set("location", azure.NormalizeLocation(*location))
+	}
 
-	if model := read.Model; model != nil {
-		if location := model.Location; location != nil {
-			d.Set("location", azure.NormalizeLocation(*location))
-		}
-
-		props := model.Properties
+	if props := read.LabVirtualMachineProperties; props != nil {
 		d.Set("allow_claim", props.AllowClaim)
 		d.Set("disallow_public_ip_address", props.DisallowPublicIPAddress)
 		d.Set("notes", props.Notes)
@@ -271,12 +273,9 @@ func resourceArmDevTestWindowsVirtualMachineRead(d *pluginsdk.ResourceData, meta
 		// Computed fields
 		d.Set("fqdn", props.Fqdn)
 		d.Set("unique_identifier", props.UniqueIdentifier)
-
-		if err = tags.FlattenAndSet(d, flattenTags(model.Tags)); err != nil {
-			return err
-		}
 	}
-	return nil
+
+	return tags.FlattenAndSet(d, read.Tags)
 }
 
 func resourceArmDevTestWindowsVirtualMachineDelete(d *pluginsdk.ResourceData, meta interface{}) error {
@@ -284,14 +283,14 @@ func resourceArmDevTestWindowsVirtualMachineDelete(d *pluginsdk.ResourceData, me
 	ctx, cancel := timeouts.ForDelete(meta.(*clients.Client).StopContext, d)
 	defer cancel()
 
-	id, err := virtualmachines.ParseVirtualMachineID(d.Id())
+	id, err := parse.DevTestVirtualMachineID(d.Id())
 	if err != nil {
 		return err
 	}
 
-	read, err := client.Get(ctx, *id, virtualmachines.GetOperationOptions{})
+	read, err := client.Get(ctx, id.ResourceGroup, id.LabName, id.VirtualMachineName, "")
 	if err != nil {
-		if response.WasNotFound(read.HttpResponse) {
+		if utils.ResponseWasNotFound(read.Response) {
 			// deleted outside of TF
 			log.Printf("[DEBUG] %s was not found - assuming removed!", *id)
 			return nil
@@ -300,9 +299,13 @@ func resourceArmDevTestWindowsVirtualMachineDelete(d *pluginsdk.ResourceData, me
 		return fmt.Errorf("retrieving %s: %+v", *id, err)
 	}
 
-	err = client.DeleteThenPoll(ctx, *id)
+	future, err := client.Delete(ctx, id.ResourceGroup, id.LabName, id.VirtualMachineName)
 	if err != nil {
 		return fmt.Errorf("deleting %s: %+v", *id, err)
+	}
+
+	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+		return fmt.Errorf("waiting for the deletion of %s: %+v", *id, err)
 	}
 
 	return err

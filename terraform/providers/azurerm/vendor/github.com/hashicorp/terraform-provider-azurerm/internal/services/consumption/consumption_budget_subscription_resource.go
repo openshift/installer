@@ -2,11 +2,11 @@ package consumption
 
 import (
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/consumption/2019-10-01/budgets"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/consumption/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/consumption/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 )
 
 type SubscriptionConsumptionBudget struct {
@@ -25,7 +25,7 @@ func (r SubscriptionConsumptionBudget) Arguments() map[string]*pluginsdk.Schema 
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: validate.ConsumptionBudgetName(),
+			ValidateFunc: validation.StringIsNotWhiteSpace,
 		},
 		"subscription_id": {
 			Type:         pluginsdk.TypeString,
@@ -50,7 +50,7 @@ func (r SubscriptionConsumptionBudget) ResourceType() string {
 }
 
 func (r SubscriptionConsumptionBudget) IDValidationFunc() pluginsdk.SchemaValidateFunc {
-	return budgets.ValidateScopedBudgetID
+	return validate.ConsumptionBudgetSubscriptionID
 }
 
 func (r SubscriptionConsumptionBudget) Create() sdk.ResourceFunc {
@@ -70,7 +70,7 @@ func (r SubscriptionConsumptionBudget) Update() sdk.ResourceFunc {
 }
 
 func (r SubscriptionConsumptionBudget) CustomImporter() sdk.ResourceRunFunc {
-	return r.base.importerFunc()
+	return r.base.importerFunc("subscription")
 }
 
 func (r SubscriptionConsumptionBudget) StateUpgraders() sdk.StateUpgradeData {

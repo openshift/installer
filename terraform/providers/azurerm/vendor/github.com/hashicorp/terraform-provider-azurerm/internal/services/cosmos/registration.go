@@ -7,30 +7,10 @@ import (
 
 type Registration struct{}
 
-var (
-	_ sdk.TypedServiceRegistration                   = Registration{}
-	_ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
-)
+var _ sdk.UntypedServiceRegistrationWithAGitHubLabel = Registration{}
 
 func (r Registration) AssociatedGitHubLabel() string {
 	return "service/cosmosdb"
-}
-
-func (r Registration) DataSources() []sdk.DataSource {
-	return []sdk.DataSource{}
-}
-
-func (r Registration) Resources() []sdk.Resource {
-	return []sdk.Resource{
-		CosmosDbMongoUserDefinitionResource{},
-		CosmosDbPostgreSQLClusterResource{},
-		CosmosDbPostgreSQLCoordinatorConfigurationResource{},
-		CosmosDbPostgreSQLFirewallRuleResource{},
-		CosmosDbPostgreSQLNodeConfigurationResource{},
-		CosmosDbPostgreSQLRoleResource{},
-		CosmosDbSqlDedicatedGatewayResource{},
-		CosmosDbMongoRoleDefinitionResource{},
-	}
 }
 
 // Name is the name of this Service
@@ -51,8 +31,6 @@ func (r Registration) SupportedDataSources() map[string]*pluginsdk.Resource {
 		"azurerm_cosmosdb_account":                      dataSourceCosmosDbAccount(),
 		"azurerm_cosmosdb_mongo_database":               dataSourceCosmosDbMongoDatabase(),
 		"azurerm_cosmosdb_restorable_database_accounts": dataSourceCosmosDbRestorableDatabaseAccounts(),
-		"azurerm_cosmosdb_sql_database":                 dataSourceCosmosDbSQLDatabase(),
-		"azurerm_cosmosdb_sql_role_definition":          dataSourceCosmosDbSQLRoleDefinition(),
 	}
 }
 

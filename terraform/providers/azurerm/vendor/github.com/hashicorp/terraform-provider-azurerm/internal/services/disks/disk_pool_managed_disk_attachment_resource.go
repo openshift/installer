@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/go-azure-helpers/lang/response"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/compute/2022-03-02/disks"
-	"github.com/hashicorp/go-azure-sdk/resource-manager/storagepool/2021-08-01/diskpools"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/sdk"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/disks/parse"
+	computeParse "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/parse"
+	computeValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/compute/validate"
+	"github.com/hashicorp/terraform-provider-azurerm/internal/services/disks/sdk/2021-08-01/diskpools"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/disks/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/pluginsdk"
 )
@@ -19,15 +19,10 @@ import (
 type DiskPoolManagedDiskAttachmentResource struct{}
 
 var _ sdk.Resource = DiskPoolManagedDiskAttachmentResource{}
-var _ sdk.ResourceWithDeprecationAndNoReplacement = DiskPoolManagedDiskAttachmentResource{}
 
 type DiskPoolManagedDiskAttachmentModel struct {
 	DiskPoolId string `tfschema:"disk_pool_id"`
 	DiskId     string `tfschema:"managed_disk_id"`
-}
-
-func (DiskPoolManagedDiskAttachmentResource) DeprecationMessage() string {
-	return "The `azurerm_disk_pool_managed_disk_attachment` resource is deprecated and will be removed in v4.0 of the AzureRM Provider."
 }
 
 func (d DiskPoolManagedDiskAttachmentResource) Arguments() map[string]*schema.Schema {
@@ -42,7 +37,7 @@ func (d DiskPoolManagedDiskAttachmentResource) Arguments() map[string]*schema.Sc
 			Type:         pluginsdk.TypeString,
 			Required:     true,
 			ForceNew:     true,
-			ValidateFunc: disks.ValidateDiskID,
+			ValidateFunc: computeValidate.ManagedDiskID,
 		},
 	}
 }
@@ -61,7 +56,7 @@ func (d DiskPoolManagedDiskAttachmentResource) ResourceType() string {
 
 func (d DiskPoolManagedDiskAttachmentResource) Create() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
-		Timeout: 60 * time.Minute,
+		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			attachment := DiskPoolManagedDiskAttachmentModel{}
 			err := metadata.Decode(&attachment)
@@ -76,13 +71,13 @@ func (d DiskPoolManagedDiskAttachmentResource) Create() sdk.ResourceFunc {
 			if poolId.SubscriptionId != subscriptionId {
 				return fmt.Errorf("Disk Pool subscription id %q is different from provider's subscription", poolId.SubscriptionId)
 			}
-			diskId, err := disks.ParseDiskID(attachment.DiskId)
+			diskId, err := computeParse.ManagedDiskID(attachment.DiskId)
 			if err != nil {
 				return err
 			}
 			locks.ByID(attachment.DiskPoolId)
 			defer locks.UnlockByID(attachment.DiskPoolId)
-			id := parse.NewDiskPoolManagedDiskAttachmentId(*poolId, *diskId)
+			id := diskpools.NewDiskPoolManagedDiskAttachmentId(*poolId, *diskId)
 
 			client := metadata.Client.Disks.DiskPoolsClient
 			poolResp, err := client.Get(ctx, *poolId)
@@ -90,12 +85,12 @@ func (d DiskPoolManagedDiskAttachmentResource) Create() sdk.ResourceFunc {
 				return fmt.Errorf("retrieving %q: %+v", *poolId, err)
 			}
 
-			inputDisks := make([]diskpools.Disk, 0)
+			disks := make([]diskpools.Disk, 0)
 			if poolResp.Model != nil && poolResp.Model.Properties.Disks != nil {
-				inputDisks = *poolResp.Model.Properties.Disks
+				disks = *poolResp.Model.Properties.Disks
 			}
-			for _, disk := range inputDisks {
-				existedDiskId, err := disks.ParseDiskID(disk.Id)
+			for _, disk := range disks {
+				existedDiskId, err := computeParse.ManagedDiskID(disk.Id)
 				if err != nil {
 					return fmt.Errorf("error on parsing existing attached disk id %q %+v", disk.Id, err)
 				}
@@ -104,13 +99,13 @@ func (d DiskPoolManagedDiskAttachmentResource) Create() sdk.ResourceFunc {
 				}
 			}
 
-			inputDisks = append(inputDisks, diskpools.Disk{
+			disks = append(disks, diskpools.Disk{
 				Id: diskId.ID(),
 			})
 
 			err = client.UpdateThenPoll(ctx, *poolId, diskpools.DiskPoolUpdate{
 				Properties: diskpools.DiskPoolUpdateProperties{
-					Disks: &inputDisks,
+					Disks: &disks,
 				},
 			})
 			if err != nil {
@@ -127,7 +122,7 @@ func (d DiskPoolManagedDiskAttachmentResource) Read() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
 		Timeout: 5 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
-			id, err := parse.DiskPoolManagedDiskAttachmentID(metadata.ResourceData.Id())
+			id, err := diskpools.DiskPoolManagedDiskAttachmentID(metadata.ResourceData.Id())
 			if err != nil {
 				return err
 			}
@@ -162,7 +157,7 @@ func (d DiskPoolManagedDiskAttachmentResource) Read() sdk.ResourceFunc {
 
 func (d DiskPoolManagedDiskAttachmentResource) Delete() sdk.ResourceFunc {
 	return sdk.ResourceFunc{
-		Timeout: 60 * time.Minute,
+		Timeout: 30 * time.Minute,
 		Func: func(ctx context.Context, metadata sdk.ResourceMetaData) error {
 			diskToDetach := &DiskPoolManagedDiskAttachmentModel{}
 			err := metadata.Decode(diskToDetach)

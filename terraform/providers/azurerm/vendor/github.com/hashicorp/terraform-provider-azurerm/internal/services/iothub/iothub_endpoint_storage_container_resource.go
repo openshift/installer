@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2021-07-02/devices"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonids"
-	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
+	"github.com/hashicorp/terraform-provider-azurerm/helpers/azure"
 	"github.com/hashicorp/terraform-provider-azurerm/helpers/tf"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/clients"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/locks"
-	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/migration"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/parse"
 	iothubValidate "github.com/hashicorp/terraform-provider-azurerm/internal/services/iothub/validate"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/services/storage/validate"
@@ -20,7 +20,6 @@ import (
 	"github.com/hashicorp/terraform-provider-azurerm/internal/tf/validation"
 	"github.com/hashicorp/terraform-provider-azurerm/internal/timeouts"
 	"github.com/hashicorp/terraform-provider-azurerm/utils"
-	devices "github.com/tombuildsstuff/kermit/sdk/iothub/2022-04-30-preview/iothub"
 )
 
 func resourceIotHubEndpointStorageContainer() *pluginsdk.Resource {
@@ -29,11 +28,6 @@ func resourceIotHubEndpointStorageContainer() *pluginsdk.Resource {
 		Read:   resourceIotHubEndpointStorageContainerRead,
 		Update: resourceIotHubEndpointStorageContainerCreateUpdate,
 		Delete: resourceIotHubEndpointStorageContainerDelete,
-
-		SchemaVersion: 1,
-		StateUpgraders: pluginsdk.StateUpgrades(map[int]pluginsdk.StateUpgrade{
-			0: migration.IoTHubEndPointStorageContainerV0ToV1{},
-		}),
 
 		Importer: pluginsdk.ImporterValidatingResourceId(func(id string) error {
 			_, err := parse.EndpointStorageContainerID(id)
@@ -60,7 +54,7 @@ func resourceIothubEndpointStorageContainerSchema() map[string]*pluginsdk.Schema
 			ValidateFunc: iothubValidate.IoTHubEndpointName,
 		},
 
-		"resource_group_name": commonschema.ResourceGroupName(),
+		"resource_group_name": azure.SchemaResourceGroupName(),
 
 		//lintignore: S013
 		"iothub_id": {
@@ -284,10 +278,6 @@ func resourceIotHubEndpointStorageContainerRead(d *pluginsdk.ResourceData, meta 
 
 	iothub, err := client.Get(ctx, id.ResourceGroup, id.IotHubName)
 	if err != nil {
-		if utils.ResponseWasNotFound(iothub.Response) {
-			d.SetId("")
-			return nil
-		}
 		return fmt.Errorf("loading IotHub %q (Resource Group %q): %+v", id.IotHubName, id.ResourceGroup, err)
 	}
 
@@ -297,17 +287,13 @@ func resourceIotHubEndpointStorageContainerRead(d *pluginsdk.ResourceData, meta 
 	d.Set("iothub_id", iotHubId.ID())
 
 	if iothub.Properties == nil || iothub.Properties.Routing == nil || iothub.Properties.Routing.Endpoints == nil {
-		d.SetId("")
 		return nil
 	}
-
-	exist := false
 
 	if endpoints := iothub.Properties.Routing.Endpoints.StorageContainers; endpoints != nil {
 		for _, endpoint := range *endpoints {
 			if existingEndpointName := endpoint.Name; existingEndpointName != nil {
 				if strings.EqualFold(*existingEndpointName, id.EndpointName) {
-					exist = true
 					d.Set("container_name", endpoint.ContainerName)
 					d.Set("file_name_format", endpoint.FileNameFormat)
 					d.Set("batch_frequency_in_seconds", endpoint.BatchFrequencyInSeconds)
@@ -341,10 +327,6 @@ func resourceIotHubEndpointStorageContainerRead(d *pluginsdk.ResourceData, meta 
 				}
 			}
 		}
-	}
-
-	if !exist {
-		d.SetId("")
 	}
 
 	return nil
