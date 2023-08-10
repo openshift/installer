@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package authentication
 
 import (
@@ -46,6 +49,8 @@ type Builder struct {
 
 	// OIDC Auth
 	SupportsOIDCAuth    bool
+	IDToken             string
+	IDTokenFilePath     string
 	IDTokenRequestURL   string
 	IDTokenRequestToken string
 

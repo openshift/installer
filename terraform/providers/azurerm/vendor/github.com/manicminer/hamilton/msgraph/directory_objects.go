@@ -46,8 +46,8 @@ func (c *DirectoryObjectsClient) Get(ctx context.Context, id string, query odata
 		return nil, status, fmt.Errorf("io.ReadAll(): %v", err)
 	}
 
-	var directoryObject DirectoryObject
-	if err := json.Unmarshal(respBody, &directoryObject); err != nil {
+	directoryObject := DirectoryObject{}
+	if err = directoryObject.UnmarshalJSONWithAdditionalData(respBody); err != nil {
 		return nil, status, fmt.Errorf("json.Unmarshal(): %v", err)
 	}
 
@@ -88,11 +88,23 @@ func (c *DirectoryObjectsClient) GetByIds(ctx context.Context, ids []string, typ
 		return nil, status, fmt.Errorf("io.ReadAll(): %v", err)
 	}
 
+	var rawData struct {
+		Objects []json.RawMessage `json:"value"`
+	}
+	if err := json.Unmarshal(respBody, &rawData); err != nil {
+		return nil, status, fmt.Errorf("json.Unmarshal(): %v", err)
+	}
+
 	var data struct {
 		Objects []DirectoryObject `json:"value"`
 	}
-	if err := json.Unmarshal(respBody, &data); err != nil {
-		return nil, status, fmt.Errorf("json.Unmarshal(): %v", err)
+
+	for _, rawObj := range rawData.Objects {
+		directoryObject := DirectoryObject{}
+		if err = directoryObject.UnmarshalJSONWithAdditionalData(rawObj); err != nil {
+			return nil, status, fmt.Errorf("json.Unmarshal(): %v", err)
+		}
+		data.Objects = append(data.Objects, directoryObject)
 	}
 
 	return &data.Objects, status, nil
@@ -157,7 +169,7 @@ func (c *DirectoryObjectsClient) GetMemberGroups(ctx context.Context, id string,
 
 	result := make([]DirectoryObject, len(data.IDs))
 	for i, id := range data.IDs {
-		result[i].ID = utils.StringPtr(id)
+		result[i].Id = utils.StringPtr(id)
 	}
 
 	return &result, status, nil
@@ -205,7 +217,7 @@ func (c *DirectoryObjectsClient) GetMemberObjects(ctx context.Context, id string
 
 	result := make([]DirectoryObject, len(data.IDs))
 	for i, id := range data.IDs {
-		result[i].ID = utils.StringPtr(id)
+		result[i].Id = utils.StringPtr(id)
 	}
 
 	return &result, status, nil
