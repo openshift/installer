@@ -87,8 +87,3 @@ conditional need to be recreated. See
 https://github.com/hashicorp/terraform/issues/12570
 EOF
 }
-
-variable "master_subnet_zone_map" {
-  type = map
-  description = "Mapping of subnet ID and its availability zone"
-}

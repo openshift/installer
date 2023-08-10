@@ -90,7 +90,7 @@ resource "azurerm_linux_virtual_machine" "master" {
   name     = "${var.cluster_id}-master-${count.index}"
   location = var.region
   // The VM zone has to be the same as the subnet's it is associated with when using NAT gateway
-  zone                  = var.outbound_type == "NatGateway" ? var.master_subnet_zone_map[azurerm_network_interface.master[count.index].ip_configuration[0].subnet_id] : var.availability_zones[count.index] != "" ? var.availability_zones[count.index] : null
+  zone                  = var.availability_zones[count.index] != "" ? var.availability_zones[count.index] : null
   resource_group_name   = var.resource_group_name
   network_interface_ids = [element(azurerm_network_interface.master.*.id, count.index)]
   size                  = var.vm_size

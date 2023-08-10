@@ -54,7 +54,7 @@ data "azurerm_public_ip" "cluster_public_ip_v6" {
 }
 
 resource "azurerm_public_ip" "nat_gw_public_ip_v4" {
-  count = local.need_nat_gw ? local.subnet_count : 0
+  count = local.need_nat_gw ? local.nat_gateway_count : 0
 
   sku                 = "Standard"
   location            = var.azure_region
@@ -62,11 +62,11 @@ resource "azurerm_public_ip" "nat_gw_public_ip_v4" {
   resource_group_name = data.azurerm_resource_group.main.name
   allocation_method   = "Static"
   tags                = var.azure_extra_tags
-  zones               = length(var.azure_master_availability_zones) > 0 ? [var.azure_master_availability_zones[count.index]] : null
+  zones               = length(local.cluster_zones) > 0 ? [element(local.cluster_zones, count.index)] : null
 }
 
 data "azurerm_public_ip" "nat_gw_public_ip_v4" {
-  count = local.need_nat_gw ? local.subnet_count : 0
+  count = local.need_nat_gw ? local.nat_gateway_count : 0
 
   name                = azurerm_public_ip.nat_gw_public_ip_v4[count.index].name
   resource_group_name = data.azurerm_resource_group.main.name
@@ -203,7 +203,7 @@ resource "azurerm_lb_probe" "public_lb_probe_api_internal" {
 }
 
 resource "azurerm_nat_gateway" "nat_gw" {
-  count = local.need_nat_gw ? local.subnet_count : 0
+  count = local.need_nat_gw ? local.nat_gateway_count : 0
 
   name                    = "${var.cluster_id}-natgw-${count.index}"
   location                = var.azure_region
@@ -217,7 +217,7 @@ resource "azurerm_nat_gateway" "nat_gw" {
 }
 
 data "azurerm_nat_gateway" "nat_gw" {
-  count = local.need_nat_gw ? local.subnet_count : 0
+  count = local.need_nat_gw ? local.nat_gateway_count : 0
 
   name                = azurerm_nat_gateway.nat_gw[count.index].name
   resource_group_name = data.azurerm_resource_group.main.name
@@ -226,7 +226,7 @@ data "azurerm_nat_gateway" "nat_gw" {
 // NAT Gateways can only be associated with IPv4 addresses
 // https://learn.microsoft.com/en-us/azure/nat-gateway/nat-overview#nat-gateway-configurations
 resource "azurerm_nat_gateway_public_ip_association" "nat_ip_assoc" {
-  count = local.need_nat_gw ? local.subnet_count : 0
+  count = local.need_nat_gw ? local.nat_gateway_count : 0
 
   nat_gateway_id       = azurerm_nat_gateway.nat_gw[count.index].id
   public_ip_address_id = azurerm_public_ip.nat_gw_public_ip_v4[count.index].id

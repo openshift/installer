@@ -7,7 +7,7 @@ locals {
     include : var.use_ipv4,
     subnet_id : local.master_subnet_id[idx]
     private_ip_address : null
-    zones : var.azure_outbound_routing_type == "NatGateway" ? [local.master_subnet_zone_map[local.master_subnet_id[idx]]] : null
+    zones : (var.azure_outbound_routing_type == "NatGateway" && var.azure_master_availability_zones[idx] != "") ? [var.azure_master_availability_zones[idx]] : null
   }]
   internal_lb_frontend_ip_v6_configuration = [for idx in range(length(local.master_subnet_id)) : {
     name : "${local.internal_lb_frontend_ip_v6_configuration_name}-${idx}",
@@ -15,7 +15,7 @@ locals {
     include : var.use_ipv6,
     subnet_id : local.master_subnet_id[idx]
     private_ip_address : var.use_ipv6 ? cidrhost(local.master_subnet_cidr_v6, -2 - idx) : null
-    zones : var.azure_outbound_routing_type == "NatGateway" ? [local.master_subnet_zone_map[local.master_subnet_id[idx]]] : null
+    zones : (var.azure_outbound_routing_type == "NatGateway" && var.azure_master_availability_zones[idx] != "") ? [var.azure_master_availability_zones[idx]] : null
   }]
 }
 

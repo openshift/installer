@@ -67,10 +67,11 @@ type config struct {
 	UseMarketplaceImage                     bool              `json:"azure_use_marketplace_image"`
 	MarketplaceImageHasPlan                 bool              `json:"azure_marketplace_image_has_plan"`
 	OSImage                                 `json:",inline"`
-	SecurityEncryptionType                  string `json:"azure_master_security_encryption_type,omitempty"`
-	SecureVirtualMachineDiskEncryptionSetID string `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
-	SecureBoot                              string `json:"azure_master_secure_boot,omitempty"`
-	VirtualizedTrustedPlatformModule        string `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
+	SecurityEncryptionType                  string   `json:"azure_master_security_encryption_type,omitempty"`
+	SecureVirtualMachineDiskEncryptionSetID string   `json:"azure_master_secure_vm_disk_encryption_set_id,omitempty"`
+	SecureBoot                              string   `json:"azure_master_secure_boot,omitempty"`
+	VirtualizedTrustedPlatformModule        string   `json:"azure_master_virtualized_trusted_platform_module,omitempty"`
+	WorkerAvailabilityZones                 []string `json:"azure_worker_availability_zones,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -104,6 +105,11 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = to.String(c.Zone)
+	}
+
+	workerAvailabilityZones := make([]string, len(sources.WorkerConfigs))
+	for i, c := range sources.WorkerConfigs {
+		workerAvailabilityZones[i] = to.String(c.Zone)
 	}
 
 	environment, err := environment(sources.CloudName)
@@ -200,6 +206,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		SecureVirtualMachineDiskEncryptionSetID: masterConfig.OSDisk.ManagedDisk.SecurityProfile.DiskEncryptionSet.ID,
 		SecureBoot:                              secureBoot,
 		VirtualizedTrustedPlatformModule:        virtualizedTrustedPlatformModule,
+		WorkerAvailabilityZones:                 workerAvailabilityZones,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

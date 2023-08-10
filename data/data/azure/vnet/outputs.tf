@@ -42,10 +42,6 @@ output "master_subnet_id" {
   value = local.master_subnet_id
 }
 
-output "master_subnet_zone_map" {
-  value = local.master_subnet_zone_map
-}
-
 output "worker_subnet_id" {
   value = local.worker_subnet_id
 }

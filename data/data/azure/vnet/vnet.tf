@@ -9,7 +9,7 @@ resource "azurerm_virtual_network" "cluster_vnet" {
 }
 
 resource "azurerm_subnet" "master_subnet" {
-  count = var.azure_preexisting_network ? 0 : local.subnet_count
+  count = var.azure_preexisting_network ? 0 : local.master_subnet_count
 
   resource_group_name = data.azurerm_resource_group.main.name
   address_prefixes = [for cidr in [
@@ -21,7 +21,7 @@ resource "azurerm_subnet" "master_subnet" {
 }
 
 resource "azurerm_subnet" "worker_subnet" {
-  count = var.azure_preexisting_network ? 0 : local.subnet_count
+  count = var.azure_preexisting_network ? 0 : local.worker_subnet_count
 
   resource_group_name = data.azurerm_resource_group.main.name
   address_prefixes = [for cidr in [
@@ -33,13 +33,13 @@ resource "azurerm_subnet" "worker_subnet" {
 }
 
 resource "azurerm_subnet_nat_gateway_association" "nat_master_assoc" {
-  count          = var.azure_outbound_routing_type == "NatGateway" ? local.subnet_count : 0
+  count          = var.azure_outbound_routing_type == "NatGateway" ? local.master_subnet_count : 0
   subnet_id      = local.master_subnet_id[count.index]
-  nat_gateway_id = azurerm_nat_gateway.nat_gw[count.index].id
+  nat_gateway_id = var.azure_master_availability_zones[count.index] == "" ? azurerm_nat_gateway.nat_gw[0].id : azurerm_nat_gateway.nat_gw[index(local.cluster_zones, var.azure_master_availability_zones[count.index])].id
 }
 
 resource "azurerm_subnet_nat_gateway_association" "nat_worker_assoc" {
-  count          = var.azure_outbound_routing_type == "NatGateway" ? local.subnet_count : 0
+  count          = var.azure_outbound_routing_type == "NatGateway" ? local.worker_subnet_count : 0
   subnet_id      = local.worker_subnet_id[count.index]
-  nat_gateway_id = azurerm_nat_gateway.nat_gw[count.index].id
+  nat_gateway_id = var.azure_worker_availability_zones[count.index] == "" ? azurerm_nat_gateway.nat_gw[0].id : azurerm_nat_gateway.nat_gw[index(local.cluster_zones, var.azure_worker_availability_zones[count.index])].id
 }

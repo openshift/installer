@@ -47,7 +47,6 @@ module "master" {
   vm_image_offer             = var.azure_marketplace_image_offer
   vm_image_sku               = var.azure_marketplace_image_sku
   vm_image_version           = var.azure_marketplace_image_version
-  master_subnet_zone_map     = var.master_subnet_zone_map
 
   security_encryption_type            = var.azure_master_security_encryption_type
   secure_vm_disk_encryption_set_id    = var.azure_master_secure_vm_disk_encryption_set_id

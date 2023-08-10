@@ -207,8 +207,3 @@ variable "virtualized_trusted_platform_module" {
   default = ""
   description = "Defines whether vTPM should be enabled on the virtual machine."
 }
-
-variable "master_subnet_zone_map" {
-  type = map
-  description = "Mapping of subnet ID and its availability zone"
-}

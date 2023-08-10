@@ -6,14 +6,14 @@ resource "azurerm_network_security_group" "cluster" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "master" {
-  count = var.azure_preexisting_network ? 0 : local.subnet_count
+  count = var.azure_preexisting_network ? 0 : local.master_subnet_count
 
   subnet_id                 = azurerm_subnet.master_subnet[count.index].id
   network_security_group_id = azurerm_network_security_group.cluster.id
 }
 
 resource "azurerm_subnet_network_security_group_association" "worker" {
-  count = var.azure_preexisting_network ? 0 : local.subnet_count
+  count = var.azure_preexisting_network ? 0 : local.worker_subnet_count
 
   subnet_id                 = azurerm_subnet.worker_subnet[count.index].id
   network_security_group_id = azurerm_network_security_group.cluster.id

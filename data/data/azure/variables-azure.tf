@@ -283,3 +283,9 @@ variable "azure_master_virtualized_trusted_platform_module" {
   description = "Defines whether the instance should have vTPM enabled."
   default     = ""
 }
+
+variable "azure_worker_availability_zones" {
+  type        = list(string)
+  description = "The availability zones in which to create the workers. The length of this list must match worker_count."
+  default     = []
+}
