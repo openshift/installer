@@ -94,6 +94,12 @@ hosts:
 
 	a.Template = agentConfigTemplate
 
+	// Set the File field correctly with the generated agent config YAML content
+	a.File = &asset.File{
+		Filename: agentConfigFilename,
+		Data:     []byte(a.Template),
+	}
+
 	// TODO: template is not validated
 	return nil
 }

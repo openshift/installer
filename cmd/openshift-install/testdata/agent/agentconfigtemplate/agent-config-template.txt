@@ -1,0 +1,54 @@
+# Verify the generated default template for agent-config.yaml
+
+exec openshift-install agent create agent-config-template --dir $WORK
+
+stderr 'level=info msg=Agent-Config-Template created in:'
+
+exists $WORK/agent-config.yaml
+
+cmp $WORK/agent-config.yaml $WORK/expected/agent-config.yaml
+
+-- expected/agent-config.yaml --
+#
+# Note: This is a sample AgentConfig file showing
+# which fields are available to aid you in creating your
+# own agent-config.yaml file.
+#
+apiVersion: v1beta1
+kind: AgentConfig
+metadata:
+  name: example-agent-config
+  namespace: cluster0
+# All fields are optional
+rendezvousIP: your-node0-ip
+ipxeBaseURL: http://user-specified-pxe-infra.com
+additionalNTPSources:
+- 0.rhel.pool.ntp.org
+- 1.rhel.pool.ntp.org
+hosts:
+# If a host is listed, then at least one interface
+# needs to be specified.
+- hostname: change-to-hostname
+  role: master
+  # For more information about rootDeviceHints:
+  # https://docs.openshift.com/container-platform/4.10/installing/installing_bare_metal_ipi/ipi-install-installation-workflow.html#root-device-hints_ipi-install-installation-workflow
+  rootDeviceHints:
+    deviceName: /dev/sda
+  # interfaces are used to identify the host to apply this configuration to
+  interfaces:
+    - macAddress: 00:00:00:00:00:00
+      name: host-network-interface-name
+  # networkConfig contains the network configuration for the host in NMState format.
+  # See https://nmstate.io/examples.html for examples.
+  networkConfig:
+    interfaces:
+      - name: eth0
+        type: ethernet
+        state: up
+        mac-address: 00:00:00:00:00:00
+        ipv4:
+          enabled: true
+          address:
+            - ip: 192.168.122.2
+              prefix-length: 23
+          dhcp: false
