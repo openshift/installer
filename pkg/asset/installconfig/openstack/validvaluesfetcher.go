@@ -30,7 +30,7 @@ func getCloudNames() ([]string, error) {
 // getExternalNetworkNames interrogates OpenStack to get the external network
 // names.
 func getExternalNetworkNames(cloud string) ([]string, error) {
-	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func getExternalNetworkNames(cloud string) ([]string, error) {
 
 // getFlavorNames gets a list of valid flavor names.
 func getFlavorNames(cloud string) ([]string, error) {
-	conn, err := clientconfig.NewServiceClient("compute", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (fips sortableFloatingIPCollection) Contains(value string) bool {
 }
 
 func getFloatingIPs(cloud string, floatingNetworkName string) (sortableFloatingIPCollection, error) {
-	conn, err := clientconfig.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("network", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		return nil, err
 	}

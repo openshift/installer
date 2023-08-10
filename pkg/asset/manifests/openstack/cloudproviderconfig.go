@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
+	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
 )
 
 // Error represents a failure while generating OpenStack provider
@@ -108,7 +109,7 @@ secret-namespace = kube-system
 }
 
 func getNetworkClient(session *openstack.Session) (*gophercloud.ServiceClient, error) {
-	return clientconfig.NewServiceClient("network", session.ClientOpts)
+	return openstackdefaults.NewServiceClient("network", session.ClientOpts)
 }
 
 // GenerateCloudProviderConfig adds the cloud provider config for the OpenStack

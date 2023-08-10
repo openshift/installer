@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
-	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 
@@ -30,7 +29,7 @@ func DeleteGlanceImage(name string, cloud string) error {
 }
 
 func deleteGlanceImage(name string, cloud string) (bool, error) {
-	conn, err := clientconfig.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
+	conn, err := openstackdefaults.NewServiceClient("image", openstackdefaults.DefaultClientOpts(cloud))
 	if err != nil {
 		logrus.Warningf("There was an error during the image removal: %v", err)
 		return false, nil
