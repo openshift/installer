@@ -1067,6 +1067,15 @@ func validateFeatureSet(c *types.InstallConfig) field.ErrorList {
 				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "vsphere", "hosts"), errMsg))
 			}
 		}
+
+		if c.GCP != nil {
+			if len(c.GCP.UserTags) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "userTags"), errMsg))
+			}
+			if len(c.GCP.UserLabels) > 0 {
+				allErrs = append(allErrs, field.Forbidden(field.NewPath("platform", "gcp", "userLabels"), errMsg))
+			}
+		}
 	}
 
 	return allErrs
