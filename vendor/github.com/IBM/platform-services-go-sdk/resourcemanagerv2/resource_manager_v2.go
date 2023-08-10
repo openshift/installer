@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 99-SNAPSHOT-4883cbcd-20210301-143711
+ * IBM OpenAPI SDK Code Generator Version: 3.41.0-f1ef0102-20211018-193503
  */
 
 // Package resourcemanagerv2 : Operations and models for the ResourceManagerV2 service
@@ -36,13 +36,13 @@ import (
 
 // ResourceManagerV2 : Manage lifecycle of your Cloud resource groups using Resource Manager APIs.
 //
-// Version: 2.0
+// API Version: 2.0
 type ResourceManagerV2 struct {
 	Service *core.BaseService
 }
 
 // DefaultServiceURL is the default URL to make service requests to.
-const DefaultServiceURL = "https://resource-controller.cloud.ibm.com/v2"
+const DefaultServiceURL = "https://resource-controller.cloud.ibm.com"
 
 // DefaultServiceName is the default key used to find external configuration information.
 const DefaultServiceName = "resource_manager"
@@ -161,7 +161,11 @@ func (resourceManager *ResourceManagerV2) DisableRetries() {
 }
 
 // ListResourceGroups : Get a list of all resource groups
-// Get a list of all resource groups in an account.
+// Call this method to retrieve information about all resource groups and associated quotas in an account. The `id`
+// returned in the response can be used to [create a resource instance
+// later](https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=java#create-resource-instance). The
+// response can be filtered based on queryParams such as `account_id`, `name`, `default`, and more to narrow your
+// search.Users need to be assigned IAM policies with the Viewer role or higher on the targeted resource groups.
 func (resourceManager *ResourceManagerV2) ListResourceGroups(listResourceGroupsOptions *ListResourceGroupsOptions) (result *ResourceGroupList, response *core.DetailedResponse, err error) {
 	return resourceManager.ListResourceGroupsWithContext(context.Background(), listResourceGroupsOptions)
 }
@@ -176,7 +180,7 @@ func (resourceManager *ResourceManagerV2) ListResourceGroupsWithContext(ctx cont
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/resource_groups`, nil)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/resource_groups`, nil)
 	if err != nil {
 		return
 	}
@@ -217,17 +221,25 @@ func (resourceManager *ResourceManagerV2) ListResourceGroupsWithContext(ctx cont
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroupList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroupList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
-// CreateResourceGroup : Create a new resource group
-// Create a new resource group in an account.
+// CreateResourceGroup : Create a resource group
+// Create a resource group in an account to organize your account resources in customizable groupings so that you can
+// quickly assign users access to more than one resource at a time. To learn what makes a good resource group strategy,
+// see [Best practices for organizing resources](https://cloud.ibm.com/docs/account?topic=account-account_setup). A
+// default resource group is created when an account is created. If you have a Lite account or 30-day trial, you cannot
+// create extra resource groups, but you can rename your default resource group. If you have a Pay-As-You-Go or
+// Subscription account, you can create multiple resource groups. You must be assigned an IAM policy with the
+// Administrator role on All Account Management services to create extra resource groups.
 func (resourceManager *ResourceManagerV2) CreateResourceGroup(createResourceGroupOptions *CreateResourceGroupOptions) (result *ResCreateResourceGroup, response *core.DetailedResponse, err error) {
 	return resourceManager.CreateResourceGroupWithContext(context.Background(), createResourceGroupOptions)
 }
@@ -242,7 +254,7 @@ func (resourceManager *ResourceManagerV2) CreateResourceGroupWithContext(ctx con
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/resource_groups`, nil)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/resource_groups`, nil)
 	if err != nil {
 		return
 	}
@@ -280,17 +292,23 @@ func (resourceManager *ResourceManagerV2) CreateResourceGroupWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResCreateResourceGroup)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResCreateResourceGroup)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // GetResourceGroup : Get a resource group
-// Retrieve a resource group by ID.
+// Retrieve a resource group by alias ID. Call this method to get details about a particular resource group, like the
+// name of the resource group, associated quotas, whether the state is active, the resource group ID and the CRN. The
+// `id` returned in the response can be used to [create a resource instance
+// later](https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=java#create-resource-instance).
+// Users need to be assigned an IAM policy with the Viewer role or higher on the targeted resource group.
 func (resourceManager *ResourceManagerV2) GetResourceGroup(getResourceGroupOptions *GetResourceGroupOptions) (result *ResourceGroup, response *core.DetailedResponse, err error) {
 	return resourceManager.GetResourceGroupWithContext(context.Background(), getResourceGroupOptions)
 }
@@ -313,7 +331,7 @@ func (resourceManager *ResourceManagerV2) GetResourceGroupWithContext(ctx contex
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/resource_groups/{id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/resource_groups/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -338,17 +356,21 @@ func (resourceManager *ResourceManagerV2) GetResourceGroupWithContext(ctx contex
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroup)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroup)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // UpdateResourceGroup : Update a resource group
-// Update a resource group by ID.
+// Update a resource group by the alias ID. Call this method to update information about an existing resource group. You
+// can rename a resource group and activate or suspend a particular resource group. To update a resource group, users
+// need to be assigned with IAM policies with the Editor role or higher.
 func (resourceManager *ResourceManagerV2) UpdateResourceGroup(updateResourceGroupOptions *UpdateResourceGroupOptions) (result *ResourceGroup, response *core.DetailedResponse, err error) {
 	return resourceManager.UpdateResourceGroupWithContext(context.Background(), updateResourceGroupOptions)
 }
@@ -371,7 +393,7 @@ func (resourceManager *ResourceManagerV2) UpdateResourceGroupWithContext(ctx con
 	builder := core.NewRequestBuilder(core.PATCH)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/resource_groups/{id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/resource_groups/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -409,17 +431,25 @@ func (resourceManager *ResourceManagerV2) UpdateResourceGroupWithContext(ctx con
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroup)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalResourceGroup)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // DeleteResourceGroup : Delete a resource group
-// Delete a resource group by ID.
+// Delete a resource group by the alias ID. You can delete a resource group only if the targeted resource group does not
+// contain any resources or if it is not a default resource group. When a user creates an account, a default resource
+// group is created in the account. If you want to delete a resource group that contains resources, first [delete the
+// resource
+// instances](https://cloud.ibm.com/apidocs/resource-controller/resource-controller?code=java#delete-resource-instance).
+// Then, delete the resource group when all resource instances in the group are deleted. Users need to be assigned an
+// IAM policy with the Editor role or higher on the targeted resource group.
 func (resourceManager *ResourceManagerV2) DeleteResourceGroup(deleteResourceGroupOptions *DeleteResourceGroupOptions) (response *core.DetailedResponse, err error) {
 	return resourceManager.DeleteResourceGroupWithContext(context.Background(), deleteResourceGroupOptions)
 }
@@ -442,7 +472,7 @@ func (resourceManager *ResourceManagerV2) DeleteResourceGroupWithContext(ctx con
 	builder := core.NewRequestBuilder(core.DELETE)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/resource_groups/{id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/resource_groups/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -467,7 +497,11 @@ func (resourceManager *ResourceManagerV2) DeleteResourceGroupWithContext(ctx con
 }
 
 // ListQuotaDefinitions : List quota definitions
-// Get a list of all quota definitions.
+// Get a list of all quota definitions. Quotas for a resource group limit the number of apps, instances, and memory
+// allowed for that specific resource group. Each resource group that you have on your account has a specific set of
+// quotas. Standard quotas are for resource groups that are created by users with a Lite account, and Pay-As-You-Go
+// quotas are for resource groups that are created with a Pay-As-You-Go account. This method provides list of all
+// available quota definitions. No specific IAM policy needed.
 func (resourceManager *ResourceManagerV2) ListQuotaDefinitions(listQuotaDefinitionsOptions *ListQuotaDefinitionsOptions) (result *QuotaDefinitionList, response *core.DetailedResponse, err error) {
 	return resourceManager.ListQuotaDefinitionsWithContext(context.Background(), listQuotaDefinitionsOptions)
 }
@@ -482,7 +516,7 @@ func (resourceManager *ResourceManagerV2) ListQuotaDefinitionsWithContext(ctx co
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/quota_definitions`, nil)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/quota_definitions`, nil)
 	if err != nil {
 		return
 	}
@@ -507,17 +541,25 @@ func (resourceManager *ResourceManagerV2) ListQuotaDefinitionsWithContext(ctx co
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQuotaDefinitionList)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQuotaDefinitionList)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
 
 // GetQuotaDefinition : Get a quota definition
-// Get a a quota definition.
+// Call this method to retrieve information about a particular quota by passing the quota ID. The response can be used
+// to identify the quota type, Standard or Paid. Information about available resources, such as number of apps, number
+// of service instances, and memory, are returned in the response. Quotas for a resource group limit the number of apps,
+// instances, and memory allowed for that specific resource group. Each resource group that you have on your account has
+// a specific set of quotas. Standard quotas are for resource groups that are created by users with a Lite account, and
+// Pay-As-You-Go quotas are for resource groups that are created with a Pay-As-You-Go account. No specific IAM policy
+// needed.
 func (resourceManager *ResourceManagerV2) GetQuotaDefinition(getQuotaDefinitionOptions *GetQuotaDefinitionOptions) (result *QuotaDefinition, response *core.DetailedResponse, err error) {
 	return resourceManager.GetQuotaDefinitionWithContext(context.Background(), getQuotaDefinitionOptions)
 }
@@ -540,7 +582,7 @@ func (resourceManager *ResourceManagerV2) GetQuotaDefinitionWithContext(ctx cont
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = resourceManager.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/quota_definitions/{id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(resourceManager.Service.Options.URL, `/v2/quota_definitions/{id}`, pathParamsMap)
 	if err != nil {
 		return
 	}
@@ -565,11 +607,13 @@ func (resourceManager *ResourceManagerV2) GetQuotaDefinitionWithContext(ctx cont
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQuotaDefinition)
-	if err != nil {
-		return
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalQuotaDefinition)
+		if err != nil {
+			return
+		}
+		response.Result = result
 	}
-	response.Result = result
 
 	return
 }
@@ -577,10 +621,10 @@ func (resourceManager *ResourceManagerV2) GetQuotaDefinitionWithContext(ctx cont
 // CreateResourceGroupOptions : The CreateResourceGroup options.
 type CreateResourceGroupOptions struct {
 	// The new name of the resource group.
-	Name *string
+	Name *string `json:"name,omitempty"`
 
 	// The account id of the resource group.
-	AccountID *string
+	AccountID *string `json:"account_id,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -592,15 +636,15 @@ func (*ResourceManagerV2) NewCreateResourceGroupOptions() *CreateResourceGroupOp
 }
 
 // SetName : Allow user to set Name
-func (options *CreateResourceGroupOptions) SetName(name string) *CreateResourceGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *CreateResourceGroupOptions) SetName(name string) *CreateResourceGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *CreateResourceGroupOptions) SetAccountID(accountID string) *CreateResourceGroupOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *CreateResourceGroupOptions) SetAccountID(accountID string) *CreateResourceGroupOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -612,7 +656,7 @@ func (options *CreateResourceGroupOptions) SetHeaders(param map[string]string) *
 // DeleteResourceGroupOptions : The DeleteResourceGroup options.
 type DeleteResourceGroupOptions struct {
 	// The short or long ID of the alias.
-	ID *string `validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -626,9 +670,9 @@ func (*ResourceManagerV2) NewDeleteResourceGroupOptions(id string) *DeleteResour
 }
 
 // SetID : Allow user to set ID
-func (options *DeleteResourceGroupOptions) SetID(id string) *DeleteResourceGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *DeleteResourceGroupOptions) SetID(id string) *DeleteResourceGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -640,7 +684,7 @@ func (options *DeleteResourceGroupOptions) SetHeaders(param map[string]string) *
 // GetQuotaDefinitionOptions : The GetQuotaDefinition options.
 type GetQuotaDefinitionOptions struct {
 	// The id of the quota.
-	ID *string `validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -654,9 +698,9 @@ func (*ResourceManagerV2) NewGetQuotaDefinitionOptions(id string) *GetQuotaDefin
 }
 
 // SetID : Allow user to set ID
-func (options *GetQuotaDefinitionOptions) SetID(id string) *GetQuotaDefinitionOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetQuotaDefinitionOptions) SetID(id string) *GetQuotaDefinitionOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -668,7 +712,7 @@ func (options *GetQuotaDefinitionOptions) SetHeaders(param map[string]string) *G
 // GetResourceGroupOptions : The GetResourceGroup options.
 type GetResourceGroupOptions struct {
 	// The short or long ID of the alias.
-	ID *string `validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -682,9 +726,9 @@ func (*ResourceManagerV2) NewGetResourceGroupOptions(id string) *GetResourceGrou
 }
 
 // SetID : Allow user to set ID
-func (options *GetResourceGroupOptions) SetID(id string) *GetResourceGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *GetResourceGroupOptions) SetID(id string) *GetResourceGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -714,20 +758,20 @@ func (options *ListQuotaDefinitionsOptions) SetHeaders(param map[string]string) 
 // ListResourceGroupsOptions : The ListResourceGroups options.
 type ListResourceGroupsOptions struct {
 	// The ID of the account that contains the resource groups that you want to get.
-	AccountID *string
+	AccountID *string `json:"account_id,omitempty"`
 
 	// The date in the format of YYYY-MM which returns resource groups. Deleted resource groups will be excluded before
 	// this month.
-	Date *string
+	Date *string `json:"date,omitempty"`
 
 	// The name of the resource group.
-	Name *string
+	Name *string `json:"name,omitempty"`
 
 	// Boolean value to specify whether or not to list default resource groups.
-	Default *bool
+	Default *bool `json:"default,omitempty"`
 
 	// Boolean value to specify whether or not to list default resource groups.
-	IncludeDeleted *bool
+	IncludeDeleted *bool `json:"include_deleted,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -739,33 +783,33 @@ func (*ResourceManagerV2) NewListResourceGroupsOptions() *ListResourceGroupsOpti
 }
 
 // SetAccountID : Allow user to set AccountID
-func (options *ListResourceGroupsOptions) SetAccountID(accountID string) *ListResourceGroupsOptions {
-	options.AccountID = core.StringPtr(accountID)
-	return options
+func (_options *ListResourceGroupsOptions) SetAccountID(accountID string) *ListResourceGroupsOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
 }
 
 // SetDate : Allow user to set Date
-func (options *ListResourceGroupsOptions) SetDate(date string) *ListResourceGroupsOptions {
-	options.Date = core.StringPtr(date)
-	return options
+func (_options *ListResourceGroupsOptions) SetDate(date string) *ListResourceGroupsOptions {
+	_options.Date = core.StringPtr(date)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *ListResourceGroupsOptions) SetName(name string) *ListResourceGroupsOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *ListResourceGroupsOptions) SetName(name string) *ListResourceGroupsOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetDefault : Allow user to set Default
-func (options *ListResourceGroupsOptions) SetDefault(defaultVar bool) *ListResourceGroupsOptions {
-	options.Default = core.BoolPtr(defaultVar)
-	return options
+func (_options *ListResourceGroupsOptions) SetDefault(defaultVar bool) *ListResourceGroupsOptions {
+	_options.Default = core.BoolPtr(defaultVar)
+	return _options
 }
 
 // SetIncludeDeleted : Allow user to set IncludeDeleted
-func (options *ListResourceGroupsOptions) SetIncludeDeleted(includeDeleted bool) *ListResourceGroupsOptions {
-	options.IncludeDeleted = core.BoolPtr(includeDeleted)
-	return options
+func (_options *ListResourceGroupsOptions) SetIncludeDeleted(includeDeleted bool) *ListResourceGroupsOptions {
+	_options.IncludeDeleted = core.BoolPtr(includeDeleted)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
@@ -1078,13 +1122,13 @@ func UnmarshalResourceQuota(m map[string]json.RawMessage, result interface{}) (e
 // UpdateResourceGroupOptions : The UpdateResourceGroup options.
 type UpdateResourceGroupOptions struct {
 	// The short or long ID of the alias.
-	ID *string `validate:"required,ne="`
+	ID *string `json:"id" validate:"required,ne="`
 
 	// The new name of the resource group.
-	Name *string
+	Name *string `json:"name,omitempty"`
 
 	// The state of the resource group.
-	State *string
+	State *string `json:"state,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1098,21 +1142,21 @@ func (*ResourceManagerV2) NewUpdateResourceGroupOptions(id string) *UpdateResour
 }
 
 // SetID : Allow user to set ID
-func (options *UpdateResourceGroupOptions) SetID(id string) *UpdateResourceGroupOptions {
-	options.ID = core.StringPtr(id)
-	return options
+func (_options *UpdateResourceGroupOptions) SetID(id string) *UpdateResourceGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
 }
 
 // SetName : Allow user to set Name
-func (options *UpdateResourceGroupOptions) SetName(name string) *UpdateResourceGroupOptions {
-	options.Name = core.StringPtr(name)
-	return options
+func (_options *UpdateResourceGroupOptions) SetName(name string) *UpdateResourceGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
 }
 
 // SetState : Allow user to set State
-func (options *UpdateResourceGroupOptions) SetState(state string) *UpdateResourceGroupOptions {
-	options.State = core.StringPtr(state)
-	return options
+func (_options *UpdateResourceGroupOptions) SetState(state string) *UpdateResourceGroupOptions {
+	_options.State = core.StringPtr(state)
+	return _options
 }
 
 // SetHeaders : Allow user to set Headers
