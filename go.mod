@@ -281,3 +281,5 @@ replace github.com/containerd/containerd => github.com/containerd/containerd v1.
 
 // https://issues.redhat.com/browse/OCPBUGS-8540
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
+
+replace github.com/openshift/api => github.com/qjkee/api v0.0.0-20230802082551-38e4594c1ed0

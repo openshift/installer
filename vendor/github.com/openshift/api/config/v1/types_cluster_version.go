@@ -247,7 +247,7 @@ const (
 )
 
 // ClusterVersionCapability enumerates optional, core cluster components.
-// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot;NodeTuning;MachineAPI;Build;DeploymentConfig
+// +kubebuilder:validation:Enum=openshift-samples;baremetal;marketplace;Console;Insights;Storage;CSISnapshot;NodeTuning;MachineAPI;Ingress;ImageRegistry
 type ClusterVersionCapability string
 
 const (
@@ -314,28 +314,29 @@ const (
 	// and may cause cluster damage
 	ClusterVersionCapabilityMachineAPI ClusterVersionCapability = "MachineAPI"
 
-	// ClusterVersionCapabilityBuild manages the Build API which is responsible
-	// for watching the Build API objects and managing their lifecycle.
-	// The functionality is located under openshift-apiserver and openshift-controller-manager.
+	// ClusterVersionCapabilityIngress manages the cluster ingress operator
+	// which is responsible for running the ingress controllers (including OpenShift router).
 	//
-	// The following resources are taken into account:
-	// - builds
-	// - buildconfigs
-	ClusterVersionCapabilityBuild ClusterVersionCapability = "Build"
-
-	// ClusterVersionCapabilityDeploymentConfig manages the DeploymentConfig API
-	// which is responsible for watching the DeploymentConfig API and managing their lifecycle.
-	// The functionality is located under openshift-apiserver and openshift-controller-manager.
+	// The following CRDs are part of the capability as well:
+	// IngressController
+	// DNSRecord
+	// GatewayClass
+	// Gateway
+	// HTTPRoute
+	// ReferenceGrant
 	//
-	// The following resources are taken into account:
-	// - deploymentconfigs
-	ClusterVersionCapabilityDeploymentConfig ClusterVersionCapability = "DeploymentConfig"
+	// WARNING: This capability cannot be disabled on the standalone OpenShift.
+	ClusterVersionCapabilityIngress ClusterVersionCapability = "Ingress"
+	// ClusterVersionCapabilityImageRegistry manages the image registry which
+	// allows to distribute Docker images
+	ClusterVersionCapabilityImageRegistry ClusterVersionCapability = "ImageRegistry"
 )
 
 // KnownClusterVersionCapabilities includes all known optional, core cluster components.
 var KnownClusterVersionCapabilities = []ClusterVersionCapability{
 	ClusterVersionCapabilityBaremetal,
 	ClusterVersionCapabilityConsole,
+	ClusterVersionCapabilityIngress,
 	ClusterVersionCapabilityInsights,
 	ClusterVersionCapabilityMarketplace,
 	ClusterVersionCapabilityStorage,
@@ -343,8 +344,7 @@ var KnownClusterVersionCapabilities = []ClusterVersionCapability{
 	ClusterVersionCapabilityCSISnapshot,
 	ClusterVersionCapabilityNodeTuning,
 	ClusterVersionCapabilityMachineAPI,
-	ClusterVersionCapabilityBuild,
-	ClusterVersionCapabilityDeploymentConfig,
+	ClusterVersionCapabilityImageRegistry,
 }
 
 // ClusterVersionCapabilitySet defines sets of cluster version capabilities.
@@ -416,6 +416,7 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 	ClusterVersionCapabilitySet4_14: {
 		ClusterVersionCapabilityBaremetal,
 		ClusterVersionCapabilityConsole,
+		ClusterVersionCapabilityIngress,
 		ClusterVersionCapabilityInsights,
 		ClusterVersionCapabilityMarketplace,
 		ClusterVersionCapabilityStorage,
@@ -423,12 +424,12 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 		ClusterVersionCapabilityCSISnapshot,
 		ClusterVersionCapabilityNodeTuning,
 		ClusterVersionCapabilityMachineAPI,
-		ClusterVersionCapabilityBuild,
-		ClusterVersionCapabilityDeploymentConfig,
+		ClusterVersionCapabilityImageRegistry,
 	},
 	ClusterVersionCapabilitySetCurrent: {
 		ClusterVersionCapabilityBaremetal,
 		ClusterVersionCapabilityConsole,
+		ClusterVersionCapabilityIngress,
 		ClusterVersionCapabilityInsights,
 		ClusterVersionCapabilityMarketplace,
 		ClusterVersionCapabilityStorage,
@@ -436,8 +437,7 @@ var ClusterVersionCapabilitySets = map[ClusterVersionCapabilitySet][]ClusterVers
 		ClusterVersionCapabilityCSISnapshot,
 		ClusterVersionCapabilityNodeTuning,
 		ClusterVersionCapabilityMachineAPI,
-		ClusterVersionCapabilityBuild,
-		ClusterVersionCapabilityDeploymentConfig,
+		ClusterVersionCapabilityImageRegistry,
 	},
 }
 
@@ -511,8 +511,8 @@ type ComponentOverride struct {
 type URL string
 
 // Update represents an administrator update request.
-// +kubebuilder:validation:XValidation:rule="has(self.architecture) && has(self.image) ? (self.architecture == '' || self.image == '') : true",message="cannot set both Architecture and Image"
-// +kubebuilder:validation:XValidation:rule="has(self.architecture) && self.architecture != '' ? self.version != '' : true",message="Version must be set if Architecture is set"
+// +kubebuilder:validation:XValidation:rule="has(self.architecture) && has(self.image) ? (self.architecture == ” || self.image == ”) : true",message="cannot set both Architecture and Image"
+// +kubebuilder:validation:XValidation:rule="has(self.architecture) && self.architecture != ” ? self.version != ” : true",message="Version must be set if Architecture is set"
 // +k8s:deepcopy-gen=true
 type Update struct {
 	// architecture is an optional field that indicates the desired

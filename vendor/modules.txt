@@ -8688,7 +8688,7 @@ github.com/opencontainers/go-digest
 ## explicit; go 1.11
 github.com/opencontainers/image-spec/specs-go
 github.com/opencontainers/image-spec/specs-go/v1
-# github.com/openshift/api v0.0.0-20230807132801-600991d550ac
+# github.com/openshift/api v0.0.0-20230807132801-600991d550ac => github.com/qjkee/api v0.0.0-20230802082551-38e4594c1ed0
 ## explicit; go 1.20
 github.com/openshift/api/config/v1
 github.com/openshift/api/config/v1alpha1
@@ -9606,3 +9606,4 @@ sigs.k8s.io/yaml
 # golang.org/x/net => golang.org/x/net v0.5.0
 # github.com/containerd/containerd => github.com/containerd/containerd v1.5.18
 # go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.11.2
+# github.com/openshift/api => github.com/qjkee/api v0.0.0-20230802082551-38e4594c1ed0
