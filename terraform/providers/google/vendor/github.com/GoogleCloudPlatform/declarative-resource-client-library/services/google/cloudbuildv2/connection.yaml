@@ -1,0 +1,387 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Cloudbuildv2/Connection
+  description: The Cloudbuildv2 Connection resource
+  x-dcl-struct-name: Connection
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Connection
+    parameters:
+    - name: connection
+      required: true
+      description: A full instance of a Connection
+  apply:
+    description: The function used to apply information about a Connection
+    parameters:
+    - name: connection
+      required: true
+      description: A full instance of a Connection
+  delete:
+    description: The function used to delete a Connection
+    parameters:
+    - name: connection
+      required: true
+      description: A full instance of a Connection
+  deleteAll:
+    description: The function used to delete all Connection
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Connection
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Connection:
+      title: Connection
+      x-dcl-id: projects/{{project}}/locations/{{location}}/connections/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      - location
+      properties:
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Annotations
+          description: Allows clients to store small amounts of arbitrary data.
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. Server assigned timestamp for when the connection
+            was created.
+          x-kubernetes-immutable: true
+        disabled:
+          type: boolean
+          x-dcl-go-name: Disabled
+          description: If disabled is set to true, functionality is disabled for this
+            connection. Repository based API methods and webhooks processing for repositories
+            in this connection will be disabled.
+        etag:
+          type: string
+          x-dcl-go-name: Etag
+          readOnly: true
+          description: This checksum is computed by the server based on the value
+            of other fields, and may be sent on update and delete requests to ensure
+            the client has an up-to-date value before proceeding.
+          x-kubernetes-immutable: true
+        githubConfig:
+          type: object
+          x-dcl-go-name: GithubConfig
+          x-dcl-go-type: ConnectionGithubConfig
+          description: Configuration for connections to github.com.
+          x-dcl-conflicts:
+          - githubEnterpriseConfig
+          - gitlabConfig
+          properties:
+            appInstallationId:
+              type: integer
+              format: int64
+              x-dcl-go-name: AppInstallationId
+              description: GitHub App installation id.
+            authorizerCredential:
+              type: object
+              x-dcl-go-name: AuthorizerCredential
+              x-dcl-go-type: ConnectionGithubConfigAuthorizerCredential
+              description: OAuth credential of the account that authorized the Cloud
+                Build GitHub App. It is recommended to use a robot account instead
+                of a human user account. The OAuth token must be tied to the Cloud
+                Build GitHub App.
+              properties:
+                oauthTokenSecretVersion:
+                  type: string
+                  x-dcl-go-name: OAuthTokenSecretVersion
+                  description: 'A SecretManager resource containing the OAuth token
+                    that authorizes the Cloud Build connection. Format: `projects/*/secrets/*/versions/*`.'
+                  x-dcl-references:
+                  - resource: Secretmanager/SecretVersion
+                    field: selfLink
+                username:
+                  type: string
+                  x-dcl-go-name: Username
+                  readOnly: true
+                  description: Output only. The username associated to this token.
+        githubEnterpriseConfig:
+          type: object
+          x-dcl-go-name: GithubEnterpriseConfig
+          x-dcl-go-type: ConnectionGithubEnterpriseConfig
+          description: Configuration for connections to an instance of GitHub Enterprise.
+          x-dcl-conflicts:
+          - githubConfig
+          - gitlabConfig
+          required:
+          - hostUri
+          properties:
+            appId:
+              type: integer
+              format: int64
+              x-dcl-go-name: AppId
+              description: Id of the GitHub App created from the manifest.
+            appInstallationId:
+              type: integer
+              format: int64
+              x-dcl-go-name: AppInstallationId
+              description: ID of the installation of the GitHub App.
+            appSlug:
+              type: string
+              x-dcl-go-name: AppSlug
+              description: The URL-friendly name of the GitHub App.
+            hostUri:
+              type: string
+              x-dcl-go-name: HostUri
+              description: Required. The URI of the GitHub Enterprise host this connection
+                is for.
+            privateKeySecretVersion:
+              type: string
+              x-dcl-go-name: PrivateKeySecretVersion
+              description: SecretManager resource containing the private key of the
+                GitHub App, formatted as `projects/*/secrets/*/versions/*`.
+              x-dcl-references:
+              - resource: Secretmanager/SecretVersion
+                field: selfLink
+            serviceDirectoryConfig:
+              type: object
+              x-dcl-go-name: ServiceDirectoryConfig
+              x-dcl-go-type: ConnectionGithubEnterpriseConfigServiceDirectoryConfig
+              description: Configuration for using Service Directory to privately
+                connect to a GitHub Enterprise server. This should only be set if
+                the GitHub Enterprise server is hosted on-premises and not reachable
+                by public internet. If this field is left empty, calls to the GitHub
+                Enterprise server will be made over the public internet.
+              required:
+              - service
+              properties:
+                service:
+                  type: string
+                  x-dcl-go-name: Service
+                  description: 'Required. The Service Directory service name. Format:
+                    projects/{project}/locations/{location}/namespaces/{namespace}/services/{service}.'
+                  x-dcl-references:
+                  - resource: Servicedirectory/Service
+                    field: selfLink
+            sslCa:
+              type: string
+              x-dcl-go-name: SslCa
+              description: SSL certificate to use for requests to GitHub Enterprise.
+            webhookSecretSecretVersion:
+              type: string
+              x-dcl-go-name: WebhookSecretSecretVersion
+              description: SecretManager resource containing the webhook secret of
+                the GitHub App, formatted as `projects/*/secrets/*/versions/*`.
+              x-dcl-references:
+              - resource: Secretmanager/SecretVersion
+                field: selfLink
+        gitlabConfig:
+          type: object
+          x-dcl-go-name: GitlabConfig
+          x-dcl-go-type: ConnectionGitlabConfig
+          description: Configuration for connections to gitlab.com or an instance
+            of GitLab Enterprise.
+          x-dcl-conflicts:
+          - githubConfig
+          - githubEnterpriseConfig
+          required:
+          - webhookSecretSecretVersion
+          - readAuthorizerCredential
+          - authorizerCredential
+          properties:
+            authorizerCredential:
+              type: object
+              x-dcl-go-name: AuthorizerCredential
+              x-dcl-go-type: ConnectionGitlabConfigAuthorizerCredential
+              description: Required. A GitLab personal access token with the `api`
+                scope access.
+              required:
+              - userTokenSecretVersion
+              properties:
+                userTokenSecretVersion:
+                  type: string
+                  x-dcl-go-name: UserTokenSecretVersion
+                  description: 'Required. A SecretManager resource containing the
+                    user token that authorizes the Cloud Build connection. Format:
+                    `projects/*/secrets/*/versions/*`.'
+                  x-dcl-references:
+                  - resource: Secretmanager/SecretVersion
+                    field: selfLink
+                username:
+                  type: string
+                  x-dcl-go-name: Username
+                  readOnly: true
+                  description: Output only. The username associated to this token.
+            hostUri:
+              type: string
+              x-dcl-go-name: HostUri
+              description: The URI of the GitLab Enterprise host this connection is
+                for. If not specified, the default value is https://gitlab.com.
+              x-dcl-server-default: true
+            readAuthorizerCredential:
+              type: object
+              x-dcl-go-name: ReadAuthorizerCredential
+              x-dcl-go-type: ConnectionGitlabConfigReadAuthorizerCredential
+              description: Required. A GitLab personal access token with the minimum
+                `read_api` scope access.
+              required:
+              - userTokenSecretVersion
+              properties:
+                userTokenSecretVersion:
+                  type: string
+                  x-dcl-go-name: UserTokenSecretVersion
+                  description: 'Required. A SecretManager resource containing the
+                    user token that authorizes the Cloud Build connection. Format:
+                    `projects/*/secrets/*/versions/*`.'
+                  x-dcl-references:
+                  - resource: Secretmanager/SecretVersion
+                    field: selfLink
+                username:
+                  type: string
+                  x-dcl-go-name: Username
+                  readOnly: true
+                  description: Output only. The username associated to this token.
+            serverVersion:
+              type: string
+              x-dcl-go-name: ServerVersion
+              readOnly: true
+              description: Output only. Version of the GitLab Enterprise server running
+                on the `host_uri`.
+            serviceDirectoryConfig:
+              type: object
+              x-dcl-go-name: ServiceDirectoryConfig
+              x-dcl-go-type: ConnectionGitlabConfigServiceDirectoryConfig
+              description: Configuration for using Service Directory to privately
+                connect to a GitLab Enterprise server. This should only be set if
+                the GitLab Enterprise server is hosted on-premises and not reachable
+                by public internet. If this field is left empty, calls to the GitLab
+                Enterprise server will be made over the public internet.
+              required:
+              - service
+              properties:
+                service:
+                  type: string
+                  x-dcl-go-name: Service
+                  description: 'Required. The Service Directory service name. Format:
+                    projects/{project}/locations/{location}/namespaces/{namespace}/services/{service}.'
+                  x-dcl-references:
+                  - resource: Servicedirectory/Service
+                    field: selfLink
+            sslCa:
+              type: string
+              x-dcl-go-name: SslCa
+              description: SSL certificate to use for requests to GitLab Enterprise.
+            webhookSecretSecretVersion:
+              type: string
+              x-dcl-go-name: WebhookSecretSecretVersion
+              description: Required. Immutable. SecretManager resource containing
+                the webhook secret of a GitLab Enterprise project, formatted as `projects/*/secrets/*/versions/*`.
+              x-dcl-references:
+              - resource: Secretmanager/SecretVersion
+                field: selfLink
+        installationState:
+          type: object
+          x-dcl-go-name: InstallationState
+          x-dcl-go-type: ConnectionInstallationState
+          readOnly: true
+          description: Output only. Installation state of the Connection.
+          x-kubernetes-immutable: true
+          properties:
+            actionUri:
+              type: string
+              x-dcl-go-name: ActionUri
+              readOnly: true
+              description: Output only. Link to follow for next action. Empty string
+                if the installation is already complete.
+              x-kubernetes-immutable: true
+            message:
+              type: string
+              x-dcl-go-name: Message
+              readOnly: true
+              description: Output only. Message of what the user should do next to
+                continue the installation. Empty string if the installation is already
+                complete.
+              x-kubernetes-immutable: true
+            stage:
+              type: string
+              x-dcl-go-name: Stage
+              x-dcl-go-type: ConnectionInstallationStateStageEnum
+              readOnly: true
+              description: 'Output only. Current step of the installation process.
+                Possible values: STAGE_UNSPECIFIED, PENDING_CREATE_APP, PENDING_USER_OAUTH,
+                PENDING_INSTALL_APP, COMPLETE'
+              x-kubernetes-immutable: true
+              enum:
+              - STAGE_UNSPECIFIED
+              - PENDING_CREATE_APP
+              - PENDING_USER_OAUTH
+              - PENDING_INSTALL_APP
+              - COMPLETE
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: Immutable. The resource name of the connection, in the format
+            `projects/{project}/locations/{location}/connections/{connection_id}`.
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        reconciling:
+          type: boolean
+          x-dcl-go-name: Reconciling
+          readOnly: true
+          description: Output only. Set to true when the connection is being set up
+            or updated in the background.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. Server assigned timestamp for when the connection
+            was updated.
+          x-kubernetes-immutable: true

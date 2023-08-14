@@ -190,6 +190,9 @@ func newUpdateTriggerUpdateTriggerRequest(ctx context.Context, f *Trigger, c *Cl
 	if v := f.Labels; !dcl.IsEmptyValueIndirect(v) {
 		req["labels"] = v
 	}
+	if v := f.EventDataContentType; !dcl.IsEmptyValueIndirect(v) {
+		req["eventDataContentType"] = v
+	}
 	b, err := c.getTriggerRaw(ctx, f)
 	if err != nil {
 		return nil, err
@@ -577,6 +580,11 @@ func canonicalizeTriggerDesiredState(rawDesired, rawInitial *Trigger, opts ...dc
 	} else {
 		canonicalDesired.Channel = rawDesired.Channel
 	}
+	if dcl.StringCanonicalize(rawDesired.EventDataContentType, rawInitial.EventDataContentType) {
+		canonicalDesired.EventDataContentType = rawInitial.EventDataContentType
+	} else {
+		canonicalDesired.EventDataContentType = rawDesired.EventDataContentType
+	}
 	return canonicalDesired, nil
 }
 
@@ -656,6 +664,14 @@ func canonicalizeTriggerNewState(c *Client, rawNew, rawDesired *Trigger) (*Trigg
 	if dcl.IsEmptyValueIndirect(rawNew.Conditions) && dcl.IsEmptyValueIndirect(rawDesired.Conditions) {
 		rawNew.Conditions = rawDesired.Conditions
 	} else {
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.EventDataContentType) && dcl.IsEmptyValueIndirect(rawDesired.EventDataContentType) {
+		rawNew.EventDataContentType = rawDesired.EventDataContentType
+	} else {
+		if dcl.StringCanonicalize(rawDesired.EventDataContentType, rawNew.EventDataContentType) {
+			rawNew.EventDataContentType = rawDesired.EventDataContentType
+		}
 	}
 
 	return rawNew, nil
@@ -1594,6 +1610,13 @@ func diffTrigger(c *Client, desired, actual *Trigger, opts ...dcl.ApplyOption) (
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.EventDataContentType, actual.EventDataContentType, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateTriggerUpdateTriggerOperation")}, fn.AddNest("EventDataContentType")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
 	if len(newDiffs) > 0 {
 		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
 	}
@@ -1869,6 +1892,7 @@ func (r *Trigger) urlNormalized() *Trigger {
 	normalized.Project = dcl.SelfLinkToName(r.Project)
 	normalized.Location = dcl.SelfLinkToName(r.Location)
 	normalized.Channel = dcl.SelfLinkToName(r.Channel)
+	normalized.EventDataContentType = dcl.SelfLinkToName(r.EventDataContentType)
 	return &normalized
 }
 
@@ -1961,6 +1985,9 @@ func expandTrigger(c *Client, f *Trigger) (map[string]interface{}, error) {
 	if v := f.Channel; dcl.ValueShouldBeSent(v) {
 		m["channel"] = v
 	}
+	if v := f.EventDataContentType; dcl.ValueShouldBeSent(v) {
+		m["eventDataContentType"] = v
+	}
 
 	return m, nil
 }
@@ -1991,6 +2018,7 @@ func flattenTrigger(c *Client, i interface{}, res *Trigger) *Trigger {
 	resultRes.Location = dcl.FlattenString(m["location"])
 	resultRes.Channel = dcl.FlattenString(m["channel"])
 	resultRes.Conditions = dcl.FlattenKeyValuePairs(m["conditions"])
+	resultRes.EventDataContentType = dcl.FlattenString(m["eventDataContentType"])
 
 	return resultRes
 }

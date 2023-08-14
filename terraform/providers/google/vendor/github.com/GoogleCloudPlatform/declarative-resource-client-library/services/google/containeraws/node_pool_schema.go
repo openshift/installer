@@ -306,6 +306,13 @@ func DCLNodePoolSchema() *dcl.Schema {
 												Description:   "Optional. The size of the volume, in GiBs. When unspecified, a default value is provided. See the specific reference in the parent resource.",
 												ServerDefault: true,
 											},
+											"throughput": &dcl.Property{
+												Type:          "integer",
+												Format:        "int64",
+												GoName:        "Throughput",
+												Description:   "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
+												ServerDefault: true,
+											},
 											"volumeType": &dcl.Property{
 												Type:          "string",
 												GoName:        "VolumeType",

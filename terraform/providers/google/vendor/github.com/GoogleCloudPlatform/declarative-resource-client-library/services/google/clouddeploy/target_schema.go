@@ -128,6 +128,7 @@ func DCLTargetSchema() *dcl.Schema {
 								Description: "Information specifying an Anthos Cluster.",
 								Conflicts: []string{
 									"gke",
+									"run",
 								},
 								Properties: map[string]*dcl.Property{
 									"membership": &dcl.Property{
@@ -150,6 +151,14 @@ func DCLTargetSchema() *dcl.Schema {
 								ReadOnly:    true,
 								Description: "Output only. Time at which the `Target` was created.",
 								Immutable:   true,
+							},
+							"deployParameters": &dcl.Property{
+								Type: "object",
+								AdditionalProperties: &dcl.Property{
+									Type: "string",
+								},
+								GoName:      "DeployParameters",
+								Description: "Optional. The deploy parameters to use for this target.",
 							},
 							"description": &dcl.Property{
 								Type:        "string",
@@ -232,6 +241,7 @@ func DCLTargetSchema() *dcl.Schema {
 								Description: "Information specifying a GKE Cluster.",
 								Conflicts: []string{
 									"anthosCluster",
+									"run",
 								},
 								Properties: map[string]*dcl.Property{
 									"cluster": &dcl.Property{
@@ -289,6 +299,26 @@ func DCLTargetSchema() *dcl.Schema {
 								Type:        "boolean",
 								GoName:      "RequireApproval",
 								Description: "Optional. Whether or not the `Target` requires approval.",
+							},
+							"run": &dcl.Property{
+								Type:        "object",
+								GoName:      "Run",
+								GoType:      "TargetRun",
+								Description: "Information specifying a Cloud Run deployment target.",
+								Conflicts: []string{
+									"gke",
+									"anthosCluster",
+								},
+								Required: []string{
+									"location",
+								},
+								Properties: map[string]*dcl.Property{
+									"location": &dcl.Property{
+										Type:        "string",
+										GoName:      "Location",
+										Description: "Required. The location where the Cloud Run Service should be located. Format is `projects/{project}/locations/{location}`.",
+									},
+								},
 							},
 							"targetId": &dcl.Property{
 								Type:        "string",

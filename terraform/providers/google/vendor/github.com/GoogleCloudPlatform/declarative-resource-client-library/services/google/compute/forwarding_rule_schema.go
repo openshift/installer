@@ -130,6 +130,13 @@ func DCLForwardingRuleSchema() *dcl.Schema {
 								Description: "This field is only used for `INTERNAL` load balancing. For internal load balancing, this field identifies the BackendService resource to receive the matched traffic.",
 								Immutable:   true,
 							},
+							"baseForwardingRule": &dcl.Property{
+								Type:        "string",
+								GoName:      "BaseForwardingRule",
+								ReadOnly:    true,
+								Description: "[Output Only] The URL for the corresponding base Forwarding Rule. By base Forwarding Rule, we mean the Forwarding Rule that has the same IP address, protocol, and port settings with the current Forwarding Rule, but without sourceIPRanges specified. Always empty if the current Forwarding Rule does not have sourceIPRanges specified.",
+								Immutable:   true,
+							},
 							"creationTimestamp": &dcl.Property{
 								Type:        "string",
 								GoName:      "CreationTimestamp",
@@ -413,6 +420,18 @@ func DCLForwardingRuleSchema() *dcl.Schema {
 								ReadOnly:    true,
 								Description: "[Output Only] The internal fully qualified service name for this Forwarding Rule. This field is only used for internal load balancing.",
 								Immutable:   true,
+							},
+							"sourceIPRanges": &dcl.Property{
+								Type:        "array",
+								GoName:      "SourceIPRanges",
+								Description: "If not empty, this Forwarding Rule will only forward the traffic when the source IP address matches one of the IP addresses or CIDR ranges set here. Note that a Forwarding Rule can only have up to 64 source IP ranges, and this field can only be used with a regional Forwarding Rule whose scheme is EXTERNAL. Each sourceIpRange entry should be either an IP address (for example, 1.2.3.4) or a CIDR range (for example, 1.2.3.0/24).",
+								Immutable:   true,
+								SendEmpty:   true,
+								ListType:    "list",
+								Items: &dcl.Property{
+									Type:   "string",
+									GoType: "string",
+								},
 							},
 							"subnetwork": &dcl.Property{
 								Type:          "string",

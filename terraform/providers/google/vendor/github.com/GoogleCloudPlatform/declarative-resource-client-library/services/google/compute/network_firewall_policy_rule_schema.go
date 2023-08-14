@@ -133,7 +133,7 @@ func DCLNetworkFirewallPolicyRuleSchema() *dcl.Schema {
 							"action": &dcl.Property{
 								Type:        "string",
 								GoName:      "Action",
-								Description: "The Action to perform when the client connection triggers the rule. Can currently be either \"allow\" or \"deny()\" where valid values for status are 403, 404, and 502.",
+								Description: "The Action to perform when the client connection triggers the rule. Valid actions are \"allow\", \"deny\" and \"goto_next\".",
 							},
 							"description": &dcl.Property{
 								Type:        "string",
@@ -195,10 +195,54 @@ func DCLNetworkFirewallPolicyRuleSchema() *dcl.Schema {
 									"layer4Configs",
 								},
 								Properties: map[string]*dcl.Property{
+									"destAddressGroups": &dcl.Property{
+										Type:        "array",
+										GoName:      "DestAddressGroups",
+										Description: "Address groups which should be matched against the traffic destination. Maximum number of destination address groups is 10. Destination address groups is only supported in Egress rules.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
+									"destFqdns": &dcl.Property{
+										Type:        "array",
+										GoName:      "DestFqdns",
+										Description: "Domain names that will be used to match against the resolved domain name of destination of traffic. Can only be specified if DIRECTION is egress.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
 									"destIPRanges": &dcl.Property{
 										Type:        "array",
 										GoName:      "DestIPRanges",
 										Description: "CIDR IP address range. Maximum number of destination CIDR IP ranges allowed is 5000.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
+									"destRegionCodes": &dcl.Property{
+										Type:        "array",
+										GoName:      "DestRegionCodes",
+										Description: "The Unicode country codes whose IP addresses will be used to match against the source of traffic. Can only be specified if DIRECTION is egress.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
+									"destThreatIntelligences": &dcl.Property{
+										Type:        "array",
+										GoName:      "DestThreatIntelligences",
+										Description: "Name of the Google Cloud Threat Intelligence list.",
 										SendEmpty:   true,
 										ListType:    "list",
 										Items: &dcl.Property{
@@ -238,10 +282,43 @@ func DCLNetworkFirewallPolicyRuleSchema() *dcl.Schema {
 											},
 										},
 									},
+									"srcAddressGroups": &dcl.Property{
+										Type:        "array",
+										GoName:      "SrcAddressGroups",
+										Description: "Address groups which should be matched against the traffic source. Maximum number of source address groups is 10. Source address groups is only supported in Ingress rules.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
+									"srcFqdns": &dcl.Property{
+										Type:        "array",
+										GoName:      "SrcFqdns",
+										Description: "Domain names that will be used to match against the resolved domain name of source of traffic. Can only be specified if DIRECTION is ingress.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
 									"srcIPRanges": &dcl.Property{
 										Type:        "array",
 										GoName:      "SrcIPRanges",
 										Description: "CIDR IP address range. Maximum number of source CIDR IP ranges allowed is 5000.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
+										},
+									},
+									"srcRegionCodes": &dcl.Property{
+										Type:        "array",
+										GoName:      "SrcRegionCodes",
+										Description: "The Unicode country codes whose IP addresses will be used to match against the source of traffic. Can only be specified if DIRECTION is ingress.",
 										SendEmpty:   true,
 										ListType:    "list",
 										Items: &dcl.Property{
@@ -285,6 +362,17 @@ func DCLNetworkFirewallPolicyRuleSchema() *dcl.Schema {
 													},
 												},
 											},
+										},
+									},
+									"srcThreatIntelligences": &dcl.Property{
+										Type:        "array",
+										GoName:      "SrcThreatIntelligences",
+										Description: "Name of the Google Cloud Threat Intelligence list.",
+										SendEmpty:   true,
+										ListType:    "list",
+										Items: &dcl.Property{
+											Type:   "string",
+											GoType: "string",
 										},
 									},
 								},

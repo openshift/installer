@@ -271,6 +271,11 @@ func newUpdateClusterUpdateAwsClusterRequest(ctx context.Context, f *Cluster, c 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
 	}
+	if v, err := expandClusterNetworking(c, f.Networking, res); err != nil {
+		return nil, fmt.Errorf("error expanding Networking into networking: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		req["networking"] = v
+	}
 	if v, err := expandClusterControlPlane(c, f.ControlPlane, res); err != nil {
 		return nil, fmt.Errorf("error expanding ControlPlane into controlPlane: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
@@ -820,6 +825,11 @@ func canonicalizeClusterNetworking(des, initial *ClusterNetworking, opts ...dcl.
 	} else {
 		cDes.ServiceAddressCidrBlocks = des.ServiceAddressCidrBlocks
 	}
+	if dcl.BoolCanonicalize(des.PerNodePoolSgRulesDisabled, initial.PerNodePoolSgRulesDisabled) || dcl.IsZeroValue(des.PerNodePoolSgRulesDisabled) {
+		cDes.PerNodePoolSgRulesDisabled = initial.PerNodePoolSgRulesDisabled
+	} else {
+		cDes.PerNodePoolSgRulesDisabled = des.PerNodePoolSgRulesDisabled
+	}
 
 	return cDes
 }
@@ -874,6 +884,9 @@ func canonicalizeNewClusterNetworking(c *Client, des, nw *ClusterNetworking) *Cl
 	}
 	if dcl.StringArrayCanonicalize(des.ServiceAddressCidrBlocks, nw.ServiceAddressCidrBlocks) {
 		nw.ServiceAddressCidrBlocks = des.ServiceAddressCidrBlocks
+	}
+	if dcl.BoolCanonicalize(des.PerNodePoolSgRulesDisabled, nw.PerNodePoolSgRulesDisabled) {
+		nw.PerNodePoolSgRulesDisabled = des.PerNodePoolSgRulesDisabled
 	}
 
 	return nw
@@ -1363,6 +1376,12 @@ func canonicalizeClusterControlPlaneRootVolume(des, initial *ClusterControlPlane
 	} else {
 		cDes.Iops = des.Iops
 	}
+	if dcl.IsZeroValue(des.Throughput) || (dcl.IsEmptyValueIndirect(des.Throughput) && dcl.IsEmptyValueIndirect(initial.Throughput)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Throughput = initial.Throughput
+	} else {
+		cDes.Throughput = des.Throughput
+	}
 	if dcl.StringCanonicalize(des.KmsKeyArn, initial.KmsKeyArn) || dcl.IsZeroValue(des.KmsKeyArn) {
 		cDes.KmsKeyArn = initial.KmsKeyArn
 	} else {
@@ -1498,6 +1517,12 @@ func canonicalizeClusterControlPlaneMainVolume(des, initial *ClusterControlPlane
 		cDes.Iops = initial.Iops
 	} else {
 		cDes.Iops = des.Iops
+	}
+	if dcl.IsZeroValue(des.Throughput) || (dcl.IsEmptyValueIndirect(des.Throughput) && dcl.IsEmptyValueIndirect(initial.Throughput)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Throughput = initial.Throughput
+	} else {
+		cDes.Throughput = des.Throughput
 	}
 	if dcl.StringCanonicalize(des.KmsKeyArn, initial.KmsKeyArn) || dcl.IsZeroValue(des.KmsKeyArn) {
 		cDes.KmsKeyArn = initial.KmsKeyArn
@@ -2647,6 +2672,13 @@ func compareClusterNetworkingNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dc
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.PerNodePoolSgRulesDisabled, actual.PerNodePoolSgRulesDisabled, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("PerNodePoolSgRulesDisabled")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -2862,6 +2894,13 @@ func compareClusterControlPlaneRootVolumeNewStyle(d, a interface{}, fn dcl.Field
 		diffs = append(diffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.Throughput, actual.Throughput, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Throughput")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
 	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
@@ -2906,6 +2945,13 @@ func compareClusterControlPlaneMainVolumeNewStyle(d, a interface{}, fn dcl.Field
 	}
 
 	if ds, err := dcl.Diff(desired.Iops, actual.Iops, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Iops")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Throughput, actual.Throughput, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Throughput")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3405,6 +3451,9 @@ func expandClusterNetworking(c *Client, f *ClusterNetworking, res *Cluster) (map
 	if v := f.ServiceAddressCidrBlocks; v != nil {
 		m["serviceAddressCidrBlocks"] = v
 	}
+	if v := f.PerNodePoolSgRulesDisabled; !dcl.IsEmptyValueIndirect(v) {
+		m["perNodePoolSgRulesDisabled"] = v
+	}
 
 	return m, nil
 }
@@ -3425,6 +3474,7 @@ func flattenClusterNetworking(c *Client, i interface{}, res *Cluster) *ClusterNe
 	r.VPCId = dcl.FlattenString(m["vpcId"])
 	r.PodAddressCidrBlocks = dcl.FlattenStringSlice(m["podAddressCidrBlocks"])
 	r.ServiceAddressCidrBlocks = dcl.FlattenStringSlice(m["serviceAddressCidrBlocks"])
+	r.PerNodePoolSgRulesDisabled = dcl.FlattenBool(m["perNodePoolSgRulesDisabled"])
 
 	return r
 }
@@ -3931,6 +3981,9 @@ func expandClusterControlPlaneRootVolume(c *Client, f *ClusterControlPlaneRootVo
 	if v := f.Iops; !dcl.IsEmptyValueIndirect(v) {
 		m["iops"] = v
 	}
+	if v := f.Throughput; !dcl.IsEmptyValueIndirect(v) {
+		m["throughput"] = v
+	}
 	if v := f.KmsKeyArn; !dcl.IsEmptyValueIndirect(v) {
 		m["kmsKeyArn"] = v
 	}
@@ -3954,6 +4007,7 @@ func flattenClusterControlPlaneRootVolume(c *Client, i interface{}, res *Cluster
 	r.SizeGib = dcl.FlattenInteger(m["sizeGib"])
 	r.VolumeType = flattenClusterControlPlaneRootVolumeVolumeTypeEnum(m["volumeType"])
 	r.Iops = dcl.FlattenInteger(m["iops"])
+	r.Throughput = dcl.FlattenInteger(m["throughput"])
 	r.KmsKeyArn = dcl.FlattenString(m["kmsKeyArn"])
 
 	return r
@@ -4057,6 +4111,9 @@ func expandClusterControlPlaneMainVolume(c *Client, f *ClusterControlPlaneMainVo
 	if v := f.Iops; !dcl.IsEmptyValueIndirect(v) {
 		m["iops"] = v
 	}
+	if v := f.Throughput; !dcl.IsEmptyValueIndirect(v) {
+		m["throughput"] = v
+	}
 	if v := f.KmsKeyArn; !dcl.IsEmptyValueIndirect(v) {
 		m["kmsKeyArn"] = v
 	}
@@ -4080,6 +4137,7 @@ func flattenClusterControlPlaneMainVolume(c *Client, i interface{}, res *Cluster
 	r.SizeGib = dcl.FlattenInteger(m["sizeGib"])
 	r.VolumeType = flattenClusterControlPlaneMainVolumeVolumeTypeEnum(m["volumeType"])
 	r.Iops = dcl.FlattenInteger(m["iops"])
+	r.Throughput = dcl.FlattenInteger(m["throughput"])
 	r.KmsKeyArn = dcl.FlattenString(m["kmsKeyArn"])
 
 	return r

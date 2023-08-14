@@ -71,6 +71,7 @@ var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
 var _ = internaloption.WithDefaultEndpoint
+var _ = internal.Version
 
 const apiId = "datastream:v1"
 const apiName = "datastream"
@@ -284,7 +285,7 @@ type BackfillJob struct {
 	// LastStartTime: Output only. Backfill job's start time.
 	LastStartTime string `json:"lastStartTime,omitempty"`
 
-	// State: Backfill job state.
+	// State: Output only. Backfill job state.
 	//
 	// Possible values:
 	//   "STATE_UNSPECIFIED" - Default value.
@@ -773,7 +774,8 @@ type GcsDestinationConfig struct {
 	AvroFileFormat *AvroFileFormat `json:"avroFileFormat,omitempty"`
 
 	// FileRotationInterval: The maximum duration for which new events are
-	// added before a file is closed and a new file is created.
+	// added before a file is closed and a new file is created. Values
+	// within the range of 15-60 seconds are allowed.
 	FileRotationInterval string `json:"fileRotationInterval,omitempty"`
 
 	// FileRotationMb: The maximum file size to be saved in the bucket.
@@ -1155,7 +1157,7 @@ func (s *ListStreamsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Location: A resource that represents Google Cloud Platform location.
+// Location: A resource that represents a Google Cloud location.
 type Location struct {
 	// DisplayName: The friendly name for this location, typically a nearby
 	// city name. For example, "Tokyo".
@@ -2338,7 +2340,9 @@ func (s *Route) MarshalJSON() ([]byte, error) {
 // SingleTargetDataset: A single target dataset to which all data will
 // be streamed.
 type SingleTargetDataset struct {
-	// DatasetId: The dataset ID of the target dataset.
+	// DatasetId: The dataset ID of the target dataset. DatasetIds allowed
+	// characters:
+	// https://cloud.google.com/bigquery/docs/reference/rest/v2/datasets#datasetreference.
 	DatasetId string `json:"datasetId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DatasetId") to
@@ -2752,7 +2756,7 @@ type Validation struct {
 	// Message: Messages reflecting the validation results.
 	Message []*ValidationMessage `json:"message,omitempty"`
 
-	// State: Validation execution status.
+	// State: Output only. Validation execution status.
 	//
 	// Possible values:
 	//   "STATE_UNSPECIFIED" - Unspecified state.
@@ -4962,14 +4966,7 @@ type ProjectsLocationsOperationsListCall struct {
 
 // List: Lists operations that match the specified filter in the
 // request. If the server doesn't support this method, it returns
-// `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to
-// override the binding to use different resource name schemes, such as
-// `users/*/operations`. To override the binding, API services can add a
-// binding such as "/v1/{name=users/*}/operations" to their service
-// configuration. For backwards compatibility, the default name includes
-// the operations collection id, however overriding users must ensure
-// the name binding is the parent resource, without the operations
-// collection id.
+// `UNIMPLEMENTED`.
 //
 // - name: The name of the operation's parent resource.
 func (r *ProjectsLocationsOperationsService) List(name string) *ProjectsLocationsOperationsListCall {
@@ -5098,7 +5095,7 @@ func (c *ProjectsLocationsOperationsListCall) Do(opts ...googleapi.CallOption) (
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`. NOTE: the `name` binding allows API services to override the binding to use different resource name schemes, such as `users/*/operations`. To override the binding, API services can add a binding such as `\"/v1/{name=users/*}/operations\"` to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
+	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns `UNIMPLEMENTED`.",
 	//   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/operations",
 	//   "httpMethod": "GET",
 	//   "id": "datastream.projects.locations.operations.list",
@@ -7325,6 +7322,24 @@ func (r *ProjectsLocationsStreamsService) Patch(name string, stream *Stream) *Pr
 	return c
 }
 
+// CdcStrategySpecificStartPositionMysqlLogPositionLogFile sets the
+// optional parameter
+// "cdcStrategy.specificStartPosition.mysqlLogPosition.logFile": The
+// binary log file name.
+func (c *ProjectsLocationsStreamsPatchCall) CdcStrategySpecificStartPositionMysqlLogPositionLogFile(cdcStrategySpecificStartPositionMysqlLogPositionLogFile string) *ProjectsLocationsStreamsPatchCall {
+	c.urlParams_.Set("cdcStrategy.specificStartPosition.mysqlLogPosition.logFile", cdcStrategySpecificStartPositionMysqlLogPositionLogFile)
+	return c
+}
+
+// CdcStrategySpecificStartPositionMysqlLogPositionLogPosition sets the
+// optional parameter
+// "cdcStrategy.specificStartPosition.mysqlLogPosition.logPosition": The
+// position within the binary log file. Default is head of file.
+func (c *ProjectsLocationsStreamsPatchCall) CdcStrategySpecificStartPositionMysqlLogPositionLogPosition(cdcStrategySpecificStartPositionMysqlLogPositionLogPosition int64) *ProjectsLocationsStreamsPatchCall {
+	c.urlParams_.Set("cdcStrategy.specificStartPosition.mysqlLogPosition.logPosition", fmt.Sprint(cdcStrategySpecificStartPositionMysqlLogPositionLogPosition))
+	return c
+}
+
 // Force sets the optional parameter "force": Update the stream without
 // validating it.
 func (c *ProjectsLocationsStreamsPatchCall) Force(force bool) *ProjectsLocationsStreamsPatchCall {
@@ -7467,6 +7482,17 @@ func (c *ProjectsLocationsStreamsPatchCall) Do(opts ...googleapi.CallOption) (*O
 	//     "name"
 	//   ],
 	//   "parameters": {
+	//     "cdcStrategy.specificStartPosition.mysqlLogPosition.logFile": {
+	//       "description": "The binary log file name.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "cdcStrategy.specificStartPosition.mysqlLogPosition.logPosition": {
+	//       "description": "The position within the binary log file. Default is head of file.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
 	//     "force": {
 	//       "description": "Optional. Update the stream without validating it.",
 	//       "location": "query",

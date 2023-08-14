@@ -884,6 +884,14 @@ components:
                         value is missing, the max path length will be omitted from
                         the CA certificate.
                       x-kubernetes-immutable: true
+                    zeroMaxIssuerPathLength:
+                      type: boolean
+                      x-dcl-go-name: ZeroMaxIssuerPathLength
+                      description: Optional. When true, the "path length constraint"
+                        in Basic Constraints extension will be set to 0. if both max_issuer_path_length
+                        and zero_max_issuer_path_length are unset, the max path length
+                        will be omitted from the CA certificate.
+                      x-kubernetes-immutable: true
                 keyUsage:
                   type: object
                   x-dcl-go-name: KeyUsage

@@ -239,6 +239,14 @@ components:
                     parent resource.
                   x-kubernetes-immutable: true
                   x-dcl-server-default: true
+                throughput:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Throughput
+                  description: Optional. The throughput to provision for the volume,
+                    in MiB/s. Only valid if the volume type is GP3.
+                  x-kubernetes-immutable: true
+                  x-dcl-server-default: true
                 volumeType:
                   type: string
                   x-dcl-go-name: VolumeType
@@ -302,6 +310,13 @@ components:
                   description: Optional. The size of the volume, in GiBs. When unspecified,
                     a default value is provided. See the specific reference in the
                     parent resource.
+                  x-dcl-server-default: true
+                throughput:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Throughput
+                  description: Optional. The throughput to provision for the volume,
+                    in MiB/s. Only valid if the volume type is GP3.
                   x-dcl-server-default: true
                 volumeType:
                   type: string
@@ -436,12 +451,19 @@ components:
           x-dcl-go-name: Networking
           x-dcl-go-type: ClusterNetworking
           description: Cluster-wide networking configuration.
-          x-kubernetes-immutable: true
           required:
           - vpcId
           - podAddressCidrBlocks
           - serviceAddressCidrBlocks
           properties:
+            perNodePoolSgRulesDisabled:
+              type: boolean
+              x-dcl-go-name: PerNodePoolSgRulesDisabled
+              description: Disable the per node pool subnet security group rules on
+                the control plane security group. When set to true, you must also
+                provide one or more security groups that ensure node pools are able
+                to send requests to the control plane on TCP/443 and TCP/8132. Failure
+                to do so may result in unavailable node pools.
             podAddressCidrBlocks:
               type: array
               x-dcl-go-name: PodAddressCidrBlocks

@@ -92,9 +92,11 @@ func (r *DeliveryPipelineSerialPipeline) HashCode() string {
 }
 
 type DeliveryPipelineSerialPipelineStages struct {
-	empty    bool     `json:"-"`
-	TargetId *string  `json:"targetId"`
-	Profiles []string `json:"profiles"`
+	empty            bool                                                   `json:"-"`
+	TargetId         *string                                                `json:"targetId"`
+	Profiles         []string                                               `json:"profiles"`
+	Strategy         *DeliveryPipelineSerialPipelineStagesStrategy          `json:"strategy"`
+	DeployParameters []DeliveryPipelineSerialPipelineStagesDeployParameters `json:"deployParameters"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStages DeliveryPipelineSerialPipelineStages
@@ -115,6 +117,10 @@ func (r *DeliveryPipelineSerialPipelineStages) UnmarshalJSON(data []byte) error 
 		r.TargetId = res.TargetId
 
 		r.Profiles = res.Profiles
+
+		r.Strategy = res.Strategy
+
+		r.DeployParameters = res.DeployParameters
 
 	}
 	return nil
@@ -140,10 +146,605 @@ func (r *DeliveryPipelineSerialPipelineStages) HashCode() string {
 	return fmt.Sprintf("%x", hash)
 }
 
+type DeliveryPipelineSerialPipelineStagesStrategy struct {
+	empty    bool                                                  `json:"-"`
+	Standard *DeliveryPipelineSerialPipelineStagesStrategyStandard `json:"standard"`
+	Canary   *DeliveryPipelineSerialPipelineStagesStrategyCanary   `json:"canary"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategy DeliveryPipelineSerialPipelineStagesStrategy
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategy) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategy
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategy
+	} else {
+
+		r.Standard = res.Standard
+
+		r.Canary = res.Canary
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategy is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategy *DeliveryPipelineSerialPipelineStagesStrategy = &DeliveryPipelineSerialPipelineStagesStrategy{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategy) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategy) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategy) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyStandard struct {
+	empty  bool  `json:"-"`
+	Verify *bool `json:"verify"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyStandard DeliveryPipelineSerialPipelineStagesStrategyStandard
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyStandard
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyStandard
+	} else {
+
+		r.Verify = res.Verify
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyStandard is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyStandard *DeliveryPipelineSerialPipelineStagesStrategyStandard = &DeliveryPipelineSerialPipelineStagesStrategyStandard{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyStandard) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanary struct {
+	empty                  bool                                                                      `json:"-"`
+	RuntimeConfig          *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig          `json:"runtimeConfig"`
+	CanaryDeployment       *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment       `json:"canaryDeployment"`
+	CustomCanaryDeployment *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment `json:"customCanaryDeployment"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanary DeliveryPipelineSerialPipelineStagesStrategyCanary
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanary
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanary
+	} else {
+
+		r.RuntimeConfig = res.RuntimeConfig
+
+		r.CanaryDeployment = res.CanaryDeployment
+
+		r.CustomCanaryDeployment = res.CustomCanaryDeployment
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanary is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanary *DeliveryPipelineSerialPipelineStagesStrategyCanary = &DeliveryPipelineSerialPipelineStagesStrategyCanary{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanary) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig struct {
+	empty      bool                                                                       `json:"-"`
+	Kubernetes *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes `json:"kubernetes"`
+	CloudRun   *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun   `json:"cloudRun"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
+	} else {
+
+		r.Kubernetes = res.Kubernetes
+
+		r.CloudRun = res.CloudRun
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig = &DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes struct {
+	empty              bool                                                                                         `json:"-"`
+	GatewayServiceMesh *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh `json:"gatewayServiceMesh"`
+	ServiceNetworking  *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking  `json:"serviceNetworking"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes
+	} else {
+
+		r.GatewayServiceMesh = res.GatewayServiceMesh
+
+		r.ServiceNetworking = res.ServiceNetworking
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes = &DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh struct {
+	empty      bool    `json:"-"`
+	HttpRoute  *string `json:"httpRoute"`
+	Service    *string `json:"service"`
+	Deployment *string `json:"deployment"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh
+	} else {
+
+		r.HttpRoute = res.HttpRoute
+
+		r.Service = res.Service
+
+		r.Deployment = res.Deployment
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh = &DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking struct {
+	empty                      bool    `json:"-"`
+	Service                    *string `json:"service"`
+	Deployment                 *string `json:"deployment"`
+	DisablePodOverprovisioning *bool   `json:"disablePodOverprovisioning"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking
+	} else {
+
+		r.Service = res.Service
+
+		r.Deployment = res.Deployment
+
+		r.DisablePodOverprovisioning = res.DisablePodOverprovisioning
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking = &DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun struct {
+	empty                   bool  `json:"-"`
+	AutomaticTrafficControl *bool `json:"automaticTrafficControl"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
+	} else {
+
+		r.AutomaticTrafficControl = res.AutomaticTrafficControl
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun = &DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment struct {
+	empty       bool    `json:"-"`
+	Percentages []int64 `json:"percentages"`
+	Verify      *bool   `json:"verify"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment
+	} else {
+
+		r.Percentages = res.Percentages
+
+		r.Verify = res.Verify
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment struct {
+	empty        bool                                                                                   `json:"-"`
+	PhaseConfigs []DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs `json:"phaseConfigs"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment
+	} else {
+
+		r.PhaseConfigs = res.PhaseConfigs
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs struct {
+	empty      bool     `json:"-"`
+	PhaseId    *string  `json:"phaseId"`
+	Percentage *int64   `json:"percentage"`
+	Profiles   []string `json:"profiles"`
+	Verify     *bool    `json:"verify"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs
+	} else {
+
+		r.PhaseId = res.PhaseId
+
+		r.Percentage = res.Percentage
+
+		r.Profiles = res.Profiles
+
+		r.Verify = res.Verify
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs = &DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineSerialPipelineStagesDeployParameters struct {
+	empty             bool              `json:"-"`
+	Values            map[string]string `json:"values"`
+	MatchTargetLabels map[string]string `json:"matchTargetLabels"`
+}
+
+type jsonDeliveryPipelineSerialPipelineStagesDeployParameters DeliveryPipelineSerialPipelineStagesDeployParameters
+
+func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineSerialPipelineStagesDeployParameters
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineSerialPipelineStagesDeployParameters
+	} else {
+
+		r.Values = res.Values
+
+		r.MatchTargetLabels = res.MatchTargetLabels
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineSerialPipelineStagesDeployParameters is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineSerialPipelineStagesDeployParameters *DeliveryPipelineSerialPipelineStagesDeployParameters = &DeliveryPipelineSerialPipelineStagesDeployParameters{empty: true}
+
+func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineSerialPipelineStagesDeployParameters) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
 type DeliveryPipelineCondition struct {
 	empty                   bool                                              `json:"-"`
 	PipelineReadyCondition  *DeliveryPipelineConditionPipelineReadyCondition  `json:"pipelineReadyCondition"`
 	TargetsPresentCondition *DeliveryPipelineConditionTargetsPresentCondition `json:"targetsPresentCondition"`
+	TargetsTypeCondition    *DeliveryPipelineConditionTargetsTypeCondition    `json:"targetsTypeCondition"`
 }
 
 type jsonDeliveryPipelineCondition DeliveryPipelineCondition
@@ -164,6 +765,8 @@ func (r *DeliveryPipelineCondition) UnmarshalJSON(data []byte) error {
 		r.PipelineReadyCondition = res.PipelineReadyCondition
 
 		r.TargetsPresentCondition = res.TargetsPresentCondition
+
+		r.TargetsTypeCondition = res.TargetsTypeCondition
 
 	}
 	return nil
@@ -284,6 +887,55 @@ func (r *DeliveryPipelineConditionTargetsPresentCondition) String() string {
 }
 
 func (r *DeliveryPipelineConditionTargetsPresentCondition) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type DeliveryPipelineConditionTargetsTypeCondition struct {
+	empty        bool    `json:"-"`
+	Status       *bool   `json:"status"`
+	ErrorDetails *string `json:"errorDetails"`
+}
+
+type jsonDeliveryPipelineConditionTargetsTypeCondition DeliveryPipelineConditionTargetsTypeCondition
+
+func (r *DeliveryPipelineConditionTargetsTypeCondition) UnmarshalJSON(data []byte) error {
+	var res jsonDeliveryPipelineConditionTargetsTypeCondition
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyDeliveryPipelineConditionTargetsTypeCondition
+	} else {
+
+		r.Status = res.Status
+
+		r.ErrorDetails = res.ErrorDetails
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this DeliveryPipelineConditionTargetsTypeCondition is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyDeliveryPipelineConditionTargetsTypeCondition *DeliveryPipelineConditionTargetsTypeCondition = &DeliveryPipelineConditionTargetsTypeCondition{empty: true}
+
+func (r *DeliveryPipelineConditionTargetsTypeCondition) Empty() bool {
+	return r.empty
+}
+
+func (r *DeliveryPipelineConditionTargetsTypeCondition) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *DeliveryPipelineConditionTargetsTypeCondition) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))

@@ -27,7 +27,7 @@ import (
 
 func (r *Target) validate() error {
 
-	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Gke", "AnthosCluster"}, r.Gke, r.AnthosCluster); err != nil {
+	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"Gke", "AnthosCluster", "Run"}, r.Gke, r.AnthosCluster, r.Run); err != nil {
 		return err
 	}
 	if err := dcl.RequiredParameter(r.Name, "Name"); err != nil {
@@ -49,6 +49,11 @@ func (r *Target) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.Run) {
+		if err := r.Run.validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func (r *TargetGke) validate() error {
@@ -62,6 +67,12 @@ func (r *TargetExecutionConfigs) validate() error {
 		return err
 	}
 	if err := dcl.ValidateAtMostOneOfFieldsSet([]string(nil)); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *TargetRun) validate() error {
+	if err := dcl.Required(r, "location"); err != nil {
 		return err
 	}
 	return nil
@@ -172,6 +183,14 @@ func newUpdateTargetUpdateTargetRequest(ctx context.Context, f *Target, c *Clien
 		return nil, fmt.Errorf("error expanding ExecutionConfigs into executionConfigs: %w", err)
 	} else if v != nil {
 		req["executionConfigs"] = v
+	}
+	if v, err := expandTargetRun(c, f.Run, res); err != nil {
+		return nil, fmt.Errorf("error expanding Run into run: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		req["run"] = v
+	}
+	if v := f.DeployParameters; !dcl.IsEmptyValueIndirect(v) {
+		req["deployParameters"] = v
 	}
 	b, err := c.getTargetRaw(ctx, f)
 	if err != nil {
@@ -508,15 +527,22 @@ func canonicalizeTargetInitialState(rawInitial, rawDesired *Target) (*Target, er
 
 	if !dcl.IsZeroValue(rawInitial.Gke) {
 		// Check if anything else is set.
-		if dcl.AnySet(rawInitial.AnthosCluster) {
+		if dcl.AnySet(rawInitial.AnthosCluster, rawInitial.Run) {
 			rawInitial.Gke = EmptyTargetGke
 		}
 	}
 
 	if !dcl.IsZeroValue(rawInitial.AnthosCluster) {
 		// Check if anything else is set.
-		if dcl.AnySet(rawInitial.Gke) {
+		if dcl.AnySet(rawInitial.Gke, rawInitial.Run) {
 			rawInitial.AnthosCluster = EmptyTargetAnthosCluster
+		}
+	}
+
+	if !dcl.IsZeroValue(rawInitial.Run) {
+		// Check if anything else is set.
+		if dcl.AnySet(rawInitial.Gke, rawInitial.AnthosCluster) {
+			rawInitial.Run = EmptyTargetRun
 		}
 	}
 
@@ -537,6 +563,7 @@ func canonicalizeTargetDesiredState(rawDesired, rawInitial *Target, opts ...dcl.
 		// We canonicalize the remaining nested objects with nil to pick up defaults.
 		rawDesired.Gke = canonicalizeTargetGke(rawDesired.Gke, nil, opts...)
 		rawDesired.AnthosCluster = canonicalizeTargetAnthosCluster(rawDesired.AnthosCluster, nil, opts...)
+		rawDesired.Run = canonicalizeTargetRun(rawDesired.Run, nil, opts...)
 
 		return rawDesired, nil
 	}
@@ -581,18 +608,32 @@ func canonicalizeTargetDesiredState(rawDesired, rawInitial *Target, opts ...dcl.
 	} else {
 		canonicalDesired.Location = rawDesired.Location
 	}
+	canonicalDesired.Run = canonicalizeTargetRun(rawDesired.Run, rawInitial.Run, opts...)
+	if dcl.IsZeroValue(rawDesired.DeployParameters) || (dcl.IsEmptyValueIndirect(rawDesired.DeployParameters) && dcl.IsEmptyValueIndirect(rawInitial.DeployParameters)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		canonicalDesired.DeployParameters = rawInitial.DeployParameters
+	} else {
+		canonicalDesired.DeployParameters = rawDesired.DeployParameters
+	}
 
 	if canonicalDesired.Gke != nil {
 		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.AnthosCluster) {
+		if dcl.AnySet(rawDesired.AnthosCluster, rawDesired.Run) {
 			canonicalDesired.Gke = EmptyTargetGke
 		}
 	}
 
 	if canonicalDesired.AnthosCluster != nil {
 		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.Gke) {
+		if dcl.AnySet(rawDesired.Gke, rawDesired.Run) {
 			canonicalDesired.AnthosCluster = EmptyTargetAnthosCluster
+		}
+	}
+
+	if canonicalDesired.Run != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.Gke, rawDesired.AnthosCluster) {
+			canonicalDesired.Run = EmptyTargetRun
 		}
 	}
 
@@ -684,6 +725,17 @@ func canonicalizeTargetNewState(c *Client, rawNew, rawDesired *Target) (*Target,
 	rawNew.Project = rawDesired.Project
 
 	rawNew.Location = rawDesired.Location
+
+	if dcl.IsEmptyValueIndirect(rawNew.Run) && dcl.IsEmptyValueIndirect(rawDesired.Run) {
+		rawNew.Run = rawDesired.Run
+	} else {
+		rawNew.Run = canonicalizeNewTargetRun(c, rawDesired.Run, rawNew.Run)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.DeployParameters) && dcl.IsEmptyValueIndirect(rawDesired.DeployParameters) {
+		rawNew.DeployParameters = rawDesired.DeployParameters
+	} else {
+	}
 
 	return rawNew, nil
 }
@@ -1073,6 +1125,124 @@ func canonicalizeNewTargetExecutionConfigsSlice(c *Client, des, nw []TargetExecu
 	return items
 }
 
+func canonicalizeTargetRun(des, initial *TargetRun, opts ...dcl.ApplyOption) *TargetRun {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &TargetRun{}
+
+	if dcl.StringCanonicalize(des.Location, initial.Location) || dcl.IsZeroValue(des.Location) {
+		cDes.Location = initial.Location
+	} else {
+		cDes.Location = des.Location
+	}
+
+	return cDes
+}
+
+func canonicalizeTargetRunSlice(des, initial []TargetRun, opts ...dcl.ApplyOption) []TargetRun {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]TargetRun, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeTargetRun(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]TargetRun, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeTargetRun(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewTargetRun(c *Client, des, nw *TargetRun) *TargetRun {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for TargetRun while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.Location, nw.Location) {
+		nw.Location = des.Location
+	}
+
+	return nw
+}
+
+func canonicalizeNewTargetRunSet(c *Client, des, nw []TargetRun) []TargetRun {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []TargetRun
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareTargetRunNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewTargetRun(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewTargetRunSlice(c *Client, des, nw []TargetRun) []TargetRun {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []TargetRun
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewTargetRun(c, &d, &n))
+	}
+
+	return items
+}
+
 // The differ returns a list of diffs, along with a list of operations that should be taken
 // to remedy them. Right now, it does not attempt to consolidate operations - if several
 // fields can be fixed with a patch update, it will perform the patch several times.
@@ -1190,6 +1360,20 @@ func diffTarget(c *Client, desired, actual *Target, opts ...dcl.ApplyOption) ([]
 	}
 
 	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Run, actual.Run, dcl.DiffInfo{ObjectFunction: compareTargetRunNewStyle, EmptyObject: EmptyTargetRun, OperationSelector: dcl.TriggersOperation("updateTargetUpdateTargetOperation")}, fn.AddNest("Run")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.DeployParameters, actual.DeployParameters, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateTargetUpdateTargetOperation")}, fn.AddNest("DeployParameters")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1323,6 +1507,35 @@ func compareTargetExecutionConfigsNewStyle(d, a interface{}, fn dcl.FieldName) (
 	return diffs, nil
 }
 
+func compareTargetRunNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*TargetRun)
+	if !ok {
+		desiredNotPointer, ok := d.(TargetRun)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a TargetRun or *TargetRun", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*TargetRun)
+	if !ok {
+		actualNotPointer, ok := a.(TargetRun)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a TargetRun", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
 // urlNormalized returns a copy of the resource struct with values normalized
 // for URL substitutions. For instance, it converts long-form self-links to
 // short-form so they can be substituted in.
@@ -1430,6 +1643,14 @@ func expandTarget(c *Client, f *Target) (map[string]interface{}, error) {
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
+	if v, err := expandTargetRun(c, f.Run, res); err != nil {
+		return nil, fmt.Errorf("error expanding Run into run: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["run"] = v
+	}
+	if v := f.DeployParameters; dcl.ValueShouldBeSent(v) {
+		m["deployParameters"] = v
+	}
 
 	return m, nil
 }
@@ -1461,6 +1682,8 @@ func flattenTarget(c *Client, i interface{}, res *Target) *Target {
 	resultRes.ExecutionConfigs = flattenTargetExecutionConfigsSlice(c, m["executionConfigs"], res)
 	resultRes.Project = dcl.FlattenString(m["project"])
 	resultRes.Location = dcl.FlattenString(m["location"])
+	resultRes.Run = flattenTargetRun(c, m["run"], res)
+	resultRes.DeployParameters = dcl.FlattenKeyValuePairs(m["deployParameters"])
 
 	return resultRes
 }
@@ -1827,6 +2050,120 @@ func flattenTargetExecutionConfigs(c *Client, i interface{}, res *Target) *Targe
 	return r
 }
 
+// expandTargetRunMap expands the contents of TargetRun into a JSON
+// request object.
+func expandTargetRunMap(c *Client, f map[string]TargetRun, res *Target) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandTargetRun(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandTargetRunSlice expands the contents of TargetRun into a JSON
+// request object.
+func expandTargetRunSlice(c *Client, f []TargetRun, res *Target) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandTargetRun(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenTargetRunMap flattens the contents of TargetRun from a JSON
+// response object.
+func flattenTargetRunMap(c *Client, i interface{}, res *Target) map[string]TargetRun {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]TargetRun{}
+	}
+
+	if len(a) == 0 {
+		return map[string]TargetRun{}
+	}
+
+	items := make(map[string]TargetRun)
+	for k, item := range a {
+		items[k] = *flattenTargetRun(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenTargetRunSlice flattens the contents of TargetRun from a JSON
+// response object.
+func flattenTargetRunSlice(c *Client, i interface{}, res *Target) []TargetRun {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []TargetRun{}
+	}
+
+	if len(a) == 0 {
+		return []TargetRun{}
+	}
+
+	items := make([]TargetRun, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenTargetRun(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandTargetRun expands an instance of TargetRun into a JSON
+// request object.
+func expandTargetRun(c *Client, f *TargetRun, res *Target) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.Location; !dcl.IsEmptyValueIndirect(v) {
+		m["location"] = v
+	}
+
+	return m, nil
+}
+
+// flattenTargetRun flattens an instance of TargetRun from a JSON
+// response object.
+func flattenTargetRun(c *Client, i interface{}, res *Target) *TargetRun {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &TargetRun{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyTargetRun
+	}
+	r.Location = dcl.FlattenString(m["location"])
+
+	return r
+}
+
 // flattenTargetExecutionConfigsUsagesEnumMap flattens the contents of TargetExecutionConfigsUsagesEnum from a JSON
 // response object.
 func flattenTargetExecutionConfigsUsagesEnumMap(c *Client, i interface{}, res *Target) map[string]TargetExecutionConfigsUsagesEnum {
@@ -1994,6 +2331,17 @@ func extractTargetFields(r *Target) error {
 	if !dcl.IsEmptyValueIndirect(vAnthosCluster) {
 		r.AnthosCluster = vAnthosCluster
 	}
+	vRun := r.Run
+	if vRun == nil {
+		// note: explicitly not the empty object.
+		vRun = &TargetRun{}
+	}
+	if err := extractTargetRunFields(r, vRun); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRun) {
+		r.Run = vRun
+	}
 	return nil
 }
 func extractTargetGkeFields(r *Target, o *TargetGke) error {
@@ -2003,6 +2351,9 @@ func extractTargetAnthosClusterFields(r *Target, o *TargetAnthosCluster) error {
 	return nil
 }
 func extractTargetExecutionConfigsFields(r *Target, o *TargetExecutionConfigs) error {
+	return nil
+}
+func extractTargetRunFields(r *Target, o *TargetRun) error {
 	return nil
 }
 
@@ -2029,6 +2380,17 @@ func postReadExtractTargetFields(r *Target) error {
 	if !dcl.IsEmptyValueIndirect(vAnthosCluster) {
 		r.AnthosCluster = vAnthosCluster
 	}
+	vRun := r.Run
+	if vRun == nil {
+		// note: explicitly not the empty object.
+		vRun = &TargetRun{}
+	}
+	if err := postReadExtractTargetRunFields(r, vRun); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vRun) {
+		r.Run = vRun
+	}
 	return nil
 }
 func postReadExtractTargetGkeFields(r *Target, o *TargetGke) error {
@@ -2038,5 +2400,8 @@ func postReadExtractTargetAnthosClusterFields(r *Target, o *TargetAnthosCluster)
 	return nil
 }
 func postReadExtractTargetExecutionConfigsFields(r *Target, o *TargetExecutionConfigs) error {
+	return nil
+}
+func postReadExtractTargetRunFields(r *Target, o *TargetRun) error {
 	return nil
 }

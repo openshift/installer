@@ -73,6 +73,7 @@ var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
 var _ = internaloption.WithDefaultEndpoint
+var _ = internal.Version
 
 const apiId = "dataproc:v1"
 const apiName = "dataproc"
@@ -1415,9 +1416,17 @@ type DiagnoseClusterRequest struct {
 	// be performed. Format: projects/{project}/regions/{region}/jobs/{job}
 	Job string `json:"job,omitempty"`
 
+	// Jobs: Optional. Specifies a list of jobs on which diagnosis is to be
+	// performed. Format: projects/{project}/regions/{region}/jobs/{job}
+	Jobs []string `json:"jobs,omitempty"`
+
 	// YarnApplicationId: Optional. DEPRECATED Specifies the yarn
 	// application on which diagnosis is to be performed.
 	YarnApplicationId string `json:"yarnApplicationId,omitempty"`
+
+	// YarnApplicationIds: Optional. Specifies a list of yarn applications
+	// on which diagnosis is to be performed.
+	YarnApplicationIds []string `json:"yarnApplicationIds,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DiagnosisInterval")
 	// to unconditionally include in API requests. By default, fields with
@@ -1677,14 +1686,15 @@ func (s *EnvironmentConfig) MarshalJSON() ([]byte, error) {
 // ExecutionConfig: Execution configuration for a workload.
 type ExecutionConfig struct {
 	// IdleTtl: Optional. The duration to keep the session alive while it's
-	// idling. Passing this threshold will cause the session to be
-	// terminated. Minimum value is 10 minutes; maximum value is 14 days
-	// (see JSON representation of Duration
+	// idling. Exceeding this threshold causes the session to terminate.
+	// This field cannot be set on a batch workload. Minimum value is 10
+	// minutes; maximum value is 14 days (see JSON representation of
+	// Duration
 	// (https://developers.google.com/protocol-buffers/docs/proto3#json)).
 	// Defaults to 4 hours if not set. If both ttl and idle_ttl are
-	// specified, the conditions are treated as and OR: the workload will be
-	// terminated when it has been idle for idle_ttl or when the ttl has
-	// passed, whichever comes first.
+	// specified for an interactive session, the conditions are treated as
+	// OR conditions: the workload will be terminated when it has been idle
+	// for idle_ttl or when ttl has been exceeded, whichever occurs first.
 	IdleTtl string `json:"idleTtl,omitempty"`
 
 	// KmsKey: Optional. The Cloud KMS key to use for encryption.
@@ -1714,15 +1724,19 @@ type ExecutionConfig struct {
 	SubnetworkUri string `json:"subnetworkUri,omitempty"`
 
 	// Ttl: Optional. The duration after which the workload will be
-	// terminated. When the workload passes this ttl, it will be
-	// unconditionally killed without waiting for ongoing work to finish.
-	// Minimum value is 10 minutes; maximum value is 14 days (see JSON
-	// representation of Duration
+	// terminated. When the workload exceeds this duration, it will be
+	// unconditionally terminated without waiting for ongoing work to
+	// finish. If ttl is not specified for a batch workload, the workload
+	// will be allowed to run until it exits naturally (or runs forever
+	// without exiting). If ttl is not specified for an interactive session,
+	// it defaults to 24h. If ttl is not specified for a batch that uses
+	// 2.1+ runtime version, it defaults to 4h. Minimum value is 10 minutes;
+	// maximum value is 14 days (see JSON representation of Duration
 	// (https://developers.google.com/protocol-buffers/docs/proto3#json)).
-	// If both ttl and idle_ttl are specified, the conditions are treated as
-	// and OR: the workload will be terminated when it has been idle for
-	// idle_ttl or when the ttl has passed, whichever comes first. If ttl is
-	// not specified for a session, it defaults to 24h.
+	// If both ttl and idle_ttl are specified (for an interactive session),
+	// the conditions are treated as OR conditions: the workload will be
+	// terminated when it has been idle for idle_ttl or when ttl has been
+	// exceeded, whichever occurs first.
 	Ttl string `json:"ttl,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "IdleTtl") to
@@ -2065,8 +2079,8 @@ type GkeNodeConfig struct {
 	// (https://cloud.google.com/kubernetes-engine/docs/how-to/using-cmek)
 	// used to encrypt the boot disk attached to each node in the node pool.
 	// Specify the key using the following format:
-	// projects/KEY_PROJECT_ID/locations/LOCATION
-	// /keyRings/RING_NAME/cryptoKeys/KEY_NAME.
+	// projects/{project}/locations/{location}/keyRings/{key_ring}/cryptoKeys
+	// /{crypto_key}
 	BootDiskKmsKey string `json:"bootDiskKmsKey,omitempty"`
 
 	// LocalSsdCount: Optional. The number of local SSD disks to attach to
@@ -3396,7 +3410,7 @@ func (s *ListAutoscalingPoliciesResponse) MarshalJSON() ([]byte, error) {
 
 // ListBatchesResponse: A list of batch workloads.
 type ListBatchesResponse struct {
-	// Batches: The batches from the specified collection.
+	// Batches: Output only. The batches from the specified collection.
 	Batches []*Batch `json:"batches,omitempty"`
 
 	// NextPageToken: A token, which can be sent as page_token to retrieve
@@ -3584,8 +3598,8 @@ func (s *ListWorkflowTemplatesResponse) MarshalJSON() ([]byte, error) {
 // LoggingConfig: The runtime logging config of the job.
 type LoggingConfig struct {
 	// DriverLogLevels: The per-package log levels for the driver. This may
-	// include "root" package name to configure rootLogger. Examples:
-	// 'com.google = FATAL', 'root = INFO', 'org.apache = DEBUG'
+	// include "root" package name to configure rootLogger. Examples: -
+	// 'com.google = FATAL' - 'root = INFO' - 'org.apache = DEBUG'
 	DriverLogLevels map[string]string `json:"driverLogLevels,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DriverLogLevels") to
@@ -3724,11 +3738,11 @@ func (s *MetastoreConfig) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Metric: A Dataproc OSS metric.
+// Metric: A Dataproc custom metric.
 type Metric struct {
-	// MetricOverrides: Optional. Specify one or more available OSS metrics
-	// (https://cloud.google.com/dataproc/docs/guides/monitoring#available_oss_metrics)
-	// to collect for the metric course (for the SPARK metric source, any
+	// MetricOverrides: Optional. Specify one or more Custom metrics
+	// (https://cloud.google.com/dataproc/docs/guides/dataproc-metrics#custom_metrics)
+	// to collect for the metric course (for the SPARK metric source (any
 	// Spark metric
 	// (https://spark.apache.org/docs/latest/monitoring.html#metrics) can be
 	// specified).Provide metrics in the following format: METRIC_SOURCE:
@@ -3737,27 +3751,27 @@ type Metric struct {
 	// spark:driver:DAGScheduler:job.allJobs
 	// sparkHistoryServer:JVM:Memory:NonHeapMemoryUsage.committed
 	// hiveserver2:JVM:Memory:NonHeapMemoryUsage.used Notes: Only the
-	// specified overridden metrics will be collected for the metric source.
-	// For example, if one or more spark:executive metrics are listed as
-	// metric overrides, other SPARK metrics will not be collected. The
-	// collection of the default metrics for other OSS metric sources is
-	// unaffected. For example, if both SPARK andd YARN metric sources are
-	// enabled, and overrides are provided for Spark metrics only, all
-	// default YARN metrics will be collected.
+	// specified overridden metrics are collected for the metric source. For
+	// example, if one or more spark:executive metrics are listed as metric
+	// overrides, other SPARK metrics are not collected. The collection of
+	// the metrics for other enabled custom metric sources is unaffected.
+	// For example, if both SPARK andd YARN metric sources are enabled, and
+	// overrides are provided for Spark metrics only, all YARN metrics are
+	// collected.
 	MetricOverrides []string `json:"metricOverrides,omitempty"`
 
-	// MetricSource: Required. Default metrics are collected unless
-	// metricOverrides are specified for the metric source (see Available
-	// OSS metrics
-	// (https://cloud.google.com/dataproc/docs/guides/monitoring#available_oss_metrics)
+	// MetricSource: Required. A standard set of metrics is collected unless
+	// metricOverrides are specified for the metric source (see Custom
+	// metrics
+	// (https://cloud.google.com/dataproc/docs/guides/dataproc-metrics#custom_metrics)
 	// for more information).
 	//
 	// Possible values:
 	//   "METRIC_SOURCE_UNSPECIFIED" - Required unspecified metric source.
-	//   "MONITORING_AGENT_DEFAULTS" - Default monitoring agent metrics. If
-	// this source is enabled, Dataproc enables the monitoring agent in
-	// Compute Engine, and collects default monitoring agent metrics, which
-	// are published with an agent.googleapis.com prefix.
+	//   "MONITORING_AGENT_DEFAULTS" - Monitoring agent metrics. If this
+	// source is enabled, Dataproc enables the monitoring agent in Compute
+	// Engine, and collects monitoring agent metrics, which are published
+	// with an agent.googleapis.com prefix.
 	//   "HDFS" - HDFS metric source.
 	//   "SPARK" - Spark metric source.
 	//   "YARN" - YARN metric source.
@@ -4764,7 +4778,7 @@ func (s *ReservationAffinity) MarshalJSON() ([]byte, error) {
 // ResizeNodeGroupRequest: A request to resize a node group.
 type ResizeNodeGroupRequest struct {
 	// GracefulDecommissionTimeout: Optional. Timeout for graceful YARN
-	// decomissioning. Graceful decommissioning
+	// decommissioning. Graceful decommissioning
 	// (https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/scaling-clusters#graceful_decommissioning)
 	// allows the removal of nodes from the Compute Engine node group
 	// without interrupting jobs in progress. This timeout specifies how
@@ -5472,9 +5486,9 @@ func (s *SparkSqlJob) MarshalJSON() ([]byte, error) {
 type SparkStandaloneAutoscalingConfig struct {
 	// GracefulDecommissionTimeout: Required. Timeout for Spark graceful
 	// decommissioning of spark workers. Specifies the duration to wait for
-	// spark worker to complete spark decomissioning tasks before forcefully
-	// removing workers. Only applicable to downscaling operations.Bounds:
-	// 0s, 1d.
+	// spark worker to complete spark decommissioning tasks before
+	// forcefully removing workers. Only applicable to downscaling
+	// operations.Bounds: 0s, 1d.
 	GracefulDecommissionTimeout string `json:"gracefulDecommissionTimeout,omitempty"`
 
 	// ScaleDownFactor: Required. Fraction of required executors to remove
@@ -8842,14 +8856,7 @@ type ProjectsLocationsOperationsListCall struct {
 
 // List: Lists operations that match the specified filter in the
 // request. If the server doesn't support this method, it returns
-// UNIMPLEMENTED.NOTE: the name binding allows API services to override
-// the binding to use different resource name schemes, such as
-// users/*/operations. To override the binding, API services can add a
-// binding such as "/v1/{name=users/*}/operations" to their service
-// configuration. For backwards compatibility, the default name includes
-// the operations collection id, however overriding users must ensure
-// the name binding is the parent resource, without the operations
-// collection id.
+// UNIMPLEMENTED.
 //
 // - name: The name of the operation's parent resource.
 func (r *ProjectsLocationsOperationsService) List(name string) *ProjectsLocationsOperationsListCall {
@@ -8978,7 +8985,7 @@ func (c *ProjectsLocationsOperationsListCall) Do(opts ...googleapi.CallOption) (
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
+	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.",
 	//   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/operations",
 	//   "httpMethod": "GET",
 	//   "id": "dataproc.projects.locations.operations.list",
@@ -16938,14 +16945,7 @@ type ProjectsRegionsOperationsListCall struct {
 
 // List: Lists operations that match the specified filter in the
 // request. If the server doesn't support this method, it returns
-// UNIMPLEMENTED.NOTE: the name binding allows API services to override
-// the binding to use different resource name schemes, such as
-// users/*/operations. To override the binding, API services can add a
-// binding such as "/v1/{name=users/*}/operations" to their service
-// configuration. For backwards compatibility, the default name includes
-// the operations collection id, however overriding users must ensure
-// the name binding is the parent resource, without the operations
-// collection id.
+// UNIMPLEMENTED.
 //
 // - name: The name of the operation's parent resource.
 func (r *ProjectsRegionsOperationsService) List(name string) *ProjectsRegionsOperationsListCall {
@@ -17074,7 +17074,7 @@ func (c *ProjectsRegionsOperationsListCall) Do(opts ...googleapi.CallOption) (*L
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
+	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.",
 	//   "flatPath": "v1/projects/{projectsId}/regions/{regionsId}/operations",
 	//   "httpMethod": "GET",
 	//   "id": "dataproc.projects.regions.operations.list",

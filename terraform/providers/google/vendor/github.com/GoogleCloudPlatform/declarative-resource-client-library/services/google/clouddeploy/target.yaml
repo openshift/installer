@@ -92,6 +92,7 @@ components:
           description: Information specifying an Anthos Cluster.
           x-dcl-conflicts:
           - gke
+          - run
           properties:
             membership:
               type: string
@@ -108,6 +109,12 @@ components:
           readOnly: true
           description: Output only. Time at which the `Target` was created.
           x-kubernetes-immutable: true
+        deployParameters:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: DeployParameters
+          description: Optional. The deploy parameters to use for this target.
         description:
           type: string
           x-dcl-go-name: Description
@@ -190,6 +197,7 @@ components:
           description: Information specifying a GKE Cluster.
           x-dcl-conflicts:
           - anthosCluster
+          - run
           properties:
             cluster:
               type: string
@@ -243,6 +251,22 @@ components:
           type: boolean
           x-dcl-go-name: RequireApproval
           description: Optional. Whether or not the `Target` requires approval.
+        run:
+          type: object
+          x-dcl-go-name: Run
+          x-dcl-go-type: TargetRun
+          description: Information specifying a Cloud Run deployment target.
+          x-dcl-conflicts:
+          - gke
+          - anthosCluster
+          required:
+          - location
+          properties:
+            location:
+              type: string
+              x-dcl-go-name: Location
+              description: Required. The location where the Cloud Run Service should
+                be located. Format is `projects/{project}/locations/{location}`.
         targetId:
           type: string
           x-dcl-go-name: TargetId

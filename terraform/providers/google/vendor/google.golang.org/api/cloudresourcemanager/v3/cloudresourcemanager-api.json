@@ -1273,6 +1273,28 @@
             "https://www.googleapis.com/auth/cloud-platform.read-only"
           ]
         },
+        "getNamespaced": {
+          "description": "Retrieves a TagKey by its namespaced name. This method will return `PERMISSION_DENIED` if the key does not exist or the user does not have permission to view it.",
+          "flatPath": "v3/tagKeys/namespaced",
+          "httpMethod": "GET",
+          "id": "cloudresourcemanager.tagKeys.getNamespaced",
+          "parameterOrder": [],
+          "parameters": {
+            "name": {
+              "description": "Required. A namespaced tag key name in the format `{parentId}/{tagKeyShort}`, such as `42/foo` for a key with short name \"foo\" under the organization with ID 42 or `r2-d2/bar` for a key with short name \"bar\" under the project `r2-d2`.",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "v3/tagKeys/namespaced",
+          "response": {
+            "$ref": "TagKey"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-platform.read-only"
+          ]
+        },
         "list": {
           "description": "Lists all TagKeys for a parent resource.",
           "flatPath": "v3/tagKeys",
@@ -1292,7 +1314,7 @@
               "type": "string"
             },
             "parent": {
-              "description": "Required. The resource name of the new TagKey's parent. Must be of the form `folders/{folder_id}` or `organizations/{org_id}`.",
+              "description": "Required. The resource name of the TagKey's parent. Must be of the form `organizations/{org_id}` or `projects/{project_id}` or `projects/{project_number}`",
               "location": "query",
               "type": "string"
             }
@@ -1513,6 +1535,28 @@
           },
           "response": {
             "$ref": "Policy"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/cloud-platform.read-only"
+          ]
+        },
+        "getNamespaced": {
+          "description": "Retrieves a TagValue by its namespaced name. This method will return `PERMISSION_DENIED` if the value does not exist or the user does not have permission to view it.",
+          "flatPath": "v3/tagValues/namespaced",
+          "httpMethod": "GET",
+          "id": "cloudresourcemanager.tagValues.getNamespaced",
+          "parameterOrder": [],
+          "parameters": {
+            "name": {
+              "description": "Required. A namespaced tag value name in the following format: `{parentId}/{tagKeyShort}/{tagValueShort}` Examples: - `42/foo/abc` for a value with short name \"abc\" under the key with short name \"foo\" under the organization with ID 42 - `r2-d2/bar/xyz` for a value with short name \"xyz\" under the key with short name \"bar\" under the project with ID \"r2-d2\"",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "v3/tagValues/namespaced",
+          "response": {
+            "$ref": "TagValue"
           },
           "scopes": [
             "https://www.googleapis.com/auth/cloud-platform",
@@ -1761,7 +1805,7 @@
       }
     }
   },
-  "revision": "20230219",
+  "revision": "20230514",
   "rootUrl": "https://cloudresourcemanager.googleapis.com/",
   "schemas": {
     "AuditConfig": {
@@ -1998,11 +2042,11 @@
           "type": "boolean"
         },
         "namespacedTagKey": {
-          "description": "The namespaced_name of the TagKey. Now only supported in the format of `{organization_id}/{tag_key_short_name}`. Other formats will be supported when we add non-org parented tags.",
+          "description": "The namespaced name of the TagKey. Can be in the form `{organization_id}/{tag_key_short_name}` or `{project_id}/{tag_key_short_name}` or `{project_number}/{tag_key_short_name}`.",
           "type": "string"
         },
         "namespacedTagValue": {
-          "description": "Namespaced name of the TagValue. Now only supported in the format `{organization_id}/{tag_key_short_name}/{tag_value_short_name}`. Other formats will be supported when we add non-org parented tags.",
+          "description": "The namespaced name of the TagValue. Can be in the form `{organization_id}/{tag_key_short_name}/{tag_value_short_name}` or `{project_id}/{tag_key_short_name}/{tag_value_short_name}` or `{project_number}/{tag_key_short_name}/{tag_value_short_name}`.",
           "type": "string"
         },
         "tagKey": {
@@ -2010,7 +2054,7 @@
           "type": "string"
         },
         "tagKeyParentName": {
-          "description": "The parent name of the tag key. Must be in the format `organizations/{organization_id}`.",
+          "description": "The parent name of the tag key. Must be in the format `organizations/{organization_id}` or `projects/{project_number}`",
           "type": "string"
         },
         "tagValue": {
@@ -2751,6 +2795,10 @@
         "tagValue": {
           "description": "The TagValue of the TagBinding. Must be of the form `tagValues/456`.",
           "type": "string"
+        },
+        "tagValueNamespacedName": {
+          "description": "The namespaced name for the TagValue of the TagBinding. Must be in the format `{parent_id}/{tag_key_short_name}/{short_name}`. For methods that support TagValue namespaced name, only one of tag_value_namespaced_name or tag_value may be filled. Requests with both fields will be rejected.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -2813,7 +2861,7 @@
           "type": "string"
         },
         "parent": {
-          "description": "Immutable. The resource name of the new TagKey's parent. Must be of the form `organizations/{org_id}`.",
+          "description": "Immutable. The resource name of the TagKey's parent. A TagKey can be parented by an Organization or a Project. For a TagKey parented by an Organization, its parent must be in the form `organizations/{org_id}`. For a TagKey parented by a Project, its parent can be in the form `projects/{project_id}` or `projects/{project_number}`.",
           "type": "string"
         },
         "purpose": {
@@ -2824,7 +2872,7 @@
           ],
           "enumDescriptions": [
             "Unspecified purpose.",
-            "Purpose for Compute Engine firewalls. A corresponding purpose_data should be set for the network the tag is intended for. The key should be 'network' and the value should be in either of these two formats: -https://www.googleapis.com/compute/{compute_version}/projects/{project_id}/global/networks/{network_id} -{project_id}/{network_name} Examples: -https://www.googleapis.com/compute/staging_v1/projects/fail-closed-load-testing/global/networks/6992953698831725600 -fail-closed-load-testing/load-testing-network"
+            "Purpose for Compute Engine firewalls. A corresponding `purpose_data` should be set for the network the tag is intended for. The key should be `network` and the value should be in ## either of these two formats: `https://www.googleapis.com/compute/{compute_version}/projects/{project_id}/global/networks/{network_id}` - `{project_id}/{network_name}` ## Examples: `https://www.googleapis.com/compute/staging_v1/projects/fail-closed-load-testing/global/networks/6992953698831725600` - `fail-closed-load-testing/load-testing-network`"
           ],
           "type": "string"
         },
@@ -2871,7 +2919,7 @@
           "type": "string"
         },
         "namespacedName": {
-          "description": "Output only. Namespaced name of the TagValue. Now only supported in the format `{organization_id}/{tag_key_short_name}/{short_name}`. Other formats will be supported when we add non-org parented tags.",
+          "description": "Output only. The namespaced name of the TagValue. Can be in the form `{organization_id}/{tag_key_short_name}/{tag_value_short_name}` or `{project_id}/{tag_key_short_name}/{tag_value_short_name}` or `{project_number}/{tag_key_short_name}/{tag_value_short_name}`.",
           "readOnly": true,
           "type": "string"
         },

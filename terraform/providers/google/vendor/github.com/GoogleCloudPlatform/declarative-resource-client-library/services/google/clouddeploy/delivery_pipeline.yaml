@@ -138,6 +138,24 @@ components:
                   format: date-time
                   x-dcl-go-name: UpdateTime
                   description: Last time the condition was updated.
+            targetsTypeCondition:
+              type: object
+              x-dcl-go-name: TargetsTypeCondition
+              x-dcl-go-type: DeliveryPipelineConditionTargetsTypeCondition
+              description: Details on the whether the targets enumerated in the pipeline
+                are of the same type.
+              properties:
+                errorDetails:
+                  type: string
+                  x-dcl-go-name: ErrorDetails
+                  description: Human readable error message.
+                status:
+                  type: boolean
+                  x-dcl-go-name: Status
+                  description: True if the targets are all a comparable type. For
+                    example this is true if all targets are GKE clusters. This is
+                    false if some targets are Cloud Run targets and others are GKE
+                    clusters.
         createTime:
           type: string
           format: date-time
@@ -206,6 +224,35 @@ components:
                 type: object
                 x-dcl-go-type: DeliveryPipelineSerialPipelineStages
                 properties:
+                  deployParameters:
+                    type: array
+                    x-dcl-go-name: DeployParameters
+                    description: Optional. The deploy parameters to use for the target
+                      in this stage.
+                    x-dcl-send-empty: true
+                    x-dcl-list-type: list
+                    items:
+                      type: object
+                      x-dcl-go-type: DeliveryPipelineSerialPipelineStagesDeployParameters
+                      required:
+                      - values
+                      properties:
+                        matchTargetLabels:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          x-dcl-go-name: MatchTargetLabels
+                          description: Optional. Deploy parameters are applied to
+                            targets with match labels. If unspecified, deploy parameters
+                            are applied to all targets (including child targets of
+                            a multi-target).
+                        values:
+                          type: object
+                          additionalProperties:
+                            type: string
+                          x-dcl-go-name: Values
+                          description: Required. Values are deploy parameters in key-value
+                            pairs.
                   profiles:
                     type: array
                     x-dcl-go-name: Profiles
@@ -216,6 +263,212 @@ components:
                     items:
                       type: string
                       x-dcl-go-type: string
+                  strategy:
+                    type: object
+                    x-dcl-go-name: Strategy
+                    x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategy
+                    description: Optional. The strategy to use for a `Rollout` to
+                      this stage.
+                    properties:
+                      canary:
+                        type: object
+                        x-dcl-go-name: Canary
+                        x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanary
+                        description: Canary deployment strategy provides progressive
+                          percentage based deployments to a Target.
+                        properties:
+                          canaryDeployment:
+                            type: object
+                            x-dcl-go-name: CanaryDeployment
+                            x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment
+                            description: Configures the progressive based deployment
+                              for a Target.
+                            x-dcl-conflicts:
+                            - customCanaryDeployment
+                            required:
+                            - percentages
+                            properties:
+                              percentages:
+                                type: array
+                                x-dcl-go-name: Percentages
+                                description: Required. The percentage based deployments
+                                  that will occur as a part of a `Rollout`. List is
+                                  expected in ascending order and each integer n is
+                                  0 <= n < 100.
+                                x-dcl-send-empty: true
+                                x-dcl-list-type: list
+                                items:
+                                  type: integer
+                                  format: int64
+                                  x-dcl-go-type: int64
+                              verify:
+                                type: boolean
+                                x-dcl-go-name: Verify
+                                description: Whether to run verify tests after each
+                                  percentage deployment.
+                          customCanaryDeployment:
+                            type: object
+                            x-dcl-go-name: CustomCanaryDeployment
+                            x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment
+                            description: Configures the progressive based deployment
+                              for a Target, but allows customizing at the phase level
+                              where a phase represents each of the percentage deployments.
+                            x-dcl-conflicts:
+                            - canaryDeployment
+                            required:
+                            - phaseConfigs
+                            properties:
+                              phaseConfigs:
+                                type: array
+                                x-dcl-go-name: PhaseConfigs
+                                description: Required. Configuration for each phase
+                                  in the canary deployment in the order executed.
+                                x-dcl-send-empty: true
+                                x-dcl-list-type: list
+                                items:
+                                  type: object
+                                  x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs
+                                  required:
+                                  - phaseId
+                                  - percentage
+                                  properties:
+                                    percentage:
+                                      type: integer
+                                      format: int64
+                                      x-dcl-go-name: Percentage
+                                      description: Required. Percentage deployment
+                                        for the phase.
+                                    phaseId:
+                                      type: string
+                                      x-dcl-go-name: PhaseId
+                                      description: 'Required. The ID to assign to
+                                        the `Rollout` phase. This value must consist
+                                        of lower-case letters, numbers, and hyphens,
+                                        start with a letter and end with a letter
+                                        or a number, and have a max length of 63 characters.
+                                        In other words, it must match the following
+                                        regex: `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`.'
+                                    profiles:
+                                      type: array
+                                      x-dcl-go-name: Profiles
+                                      description: Skaffold profiles to use when rendering
+                                        the manifest for this phase. These are in
+                                        addition to the profiles list specified in
+                                        the `DeliveryPipeline` stage.
+                                      x-dcl-send-empty: true
+                                      x-dcl-list-type: list
+                                      items:
+                                        type: string
+                                        x-dcl-go-type: string
+                                    verify:
+                                      type: boolean
+                                      x-dcl-go-name: Verify
+                                      description: Whether to run verify tests after
+                                        the deployment.
+                          runtimeConfig:
+                            type: object
+                            x-dcl-go-name: RuntimeConfig
+                            x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
+                            description: Optional. Runtime specific configurations
+                              for the deployment strategy. The runtime configuration
+                              is used to determine how Cloud Deploy will split traffic
+                              to enable a progressive deployment.
+                            properties:
+                              cloudRun:
+                                type: object
+                                x-dcl-go-name: CloudRun
+                                x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun
+                                description: Cloud Run runtime configuration.
+                                x-dcl-conflicts:
+                                - kubernetes
+                                properties:
+                                  automaticTrafficControl:
+                                    type: boolean
+                                    x-dcl-go-name: AutomaticTrafficControl
+                                    description: Whether Cloud Deploy should update
+                                      the traffic stanza in a Cloud Run Service on
+                                      the user's behalf to facilitate traffic splitting.
+                                      This is required to be true for CanaryDeployments,
+                                      but optional for CustomCanaryDeployments.
+                              kubernetes:
+                                type: object
+                                x-dcl-go-name: Kubernetes
+                                x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes
+                                description: Kubernetes runtime configuration.
+                                x-dcl-conflicts:
+                                - cloudRun
+                                properties:
+                                  gatewayServiceMesh:
+                                    type: object
+                                    x-dcl-go-name: GatewayServiceMesh
+                                    x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh
+                                    description: Kubernetes Gateway API service mesh
+                                      configuration.
+                                    x-dcl-conflicts:
+                                    - serviceNetworking
+                                    required:
+                                    - httpRoute
+                                    - service
+                                    - deployment
+                                    properties:
+                                      deployment:
+                                        type: string
+                                        x-dcl-go-name: Deployment
+                                        description: Required. Name of the Kubernetes
+                                          Deployment whose traffic is managed by the
+                                          specified HTTPRoute and Service.
+                                      httpRoute:
+                                        type: string
+                                        x-dcl-go-name: HttpRoute
+                                        description: Required. Name of the Gateway
+                                          API HTTPRoute.
+                                      service:
+                                        type: string
+                                        x-dcl-go-name: Service
+                                        description: Required. Name of the Kubernetes
+                                          Service.
+                                  serviceNetworking:
+                                    type: object
+                                    x-dcl-go-name: ServiceNetworking
+                                    x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking
+                                    description: Kubernetes Service networking configuration.
+                                    x-dcl-conflicts:
+                                    - gatewayServiceMesh
+                                    required:
+                                    - service
+                                    - deployment
+                                    properties:
+                                      deployment:
+                                        type: string
+                                        x-dcl-go-name: Deployment
+                                        description: Required. Name of the Kubernetes
+                                          Deployment whose traffic is managed by the
+                                          specified Service.
+                                      disablePodOverprovisioning:
+                                        type: boolean
+                                        x-dcl-go-name: DisablePodOverprovisioning
+                                        description: Optional. Whether to disable
+                                          Pod overprovisioning. If Pod overprovisioning
+                                          is disabled then Cloud Deploy will limit
+                                          the number of total Pods used for the deployment
+                                          strategy to the number of Pods the Deployment
+                                          has on the cluster.
+                                      service:
+                                        type: string
+                                        x-dcl-go-name: Service
+                                        description: Required. Name of the Kubernetes
+                                          Service.
+                      standard:
+                        type: object
+                        x-dcl-go-name: Standard
+                        x-dcl-go-type: DeliveryPipelineSerialPipelineStagesStrategyStandard
+                        description: Standard deployment strategy executes a single
+                          deploy and allows verifying the deployment.
+                        properties:
+                          verify:
+                            type: boolean
+                            x-dcl-go-name: Verify
+                            description: Whether to verify a deployment.
                   targetId:
                     type: string
                     x-dcl-go-name: TargetId

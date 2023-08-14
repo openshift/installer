@@ -85,7 +85,7 @@ func (v WorkloadComplianceRegimeEnum) Validate() error {
 		// Empty enum is okay.
 		return nil
 	}
-	for _, s := range []string{"COMPLIANCE_REGIME_UNSPECIFIED", "IL4", "CJIS", "FEDRAMP_HIGH", "FEDRAMP_MODERATE", "US_REGIONAL_ACCESS"} {
+	for _, s := range []string{"COMPLIANCE_REGIME_UNSPECIFIED", "IL4", "CJIS", "FEDRAMP_HIGH", "FEDRAMP_MODERATE", "US_REGIONAL_ACCESS", "HIPAA", "EU_REGIONS_AND_SUPPORT", "CA_REGIONS_AND_SUPPORT", "ITAR", "AU_REGIONS_AND_US_SUPPORT", "ASSURED_WORKLOADS_FOR_PARTNERS"} {
 		if string(v) == s {
 			return nil
 		}

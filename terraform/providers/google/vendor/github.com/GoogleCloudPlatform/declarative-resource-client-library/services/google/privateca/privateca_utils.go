@@ -241,3 +241,103 @@ func flattenCertificateTemplateExtendedKeyUsage(_ *Client, i interface{}, res *C
 
 	return r
 }
+
+func expandCaPoolIssuancePolicyBaselineValuesCAOptions(_ *Client, f *CaPoolIssuancePolicyBaselineValuesCaOptions, res *CaPool) (map[string]any, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]any)
+	if v := f.IsCa; !dcl.IsEmptyValueIndirect(v) {
+		m["isCa"] = v
+	}
+
+	maxIssuerPathLength := dcl.ValueOrEmptyInt64(f.MaxIssuerPathLength)
+	zeroPathLength := dcl.ValueOrEmptyBool(f.ZeroMaxIssuerPathLength)
+	if zeroPathLength && maxIssuerPathLength > 0 {
+		return nil, fmt.Errorf("max_issuer_path_length and zero_max_issuer_path_length are mutually exclusive")
+	}
+	if maxIssuerPathLength > 0 || zeroPathLength {
+		m["maxIssuerPathLength"] = maxIssuerPathLength
+	}
+
+	return m, nil
+}
+
+func flattenCaPoolIssuancePolicyBaselineValuesCAOptions(_ *Client, i any, res *CaPool) *CaPoolIssuancePolicyBaselineValuesCaOptions {
+	m, ok := i.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	r := &CaPoolIssuancePolicyBaselineValuesCaOptions{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyCaPoolIssuancePolicyBaselineValuesCaOptions
+	}
+
+	isCA, ok := m["isCa"].(bool)
+	if ok {
+		r.IsCa = dcl.Bool(isCA)
+	}
+
+	if _, ok := m["maxIssuerPathLength"]; ok {
+		pathLen := dcl.FlattenInteger(m["maxIssuerPathLength"])
+		r.MaxIssuerPathLength = pathLen
+		if dcl.ValueOrEmptyInt64(pathLen) == 0 {
+			r.ZeroMaxIssuerPathLength = dcl.Bool(true)
+		}
+	}
+
+	return r
+}
+
+func flattenCertificateAuthorityConfigX509ConfigCAOptions(_ *Client, i any, res *CertificateAuthority) *CertificateAuthorityConfigX509ConfigCaOptions {
+	m, ok := i.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	r := &CertificateAuthorityConfigX509ConfigCaOptions{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyCertificateAuthorityConfigX509ConfigCaOptions
+	}
+
+	isCA, ok := m["isCa"].(bool)
+	if ok {
+		r.IsCa = dcl.Bool(isCA)
+	}
+
+	if _, ok := m["maxIssuerPathLength"]; ok {
+		pathLen := dcl.FlattenInteger(m["maxIssuerPathLength"])
+		r.MaxIssuerPathLength = pathLen
+		if dcl.ValueOrEmptyInt64(pathLen) == 0 {
+			r.ZeroMaxIssuerPathLength = dcl.Bool(true)
+		}
+	}
+
+	return r
+}
+
+func expandCertificateAuthorityConfigX509ConfigCAOptions(_ *Client, f *CertificateAuthorityConfigX509ConfigCaOptions, res *CertificateAuthority) (map[string]any, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]any)
+	if v := f.IsCa; !dcl.IsEmptyValueIndirect(v) {
+		m["isCa"] = v
+	}
+
+	maxIssuerPathLength := dcl.ValueOrEmptyInt64(f.MaxIssuerPathLength)
+	zeroPathLength := dcl.ValueOrEmptyBool(f.ZeroMaxIssuerPathLength)
+	if zeroPathLength && maxIssuerPathLength > 0 {
+		return nil, fmt.Errorf("max_issuer_path_length and zero_max_issuer_path_length are mutually exclusive")
+	}
+	if maxIssuerPathLength > 0 || zeroPathLength {
+		m["maxIssuerPathLength"] = maxIssuerPathLength
+	}
+
+	return m, nil
+}

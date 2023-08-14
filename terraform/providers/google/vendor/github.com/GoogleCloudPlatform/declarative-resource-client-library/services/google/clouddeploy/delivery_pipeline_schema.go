@@ -183,6 +183,24 @@ func DCLDeliveryPipelineSchema() *dcl.Schema {
 											},
 										},
 									},
+									"targetsTypeCondition": &dcl.Property{
+										Type:        "object",
+										GoName:      "TargetsTypeCondition",
+										GoType:      "DeliveryPipelineConditionTargetsTypeCondition",
+										Description: "Details on the whether the targets enumerated in the pipeline are of the same type.",
+										Properties: map[string]*dcl.Property{
+											"errorDetails": &dcl.Property{
+												Type:        "string",
+												GoName:      "ErrorDetails",
+												Description: "Human readable error message.",
+											},
+											"status": &dcl.Property{
+												Type:        "boolean",
+												GoName:      "Status",
+												Description: "True if the targets are all a comparable type. For example this is true if all targets are GKE clusters. This is false if some targets are Cloud Run targets and others are GKE clusters.",
+											},
+										},
+									},
 								},
 							},
 							"createTime": &dcl.Property{
@@ -254,6 +272,38 @@ func DCLDeliveryPipelineSchema() *dcl.Schema {
 											Type:   "object",
 											GoType: "DeliveryPipelineSerialPipelineStages",
 											Properties: map[string]*dcl.Property{
+												"deployParameters": &dcl.Property{
+													Type:        "array",
+													GoName:      "DeployParameters",
+													Description: "Optional. The deploy parameters to use for the target in this stage.",
+													SendEmpty:   true,
+													ListType:    "list",
+													Items: &dcl.Property{
+														Type:   "object",
+														GoType: "DeliveryPipelineSerialPipelineStagesDeployParameters",
+														Required: []string{
+															"values",
+														},
+														Properties: map[string]*dcl.Property{
+															"matchTargetLabels": &dcl.Property{
+																Type: "object",
+																AdditionalProperties: &dcl.Property{
+																	Type: "string",
+																},
+																GoName:      "MatchTargetLabels",
+																Description: "Optional. Deploy parameters are applied to targets with match labels. If unspecified, deploy parameters are applied to all targets (including child targets of a multi-target).",
+															},
+															"values": &dcl.Property{
+																Type: "object",
+																AdditionalProperties: &dcl.Property{
+																	Type: "string",
+																},
+																GoName:      "Values",
+																Description: "Required. Values are deploy parameters in key-value pairs.",
+															},
+														},
+													},
+												},
 												"profiles": &dcl.Property{
 													Type:        "array",
 													GoName:      "Profiles",
@@ -263,6 +313,220 @@ func DCLDeliveryPipelineSchema() *dcl.Schema {
 													Items: &dcl.Property{
 														Type:   "string",
 														GoType: "string",
+													},
+												},
+												"strategy": &dcl.Property{
+													Type:        "object",
+													GoName:      "Strategy",
+													GoType:      "DeliveryPipelineSerialPipelineStagesStrategy",
+													Description: "Optional. The strategy to use for a `Rollout` to this stage.",
+													Properties: map[string]*dcl.Property{
+														"canary": &dcl.Property{
+															Type:        "object",
+															GoName:      "Canary",
+															GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanary",
+															Description: "Canary deployment strategy provides progressive percentage based deployments to a Target.",
+															Properties: map[string]*dcl.Property{
+																"canaryDeployment": &dcl.Property{
+																	Type:        "object",
+																	GoName:      "CanaryDeployment",
+																	GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryCanaryDeployment",
+																	Description: "Configures the progressive based deployment for a Target.",
+																	Conflicts: []string{
+																		"customCanaryDeployment",
+																	},
+																	Required: []string{
+																		"percentages",
+																	},
+																	Properties: map[string]*dcl.Property{
+																		"percentages": &dcl.Property{
+																			Type:        "array",
+																			GoName:      "Percentages",
+																			Description: "Required. The percentage based deployments that will occur as a part of a `Rollout`. List is expected in ascending order and each integer n is 0 <= n < 100.",
+																			SendEmpty:   true,
+																			ListType:    "list",
+																			Items: &dcl.Property{
+																				Type:   "integer",
+																				Format: "int64",
+																				GoType: "int64",
+																			},
+																		},
+																		"verify": &dcl.Property{
+																			Type:        "boolean",
+																			GoName:      "Verify",
+																			Description: "Whether to run verify tests after each percentage deployment.",
+																		},
+																	},
+																},
+																"customCanaryDeployment": &dcl.Property{
+																	Type:        "object",
+																	GoName:      "CustomCanaryDeployment",
+																	GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeployment",
+																	Description: "Configures the progressive based deployment for a Target, but allows customizing at the phase level where a phase represents each of the percentage deployments.",
+																	Conflicts: []string{
+																		"canaryDeployment",
+																	},
+																	Required: []string{
+																		"phaseConfigs",
+																	},
+																	Properties: map[string]*dcl.Property{
+																		"phaseConfigs": &dcl.Property{
+																			Type:        "array",
+																			GoName:      "PhaseConfigs",
+																			Description: "Required. Configuration for each phase in the canary deployment in the order executed.",
+																			SendEmpty:   true,
+																			ListType:    "list",
+																			Items: &dcl.Property{
+																				Type:   "object",
+																				GoType: "DeliveryPipelineSerialPipelineStagesStrategyCanaryCustomCanaryDeploymentPhaseConfigs",
+																				Required: []string{
+																					"phaseId",
+																					"percentage",
+																				},
+																				Properties: map[string]*dcl.Property{
+																					"percentage": &dcl.Property{
+																						Type:        "integer",
+																						Format:      "int64",
+																						GoName:      "Percentage",
+																						Description: "Required. Percentage deployment for the phase.",
+																					},
+																					"phaseId": &dcl.Property{
+																						Type:        "string",
+																						GoName:      "PhaseId",
+																						Description: "Required. The ID to assign to the `Rollout` phase. This value must consist of lower-case letters, numbers, and hyphens, start with a letter and end with a letter or a number, and have a max length of 63 characters. In other words, it must match the following regex: `^[a-z]([a-z0-9-]{0,61}[a-z0-9])?$`.",
+																					},
+																					"profiles": &dcl.Property{
+																						Type:        "array",
+																						GoName:      "Profiles",
+																						Description: "Skaffold profiles to use when rendering the manifest for this phase. These are in addition to the profiles list specified in the `DeliveryPipeline` stage.",
+																						SendEmpty:   true,
+																						ListType:    "list",
+																						Items: &dcl.Property{
+																							Type:   "string",
+																							GoType: "string",
+																						},
+																					},
+																					"verify": &dcl.Property{
+																						Type:        "boolean",
+																						GoName:      "Verify",
+																						Description: "Whether to run verify tests after the deployment.",
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+																"runtimeConfig": &dcl.Property{
+																	Type:        "object",
+																	GoName:      "RuntimeConfig",
+																	GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig",
+																	Description: "Optional. Runtime specific configurations for the deployment strategy. The runtime configuration is used to determine how Cloud Deploy will split traffic to enable a progressive deployment.",
+																	Properties: map[string]*dcl.Property{
+																		"cloudRun": &dcl.Property{
+																			Type:        "object",
+																			GoName:      "CloudRun",
+																			GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigCloudRun",
+																			Description: "Cloud Run runtime configuration.",
+																			Conflicts: []string{
+																				"kubernetes",
+																			},
+																			Properties: map[string]*dcl.Property{
+																				"automaticTrafficControl": &dcl.Property{
+																					Type:        "boolean",
+																					GoName:      "AutomaticTrafficControl",
+																					Description: "Whether Cloud Deploy should update the traffic stanza in a Cloud Run Service on the user's behalf to facilitate traffic splitting. This is required to be true for CanaryDeployments, but optional for CustomCanaryDeployments.",
+																				},
+																			},
+																		},
+																		"kubernetes": &dcl.Property{
+																			Type:        "object",
+																			GoName:      "Kubernetes",
+																			GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetes",
+																			Description: "Kubernetes runtime configuration.",
+																			Conflicts: []string{
+																				"cloudRun",
+																			},
+																			Properties: map[string]*dcl.Property{
+																				"gatewayServiceMesh": &dcl.Property{
+																					Type:        "object",
+																					GoName:      "GatewayServiceMesh",
+																					GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh",
+																					Description: "Kubernetes Gateway API service mesh configuration.",
+																					Conflicts: []string{
+																						"serviceNetworking",
+																					},
+																					Required: []string{
+																						"httpRoute",
+																						"service",
+																						"deployment",
+																					},
+																					Properties: map[string]*dcl.Property{
+																						"deployment": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "Deployment",
+																							Description: "Required. Name of the Kubernetes Deployment whose traffic is managed by the specified HTTPRoute and Service.",
+																						},
+																						"httpRoute": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "HttpRoute",
+																							Description: "Required. Name of the Gateway API HTTPRoute.",
+																						},
+																						"service": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "Service",
+																							Description: "Required. Name of the Kubernetes Service.",
+																						},
+																					},
+																				},
+																				"serviceNetworking": &dcl.Property{
+																					Type:        "object",
+																					GoName:      "ServiceNetworking",
+																					GoType:      "DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking",
+																					Description: "Kubernetes Service networking configuration.",
+																					Conflicts: []string{
+																						"gatewayServiceMesh",
+																					},
+																					Required: []string{
+																						"service",
+																						"deployment",
+																					},
+																					Properties: map[string]*dcl.Property{
+																						"deployment": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "Deployment",
+																							Description: "Required. Name of the Kubernetes Deployment whose traffic is managed by the specified Service.",
+																						},
+																						"disablePodOverprovisioning": &dcl.Property{
+																							Type:        "boolean",
+																							GoName:      "DisablePodOverprovisioning",
+																							Description: "Optional. Whether to disable Pod overprovisioning. If Pod overprovisioning is disabled then Cloud Deploy will limit the number of total Pods used for the deployment strategy to the number of Pods the Deployment has on the cluster.",
+																						},
+																						"service": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "Service",
+																							Description: "Required. Name of the Kubernetes Service.",
+																						},
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+														"standard": &dcl.Property{
+															Type:        "object",
+															GoName:      "Standard",
+															GoType:      "DeliveryPipelineSerialPipelineStagesStrategyStandard",
+															Description: "Standard deployment strategy executes a single deploy and allows verifying the deployment.",
+															Properties: map[string]*dcl.Property{
+																"verify": &dcl.Property{
+																	Type:        "boolean",
+																	GoName:      "Verify",
+																	Description: "Whether to verify a deployment.",
+																},
+															},
+														},
 													},
 												},
 												"targetId": &dcl.Property{

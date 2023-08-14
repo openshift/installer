@@ -92,8 +92,7 @@ components:
           type: string
           x-dcl-go-name: Action
           description: The Action to perform when the client connection triggers the
-            rule. Can currently be either "allow" or "deny()" where valid values for
-            status are 403, 404, and 502.
+            rule. Valid actions are "allow", "deny" and "goto_next".
         description:
           type: string
           x-dcl-go-name: Description
@@ -151,11 +150,53 @@ components:
           required:
           - layer4Configs
           properties:
+            destAddressGroups:
+              type: array
+              x-dcl-go-name: DestAddressGroups
+              description: Address groups which should be matched against the traffic
+                destination. Maximum number of destination address groups is 10. Destination
+                address groups is only supported in Egress rules.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            destFqdns:
+              type: array
+              x-dcl-go-name: DestFqdns
+              description: Domain names that will be used to match against the resolved
+                domain name of destination of traffic. Can only be specified if DIRECTION
+                is egress.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
             destIPRanges:
               type: array
               x-dcl-go-name: DestIPRanges
               description: CIDR IP address range. Maximum number of destination CIDR
                 IP ranges allowed is 5000.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            destRegionCodes:
+              type: array
+              x-dcl-go-name: DestRegionCodes
+              description: The Unicode country codes whose IP addresses will be used
+                to match against the source of traffic. Can only be specified if DIRECTION
+                is egress.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            destThreatIntelligences:
+              type: array
+              x-dcl-go-name: DestThreatIntelligences
+              description: Name of the Google Cloud Threat Intelligence list.
               x-dcl-send-empty: true
               x-dcl-list-type: list
               items:
@@ -194,11 +235,44 @@ components:
                     items:
                       type: string
                       x-dcl-go-type: string
+            srcAddressGroups:
+              type: array
+              x-dcl-go-name: SrcAddressGroups
+              description: Address groups which should be matched against the traffic
+                source. Maximum number of source address groups is 10. Source address
+                groups is only supported in Ingress rules.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            srcFqdns:
+              type: array
+              x-dcl-go-name: SrcFqdns
+              description: Domain names that will be used to match against the resolved
+                domain name of source of traffic. Can only be specified if DIRECTION
+                is ingress.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
             srcIPRanges:
               type: array
               x-dcl-go-name: SrcIPRanges
               description: CIDR IP address range. Maximum number of source CIDR IP
                 ranges allowed is 5000.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            srcRegionCodes:
+              type: array
+              x-dcl-go-name: SrcRegionCodes
+              description: The Unicode country codes whose IP addresses will be used
+                to match against the source of traffic. Can only be specified if DIRECTION
+                is ingress.
               x-dcl-send-empty: true
               x-dcl-list-type: list
               items:
@@ -238,6 +312,15 @@ components:
                     enum:
                     - EFFECTIVE
                     - INEFFECTIVE
+            srcThreatIntelligences:
+              type: array
+              x-dcl-go-name: SrcThreatIntelligences
+              description: Name of the Google Cloud Threat Intelligence list.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
         priority:
           type: integer
           format: int64

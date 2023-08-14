@@ -926,6 +926,12 @@ func canonicalizeNodePoolConfigRootVolume(des, initial *NodePoolConfigRootVolume
 	} else {
 		cDes.Iops = des.Iops
 	}
+	if dcl.IsZeroValue(des.Throughput) || (dcl.IsEmptyValueIndirect(des.Throughput) && dcl.IsEmptyValueIndirect(initial.Throughput)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Throughput = initial.Throughput
+	} else {
+		cDes.Throughput = des.Throughput
+	}
 	if dcl.StringCanonicalize(des.KmsKeyArn, initial.KmsKeyArn) || dcl.IsZeroValue(des.KmsKeyArn) {
 		cDes.KmsKeyArn = initial.KmsKeyArn
 	} else {
@@ -2161,6 +2167,13 @@ func compareNodePoolConfigRootVolumeNewStyle(d, a interface{}, fn dcl.FieldName)
 		diffs = append(diffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.Throughput, actual.Throughput, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAwsNodePoolOperation")}, fn.AddNest("Throughput")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
 	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAwsNodePoolOperation")}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
@@ -2819,6 +2832,9 @@ func expandNodePoolConfigRootVolume(c *Client, f *NodePoolConfigRootVolume, res 
 	if v := f.Iops; !dcl.IsEmptyValueIndirect(v) {
 		m["iops"] = v
 	}
+	if v := f.Throughput; !dcl.IsEmptyValueIndirect(v) {
+		m["throughput"] = v
+	}
 	if v := f.KmsKeyArn; !dcl.IsEmptyValueIndirect(v) {
 		m["kmsKeyArn"] = v
 	}
@@ -2842,6 +2858,7 @@ func flattenNodePoolConfigRootVolume(c *Client, i interface{}, res *NodePool) *N
 	r.SizeGib = dcl.FlattenInteger(m["sizeGib"])
 	r.VolumeType = flattenNodePoolConfigRootVolumeVolumeTypeEnum(m["volumeType"])
 	r.Iops = dcl.FlattenInteger(m["iops"])
+	r.Throughput = dcl.FlattenInteger(m["throughput"])
 	r.KmsKeyArn = dcl.FlattenString(m["kmsKeyArn"])
 
 	return r

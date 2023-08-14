@@ -1,0 +1,152 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Cloudbuildv2/Repository
+  description: The Cloudbuildv2 Repository resource
+  x-dcl-struct-name: Repository
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Repository
+    parameters:
+    - name: repository
+      required: true
+      description: A full instance of a Repository
+  apply:
+    description: The function used to apply information about a Repository
+    parameters:
+    - name: repository
+      required: true
+      description: A full instance of a Repository
+  delete:
+    description: The function used to delete a Repository
+    parameters:
+    - name: repository
+      required: true
+      description: A full instance of a Repository
+  deleteAll:
+    description: The function used to delete all Repository
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: connection
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Repository
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: connection
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Repository:
+      title: Repository
+      x-dcl-id: projects/{{project}}/locations/{{location}}/connections/{{connection}}/repositories/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - remoteUri
+      - project
+      - location
+      - connection
+      properties:
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Annotations
+          description: Allows clients to store small amounts of arbitrary data.
+          x-kubernetes-immutable: true
+        connection:
+          type: string
+          x-dcl-go-name: Connection
+          description: The connection for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudbuildv2/Connection
+            field: name
+            parent: true
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. Server assigned timestamp for when the connection
+            was created.
+          x-kubernetes-immutable: true
+        etag:
+          type: string
+          x-dcl-go-name: Etag
+          readOnly: true
+          description: This checksum is computed by the server based on the value
+            of other fields, and may be sent on update and delete requests to ensure
+            the client has an up-to-date value before proceeding.
+          x-kubernetes-immutable: true
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+          x-dcl-extract-if-empty: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: Name of the repository.
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+          x-dcl-extract-if-empty: true
+        remoteUri:
+          type: string
+          x-dcl-go-name: RemoteUri
+          description: Required. Git Clone HTTPS URI.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. Server assigned timestamp for when the connection
+            was updated.
+          x-kubernetes-immutable: true

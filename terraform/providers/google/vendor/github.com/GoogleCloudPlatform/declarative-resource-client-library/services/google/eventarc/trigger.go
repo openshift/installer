@@ -25,20 +25,21 @@ import (
 )
 
 type Trigger struct {
-	Name             *string                   `json:"name"`
-	Uid              *string                   `json:"uid"`
-	CreateTime       *string                   `json:"createTime"`
-	UpdateTime       *string                   `json:"updateTime"`
-	MatchingCriteria []TriggerMatchingCriteria `json:"matchingCriteria"`
-	ServiceAccount   *string                   `json:"serviceAccount"`
-	Destination      *TriggerDestination       `json:"destination"`
-	Transport        *TriggerTransport         `json:"transport"`
-	Labels           map[string]string         `json:"labels"`
-	Etag             *string                   `json:"etag"`
-	Project          *string                   `json:"project"`
-	Location         *string                   `json:"location"`
-	Channel          *string                   `json:"channel"`
-	Conditions       map[string]string         `json:"conditions"`
+	Name                 *string                   `json:"name"`
+	Uid                  *string                   `json:"uid"`
+	CreateTime           *string                   `json:"createTime"`
+	UpdateTime           *string                   `json:"updateTime"`
+	MatchingCriteria     []TriggerMatchingCriteria `json:"matchingCriteria"`
+	ServiceAccount       *string                   `json:"serviceAccount"`
+	Destination          *TriggerDestination       `json:"destination"`
+	Transport            *TriggerTransport         `json:"transport"`
+	Labels               map[string]string         `json:"labels"`
+	Etag                 *string                   `json:"etag"`
+	Project              *string                   `json:"project"`
+	Location             *string                   `json:"location"`
+	Channel              *string                   `json:"channel"`
+	Conditions           map[string]string         `json:"conditions"`
+	EventDataContentType *string                   `json:"eventDataContentType"`
 }
 
 func (r *Trigger) String() string {
@@ -373,20 +374,21 @@ func (r *Trigger) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":              dcl.ValueOrEmptyString(nr.Name),
-		"uid":               dcl.ValueOrEmptyString(nr.Uid),
-		"create_time":       dcl.ValueOrEmptyString(nr.CreateTime),
-		"update_time":       dcl.ValueOrEmptyString(nr.UpdateTime),
-		"matching_criteria": dcl.ValueOrEmptyString(nr.MatchingCriteria),
-		"service_account":   dcl.ValueOrEmptyString(nr.ServiceAccount),
-		"destination":       dcl.ValueOrEmptyString(nr.Destination),
-		"transport":         dcl.ValueOrEmptyString(nr.Transport),
-		"labels":            dcl.ValueOrEmptyString(nr.Labels),
-		"etag":              dcl.ValueOrEmptyString(nr.Etag),
-		"project":           dcl.ValueOrEmptyString(nr.Project),
-		"location":          dcl.ValueOrEmptyString(nr.Location),
-		"channel":           dcl.ValueOrEmptyString(nr.Channel),
-		"conditions":        dcl.ValueOrEmptyString(nr.Conditions),
+		"name":                    dcl.ValueOrEmptyString(nr.Name),
+		"uid":                     dcl.ValueOrEmptyString(nr.Uid),
+		"create_time":             dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":             dcl.ValueOrEmptyString(nr.UpdateTime),
+		"matching_criteria":       dcl.ValueOrEmptyString(nr.MatchingCriteria),
+		"service_account":         dcl.ValueOrEmptyString(nr.ServiceAccount),
+		"destination":             dcl.ValueOrEmptyString(nr.Destination),
+		"transport":               dcl.ValueOrEmptyString(nr.Transport),
+		"labels":                  dcl.ValueOrEmptyString(nr.Labels),
+		"etag":                    dcl.ValueOrEmptyString(nr.Etag),
+		"project":                 dcl.ValueOrEmptyString(nr.Project),
+		"location":                dcl.ValueOrEmptyString(nr.Location),
+		"channel":                 dcl.ValueOrEmptyString(nr.Channel),
+		"conditions":              dcl.ValueOrEmptyString(nr.Conditions),
+		"event_data_content_type": dcl.ValueOrEmptyString(nr.EventDataContentType),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/triggers/{{name}}", params), nil
 }
