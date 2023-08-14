@@ -434,6 +434,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				return err
 			}
 			createFirewallRules = permissions.Has(GCPFirewallPermission)
+
+			if !createFirewallRules {
+				logrus.Warnf("failed to find permission %s, skipping firewall rule creation", GCPFirewallPermission)
+			}
 		}
 
 		masters, err := mastersAsset.Machines()
