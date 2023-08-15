@@ -42,4 +42,56 @@ type Platform struct {
 	// such as the current env OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE
 	// +optional
 	Licenses []string `json:"licenses,omitempty"`
+
+	// userLabels has additional keys and values that the installer will add as
+	// labels to all resources that it creates on GCP. Resources created by the
+	// cluster itself may not include these labels. This is a TechPreview feature
+	// and requires setting CustomNoUpgrade featureSet with GCPLabelsTags featureGate
+	// enabled or TechPreviewNoUpgrade featureSet to configure labels.
+	UserLabels []UserLabel `json:"userLabels,omitempty"`
+
+	// userTags has additional keys and values that the installer will add as
+	// tags to all resources that it creates on GCP. Resources created by the
+	// cluster itself may not include these tags. Tag key and tag value should
+	// be the shortnames of the tag key and tag value resource. This is a TechPreview
+	// feature and requires setting CustomNoUpgrade featureSet with GCPLabelsTags
+	// featureGate enabled or TechPreviewNoUpgrade featureSet to configure tags.
+	UserTags []UserTag `json:"userTags,omitempty"`
+}
+
+// UserLabel is a label to apply to GCP resources created for the cluster.
+type UserLabel struct {
+	// key is the key part of the label. A label key can have a maximum of 63 characters
+	// and cannot be empty. Label must begin with a lowercase letter, and must contain
+	// only lowercase letters, numeric characters, and the following special characters `_-`.
+	Key string `json:"key"`
+
+	// value is the value part of the label. A label value can have a maximum of 63 characters
+	// and cannot be empty. Value must contain only lowercase letters, numeric characters, and
+	// the following special characters `_-`.
+	Value string `json:"value"`
+}
+
+// UserTag is a tag to apply to GCP resources created for the cluster.
+type UserTag struct {
+	// parentID is the ID of the hierarchical resource where the tags are defined,
+	// e.g. at the Organization or the Project level. To find the Organization ID or Project ID refer to the following pages:
+	// https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id,
+	// https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects.
+	// An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+	// A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+	// numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
+	ParentID string `json:"parentID"`
+
+	// key is the key part of the tag. A tag key can have a maximum of 63 characters and
+	// cannot be empty. Tag key must begin and end with an alphanumeric character, and
+	// must contain only uppercase, lowercase alphanumeric characters, and the following
+	// special characters `._-`.
+	Key string `json:"key"`
+
+	// value is the value part of the tag. A tag value can have a maximum of 63 characters
+	// and cannot be empty. Tag value must begin and end with an alphanumeric character, and
+	// must contain only uppercase, lowercase alphanumeric characters, and the following
+	// special characters `_-.@%=+:,*#&(){}[]` and spaces.
+	Value string `json:"value"`
 }
