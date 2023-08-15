@@ -38,6 +38,7 @@ resource "google_compute_forwarding_rule" "api_internal" {
   ports           = ["6443", "22623"]
   subnetwork      = var.master_subnet
   network         = var.network
+  labels          = var.gcp_extra_labels
 
   load_balancing_scheme = "INTERNAL"
 }
@@ -61,4 +62,5 @@ resource "google_compute_forwarding_rule" "api" {
   ip_address = var.cluster_public_ip
   target     = google_compute_target_pool.api[0].self_link
   port_range = "6443"
+  labels     = var.gcp_extra_labels
 }

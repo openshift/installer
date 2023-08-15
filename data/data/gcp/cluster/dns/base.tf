@@ -10,6 +10,7 @@ resource "google_dns_managed_zone" "int" {
   dns_name    = "${var.cluster_domain}."
   visibility  = "private"
   project     = var.project_id
+  labels      = var.gcp_extra_labels
 
   private_visibility_config {
     networks {

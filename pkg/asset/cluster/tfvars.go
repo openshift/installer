@@ -505,6 +505,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 				PublicZoneName:      publicZoneName,
 				PrivateZoneName:     privateZoneName,
 				PublishStrategy:     installConfig.Config.Publish,
+				InfrastructureName:  clusterID.InfraID,
 			},
 		)
 		if err != nil {
