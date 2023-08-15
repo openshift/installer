@@ -179,6 +179,20 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 			Filename: cloudControllerUIDFilename,
 			Data:     content,
 		})
+		if len(installConfig.Config.GCP.UserLabels) > 0 {
+			resourceLabels := make([]configv1.GCPResourceLabel, len(installConfig.Config.GCP.UserLabels))
+			for i, label := range installConfig.Config.GCP.UserLabels {
+				resourceLabels[i] = configv1.GCPResourceLabel{Key: label.Key, Value: label.Value}
+			}
+			config.Status.PlatformStatus.GCP.ResourceLabels = resourceLabels
+		}
+		if len(installConfig.Config.GCP.UserTags) > 0 {
+			resourceTags := make([]configv1.GCPResourceTag, len(installConfig.Config.GCP.UserTags))
+			for i, tag := range installConfig.Config.GCP.UserTags {
+				resourceTags[i] = configv1.GCPResourceTag{ParentID: tag.ParentID, Key: tag.Key, Value: tag.Value}
+			}
+			config.Status.PlatformStatus.GCP.ResourceTags = resourceTags
+		}
 	case ibmcloud.Name:
 		config.Spec.PlatformSpec.Type = configv1.IBMCloudPlatformType
 		var cisInstanceCRN, dnsInstanceCRN string
