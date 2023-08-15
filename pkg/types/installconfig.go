@@ -164,7 +164,6 @@ type InstallConfig struct {
 	// When this field is set the cluster will be flagged for CPU Partitioning allowing users to segregate workloads to
 	// specific CPU Sets. This does not make any decisions on workloads it only configures the nodes to allow CPU Partitioning.
 	// The "AllNodes" value will setup all nodes for CPU Partitioning, the default is "None".
-	// This feature is currently in TechPreview.
 	//
 	// +kubebuilder:default="None"
 	// +optional
