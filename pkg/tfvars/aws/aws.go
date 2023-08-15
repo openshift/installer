@@ -45,6 +45,7 @@ type config struct {
 	WorkerIAMRoleName               string            `json:"aws_worker_iam_role_name,omitempty"`
 	MasterMetadataAuthentication    string            `json:"aws_master_instance_metadata_authentication,omitempty"`
 	BootstrapMetadataAuthentication string            `json:"aws_bootstrap_instance_metadata_authentication,omitempty"`
+	PreserveBootstrapIgnition       bool              `json:"aws_preserve_bootstrap_ignition"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -72,6 +73,8 @@ type TFVarsSources struct {
 	Architecture types.Architecture
 
 	Proxy *types.Proxy
+
+	PreserveBootstrapIgnition bool
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -174,25 +177,26 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	}
 
 	cfg := &config{
-		CustomEndpoints:         endpoints,
-		Region:                  masterConfig.Placement.Region,
-		ExtraTags:               tags,
-		MasterAvailabilityZones: masterAvailabilityZones,
-		WorkerAvailabilityZones: workerAvailabilityZones,
-		EdgeLocalZones:          edgeLocalZones,
-		EdgeZonesGatewayIndex:   edgeZonesGatewayIndexMap,
-		BootstrapInstanceType:   masterConfig.InstanceType,
-		MasterInstanceType:      masterConfig.InstanceType,
-		Size:                    *rootVolume.EBS.VolumeSize,
-		Type:                    *rootVolume.EBS.VolumeType,
-		VPC:                     sources.VPC,
-		PrivateSubnets:          sources.PrivateSubnets,
-		InternalZone:            sources.InternalZone,
-		InternalZoneRole:        sources.InternalZoneRole,
-		PublishStrategy:         string(sources.Publish),
-		IgnitionBucket:          sources.IgnitionBucket,
-		MasterIAMRoleName:       sources.MasterIAMRoleName,
-		WorkerIAMRoleName:       sources.WorkerIAMRoleName,
+		CustomEndpoints:           endpoints,
+		Region:                    masterConfig.Placement.Region,
+		ExtraTags:                 tags,
+		MasterAvailabilityZones:   masterAvailabilityZones,
+		WorkerAvailabilityZones:   workerAvailabilityZones,
+		EdgeLocalZones:            edgeLocalZones,
+		EdgeZonesGatewayIndex:     edgeZonesGatewayIndexMap,
+		BootstrapInstanceType:     masterConfig.InstanceType,
+		MasterInstanceType:        masterConfig.InstanceType,
+		Size:                      *rootVolume.EBS.VolumeSize,
+		Type:                      *rootVolume.EBS.VolumeType,
+		VPC:                       sources.VPC,
+		PrivateSubnets:            sources.PrivateSubnets,
+		InternalZone:              sources.InternalZone,
+		InternalZoneRole:          sources.InternalZoneRole,
+		PublishStrategy:           string(sources.Publish),
+		IgnitionBucket:            sources.IgnitionBucket,
+		MasterIAMRoleName:         sources.MasterIAMRoleName,
+		WorkerIAMRoleName:         sources.WorkerIAMRoleName,
+		PreserveBootstrapIgnition: sources.PreserveBootstrapIgnition,
 	}
 
 	stubIgn, err := bootstrap.GenerateIgnitionShimWithCertBundleAndProxy(sources.IgnitionPresignedURL, sources.AdditionalTrustBundle, sources.Proxy)

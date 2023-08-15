@@ -101,6 +101,11 @@ type Platform struct {
 	//
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
+
+	// PreserveBootstrapIgnition is an optional field that can be used to make the S3 deletion optional
+	// during bootstrap destroy.
+	// +optional
+	PreserveBootstrapIgnition bool `json:"preserveBootstrapIgnition,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
