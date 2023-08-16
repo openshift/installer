@@ -488,6 +488,18 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				}
 			}
 
+			if mpool.OSImage.Publisher != "" {
+				img, ierr := client.GetMarketplaceImage(context.TODO(), ic.Platform.Azure.Region, mpool.OSImage.Publisher, mpool.OSImage.Offer, mpool.OSImage.SKU, mpool.OSImage.Version)
+				if ierr != nil {
+					return fmt.Errorf("failed to fetch marketplace image: %w", ierr)
+				}
+				// Publisher is case-sensitive and matched against exactly. Also
+				// the Plan's publisher might not be exactly the same as the
+				// Image's publisher
+				if img.Plan != nil && img.Plan.Publisher != nil {
+					mpool.OSImage.Publisher = *img.Plan.Publisher
+				}
+			}
 			pool.Platform.Azure = &mpool
 
 			capabilities, err := client.GetVMCapabilities(context.TODO(), mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
