@@ -1,10 +1,4 @@
 locals {
-  labels = merge(
-    {
-      "kubernetes-io-cluster-${var.cluster_id}" = "owned"
-    },
-    var.gcp_extra_labels,
-  )
   description = "Created By OpenShift Installer"
 
   public_endpoints = var.gcp_publish_strategy == "External" ? true : false
@@ -21,6 +15,7 @@ resource "google_storage_bucket" "ignition" {
   name                        = "${var.cluster_id}-bootstrap-ignition"
   location                    = var.gcp_region
   uniform_bucket_level_access = true
+  labels                      = var.gcp_extra_labels
 }
 
 resource "google_storage_bucket_object" "ignition" {
@@ -93,9 +88,10 @@ resource "google_compute_instance" "bootstrap" {
 
   boot_disk {
     initialize_params {
-      type  = var.gcp_master_root_volume_type
-      size  = var.gcp_master_root_volume_size
-      image = var.compute_image
+      type   = var.gcp_master_root_volume_type
+      size   = var.gcp_master_root_volume_size
+      image  = var.compute_image
+      labels = var.gcp_extra_labels
     }
     kms_key_self_link = var.gcp_root_volume_kms_key_link
   }
@@ -140,7 +136,7 @@ resource "google_compute_instance" "bootstrap" {
 
   tags = ["${var.cluster_id}-master", "${var.cluster_id}-bootstrap"]
 
-  labels = local.labels
+  labels = var.gcp_extra_labels
 
   lifecycle {
     # In GCP TF apply is run a second time to remove bootstrap node from LB.

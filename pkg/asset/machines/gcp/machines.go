@@ -187,6 +187,10 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 	if mpool.SecureBoot == string(machineapi.SecureBootPolicyEnabled) {
 		shieldedInstanceConfig.SecureBoot = machineapi.SecureBootPolicyEnabled
 	}
+	labels := make(map[string]string, len(platform.UserLabels))
+	for _, label := range platform.UserLabels {
+		labels[label.Key] = label.Value
+	}
 	return &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
@@ -200,6 +204,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			SizeGB:        mpool.OSDisk.DiskSizeGB,
 			Type:          mpool.OSDisk.DiskType,
 			Image:         osImage,
+			Labels:        labels,
 			EncryptionKey: encryptionKey,
 		}},
 		NetworkInterfaces: []*machineapi.GCPNetworkInterface{{
@@ -219,6 +224,7 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		ShieldedInstanceConfig: shieldedInstanceConfig,
 		ConfidentialCompute:    machineapi.ConfidentialComputePolicy(mpool.ConfidentialCompute),
 		OnHostMaintenance:      machineapi.GCPHostMaintenanceType(mpool.OnHostMaintenance),
+		Labels:                 labels,
 	}, nil
 }
 

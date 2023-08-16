@@ -12,6 +12,10 @@ import (
 
 const (
 	kmsKeyNameFmt = "projects/%s/locations/%s/keyRings/%s/cryptoKeys/%s"
+
+	// ocpDefaultLabelFmt is the format string for the default label
+	// added to the OpenShift created GCP resources.
+	ocpDefaultLabelFmt = "kubernetes-io-cluster-%s"
 )
 
 // Auth is the collection of credentials that will be used by terrform.
@@ -23,31 +27,32 @@ type Auth struct {
 
 type config struct {
 	Auth                      `json:",inline"`
-	Region                    string   `json:"gcp_region,omitempty"`
-	BootstrapInstanceType     string   `json:"gcp_bootstrap_instance_type,omitempty"`
-	CreateBootstrapSA         bool     `json:"gcp_create_bootstrap_sa"`
-	CreateFirewallRules       bool     `json:"gcp_create_firewall_rules"`
-	MasterInstanceType        string   `json:"gcp_master_instance_type,omitempty"`
-	MasterAvailabilityZones   []string `json:"gcp_master_availability_zones"`
-	ImageURI                  string   `json:"gcp_image_uri,omitempty"`
-	Image                     string   `json:"gcp_image,omitempty"`
-	PreexistingImage          bool     `json:"gcp_preexisting_image"`
-	InstanceServiceAccount    string   `json:"gcp_instance_service_account,omitempty"`
-	ImageLicenses             []string `json:"gcp_image_licenses,omitempty"`
-	VolumeType                string   `json:"gcp_master_root_volume_type"`
-	VolumeSize                int64    `json:"gcp_master_root_volume_size"`
-	VolumeKMSKeyLink          string   `json:"gcp_root_volume_kms_key_link"`
-	PublicZoneName            string   `json:"gcp_public_zone_name,omitempty"`
-	PrivateZoneName           string   `json:"gcp_private_zone_name,omitempty"`
-	PublishStrategy           string   `json:"gcp_publish_strategy,omitempty"`
-	PreexistingNetwork        bool     `json:"gcp_preexisting_network,omitempty"`
-	ClusterNetwork            string   `json:"gcp_cluster_network,omitempty"`
-	ControlPlaneSubnet        string   `json:"gcp_control_plane_subnet,omitempty"`
-	ComputeSubnet             string   `json:"gcp_compute_subnet,omitempty"`
-	ControlPlaneTags          []string `json:"gcp_control_plane_tags,omitempty"`
-	SecureBoot                string   `json:"gcp_master_secure_boot,omitempty"`
-	OnHostMaintenance         string   `json:"gcp_master_on_host_maintenance,omitempty"`
-	EnableConfidentialCompute string   `json:"gcp_master_confidential_compute,omitempty"`
+	Region                    string            `json:"gcp_region,omitempty"`
+	BootstrapInstanceType     string            `json:"gcp_bootstrap_instance_type,omitempty"`
+	CreateBootstrapSA         bool              `json:"gcp_create_bootstrap_sa"`
+	CreateFirewallRules       bool              `json:"gcp_create_firewall_rules"`
+	MasterInstanceType        string            `json:"gcp_master_instance_type,omitempty"`
+	MasterAvailabilityZones   []string          `json:"gcp_master_availability_zones"`
+	ImageURI                  string            `json:"gcp_image_uri,omitempty"`
+	Image                     string            `json:"gcp_image,omitempty"`
+	PreexistingImage          bool              `json:"gcp_preexisting_image"`
+	InstanceServiceAccount    string            `json:"gcp_instance_service_account,omitempty"`
+	ImageLicenses             []string          `json:"gcp_image_licenses,omitempty"`
+	VolumeType                string            `json:"gcp_master_root_volume_type"`
+	VolumeSize                int64             `json:"gcp_master_root_volume_size"`
+	VolumeKMSKeyLink          string            `json:"gcp_root_volume_kms_key_link"`
+	PublicZoneName            string            `json:"gcp_public_zone_name,omitempty"`
+	PrivateZoneName           string            `json:"gcp_private_zone_name,omitempty"`
+	PublishStrategy           string            `json:"gcp_publish_strategy,omitempty"`
+	PreexistingNetwork        bool              `json:"gcp_preexisting_network,omitempty"`
+	ClusterNetwork            string            `json:"gcp_cluster_network,omitempty"`
+	ControlPlaneSubnet        string            `json:"gcp_control_plane_subnet,omitempty"`
+	ComputeSubnet             string            `json:"gcp_compute_subnet,omitempty"`
+	ControlPlaneTags          []string          `json:"gcp_control_plane_tags,omitempty"`
+	SecureBoot                string            `json:"gcp_master_secure_boot,omitempty"`
+	OnHostMaintenance         string            `json:"gcp_master_on_host_maintenance,omitempty"`
+	EnableConfidentialCompute string            `json:"gcp_master_confidential_compute,omitempty"`
+	ExtraLabels               map[string]string `json:"gcp_extra_labels,omitempty"`
 }
 
 // TFVarsSources contains the parameters to be converted into Terraform variables
@@ -62,6 +67,7 @@ type TFVarsSources struct {
 	PrivateZoneName     string
 	PublishStrategy     types.PublishingStrategy
 	PreexistingNetwork  bool
+	InfrastructureName  string
 }
 
 // TFVars generates gcp-specific Terraform variables launching the cluster.
@@ -71,6 +77,13 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 	masterAvailabilityZones := make([]string, len(sources.MasterConfigs))
 	for i, c := range sources.MasterConfigs {
 		masterAvailabilityZones[i] = c.Zone
+	}
+
+	labels := make(map[string]string, len(masterConfig.Labels)+1)
+	// add OCP default label
+	labels[fmt.Sprintf(ocpDefaultLabelFmt, sources.InfrastructureName)] = "owned"
+	for k, v := range masterConfig.Labels {
+		labels[k] = v
 	}
 
 	cfg := &config{
@@ -96,6 +109,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		SecureBoot:                string(masterConfig.ShieldedInstanceConfig.SecureBoot),
 		EnableConfidentialCompute: string(masterConfig.ConfidentialCompute),
 		OnHostMaintenance:         string(masterConfig.OnHostMaintenance),
+		ExtraLabels:               labels,
 	}
 
 	cfg.PreexistingImage = true

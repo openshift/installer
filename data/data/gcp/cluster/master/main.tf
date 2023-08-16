@@ -47,9 +47,10 @@ resource "google_compute_instance" "master" {
 
   boot_disk {
     initialize_params {
-      type  = var.root_volume_type
-      size  = var.root_volume_size
-      image = var.image
+      type   = var.root_volume_type
+      size   = var.root_volume_size
+      image  = var.image
+      labels = var.gcp_extra_labels
     }
     kms_key_self_link = var.root_volume_kms_key_link
   }
@@ -89,7 +90,7 @@ resource "google_compute_instance" "master" {
     var.tags,
   )
 
-  labels = var.labels
+  labels = var.gcp_extra_labels
 
   service_account {
     email  = var.service_account != "" ? var.service_account : google_service_account.master-node-sa[0].email
