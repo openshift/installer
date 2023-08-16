@@ -101,7 +101,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
 
-		vsphereMachineProvider = provider
+		vsphereMachineProvider = provider.DeepCopy()
 
 		// Apply static IP if configured
 		applyNetworkConfig(host, provider)
