@@ -52,10 +52,12 @@ func NewPcloudV1CloudinstancesCosimagesGetParamsWithHTTPClient(client *http.Clie
 	}
 }
 
-/* PcloudV1CloudinstancesCosimagesGetParams contains all the parameters to send to the API endpoint
-   for the pcloud v1 cloudinstances cosimages get operation.
+/*
+PcloudV1CloudinstancesCosimagesGetParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud v1 cloudinstances cosimages get operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudV1CloudinstancesCosimagesGetParams struct {
 

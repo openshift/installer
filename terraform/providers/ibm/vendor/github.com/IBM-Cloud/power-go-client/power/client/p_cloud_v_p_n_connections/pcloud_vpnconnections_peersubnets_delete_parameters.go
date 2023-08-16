@@ -54,10 +54,12 @@ func NewPcloudVpnconnectionsPeersubnetsDeleteParamsWithHTTPClient(client *http.C
 	}
 }
 
-/* PcloudVpnconnectionsPeersubnetsDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud vpnconnections peersubnets delete operation.
+/*
+PcloudVpnconnectionsPeersubnetsDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud vpnconnections peersubnets delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudVpnconnectionsPeersubnetsDeleteParams struct {
 

@@ -59,7 +59,32 @@ func DataSourceIBMISInstance() *schema.Resource {
 				Computed:    true,
 				Description: "Indicates whether the metadata service endpoint is available to the virtual server instance",
 			},
+			isInstanceMetadataService: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The metadata service configuration",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceMetadataServiceEnabled1: {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Indicates whether the metadata service endpoint will be available to the virtual server instance",
+						},
 
+						isInstanceMetadataServiceProtocol: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The communication protocol to use for the metadata service endpoint. Applies only when the metadata service is enabled.",
+						},
+
+						isInstanceMetadataServiceRespHopLimit: {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "The hop limit (IP time to live) for IP response packets from the metadata service",
+						},
+					},
+				},
+			},
 			isInstancePEM: {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -136,12 +161,51 @@ func DataSourceIBMISInstance() *schema.Resource {
 				Description: "The amount of bandwidth (in megabits per second) allocated exclusively to instance network interfaces.",
 			},
 
+			isInstanceLifecycleState: {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The lifecycle state of the virtual server instance.",
+			},
+			isInstanceLifecycleReasons: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The reasons for the current lifecycle_state (if any).",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceLifecycleReasonsCode: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this lifecycle state.",
+						},
+
+						isInstanceLifecycleReasonsMessage: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this lifecycle state.",
+						},
+
+						isInstanceLifecycleReasonsMoreInfo: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this lifecycle state.",
+						},
+					},
+				},
+			},
+
 			isInstanceTags: {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "list of tags for the instance",
+			},
+			isInstanceAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "list of access tags for the instance",
 			},
 			isInstanceBootVolume: {
 				Type:        schema.TypeList,
@@ -178,6 +242,26 @@ func DataSourceIBMISInstance() *schema.Resource {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Instance Boot Volume's volume CRN",
+						},
+					},
+				},
+			},
+
+			isInstanceCatalogOffering: {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The catalog offering or offering version to use when provisioning this virtual server instance. If an offering is specified, the latest version of that offering will be used. The specified offering or offering version may be in a different account in the same enterprise, subject to IAM policies.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isInstanceCatalogOfferingOfferingCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identifies a catalog offering by a unique CRN property",
+						},
+						isInstanceCatalogOfferingVersionCrn: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Identifies a version of a catalog offering by a unique CRN property",
 						},
 					},
 				},
@@ -400,6 +484,12 @@ func DataSourceIBMISInstance() *schema.Resource {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Instance vCPU count",
+						},
+						// Added for AMD support, manufacturer details.
+						isInstanceCPUManufacturer: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Instance vCPU Manufacturer",
 						},
 					},
 				},
@@ -637,13 +727,39 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 	instance := allrecs[0]
 	d.SetId(*instance.ID)
 	id := *instance.ID
+
+	// catalog
+	if instance.CatalogOffering != nil {
+		versionCrn := *instance.CatalogOffering.Version.CRN
+		catalogList := make([]map[string]interface{}, 0)
+		catalogMap := map[string]interface{}{}
+		catalogMap[isInstanceCatalogOfferingVersionCrn] = versionCrn
+		catalogList = append(catalogList, catalogMap)
+		d.Set(isInstanceCatalogOffering, catalogList)
+	}
+
 	d.Set(isInstanceName, *instance.Name)
 	if instance.Profile != nil {
 		d.Set(isInstanceProfile, *instance.Profile.Name)
 	}
 	if instance.MetadataService != nil {
 		d.Set(isInstanceMetadataServiceEnabled, instance.MetadataService.Enabled)
+
+		metadataService := []map[string]interface{}{}
+		metadataServiceMap := map[string]interface{}{}
+
+		metadataServiceMap[isInstanceMetadataServiceEnabled1] = instance.MetadataService.Enabled
+		if instance.MetadataService.Protocol != nil {
+			metadataServiceMap[isInstanceMetadataServiceProtocol] = instance.MetadataService.Protocol
+		}
+		if instance.MetadataService.ResponseHopLimit != nil {
+			metadataServiceMap[isInstanceMetadataServiceRespHopLimit] = instance.MetadataService.ResponseHopLimit
+		}
+
+		metadataService = append(metadataService, metadataServiceMap)
+		d.Set(isInstanceMetadataService, metadataService)
 	}
+
 	if instance.AvailabilityPolicy != nil && instance.AvailabilityPolicy.HostFailure != nil {
 		d.Set(isInstanceAvailablePolicyHostFailure, *instance.AvailabilityPolicy.HostFailure)
 	}
@@ -652,6 +768,7 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 		currentCPU := map[string]interface{}{}
 		currentCPU[isInstanceCPUArch] = *instance.Vcpu.Architecture
 		currentCPU[isInstanceCPUCount] = *instance.Vcpu.Count
+		currentCPU[isInstanceCPUManufacturer] = *instance.Vcpu.Manufacturer // Added for AMD support, manufacturer details.
 		cpuList = append(cpuList, currentCPU)
 	}
 	d.Set(isInstanceCPU, cpuList)
@@ -809,20 +926,17 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 				if keyFlag != "" {
 					block, err := pem.Decode(keybytes)
 					if block == nil {
-						return fmt.Errorf("[ERROR] Failed to load the private key from the given key contents. Instead of the key file path, please make sure the private key is pem format")
+						return fmt.Errorf("[ERROR] Failed to load the private key from the given key contents. Instead of the key file path, please make sure the private key is pem format (%v)", err)
 					}
 					isEncrypted := false
-					switch block.Type {
-					case "RSA PRIVATE KEY":
-						isEncrypted = x509.IsEncryptedPEMBlock(block)
-					case "OPENSSH PRIVATE KEY":
+					if block.Type == "OPENSSH PRIVATE KEY" {
 						var err error
 						isEncrypted, err = isOpenSSHPrivKeyEncrypted(block.Bytes)
 						if err != nil {
 							return fmt.Errorf("[ERROR] Failed to check if the provided open ssh key is encrypted or not %s", err)
 						}
-					default:
-						return fmt.Errorf("PEM and OpenSSH private key formats with RSA key type are supported, can not support this key file type: %s", err)
+					} else {
+						isEncrypted = x509.IsEncryptedPEMBlock(block)
 					}
 					passphrase := ""
 					var privateKey interface{}
@@ -881,6 +995,14 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 		}
 		d.Set(isInstanceInitKeys, initKeyList)
 	}
+	//set the lifecycle status, reasons
+	if instance.LifecycleState != nil {
+		d.Set(isInstanceLifecycleState, *instance.LifecycleState)
+	}
+	if instance.LifecycleReasons != nil {
+		d.Set(isInstanceLifecycleReasons, dataSourceInstanceFlattenLifecycleReasons(instance.LifecycleReasons))
+	}
+
 	if initParms.Password != nil && initParms.Password.EncryptedPassword != nil {
 		ciphertext := *initParms.Password.EncryptedPassword
 		password := base64.StdEncoding.EncodeToString(ciphertext)
@@ -956,12 +1078,18 @@ func instanceGetByName(d *schema.ResourceData, meta interface{}, name string) er
 		bootVolList = append(bootVolList, bootVol)
 		d.Set(isInstanceBootVolume, bootVolList)
 	}
-	tags, err := flex.GetTagsUsingCRN(meta, *instance.CRN)
+	tags, err := flex.GetGlobalTagsUsingCRN(meta, *instance.CRN, "", isInstanceUserTagType)
 	if err != nil {
 		log.Printf(
 			"[ERROR] Error on get of resource vpc Instance (%s) tags: %s", d.Id(), err)
 	}
 	d.Set(isInstanceTags, tags)
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *instance.CRN, "", isInstanceAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource vpc Instance (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isInstanceAccessTags, accesstags)
 
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
@@ -1044,4 +1172,19 @@ func dataSourceInstanceDisksToMap(disksItem vpcv1.InstanceDisk) (disksMap map[st
 	}
 
 	return disksMap
+}
+func dataSourceInstanceFlattenLifecycleReasons(lifecycleReasons []vpcv1.InstanceLifecycleReason) (lifecycleReasonsList []map[string]interface{}) {
+	lifecycleReasonsList = make([]map[string]interface{}, 0)
+	for _, lr := range lifecycleReasons {
+		currentLR := map[string]interface{}{}
+		if lr.Code != nil && lr.Message != nil {
+			currentLR[isInstanceLifecycleReasonsCode] = *lr.Code
+			currentLR[isInstanceLifecycleReasonsMessage] = *lr.Message
+			if lr.MoreInfo != nil {
+				currentLR[isInstanceLifecycleReasonsMoreInfo] = *lr.MoreInfo
+			}
+			lifecycleReasonsList = append(lifecycleReasonsList, currentLR)
+		}
+	}
+	return lifecycleReasonsList
 }

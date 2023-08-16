@@ -95,7 +95,7 @@ func DataSourceIBMResourceKeyValidator() *validate.ResourceValidator {
 			Identifier:                 "resource_instance_id",
 			ValidateFunctionIdentifier: validate.ValidateCloudData,
 			Type:                       validate.TypeString,
-			CloudDataType:              "ResourceInstance",
+			CloudDataType:              "resource_instance",
 			CloudDataRange:             []string{"service:%s"},
 			Optional:                   true})
 

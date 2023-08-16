@@ -9,8 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
+	"github.com/IBM/vpc-beta-go-sdk/vpcbetav1"
 	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -121,6 +123,16 @@ func resourceIBMISSecurityGroupTargetCreate(d *schema.ResourceData, meta interfa
 	if crn != nil && *crn != "" && strings.Contains(*crn, "load-balancer") {
 		lbid := sgtarget.ID
 		_, errsgt := isWaitForLbSgTargetCreateAvailable(sess, *lbid, d.Timeout(schema.TimeoutCreate))
+		if errsgt != nil {
+			return errsgt
+		}
+	} else if crn != nil && *crn != "" && strings.Contains(*crn, "virtual_network_interfaces") {
+		vpcClient, err := meta.(conns.ClientSession).VpcV1BetaAPI()
+		if err != nil {
+			return err
+		}
+		vniId := sgtarget.ID
+		_, errsgt := isWaitForVNISgTargetCreateAvailable(vpcClient, *vniId, d.Timeout(schema.TimeoutCreate))
 		if errsgt != nil {
 			return errsgt
 		}
@@ -323,5 +335,38 @@ func isLBSgTargetRefreshFunc(sess *vpcv1.VpcV1, lbId string) resource.StateRefre
 		}
 
 		return lb, isLBProvisioning, nil
+	}
+}
+
+func isWaitForVNISgTargetCreateAvailable(sess *vpcbetav1.VpcbetaV1, vniId string, timeout time.Duration) (interface{}, error) {
+	log.Printf("Waiting for virtual network interface (%s) to be available.", vniId)
+
+	stateConf := &resource.StateChangeConf{
+		Pending:    []string{"pending", "updating", "waiting"},
+		Target:     []string{isLBProvisioningDone, ""},
+		Refresh:    isVNISgTargetRefreshFunc(sess, vniId),
+		Timeout:    timeout,
+		Delay:      10 * time.Second,
+		MinTimeout: 10 * time.Second,
+	}
+
+	return stateConf.WaitForState()
+}
+
+func isVNISgTargetRefreshFunc(vpcClient *vpcbetav1.VpcbetaV1, vniId string) resource.StateRefreshFunc {
+	return func() (interface{}, string, error) {
+
+		getVNIOptions := &vpcbetav1.GetVirtualNetworkInterfaceOptions{
+			ID: &vniId,
+		}
+		vni, response, err := vpcClient.GetVirtualNetworkInterface(getVNIOptions)
+		if err != nil {
+			return nil, "", fmt.Errorf("[ERROR] Error Getting Load Balancer : %s\n%s", err, response)
+		}
+
+		if *vni.LifecycleState == "failed" {
+			return vni, *vni.LifecycleState, fmt.Errorf("Network Interface creationg failed with status %s ", *vni.LifecycleState)
+		}
+		return vni, *vni.LifecycleState, nil
 	}
 }

@@ -52,10 +52,12 @@ func NewPcloudIpsecpoliciesDeleteParamsWithHTTPClient(client *http.Client) *Pclo
 	}
 }
 
-/* PcloudIpsecpoliciesDeleteParams contains all the parameters to send to the API endpoint
-   for the pcloud ipsecpolicies delete operation.
+/*
+PcloudIpsecpoliciesDeleteParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud ipsecpolicies delete operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudIpsecpoliciesDeleteParams struct {
 

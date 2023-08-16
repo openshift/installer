@@ -240,6 +240,10 @@ func resourceIBMAppIDCloudDirectoryUserCreate(ctx context.Context, d *schema.Res
 		input.LockedUntil = core.Int64Ptr(int64(lockedUntil.(int)))
 	}
 
+	if userName, ok := d.GetOk("user_name"); ok {
+		input.UserName = helpers.String(userName.(string))
+	}
+
 	user, resp, err := appIDClient.StartSignUpWithContext(ctx, input)
 
 	if err != nil {
@@ -304,6 +308,9 @@ func resourceIBMAppIDCloudDirectoryUserUpdate(ctx context.Context, d *schema.Res
 		input.LockedUntil = core.Int64Ptr(int64(lockedUntil.(int)))
 	}
 
+	if userName, ok := d.GetOk("user_name"); ok {
+		input.UserName = helpers.String(userName.(string))
+	}
 	_, resp, err := appIDClient.UpdateCloudDirectoryUserWithContext(ctx, input)
 
 	if err != nil {

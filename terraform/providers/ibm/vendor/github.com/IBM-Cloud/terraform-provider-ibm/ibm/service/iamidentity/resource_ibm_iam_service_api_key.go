@@ -12,6 +12,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/IBM/platform-services-go-sdk/iamidentityv1"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	homedir "github.com/mitchellh/go-homedir"
@@ -45,6 +46,8 @@ func ResourceIBMIAMServiceAPIKey() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The service iam_id that this API key authenticates",
+				ValidateFunc: validate.InvokeValidator("ibm_iam_service_api_key",
+					"iam_service_id"),
 			},
 
 			"account_id": {
@@ -114,6 +117,20 @@ func ResourceIBMIAMServiceAPIKey() *schema.Resource {
 			},
 		},
 	}
+}
+func ResourceIBMIAMServiceAPIKeyValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "iam_service_id",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			CloudDataType:              "iam",
+			CloudDataRange:             []string{"service:service_id", "resolved_to:id"},
+			Required:                   true})
+
+	iBMIAMServiceAPIKeyValidator := validate.ResourceValidator{ResourceName: "ibm_iam_service_api_key", Schema: validateSchema}
+	return &iBMIAMServiceAPIKeyValidator
 }
 
 type APIKey struct {
@@ -212,7 +229,7 @@ func resourceIBMIAMServiceAPIKeyRead(d *schema.ResourceData, meta interface{}) e
 	if apiKey.AccountID != nil {
 		d.Set("account_id", *apiKey.AccountID)
 	}
-	if *apiKey.Apikey != "" {
+	if apiKey.Apikey != nil && *apiKey.Apikey != "" {
 		d.Set("apikey", *apiKey.Apikey)
 	}
 	if apiKey.CRN != nil {

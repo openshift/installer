@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
@@ -40,6 +41,7 @@ func ResourceIBMSchematicsInventory() *schema.Resource {
 			"location": {
 				Type:         schema.TypeString,
 				Optional:     true,
+				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_schematics_inventory", "location"),
 				Description:  "List of locations supported by IBM Cloud Schematics service.  While creating your workspace or action, choose the right region, since it cannot be changed.  Note, this does not limit the location of the IBM Cloud resources, provisioned using Schematics.",
 			},
@@ -112,7 +114,13 @@ func resourceIBMSchematicsInventoryCreate(context context.Context, d *schema.Res
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	if r, ok := d.GetOk("location"); ok {
+		region := r.(string)
+		schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+		if updatedURL {
+			schematicsClient.Service.Options.URL = schematicsURL
+		}
+	}
 	createInventoryOptions := &schematicsv1.CreateInventoryOptions{}
 
 	if _, ok := d.GetOk("name"); ok {
@@ -150,6 +158,12 @@ func resourceIBMSchematicsInventoryRead(context context.Context, d *schema.Resou
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	inventoryIDSplit := strings.Split(d.Id(), ".")
+	region := inventoryIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 
 	getInventoryOptions := &schematicsv1.GetInventoryOptions{}
 
@@ -164,7 +178,6 @@ func resourceIBMSchematicsInventoryRead(context context.Context, d *schema.Resou
 		log.Printf("[DEBUG] GetInventoryWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("GetInventoryWithContext failed %s\n%s", err, response))
 	}
-
 	if err = d.Set("name", inventoryResourceRecord.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("[ERROR] Error setting name: %s", err))
 	}
@@ -207,6 +220,12 @@ func resourceIBMSchematicsInventoryUpdate(context context.Context, d *schema.Res
 		return diag.FromErr(err)
 	}
 
+	inventoryIDSplit := strings.Split(d.Id(), ".")
+	region := inventoryIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	updateInventoryOptions := &schematicsv1.ReplaceInventoryOptions{}
 
 	updateInventoryOptions.SetInventoryID(d.Id())
@@ -259,7 +278,12 @@ func resourceIBMSchematicsInventoryDelete(context context.Context, d *schema.Res
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
+	inventoryIDSplit := strings.Split(d.Id(), ".")
+	region := inventoryIDSplit[0]
+	schematicsURL, updatedURL, _ := SchematicsEndpointURL(region, meta)
+	if updatedURL {
+		schematicsClient.Service.Options.URL = schematicsURL
+	}
 	deleteInventoryOptions := &schematicsv1.DeleteInventoryOptions{}
 
 	deleteInventoryOptions.SetInventoryID(d.Id())

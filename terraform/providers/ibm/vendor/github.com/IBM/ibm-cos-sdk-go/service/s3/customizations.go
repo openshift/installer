@@ -1,7 +1,9 @@
 package s3
 
 import (
+	"github.com/IBM/ibm-cos-sdk-go/aws"
 	"github.com/IBM/ibm-cos-sdk-go/aws/client"
+	"github.com/IBM/ibm-cos-sdk-go/aws/endpoints"
 	"github.com/IBM/ibm-cos-sdk-go/aws/request"
 	"github.com/IBM/ibm-cos-sdk-go/internal/s3shared/arn"
 	"github.com/IBM/ibm-cos-sdk-go/internal/s3shared/s3err"
@@ -13,6 +15,14 @@ func init() {
 }
 
 func defaultInitClientFn(c *client.Client) {
+	if c.Config.UseDualStackEndpoint == endpoints.DualStackEndpointStateUnset {
+		if aws.BoolValue(c.Config.UseDualStack) {
+			c.Config.UseDualStackEndpoint = endpoints.DualStackEndpointStateEnabled
+		} else {
+			c.Config.UseDualStackEndpoint = endpoints.DualStackEndpointStateDisabled
+		}
+	}
+
 	// Support building custom endpoints based on config
 	c.Handlers.Build.PushFront(endpointHandler)
 
@@ -40,7 +50,7 @@ func defaultInitRequestFn(r *request.Request) {
 	// IBM do not popluate opCreateBucket LocationConstraint
 	// IBM COS SDK Code -- END
 	case opCopyObject, opUploadPartCopy, opCompleteMultipartUpload:
-		r.Handlers.Unmarshal.PushFront(copyMultipartStatusOKUnmarhsalError)
+		r.Handlers.Unmarshal.PushFront(copyMultipartStatusOKUnmarshalError)
 		r.Handlers.Unmarshal.PushBackNamed(s3err.RequestFailureWrapperHandler())
 	case opPutObject, opUploadPart:
 		r.Handlers.Build.PushBack(computeBodyHashes)

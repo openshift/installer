@@ -9,3 +9,4 @@ This area is primarily for IBM provider contributors and maintainers. For inform
 * IBM Provider Docs: [One of the IAM Policy Management resources](https://registry.terraform.io/providers/IBM-Cloud/ibm/latest/docs/resources/iam_access_group_policy)
 * IBM API Docs: [IBM API Docs for IAM Policy Management](https://cloud.ibm.com/apidocs/iam-policy-management)
 * IBM IAM Policy Management SDK: [IBM SDK for IAM Policy Management](https://github.com/IBM/platform-services-go-sdk/tree/main/iampolicymanagementv1)
+* IBM IAM Time-Based Conditions: [Limiting access with time-based conditions](https://cloud.ibm.com/docs/account?topic=account-iam-time-based&interface=ui)

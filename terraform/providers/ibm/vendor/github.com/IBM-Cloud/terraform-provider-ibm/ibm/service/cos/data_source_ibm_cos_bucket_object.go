@@ -79,6 +79,18 @@ func DataSourceIBMCosBucketObject() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"object_lock_legal_hold_status": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"object_lock_mode": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"object_lock_retain_until_date": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
@@ -149,6 +161,15 @@ func dataSourceIBMCosBucketObjectRead(ctx context.Context, d *schema.ResourceDat
 		}
 
 		log.Printf("[INFO] Ignoring body of COS bucket (%s) object (%s) with Content-Type %q", bucketName, objectKey, contentType)
+	}
+	if out.ObjectLockMode != nil {
+		d.Set("object_lock_mode", out.ObjectLockMode)
+	}
+	if out.ObjectLockRetainUntilDate != nil {
+		d.Set("object_lock_retain_until_date", out.ObjectLockRetainUntilDate.Format(time.RFC1123))
+	}
+	if out.ObjectLockLegalHoldStatus != nil {
+		d.Set("object_lock_legal_hold_status", out.ObjectLockLegalHoldStatus)
 	}
 
 	objectID := getObjectId(bucketCRN, objectKey, bucketLocation)

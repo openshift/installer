@@ -46,6 +46,25 @@ func DataSourceIBMISLBS() *schema.Resource {
 							Computed:    true,
 							Description: "The date and time that this pool was created.",
 						},
+						"dns": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The DNS configuration for this load balancer.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"instance_crn": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The CRN for this DNS instancer",
+									},
+									"zone_id": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: "The unique identifier of the DNS zone.",
+									},
+								},
+							},
+						},
 						ProvisioningStatus: {
 							Type:        schema.TypeString,
 							Computed:    true,
@@ -168,6 +187,14 @@ func DataSourceIBMISLBS() *schema.Resource {
 							Elem:        &schema.Schema{Type: schema.TypeString},
 							Set:         flex.ResourceIBMVPCHash,
 							Description: "Tags associated to Load Balancer",
+						},
+
+						isLBAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
 						},
 
 						isLBResourceGroup: {
@@ -295,6 +322,14 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 		//	log.Printf("******* lb ******** : (%+v)", lb)
 		lbInfo[ID] = *lb.ID
 		lbInfo[isLBName] = *lb.Name
+		dnsList := make([]map[string]interface{}, 0)
+		if lb.Dns != nil {
+			dns := map[string]interface{}{}
+			dns["instance_crn"] = lb.Dns.Instance.CRN
+			dns["zone_id"] = lb.Dns.Zone.ID
+			dnsList = append(dnsList, dns)
+			lbInfo["dns"] = dnsList
+		}
 		if lb.RouteMode != nil {
 			lbInfo[isLBRouteMode] = *lb.RouteMode
 		}
@@ -405,12 +440,20 @@ func getLbs(d *schema.ResourceData, meta interface{}) error {
 		}
 		lbInfo[isLBResourceGroup] = *lb.ResourceGroup.ID
 		lbInfo[isLBHostName] = *lb.Hostname
-		tags, err := flex.GetTagsUsingCRN(meta, *lb.CRN)
+		tags, err := flex.GetGlobalTagsUsingCRN(meta, *lb.CRN, "", isUserTagType)
 		if err != nil {
 			log.Printf(
 				"Error on get of resource vpc Load Balancer (%s) tags: %s", d.Id(), err)
 		}
 		lbInfo[isLBTags] = tags
+
+		accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *lb.CRN, "", isAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on get of resource Load Balancer (%s) access tags: %s", d.Id(), err)
+		}
+		lbInfo[isLBAccessTags] = accesstags
+
 		controller, err := flex.GetBaseController(meta)
 		if err != nil {
 			return err

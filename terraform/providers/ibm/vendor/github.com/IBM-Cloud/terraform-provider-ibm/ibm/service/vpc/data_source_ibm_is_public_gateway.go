@@ -62,6 +62,14 @@ func DataSourceIBMISPublicGateway() *schema.Resource {
 				Description: "Service tags for the public gateway instance",
 			},
 
+			isPublicGatewayAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access management tags",
+			},
+
 			flex.ResourceControllerURL: {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -146,12 +154,21 @@ func dataSourceIBMISPublicGatewayRead(d *schema.ResourceData, meta interface{}) 
 			d.Set(isPublicGatewayStatus, *publicgw.Status)
 			d.Set(isPublicGatewayZone, *publicgw.Zone.Name)
 			d.Set(isPublicGatewayVPC, *publicgw.VPC.ID)
-			tags, err := flex.GetTagsUsingCRN(meta, *publicgw.CRN)
+			tags, err := flex.GetGlobalTagsUsingCRN(meta, *publicgw.CRN, "", isUserTagType)
 			if err != nil {
 				log.Printf(
 					"Error on get of vpc public gateway (%s) tags: %s", *publicgw.ID, err)
 			}
 			d.Set(isPublicGatewayTags, tags)
+
+			accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *publicgw.CRN, "", isAccessTagType)
+			if err != nil {
+				log.Printf(
+					"Error on get of vpc public gateway (%s) access tags: %s", d.Id(), err)
+			}
+
+			d.Set(isPublicGatewayAccessTags, accesstags)
+
 			controller, err := flex.GetBaseController(meta)
 			if err != nil {
 				return err

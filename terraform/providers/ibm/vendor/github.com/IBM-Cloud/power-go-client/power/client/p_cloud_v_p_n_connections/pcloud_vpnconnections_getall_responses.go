@@ -69,7 +69,8 @@ func NewPcloudVpnconnectionsGetallOK() *PcloudVpnconnectionsGetallOK {
 	return &PcloudVpnconnectionsGetallOK{}
 }
 
-/* PcloudVpnconnectionsGetallOK describes a response with status code 200, with default header values.
+/*
+PcloudVpnconnectionsGetallOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -77,9 +78,39 @@ type PcloudVpnconnectionsGetallOK struct {
 	Payload *models.VPNConnections
 }
 
+// IsSuccess returns true when this pcloud vpnconnections getall o k response has a 2xx status code
+func (o *PcloudVpnconnectionsGetallOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud vpnconnections getall o k response has a 3xx status code
+func (o *PcloudVpnconnectionsGetallOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections getall o k response has a 4xx status code
+func (o *PcloudVpnconnectionsGetallOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud vpnconnections getall o k response has a 5xx status code
+func (o *PcloudVpnconnectionsGetallOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections getall o k response a status code equal to that given
+func (o *PcloudVpnconnectionsGetallOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudVpnconnectionsGetallOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsGetallOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsGetallOK) GetPayload() *models.VPNConnections {
 	return o.Payload
 }
@@ -101,7 +132,8 @@ func NewPcloudVpnconnectionsGetallBadRequest() *PcloudVpnconnectionsGetallBadReq
 	return &PcloudVpnconnectionsGetallBadRequest{}
 }
 
-/* PcloudVpnconnectionsGetallBadRequest describes a response with status code 400, with default header values.
+/*
+PcloudVpnconnectionsGetallBadRequest describes a response with status code 400, with default header values.
 
 Bad Request
 */
@@ -109,9 +141,39 @@ type PcloudVpnconnectionsGetallBadRequest struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections getall bad request response has a 2xx status code
+func (o *PcloudVpnconnectionsGetallBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections getall bad request response has a 3xx status code
+func (o *PcloudVpnconnectionsGetallBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections getall bad request response has a 4xx status code
+func (o *PcloudVpnconnectionsGetallBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections getall bad request response has a 5xx status code
+func (o *PcloudVpnconnectionsGetallBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections getall bad request response a status code equal to that given
+func (o *PcloudVpnconnectionsGetallBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
 func (o *PcloudVpnconnectionsGetallBadRequest) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallBadRequest  %+v", 400, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsGetallBadRequest) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallBadRequest  %+v", 400, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsGetallBadRequest) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -133,7 +195,8 @@ func NewPcloudVpnconnectionsGetallUnauthorized() *PcloudVpnconnectionsGetallUnau
 	return &PcloudVpnconnectionsGetallUnauthorized{}
 }
 
-/* PcloudVpnconnectionsGetallUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudVpnconnectionsGetallUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -141,9 +204,39 @@ type PcloudVpnconnectionsGetallUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections getall unauthorized response has a 2xx status code
+func (o *PcloudVpnconnectionsGetallUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections getall unauthorized response has a 3xx status code
+func (o *PcloudVpnconnectionsGetallUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections getall unauthorized response has a 4xx status code
+func (o *PcloudVpnconnectionsGetallUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections getall unauthorized response has a 5xx status code
+func (o *PcloudVpnconnectionsGetallUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections getall unauthorized response a status code equal to that given
+func (o *PcloudVpnconnectionsGetallUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudVpnconnectionsGetallUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsGetallUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsGetallUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -165,7 +258,8 @@ func NewPcloudVpnconnectionsGetallForbidden() *PcloudVpnconnectionsGetallForbidd
 	return &PcloudVpnconnectionsGetallForbidden{}
 }
 
-/* PcloudVpnconnectionsGetallForbidden describes a response with status code 403, with default header values.
+/*
+PcloudVpnconnectionsGetallForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -173,9 +267,39 @@ type PcloudVpnconnectionsGetallForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections getall forbidden response has a 2xx status code
+func (o *PcloudVpnconnectionsGetallForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections getall forbidden response has a 3xx status code
+func (o *PcloudVpnconnectionsGetallForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections getall forbidden response has a 4xx status code
+func (o *PcloudVpnconnectionsGetallForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections getall forbidden response has a 5xx status code
+func (o *PcloudVpnconnectionsGetallForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections getall forbidden response a status code equal to that given
+func (o *PcloudVpnconnectionsGetallForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *PcloudVpnconnectionsGetallForbidden) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallForbidden  %+v", 403, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsGetallForbidden) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallForbidden  %+v", 403, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsGetallForbidden) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -197,7 +321,8 @@ func NewPcloudVpnconnectionsGetallNotFound() *PcloudVpnconnectionsGetallNotFound
 	return &PcloudVpnconnectionsGetallNotFound{}
 }
 
-/* PcloudVpnconnectionsGetallNotFound describes a response with status code 404, with default header values.
+/*
+PcloudVpnconnectionsGetallNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -205,9 +330,39 @@ type PcloudVpnconnectionsGetallNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections getall not found response has a 2xx status code
+func (o *PcloudVpnconnectionsGetallNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections getall not found response has a 3xx status code
+func (o *PcloudVpnconnectionsGetallNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections getall not found response has a 4xx status code
+func (o *PcloudVpnconnectionsGetallNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud vpnconnections getall not found response has a 5xx status code
+func (o *PcloudVpnconnectionsGetallNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud vpnconnections getall not found response a status code equal to that given
+func (o *PcloudVpnconnectionsGetallNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudVpnconnectionsGetallNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsGetallNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsGetallNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -229,7 +384,8 @@ func NewPcloudVpnconnectionsGetallInternalServerError() *PcloudVpnconnectionsGet
 	return &PcloudVpnconnectionsGetallInternalServerError{}
 }
 
-/* PcloudVpnconnectionsGetallInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudVpnconnectionsGetallInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -237,9 +393,39 @@ type PcloudVpnconnectionsGetallInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud vpnconnections getall internal server error response has a 2xx status code
+func (o *PcloudVpnconnectionsGetallInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud vpnconnections getall internal server error response has a 3xx status code
+func (o *PcloudVpnconnectionsGetallInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud vpnconnections getall internal server error response has a 4xx status code
+func (o *PcloudVpnconnectionsGetallInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud vpnconnections getall internal server error response has a 5xx status code
+func (o *PcloudVpnconnectionsGetallInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud vpnconnections getall internal server error response a status code equal to that given
+func (o *PcloudVpnconnectionsGetallInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudVpnconnectionsGetallInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudVpnconnectionsGetallInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v1/cloud-instances/{cloud_instance_id}/vpn/vpn-connections][%d] pcloudVpnconnectionsGetallInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudVpnconnectionsGetallInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

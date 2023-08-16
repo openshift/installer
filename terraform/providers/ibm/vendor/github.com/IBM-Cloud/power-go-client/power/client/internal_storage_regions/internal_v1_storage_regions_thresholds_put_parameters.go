@@ -54,10 +54,12 @@ func NewInternalV1StorageRegionsThresholdsPutParamsWithHTTPClient(client *http.C
 	}
 }
 
-/* InternalV1StorageRegionsThresholdsPutParams contains all the parameters to send to the API endpoint
-   for the internal v1 storage regions thresholds put operation.
+/*
+InternalV1StorageRegionsThresholdsPutParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the internal v1 storage regions thresholds put operation.
+
+	Typically these are written to a http.Request.
 */
 type InternalV1StorageRegionsThresholdsPutParams struct {
 

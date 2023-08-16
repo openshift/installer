@@ -8,10 +8,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	kp "github.com/IBM/keyprotect-go-client"
-	rc "github.com/IBM/platform-services-go-sdk/resourcecontrollerv2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -68,48 +66,21 @@ func ResourceIBMKeyRingValidator() *validate.ResourceValidator {
 }
 
 func resourceIBMKmsKeyRingCreate(d *schema.ResourceData, meta interface{}) error {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-	if err != nil {
-		return err
-	}
-
-	instanceID := d.Get("instance_id").(string)
-	CrnInstanceID := strings.Split(instanceID, ":")
-	if len(CrnInstanceID) > 3 {
-		instanceID = CrnInstanceID[len(CrnInstanceID)-3]
-	}
-	endpointType := d.Get("endpoint_type").(string)
+	instanceID := getInstanceIDFromCRN(d.Get("instance_id").(string))
 	keyRingID := d.Get("key_ring_id").(string)
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+	kpAPI, instanceCRN, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
 	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	instanceCRN := instanceData.CRN
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return err
-	}
-	kpAPI.URL = URL
-	kpAPI.Config.InstanceID = instanceID
 
 	err = kpAPI.CreateKeyRing(context.Background(), keyRingID)
 	if err != nil {
 		return fmt.Errorf("[ERROR] Error while creating key ring : %s", err)
 	}
 	var keyRing string
-	keyRings, err2 := kpAPI.GetKeyRings(context.Background())
-	if err2 != nil {
-		return fmt.Errorf("[ERROR] Error while fetching key ring : %s", err2)
+	keyRings, err := kpAPI.GetKeyRings(context.Background())
+	if err != nil {
+		return fmt.Errorf("[ERROR] Error while fetching key ring : %s", err)
 	}
 	for _, v := range keyRings.KeyRings {
 		if v.ID == keyRingID {
@@ -124,38 +95,15 @@ func resourceIBMKmsKeyRingCreate(d *schema.ResourceData, meta interface{}) error
 }
 
 func resourceIBMKmsKeyRingRead(d *schema.ResourceData, meta interface{}) error {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-	if err != nil {
-		return err
-	}
 	id := strings.Split(d.Id(), ":keyRing:")
 	if len(id) < 2 {
 		return fmt.Errorf("[ERROR] Incorrect ID %s: Id should be a combination of keyRingID:keyRing:InstanceCRN", d.Id())
 	}
-	crn := id[1]
-	crnData := strings.Split(crn, ":")
-	endpointType := d.Get("endpoint_type").(string)
-	instanceID := crnData[len(crnData)-3]
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+	instanceID := getInstanceIDFromCRN(id[1])
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
 	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
-	if err != nil {
-		return err
-	}
-	kpAPI.URL = URL
-	kpAPI.Config.InstanceID = instanceID
 	_, err = kpAPI.GetKeyRings(context.Background())
 	if err != nil {
 		kpError := err.(*kp.Error)
@@ -177,42 +125,19 @@ func resourceIBMKmsKeyRingRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceIBMKmsKeyRingDelete(d *schema.ResourceData, meta interface{}) error {
-	kpAPI, err := meta.(conns.ClientSession).KeyManagementAPI()
-	if err != nil {
-		return err
-	}
 	id := strings.Split(d.Id(), ":keyRing:")
-	crn := id[1]
-	crnData := strings.Split(crn, ":")
-	endpointType := d.Get("endpoint_type").(string)
-	instanceID := crnData[len(crnData)-3]
-
-	rsConClient, err := meta.(conns.ClientSession).ResourceControllerV2API()
+	instanceID := getInstanceIDFromCRN(id[1])
+	kpAPI, _, err := populateKPClient(d, meta, instanceID)
 	if err != nil {
 		return err
 	}
-	resourceInstanceGet := rc.GetResourceInstanceOptions{
-		ID: &instanceID,
-	}
-
-	instanceData, resp, err := rsConClient.GetResourceInstance(&resourceInstanceGet)
-	if err != nil || instanceData == nil {
-		return fmt.Errorf("[ERROR] Error retrieving resource instance: %s with resp code: %s", err, resp)
-	}
-	extensions := instanceData.Extensions
-	URL, err := KmsEndpointURL(kpAPI, endpointType, extensions)
+	err = kpAPI.DeleteKeyRing(context.Background(), id[0])
 	if err != nil {
-		return err
-	}
-	kpAPI.URL = URL
-	kpAPI.Config.InstanceID = instanceID
-	err1 := kpAPI.DeleteKeyRing(context.Background(), id[0])
-	if err1 != nil {
-		kpError := err1.(*kp.Error)
+		kpError := err.(*kp.Error)
 		if kpError.StatusCode == 404 || kpError.StatusCode == 409 {
 			return nil
 		} else {
-			return fmt.Errorf(" failed to Destroy key ring with error: %s", err1)
+			return fmt.Errorf(" failed to Destroy key ring with error: %s", err)
 		}
 	}
 	return nil

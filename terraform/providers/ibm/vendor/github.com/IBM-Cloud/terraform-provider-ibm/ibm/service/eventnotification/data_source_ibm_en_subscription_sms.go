@@ -55,19 +55,71 @@ func DataSourceIBMEnSMSSubscription() *schema.Resource {
 				Description: "The additional attributes",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"additional_properties": {
+						"invited": {
 							Type:        schema.TypeList,
 							Computed:    true,
-							Description: "Additional attributes for sms and webhook subscription.",
+							Description: "The phone number to send the SMS to.",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"to": {
-										Type:        schema.TypeList,
+									"phone_number": {
+										Type:        schema.TypeString,
+										Optional:    true,
 										Computed:    true,
-										Description: "The phone number to send the SMS to.",
-										Elem: &schema.Schema{
-											Type: schema.TypeString,
-										},
+										Description: "The email address to reply to.",
+									},
+									"updated_at": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The email address user name to reply to.",
+									},
+									"expires_at": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The email address user name to reply to.",
+									},
+								},
+							},
+						},
+						"subscribed": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The phone number to send the SMS to.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"phone_number": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The email address to reply to.",
+									},
+									"updated_at": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The email address user name to reply to.",
+									},
+								},
+							},
+						},
+						"unsubscribed": {
+							Type:        schema.TypeList,
+							Computed:    true,
+							Description: "The phone number to send the SMS to.",
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"phone_number": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The email address to reply to.",
+									},
+									"updated_at": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Computed:    true,
+										Description: "The email address user name to reply to.",
 									},
 								},
 							},
@@ -146,17 +198,18 @@ func enSMSSubscriptionFlattenAttributes(result en.SubscriptionAttributesIntf) (f
 func enSMSSubscriptionToMap(attributeItem *en.SubscriptionAttributes) (attributeMap map[string]interface{}) {
 	attributeMap = map[string]interface{}{}
 
-	prop := []map[string]interface{}{}
-
-	b := attributeItem.GetProperties()
-	m := make(map[string]interface{})
-	if len(b) > 0 {
-		for k, v := range b {
-			m[k] = v
-		}
+	invitedmap := make(map[string]interface{})
+	if attributeItem.Invited != nil {
+		invitedmap["invited"] = attributeItem.Invited
 	}
-	prop = append(prop, m)
-	attributeMap["additional_properties"] = prop
+	subscribedmap := make(map[string]interface{})
+	if attributeItem.Subscribed != nil {
+		subscribedmap["subscribed"] = attributeItem.Subscribed
+	}
+	unsubscribedmap := make(map[string]interface{})
+	if attributeItem.Unsubscribed != nil {
+		unsubscribedmap["unsubscribed"] = attributeItem.Unsubscribed
+	}
 
 	return attributeMap
 }

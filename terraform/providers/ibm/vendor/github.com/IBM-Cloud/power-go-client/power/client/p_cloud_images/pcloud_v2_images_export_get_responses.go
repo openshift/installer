@@ -57,7 +57,8 @@ func NewPcloudV2ImagesExportGetOK() *PcloudV2ImagesExportGetOK {
 	return &PcloudV2ImagesExportGetOK{}
 }
 
-/* PcloudV2ImagesExportGetOK describes a response with status code 200, with default header values.
+/*
+PcloudV2ImagesExportGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -65,9 +66,39 @@ type PcloudV2ImagesExportGetOK struct {
 	Payload *models.Job
 }
 
+// IsSuccess returns true when this pcloud v2 images export get o k response has a 2xx status code
+func (o *PcloudV2ImagesExportGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this pcloud v2 images export get o k response has a 3xx status code
+func (o *PcloudV2ImagesExportGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 images export get o k response has a 4xx status code
+func (o *PcloudV2ImagesExportGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 images export get o k response has a 5xx status code
+func (o *PcloudV2ImagesExportGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 images export get o k response a status code equal to that given
+func (o *PcloudV2ImagesExportGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *PcloudV2ImagesExportGetOK) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetOK  %+v", 200, o.Payload)
 }
+
+func (o *PcloudV2ImagesExportGetOK) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetOK  %+v", 200, o.Payload)
+}
+
 func (o *PcloudV2ImagesExportGetOK) GetPayload() *models.Job {
 	return o.Payload
 }
@@ -89,7 +120,8 @@ func NewPcloudV2ImagesExportGetUnauthorized() *PcloudV2ImagesExportGetUnauthoriz
 	return &PcloudV2ImagesExportGetUnauthorized{}
 }
 
-/* PcloudV2ImagesExportGetUnauthorized describes a response with status code 401, with default header values.
+/*
+PcloudV2ImagesExportGetUnauthorized describes a response with status code 401, with default header values.
 
 Unauthorized
 */
@@ -97,9 +129,39 @@ type PcloudV2ImagesExportGetUnauthorized struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 images export get unauthorized response has a 2xx status code
+func (o *PcloudV2ImagesExportGetUnauthorized) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 images export get unauthorized response has a 3xx status code
+func (o *PcloudV2ImagesExportGetUnauthorized) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 images export get unauthorized response has a 4xx status code
+func (o *PcloudV2ImagesExportGetUnauthorized) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 images export get unauthorized response has a 5xx status code
+func (o *PcloudV2ImagesExportGetUnauthorized) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 images export get unauthorized response a status code equal to that given
+func (o *PcloudV2ImagesExportGetUnauthorized) IsCode(code int) bool {
+	return code == 401
+}
+
 func (o *PcloudV2ImagesExportGetUnauthorized) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetUnauthorized  %+v", 401, o.Payload)
 }
+
+func (o *PcloudV2ImagesExportGetUnauthorized) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetUnauthorized  %+v", 401, o.Payload)
+}
+
 func (o *PcloudV2ImagesExportGetUnauthorized) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -121,7 +183,8 @@ func NewPcloudV2ImagesExportGetNotFound() *PcloudV2ImagesExportGetNotFound {
 	return &PcloudV2ImagesExportGetNotFound{}
 }
 
-/* PcloudV2ImagesExportGetNotFound describes a response with status code 404, with default header values.
+/*
+PcloudV2ImagesExportGetNotFound describes a response with status code 404, with default header values.
 
 Not Found
 */
@@ -129,9 +192,39 @@ type PcloudV2ImagesExportGetNotFound struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 images export get not found response has a 2xx status code
+func (o *PcloudV2ImagesExportGetNotFound) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 images export get not found response has a 3xx status code
+func (o *PcloudV2ImagesExportGetNotFound) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 images export get not found response has a 4xx status code
+func (o *PcloudV2ImagesExportGetNotFound) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this pcloud v2 images export get not found response has a 5xx status code
+func (o *PcloudV2ImagesExportGetNotFound) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this pcloud v2 images export get not found response a status code equal to that given
+func (o *PcloudV2ImagesExportGetNotFound) IsCode(code int) bool {
+	return code == 404
+}
+
 func (o *PcloudV2ImagesExportGetNotFound) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetNotFound  %+v", 404, o.Payload)
 }
+
+func (o *PcloudV2ImagesExportGetNotFound) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetNotFound  %+v", 404, o.Payload)
+}
+
 func (o *PcloudV2ImagesExportGetNotFound) GetPayload() *models.Error {
 	return o.Payload
 }
@@ -153,7 +246,8 @@ func NewPcloudV2ImagesExportGetInternalServerError() *PcloudV2ImagesExportGetInt
 	return &PcloudV2ImagesExportGetInternalServerError{}
 }
 
-/* PcloudV2ImagesExportGetInternalServerError describes a response with status code 500, with default header values.
+/*
+PcloudV2ImagesExportGetInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -161,9 +255,39 @@ type PcloudV2ImagesExportGetInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this pcloud v2 images export get internal server error response has a 2xx status code
+func (o *PcloudV2ImagesExportGetInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this pcloud v2 images export get internal server error response has a 3xx status code
+func (o *PcloudV2ImagesExportGetInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this pcloud v2 images export get internal server error response has a 4xx status code
+func (o *PcloudV2ImagesExportGetInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this pcloud v2 images export get internal server error response has a 5xx status code
+func (o *PcloudV2ImagesExportGetInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this pcloud v2 images export get internal server error response a status code equal to that given
+func (o *PcloudV2ImagesExportGetInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *PcloudV2ImagesExportGetInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *PcloudV2ImagesExportGetInternalServerError) String() string {
+	return fmt.Sprintf("[GET /pcloud/v2/cloud-instances/{cloud_instance_id}/images/{image_id}/export][%d] pcloudV2ImagesExportGetInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *PcloudV2ImagesExportGetInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

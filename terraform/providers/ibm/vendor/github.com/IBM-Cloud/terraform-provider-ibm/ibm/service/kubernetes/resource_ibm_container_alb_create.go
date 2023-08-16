@@ -12,6 +12,7 @@ import (
 
 	v1 "github.com/IBM-Cloud/bluemix-go/api/container/containerv1"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 )
 
 func ResourceIBMContainerAlbCreate() *schema.Resource {
@@ -75,6 +76,9 @@ func ResourceIBMContainerAlbCreate() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The ID of the cluster that the ALB belongs to.",
+				ValidateFunc: validate.InvokeValidator(
+					"ibm_container_alb_create",
+					"cluster"),
 			},
 
 			//response
@@ -176,4 +180,19 @@ func resourceIBMContainerClassicAlbCreate(d *schema.ResourceData, meta interface
 
 	d.SetId(albResp.Alb)
 	return nil
+}
+
+func ResourceIBMContainerAlbCreateValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerAlbCreateValidator := validate.ResourceValidator{ResourceName: "ibm_container_alb_create", Schema: validateSchema}
+	return &iBMContainerAlbCreateValidator
 }

@@ -52,10 +52,12 @@ func NewPcloudNetworksGetallParamsWithHTTPClient(client *http.Client) *PcloudNet
 	}
 }
 
-/* PcloudNetworksGetallParams contains all the parameters to send to the API endpoint
-   for the pcloud networks getall operation.
+/*
+PcloudNetworksGetallParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the pcloud networks getall operation.
+
+	Typically these are written to a http.Request.
 */
 type PcloudNetworksGetallParams struct {
 

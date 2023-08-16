@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.46.1-a5569134-20220316-164819
+ * IBM OpenAPI SDK Code Generator Version: 3.62.2-e5d4c32b-20221214-193750
  */
 
 // Package ukov4 : Operations and models for the UkoV4 service
@@ -28,6 +28,7 @@ import (
 	"net/http"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/IBM/go-sdk-core/v5/core"
@@ -37,13 +38,10 @@ import (
 
 // UkoV4 : API for UKO used for key management.
 //
-// API Version: 4.0.5
+// API Version: 4.7.9
 type UkoV4 struct {
 	Service *core.BaseService
 }
-
-// DefaultServiceURL is the default URL to make service requests to.
-const DefaultServiceURL = "https://uko.cloud.ibm.com"
 
 // DefaultServiceName is the default key used to find external configuration information.
 const DefaultServiceName = "uko"
@@ -87,7 +85,6 @@ func NewUkoV4UsingExternalConfig(options *UkoV4Options) (uko *UkoV4, err error) 
 // NewUkoV4 : constructs an instance of UkoV4 with passed in options.
 func NewUkoV4(options *UkoV4Options) (service *UkoV4, err error) {
 	serviceOptions := &core.ServiceOptions{
-		URL:           DefaultServiceURL,
 		Authenticator: options.Authenticator,
 	}
 
@@ -162,7 +159,8 @@ func (uko *UkoV4) DisableRetries() {
 }
 
 // ListManagedKeys : List managed keys
-// List all managed keys in the instance.
+// List all managed keys in the instance. It is possible to sort by the following parameters: name, algorithm, state,
+// activation_date, deactivation_date, created_at, updated_at, size, vault.id.
 func (uko *UkoV4) ListManagedKeys(listManagedKeysOptions *ListManagedKeysOptions) (result *ManagedKeyList, response *core.DetailedResponse, err error) {
 	return uko.ListManagedKeysWithContext(context.Background(), listManagedKeysOptions)
 }
@@ -193,19 +191,88 @@ func (uko *UkoV4) ListManagedKeysWithContext(ctx context.Context, listManagedKey
 	builder.AddHeader("Accept", "application/json")
 
 	if listManagedKeysOptions.VaultID != nil {
-		builder.AddQuery("vault.id", fmt.Sprint(*listManagedKeysOptions.VaultID))
+		builder.AddQuery("vault.id", strings.Join(listManagedKeysOptions.VaultID, ","))
 	}
 	if listManagedKeysOptions.Algorithm != nil {
-		builder.AddQuery("algorithm", fmt.Sprint(*listManagedKeysOptions.Algorithm))
+		builder.AddQuery("algorithm", strings.Join(listManagedKeysOptions.Algorithm, ","))
 	}
 	if listManagedKeysOptions.State != nil {
-		builder.AddQuery("state", fmt.Sprint(*listManagedKeysOptions.State))
+		builder.AddQuery("state", strings.Join(listManagedKeysOptions.State, ","))
 	}
 	if listManagedKeysOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listManagedKeysOptions.Limit))
 	}
 	if listManagedKeysOptions.Offset != nil {
 		builder.AddQuery("offset", fmt.Sprint(*listManagedKeysOptions.Offset))
+	}
+	if listManagedKeysOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listManagedKeysOptions.Sort, ","))
+	}
+	if listManagedKeysOptions.Label != nil {
+		builder.AddQuery("label", fmt.Sprint(*listManagedKeysOptions.Label))
+	}
+	if listManagedKeysOptions.ActivationDate != nil {
+		builder.AddQuery("activation_date", fmt.Sprint(*listManagedKeysOptions.ActivationDate))
+	}
+	if listManagedKeysOptions.ActivationDateMin != nil {
+		builder.AddQuery("activation_date_min", fmt.Sprint(*listManagedKeysOptions.ActivationDateMin))
+	}
+	if listManagedKeysOptions.ActivationDateMax != nil {
+		builder.AddQuery("activation_date_max", fmt.Sprint(*listManagedKeysOptions.ActivationDateMax))
+	}
+	if listManagedKeysOptions.DeactivationDate != nil {
+		builder.AddQuery("deactivation_date", fmt.Sprint(*listManagedKeysOptions.DeactivationDate))
+	}
+	if listManagedKeysOptions.DeactivationDateMin != nil {
+		builder.AddQuery("deactivation_date_min", fmt.Sprint(*listManagedKeysOptions.DeactivationDateMin))
+	}
+	if listManagedKeysOptions.DeactivationDateMax != nil {
+		builder.AddQuery("deactivation_date_max", fmt.Sprint(*listManagedKeysOptions.DeactivationDateMax))
+	}
+	if listManagedKeysOptions.ExpirationDate != nil {
+		builder.AddQuery("expiration_date", fmt.Sprint(*listManagedKeysOptions.ExpirationDate))
+	}
+	if listManagedKeysOptions.ExpirationDateMin != nil {
+		builder.AddQuery("expiration_date_min", fmt.Sprint(*listManagedKeysOptions.ExpirationDateMin))
+	}
+	if listManagedKeysOptions.ExpirationDateMax != nil {
+		builder.AddQuery("expiration_date_max", fmt.Sprint(*listManagedKeysOptions.ExpirationDateMax))
+	}
+	if listManagedKeysOptions.CreatedAt != nil {
+		builder.AddQuery("created_at", fmt.Sprint(*listManagedKeysOptions.CreatedAt))
+	}
+	if listManagedKeysOptions.CreatedAtMin != nil {
+		builder.AddQuery("created_at_min", fmt.Sprint(*listManagedKeysOptions.CreatedAtMin))
+	}
+	if listManagedKeysOptions.CreatedAtMax != nil {
+		builder.AddQuery("created_at_max", fmt.Sprint(*listManagedKeysOptions.CreatedAtMax))
+	}
+	if listManagedKeysOptions.UpdatedAt != nil {
+		builder.AddQuery("updated_at", fmt.Sprint(*listManagedKeysOptions.UpdatedAt))
+	}
+	if listManagedKeysOptions.UpdatedAtMin != nil {
+		builder.AddQuery("updated_at_min", fmt.Sprint(*listManagedKeysOptions.UpdatedAtMin))
+	}
+	if listManagedKeysOptions.UpdatedAtMax != nil {
+		builder.AddQuery("updated_at_max", fmt.Sprint(*listManagedKeysOptions.UpdatedAtMax))
+	}
+	if listManagedKeysOptions.Size != nil {
+		builder.AddQuery("size", fmt.Sprint(*listManagedKeysOptions.Size))
+	}
+	if listManagedKeysOptions.SizeMin != nil {
+		builder.AddQuery("size_min", fmt.Sprint(*listManagedKeysOptions.SizeMin))
+	}
+	if listManagedKeysOptions.SizeMax != nil {
+		builder.AddQuery("size_max", fmt.Sprint(*listManagedKeysOptions.SizeMax))
+	}
+	if listManagedKeysOptions.ReferencedKeystoresType != nil {
+		builder.AddQuery("referenced_keystores[].type", strings.Join(listManagedKeysOptions.ReferencedKeystoresType, ","))
+	}
+	if listManagedKeysOptions.ReferencedKeystoresName != nil {
+		builder.AddQuery("referenced_keystores[].name", strings.Join(listManagedKeysOptions.ReferencedKeystoresName, ","))
+	}
+	if listManagedKeysOptions.InstancesKeystoreType != nil {
+		builder.AddQuery("instances[].keystore.type", strings.Join(listManagedKeysOptions.InstancesKeystoreType, ","))
 	}
 
 	request, err := builder.Build()
@@ -507,6 +574,80 @@ func (uko *UkoV4) UpdateManagedKeyWithContext(ctx context.Context, updateManaged
 	}
 	if rawResponse != nil {
 		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalManagedKey)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// ListAssociatedResourcesForManagedKey : List associated resources for a managed key
+// You can use this endpoint to obtain a list of resources associated with this managed key in IBM Cloud; which cloud
+// resources are protected by the key you specify.
+func (uko *UkoV4) ListAssociatedResourcesForManagedKey(listAssociatedResourcesForManagedKeyOptions *ListAssociatedResourcesForManagedKeyOptions) (result *AssociatedResourceList, response *core.DetailedResponse, err error) {
+	return uko.ListAssociatedResourcesForManagedKeyWithContext(context.Background(), listAssociatedResourcesForManagedKeyOptions)
+}
+
+// ListAssociatedResourcesForManagedKeyWithContext is an alternate form of the ListAssociatedResourcesForManagedKey method which supports a Context parameter
+func (uko *UkoV4) ListAssociatedResourcesForManagedKeyWithContext(ctx context.Context, listAssociatedResourcesForManagedKeyOptions *ListAssociatedResourcesForManagedKeyOptions) (result *AssociatedResourceList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listAssociatedResourcesForManagedKeyOptions, "listAssociatedResourcesForManagedKeyOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listAssociatedResourcesForManagedKeyOptions, "listAssociatedResourcesForManagedKeyOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *listAssociatedResourcesForManagedKeyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = uko.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(uko.Service.Options.URL, `/api/v4/managed_keys/{id}/associated_resources`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listAssociatedResourcesForManagedKeyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("uko", "V4", "ListAssociatedResourcesForManagedKey")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listAssociatedResourcesForManagedKeyOptions.UKOVault != nil {
+		builder.AddHeader("UKO-Vault", fmt.Sprint(*listAssociatedResourcesForManagedKeyOptions.UKOVault))
+	}
+
+	if listAssociatedResourcesForManagedKeyOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listAssociatedResourcesForManagedKeyOptions.Limit))
+	}
+	if listAssociatedResourcesForManagedKeyOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listAssociatedResourcesForManagedKeyOptions.Offset))
+	}
+	if listAssociatedResourcesForManagedKeyOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listAssociatedResourcesForManagedKeyOptions.Sort, ","))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = uko.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAssociatedResourceList)
 		if err != nil {
 			return
 		}
@@ -849,6 +990,72 @@ func (uko *UkoV4) DestroyManagedKeyWithContext(ctx context.Context, destroyManag
 	return
 }
 
+// SyncManagedKey : Sync a managed key in keystores
+// Perform the synchronisation operation on a managed key to align the states in the associated keystores.
+func (uko *UkoV4) SyncManagedKey(syncManagedKeyOptions *SyncManagedKeyOptions) (result *StatusInKeystores, response *core.DetailedResponse, err error) {
+	return uko.SyncManagedKeyWithContext(context.Background(), syncManagedKeyOptions)
+}
+
+// SyncManagedKeyWithContext is an alternate form of the SyncManagedKey method which supports a Context parameter
+func (uko *UkoV4) SyncManagedKeyWithContext(ctx context.Context, syncManagedKeyOptions *SyncManagedKeyOptions) (result *StatusInKeystores, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(syncManagedKeyOptions, "syncManagedKeyOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(syncManagedKeyOptions, "syncManagedKeyOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *syncManagedKeyOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = uko.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(uko.Service.Options.URL, `/api/v4/managed_keys/{id}/sync_status_in_keystores`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range syncManagedKeyOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("uko", "V4", "SyncManagedKey")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if syncManagedKeyOptions.UKOVault != nil {
+		builder.AddHeader("UKO-Vault", fmt.Sprint(*syncManagedKeyOptions.UKOVault))
+	}
+	if syncManagedKeyOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*syncManagedKeyOptions.IfMatch))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = uko.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalStatusInKeystores)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // ListKeyTemplates : List key templates
 // List all key templates in the instance.
 func (uko *UkoV4) ListKeyTemplates(listKeyTemplatesOptions *ListKeyTemplatesOptions) (result *TemplateList, response *core.DetailedResponse, err error) {
@@ -881,10 +1088,13 @@ func (uko *UkoV4) ListKeyTemplatesWithContext(ctx context.Context, listKeyTempla
 	builder.AddHeader("Accept", "application/json")
 
 	if listKeyTemplatesOptions.VaultID != nil {
-		builder.AddQuery("vault.id", fmt.Sprint(*listKeyTemplatesOptions.VaultID))
+		builder.AddQuery("vault.id", strings.Join(listKeyTemplatesOptions.VaultID, ","))
 	}
 	if listKeyTemplatesOptions.KeyAlgorithm != nil {
 		builder.AddQuery("key.algorithm", fmt.Sprint(*listKeyTemplatesOptions.KeyAlgorithm))
+	}
+	if listKeyTemplatesOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listKeyTemplatesOptions.Sort, ","))
 	}
 	if listKeyTemplatesOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listKeyTemplatesOptions.Limit))
@@ -1228,19 +1438,34 @@ func (uko *UkoV4) ListKeystoresWithContext(ctx context.Context, listKeystoresOpt
 	builder.AddHeader("Accept", "application/json")
 
 	if listKeystoresOptions.Type != nil {
-		builder.AddQuery("type", fmt.Sprint(*listKeystoresOptions.Type))
+		builder.AddQuery("type", strings.Join(listKeystoresOptions.Type, ","))
+	}
+	if listKeystoresOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listKeystoresOptions.Name))
+	}
+	if listKeystoresOptions.Description != nil {
+		builder.AddQuery("description", fmt.Sprint(*listKeystoresOptions.Description))
 	}
 	if listKeystoresOptions.Group != nil {
 		builder.AddQuery("group", fmt.Sprint(*listKeystoresOptions.Group))
 	}
+	if listKeystoresOptions.Groups != nil {
+		builder.AddQuery("groups[]", fmt.Sprint(*listKeystoresOptions.Groups))
+	}
 	if listKeystoresOptions.VaultID != nil {
-		builder.AddQuery("vault.id", fmt.Sprint(*listKeystoresOptions.VaultID))
+		builder.AddQuery("vault.id", strings.Join(listKeystoresOptions.VaultID, ","))
+	}
+	if listKeystoresOptions.Location != nil {
+		builder.AddQuery("location", fmt.Sprint(*listKeystoresOptions.Location))
 	}
 	if listKeystoresOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listKeystoresOptions.Limit))
 	}
 	if listKeystoresOptions.Offset != nil {
 		builder.AddQuery("offset", fmt.Sprint(*listKeystoresOptions.Offset))
+	}
+	if listKeystoresOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listKeystoresOptions.Sort, ","))
 	}
 
 	request, err := builder.Build()
@@ -1265,7 +1490,10 @@ func (uko *UkoV4) ListKeystoresWithContext(ctx context.Context, listKeystoresOpt
 }
 
 // CreateKeystore : Create an internal keystore or a keystore connection
-// Creates a new internal keystore or a connection to an external keystore of the requested type.
+// Creates a new internal keystore or a connection to an external keystore of the requested type.  If the `dry_run`
+// query parameter is used, then a new keystore is not created in the database,  only a test is performed to verify if
+// the connection information is correct. It is possible to sort by the following parameters: name, created_at,
+// updated_at, vault.id.
 func (uko *UkoV4) CreateKeystore(createKeystoreOptions *CreateKeystoreOptions) (result KeystoreIntf, response *core.DetailedResponse, err error) {
 	return uko.CreateKeystoreWithContext(context.Background(), createKeystoreOptions)
 }
@@ -1301,6 +1529,10 @@ func (uko *UkoV4) CreateKeystoreWithContext(ctx context.Context, createKeystoreO
 	builder.AddHeader("Content-Type", "application/json")
 	if createKeystoreOptions.UKOVault != nil {
 		builder.AddHeader("UKO-Vault", fmt.Sprint(*createKeystoreOptions.UKOVault))
+	}
+
+	if createKeystoreOptions.DryRun != nil {
+		builder.AddQuery("dry_run", fmt.Sprint(*createKeystoreOptions.DryRun))
 	}
 
 	_, err = builder.SetBodyContentJSON(createKeystoreOptions.KeystoreBody)
@@ -1520,6 +1752,79 @@ func (uko *UkoV4) UpdateKeystoreWithContext(ctx context.Context, updateKeystoreO
 	return
 }
 
+// ListAssociatedResourcesForTargetKeystore : List associated resources for a target keystore
+// You can use this endpoint to obtain a list of resources associated with all keys referencing this keystore.
+func (uko *UkoV4) ListAssociatedResourcesForTargetKeystore(listAssociatedResourcesForTargetKeystoreOptions *ListAssociatedResourcesForTargetKeystoreOptions) (result *AssociatedResourceList, response *core.DetailedResponse, err error) {
+	return uko.ListAssociatedResourcesForTargetKeystoreWithContext(context.Background(), listAssociatedResourcesForTargetKeystoreOptions)
+}
+
+// ListAssociatedResourcesForTargetKeystoreWithContext is an alternate form of the ListAssociatedResourcesForTargetKeystore method which supports a Context parameter
+func (uko *UkoV4) ListAssociatedResourcesForTargetKeystoreWithContext(ctx context.Context, listAssociatedResourcesForTargetKeystoreOptions *ListAssociatedResourcesForTargetKeystoreOptions) (result *AssociatedResourceList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listAssociatedResourcesForTargetKeystoreOptions, "listAssociatedResourcesForTargetKeystoreOptions cannot be nil")
+	if err != nil {
+		return
+	}
+	err = core.ValidateStruct(listAssociatedResourcesForTargetKeystoreOptions, "listAssociatedResourcesForTargetKeystoreOptions")
+	if err != nil {
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *listAssociatedResourcesForTargetKeystoreOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = uko.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(uko.Service.Options.URL, `/api/v4/keystores/{id}/associated_resources`, pathParamsMap)
+	if err != nil {
+		return
+	}
+
+	for headerName, headerValue := range listAssociatedResourcesForTargetKeystoreOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	sdkHeaders := common.GetSdkHeaders("uko", "V4", "ListAssociatedResourcesForTargetKeystore")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	if listAssociatedResourcesForTargetKeystoreOptions.UKOVault != nil {
+		builder.AddHeader("UKO-Vault", fmt.Sprint(*listAssociatedResourcesForTargetKeystoreOptions.UKOVault))
+	}
+
+	if listAssociatedResourcesForTargetKeystoreOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listAssociatedResourcesForTargetKeystoreOptions.Limit))
+	}
+	if listAssociatedResourcesForTargetKeystoreOptions.Offset != nil {
+		builder.AddQuery("offset", fmt.Sprint(*listAssociatedResourcesForTargetKeystoreOptions.Offset))
+	}
+	if listAssociatedResourcesForTargetKeystoreOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listAssociatedResourcesForTargetKeystoreOptions.Sort, ","))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = uko.Service.Request(request, &rawResponse)
+	if err != nil {
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAssociatedResourceList)
+		if err != nil {
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // GetKeystoreStatus : Retrieve target keystore status
 // Retrieves status of a single target keystore (either a keystore connection or an internal keystore).
 func (uko *UkoV4) GetKeystoreStatus(getKeystoreStatusOptions *GetKeystoreStatusOptions) (result *KeystoreStatus, response *core.DetailedResponse, err error) {
@@ -1626,16 +1931,76 @@ func (uko *UkoV4) ListManagedKeysFromKeystoreWithContext(ctx context.Context, li
 	}
 
 	if listManagedKeysFromKeystoreOptions.Algorithm != nil {
-		builder.AddQuery("algorithm", fmt.Sprint(*listManagedKeysFromKeystoreOptions.Algorithm))
+		builder.AddQuery("algorithm", strings.Join(listManagedKeysFromKeystoreOptions.Algorithm, ","))
 	}
 	if listManagedKeysFromKeystoreOptions.State != nil {
-		builder.AddQuery("state", fmt.Sprint(*listManagedKeysFromKeystoreOptions.State))
+		builder.AddQuery("state", strings.Join(listManagedKeysFromKeystoreOptions.State, ","))
 	}
 	if listManagedKeysFromKeystoreOptions.Limit != nil {
 		builder.AddQuery("limit", fmt.Sprint(*listManagedKeysFromKeystoreOptions.Limit))
 	}
 	if listManagedKeysFromKeystoreOptions.Offset != nil {
 		builder.AddQuery("offset", fmt.Sprint(*listManagedKeysFromKeystoreOptions.Offset))
+	}
+	if listManagedKeysFromKeystoreOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listManagedKeysFromKeystoreOptions.Sort, ","))
+	}
+	if listManagedKeysFromKeystoreOptions.Label != nil {
+		builder.AddQuery("label", fmt.Sprint(*listManagedKeysFromKeystoreOptions.Label))
+	}
+	if listManagedKeysFromKeystoreOptions.ActivationDate != nil {
+		builder.AddQuery("activation_date", fmt.Sprint(*listManagedKeysFromKeystoreOptions.ActivationDate))
+	}
+	if listManagedKeysFromKeystoreOptions.ActivationDateMin != nil {
+		builder.AddQuery("activation_date_min", fmt.Sprint(*listManagedKeysFromKeystoreOptions.ActivationDateMin))
+	}
+	if listManagedKeysFromKeystoreOptions.ActivationDateMax != nil {
+		builder.AddQuery("activation_date_max", fmt.Sprint(*listManagedKeysFromKeystoreOptions.ActivationDateMax))
+	}
+	if listManagedKeysFromKeystoreOptions.DeactivationDate != nil {
+		builder.AddQuery("deactivation_date", fmt.Sprint(*listManagedKeysFromKeystoreOptions.DeactivationDate))
+	}
+	if listManagedKeysFromKeystoreOptions.DeactivationDateMin != nil {
+		builder.AddQuery("deactivation_date_min", fmt.Sprint(*listManagedKeysFromKeystoreOptions.DeactivationDateMin))
+	}
+	if listManagedKeysFromKeystoreOptions.DeactivationDateMax != nil {
+		builder.AddQuery("deactivation_date_max", fmt.Sprint(*listManagedKeysFromKeystoreOptions.DeactivationDateMax))
+	}
+	if listManagedKeysFromKeystoreOptions.ExpirationDate != nil {
+		builder.AddQuery("expiration_date", fmt.Sprint(*listManagedKeysFromKeystoreOptions.ExpirationDate))
+	}
+	if listManagedKeysFromKeystoreOptions.ExpirationDateMin != nil {
+		builder.AddQuery("expiration_date_min", fmt.Sprint(*listManagedKeysFromKeystoreOptions.ExpirationDateMin))
+	}
+	if listManagedKeysFromKeystoreOptions.ExpirationDateMax != nil {
+		builder.AddQuery("expiration_date_max", fmt.Sprint(*listManagedKeysFromKeystoreOptions.ExpirationDateMax))
+	}
+	if listManagedKeysFromKeystoreOptions.CreatedAt != nil {
+		builder.AddQuery("created_at", fmt.Sprint(*listManagedKeysFromKeystoreOptions.CreatedAt))
+	}
+	if listManagedKeysFromKeystoreOptions.CreatedAtMin != nil {
+		builder.AddQuery("created_at_min", fmt.Sprint(*listManagedKeysFromKeystoreOptions.CreatedAtMin))
+	}
+	if listManagedKeysFromKeystoreOptions.CreatedAtMax != nil {
+		builder.AddQuery("created_at_max", fmt.Sprint(*listManagedKeysFromKeystoreOptions.CreatedAtMax))
+	}
+	if listManagedKeysFromKeystoreOptions.UpdatedAt != nil {
+		builder.AddQuery("updated_at", fmt.Sprint(*listManagedKeysFromKeystoreOptions.UpdatedAt))
+	}
+	if listManagedKeysFromKeystoreOptions.UpdatedAtMin != nil {
+		builder.AddQuery("updated_at_min", fmt.Sprint(*listManagedKeysFromKeystoreOptions.UpdatedAtMin))
+	}
+	if listManagedKeysFromKeystoreOptions.UpdatedAtMax != nil {
+		builder.AddQuery("updated_at_max", fmt.Sprint(*listManagedKeysFromKeystoreOptions.UpdatedAtMax))
+	}
+	if listManagedKeysFromKeystoreOptions.Size != nil {
+		builder.AddQuery("size", fmt.Sprint(*listManagedKeysFromKeystoreOptions.Size))
+	}
+	if listManagedKeysFromKeystoreOptions.SizeMin != nil {
+		builder.AddQuery("size_min", fmt.Sprint(*listManagedKeysFromKeystoreOptions.SizeMin))
+	}
+	if listManagedKeysFromKeystoreOptions.SizeMax != nil {
+		builder.AddQuery("size_max", fmt.Sprint(*listManagedKeysFromKeystoreOptions.SizeMax))
 	}
 
 	request, err := builder.Build()
@@ -1695,6 +2060,15 @@ func (uko *UkoV4) ListVaultsWithContext(ctx context.Context, listVaultsOptions *
 	}
 	if listVaultsOptions.Offset != nil {
 		builder.AddQuery("offset", fmt.Sprint(*listVaultsOptions.Offset))
+	}
+	if listVaultsOptions.Sort != nil {
+		builder.AddQuery("sort", strings.Join(listVaultsOptions.Sort, ","))
+	}
+	if listVaultsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listVaultsOptions.Name))
+	}
+	if listVaultsOptions.Description != nil {
+		builder.AddQuery("description", fmt.Sprint(*listVaultsOptions.Description))
 	}
 
 	request, err := builder.Build()
@@ -2038,7 +2412,7 @@ type CreateKeyTemplateOptions struct {
 	Key *KeyProperties `json:"key" validate:"required"`
 
 	// An array describing the type and group of target keystores the managed key is to be installed in.
-	Keystores []KeystoresProperties `json:"keystores" validate:"required"`
+	Keystores []KeystoresPropertiesCreateIntf `json:"keystores" validate:"required"`
 
 	// Description of the key template.
 	Description *string `json:"description,omitempty"`
@@ -2048,7 +2422,7 @@ type CreateKeyTemplateOptions struct {
 }
 
 // NewCreateKeyTemplateOptions : Instantiate CreateKeyTemplateOptions
-func (*UkoV4) NewCreateKeyTemplateOptions(uKOVault string, vault *VaultReferenceInCreationRequest, name string, key *KeyProperties, keystores []KeystoresProperties) *CreateKeyTemplateOptions {
+func (*UkoV4) NewCreateKeyTemplateOptions(uKOVault string, vault *VaultReferenceInCreationRequest, name string, key *KeyProperties, keystores []KeystoresPropertiesCreateIntf) *CreateKeyTemplateOptions {
 	return &CreateKeyTemplateOptions{
 		UKOVault: core.StringPtr(uKOVault),
 		Vault: vault,
@@ -2083,7 +2457,7 @@ func (_options *CreateKeyTemplateOptions) SetKey(key *KeyProperties) *CreateKeyT
 }
 
 // SetKeystores : Allow user to set Keystores
-func (_options *CreateKeyTemplateOptions) SetKeystores(keystores []KeystoresProperties) *CreateKeyTemplateOptions {
+func (_options *CreateKeyTemplateOptions) SetKeystores(keystores []KeystoresPropertiesCreateIntf) *CreateKeyTemplateOptions {
 	_options.Keystores = keystores
 	return _options
 }
@@ -2108,6 +2482,10 @@ type CreateKeystoreOptions struct {
 	// Keystore properties to update.
 	KeystoreBody KeystoreCreationRequestIntf `json:"keystoreBody" validate:"required"`
 
+	// Do not create a keystore, only verify if keystore created with given parameters can be communicated with
+	// successfully.
+	DryRun *bool `json:"dry_run,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -2129,6 +2507,12 @@ func (_options *CreateKeystoreOptions) SetUKOVault(uKOVault string) *CreateKeyst
 // SetKeystoreBody : Allow user to set KeystoreBody
 func (_options *CreateKeystoreOptions) SetKeystoreBody(keystoreBody KeystoreCreationRequestIntf) *CreateKeystoreOptions {
 	_options.KeystoreBody = keystoreBody
+	return _options
+}
+
+// SetDryRun : Allow user to set DryRun
+func (_options *CreateKeystoreOptions) SetDryRun(dryRun bool) *CreateKeystoreOptions {
+	_options.DryRun = core.BoolPtr(dryRun)
 	return _options
 }
 
@@ -2748,13 +3132,146 @@ func (options *GetVaultOptions) SetHeaders(param map[string]string) *GetVaultOpt
 	return options
 }
 
+// ListAssociatedResourcesForManagedKeyOptions : The ListAssociatedResourcesForManagedKey options.
+type ListAssociatedResourcesForManagedKeyOptions struct {
+	// UUID of the key.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The UUID of the Vault in which the update is to take place.
+	UKOVault *string `json:"UKO-Vault" validate:"required"`
+
+	// The number of resources to retrieve.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// The number of resources to skip.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListAssociatedResourcesForManagedKeyOptions : Instantiate ListAssociatedResourcesForManagedKeyOptions
+func (*UkoV4) NewListAssociatedResourcesForManagedKeyOptions(id string, uKOVault string) *ListAssociatedResourcesForManagedKeyOptions {
+	return &ListAssociatedResourcesForManagedKeyOptions{
+		ID: core.StringPtr(id),
+		UKOVault: core.StringPtr(uKOVault),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *ListAssociatedResourcesForManagedKeyOptions) SetID(id string) *ListAssociatedResourcesForManagedKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUKOVault : Allow user to set UKOVault
+func (_options *ListAssociatedResourcesForManagedKeyOptions) SetUKOVault(uKOVault string) *ListAssociatedResourcesForManagedKeyOptions {
+	_options.UKOVault = core.StringPtr(uKOVault)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListAssociatedResourcesForManagedKeyOptions) SetLimit(limit int64) *ListAssociatedResourcesForManagedKeyOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListAssociatedResourcesForManagedKeyOptions) SetOffset(offset int64) *ListAssociatedResourcesForManagedKeyOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListAssociatedResourcesForManagedKeyOptions) SetSort(sort []string) *ListAssociatedResourcesForManagedKeyOptions {
+	_options.Sort = sort
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListAssociatedResourcesForManagedKeyOptions) SetHeaders(param map[string]string) *ListAssociatedResourcesForManagedKeyOptions {
+	options.Headers = param
+	return options
+}
+
+// ListAssociatedResourcesForTargetKeystoreOptions : The ListAssociatedResourcesForTargetKeystore options.
+type ListAssociatedResourcesForTargetKeystoreOptions struct {
+	// UUID of the keystore.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The UUID of the Vault in which the update is to take place.
+	UKOVault *string `json:"UKO-Vault" validate:"required"`
+
+	// The number of resources to retrieve.
+	Limit *int64 `json:"limit,omitempty"`
+
+	// The number of resources to skip.
+	Offset *int64 `json:"offset,omitempty"`
+
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewListAssociatedResourcesForTargetKeystoreOptions : Instantiate ListAssociatedResourcesForTargetKeystoreOptions
+func (*UkoV4) NewListAssociatedResourcesForTargetKeystoreOptions(id string, uKOVault string) *ListAssociatedResourcesForTargetKeystoreOptions {
+	return &ListAssociatedResourcesForTargetKeystoreOptions{
+		ID: core.StringPtr(id),
+		UKOVault: core.StringPtr(uKOVault),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *ListAssociatedResourcesForTargetKeystoreOptions) SetID(id string) *ListAssociatedResourcesForTargetKeystoreOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUKOVault : Allow user to set UKOVault
+func (_options *ListAssociatedResourcesForTargetKeystoreOptions) SetUKOVault(uKOVault string) *ListAssociatedResourcesForTargetKeystoreOptions {
+	_options.UKOVault = core.StringPtr(uKOVault)
+	return _options
+}
+
+// SetLimit : Allow user to set Limit
+func (_options *ListAssociatedResourcesForTargetKeystoreOptions) SetLimit(limit int64) *ListAssociatedResourcesForTargetKeystoreOptions {
+	_options.Limit = core.Int64Ptr(limit)
+	return _options
+}
+
+// SetOffset : Allow user to set Offset
+func (_options *ListAssociatedResourcesForTargetKeystoreOptions) SetOffset(offset int64) *ListAssociatedResourcesForTargetKeystoreOptions {
+	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListAssociatedResourcesForTargetKeystoreOptions) SetSort(sort []string) *ListAssociatedResourcesForTargetKeystoreOptions {
+	_options.Sort = sort
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListAssociatedResourcesForTargetKeystoreOptions) SetHeaders(param map[string]string) *ListAssociatedResourcesForTargetKeystoreOptions {
+	options.Headers = param
+	return options
+}
+
 // ListKeyTemplatesOptions : The ListKeyTemplates options.
 type ListKeyTemplatesOptions struct {
 	// The UUID of the Vault.
-	VaultID *string `json:"vault.id,omitempty"`
+	VaultID []string `json:"vault.id,omitempty"`
 
 	// The algorithm of a returned key templates.
 	KeyAlgorithm *string `json:"key.algorithm,omitempty"`
+
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
 
 	// The number of resources to retrieve.
 	Limit *int64 `json:"limit,omitempty"`
@@ -2770,6 +3287,8 @@ type ListKeyTemplatesOptions struct {
 // The algorithm of a returned key templates.
 const (
 	ListKeyTemplatesOptions_KeyAlgorithm_Aes = "aes"
+	ListKeyTemplatesOptions_KeyAlgorithm_Ec = "ec"
+	ListKeyTemplatesOptions_KeyAlgorithm_Hmac = "hmac"
 	ListKeyTemplatesOptions_KeyAlgorithm_Rsa = "rsa"
 )
 
@@ -2779,14 +3298,20 @@ func (*UkoV4) NewListKeyTemplatesOptions() *ListKeyTemplatesOptions {
 }
 
 // SetVaultID : Allow user to set VaultID
-func (_options *ListKeyTemplatesOptions) SetVaultID(vaultID string) *ListKeyTemplatesOptions {
-	_options.VaultID = core.StringPtr(vaultID)
+func (_options *ListKeyTemplatesOptions) SetVaultID(vaultID []string) *ListKeyTemplatesOptions {
+	_options.VaultID = vaultID
 	return _options
 }
 
 // SetKeyAlgorithm : Allow user to set KeyAlgorithm
 func (_options *ListKeyTemplatesOptions) SetKeyAlgorithm(keyAlgorithm string) *ListKeyTemplatesOptions {
 	_options.KeyAlgorithm = core.StringPtr(keyAlgorithm)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListKeyTemplatesOptions) SetSort(sort []string) *ListKeyTemplatesOptions {
+	_options.Sort = sort
 	return _options
 }
 
@@ -2811,13 +3336,25 @@ func (options *ListKeyTemplatesOptions) SetHeaders(param map[string]string) *Lis
 // ListKeystoresOptions : The ListKeystores options.
 type ListKeystoresOptions struct {
 	// Keystore type.
-	Type *string `json:"type,omitempty"`
+	Type []string `json:"type,omitempty"`
 
-	// Keystore group.
+	// Return only keystores whose name contains the string.
+	Name *string `json:"name,omitempty"`
+
+	// Return only keystores whose description contains the string.
+	Description *string `json:"description,omitempty"`
+
+	// A Keystore group. This query parameter cannot be used in conjunction with the 'groups[]' query parameter.
 	Group *string `json:"group,omitempty"`
 
+	// Keystore groups.
+	Groups *string `json:"groups[],omitempty"`
+
 	// The UUID of the Vault.
-	VaultID *string `json:"vault.id,omitempty"`
+	VaultID []string `json:"vault.id,omitempty"`
+
+	// Keystore location.
+	Location *string `json:"location,omitempty"`
 
 	// The number of resources to retrieve.
 	Limit *int64 `json:"limit,omitempty"`
@@ -2825,15 +3362,19 @@ type ListKeystoresOptions struct {
 	// The number of resources to skip.
 	Offset *int64 `json:"offset,omitempty"`
 
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // Constants associated with the ListKeystoresOptions.Type property.
-// Keystore type.
+// Type of keystore.
 const (
 	ListKeystoresOptions_Type_AwsKms = "aws_kms"
 	ListKeystoresOptions_Type_AzureKeyVault = "azure_key_vault"
+	ListKeystoresOptions_Type_GoogleKms = "google_kms"
 	ListKeystoresOptions_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -2843,8 +3384,20 @@ func (*UkoV4) NewListKeystoresOptions() *ListKeystoresOptions {
 }
 
 // SetType : Allow user to set Type
-func (_options *ListKeystoresOptions) SetType(typeVar string) *ListKeystoresOptions {
-	_options.Type = core.StringPtr(typeVar)
+func (_options *ListKeystoresOptions) SetType(typeVar []string) *ListKeystoresOptions {
+	_options.Type = typeVar
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ListKeystoresOptions) SetName(name string) *ListKeystoresOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *ListKeystoresOptions) SetDescription(description string) *ListKeystoresOptions {
+	_options.Description = core.StringPtr(description)
 	return _options
 }
 
@@ -2854,9 +3407,21 @@ func (_options *ListKeystoresOptions) SetGroup(group string) *ListKeystoresOptio
 	return _options
 }
 
+// SetGroups : Allow user to set Groups
+func (_options *ListKeystoresOptions) SetGroups(groups string) *ListKeystoresOptions {
+	_options.Groups = core.StringPtr(groups)
+	return _options
+}
+
 // SetVaultID : Allow user to set VaultID
-func (_options *ListKeystoresOptions) SetVaultID(vaultID string) *ListKeystoresOptions {
-	_options.VaultID = core.StringPtr(vaultID)
+func (_options *ListKeystoresOptions) SetVaultID(vaultID []string) *ListKeystoresOptions {
+	_options.VaultID = vaultID
+	return _options
+}
+
+// SetLocation : Allow user to set Location
+func (_options *ListKeystoresOptions) SetLocation(location string) *ListKeystoresOptions {
+	_options.Location = core.StringPtr(location)
 	return _options
 }
 
@@ -2869,6 +3434,12 @@ func (_options *ListKeystoresOptions) SetLimit(limit int64) *ListKeystoresOption
 // SetOffset : Allow user to set Offset
 func (_options *ListKeystoresOptions) SetOffset(offset int64) *ListKeystoresOptions {
 	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListKeystoresOptions) SetSort(sort []string) *ListKeystoresOptions {
+	_options.Sort = sort
 	return _options
 }
 
@@ -2887,10 +3458,10 @@ type ListManagedKeysFromKeystoreOptions struct {
 	ID *string `json:"id" validate:"required,ne="`
 
 	// The algorithm of a returned keys.
-	Algorithm *string `json:"algorithm,omitempty"`
+	Algorithm []string `json:"algorithm,omitempty"`
 
 	// The state that returned keys are to be in.
-	State *string `json:"state,omitempty"`
+	State []string `json:"state,omitempty"`
 
 	// The number of resources to retrieve.
 	Limit *int64 `json:"limit,omitempty"`
@@ -2898,19 +3469,96 @@ type ListManagedKeysFromKeystoreOptions struct {
 	// The number of resources to skip.
 	Offset *int64 `json:"offset,omitempty"`
 
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
+
+	// The label of the key.
+	Label *string `json:"label,omitempty"`
+
+	// Return only managed keys whose activation_date matches the parameter.
+	ActivationDate *string `json:"activation_date,omitempty"`
+
+	// Return only managed keys whose activation_date is at or after the parameter value. This query parameter cannot be
+	// used in conjunction with the 'activation_date' query parameter.
+	ActivationDateMin *string `json:"activation_date_min,omitempty"`
+
+	// Return only managed keys whose activation_date is at or before the parameter value. This query parameter cannot be
+	// used in conjunction with the 'activation_date' query parameter.
+	ActivationDateMax *string `json:"activation_date_max,omitempty"`
+
+	// Return only managed keys whose deactivation_date matches the parameter. This query parameter cannot be used in
+	// conjunction with the 'expiration_date' query parameter.
+	DeactivationDate *string `json:"deactivation_date,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or after the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'expiration_date_min' and 'expiration_date_max'
+	// query parameters.
+	DeactivationDateMin *string `json:"deactivation_date_min,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or before the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'expiration_date_min' and 'expiration_date_max'
+	// query parameters.
+	DeactivationDateMax *string `json:"deactivation_date_max,omitempty"`
+
+	// Return only managed keys whose deactivation_date matches the parameter.
+	ExpirationDate *string `json:"expiration_date,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or after the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'deactivation_date_min' and
+	// 'deactivation_date_max' query parameters.
+	ExpirationDateMin *string `json:"expiration_date_min,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or before the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'deactivation_date_min' and
+	// 'deactivation_date_max' query parameters.
+	ExpirationDateMax *string `json:"expiration_date_max,omitempty"`
+
+	// Return only managed keys whose created_at matches the parameter.
+	CreatedAt *string `json:"created_at,omitempty"`
+
+	// Return only managed keys whose created_at is at or after the parameter value. This query parameter cannot be used in
+	// conjunction with the 'created_at' query parameter.
+	CreatedAtMin *string `json:"created_at_min,omitempty"`
+
+	// Return only managed keys whose created_at is at or before the parameter value. This query parameter cannot be used
+	// in conjunction with the 'created_at' query parameter.
+	CreatedAtMax *string `json:"created_at_max,omitempty"`
+
+	// Return only managed keys whose updated_at matches the parameter.
+	UpdatedAt *string `json:"updated_at,omitempty"`
+
+	// Return only managed keys whose updated_at is after the parameter value. This query parameter cannot be used in
+	// conjunction with the 'updated_at' query parameter.
+	UpdatedAtMin *string `json:"updated_at_min,omitempty"`
+
+	// Return only managed keys whose updated_at is before the parameter value. This query parameter cannot be used in
+	// conjunction with the 'updated_at' query parameter.
+	UpdatedAtMax *string `json:"updated_at_max,omitempty"`
+
+	// The size of the key.
+	Size *int64 `json:"size,omitempty"`
+
+	// The minimum size of the key. This query parameter cannot be used in conjunction with the 'size' query parameter.
+	SizeMin *int64 `json:"size_min,omitempty"`
+
+	// The maximum size of the key. This query parameter cannot be used in conjunction with the 'size' query parameter.
+	SizeMax *int64 `json:"size_max,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // Constants associated with the ListManagedKeysFromKeystoreOptions.Algorithm property.
-// The algorithm of a returned keys.
+// The algorithm of the key.
 const (
 	ListManagedKeysFromKeystoreOptions_Algorithm_Aes = "aes"
+	ListManagedKeysFromKeystoreOptions_Algorithm_Ec = "ec"
+	ListManagedKeysFromKeystoreOptions_Algorithm_Hmac = "hmac"
 	ListManagedKeysFromKeystoreOptions_Algorithm_Rsa = "rsa"
 )
 
 // Constants associated with the ListManagedKeysFromKeystoreOptions.State property.
-// The state that returned keys are to be in.
+// The state of the key.
 const (
 	ListManagedKeysFromKeystoreOptions_State_Active = "active"
 	ListManagedKeysFromKeystoreOptions_State_Deactivated = "deactivated"
@@ -2939,14 +3587,14 @@ func (_options *ListManagedKeysFromKeystoreOptions) SetID(id string) *ListManage
 }
 
 // SetAlgorithm : Allow user to set Algorithm
-func (_options *ListManagedKeysFromKeystoreOptions) SetAlgorithm(algorithm string) *ListManagedKeysFromKeystoreOptions {
-	_options.Algorithm = core.StringPtr(algorithm)
+func (_options *ListManagedKeysFromKeystoreOptions) SetAlgorithm(algorithm []string) *ListManagedKeysFromKeystoreOptions {
+	_options.Algorithm = algorithm
 	return _options
 }
 
 // SetState : Allow user to set State
-func (_options *ListManagedKeysFromKeystoreOptions) SetState(state string) *ListManagedKeysFromKeystoreOptions {
-	_options.State = core.StringPtr(state)
+func (_options *ListManagedKeysFromKeystoreOptions) SetState(state []string) *ListManagedKeysFromKeystoreOptions {
+	_options.State = state
 	return _options
 }
 
@@ -2962,6 +3610,126 @@ func (_options *ListManagedKeysFromKeystoreOptions) SetOffset(offset int64) *Lis
 	return _options
 }
 
+// SetSort : Allow user to set Sort
+func (_options *ListManagedKeysFromKeystoreOptions) SetSort(sort []string) *ListManagedKeysFromKeystoreOptions {
+	_options.Sort = sort
+	return _options
+}
+
+// SetLabel : Allow user to set Label
+func (_options *ListManagedKeysFromKeystoreOptions) SetLabel(label string) *ListManagedKeysFromKeystoreOptions {
+	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetActivationDate : Allow user to set ActivationDate
+func (_options *ListManagedKeysFromKeystoreOptions) SetActivationDate(activationDate string) *ListManagedKeysFromKeystoreOptions {
+	_options.ActivationDate = core.StringPtr(activationDate)
+	return _options
+}
+
+// SetActivationDateMin : Allow user to set ActivationDateMin
+func (_options *ListManagedKeysFromKeystoreOptions) SetActivationDateMin(activationDateMin string) *ListManagedKeysFromKeystoreOptions {
+	_options.ActivationDateMin = core.StringPtr(activationDateMin)
+	return _options
+}
+
+// SetActivationDateMax : Allow user to set ActivationDateMax
+func (_options *ListManagedKeysFromKeystoreOptions) SetActivationDateMax(activationDateMax string) *ListManagedKeysFromKeystoreOptions {
+	_options.ActivationDateMax = core.StringPtr(activationDateMax)
+	return _options
+}
+
+// SetDeactivationDate : Allow user to set DeactivationDate
+func (_options *ListManagedKeysFromKeystoreOptions) SetDeactivationDate(deactivationDate string) *ListManagedKeysFromKeystoreOptions {
+	_options.DeactivationDate = core.StringPtr(deactivationDate)
+	return _options
+}
+
+// SetDeactivationDateMin : Allow user to set DeactivationDateMin
+func (_options *ListManagedKeysFromKeystoreOptions) SetDeactivationDateMin(deactivationDateMin string) *ListManagedKeysFromKeystoreOptions {
+	_options.DeactivationDateMin = core.StringPtr(deactivationDateMin)
+	return _options
+}
+
+// SetDeactivationDateMax : Allow user to set DeactivationDateMax
+func (_options *ListManagedKeysFromKeystoreOptions) SetDeactivationDateMax(deactivationDateMax string) *ListManagedKeysFromKeystoreOptions {
+	_options.DeactivationDateMax = core.StringPtr(deactivationDateMax)
+	return _options
+}
+
+// SetExpirationDate : Allow user to set ExpirationDate
+func (_options *ListManagedKeysFromKeystoreOptions) SetExpirationDate(expirationDate string) *ListManagedKeysFromKeystoreOptions {
+	_options.ExpirationDate = core.StringPtr(expirationDate)
+	return _options
+}
+
+// SetExpirationDateMin : Allow user to set ExpirationDateMin
+func (_options *ListManagedKeysFromKeystoreOptions) SetExpirationDateMin(expirationDateMin string) *ListManagedKeysFromKeystoreOptions {
+	_options.ExpirationDateMin = core.StringPtr(expirationDateMin)
+	return _options
+}
+
+// SetExpirationDateMax : Allow user to set ExpirationDateMax
+func (_options *ListManagedKeysFromKeystoreOptions) SetExpirationDateMax(expirationDateMax string) *ListManagedKeysFromKeystoreOptions {
+	_options.ExpirationDateMax = core.StringPtr(expirationDateMax)
+	return _options
+}
+
+// SetCreatedAt : Allow user to set CreatedAt
+func (_options *ListManagedKeysFromKeystoreOptions) SetCreatedAt(createdAt string) *ListManagedKeysFromKeystoreOptions {
+	_options.CreatedAt = core.StringPtr(createdAt)
+	return _options
+}
+
+// SetCreatedAtMin : Allow user to set CreatedAtMin
+func (_options *ListManagedKeysFromKeystoreOptions) SetCreatedAtMin(createdAtMin string) *ListManagedKeysFromKeystoreOptions {
+	_options.CreatedAtMin = core.StringPtr(createdAtMin)
+	return _options
+}
+
+// SetCreatedAtMax : Allow user to set CreatedAtMax
+func (_options *ListManagedKeysFromKeystoreOptions) SetCreatedAtMax(createdAtMax string) *ListManagedKeysFromKeystoreOptions {
+	_options.CreatedAtMax = core.StringPtr(createdAtMax)
+	return _options
+}
+
+// SetUpdatedAt : Allow user to set UpdatedAt
+func (_options *ListManagedKeysFromKeystoreOptions) SetUpdatedAt(updatedAt string) *ListManagedKeysFromKeystoreOptions {
+	_options.UpdatedAt = core.StringPtr(updatedAt)
+	return _options
+}
+
+// SetUpdatedAtMin : Allow user to set UpdatedAtMin
+func (_options *ListManagedKeysFromKeystoreOptions) SetUpdatedAtMin(updatedAtMin string) *ListManagedKeysFromKeystoreOptions {
+	_options.UpdatedAtMin = core.StringPtr(updatedAtMin)
+	return _options
+}
+
+// SetUpdatedAtMax : Allow user to set UpdatedAtMax
+func (_options *ListManagedKeysFromKeystoreOptions) SetUpdatedAtMax(updatedAtMax string) *ListManagedKeysFromKeystoreOptions {
+	_options.UpdatedAtMax = core.StringPtr(updatedAtMax)
+	return _options
+}
+
+// SetSize : Allow user to set Size
+func (_options *ListManagedKeysFromKeystoreOptions) SetSize(size int64) *ListManagedKeysFromKeystoreOptions {
+	_options.Size = core.Int64Ptr(size)
+	return _options
+}
+
+// SetSizeMin : Allow user to set SizeMin
+func (_options *ListManagedKeysFromKeystoreOptions) SetSizeMin(sizeMin int64) *ListManagedKeysFromKeystoreOptions {
+	_options.SizeMin = core.Int64Ptr(sizeMin)
+	return _options
+}
+
+// SetSizeMax : Allow user to set SizeMax
+func (_options *ListManagedKeysFromKeystoreOptions) SetSizeMax(sizeMax int64) *ListManagedKeysFromKeystoreOptions {
+	_options.SizeMax = core.Int64Ptr(sizeMax)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListManagedKeysFromKeystoreOptions) SetHeaders(param map[string]string) *ListManagedKeysFromKeystoreOptions {
 	options.Headers = param
@@ -2971,13 +3739,13 @@ func (options *ListManagedKeysFromKeystoreOptions) SetHeaders(param map[string]s
 // ListManagedKeysOptions : The ListManagedKeys options.
 type ListManagedKeysOptions struct {
 	// The UUID of the Vault.
-	VaultID *string `json:"vault.id,omitempty"`
+	VaultID []string `json:"vault.id,omitempty"`
 
 	// The algorithm of a returned keys.
-	Algorithm *string `json:"algorithm,omitempty"`
+	Algorithm []string `json:"algorithm,omitempty"`
 
 	// The state that returned keys are to be in.
-	State *string `json:"state,omitempty"`
+	State []string `json:"state,omitempty"`
 
 	// The number of resources to retrieve.
 	Limit *int64 `json:"limit,omitempty"`
@@ -2985,24 +3753,128 @@ type ListManagedKeysOptions struct {
 	// The number of resources to skip.
 	Offset *int64 `json:"offset,omitempty"`
 
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
+
+	// The label of the key.
+	Label *string `json:"label,omitempty"`
+
+	// Return only managed keys whose activation_date matches the parameter.
+	ActivationDate *string `json:"activation_date,omitempty"`
+
+	// Return only managed keys whose activation_date is at or after the parameter value. This query parameter cannot be
+	// used in conjunction with the 'activation_date' query parameter.
+	ActivationDateMin *string `json:"activation_date_min,omitempty"`
+
+	// Return only managed keys whose activation_date is at or before the parameter value. This query parameter cannot be
+	// used in conjunction with the 'activation_date' query parameter.
+	ActivationDateMax *string `json:"activation_date_max,omitempty"`
+
+	// Return only managed keys whose deactivation_date matches the parameter. This query parameter cannot be used in
+	// conjunction with the 'expiration_date' query parameter.
+	DeactivationDate *string `json:"deactivation_date,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or after the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'expiration_date_min' and 'expiration_date_max'
+	// query parameters.
+	DeactivationDateMin *string `json:"deactivation_date_min,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or before the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'expiration_date_min' and 'expiration_date_max'
+	// query parameters.
+	DeactivationDateMax *string `json:"deactivation_date_max,omitempty"`
+
+	// Return only managed keys whose deactivation_date matches the parameter.
+	ExpirationDate *string `json:"expiration_date,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or after the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'deactivation_date_min' and
+	// 'deactivation_date_max' query parameters.
+	ExpirationDateMin *string `json:"expiration_date_min,omitempty"`
+
+	// Return only managed keys whose deactivation_date is at or before the parameter value. This query parameter cannot be
+	// used in conjunction with the 'deactivation_date', 'expiration_date', 'deactivation_date_min' and
+	// 'deactivation_date_max' query parameters.
+	ExpirationDateMax *string `json:"expiration_date_max,omitempty"`
+
+	// Return only managed keys whose created_at matches the parameter.
+	CreatedAt *string `json:"created_at,omitempty"`
+
+	// Return only managed keys whose created_at is at or after the parameter value. This query parameter cannot be used in
+	// conjunction with the 'created_at' query parameter.
+	CreatedAtMin *string `json:"created_at_min,omitempty"`
+
+	// Return only managed keys whose created_at is at or before the parameter value. This query parameter cannot be used
+	// in conjunction with the 'created_at' query parameter.
+	CreatedAtMax *string `json:"created_at_max,omitempty"`
+
+	// Return only managed keys whose updated_at matches the parameter.
+	UpdatedAt *string `json:"updated_at,omitempty"`
+
+	// Return only managed keys whose updated_at is after the parameter value. This query parameter cannot be used in
+	// conjunction with the 'updated_at' query parameter.
+	UpdatedAtMin *string `json:"updated_at_min,omitempty"`
+
+	// Return only managed keys whose updated_at is before the parameter value. This query parameter cannot be used in
+	// conjunction with the 'updated_at' query parameter.
+	UpdatedAtMax *string `json:"updated_at_max,omitempty"`
+
+	// The size of the key.
+	Size *int64 `json:"size,omitempty"`
+
+	// The minimum size of the key. This query parameter cannot be used in conjunction with the 'size' query parameter.
+	SizeMin *int64 `json:"size_min,omitempty"`
+
+	// The maximum size of the key. This query parameter cannot be used in conjunction with the 'size' query parameter.
+	SizeMax *int64 `json:"size_max,omitempty"`
+
+	// Type of referenced keystore.
+	ReferencedKeystoresType []string `json:"referenced_keystores[].type,omitempty"`
+
+	// Name of referenced keystore.
+	ReferencedKeystoresName []string `json:"referenced_keystores[].name,omitempty"`
+
+	// Type of keystore supported by one of the instances.
+	InstancesKeystoreType []string `json:"instances[].keystore.type,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
 
 // Constants associated with the ListManagedKeysOptions.Algorithm property.
-// The algorithm of a returned keys.
+// The algorithm of the key.
 const (
 	ListManagedKeysOptions_Algorithm_Aes = "aes"
+	ListManagedKeysOptions_Algorithm_Ec = "ec"
+	ListManagedKeysOptions_Algorithm_Hmac = "hmac"
 	ListManagedKeysOptions_Algorithm_Rsa = "rsa"
 )
 
 // Constants associated with the ListManagedKeysOptions.State property.
-// The state that returned keys are to be in.
+// The state of the key.
 const (
 	ListManagedKeysOptions_State_Active = "active"
 	ListManagedKeysOptions_State_Deactivated = "deactivated"
 	ListManagedKeysOptions_State_Destroyed = "destroyed"
 	ListManagedKeysOptions_State_PreActivation = "pre_activation"
+)
+
+// Constants associated with the ListManagedKeysOptions.ReferencedKeystoresType property.
+// Type of keystore.
+const (
+	ListManagedKeysOptions_ReferencedKeystoresType_AwsKms = "aws_kms"
+	ListManagedKeysOptions_ReferencedKeystoresType_AzureKeyVault = "azure_key_vault"
+	ListManagedKeysOptions_ReferencedKeystoresType_GoogleKms = "google_kms"
+	ListManagedKeysOptions_ReferencedKeystoresType_IbmCloudKms = "ibm_cloud_kms"
+)
+
+// Constants associated with the ListManagedKeysOptions.InstancesKeystoreType property.
+// Type of keystore.
+const (
+	ListManagedKeysOptions_InstancesKeystoreType_AwsKms = "aws_kms"
+	ListManagedKeysOptions_InstancesKeystoreType_AzureKeyVault = "azure_key_vault"
+	ListManagedKeysOptions_InstancesKeystoreType_GoogleKms = "google_kms"
+	ListManagedKeysOptions_InstancesKeystoreType_IbmCloudKms = "ibm_cloud_kms"
 )
 
 // NewListManagedKeysOptions : Instantiate ListManagedKeysOptions
@@ -3011,20 +3883,20 @@ func (*UkoV4) NewListManagedKeysOptions() *ListManagedKeysOptions {
 }
 
 // SetVaultID : Allow user to set VaultID
-func (_options *ListManagedKeysOptions) SetVaultID(vaultID string) *ListManagedKeysOptions {
-	_options.VaultID = core.StringPtr(vaultID)
+func (_options *ListManagedKeysOptions) SetVaultID(vaultID []string) *ListManagedKeysOptions {
+	_options.VaultID = vaultID
 	return _options
 }
 
 // SetAlgorithm : Allow user to set Algorithm
-func (_options *ListManagedKeysOptions) SetAlgorithm(algorithm string) *ListManagedKeysOptions {
-	_options.Algorithm = core.StringPtr(algorithm)
+func (_options *ListManagedKeysOptions) SetAlgorithm(algorithm []string) *ListManagedKeysOptions {
+	_options.Algorithm = algorithm
 	return _options
 }
 
 // SetState : Allow user to set State
-func (_options *ListManagedKeysOptions) SetState(state string) *ListManagedKeysOptions {
-	_options.State = core.StringPtr(state)
+func (_options *ListManagedKeysOptions) SetState(state []string) *ListManagedKeysOptions {
+	_options.State = state
 	return _options
 }
 
@@ -3037,6 +3909,144 @@ func (_options *ListManagedKeysOptions) SetLimit(limit int64) *ListManagedKeysOp
 // SetOffset : Allow user to set Offset
 func (_options *ListManagedKeysOptions) SetOffset(offset int64) *ListManagedKeysOptions {
 	_options.Offset = core.Int64Ptr(offset)
+	return _options
+}
+
+// SetSort : Allow user to set Sort
+func (_options *ListManagedKeysOptions) SetSort(sort []string) *ListManagedKeysOptions {
+	_options.Sort = sort
+	return _options
+}
+
+// SetLabel : Allow user to set Label
+func (_options *ListManagedKeysOptions) SetLabel(label string) *ListManagedKeysOptions {
+	_options.Label = core.StringPtr(label)
+	return _options
+}
+
+// SetActivationDate : Allow user to set ActivationDate
+func (_options *ListManagedKeysOptions) SetActivationDate(activationDate string) *ListManagedKeysOptions {
+	_options.ActivationDate = core.StringPtr(activationDate)
+	return _options
+}
+
+// SetActivationDateMin : Allow user to set ActivationDateMin
+func (_options *ListManagedKeysOptions) SetActivationDateMin(activationDateMin string) *ListManagedKeysOptions {
+	_options.ActivationDateMin = core.StringPtr(activationDateMin)
+	return _options
+}
+
+// SetActivationDateMax : Allow user to set ActivationDateMax
+func (_options *ListManagedKeysOptions) SetActivationDateMax(activationDateMax string) *ListManagedKeysOptions {
+	_options.ActivationDateMax = core.StringPtr(activationDateMax)
+	return _options
+}
+
+// SetDeactivationDate : Allow user to set DeactivationDate
+func (_options *ListManagedKeysOptions) SetDeactivationDate(deactivationDate string) *ListManagedKeysOptions {
+	_options.DeactivationDate = core.StringPtr(deactivationDate)
+	return _options
+}
+
+// SetDeactivationDateMin : Allow user to set DeactivationDateMin
+func (_options *ListManagedKeysOptions) SetDeactivationDateMin(deactivationDateMin string) *ListManagedKeysOptions {
+	_options.DeactivationDateMin = core.StringPtr(deactivationDateMin)
+	return _options
+}
+
+// SetDeactivationDateMax : Allow user to set DeactivationDateMax
+func (_options *ListManagedKeysOptions) SetDeactivationDateMax(deactivationDateMax string) *ListManagedKeysOptions {
+	_options.DeactivationDateMax = core.StringPtr(deactivationDateMax)
+	return _options
+}
+
+// SetExpirationDate : Allow user to set ExpirationDate
+func (_options *ListManagedKeysOptions) SetExpirationDate(expirationDate string) *ListManagedKeysOptions {
+	_options.ExpirationDate = core.StringPtr(expirationDate)
+	return _options
+}
+
+// SetExpirationDateMin : Allow user to set ExpirationDateMin
+func (_options *ListManagedKeysOptions) SetExpirationDateMin(expirationDateMin string) *ListManagedKeysOptions {
+	_options.ExpirationDateMin = core.StringPtr(expirationDateMin)
+	return _options
+}
+
+// SetExpirationDateMax : Allow user to set ExpirationDateMax
+func (_options *ListManagedKeysOptions) SetExpirationDateMax(expirationDateMax string) *ListManagedKeysOptions {
+	_options.ExpirationDateMax = core.StringPtr(expirationDateMax)
+	return _options
+}
+
+// SetCreatedAt : Allow user to set CreatedAt
+func (_options *ListManagedKeysOptions) SetCreatedAt(createdAt string) *ListManagedKeysOptions {
+	_options.CreatedAt = core.StringPtr(createdAt)
+	return _options
+}
+
+// SetCreatedAtMin : Allow user to set CreatedAtMin
+func (_options *ListManagedKeysOptions) SetCreatedAtMin(createdAtMin string) *ListManagedKeysOptions {
+	_options.CreatedAtMin = core.StringPtr(createdAtMin)
+	return _options
+}
+
+// SetCreatedAtMax : Allow user to set CreatedAtMax
+func (_options *ListManagedKeysOptions) SetCreatedAtMax(createdAtMax string) *ListManagedKeysOptions {
+	_options.CreatedAtMax = core.StringPtr(createdAtMax)
+	return _options
+}
+
+// SetUpdatedAt : Allow user to set UpdatedAt
+func (_options *ListManagedKeysOptions) SetUpdatedAt(updatedAt string) *ListManagedKeysOptions {
+	_options.UpdatedAt = core.StringPtr(updatedAt)
+	return _options
+}
+
+// SetUpdatedAtMin : Allow user to set UpdatedAtMin
+func (_options *ListManagedKeysOptions) SetUpdatedAtMin(updatedAtMin string) *ListManagedKeysOptions {
+	_options.UpdatedAtMin = core.StringPtr(updatedAtMin)
+	return _options
+}
+
+// SetUpdatedAtMax : Allow user to set UpdatedAtMax
+func (_options *ListManagedKeysOptions) SetUpdatedAtMax(updatedAtMax string) *ListManagedKeysOptions {
+	_options.UpdatedAtMax = core.StringPtr(updatedAtMax)
+	return _options
+}
+
+// SetSize : Allow user to set Size
+func (_options *ListManagedKeysOptions) SetSize(size int64) *ListManagedKeysOptions {
+	_options.Size = core.Int64Ptr(size)
+	return _options
+}
+
+// SetSizeMin : Allow user to set SizeMin
+func (_options *ListManagedKeysOptions) SetSizeMin(sizeMin int64) *ListManagedKeysOptions {
+	_options.SizeMin = core.Int64Ptr(sizeMin)
+	return _options
+}
+
+// SetSizeMax : Allow user to set SizeMax
+func (_options *ListManagedKeysOptions) SetSizeMax(sizeMax int64) *ListManagedKeysOptions {
+	_options.SizeMax = core.Int64Ptr(sizeMax)
+	return _options
+}
+
+// SetReferencedKeystoresType : Allow user to set ReferencedKeystoresType
+func (_options *ListManagedKeysOptions) SetReferencedKeystoresType(referencedKeystoresType []string) *ListManagedKeysOptions {
+	_options.ReferencedKeystoresType = referencedKeystoresType
+	return _options
+}
+
+// SetReferencedKeystoresName : Allow user to set ReferencedKeystoresName
+func (_options *ListManagedKeysOptions) SetReferencedKeystoresName(referencedKeystoresName []string) *ListManagedKeysOptions {
+	_options.ReferencedKeystoresName = referencedKeystoresName
+	return _options
+}
+
+// SetInstancesKeystoreType : Allow user to set InstancesKeystoreType
+func (_options *ListManagedKeysOptions) SetInstancesKeystoreType(instancesKeystoreType []string) *ListManagedKeysOptions {
+	_options.InstancesKeystoreType = instancesKeystoreType
 	return _options
 }
 
@@ -3053,6 +4063,15 @@ type ListVaultsOptions struct {
 
 	// The number of resources to skip.
 	Offset *int64 `json:"offset,omitempty"`
+
+	// Define sorting order.
+	Sort []string `json:"sort,omitempty"`
+
+	// Return only vaults whose names begin with the string.
+	Name *string `json:"name,omitempty"`
+
+	// Return only vaults whose description contains the string.
+	Description *string `json:"description,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3075,8 +4094,74 @@ func (_options *ListVaultsOptions) SetOffset(offset int64) *ListVaultsOptions {
 	return _options
 }
 
+// SetSort : Allow user to set Sort
+func (_options *ListVaultsOptions) SetSort(sort []string) *ListVaultsOptions {
+	_options.Sort = sort
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *ListVaultsOptions) SetName(name string) *ListVaultsOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *ListVaultsOptions) SetDescription(description string) *ListVaultsOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListVaultsOptions) SetHeaders(param map[string]string) *ListVaultsOptions {
+	options.Headers = param
+	return options
+}
+
+// SyncManagedKeyOptions : The SyncManagedKey options.
+type SyncManagedKeyOptions struct {
+	// UUID of the key.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// The UUID of the Vault in which the update is to take place.
+	UKOVault *string `json:"UKO-Vault" validate:"required"`
+
+	// Precondition of the update; Value of the ETag from the header on a GET request.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// Allows users to set headers on API requests
+	Headers map[string]string
+}
+
+// NewSyncManagedKeyOptions : Instantiate SyncManagedKeyOptions
+func (*UkoV4) NewSyncManagedKeyOptions(id string, uKOVault string, ifMatch string) *SyncManagedKeyOptions {
+	return &SyncManagedKeyOptions{
+		ID: core.StringPtr(id),
+		UKOVault: core.StringPtr(uKOVault),
+		IfMatch: core.StringPtr(ifMatch),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *SyncManagedKeyOptions) SetID(id string) *SyncManagedKeyOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetUKOVault : Allow user to set UKOVault
+func (_options *SyncManagedKeyOptions) SetUKOVault(uKOVault string) *SyncManagedKeyOptions {
+	_options.UKOVault = core.StringPtr(uKOVault)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *SyncManagedKeyOptions) SetIfMatch(ifMatch string) *SyncManagedKeyOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *SyncManagedKeyOptions) SetHeaders(param map[string]string) *SyncManagedKeyOptions {
 	options.Headers = param
 	return options
 }
@@ -3092,11 +4177,13 @@ type UpdateKeyTemplateOptions struct {
 	// Precondition of the update; Value of the ETag from the header on a GET request.
 	IfMatch *string `json:"If-Match" validate:"required"`
 
-	Keystores []KeystoresPropertiesUpdate `json:"keystores,omitempty"`
+	// Updated keystore related properties.
+	Keystores []KeystoresPropertiesUpdateIntf `json:"keystores,omitempty"`
 
 	// Updated description of the key template.
 	Description *string `json:"description,omitempty"`
 
+	// Updated key related properties.
 	Key *KeyPropertiesUpdate `json:"key,omitempty"`
 
 	// Allows users to set headers on API requests
@@ -3131,7 +4218,7 @@ func (_options *UpdateKeyTemplateOptions) SetIfMatch(ifMatch string) *UpdateKeyT
 }
 
 // SetKeystores : Allow user to set Keystores
-func (_options *UpdateKeyTemplateOptions) SetKeystores(keystores []KeystoresPropertiesUpdate) *UpdateKeyTemplateOptions {
+func (_options *UpdateKeyTemplateOptions) SetKeystores(keystores []KeystoresPropertiesUpdateIntf) *UpdateKeyTemplateOptions {
 	_options.Keystores = keystores
 	return _options
 }
@@ -3441,6 +4528,156 @@ func UnmarshalApiError(m map[string]json.RawMessage, result interface{}) (err er
 	return
 }
 
+// AssociatedResource : Associated resource is any object or entity that is using or referencing a Managed Key in any cloud.
+type AssociatedResource struct {
+	// An identifier uniquely identifing this associated resource.
+	ID *string `json:"id" validate:"required"`
+
+	// Reference to a vault.
+	Vault *VaultReference `json:"vault,omitempty"`
+
+	// Reference to a managed key.
+	ManagedKey *ManagedKeyReference `json:"managed_key,omitempty"`
+
+	// Reference to a target keystore.
+	ReferencedKeystore *TargetKeystoreReference `json:"referenced_keystore,omitempty"`
+
+	// ID of the key in this keystore. Every keystore may use different format such as: UUID, GUID, CRN, URI.
+	KeyIdInKeystore *string `json:"key_id_in_keystore" validate:"required"`
+
+	// Name of the associated resource.
+	Name *string `json:"name" validate:"required"`
+
+	// Type of the associated resource, in reverse domain name notation. Currently only 'com_ibm_cloud_kms_registration' is
+	// supported.
+	Type *string `json:"type" validate:"required"`
+
+	// Properties of an associated resource of type IBM Cloud KMS Registration; com_ibm_cloud_kms_registration.
+	ComIbmCloudKmsRegistration *IbmCloudKmsRegistration `json:"com_ibm_cloud_kms_registration,omitempty"`
+}
+
+// UnmarshalAssociatedResource unmarshals an instance of AssociatedResource from the specified map of raw messages.
+func UnmarshalAssociatedResource(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AssociatedResource)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "vault", &obj.Vault, UnmarshalVaultReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "managed_key", &obj.ManagedKey, UnmarshalManagedKeyReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "referenced_keystore", &obj.ReferencedKeystore, UnmarshalTargetKeystoreReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "key_id_in_keystore", &obj.KeyIdInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "com_ibm_cloud_kms_registration", &obj.ComIbmCloudKmsRegistration, UnmarshalIbmCloudKmsRegistration)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// AssociatedResourceList : The base schema for listing associated resources.
+type AssociatedResourceList struct {
+	// The total count of all objects in the entire collection.
+	TotalCount *int64 `json:"total_count" validate:"required"`
+
+	// The number of resources that were requested in this query.
+	Limit *int64 `json:"limit" validate:"required"`
+
+	// The number of resources that were skipped in this query.
+	Offset *int64 `json:"offset" validate:"required"`
+
+	// URL of a resource.
+	First *HrefObject `json:"first,omitempty"`
+
+	// URL of a resource.
+	Last *HrefObject `json:"last,omitempty"`
+
+	// URL of a resource.
+	Previous *HrefObject `json:"previous,omitempty"`
+
+	// URL of a resource.
+	Next *HrefObject `json:"next,omitempty"`
+
+	// A list of associated resources.
+	AssociatedResources []AssociatedResource `json:"associated_resources" validate:"required"`
+}
+
+// UnmarshalAssociatedResourceList unmarshals an instance of AssociatedResourceList from the specified map of raw messages.
+func UnmarshalAssociatedResourceList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(AssociatedResourceList)
+	err = core.UnmarshalPrimitive(m, "total_count", &obj.TotalCount)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "limit", &obj.Limit)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "offset", &obj.Offset)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "first", &obj.First, UnmarshalHrefObject)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "last", &obj.Last, UnmarshalHrefObject)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "previous", &obj.Previous, UnmarshalHrefObject)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "next", &obj.Next, UnmarshalHrefObject)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "associated_resources", &obj.AssociatedResources, UnmarshalAssociatedResource)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// Retrieve the value to be passed to a request to access the next page of results
+func (resp *AssociatedResourceList) GetNextOffset() (*int64, error) {
+	if core.IsNil(resp.Next) {
+		return nil, nil
+	}
+	offset, err := core.GetQueryParam(resp.Next.Href, "offset")
+	if err != nil || offset == nil {
+		return nil, err
+	}
+	var offsetValue int64
+	offsetValue, err = strconv.ParseInt(*offset, 10, 64)
+	if err != nil {
+		return nil, err
+	}
+	return core.Int64Ptr(offsetValue), nil
+}
+
 // ErrorModel : error model.
 type ErrorModel struct {
 	// Identifier of the error.
@@ -3453,8 +4690,8 @@ type ErrorModel struct {
 	// not always available, this field is optional.
 	MoreInfo *string `json:"more_info,omitempty"`
 
-	// Parameters of the message that can be used e.g. for i18n purposes in conjuntion with the code. Since the message may
-	// not contain any parameters, this field is optional.
+	// Parameters of the message that can be used e.g. for i18n purposes in conjunction with the code. Since the message
+	// may not contain any parameters, this field is optional.
 	MessageParams []string `json:"message_params,omitempty"`
 
 	// Target of the error.
@@ -3505,6 +4742,54 @@ func UnmarshalHrefObject(m map[string]json.RawMessage, result interface{}) (err 
 	return
 }
 
+// IbmCloudKmsRegistration : Properties of an associated resource of type IBM Cloud KMS Registration; com_ibm_cloud_kms_registration.
+type IbmCloudKmsRegistration struct {
+	// A boolean that determines whether Key Protect must prevent deletion of a root key.
+	PreventsKeyDeletion *bool `json:"prevents_key_deletion" validate:"required"`
+
+	// Name of the IBM Cloud service, derived from the CRN. It will be empty if UKO is unable to contact the resource
+	// controller.
+	ServiceName *string `json:"service_name" validate:"required"`
+
+	// Name of the IBM Cloud service's instance, derived from the CRN. It will be empty if UKO is unable to contact the
+	// resource controller.
+	ServiceInstanceName *string `json:"service_instance_name" validate:"required"`
+
+	// The Cloud Resource Name (CRN) that represents the cloud resource, such as a Cloud Object Storage bucket, that is
+	// associated with the key.
+	Crn *string `json:"crn" validate:"required"`
+
+	// Description of the purpose of the registration.
+	Description *string `json:"description" validate:"required"`
+}
+
+// UnmarshalIbmCloudKmsRegistration unmarshals an instance of IbmCloudKmsRegistration from the specified map of raw messages.
+func UnmarshalIbmCloudKmsRegistration(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(IbmCloudKmsRegistration)
+	err = core.UnmarshalPrimitive(m, "prevents_key_deletion", &obj.PreventsKeyDeletion)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_name", &obj.ServiceName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "service_instance_name", &obj.ServiceInstanceName)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.Crn)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // InstanceInKeystore : Description of properties of a key within the context of keystores.
 type InstanceInKeystore struct {
 	Group *string `json:"group" validate:"required"`
@@ -3518,6 +4803,7 @@ type InstanceInKeystore struct {
 const (
 	InstanceInKeystore_Type_AwsKms = "aws_kms"
 	InstanceInKeystore_Type_AzureKeyVault = "azure_key_vault"
+	InstanceInKeystore_Type_GoogleKms = "google_kms"
 	InstanceInKeystore_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -3536,19 +4822,30 @@ func UnmarshalInstanceInKeystore(m map[string]json.RawMessage, result interface{
 	return
 }
 
-// KeyInstance : The instance of a managed key for a specific keystore.
+// KeyInstance : KeyInstance struct
+// Models which "extend" this model:
+// - KeyInstanceGoogleKms
+// - KeyInstanceAwsKms
+// - KeyInstanceIbmCloudKms
+// - KeyInstanceAzure
 type KeyInstance struct {
 	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
-	ID *string `json:"id" validate:"required"`
+	ID *string `json:"id,omitempty"`
 
 	// The label of the key.
-	LabelInKeystore *string `json:"label_in_keystore" validate:"required"`
+	LabelInKeystore *string `json:"label_in_keystore,omitempty"`
 
 	// Type of the key instance.
 	Type *string `json:"type,omitempty"`
 
 	// Description of properties of a key within the context of keystores.
-	Keystore *InstanceInKeystore `json:"keystore" validate:"required"`
+	Keystore *InstanceInKeystore `json:"keystore,omitempty"`
+
+	GoogleKeyProtectionLevel *string `json:"google_key_protection_level,omitempty"`
+
+	GoogleKeyPurpose *string `json:"google_key_purpose,omitempty"`
+
+	GoogleKmsAlgorithm *string `json:"google_kms_algorithm,omitempty"`
 }
 
 // Constants associated with the KeyInstance.Type property.
@@ -3559,6 +4856,54 @@ const (
 	KeyInstance_Type_PublicKey = "public_key"
 	KeyInstance_Type_SecretKey = "secret_key"
 )
+
+// Constants associated with the KeyInstance.GoogleKeyProtectionLevel property.
+const (
+	KeyInstance_GoogleKeyProtectionLevel_Hsm = "hsm"
+	KeyInstance_GoogleKeyProtectionLevel_Software = "software"
+)
+
+// Constants associated with the KeyInstance.GoogleKeyPurpose property.
+const (
+	KeyInstance_GoogleKeyPurpose_AsymmetricDecrypt = "asymmetric_decrypt"
+	KeyInstance_GoogleKeyPurpose_AsymmetricSign = "asymmetric_sign"
+	KeyInstance_GoogleKeyPurpose_EncryptDecrypt = "encrypt_decrypt"
+	KeyInstance_GoogleKeyPurpose_Mac = "mac"
+)
+
+// Constants associated with the KeyInstance.GoogleKmsAlgorithm property.
+const (
+	KeyInstance_GoogleKmsAlgorithm_EcSignP256Sha256 = "ec_sign_p256_sha256"
+	KeyInstance_GoogleKmsAlgorithm_EcSignP384Sha384 = "ec_sign_p384_sha384"
+	KeyInstance_GoogleKmsAlgorithm_EcSignSecp256k1Sha256 = "ec_sign_secp256k1_sha256"
+	KeyInstance_GoogleKmsAlgorithm_GoogleSymmetricEncryption = "google_symmetric_encryption"
+	KeyInstance_GoogleKmsAlgorithm_HmacSha256 = "hmac_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha1 = "rsa_decrypt_oaep_2048_sha1"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha256 = "rsa_decrypt_oaep_2048_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha1 = "rsa_decrypt_oaep_3072_sha1"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha256 = "rsa_decrypt_oaep_3072_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha1 = "rsa_decrypt_oaep_4096_sha1"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha256 = "rsa_decrypt_oaep_4096_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha512 = "rsa_decrypt_oaep_4096_sha512"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPkcs12048Sha256 = "rsa_sign_pkcs1_2048_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPkcs13072Sha256 = "rsa_sign_pkcs1_3072_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPkcs14096Sha256 = "rsa_sign_pkcs1_4096_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPkcs14096Sha512 = "rsa_sign_pkcs1_4096_sha512"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPss2048Sha256 = "rsa_sign_pss_2048_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPss3072Sha256 = "rsa_sign_pss_3072_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPss4096Sha256 = "rsa_sign_pss_4096_sha256"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignPss4096Sha512 = "rsa_sign_pss_4096_sha512"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignRawPkcs12048 = "rsa_sign_raw_pkcs1_2048"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignRawPkcs13072 = "rsa_sign_raw_pkcs1_3072"
+	KeyInstance_GoogleKmsAlgorithm_RsaSignRawPkcs14096 = "rsa_sign_raw_pkcs1_4096"
+)
+func (*KeyInstance) isaKeyInstance() bool {
+	return true
+}
+
+type KeyInstanceIntf interface {
+	isaKeyInstance() bool
+}
 
 // UnmarshalKeyInstance unmarshals an instance of KeyInstance from the specified map of raw messages.
 func UnmarshalKeyInstance(m map[string]json.RawMessage, result interface{}) (err error) {
@@ -3576,6 +4921,18 @@ func UnmarshalKeyInstance(m map[string]json.RawMessage, result interface{}) (err
 		return
 	}
 	err = core.UnmarshalModel(m, "keystore", &obj.Keystore, UnmarshalInstanceInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_protection_level", &obj.GoogleKeyProtectionLevel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_purpose", &obj.GoogleKeyPurpose)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_kms_algorithm", &obj.GoogleKmsAlgorithm)
 	if err != nil {
 		return
 	}
@@ -3605,6 +4962,8 @@ type KeyProperties struct {
 // The algorithm of the key.
 const (
 	KeyProperties_Algorithm_Aes = "aes"
+	KeyProperties_Algorithm_Ec = "ec"
+	KeyProperties_Algorithm_Hmac = "hmac"
 	KeyProperties_Algorithm_Rsa = "rsa"
 )
 
@@ -3655,7 +5014,7 @@ func UnmarshalKeyProperties(m map[string]json.RawMessage, result interface{}) (e
 	return
 }
 
-// KeyPropertiesUpdate : KeyPropertiesUpdate struct
+// KeyPropertiesUpdate : Updated key related properties.
 type KeyPropertiesUpdate struct {
 	// The size of the underlying cryptographic key or key pair. E.g. "256" for AES keys, or "2048" for RSA.
 	Size *string `json:"size,omitempty"`
@@ -3728,6 +5087,7 @@ func UnmarshalKeyVerificationPattern(m map[string]json.RawMessage, result interf
 // vault. If it is an external keystore, you need to assign the external keystore to a vault when you connect your
 // service instance to it.
 // Models which "extend" this model:
+// - KeystoreTypeGoogleKms
 // - KeystoreTypeAwsKms
 // - KeystoreTypeAzure
 // - KeystoreTypeIbmCloudKms
@@ -3740,6 +5100,9 @@ type Keystore struct {
 
 	// Name of the target keystore. It can be changed in the future.
 	Name *string `json:"name,omitempty"`
+
+	// Geographic location of the keystore, if available.
+	Location *string `json:"location,omitempty"`
 
 	// Description of the keystore.
 	Description *string `json:"description,omitempty"`
@@ -3764,6 +5127,23 @@ type Keystore struct {
 
 	// A URL that uniquely identifies your cloud resource.
 	Href *string `json:"href,omitempty"`
+
+	// The value of the JSON key represented in the Base64 format.
+	GoogleCredentials *string `json:"google_credentials,omitempty"`
+
+	// Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's
+	// location impacts the performance of applications using the key.
+	GoogleLocation *string `json:"google_location,omitempty"`
+
+	// The project id associated with this keystore.
+	GoogleProjectID *string `json:"google_project_id,omitempty"`
+
+	// The private key id associated with this keystore.
+	GooglePrivateKeyID *string `json:"google_private_key_id,omitempty"`
+
+	// A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of
+	// keys.
+	GoogleKeyRing *string `json:"google_key_ring,omitempty"`
 
 	// AWS Region.
 	AwsRegion *string `json:"aws_region,omitempty"`
@@ -3822,6 +5202,7 @@ type Keystore struct {
 const (
 	Keystore_Type_AwsKms = "aws_kms"
 	Keystore_Type_AzureKeyVault = "azure_key_vault"
+	Keystore_Type_GoogleKms = "google_kms"
 	Keystore_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -3947,6 +5328,10 @@ func UnmarshalKeystore(m map[string]json.RawMessage, result interface{}) (err er
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
 		return
@@ -3976,6 +5361,26 @@ func UnmarshalKeystore(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_credentials", &obj.GoogleCredentials)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_location", &obj.GoogleLocation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_project_id", &obj.GoogleProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_private_key_id", &obj.GooglePrivateKeyID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_ring", &obj.GoogleKeyRing)
 	if err != nil {
 		return
 	}
@@ -4054,6 +5459,7 @@ func UnmarshalKeystore(m map[string]json.RawMessage, result interface{}) (err er
 // KeystoreCreationRequest : Properties required to create a keystore.
 // Models which "extend" this model:
 // - KeystoreCreationRequestKeystoreTypeAwsKmsCreate
+// - KeystoreCreationRequestKeystoreTypeGoogleKmsCreate
 // - KeystoreCreationRequestKeystoreTypeAzureCreate
 // - KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate
 type KeystoreCreationRequest struct {
@@ -4080,6 +5486,23 @@ type KeystoreCreationRequest struct {
 
 	// The secret access key used for connecting to this instance of AWS KMS.
 	AwsSecretAccessKey *string `json:"aws_secret_access_key,omitempty"`
+
+	// The value of the JSON key represented in the Base64 format.
+	GoogleCredentials *string `json:"google_credentials,omitempty"`
+
+	// Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's
+	// location impacts the performance of applications using the key.
+	GoogleLocation *string `json:"google_location,omitempty"`
+
+	// The project id associated with this keystore.
+	GoogleProjectID *string `json:"google_project_id,omitempty"`
+
+	// The private key id associated with this keystore.
+	GooglePrivateKeyID *string `json:"google_private_key_id,omitempty"`
+
+	// A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of
+	// keys.
+	GoogleKeyRing *string `json:"google_key_ring,omitempty"`
 
 	// Service name of the key vault instance from the Azure portal.
 	AzureServiceName *string `json:"azure_service_name,omitempty"`
@@ -4129,6 +5552,7 @@ type KeystoreCreationRequest struct {
 const (
 	KeystoreCreationRequest_Type_AwsKms = "aws_kms"
 	KeystoreCreationRequest_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequest_Type_GoogleKms = "google_kms"
 	KeystoreCreationRequest_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -4252,7 +5676,9 @@ func UnmarshalKeystoreCreationRequest(m map[string]json.RawMessage, result inter
 		err = fmt.Errorf("required discriminator property 'type' not found in JSON object")
 		return
 	}
-	if discValue == "aws_kms" {
+	if discValue == "google_kms" {
+		err = core.UnmarshalModel(m, "", result, UnmarshalKeystoreCreationRequestKeystoreTypeGoogleKmsCreate)
+	} else if discValue == "aws_kms" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalKeystoreCreationRequestKeystoreTypeAwsKmsCreate)
 	} else if discValue == "azure_key_vault" {
 		err = core.UnmarshalModel(m, "", result, UnmarshalKeystoreCreationRequestKeystoreTypeAzureCreate)
@@ -4388,6 +5814,7 @@ func UnmarshalKeystoreStatus(m map[string]json.RawMessage, result interface{}) (
 
 // KeystoreUpdateRequest : Properties of a keystore that can be updated.
 // Models which "extend" this model:
+// - KeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate
 // - KeystoreUpdateRequestKeystoreTypeAwsKmsUpdate
 // - KeystoreUpdateRequestKeystoreTypeAzureUpdate
 // - KeystoreUpdateRequestKeystoreTypeIbmCloudKmsUpdate
@@ -4401,6 +5828,23 @@ type KeystoreUpdateRequest struct {
 
 	// A list of groups that this keystore belongs to.
 	Groups []string `json:"groups,omitempty"`
+
+	// The value of the JSON key represented in the Base64 format.
+	GoogleCredentials *string `json:"google_credentials,omitempty"`
+
+	// Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's
+	// location impacts the performance of applications using the key.
+	GoogleLocation *string `json:"google_location,omitempty"`
+
+	// The project id associated with this keystore.
+	GoogleProjectID *string `json:"google_project_id,omitempty"`
+
+	// The private key id associated with this keystore.
+	GooglePrivateKeyID *string `json:"google_private_key_id,omitempty"`
+
+	// A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of
+	// keys.
+	GoogleKeyRing *string `json:"google_key_ring,omitempty"`
 
 	// AWS Region.
 	AwsRegion *string `json:"aws_region,omitempty"`
@@ -4565,6 +6009,26 @@ func UnmarshalKeystoreUpdateRequest(m map[string]json.RawMessage, result interfa
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "google_credentials", &obj.GoogleCredentials)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_location", &obj.GoogleLocation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_project_id", &obj.GoogleProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_private_key_id", &obj.GooglePrivateKeyID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_ring", &obj.GoogleKeyRing)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "aws_region", &obj.AwsRegion)
 	if err != nil {
 		return
@@ -4633,36 +6097,86 @@ func UnmarshalKeystoreUpdateRequest(m map[string]json.RawMessage, result interfa
 	return
 }
 
-// KeystoresProperties : KeystoresProperties struct
-type KeystoresProperties struct {
+// KeystoresPropertiesCreate : KeystoresPropertiesCreate struct
+// Models which "extend" this model:
+// - KeystoresPropertiesCreateGoogleKms
+// - KeystoresPropertiesCreateAwsKms
+// - KeystoresPropertiesCreateIbmCloudKms
+// - KeystoresPropertiesCreateAzure
+type KeystoresPropertiesCreate struct {
 	// Which keystore group to distribute the key to.
-	Group *string `json:"group" validate:"required"`
+	Group *string `json:"group,omitempty"`
 
 	// Type of keystore.
-	Type *string `json:"type" validate:"required"`
+	Type *string `json:"type,omitempty"`
+
+	GoogleKeyProtectionLevel *string `json:"google_key_protection_level,omitempty"`
+
+	GoogleKeyPurpose *string `json:"google_key_purpose,omitempty"`
+
+	GoogleKmsAlgorithm *string `json:"google_kms_algorithm,omitempty"`
 }
 
-// Constants associated with the KeystoresProperties.Type property.
+// Constants associated with the KeystoresPropertiesCreate.Type property.
 // Type of keystore.
 const (
-	KeystoresProperties_Type_AwsKms = "aws_kms"
-	KeystoresProperties_Type_AzureKeyVault = "azure_key_vault"
-	KeystoresProperties_Type_IbmCloudKms = "ibm_cloud_kms"
+	KeystoresPropertiesCreate_Type_AwsKms = "aws_kms"
+	KeystoresPropertiesCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoresPropertiesCreate_Type_GoogleKms = "google_kms"
+	KeystoresPropertiesCreate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
-// NewKeystoresProperties : Instantiate KeystoresProperties (Generic Model Constructor)
-func (*UkoV4) NewKeystoresProperties(group string, typeVar string) (_model *KeystoresProperties, err error) {
-	_model = &KeystoresProperties{
-		Group: core.StringPtr(group),
-		Type: core.StringPtr(typeVar),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
+// Constants associated with the KeystoresPropertiesCreate.GoogleKeyProtectionLevel property.
+const (
+	KeystoresPropertiesCreate_GoogleKeyProtectionLevel_Hsm = "hsm"
+	KeystoresPropertiesCreate_GoogleKeyProtectionLevel_Software = "software"
+)
+
+// Constants associated with the KeystoresPropertiesCreate.GoogleKeyPurpose property.
+const (
+	KeystoresPropertiesCreate_GoogleKeyPurpose_AsymmetricDecrypt = "asymmetric_decrypt"
+	KeystoresPropertiesCreate_GoogleKeyPurpose_AsymmetricSign = "asymmetric_sign"
+	KeystoresPropertiesCreate_GoogleKeyPurpose_EncryptDecrypt = "encrypt_decrypt"
+	KeystoresPropertiesCreate_GoogleKeyPurpose_Mac = "mac"
+)
+
+// Constants associated with the KeystoresPropertiesCreate.GoogleKmsAlgorithm property.
+const (
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_EcSignP256Sha256 = "ec_sign_p256_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_EcSignP384Sha384 = "ec_sign_p384_sha384"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_EcSignSecp256k1Sha256 = "ec_sign_secp256k1_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_GoogleSymmetricEncryption = "google_symmetric_encryption"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_HmacSha256 = "hmac_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha1 = "rsa_decrypt_oaep_2048_sha1"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha256 = "rsa_decrypt_oaep_2048_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha1 = "rsa_decrypt_oaep_3072_sha1"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha256 = "rsa_decrypt_oaep_3072_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha1 = "rsa_decrypt_oaep_4096_sha1"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha256 = "rsa_decrypt_oaep_4096_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha512 = "rsa_decrypt_oaep_4096_sha512"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPkcs12048Sha256 = "rsa_sign_pkcs1_2048_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPkcs13072Sha256 = "rsa_sign_pkcs1_3072_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPkcs14096Sha256 = "rsa_sign_pkcs1_4096_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPkcs14096Sha512 = "rsa_sign_pkcs1_4096_sha512"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPss2048Sha256 = "rsa_sign_pss_2048_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPss3072Sha256 = "rsa_sign_pss_3072_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPss4096Sha256 = "rsa_sign_pss_4096_sha256"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignPss4096Sha512 = "rsa_sign_pss_4096_sha512"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignRawPkcs12048 = "rsa_sign_raw_pkcs1_2048"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignRawPkcs13072 = "rsa_sign_raw_pkcs1_3072"
+	KeystoresPropertiesCreate_GoogleKmsAlgorithm_RsaSignRawPkcs14096 = "rsa_sign_raw_pkcs1_4096"
+)
+func (*KeystoresPropertiesCreate) isaKeystoresPropertiesCreate() bool {
+	return true
 }
 
-// UnmarshalKeystoresProperties unmarshals an instance of KeystoresProperties from the specified map of raw messages.
-func UnmarshalKeystoresProperties(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(KeystoresProperties)
+type KeystoresPropertiesCreateIntf interface {
+	isaKeystoresPropertiesCreate() bool
+}
+
+// UnmarshalKeystoresPropertiesCreate unmarshals an instance of KeystoresPropertiesCreate from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesCreate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesCreate)
 	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
 	if err != nil {
 		return
@@ -4671,20 +6185,103 @@ func UnmarshalKeystoresProperties(m map[string]json.RawMessage, result interface
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "google_key_protection_level", &obj.GoogleKeyProtectionLevel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_purpose", &obj.GoogleKeyPurpose)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_kms_algorithm", &obj.GoogleKmsAlgorithm)
+	if err != nil {
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
 // KeystoresPropertiesUpdate : KeystoresPropertiesUpdate struct
+// Models which "extend" this model:
+// - KeystoresPropertiesUpdateGoogleKms
+// - KeystoresPropertiesUpdateAwsKms
+// - KeystoresPropertiesUpdateIbmCloudKms
+// - KeystoresPropertiesUpdateAzure
 type KeystoresPropertiesUpdate struct {
 	// Which keystore group to distribute the key to.
 	Group *string `json:"group,omitempty"`
+
+	GoogleKeyProtectionLevel *string `json:"google_key_protection_level,omitempty"`
+
+	GoogleKeyPurpose *string `json:"google_key_purpose,omitempty"`
+
+	GoogleKmsAlgorithm *string `json:"google_kms_algorithm,omitempty"`
+}
+
+// Constants associated with the KeystoresPropertiesUpdate.GoogleKeyProtectionLevel property.
+const (
+	KeystoresPropertiesUpdate_GoogleKeyProtectionLevel_Hsm = "hsm"
+	KeystoresPropertiesUpdate_GoogleKeyProtectionLevel_Software = "software"
+)
+
+// Constants associated with the KeystoresPropertiesUpdate.GoogleKeyPurpose property.
+const (
+	KeystoresPropertiesUpdate_GoogleKeyPurpose_AsymmetricDecrypt = "asymmetric_decrypt"
+	KeystoresPropertiesUpdate_GoogleKeyPurpose_AsymmetricSign = "asymmetric_sign"
+	KeystoresPropertiesUpdate_GoogleKeyPurpose_EncryptDecrypt = "encrypt_decrypt"
+	KeystoresPropertiesUpdate_GoogleKeyPurpose_Mac = "mac"
+)
+
+// Constants associated with the KeystoresPropertiesUpdate.GoogleKmsAlgorithm property.
+const (
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_EcSignP256Sha256 = "ec_sign_p256_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_EcSignP384Sha384 = "ec_sign_p384_sha384"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_EcSignSecp256k1Sha256 = "ec_sign_secp256k1_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_GoogleSymmetricEncryption = "google_symmetric_encryption"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_HmacSha256 = "hmac_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha1 = "rsa_decrypt_oaep_2048_sha1"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha256 = "rsa_decrypt_oaep_2048_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha1 = "rsa_decrypt_oaep_3072_sha1"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha256 = "rsa_decrypt_oaep_3072_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha1 = "rsa_decrypt_oaep_4096_sha1"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha256 = "rsa_decrypt_oaep_4096_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha512 = "rsa_decrypt_oaep_4096_sha512"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPkcs12048Sha256 = "rsa_sign_pkcs1_2048_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPkcs13072Sha256 = "rsa_sign_pkcs1_3072_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPkcs14096Sha256 = "rsa_sign_pkcs1_4096_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPkcs14096Sha512 = "rsa_sign_pkcs1_4096_sha512"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPss2048Sha256 = "rsa_sign_pss_2048_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPss3072Sha256 = "rsa_sign_pss_3072_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPss4096Sha256 = "rsa_sign_pss_4096_sha256"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignPss4096Sha512 = "rsa_sign_pss_4096_sha512"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignRawPkcs12048 = "rsa_sign_raw_pkcs1_2048"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignRawPkcs13072 = "rsa_sign_raw_pkcs1_3072"
+	KeystoresPropertiesUpdate_GoogleKmsAlgorithm_RsaSignRawPkcs14096 = "rsa_sign_raw_pkcs1_4096"
+)
+func (*KeystoresPropertiesUpdate) isaKeystoresPropertiesUpdate() bool {
+	return true
+}
+
+type KeystoresPropertiesUpdateIntf interface {
+	isaKeystoresPropertiesUpdate() bool
 }
 
 // UnmarshalKeystoresPropertiesUpdate unmarshals an instance of KeystoresPropertiesUpdate from the specified map of raw messages.
 func UnmarshalKeystoresPropertiesUpdate(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(KeystoresPropertiesUpdate)
 	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_protection_level", &obj.GoogleKeyProtectionLevel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_purpose", &obj.GoogleKeyPurpose)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_kms_algorithm", &obj.GoogleKmsAlgorithm)
 	if err != nil {
 		return
 	}
@@ -4702,10 +6299,10 @@ type ManagedKey struct {
 	ID *string `json:"id,omitempty"`
 
 	// Reference to a vault.
-	Vault *VaultReference `json:"vault" validate:"required"`
+	Vault *VaultReference `json:"vault,omitempty"`
 
 	// Reference to a key template.
-	Template *TemplateReference `json:"template" validate:"required"`
+	Template *TemplateReference `json:"template,omitempty"`
 
 	// Description of the managed key.
 	Description *string `json:"description,omitempty"`
@@ -4750,7 +6347,7 @@ type ManagedKey struct {
 	ReferencedKeystores []TargetKeystoreReference `json:"referenced_keystores" validate:"required"`
 
 	// key instances.
-	Instances []KeyInstance `json:"instances" validate:"required"`
+	Instances []KeyInstanceIntf `json:"instances" validate:"required"`
 
 	// A URL that uniquely identifies your cloud resource.
 	Href *string `json:"href,omitempty"`
@@ -4769,6 +6366,8 @@ const (
 // The algorithm of the key.
 const (
 	ManagedKey_Algorithm_Aes = "aes"
+	ManagedKey_Algorithm_Ec = "ec"
+	ManagedKey_Algorithm_Hmac = "hmac"
 	ManagedKey_Algorithm_Rsa = "rsa"
 )
 
@@ -4938,16 +6537,56 @@ func (resp *ManagedKeyList) GetNextOffset() (*int64, error) {
 	return core.Int64Ptr(offsetValue), nil
 }
 
+// ManagedKeyReference : Reference to a managed key.
+type ManagedKeyReference struct {
+	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
+	ID *string `json:"id,omitempty"`
+
+	// The label of the key.
+	Label *string `json:"label" validate:"required"`
+
+	// A URL that uniquely identifies your cloud resource.
+	Href *string `json:"href,omitempty"`
+}
+
+// UnmarshalManagedKeyReference unmarshals an instance of ManagedKeyReference from the specified map of raw messages.
+func UnmarshalManagedKeyReference(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ManagedKeyReference)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label", &obj.Label)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // StatusInKeystore : Describes the status of a key in a single keystore.
 type StatusInKeystore struct {
 	// Reference to a target keystore.
-	Keystore *TargetKeystoreReference `json:"keystore" validate:"required"`
+	Keystore *TargetKeystoreReference `json:"keystore,omitempty"`
 
 	// Possible states of a key in keystore.  not_present: the key is not in the target keystore at all,  active: the key
 	// is in the target keystore, and can be used for its intended purpose not_active: the key is in the target keystore,
 	// but cannot be used for its intended purpose wrong_key: there is a key in the target keystore, but it doesn't have
 	// the value that is expected error: there was an error checking the status of the key in the target keystore.
 	Status *string `json:"status" validate:"required"`
+
+	// Flag to represent synchronization status between UKO Managed Key and Target Keystore. Possible status flags. ok:
+	// managed key state is the same as target keystore state, out_of_sync: managed key state is different than target
+	// keystore state.
+	KeystoreSyncFlag *string `json:"keystore_sync_flag" validate:"required"`
+
+	// Detailed description to represents every possible state combination or mismatch between UKO Managed Key and Target
+	// Keystore.
+	KeystoreSyncFlagDetail *string `json:"keystore_sync_flag_detail" validate:"required"`
 
 	// An error encountered while using the application.
 	Error *ApiError `json:"error,omitempty"`
@@ -4969,6 +6608,33 @@ const (
 	StatusInKeystore_Status_WrongKey = "wrong_key"
 )
 
+// Constants associated with the StatusInKeystore.KeystoreSyncFlag property.
+// Flag to represent synchronization status between UKO Managed Key and Target Keystore. Possible status flags. ok:
+// managed key state is the same as target keystore state, out_of_sync: managed key state is different than target
+// keystore state.
+const (
+	StatusInKeystore_KeystoreSyncFlag_Error = "error"
+	StatusInKeystore_KeystoreSyncFlag_Ok = "ok"
+	StatusInKeystore_KeystoreSyncFlag_OutOfSync = "out_of_sync"
+)
+
+// Constants associated with the StatusInKeystore.KeystoreSyncFlagDetail property.
+// Detailed description to represents every possible state combination or mismatch between UKO Managed Key and Target
+// Keystore.
+const (
+	StatusInKeystore_KeystoreSyncFlagDetail_ActiveKeyIsActiveInKeystore = "active_key_is_active_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_ActiveKeyIsNotActiveInKeystore = "active_key_is_not_active_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_ConnectionError = "connection_error"
+	StatusInKeystore_KeystoreSyncFlagDetail_DeactivatedKeyIsDeactivatedInKeystore = "deactivated_key_is_deactivated_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_DeactivatedKeyIsNotDeactivatedInKeystore = "deactivated_key_is_not_deactivated_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_DestroyedKeyIsNotPresentInKeystore = "destroyed_key_is_not_present_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_DestroyedKeyIsPresentInKeystore = "destroyed_key_is_present_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_PreActiveKeyIsNotPresentInKeystore = "pre_active_key_is_not_present_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_PreActiveKeyIsPresentInKeystore = "pre_active_key_is_present_in_keystore"
+	StatusInKeystore_KeystoreSyncFlagDetail_TargetKeystoreRemovedByUser = "target_keystore_removed_by_user"
+	StatusInKeystore_KeystoreSyncFlagDetail_TargetKeystoreRemovedByUserContainsAnActiveKey = "target_keystore_removed_by_user_contains_an_active_key"
+)
+
 // UnmarshalStatusInKeystore unmarshals an instance of StatusInKeystore from the specified map of raw messages.
 func UnmarshalStatusInKeystore(m map[string]json.RawMessage, result interface{}) (err error) {
 	obj := new(StatusInKeystore)
@@ -4977,6 +6643,14 @@ func UnmarshalStatusInKeystore(m map[string]json.RawMessage, result interface{})
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "status", &obj.Status)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "keystore_sync_flag", &obj.KeystoreSyncFlag)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "keystore_sync_flag_detail", &obj.KeystoreSyncFlagDetail)
 	if err != nil {
 		return
 	}
@@ -5087,6 +6761,7 @@ type TargetKeystoreReference struct {
 const (
 	TargetKeystoreReference_Type_AwsKms = "aws_kms"
 	TargetKeystoreReference_Type_AzureKeyVault = "azure_key_vault"
+	TargetKeystoreReference_Type_GoogleKms = "google_kms"
 	TargetKeystoreReference_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -5116,7 +6791,7 @@ func UnmarshalTargetKeystoreReference(m map[string]json.RawMessage, result inter
 // Template : A template and all its properties.
 type Template struct {
 	// Reference to a vault.
-	Vault *VaultReference `json:"vault" validate:"required"`
+	Vault *VaultReference `json:"vault,omitempty"`
 
 	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
 	ID *string `json:"id,omitempty"`
@@ -5145,7 +6820,7 @@ type Template struct {
 	// ID of the user that updated the key.
 	UpdatedBy *string `json:"updated_by,omitempty"`
 
-	Keystores []KeystoresProperties `json:"keystores" validate:"required"`
+	Keystores []KeystoresPropertiesCreateIntf `json:"keystores" validate:"required"`
 
 	// A URL that uniquely identifies your cloud resource.
 	Href *string `json:"href,omitempty"`
@@ -5194,7 +6869,7 @@ func UnmarshalTemplate(m map[string]json.RawMessage, result interface{}) (err er
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalModel(m, "keystores", &obj.Keystores, UnmarshalKeystoresProperties)
+	err = core.UnmarshalModel(m, "keystores", &obj.Keystores, UnmarshalKeystoresPropertiesCreate)
 	if err != nil {
 		return
 	}
@@ -5527,6 +7202,273 @@ func UnmarshalVaultReferenceInCreationRequest(m map[string]json.RawMessage, resu
 	return
 }
 
+// KeyInstanceAwsKms : The instance of a managed key for a specific keystore.
+// This model "extends" KeyInstance
+type KeyInstanceAwsKms struct {
+	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
+	ID *string `json:"id" validate:"required"`
+
+	// The label of the key.
+	LabelInKeystore *string `json:"label_in_keystore" validate:"required"`
+
+	// Type of the key instance.
+	Type *string `json:"type,omitempty"`
+
+	// Description of properties of a key within the context of keystores.
+	Keystore *InstanceInKeystore `json:"keystore" validate:"required"`
+}
+
+// Constants associated with the KeyInstanceAwsKms.Type property.
+// Type of the key instance.
+const (
+	KeyInstanceAwsKms_Type_KeyPair = "key_pair"
+	KeyInstanceAwsKms_Type_PrivateKey = "private_key"
+	KeyInstanceAwsKms_Type_PublicKey = "public_key"
+	KeyInstanceAwsKms_Type_SecretKey = "secret_key"
+)
+
+func (*KeyInstanceAwsKms) isaKeyInstance() bool {
+	return true
+}
+
+// UnmarshalKeyInstanceAwsKms unmarshals an instance of KeyInstanceAwsKms from the specified map of raw messages.
+func UnmarshalKeyInstanceAwsKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeyInstanceAwsKms)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_in_keystore", &obj.LabelInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "keystore", &obj.Keystore, UnmarshalInstanceInKeystore)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeyInstanceAzure : The instance of a managed key for a specific keystore.
+// This model "extends" KeyInstance
+type KeyInstanceAzure struct {
+	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
+	ID *string `json:"id" validate:"required"`
+
+	// The label of the key.
+	LabelInKeystore *string `json:"label_in_keystore" validate:"required"`
+
+	// Type of the key instance.
+	Type *string `json:"type,omitempty"`
+
+	// Description of properties of a key within the context of keystores.
+	Keystore *InstanceInKeystore `json:"keystore" validate:"required"`
+}
+
+// Constants associated with the KeyInstanceAzure.Type property.
+// Type of the key instance.
+const (
+	KeyInstanceAzure_Type_KeyPair = "key_pair"
+	KeyInstanceAzure_Type_PrivateKey = "private_key"
+	KeyInstanceAzure_Type_PublicKey = "public_key"
+	KeyInstanceAzure_Type_SecretKey = "secret_key"
+)
+
+func (*KeyInstanceAzure) isaKeyInstance() bool {
+	return true
+}
+
+// UnmarshalKeyInstanceAzure unmarshals an instance of KeyInstanceAzure from the specified map of raw messages.
+func UnmarshalKeyInstanceAzure(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeyInstanceAzure)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_in_keystore", &obj.LabelInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "keystore", &obj.Keystore, UnmarshalInstanceInKeystore)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeyInstanceGoogleKms : The instance of a managed key for a specific keystore.
+// This model "extends" KeyInstance
+type KeyInstanceGoogleKms struct {
+	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
+	ID *string `json:"id" validate:"required"`
+
+	// The label of the key.
+	LabelInKeystore *string `json:"label_in_keystore" validate:"required"`
+
+	// Type of the key instance.
+	Type *string `json:"type,omitempty"`
+
+	// Description of properties of a key within the context of keystores.
+	Keystore *InstanceInKeystore `json:"keystore" validate:"required"`
+
+	GoogleKeyProtectionLevel *string `json:"google_key_protection_level,omitempty"`
+
+	GoogleKeyPurpose *string `json:"google_key_purpose,omitempty"`
+
+	GoogleKmsAlgorithm *string `json:"google_kms_algorithm,omitempty"`
+}
+
+// Constants associated with the KeyInstanceGoogleKms.Type property.
+// Type of the key instance.
+const (
+	KeyInstanceGoogleKms_Type_KeyPair = "key_pair"
+	KeyInstanceGoogleKms_Type_PrivateKey = "private_key"
+	KeyInstanceGoogleKms_Type_PublicKey = "public_key"
+	KeyInstanceGoogleKms_Type_SecretKey = "secret_key"
+)
+
+// Constants associated with the KeyInstanceGoogleKms.GoogleKeyProtectionLevel property.
+const (
+	KeyInstanceGoogleKms_GoogleKeyProtectionLevel_Hsm = "hsm"
+	KeyInstanceGoogleKms_GoogleKeyProtectionLevel_Software = "software"
+)
+
+// Constants associated with the KeyInstanceGoogleKms.GoogleKeyPurpose property.
+const (
+	KeyInstanceGoogleKms_GoogleKeyPurpose_AsymmetricDecrypt = "asymmetric_decrypt"
+	KeyInstanceGoogleKms_GoogleKeyPurpose_AsymmetricSign = "asymmetric_sign"
+	KeyInstanceGoogleKms_GoogleKeyPurpose_EncryptDecrypt = "encrypt_decrypt"
+	KeyInstanceGoogleKms_GoogleKeyPurpose_Mac = "mac"
+)
+
+// Constants associated with the KeyInstanceGoogleKms.GoogleKmsAlgorithm property.
+const (
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_EcSignP256Sha256 = "ec_sign_p256_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_EcSignP384Sha384 = "ec_sign_p384_sha384"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_EcSignSecp256k1Sha256 = "ec_sign_secp256k1_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_GoogleSymmetricEncryption = "google_symmetric_encryption"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_HmacSha256 = "hmac_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha1 = "rsa_decrypt_oaep_2048_sha1"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha256 = "rsa_decrypt_oaep_2048_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha1 = "rsa_decrypt_oaep_3072_sha1"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha256 = "rsa_decrypt_oaep_3072_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha1 = "rsa_decrypt_oaep_4096_sha1"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha256 = "rsa_decrypt_oaep_4096_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha512 = "rsa_decrypt_oaep_4096_sha512"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs12048Sha256 = "rsa_sign_pkcs1_2048_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs13072Sha256 = "rsa_sign_pkcs1_3072_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs14096Sha256 = "rsa_sign_pkcs1_4096_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs14096Sha512 = "rsa_sign_pkcs1_4096_sha512"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPss2048Sha256 = "rsa_sign_pss_2048_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPss3072Sha256 = "rsa_sign_pss_3072_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPss4096Sha256 = "rsa_sign_pss_4096_sha256"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignPss4096Sha512 = "rsa_sign_pss_4096_sha512"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs12048 = "rsa_sign_raw_pkcs1_2048"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs13072 = "rsa_sign_raw_pkcs1_3072"
+	KeyInstanceGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs14096 = "rsa_sign_raw_pkcs1_4096"
+)
+
+func (*KeyInstanceGoogleKms) isaKeyInstance() bool {
+	return true
+}
+
+// UnmarshalKeyInstanceGoogleKms unmarshals an instance of KeyInstanceGoogleKms from the specified map of raw messages.
+func UnmarshalKeyInstanceGoogleKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeyInstanceGoogleKms)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_in_keystore", &obj.LabelInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "keystore", &obj.Keystore, UnmarshalInstanceInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_protection_level", &obj.GoogleKeyProtectionLevel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_purpose", &obj.GoogleKeyPurpose)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_kms_algorithm", &obj.GoogleKmsAlgorithm)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeyInstanceIbmCloudKms : The instance of a managed key for a specific keystore.
+// This model "extends" KeyInstance
+type KeyInstanceIbmCloudKms struct {
+	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
+	ID *string `json:"id" validate:"required"`
+
+	// The label of the key.
+	LabelInKeystore *string `json:"label_in_keystore" validate:"required"`
+
+	// Type of the key instance.
+	Type *string `json:"type,omitempty"`
+
+	// Description of properties of a key within the context of keystores.
+	Keystore *InstanceInKeystore `json:"keystore" validate:"required"`
+}
+
+// Constants associated with the KeyInstanceIbmCloudKms.Type property.
+// Type of the key instance.
+const (
+	KeyInstanceIbmCloudKms_Type_KeyPair = "key_pair"
+	KeyInstanceIbmCloudKms_Type_PrivateKey = "private_key"
+	KeyInstanceIbmCloudKms_Type_PublicKey = "public_key"
+	KeyInstanceIbmCloudKms_Type_SecretKey = "secret_key"
+)
+
+func (*KeyInstanceIbmCloudKms) isaKeyInstance() bool {
+	return true
+}
+
+// UnmarshalKeyInstanceIbmCloudKms unmarshals an instance of KeyInstanceIbmCloudKms from the specified map of raw messages.
+func UnmarshalKeyInstanceIbmCloudKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeyInstanceIbmCloudKms)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "label_in_keystore", &obj.LabelInKeystore)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "keystore", &obj.Keystore, UnmarshalInstanceInKeystore)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // KeystoreCreationRequestKeystoreTypeAwsKmsCreate : AWS KMS is a managed service for you to create and manage cryptographic keys across a wide range of AWS services.
 // This model "extends" KeystoreCreationRequest
 type KeystoreCreationRequestKeystoreTypeAwsKmsCreate struct {
@@ -5559,6 +7501,7 @@ type KeystoreCreationRequestKeystoreTypeAwsKmsCreate struct {
 const (
 	KeystoreCreationRequestKeystoreTypeAwsKmsCreate_Type_AwsKms = "aws_kms"
 	KeystoreCreationRequestKeystoreTypeAwsKmsCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeAwsKmsCreate_Type_GoogleKms = "google_kms"
 	KeystoreCreationRequestKeystoreTypeAwsKmsCreate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -5701,6 +7644,7 @@ type KeystoreCreationRequestKeystoreTypeAzureCreate struct {
 const (
 	KeystoreCreationRequestKeystoreTypeAzureCreate_Type_AwsKms = "aws_kms"
 	KeystoreCreationRequestKeystoreTypeAzureCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeAzureCreate_Type_GoogleKms = "google_kms"
 	KeystoreCreationRequestKeystoreTypeAzureCreate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -5843,6 +7787,114 @@ func UnmarshalKeystoreCreationRequestKeystoreTypeAzureCreate(m map[string]json.R
 	return
 }
 
+// KeystoreCreationRequestKeystoreTypeGoogleKmsCreate : Google Cloud KMS is a managed service for you to create and manage cryptographic keys across a wide range of Google
+// Cloud services.
+// This model "extends" KeystoreCreationRequest
+type KeystoreCreationRequestKeystoreTypeGoogleKmsCreate struct {
+	// Type of keystore.
+	Type *string `json:"type" validate:"required"`
+
+	Vault *VaultReferenceInCreationRequest `json:"vault" validate:"required"`
+
+	// Name of a target keystore.
+	Name *string `json:"name" validate:"required"`
+
+	// Description of the keystore.
+	Description *string `json:"description,omitempty"`
+
+	// A list of groups that this keystore belongs to.
+	Groups []string `json:"groups,omitempty"`
+
+	// The value of the JSON key represented in the Base64 format.
+	GoogleCredentials *string `json:"google_credentials" validate:"required"`
+
+	// Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's
+	// location impacts the performance of applications using the key.
+	GoogleLocation *string `json:"google_location,omitempty"`
+
+	// The project id associated with this keystore.
+	GoogleProjectID *string `json:"google_project_id,omitempty"`
+
+	// The private key id associated with this keystore.
+	GooglePrivateKeyID *string `json:"google_private_key_id,omitempty"`
+
+	// A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of
+	// keys.
+	GoogleKeyRing *string `json:"google_key_ring,omitempty"`
+}
+
+// Constants associated with the KeystoreCreationRequestKeystoreTypeGoogleKmsCreate.Type property.
+// Type of keystore.
+const (
+	KeystoreCreationRequestKeystoreTypeGoogleKmsCreate_Type_AwsKms = "aws_kms"
+	KeystoreCreationRequestKeystoreTypeGoogleKmsCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeGoogleKmsCreate_Type_GoogleKms = "google_kms"
+	KeystoreCreationRequestKeystoreTypeGoogleKmsCreate_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+// NewKeystoreCreationRequestKeystoreTypeGoogleKmsCreate : Instantiate KeystoreCreationRequestKeystoreTypeGoogleKmsCreate (Generic Model Constructor)
+func (*UkoV4) NewKeystoreCreationRequestKeystoreTypeGoogleKmsCreate(typeVar string, vault *VaultReferenceInCreationRequest, name string, googleCredentials string) (_model *KeystoreCreationRequestKeystoreTypeGoogleKmsCreate, err error) {
+	_model = &KeystoreCreationRequestKeystoreTypeGoogleKmsCreate{
+		Type: core.StringPtr(typeVar),
+		Vault: vault,
+		Name: core.StringPtr(name),
+		GoogleCredentials: core.StringPtr(googleCredentials),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*KeystoreCreationRequestKeystoreTypeGoogleKmsCreate) isaKeystoreCreationRequest() bool {
+	return true
+}
+
+// UnmarshalKeystoreCreationRequestKeystoreTypeGoogleKmsCreate unmarshals an instance of KeystoreCreationRequestKeystoreTypeGoogleKmsCreate from the specified map of raw messages.
+func UnmarshalKeystoreCreationRequestKeystoreTypeGoogleKmsCreate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoreCreationRequestKeystoreTypeGoogleKmsCreate)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "vault", &obj.Vault, UnmarshalVaultReferenceInCreationRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "groups", &obj.Groups)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_credentials", &obj.GoogleCredentials)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_location", &obj.GoogleLocation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_project_id", &obj.GoogleProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_private_key_id", &obj.GooglePrivateKeyID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_ring", &obj.GoogleKeyRing)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate : Properties required to create an IBM Cloud keystore.
 // Models which "extend" this model:
 // - KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsCreate
@@ -5887,6 +7939,7 @@ type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate struct
 const (
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate_Type_AwsKms = "aws_kms"
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate_Type_GoogleKms = "google_kms"
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -5965,13 +8018,16 @@ func UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCrea
 // This model "extends" Keystore
 type KeystoreTypeAwsKms struct {
 	// Reference to a vault.
-	Vault *VaultReference `json:"vault" validate:"required"`
+	Vault *VaultReference `json:"vault,omitempty"`
 
 	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
 	ID *string `json:"id,omitempty"`
 
 	// Name of the target keystore. It can be changed in the future.
 	Name *string `json:"name" validate:"required"`
+
+	// Geographic location of the keystore, if available.
+	Location *string `json:"location" validate:"required"`
 
 	// Description of the keystore.
 	Description *string `json:"description" validate:"required"`
@@ -6012,6 +8068,7 @@ type KeystoreTypeAwsKms struct {
 const (
 	KeystoreTypeAwsKms_Type_AwsKms = "aws_kms"
 	KeystoreTypeAwsKms_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreTypeAwsKms_Type_GoogleKms = "google_kms"
 	KeystoreTypeAwsKms_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -6068,6 +8125,10 @@ func UnmarshalKeystoreTypeAwsKms(m map[string]json.RawMessage, result interface{
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
 		return
@@ -6120,13 +8181,16 @@ func UnmarshalKeystoreTypeAwsKms(m map[string]json.RawMessage, result interface{
 // This model "extends" Keystore
 type KeystoreTypeAzure struct {
 	// Reference to a vault.
-	Vault *VaultReference `json:"vault" validate:"required"`
+	Vault *VaultReference `json:"vault,omitempty"`
 
 	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
 	ID *string `json:"id,omitempty"`
 
 	// Name of the target keystore. It can be changed in the future.
 	Name *string `json:"name" validate:"required"`
+
+	// Geographic location of the keystore, if available.
+	Location *string `json:"location" validate:"required"`
 
 	// Description of the keystore.
 	Description *string `json:"description" validate:"required"`
@@ -6182,6 +8246,7 @@ type KeystoreTypeAzure struct {
 const (
 	KeystoreTypeAzure_Type_AwsKms = "aws_kms"
 	KeystoreTypeAzure_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreTypeAzure_Type_GoogleKms = "google_kms"
 	KeystoreTypeAzure_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -6262,6 +8327,10 @@ func UnmarshalKeystoreTypeAzure(m map[string]json.RawMessage, result interface{}
 	if err != nil {
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
 		return
@@ -6330,17 +8399,165 @@ func UnmarshalKeystoreTypeAzure(m map[string]json.RawMessage, result interface{}
 	return
 }
 
-// KeystoreTypeIbmCloudKms : properties of a ibm cloud keystore.
+// KeystoreTypeGoogleKms : Properties related to Google Cloud KMS.
 // This model "extends" Keystore
-type KeystoreTypeIbmCloudKms struct {
+type KeystoreTypeGoogleKms struct {
 	// Reference to a vault.
-	Vault *VaultReference `json:"vault" validate:"required"`
+	Vault *VaultReference `json:"vault,omitempty"`
 
 	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
 	ID *string `json:"id,omitempty"`
 
 	// Name of the target keystore. It can be changed in the future.
 	Name *string `json:"name" validate:"required"`
+
+	// Geographic location of the keystore, if available.
+	Location *string `json:"location" validate:"required"`
+
+	// Description of the keystore.
+	Description *string `json:"description" validate:"required"`
+
+	// List of groups that this keystore belongs to.
+	Groups []string `json:"groups" validate:"required"`
+
+	// Type of keystore.
+	Type *string `json:"type" validate:"required"`
+
+	// Date and time when the target keystore was created.
+	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
+
+	// Date and time when the target keystore was last updated.
+	UpdatedAt *strfmt.DateTime `json:"updated_at,omitempty"`
+
+	// ID of the user that created the key.
+	CreatedBy *string `json:"created_by,omitempty"`
+
+	// ID of the user that last updated the key.
+	UpdatedBy *string `json:"updated_by,omitempty"`
+
+	// A URL that uniquely identifies your cloud resource.
+	Href *string `json:"href,omitempty"`
+
+	// The value of the JSON key represented in the Base64 format.
+	GoogleCredentials *string `json:"google_credentials" validate:"required"`
+
+	// Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's
+	// location impacts the performance of applications using the key.
+	GoogleLocation *string `json:"google_location" validate:"required"`
+
+	// The project id associated with this keystore.
+	GoogleProjectID *string `json:"google_project_id,omitempty"`
+
+	// The private key id associated with this keystore.
+	GooglePrivateKeyID *string `json:"google_private_key_id,omitempty"`
+
+	// A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of
+	// keys.
+	GoogleKeyRing *string `json:"google_key_ring" validate:"required"`
+}
+
+// Constants associated with the KeystoreTypeGoogleKms.Type property.
+// Type of keystore.
+const (
+	KeystoreTypeGoogleKms_Type_AwsKms = "aws_kms"
+	KeystoreTypeGoogleKms_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreTypeGoogleKms_Type_GoogleKms = "google_kms"
+	KeystoreTypeGoogleKms_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+func (*KeystoreTypeGoogleKms) isaKeystore() bool {
+	return true
+}
+
+// UnmarshalKeystoreTypeGoogleKms unmarshals an instance of KeystoreTypeGoogleKms from the specified map of raw messages.
+func UnmarshalKeystoreTypeGoogleKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoreTypeGoogleKms)
+	err = core.UnmarshalModel(m, "vault", &obj.Vault, UnmarshalVaultReference)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "groups", &obj.Groups)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_at", &obj.UpdatedAt)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "updated_by", &obj.UpdatedBy)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "href", &obj.Href)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_credentials", &obj.GoogleCredentials)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_location", &obj.GoogleLocation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_project_id", &obj.GoogleProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_private_key_id", &obj.GooglePrivateKeyID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_ring", &obj.GoogleKeyRing)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoreTypeIbmCloudKms : properties of a ibm cloud keystore.
+// This model "extends" Keystore
+type KeystoreTypeIbmCloudKms struct {
+	// Reference to a vault.
+	Vault *VaultReference `json:"vault,omitempty"`
+
+	// The v4 UUID used to uniquely identify the resource, as specified by RFC 4122.
+	ID *string `json:"id,omitempty"`
+
+	// Name of the target keystore. It can be changed in the future.
+	Name *string `json:"name" validate:"required"`
+
+	// Geographic location of the keystore, if available.
+	Location *string `json:"location" validate:"required"`
 
 	// Description of the keystore.
 	Description *string `json:"description" validate:"required"`
@@ -6390,6 +8607,7 @@ type KeystoreTypeIbmCloudKms struct {
 const (
 	KeystoreTypeIbmCloudKms_Type_AwsKms = "aws_kms"
 	KeystoreTypeIbmCloudKms_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreTypeIbmCloudKms_Type_GoogleKms = "google_kms"
 	KeystoreTypeIbmCloudKms_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -6417,6 +8635,10 @@ func UnmarshalKeystoreTypeIbmCloudKms(m map[string]json.RawMessage, result inter
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "location", &obj.Location)
 	if err != nil {
 		return
 	}
@@ -6722,6 +8944,80 @@ func UnmarshalKeystoreUpdateRequestKeystoreTypeAzureUpdate(m map[string]json.Raw
 	return
 }
 
+// KeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate : Google Cloud KMS is a managed service for you to create and manage cryptographic keys across a wide range of Google
+// Cloud services.
+// This model "extends" KeystoreUpdateRequest
+type KeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate struct {
+	// Name of a target keystore.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the keystore.
+	Description *string `json:"description,omitempty"`
+
+	// A list of groups that this keystore belongs to.
+	Groups []string `json:"groups,omitempty"`
+
+	// The value of the JSON key represented in the Base64 format.
+	GoogleCredentials *string `json:"google_credentials,omitempty"`
+
+	// Location represents the geographical region where a Cloud KMS resource is stored and can be accessed. A key's
+	// location impacts the performance of applications using the key.
+	GoogleLocation *string `json:"google_location,omitempty"`
+
+	// The project id associated with this keystore.
+	GoogleProjectID *string `json:"google_project_id,omitempty"`
+
+	// The private key id associated with this keystore.
+	GooglePrivateKeyID *string `json:"google_private_key_id,omitempty"`
+
+	// A key ring organizes keys in a specific Google Cloud location and allows you to manage access control on groups of
+	// keys.
+	GoogleKeyRing *string `json:"google_key_ring,omitempty"`
+}
+
+func (*KeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate) isaKeystoreUpdateRequest() bool {
+	return true
+}
+
+// UnmarshalKeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate unmarshals an instance of KeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate from the specified map of raw messages.
+func UnmarshalKeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoreUpdateRequestKeystoreTypeGoogleKmsUpdate)
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "groups", &obj.Groups)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_credentials", &obj.GoogleCredentials)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_location", &obj.GoogleLocation)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_project_id", &obj.GoogleProjectID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_private_key_id", &obj.GooglePrivateKeyID)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_ring", &obj.GoogleKeyRing)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // KeystoreUpdateRequestKeystoreTypeIbmCloudKmsInternalUpdate : KeystoreUpdateRequestKeystoreTypeIbmCloudKmsInternalUpdate struct
 // Models which "extend" this model:
 // - KeystoreUpdateRequestKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate
@@ -6840,6 +9136,364 @@ func UnmarshalKeystoreUpdateRequestKeystoreTypeIbmCloudKmsUpdate(m map[string]js
 	return
 }
 
+// KeystoresPropertiesCreateAwsKms : KeystoresPropertiesCreateAwsKms struct
+// This model "extends" KeystoresPropertiesCreate
+type KeystoresPropertiesCreateAwsKms struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+
+	// Type of keystore.
+	Type *string `json:"type,omitempty"`
+}
+
+// Constants associated with the KeystoresPropertiesCreateAwsKms.Type property.
+// Type of keystore.
+const (
+	KeystoresPropertiesCreateAwsKms_Type_AwsKms = "aws_kms"
+	KeystoresPropertiesCreateAwsKms_Type_AzureKeyVault = "azure_key_vault"
+	KeystoresPropertiesCreateAwsKms_Type_GoogleKms = "google_kms"
+	KeystoresPropertiesCreateAwsKms_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+func (*KeystoresPropertiesCreateAwsKms) isaKeystoresPropertiesCreate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesCreateAwsKms unmarshals an instance of KeystoresPropertiesCreateAwsKms from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesCreateAwsKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesCreateAwsKms)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesCreateAzure : KeystoresPropertiesCreateAzure struct
+// This model "extends" KeystoresPropertiesCreate
+type KeystoresPropertiesCreateAzure struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+
+	// Type of keystore.
+	Type *string `json:"type,omitempty"`
+}
+
+// Constants associated with the KeystoresPropertiesCreateAzure.Type property.
+// Type of keystore.
+const (
+	KeystoresPropertiesCreateAzure_Type_AwsKms = "aws_kms"
+	KeystoresPropertiesCreateAzure_Type_AzureKeyVault = "azure_key_vault"
+	KeystoresPropertiesCreateAzure_Type_GoogleKms = "google_kms"
+	KeystoresPropertiesCreateAzure_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+func (*KeystoresPropertiesCreateAzure) isaKeystoresPropertiesCreate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesCreateAzure unmarshals an instance of KeystoresPropertiesCreateAzure from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesCreateAzure(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesCreateAzure)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesCreateGoogleKms : KeystoresPropertiesCreateGoogleKms struct
+// This model "extends" KeystoresPropertiesCreate
+type KeystoresPropertiesCreateGoogleKms struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+
+	// Type of keystore.
+	Type *string `json:"type,omitempty"`
+
+	GoogleKeyProtectionLevel *string `json:"google_key_protection_level,omitempty"`
+
+	GoogleKeyPurpose *string `json:"google_key_purpose,omitempty"`
+
+	GoogleKmsAlgorithm *string `json:"google_kms_algorithm,omitempty"`
+}
+
+// Constants associated with the KeystoresPropertiesCreateGoogleKms.Type property.
+// Type of keystore.
+const (
+	KeystoresPropertiesCreateGoogleKms_Type_AwsKms = "aws_kms"
+	KeystoresPropertiesCreateGoogleKms_Type_AzureKeyVault = "azure_key_vault"
+	KeystoresPropertiesCreateGoogleKms_Type_GoogleKms = "google_kms"
+	KeystoresPropertiesCreateGoogleKms_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+// Constants associated with the KeystoresPropertiesCreateGoogleKms.GoogleKeyProtectionLevel property.
+const (
+	KeystoresPropertiesCreateGoogleKms_GoogleKeyProtectionLevel_Hsm = "hsm"
+	KeystoresPropertiesCreateGoogleKms_GoogleKeyProtectionLevel_Software = "software"
+)
+
+// Constants associated with the KeystoresPropertiesCreateGoogleKms.GoogleKeyPurpose property.
+const (
+	KeystoresPropertiesCreateGoogleKms_GoogleKeyPurpose_AsymmetricDecrypt = "asymmetric_decrypt"
+	KeystoresPropertiesCreateGoogleKms_GoogleKeyPurpose_AsymmetricSign = "asymmetric_sign"
+	KeystoresPropertiesCreateGoogleKms_GoogleKeyPurpose_EncryptDecrypt = "encrypt_decrypt"
+	KeystoresPropertiesCreateGoogleKms_GoogleKeyPurpose_Mac = "mac"
+)
+
+// Constants associated with the KeystoresPropertiesCreateGoogleKms.GoogleKmsAlgorithm property.
+const (
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_EcSignP256Sha256 = "ec_sign_p256_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_EcSignP384Sha384 = "ec_sign_p384_sha384"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_EcSignSecp256k1Sha256 = "ec_sign_secp256k1_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_GoogleSymmetricEncryption = "google_symmetric_encryption"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_HmacSha256 = "hmac_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha1 = "rsa_decrypt_oaep_2048_sha1"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha256 = "rsa_decrypt_oaep_2048_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha1 = "rsa_decrypt_oaep_3072_sha1"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha256 = "rsa_decrypt_oaep_3072_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha1 = "rsa_decrypt_oaep_4096_sha1"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha256 = "rsa_decrypt_oaep_4096_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha512 = "rsa_decrypt_oaep_4096_sha512"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs12048Sha256 = "rsa_sign_pkcs1_2048_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs13072Sha256 = "rsa_sign_pkcs1_3072_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs14096Sha256 = "rsa_sign_pkcs1_4096_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs14096Sha512 = "rsa_sign_pkcs1_4096_sha512"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPss2048Sha256 = "rsa_sign_pss_2048_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPss3072Sha256 = "rsa_sign_pss_3072_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPss4096Sha256 = "rsa_sign_pss_4096_sha256"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignPss4096Sha512 = "rsa_sign_pss_4096_sha512"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs12048 = "rsa_sign_raw_pkcs1_2048"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs13072 = "rsa_sign_raw_pkcs1_3072"
+	KeystoresPropertiesCreateGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs14096 = "rsa_sign_raw_pkcs1_4096"
+)
+
+func (*KeystoresPropertiesCreateGoogleKms) isaKeystoresPropertiesCreate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesCreateGoogleKms unmarshals an instance of KeystoresPropertiesCreateGoogleKms from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesCreateGoogleKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesCreateGoogleKms)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_protection_level", &obj.GoogleKeyProtectionLevel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_purpose", &obj.GoogleKeyPurpose)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_kms_algorithm", &obj.GoogleKmsAlgorithm)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesCreateIbmCloudKms : KeystoresPropertiesCreateIbmCloudKms struct
+// This model "extends" KeystoresPropertiesCreate
+type KeystoresPropertiesCreateIbmCloudKms struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+
+	// Type of keystore.
+	Type *string `json:"type,omitempty"`
+}
+
+// Constants associated with the KeystoresPropertiesCreateIbmCloudKms.Type property.
+// Type of keystore.
+const (
+	KeystoresPropertiesCreateIbmCloudKms_Type_AwsKms = "aws_kms"
+	KeystoresPropertiesCreateIbmCloudKms_Type_AzureKeyVault = "azure_key_vault"
+	KeystoresPropertiesCreateIbmCloudKms_Type_GoogleKms = "google_kms"
+	KeystoresPropertiesCreateIbmCloudKms_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+func (*KeystoresPropertiesCreateIbmCloudKms) isaKeystoresPropertiesCreate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesCreateIbmCloudKms unmarshals an instance of KeystoresPropertiesCreateIbmCloudKms from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesCreateIbmCloudKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesCreateIbmCloudKms)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesUpdateAwsKms : KeystoresPropertiesUpdateAwsKms struct
+// This model "extends" KeystoresPropertiesUpdate
+type KeystoresPropertiesUpdateAwsKms struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+}
+
+func (*KeystoresPropertiesUpdateAwsKms) isaKeystoresPropertiesUpdate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesUpdateAwsKms unmarshals an instance of KeystoresPropertiesUpdateAwsKms from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesUpdateAwsKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesUpdateAwsKms)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesUpdateAzure : KeystoresPropertiesUpdateAzure struct
+// This model "extends" KeystoresPropertiesUpdate
+type KeystoresPropertiesUpdateAzure struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+}
+
+func (*KeystoresPropertiesUpdateAzure) isaKeystoresPropertiesUpdate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesUpdateAzure unmarshals an instance of KeystoresPropertiesUpdateAzure from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesUpdateAzure(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesUpdateAzure)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesUpdateGoogleKms : KeystoresPropertiesUpdateGoogleKms struct
+// This model "extends" KeystoresPropertiesUpdate
+type KeystoresPropertiesUpdateGoogleKms struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+
+	GoogleKeyProtectionLevel *string `json:"google_key_protection_level,omitempty"`
+
+	GoogleKeyPurpose *string `json:"google_key_purpose,omitempty"`
+
+	GoogleKmsAlgorithm *string `json:"google_kms_algorithm,omitempty"`
+}
+
+// Constants associated with the KeystoresPropertiesUpdateGoogleKms.GoogleKeyProtectionLevel property.
+const (
+	KeystoresPropertiesUpdateGoogleKms_GoogleKeyProtectionLevel_Hsm = "hsm"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKeyProtectionLevel_Software = "software"
+)
+
+// Constants associated with the KeystoresPropertiesUpdateGoogleKms.GoogleKeyPurpose property.
+const (
+	KeystoresPropertiesUpdateGoogleKms_GoogleKeyPurpose_AsymmetricDecrypt = "asymmetric_decrypt"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKeyPurpose_AsymmetricSign = "asymmetric_sign"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKeyPurpose_EncryptDecrypt = "encrypt_decrypt"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKeyPurpose_Mac = "mac"
+)
+
+// Constants associated with the KeystoresPropertiesUpdateGoogleKms.GoogleKmsAlgorithm property.
+const (
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_EcSignP256Sha256 = "ec_sign_p256_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_EcSignP384Sha384 = "ec_sign_p384_sha384"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_EcSignSecp256k1Sha256 = "ec_sign_secp256k1_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_GoogleSymmetricEncryption = "google_symmetric_encryption"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_HmacSha256 = "hmac_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha1 = "rsa_decrypt_oaep_2048_sha1"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep2048Sha256 = "rsa_decrypt_oaep_2048_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha1 = "rsa_decrypt_oaep_3072_sha1"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep3072Sha256 = "rsa_decrypt_oaep_3072_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha1 = "rsa_decrypt_oaep_4096_sha1"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha256 = "rsa_decrypt_oaep_4096_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaDecryptOaep4096Sha512 = "rsa_decrypt_oaep_4096_sha512"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs12048Sha256 = "rsa_sign_pkcs1_2048_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs13072Sha256 = "rsa_sign_pkcs1_3072_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs14096Sha256 = "rsa_sign_pkcs1_4096_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPkcs14096Sha512 = "rsa_sign_pkcs1_4096_sha512"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPss2048Sha256 = "rsa_sign_pss_2048_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPss3072Sha256 = "rsa_sign_pss_3072_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPss4096Sha256 = "rsa_sign_pss_4096_sha256"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignPss4096Sha512 = "rsa_sign_pss_4096_sha512"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs12048 = "rsa_sign_raw_pkcs1_2048"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs13072 = "rsa_sign_raw_pkcs1_3072"
+	KeystoresPropertiesUpdateGoogleKms_GoogleKmsAlgorithm_RsaSignRawPkcs14096 = "rsa_sign_raw_pkcs1_4096"
+)
+
+func (*KeystoresPropertiesUpdateGoogleKms) isaKeystoresPropertiesUpdate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesUpdateGoogleKms unmarshals an instance of KeystoresPropertiesUpdateGoogleKms from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesUpdateGoogleKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesUpdateGoogleKms)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_protection_level", &obj.GoogleKeyProtectionLevel)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_key_purpose", &obj.GoogleKeyPurpose)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "google_kms_algorithm", &obj.GoogleKmsAlgorithm)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// KeystoresPropertiesUpdateIbmCloudKms : KeystoresPropertiesUpdateIbmCloudKms struct
+// This model "extends" KeystoresPropertiesUpdate
+type KeystoresPropertiesUpdateIbmCloudKms struct {
+	// Which keystore group to distribute the key to.
+	Group *string `json:"group,omitempty"`
+}
+
+func (*KeystoresPropertiesUpdateIbmCloudKms) isaKeystoresPropertiesUpdate() bool {
+	return true
+}
+
+// UnmarshalKeystoresPropertiesUpdateIbmCloudKms unmarshals an instance of KeystoresPropertiesUpdateIbmCloudKms from the specified map of raw messages.
+func UnmarshalKeystoresPropertiesUpdateIbmCloudKms(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoresPropertiesUpdateIbmCloudKms)
+	err = core.UnmarshalPrimitive(m, "group", &obj.Group)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
 // KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsCreate : You can connect your Hyper Protect Crypto Services instance to the keystores of another Hyper Protect Crypto Services
 // or Key Protect instance, and manage its KMS keys using the current service instance.
 // This model "extends" KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate
@@ -6882,6 +9536,7 @@ type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystor
 const (
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsCreate_Type_AwsKms = "aws_kms"
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsCreate_Type_GoogleKms = "google_kms"
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsCreate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -6971,7 +9626,7 @@ func UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCrea
 // KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate : An internal keystore generation request describing all information necessary to generate an internal keystore. It
 // only require name.
 // Models which "extend" this model:
-// - KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate
+// - KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate
 // This model "extends" KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate
 type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate struct {
 	// Type of keystore.
@@ -6997,6 +9652,7 @@ type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystor
 const (
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate_Type_AwsKms = "aws_kms"
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate_Type_GoogleKms = "google_kms"
 	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
@@ -7095,9 +9751,11 @@ func UnmarshalKeystoreUpdateRequestKeystoreTypeIbmCloudKmsInternalUpdateKeystore
 	return
 }
 
-// KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate : Base of a keystore update.
+// KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate : KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate struct
+// Models which "extend" this model:
+// - KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate
 // This model "extends" KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate
-type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate struct {
+type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate struct {
 	// Type of keystore.
 	Type *string `json:"type" validate:"required"`
 
@@ -7116,48 +9774,46 @@ type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystor
 	Groups []string `json:"groups,omitempty"`
 }
 
-// Constants associated with the KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate.Type property.
+// Constants associated with the KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate.Type property.
 // Type of keystore.
 const (
-	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_AwsKms = "aws_kms"
-	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_AzureKeyVault = "azure_key_vault"
-	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_IbmCloudKms = "ibm_cloud_kms"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_Type_AwsKms = "aws_kms"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_Type_GoogleKms = "google_kms"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_Type_IbmCloudKms = "ibm_cloud_kms"
 )
 
-// Constants associated with the KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate.IbmVariant property.
+// Constants associated with the KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate.IbmVariant property.
 // Possible IBM Cloud KMS variants.
 const (
-	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_IbmVariant_Hpcs = "hpcs"
-	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_IbmVariant_Internal = "internal"
-	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_IbmVariant_KeyProtect = "key_protect"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_IbmVariant_Hpcs = "hpcs"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_IbmVariant_Internal = "internal"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate_IbmVariant_KeyProtect = "key_protect"
 )
-
-// NewKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate : Instantiate KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate (Generic Model Constructor)
-func (*UkoV4) NewKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate(typeVar string, vault *VaultReferenceInCreationRequest, ibmVariant string) (_model *KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate, err error) {
-	_model = &KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate{
-		Type: core.StringPtr(typeVar),
-		Vault: vault,
-		IbmVariant: core.StringPtr(ibmVariant),
-	}
-	err = core.ValidateStruct(_model, "required parameters")
-	return
-}
-
-func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate() bool {
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate() bool {
 	return true
 }
 
-func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate() bool {
+type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateIntf interface {
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateIntf
+	isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate() bool
+}
+
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate() bool {
 	return true
 }
 
-func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequest() bool {
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate() bool {
 	return true
 }
 
-// UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate unmarshals an instance of KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate from the specified map of raw messages.
-func UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate(m map[string]json.RawMessage, result interface{}) (err error) {
-	obj := new(KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate)
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate) isaKeystoreCreationRequest() bool {
+	return true
+}
+
+// UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate unmarshals an instance of KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate from the specified map of raw messages.
+func UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate)
 	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
 	if err != nil {
 		return
@@ -7184,4 +9840,709 @@ func UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCrea
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
+}
+
+// KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate : Base of a keystore update.
+// This model "extends" KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate
+type KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate struct {
+	// Type of keystore.
+	Type *string `json:"type" validate:"required"`
+
+	Vault *VaultReferenceInCreationRequest `json:"vault" validate:"required"`
+
+	// Possible IBM Cloud KMS variants.
+	IbmVariant *string `json:"ibm_variant" validate:"required"`
+
+	// Name of a target keystore.
+	Name *string `json:"name,omitempty"`
+
+	// Description of the keystore.
+	Description *string `json:"description,omitempty"`
+
+	// A list of groups that this keystore belongs to.
+	Groups []string `json:"groups,omitempty"`
+}
+
+// Constants associated with the KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate.Type property.
+// Type of keystore.
+const (
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_AwsKms = "aws_kms"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_AzureKeyVault = "azure_key_vault"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_GoogleKms = "google_kms"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_Type_IbmCloudKms = "ibm_cloud_kms"
+)
+
+// Constants associated with the KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate.IbmVariant property.
+// Possible IBM Cloud KMS variants.
+const (
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_IbmVariant_Hpcs = "hpcs"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_IbmVariant_Internal = "internal"
+	KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate_IbmVariant_KeyProtect = "key_protect"
+)
+
+// NewKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate : Instantiate KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate (Generic Model Constructor)
+func (*UkoV4) NewKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate(typeVar string, vault *VaultReferenceInCreationRequest, ibmVariant string) (_model *KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate, err error) {
+	_model = &KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate{
+		Type: core.StringPtr(typeVar),
+		Vault: vault,
+		IbmVariant: core.StringPtr(ibmVariant),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdate() bool {
+	return true
+}
+
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreate() bool {
+	return true
+}
+
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreate() bool {
+	return true
+}
+
+func (*KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate) isaKeystoreCreationRequest() bool {
+	return true
+}
+
+// UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate unmarshals an instance of KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate from the specified map of raw messages.
+func UnmarshalKeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(KeystoreCreationRequestKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalExternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalCreateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeIbmCloudKmsInternalUpdateKeystoreTypeBaseUpdate)
+	err = core.UnmarshalPrimitive(m, "type", &obj.Type)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "vault", &obj.Vault, UnmarshalVaultReferenceInCreationRequest)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "ibm_variant", &obj.IbmVariant)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "groups", &obj.Groups)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+//
+// ManagedKeysPager can be used to simplify the use of the "ListManagedKeys" method.
+//
+type ManagedKeysPager struct {
+	hasNext bool
+	options *ListManagedKeysOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewManagedKeysPager returns a new ManagedKeysPager instance.
+func (uko *UkoV4) NewManagedKeysPager(options *ListManagedKeysOptions) (pager *ManagedKeysPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListManagedKeysOptions = *options
+	pager = &ManagedKeysPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ManagedKeysPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ManagedKeysPager) GetNextWithContext(ctx context.Context) (page []ManagedKey, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListManagedKeysWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ManagedKeys
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ManagedKeysPager) GetAllWithContext(ctx context.Context) (allItems []ManagedKey, err error) {
+	for pager.HasNext() {
+		var nextPage []ManagedKey
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ManagedKeysPager) GetNext() (page []ManagedKey, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ManagedKeysPager) GetAll() (allItems []ManagedKey, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// AssociatedResourcesForManagedKeyPager can be used to simplify the use of the "ListAssociatedResourcesForManagedKey" method.
+//
+type AssociatedResourcesForManagedKeyPager struct {
+	hasNext bool
+	options *ListAssociatedResourcesForManagedKeyOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewAssociatedResourcesForManagedKeyPager returns a new AssociatedResourcesForManagedKeyPager instance.
+func (uko *UkoV4) NewAssociatedResourcesForManagedKeyPager(options *ListAssociatedResourcesForManagedKeyOptions) (pager *AssociatedResourcesForManagedKeyPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListAssociatedResourcesForManagedKeyOptions = *options
+	pager = &AssociatedResourcesForManagedKeyPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AssociatedResourcesForManagedKeyPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AssociatedResourcesForManagedKeyPager) GetNextWithContext(ctx context.Context) (page []AssociatedResource, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListAssociatedResourcesForManagedKeyWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.AssociatedResources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AssociatedResourcesForManagedKeyPager) GetAllWithContext(ctx context.Context) (allItems []AssociatedResource, err error) {
+	for pager.HasNext() {
+		var nextPage []AssociatedResource
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AssociatedResourcesForManagedKeyPager) GetNext() (page []AssociatedResource, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AssociatedResourcesForManagedKeyPager) GetAll() (allItems []AssociatedResource, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// KeyTemplatesPager can be used to simplify the use of the "ListKeyTemplates" method.
+//
+type KeyTemplatesPager struct {
+	hasNext bool
+	options *ListKeyTemplatesOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewKeyTemplatesPager returns a new KeyTemplatesPager instance.
+func (uko *UkoV4) NewKeyTemplatesPager(options *ListKeyTemplatesOptions) (pager *KeyTemplatesPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListKeyTemplatesOptions = *options
+	pager = &KeyTemplatesPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *KeyTemplatesPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *KeyTemplatesPager) GetNextWithContext(ctx context.Context) (page []Template, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListKeyTemplatesWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Templates
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *KeyTemplatesPager) GetAllWithContext(ctx context.Context) (allItems []Template, err error) {
+	for pager.HasNext() {
+		var nextPage []Template
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *KeyTemplatesPager) GetNext() (page []Template, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *KeyTemplatesPager) GetAll() (allItems []Template, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// KeystoresPager can be used to simplify the use of the "ListKeystores" method.
+//
+type KeystoresPager struct {
+	hasNext bool
+	options *ListKeystoresOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewKeystoresPager returns a new KeystoresPager instance.
+func (uko *UkoV4) NewKeystoresPager(options *ListKeystoresOptions) (pager *KeystoresPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListKeystoresOptions = *options
+	pager = &KeystoresPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *KeystoresPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *KeystoresPager) GetNextWithContext(ctx context.Context) (page []KeystoreIntf, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListKeystoresWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Keystores
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *KeystoresPager) GetAllWithContext(ctx context.Context) (allItems []KeystoreIntf, err error) {
+	for pager.HasNext() {
+		var nextPage []KeystoreIntf
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *KeystoresPager) GetNext() (page []KeystoreIntf, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *KeystoresPager) GetAll() (allItems []KeystoreIntf, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// AssociatedResourcesForTargetKeystorePager can be used to simplify the use of the "ListAssociatedResourcesForTargetKeystore" method.
+//
+type AssociatedResourcesForTargetKeystorePager struct {
+	hasNext bool
+	options *ListAssociatedResourcesForTargetKeystoreOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewAssociatedResourcesForTargetKeystorePager returns a new AssociatedResourcesForTargetKeystorePager instance.
+func (uko *UkoV4) NewAssociatedResourcesForTargetKeystorePager(options *ListAssociatedResourcesForTargetKeystoreOptions) (pager *AssociatedResourcesForTargetKeystorePager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListAssociatedResourcesForTargetKeystoreOptions = *options
+	pager = &AssociatedResourcesForTargetKeystorePager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AssociatedResourcesForTargetKeystorePager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AssociatedResourcesForTargetKeystorePager) GetNextWithContext(ctx context.Context) (page []AssociatedResource, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListAssociatedResourcesForTargetKeystoreWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.AssociatedResources
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AssociatedResourcesForTargetKeystorePager) GetAllWithContext(ctx context.Context) (allItems []AssociatedResource, err error) {
+	for pager.HasNext() {
+		var nextPage []AssociatedResource
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AssociatedResourcesForTargetKeystorePager) GetNext() (page []AssociatedResource, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AssociatedResourcesForTargetKeystorePager) GetAll() (allItems []AssociatedResource, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// ManagedKeysFromKeystorePager can be used to simplify the use of the "ListManagedKeysFromKeystore" method.
+//
+type ManagedKeysFromKeystorePager struct {
+	hasNext bool
+	options *ListManagedKeysFromKeystoreOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewManagedKeysFromKeystorePager returns a new ManagedKeysFromKeystorePager instance.
+func (uko *UkoV4) NewManagedKeysFromKeystorePager(options *ListManagedKeysFromKeystoreOptions) (pager *ManagedKeysFromKeystorePager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListManagedKeysFromKeystoreOptions = *options
+	pager = &ManagedKeysFromKeystorePager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *ManagedKeysFromKeystorePager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *ManagedKeysFromKeystorePager) GetNextWithContext(ctx context.Context) (page []ManagedKey, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListManagedKeysFromKeystoreWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.ManagedKeys
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *ManagedKeysFromKeystorePager) GetAllWithContext(ctx context.Context) (allItems []ManagedKey, err error) {
+	for pager.HasNext() {
+		var nextPage []ManagedKey
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *ManagedKeysFromKeystorePager) GetNext() (page []ManagedKey, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *ManagedKeysFromKeystorePager) GetAll() (allItems []ManagedKey, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// VaultsPager can be used to simplify the use of the "ListVaults" method.
+//
+type VaultsPager struct {
+	hasNext bool
+	options *ListVaultsOptions
+	client  *UkoV4
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewVaultsPager returns a new VaultsPager instance.
+func (uko *UkoV4) NewVaultsPager(options *ListVaultsOptions) (pager *VaultsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListVaultsOptions = *options
+	pager = &VaultsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  uko,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *VaultsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *VaultsPager) GetNextWithContext(ctx context.Context) (page []Vault, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListVaultsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Vaults
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *VaultsPager) GetAllWithContext(ctx context.Context) (allItems []Vault, err error) {
+	for pager.HasNext() {
+		var nextPage []Vault
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *VaultsPager) GetNext() (page []Vault, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *VaultsPager) GetAll() (allItems []Vault, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

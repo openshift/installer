@@ -876,30 +876,42 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			vpcZone = fmt.Sprintf("%s-%d", vpcRegion, rand.Intn(2)+1) //nolint:gosec // we don't need a crypto secure number
 		}
 
+		transitGatewayEnabled := powervsconfig.TransitGatewayEnabledZone(installConfig.Config.Platform.PowerVS.Zone)
+
+		serviceInstanceCRN, err := client.ServiceInstanceIDToCRN(ctx, installConfig.Config.PowerVS.ServiceInstanceID)
+		if err != nil {
+			return err
+		}
+		if serviceInstanceCRN == "" {
+			return fmt.Errorf("the service instance CRN is empty for the given ID")
+		}
+
 		osImage := strings.SplitN(string(*rhcosImage), "/", 2)
 		data, err = powervstfvars.TFVars(
 			powervstfvars.TFVarsSources{
-				MasterConfigs:        masterConfigs,
-				Region:               installConfig.Config.Platform.PowerVS.Region,
-				Zone:                 installConfig.Config.Platform.PowerVS.Zone,
-				APIKey:               APIKey,
-				SSHKey:               installConfig.Config.SSHKey,
-				PowerVSResourceGroup: installConfig.Config.PowerVS.PowerVSResourceGroup,
-				ImageBucketName:      osImage[0],
-				ImageBucketFileName:  osImage[1],
-				NetworkName:          installConfig.Config.PowerVS.PVSNetworkName,
-				VPCRegion:            vpcRegion,
-				VPCZone:              vpcZone,
-				VPCName:              vpcName,
-				VPCSubnetName:        vpcSubnet,
-				VPCPermitted:         vpcPermitted,
-				VPCGatewayName:       vpcGatewayName,
-				VPCGatewayAttached:   vpcGatewayAttached,
-				CloudConnectionName:  installConfig.Config.PowerVS.CloudConnectionName,
-				CISInstanceCRN:       cisCRN,
-				DNSInstanceCRN:       dnsCRN,
-				PublishStrategy:      installConfig.Config.Publish,
-				EnableSNAT:           len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
+				MasterConfigs:         masterConfigs,
+				Region:                installConfig.Config.Platform.PowerVS.Region,
+				Zone:                  installConfig.Config.Platform.PowerVS.Zone,
+				APIKey:                APIKey,
+				SSHKey:                installConfig.Config.SSHKey,
+				PowerVSResourceGroup:  installConfig.Config.PowerVS.PowerVSResourceGroup,
+				ImageBucketName:       osImage[0],
+				ImageBucketFileName:   osImage[1],
+				NetworkName:           installConfig.Config.PowerVS.PVSNetworkName,
+				VPCRegion:             vpcRegion,
+				VPCZone:               vpcZone,
+				VPCName:               vpcName,
+				VPCSubnetName:         vpcSubnet,
+				VPCPermitted:          vpcPermitted,
+				VPCGatewayName:        vpcGatewayName,
+				VPCGatewayAttached:    vpcGatewayAttached,
+				CloudConnectionName:   installConfig.Config.PowerVS.CloudConnectionName,
+				CISInstanceCRN:        cisCRN,
+				DNSInstanceCRN:        dnsCRN,
+				PublishStrategy:       installConfig.Config.Publish,
+				EnableSNAT:            len(installConfig.Config.DeprecatedImageContentSources) == 0 && len(installConfig.Config.ImageDigestSources) == 0,
+				TransitGatewayEnabled: transitGatewayEnabled,
+				ServiceInstanceCRN:    serviceInstanceCRN,
 			},
 		)
 		if err != nil {

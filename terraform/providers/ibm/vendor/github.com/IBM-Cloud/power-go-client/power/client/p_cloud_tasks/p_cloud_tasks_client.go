@@ -38,7 +38,7 @@ type ClientService interface {
 }
 
 /*
-  PcloudTasksDelete deletes a task
+PcloudTasksDelete deletes a task
 */
 func (a *Client) PcloudTasksDelete(params *PcloudTasksDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTasksDeleteOK, error) {
 	// TODO: Validate the params before sending
@@ -77,7 +77,7 @@ func (a *Client) PcloudTasksDelete(params *PcloudTasksDeleteParams, authInfo run
 }
 
 /*
-  PcloudTasksGet gets a task
+PcloudTasksGet gets a task
 */
 func (a *Client) PcloudTasksGet(params *PcloudTasksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudTasksGetOK, error) {
 	// TODO: Validate the params before sending

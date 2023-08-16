@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2022.
+ * (C) Copyright IBM Corp. 2020, 2022.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.46.1-a5569134-20220316-164819
+ * IBM OpenAPI SDK Code Generator Version: 3.60.0-13f6e1ba-20221019-164457
  */
 
 // Package iamaccessgroupsv2 : Operations and models for the IamAccessGroupsV2 service
@@ -551,7 +551,7 @@ func (iamAccessGroups *IamAccessGroupsV2) IsMemberOfAccessGroupWithContext(ctx c
 
 	pathParamsMap := map[string]string{
 		"access_group_id": *isMemberOfAccessGroupOptions.AccessGroupID,
-		"iam_id": *isMemberOfAccessGroupOptions.IamID,
+		"iam_id":          *isMemberOfAccessGroupOptions.IamID,
 	}
 
 	builder := core.NewRequestBuilder(core.HEAD)
@@ -767,7 +767,7 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveMemberFromAccessGroupWithContext
 
 	pathParamsMap := map[string]string{
 		"access_group_id": *removeMemberFromAccessGroupOptions.AccessGroupID,
-		"iam_id": *removeMemberFromAccessGroupOptions.IamID,
+		"iam_id":          *removeMemberFromAccessGroupOptions.IamID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1027,7 +1027,7 @@ func (iamAccessGroups *IamAccessGroupsV2) AddMemberToMultipleAccessGroupsWithCon
 // conditions during login, the user will be dynamically added to the group. The duration of the user's access to the
 // group is determined by the `expiration` field. After access expires, the user will need to log in again to regain
 // access. Note that the condition's value field must be a stringified JSON value. [Consult this documentation for
-// further explanation of dynamic rules.](/docs/iam/accessgroup_rules.html#rules).
+// further explanation of dynamic rules.](/docs/account?topic=account-rules).
 func (iamAccessGroups *IamAccessGroupsV2) AddAccessGroupRule(addAccessGroupRuleOptions *AddAccessGroupRuleOptions) (result *Rule, response *core.DetailedResponse, err error) {
 	return iamAccessGroups.AddAccessGroupRuleWithContext(context.Background(), addAccessGroupRuleOptions)
 }
@@ -1192,7 +1192,7 @@ func (iamAccessGroups *IamAccessGroupsV2) GetAccessGroupRuleWithContext(ctx cont
 
 	pathParamsMap := map[string]string{
 		"access_group_id": *getAccessGroupRuleOptions.AccessGroupID,
-		"rule_id": *getAccessGroupRuleOptions.RuleID,
+		"rule_id":         *getAccessGroupRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -1257,7 +1257,7 @@ func (iamAccessGroups *IamAccessGroupsV2) ReplaceAccessGroupRuleWithContext(ctx 
 
 	pathParamsMap := map[string]string{
 		"access_group_id": *replaceAccessGroupRuleOptions.AccessGroupID,
-		"rule_id": *replaceAccessGroupRuleOptions.RuleID,
+		"rule_id":         *replaceAccessGroupRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -1344,7 +1344,7 @@ func (iamAccessGroups *IamAccessGroupsV2) RemoveAccessGroupRuleWithContext(ctx c
 
 	pathParamsMap := map[string]string{
 		"access_group_id": *removeAccessGroupRuleOptions.AccessGroupID,
-		"rule_id": *removeAccessGroupRuleOptions.RuleID,
+		"rule_id":         *removeAccessGroupRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -1580,9 +1580,9 @@ type AddAccessGroupRuleOptions struct {
 func (*IamAccessGroupsV2) NewAddAccessGroupRuleOptions(accessGroupID string, expiration int64, realmName string, conditions []RuleConditions) *AddAccessGroupRuleOptions {
 	return &AddAccessGroupRuleOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		Expiration: core.Int64Ptr(expiration),
-		RealmName: core.StringPtr(realmName),
-		Conditions: conditions,
+		Expiration:    core.Int64Ptr(expiration),
+		RealmName:     core.StringPtr(realmName),
+		Conditions:    conditions,
 	}
 }
 
@@ -1633,7 +1633,7 @@ type AddGroupMembersRequestMembersItem struct {
 	// The IBMid, service ID or trusted profile ID of the member.
 	IamID *string `json:"iam_id" validate:"required"`
 
-	// The type of the member, must be either "user", "service" or "trusted profile".
+	// The type of the member, must be either "user", "service" or "profile".
 	Type *string `json:"type" validate:"required"`
 }
 
@@ -1641,7 +1641,7 @@ type AddGroupMembersRequestMembersItem struct {
 func (*IamAccessGroupsV2) NewAddGroupMembersRequestMembersItem(iamID string, typeVar string) (_model *AddGroupMembersRequestMembersItem, err error) {
 	_model = &AddGroupMembersRequestMembersItem{
 		IamID: core.StringPtr(iamID),
-		Type: core.StringPtr(typeVar),
+		Type:  core.StringPtr(typeVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -1684,7 +1684,7 @@ type AddGroupMembersResponseMembersItem struct {
 	// The IBMid or Service Id of the member.
 	IamID *string `json:"iam_id,omitempty"`
 
-	// The member type - either `user` or `service`.
+	// The member type - either `user`, `service` or `profile`.
 	Type *string `json:"type,omitempty"`
 
 	// The timestamp the membership was created at.
@@ -1748,7 +1748,7 @@ type AddMemberToMultipleAccessGroupsOptions struct {
 	// The IAM identifier.
 	IamID *string `json:"iam_id" validate:"required,ne="`
 
-	// The type of the member, must be either "user", "service" or "trusted profile".
+	// The type of the member, must be either "user", "service" or "profile".
 	Type *string `json:"type,omitempty"`
 
 	// The ids of the access groups a given member is to be added to.
@@ -1767,7 +1767,7 @@ type AddMemberToMultipleAccessGroupsOptions struct {
 func (*IamAccessGroupsV2) NewAddMemberToMultipleAccessGroupsOptions(accountID string, iamID string) *AddMemberToMultipleAccessGroupsOptions {
 	return &AddMemberToMultipleAccessGroupsOptions{
 		AccountID: core.StringPtr(accountID),
-		IamID: core.StringPtr(iamID),
+		IamID:     core.StringPtr(iamID),
 	}
 }
 
@@ -1944,7 +1944,7 @@ type CreateAccessGroupOptions struct {
 func (*IamAccessGroupsV2) NewCreateAccessGroupOptions(accountID string, name string) *CreateAccessGroupOptions {
 	return &CreateAccessGroupOptions{
 		AccountID: core.StringPtr(accountID),
-		Name: core.StringPtr(name),
+		Name:      core.StringPtr(name),
 	}
 }
 
@@ -2246,7 +2246,7 @@ type GetAccessGroupRuleOptions struct {
 func (*IamAccessGroupsV2) NewGetAccessGroupRuleOptions(accessGroupID string, ruleID string) *GetAccessGroupRuleOptions {
 	return &GetAccessGroupRuleOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:        core.StringPtr(ruleID),
 	}
 }
 
@@ -2346,9 +2346,6 @@ type Group struct {
 
 	// This is set to true if rules exist for the group.
 	IsFederated *bool `json:"is_federated,omitempty"`
-
-	// Type of the membership. `static` or `dynamic`.
-	MembershipType *string `json:"membership_type,omitempty"`
 }
 
 // UnmarshalGroup unmarshals an instance of Group from the specified map of raw messages.
@@ -2394,10 +2391,6 @@ func UnmarshalGroup(m map[string]json.RawMessage, result interface{}) (err error
 	if err != nil {
 		return
 	}
-	err = core.UnmarshalPrimitive(m, "membership_type", &obj.MembershipType)
-	if err != nil {
-		return
-	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -2405,13 +2398,13 @@ func UnmarshalGroup(m map[string]json.RawMessage, result interface{}) (err error
 // GroupMembersList : The members of a group.
 type GroupMembersList struct {
 	// Limit on how many items can be returned.
-	Limit *int64 `json:"limit,omitempty"`
+	Limit *int64 `json:"limit" validate:"required"`
 
 	// The offset of the first item returned in the result set.
-	Offset *int64 `json:"offset,omitempty"`
+	Offset *int64 `json:"offset" validate:"required"`
 
 	// The total number of items that match the query.
-	TotalCount *int64 `json:"total_count,omitempty"`
+	TotalCount *int64 `json:"total_count" validate:"required"`
 
 	// A link object.
 	First *HrefStruct `json:"first,omitempty"`
@@ -2488,13 +2481,13 @@ func (resp *GroupMembersList) GetNextOffset() (*int64, error) {
 // GroupsList : The list of access groups returned as part of a response.
 type GroupsList struct {
 	// Limit on how many items can be returned.
-	Limit *int64 `json:"limit,omitempty"`
+	Limit *int64 `json:"limit" validate:"required"`
 
 	// The offset of the first item returned in the result set.
-	Offset *int64 `json:"offset,omitempty"`
+	Offset *int64 `json:"offset" validate:"required"`
 
 	// The total number of items that match the query.
-	TotalCount *int64 `json:"total_count,omitempty"`
+	TotalCount *int64 `json:"total_count" validate:"required"`
 
 	// A link object.
 	First *HrefStruct `json:"first,omitempty"`
@@ -2606,7 +2599,7 @@ type IsMemberOfAccessGroupOptions struct {
 func (*IamAccessGroupsV2) NewIsMemberOfAccessGroupOptions(accessGroupID string, iamID string) *IsMemberOfAccessGroupOptions {
 	return &IsMemberOfAccessGroupOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		IamID: core.StringPtr(iamID),
+		IamID:         core.StringPtr(iamID),
 	}
 }
 
@@ -2970,7 +2963,7 @@ type RemoveAccessGroupRuleOptions struct {
 func (*IamAccessGroupsV2) NewRemoveAccessGroupRuleOptions(accessGroupID string, ruleID string) *RemoveAccessGroupRuleOptions {
 	return &RemoveAccessGroupRuleOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		RuleID: core.StringPtr(ruleID),
+		RuleID:        core.StringPtr(ruleID),
 	}
 }
 
@@ -3019,7 +3012,7 @@ type RemoveMemberFromAccessGroupOptions struct {
 func (*IamAccessGroupsV2) NewRemoveMemberFromAccessGroupOptions(accessGroupID string, iamID string) *RemoveMemberFromAccessGroupOptions {
 	return &RemoveMemberFromAccessGroupOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		IamID: core.StringPtr(iamID),
+		IamID:         core.StringPtr(iamID),
 	}
 }
 
@@ -3070,7 +3063,7 @@ type RemoveMemberFromAllAccessGroupsOptions struct {
 func (*IamAccessGroupsV2) NewRemoveMemberFromAllAccessGroupsOptions(accountID string, iamID string) *RemoveMemberFromAllAccessGroupsOptions {
 	return &RemoveMemberFromAllAccessGroupsOptions{
 		AccountID: core.StringPtr(accountID),
-		IamID: core.StringPtr(iamID),
+		IamID:     core.StringPtr(iamID),
 	}
 }
 
@@ -3182,11 +3175,11 @@ type ReplaceAccessGroupRuleOptions struct {
 func (*IamAccessGroupsV2) NewReplaceAccessGroupRuleOptions(accessGroupID string, ruleID string, ifMatch string, expiration int64, realmName string, conditions []RuleConditions) *ReplaceAccessGroupRuleOptions {
 	return &ReplaceAccessGroupRuleOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		RuleID: core.StringPtr(ruleID),
-		IfMatch: core.StringPtr(ifMatch),
-		Expiration: core.Int64Ptr(expiration),
-		RealmName: core.StringPtr(realmName),
-		Conditions: conditions,
+		RuleID:        core.StringPtr(ruleID),
+		IfMatch:       core.StringPtr(ifMatch),
+		Expiration:    core.Int64Ptr(expiration),
+		RealmName:     core.StringPtr(realmName),
+		Conditions:    conditions,
 	}
 }
 
@@ -3346,20 +3339,20 @@ type RuleConditions struct {
 // Constants associated with the RuleConditions.Operator property.
 // The operation to perform on the claim.
 const (
-	RuleConditionsOperatorContainsConst = "CONTAINS"
-	RuleConditionsOperatorEqualsConst = "EQUALS"
-	RuleConditionsOperatorEqualsIgnoreCaseConst = "EQUALS_IGNORE_CASE"
-	RuleConditionsOperatorInConst = "IN"
-	RuleConditionsOperatorNotEqualsConst = "NOT_EQUALS"
+	RuleConditionsOperatorContainsConst            = "CONTAINS"
+	RuleConditionsOperatorEqualsConst              = "EQUALS"
+	RuleConditionsOperatorEqualsIgnoreCaseConst    = "EQUALS_IGNORE_CASE"
+	RuleConditionsOperatorInConst                  = "IN"
+	RuleConditionsOperatorNotEqualsConst           = "NOT_EQUALS"
 	RuleConditionsOperatorNotEqualsIgnoreCaseConst = "NOT_EQUALS_IGNORE_CASE"
 )
 
 // NewRuleConditions : Instantiate RuleConditions (Generic Model Constructor)
 func (*IamAccessGroupsV2) NewRuleConditions(claim string, operator string, value string) (_model *RuleConditions, err error) {
 	_model = &RuleConditions{
-		Claim: core.StringPtr(claim),
+		Claim:    core.StringPtr(claim),
 		Operator: core.StringPtr(operator),
-		Value: core.StringPtr(value),
+		Value:    core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -3430,7 +3423,7 @@ type UpdateAccessGroupOptions struct {
 func (*IamAccessGroupsV2) NewUpdateAccessGroupOptions(accessGroupID string, ifMatch string) *UpdateAccessGroupOptions {
 	return &UpdateAccessGroupOptions{
 		AccessGroupID: core.StringPtr(accessGroupID),
-		IfMatch: core.StringPtr(ifMatch),
+		IfMatch:       core.StringPtr(ifMatch),
 	}
 }
 
@@ -3519,4 +3512,178 @@ func (_options *UpdateAccountSettingsOptions) SetTransactionID(transactionID str
 func (options *UpdateAccountSettingsOptions) SetHeaders(param map[string]string) *UpdateAccountSettingsOptions {
 	options.Headers = param
 	return options
+}
+
+//
+// AccessGroupsPager can be used to simplify the use of the "ListAccessGroups" method.
+//
+type AccessGroupsPager struct {
+	hasNext     bool
+	options     *ListAccessGroupsOptions
+	client      *IamAccessGroupsV2
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewAccessGroupsPager returns a new AccessGroupsPager instance.
+func (iamAccessGroups *IamAccessGroupsV2) NewAccessGroupsPager(options *ListAccessGroupsOptions) (pager *AccessGroupsPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListAccessGroupsOptions = *options
+	pager = &AccessGroupsPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamAccessGroups,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AccessGroupsPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AccessGroupsPager) GetNextWithContext(ctx context.Context) (page []Group, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListAccessGroupsWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Groups
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AccessGroupsPager) GetAllWithContext(ctx context.Context) (allItems []Group, err error) {
+	for pager.HasNext() {
+		var nextPage []Group
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AccessGroupsPager) GetNext() (page []Group, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AccessGroupsPager) GetAll() (allItems []Group, err error) {
+	return pager.GetAllWithContext(context.Background())
+}
+
+//
+// AccessGroupMembersPager can be used to simplify the use of the "ListAccessGroupMembers" method.
+//
+type AccessGroupMembersPager struct {
+	hasNext     bool
+	options     *ListAccessGroupMembersOptions
+	client      *IamAccessGroupsV2
+	pageContext struct {
+		next *int64
+	}
+}
+
+// NewAccessGroupMembersPager returns a new AccessGroupMembersPager instance.
+func (iamAccessGroups *IamAccessGroupsV2) NewAccessGroupMembersPager(options *ListAccessGroupMembersOptions) (pager *AccessGroupMembersPager, err error) {
+	if options.Offset != nil && *options.Offset != 0 {
+		err = fmt.Errorf("the 'options.Offset' field should not be set")
+		return
+	}
+
+	var optionsCopy ListAccessGroupMembersOptions = *options
+	pager = &AccessGroupMembersPager{
+		hasNext: true,
+		options: &optionsCopy,
+		client:  iamAccessGroups,
+	}
+	return
+}
+
+// HasNext returns true if there are potentially more results to be retrieved.
+func (pager *AccessGroupMembersPager) HasNext() bool {
+	return pager.hasNext
+}
+
+// GetNextWithContext returns the next page of results using the specified Context.
+func (pager *AccessGroupMembersPager) GetNextWithContext(ctx context.Context) (page []ListGroupMembersResponseMember, err error) {
+	if !pager.HasNext() {
+		return nil, fmt.Errorf("no more results available")
+	}
+
+	pager.options.Offset = pager.pageContext.next
+
+	result, _, err := pager.client.ListAccessGroupMembersWithContext(ctx, pager.options)
+	if err != nil {
+		return
+	}
+
+	var next *int64
+	if result.Next != nil {
+		var offset *int64
+		offset, err = core.GetQueryParamAsInt(result.Next.Href, "offset")
+		if err != nil {
+			err = fmt.Errorf("error retrieving 'offset' query parameter from URL '%s': %s", *result.Next.Href, err.Error())
+			return
+		}
+		next = offset
+	}
+	pager.pageContext.next = next
+	pager.hasNext = (pager.pageContext.next != nil)
+	page = result.Members
+
+	return
+}
+
+// GetAllWithContext returns all results by invoking GetNextWithContext() repeatedly
+// until all pages of results have been retrieved.
+func (pager *AccessGroupMembersPager) GetAllWithContext(ctx context.Context) (allItems []ListGroupMembersResponseMember, err error) {
+	for pager.HasNext() {
+		var nextPage []ListGroupMembersResponseMember
+		nextPage, err = pager.GetNextWithContext(ctx)
+		if err != nil {
+			return
+		}
+		allItems = append(allItems, nextPage...)
+	}
+	return
+}
+
+// GetNext invokes GetNextWithContext() using context.Background() as the Context parameter.
+func (pager *AccessGroupMembersPager) GetNext() (page []ListGroupMembersResponseMember, err error) {
+	return pager.GetNextWithContext(context.Background())
+}
+
+// GetAll invokes GetAllWithContext() using context.Background() as the Context parameter.
+func (pager *AccessGroupMembersPager) GetAll() (allItems []ListGroupMembersResponseMember, err error) {
+	return pager.GetAllWithContext(context.Background())
 }

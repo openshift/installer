@@ -412,8 +412,8 @@ func resourceIBMMultiVLanFirewallExists(d *schema.ResourceData, meta interface{}
 	return true, nil
 }
 
-//This function takes two lists and returns the difference between the two lists
-//listdifference([1,2] [2,3]) = [1]
+// This function takes two lists and returns the difference between the two lists
+// listdifference([1,2] [2,3]) = [1]
 func listdifference(a, b []string) []string {
 	mb := map[string]bool{}
 	for _, x := range b {

@@ -308,8 +308,8 @@ func resourceIBMPrivateDNSGLBMonitorRead(d *schema.ResourceData, meta interface{
 	d.Set(pdnsInstanceID, idset[0])
 	d.Set(pdnsGlbMonitorID, response.ID)
 	d.Set(pdnsGlbMonitorName, response.Name)
-	d.Set(pdnsGlbMonitorCreatedOn, response.CreatedOn)
-	d.Set(pdnsGlbMonitorModifiedOn, response.ModifiedOn)
+	d.Set(pdnsGlbMonitorCreatedOn, response.CreatedOn.String())
+	d.Set(pdnsGlbMonitorModifiedOn, response.ModifiedOn.String())
 	d.Set(pdnsGlbMonitorType, response.Type)
 	d.Set(pdnsGlbMonitorPort, response.Port)
 	if response.Path != nil {

@@ -1,5 +1,5 @@
 /**
- * (C) Copyright IBM Corp. 2020, 2021.
+ * (C) Copyright IBM Corp. 2023.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.38.1-1037b405-20210908-184149
+ * IBM OpenAPI SDK Code Generator Version: 3.75.0-726bc7e3-20230713-221716
  */
 
 // Package containerregistryv1 : Operations and models for the ContainerRegistryV1 service
@@ -123,19 +123,20 @@ func NewContainerRegistryV1(options *ContainerRegistryV1Options) (service *Conta
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
-		"us-south":   "https://us.icr.io",  // us-south
-		"uk-south":   "https://uk.icr.io",  // uk-south
-		"eu-gb":      "https://uk.icr.io",  // eu-gb
-		"eu-central": "https://de.icr.io",  // eu-central
-		"eu-de":      "https://de.icr.io",  // eu-de
-		"ap-north":   "https://jp.icr.io",  // ap-north
-		"jp-tok":     "https://jp.icr.io",  // jp-tok
-		"ap-south":   "https://au.icr.io",  // ap-south
-		"au-syd":     "https://au.icr.io",  // au-syd
-		"global":     "https://icr.io",     // global
-		"jp-osa":     "https://jp2.icr.io", // jp-osa
-		"ca-tor":     "https://ca.icr.io",  // ca-tor
-		"br-sao":     "https://br.icr.io",  // br-sao
+		"global": "https://icr.io", // global
+		"us-south": "https://us.icr.io", // us-south
+		"uk-south": "https://uk.icr.io", // uk-south
+		"eu-gb": "https://uk.icr.io", // eu-gb
+		"eu-central": "https://de.icr.io", // eu-central
+		"eu-de": "https://de.icr.io", // eu-de
+		"ap-north": "https://jp.icr.io", // ap-north
+		"jp-tok": "https://jp.icr.io", // jp-tok
+		"ap-south": "https://au.icr.io", // ap-south
+		"au-syd": "https://au.icr.io", // au-syd
+		"jp-osa": "https://jp2.icr.io", // jp-osa
+		"ca-tor": "https://ca.icr.io", // ca-tor
+		"br-sao": "https://br.icr.io", // br-sao
+		"eu-fr2": "https://fr2.icr.io", // eu-fr2
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -1963,10 +1964,10 @@ func (options *AnalyzeRetentionPolicyOptions) SetHeaders(param map[string]string
 // AssignNamespaceOptions : The AssignNamespace options.
 type AssignNamespaceOptions struct {
 	// The ID of the resource group to which you want to add the namespace.
-	XAuthResourceGroup *string `json:"-" validate:"required"`
+	XAuthResourceGroup *string `json:"X-Auth-Resource-Group" validate:"required"`
 
 	// The name of the namespace that you want to udpate.
-	Name *string `json:"-" validate:"required,ne="`
+	Name *string `json:"name" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -1976,7 +1977,7 @@ type AssignNamespaceOptions struct {
 func (*ContainerRegistryV1) NewAssignNamespaceOptions(xAuthResourceGroup string, name string) *AssignNamespaceOptions {
 	return &AssignNamespaceOptions{
 		XAuthResourceGroup: core.StringPtr(xAuthResourceGroup),
-		Name:               core.StringPtr(name),
+		Name: core.StringPtr(name),
 	}
 }
 
@@ -2239,10 +2240,10 @@ func UnmarshalConfig(m map[string]json.RawMessage, result interface{}) (err erro
 // CreateNamespaceOptions : The CreateNamespace options.
 type CreateNamespaceOptions struct {
 	// The name of the namespace that you want to create.
-	Name *string `json:"-" validate:"required,ne="`
+	Name *string `json:"name" validate:"required,ne="`
 
 	// The ID of the resource group to which you want to add the namespace.
-	XAuthResourceGroup *string `json:"-"`
+	XAuthResourceGroup *string `json:"X-Auth-Resource-Group,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2277,7 +2278,7 @@ func (options *CreateNamespaceOptions) SetHeaders(param map[string]string) *Crea
 type DeleteImageOptions struct {
 	// The full IBM Cloud registry path to the image that you want to delete, including its tag. If you do not provide a
 	// specific tag, the version with the `latest` tag is removed.
-	Image *string `json:"-" validate:"required,ne="`
+	Image *string `json:"image" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2305,7 +2306,7 @@ func (options *DeleteImageOptions) SetHeaders(param map[string]string) *DeleteIm
 // DeleteImageTagOptions : The DeleteImageTag options.
 type DeleteImageTagOptions struct {
 	// The name of the image that you want to delete, in the format &lt;REPOSITORY&gt;:&lt;TAG&gt;.
-	Image *string `json:"-" validate:"required,ne="`
+	Image *string `json:"image" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2333,7 +2334,7 @@ func (options *DeleteImageTagOptions) SetHeaders(param map[string]string) *Delet
 // DeleteNamespaceOptions : The DeleteNamespace options.
 type DeleteNamespaceOptions struct {
 	// The name of the namespace that you want to delete.
-	Name *string `json:"-" validate:"required,ne="`
+	Name *string `json:"name" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2380,7 +2381,7 @@ func (options *GetAuthOptions) SetHeaders(param map[string]string) *GetAuthOptio
 type GetImageManifestOptions struct {
 	// The full IBM Cloud registry path to the image that you want to inspect. Run `ibmcloud cr images` or call the `GET
 	// /images/json` endpoint to review images that are in the registry.
-	Image *string `json:"-" validate:"required,ne="`
+	Image *string `json:"image" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2462,7 +2463,7 @@ func (options *GetQuotaOptions) SetHeaders(param map[string]string) *GetQuotaOpt
 // GetRetentionPolicyOptions : The GetRetentionPolicy options.
 type GetRetentionPolicyOptions struct {
 	// Gets the retention policy for the specified namespace.
-	Namespace *string `json:"-" validate:"required,ne="`
+	Namespace *string `json:"namespace" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2783,7 +2784,7 @@ func UnmarshalImageInspection(m map[string]json.RawMessage, result interface{}) 
 type InspectImageOptions struct {
 	// The full IBM Cloud registry path to the image that you want to inspect. Run `ibmcloud cr images` or call the `GET
 	// /images/json` endpoint to review images that are in the registry.
-	Image *string `json:"-" validate:"required,ne="`
+	Image *string `json:"image" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2811,7 +2812,7 @@ func (options *InspectImageOptions) SetHeaders(param map[string]string) *Inspect
 // ListDeletedImagesOptions : The ListDeletedImages options.
 type ListDeletedImagesOptions struct {
 	// Limit results to trash can images in the given namespace only.
-	Namespace *string `json:"-"`
+	Namespace *string `json:"namespace,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -2892,28 +2893,28 @@ type ListImagesOptions struct {
 	// Lists images that are stored in the specified namespace only. Query multiple namespaces by specifying this option
 	// for each namespace. If this option is not specified, images from all namespaces in the specified IBM Cloud account
 	// are listed.
-	Namespace *string `json:"-"`
+	Namespace *string `json:"namespace,omitempty"`
 
 	// Includes IBM-provided public images in the list of images. If this option is not specified, private images are
 	// listed only. If this option is specified more than once, the last parsed setting is the setting that is used.
-	IncludeIBM *bool `json:"-"`
+	IncludeIBM *bool `json:"includeIBM,omitempty"`
 
 	// Includes private images in the list of images. If this option is not specified, private images are listed. If this
 	// option is specified more than once, the last parsed setting is the setting that is used.
-	IncludePrivate *bool `json:"-"`
+	IncludePrivate *bool `json:"includePrivate,omitempty"`
 
 	// Includes tags that reference multi-architecture manifest lists in the image list. If this option is not specified,
 	// tagged manifest lists are not shown in the list. If this option is specified more than once, the last parsed setting
 	// is the setting that is used.
-	IncludeManifestLists *bool `json:"-"`
+	IncludeManifestLists *bool `json:"includeManifestLists,omitempty"`
 
 	// Displays Vulnerability Advisor status for the listed images. If this option is specified more than once, the last
 	// parsed setting is the setting that is used.
-	Vulnerabilities *bool `json:"-"`
+	Vulnerabilities *bool `json:"vulnerabilities,omitempty"`
 
 	// Lists images that are stored in the specified repository, under your namespaces. Query multiple repositories by
 	// specifying this option for each repository. If this option is not specified, images from all repos are listed.
-	Repository *string `json:"-"`
+	Repository *string `json:"repository,omitempty"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3260,7 +3261,7 @@ func UnmarshalRemoteAPIImage(m map[string]json.RawMessage, result interface{}) (
 type RestoreImageOptions struct {
 	// The name of the image that you want to restore, in the format &lt;REPOSITORY&gt;:&lt;TAG&gt;. Run `ibmcloud cr
 	// trash-list` or call the `GET /trash/json` endpoint to review images that are in the trash.
-	Image *string `json:"-" validate:"required,ne="`
+	Image *string `json:"image" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3315,7 +3316,7 @@ type RestoreTagsOptions struct {
 	// The full IBM Cloud registry digest reference for the digest that you want to restore such as
 	// `icr.io/namespace/repo@sha256:a9be...`. Call the `GET /trash/json` endpoint to review digests that are in the trash
 	// and their tags in the same repository.
-	Digest *string `json:"-" validate:"required,ne="`
+	Digest *string `json:"digest" validate:"required,ne="`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3465,10 +3466,10 @@ func (options *SetRetentionPolicyOptions) SetHeaders(param map[string]string) *S
 type TagImageOptions struct {
 	// The name of the image that you want to create a new tag for, in the format &lt;REPOSITORY&gt;:&lt;TAG&gt;. Run
 	// `ibmcloud cr images` or call the `GET /images/json` endpoint to review images that are in the registry.
-	Fromimage *string `json:"-" validate:"required"`
+	Fromimage *string `json:"fromimage" validate:"required"`
 
 	// The new tag for the image, in the format &lt;REPOSITORY&gt;:&lt;TAG&gt;.
-	Toimage *string `json:"-" validate:"required"`
+	Toimage *string `json:"toimage" validate:"required"`
 
 	// Allows users to set headers on API requests
 	Headers map[string]string
@@ -3478,7 +3479,7 @@ type TagImageOptions struct {
 func (*ContainerRegistryV1) NewTagImageOptions(fromimage string, toimage string) *TagImageOptions {
 	return &TagImageOptions{
 		Fromimage: core.StringPtr(fromimage),
-		Toimage:   core.StringPtr(toimage),
+		Toimage: core.StringPtr(toimage),
 	}
 }
 

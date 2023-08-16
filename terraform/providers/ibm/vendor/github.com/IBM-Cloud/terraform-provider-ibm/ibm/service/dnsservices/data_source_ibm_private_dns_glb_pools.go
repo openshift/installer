@@ -161,8 +161,8 @@ func dataSourceIBMPrivateDNSGLBPoolsRead(d *schema.ResourceData, meta interface{
 		dnsPool[pdnsGlbPoolEnabled] = *instance.Enabled
 		dnsPool[pdnsGlbPoolHealth] = *instance.Health
 		dnsPool[pdnsGlbPoolHealthyOriginsThreshold] = *instance.HealthyOriginsThreshold
-		dnsPool[pdnsGlbPoolCreatedOn] = *instance.CreatedOn
-		dnsPool[pdnsGlbPoolModifiedOn] = *instance.ModifiedOn
+		dnsPool[pdnsGlbPoolCreatedOn] = (*instance.CreatedOn).String()
+		dnsPool[pdnsGlbPoolModifiedOn] = (*instance.ModifiedOn).String()
 		dnsPool[pdnsGlbPoolMonitor] = *instance.Monitor
 		dnsPool[pdnsGlbPoolChannel] = *instance.NotificationChannel
 		dnsPool[pdnsGlbPoolRegion] = *instance.HealthcheckRegion

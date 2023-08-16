@@ -1711,8 +1711,8 @@ func detachSecurityGroupNetworkComponentBindings(d *schema.ResourceData, meta in
 	return nil
 }
 
-//genID generates a random string to be used for the optional
-//hostname
+// genID generates a random string to be used for the optional
+// hostname
 func genID() (interface{}, error) {
 	numBytes := 8
 	bytes := make([]byte, numBytes)

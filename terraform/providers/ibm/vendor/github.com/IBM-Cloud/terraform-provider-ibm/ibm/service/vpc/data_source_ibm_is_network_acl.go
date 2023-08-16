@@ -342,6 +342,13 @@ func DataSourceIBMIsNetworkACL() *schema.Resource {
 					},
 				},
 			},
+			isNetworkACLAccessTags: {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "List of access tags",
+			},
 		},
 	}
 }
@@ -446,6 +453,13 @@ func dataSourceIBMIsNetworkACLRead(context context.Context, d *schema.ResourceDa
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting vpc %s", err))
 		}
 	}
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *networkACL.CRN, "", isAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource Network ACL (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isNetworkACLAccessTags, accesstags)
 
 	return nil
 }

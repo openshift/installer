@@ -54,10 +54,12 @@ func NewBluemixServiceInstancePutParamsWithHTTPClient(client *http.Client) *Blue
 	}
 }
 
-/* BluemixServiceInstancePutParams contains all the parameters to send to the API endpoint
-   for the bluemix service instance put operation.
+/*
+BluemixServiceInstancePutParams contains all the parameters to send to the API endpoint
 
-   Typically these are written to a http.Request.
+	for the bluemix service instance put operation.
+
+	Typically these are written to a http.Request.
 */
 type BluemixServiceInstancePutParams struct {
 

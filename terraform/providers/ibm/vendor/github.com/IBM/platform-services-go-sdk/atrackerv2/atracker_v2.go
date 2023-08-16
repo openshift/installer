@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.51.0-5b8b699d-20220613-200818
+ * IBM OpenAPI SDK Code Generator Version: 3.57.1-4c556507-20220928-143422
  */
 
 // Package atrackerv2 : Operations and models for the AtrackerV2 service
@@ -35,7 +35,7 @@ import (
 )
 
 // AtrackerV2 : IBM Cloud Activity Tracker allows you to configure how auditing events are collected and stored in each
-// region in your account. Events can be sent to Cloud Object Storage bucket or Logdna.
+// region in your account. Events can be sent to Cloud Object Storage bucket, Logdna or Event Streams.
 //
 // API Version: 2.0.0
 type AtrackerV2 struct {
@@ -113,16 +113,28 @@ func NewAtrackerV2(options *AtrackerV2Options) (service *AtrackerV2, err error) 
 // GetServiceURLForRegion returns the service URL to be used for the specified region
 func GetServiceURLForRegion(region string) (string, error) {
 	var endpoints = map[string]string{
-		"us-south": "https://us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
+		"us-south":         "https://us-south.atracker.cloud.ibm.com",         // The server for IBM Cloud Activity Tracker Service in the us-south region.
 		"private.us-south": "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-south region.
-		"us-east": "https://us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
-		"private.us-east": "https://private.us-east.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the us-east region.
-		"eu-de": "https://eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
-		"private.eu-de": "https://private.eu-de.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-de region.
-		"eu-gb": "https://eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
-		"private.eu-gb": "https://private.eu-gb.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
-		"au-syd": "https://au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
-		"private.au-syd": "https://private.au-syd.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"us-east":          "https://us-east.atracker.cloud.ibm.com",          // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"private.us-east":  "https://private.us-east.atracker.cloud.ibm.com",  // The server for IBM Cloud Activity Tracker Service in the us-east region.
+		"eu-de":            "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"private.eu-de":    "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-de region.
+		"eu-gb":            "https://eu-gb.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"private.eu-gb":    "https://private.eu-gb.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service in the eu-gb region.
+		"au-syd":           "https://au-syd.atracker.cloud.ibm.com",           // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"private.au-syd":   "https://private.au-syd.atracker.cloud.ibm.com",   // The server for IBM Cloud Activity Tracker Service in the au-syd region.
+		"ca-tor":           "https://us-east.atracker.cloud.ibm.com",          // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
+		"private.ca-tor":   "https://private.us-east.atracker.cloud.ibm.com",  // The server for IBM Cloud Activity Tracker Service for ca-tor points to the us-east region.
+		"br-sao":           "https://us-south.atracker.cloud.ibm.com",         // The server for IBM Cloud Activity Tracker Service for br-sao points to the us-south region.
+		"private.br-sao":   "https://private.us-south.atracker.cloud.ibm.com", // The server for IBM Cloud Activity Tracker Service for br-sao points to the us-south region.
+		"eu-fr2":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for eu-fr2 points to the eu-de region.
+		"private.eu-fr2":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for eu-fr2 points to the eu-de region.
+		"jp-tok":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for jp-tok points to the eu-de region.
+		"private.jp-tok":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for jp-tok points to the eu-de region.
+		"jp-osa":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for jp-osa points to the eu-de region.
+		"private.jp-osa":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for jp-osa points to the eu-de region.
+		"in-che":           "https://eu-de.atracker.cloud.ibm.com",            // The server for IBM Cloud Activity Tracker Service for in-che points to the eu-de region.
+		"private.in-che":   "https://private.eu-de.atracker.cloud.ibm.com",    // The server for IBM Cloud Activity Tracker Service for in-che points to the eu-de region.
 	}
 
 	if url, ok := endpoints[region]; ok {
@@ -227,6 +239,9 @@ func (atracker *AtrackerV2) CreateTargetWithContext(ctx context.Context, createT
 	}
 	if createTargetOptions.LogdnaEndpoint != nil {
 		body["logdna_endpoint"] = createTargetOptions.LogdnaEndpoint
+	}
+	if createTargetOptions.EventstreamsEndpoint != nil {
+		body["eventstreams_endpoint"] = createTargetOptions.EventstreamsEndpoint
 	}
 	if createTargetOptions.Region != nil {
 		body["region"] = createTargetOptions.Region
@@ -422,6 +437,9 @@ func (atracker *AtrackerV2) ReplaceTargetWithContext(ctx context.Context, replac
 	}
 	if replaceTargetOptions.LogdnaEndpoint != nil {
 		body["logdna_endpoint"] = replaceTargetOptions.LogdnaEndpoint
+	}
+	if replaceTargetOptions.EventstreamsEndpoint != nil {
+		body["eventstreams_endpoint"] = replaceTargetOptions.EventstreamsEndpoint
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1169,9 +1187,9 @@ type CosEndpointPrototype struct {
 // NewCosEndpointPrototype : Instantiate CosEndpointPrototype (Generic Model Constructor)
 func (*AtrackerV2) NewCosEndpointPrototype(endpoint string, targetCRN string, bucket string) (_model *CosEndpointPrototype, err error) {
 	_model = &CosEndpointPrototype{
-		Endpoint: core.StringPtr(endpoint),
+		Endpoint:  core.StringPtr(endpoint),
 		TargetCRN: core.StringPtr(targetCRN),
-		Bucket: core.StringPtr(bucket),
+		Bucket:    core.StringPtr(bucket),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	return
@@ -1220,7 +1238,7 @@ type CreateRouteOptions struct {
 // NewCreateRouteOptions : Instantiate CreateRouteOptions
 func (*AtrackerV2) NewCreateRouteOptions(name string, rules []RulePrototype) *CreateRouteOptions {
 	return &CreateRouteOptions{
-		Name: core.StringPtr(name),
+		Name:  core.StringPtr(name),
 		Rules: rules,
 	}
 }
@@ -1249,8 +1267,8 @@ type CreateTargetOptions struct {
 	// than `(space) - . _ :`. Do not include any personal identifying information (PII) in any resource names.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of the target. It can be cloud_object_storage or logdna. Based on this type you must include cos_endpoint
-	// or logdna_endpoint.
+	// The type of the target. It can be cloud_object_storage, logdna or event_streams. Based on this type you must include
+	// cos_endpoint, logdna_endpoint or eventstreams_endpoint.
 	TargetType *string `json:"target_type" validate:"required"`
 
 	// Property values for a Cloud Object Storage Endpoint in requests.
@@ -1258,6 +1276,9 @@ type CreateTargetOptions struct {
 
 	// Property values for a LogDNA Endpoint in requests.
 	LogdnaEndpoint *LogdnaEndpointPrototype `json:"logdna_endpoint,omitempty"`
+
+	// Property values for an Event Streams Endpoint in requests.
+	EventstreamsEndpoint *EventstreamsEndpointPrototype `json:"eventstreams_endpoint,omitempty"`
 
 	// Include this optional field if you want to create a target in a different region other than the one you are
 	// connected.
@@ -1268,17 +1289,18 @@ type CreateTargetOptions struct {
 }
 
 // Constants associated with the CreateTargetOptions.TargetType property.
-// The type of the target. It can be cloud_object_storage or logdna. Based on this type you must include cos_endpoint or
-// logdna_endpoint.
+// The type of the target. It can be cloud_object_storage, logdna or event_streams. Based on this type you must include
+// cos_endpoint, logdna_endpoint or eventstreams_endpoint.
 const (
 	CreateTargetOptionsTargetTypeCloudObjectStorageConst = "cloud_object_storage"
-	CreateTargetOptionsTargetTypeLogdnaConst = "logdna"
+	CreateTargetOptionsTargetTypeEventStreamsConst       = "event_streams"
+	CreateTargetOptionsTargetTypeLogdnaConst             = "logdna"
 )
 
 // NewCreateTargetOptions : Instantiate CreateTargetOptions
 func (*AtrackerV2) NewCreateTargetOptions(name string, targetType string) *CreateTargetOptions {
 	return &CreateTargetOptions{
-		Name: core.StringPtr(name),
+		Name:       core.StringPtr(name),
 		TargetType: core.StringPtr(targetType),
 	}
 }
@@ -1304,6 +1326,12 @@ func (_options *CreateTargetOptions) SetCosEndpoint(cosEndpoint *CosEndpointProt
 // SetLogdnaEndpoint : Allow user to set LogdnaEndpoint
 func (_options *CreateTargetOptions) SetLogdnaEndpoint(logdnaEndpoint *LogdnaEndpointPrototype) *CreateTargetOptions {
 	_options.LogdnaEndpoint = logdnaEndpoint
+	return _options
+}
+
+// SetEventstreamsEndpoint : Allow user to set EventstreamsEndpoint
+func (_options *CreateTargetOptions) SetEventstreamsEndpoint(eventstreamsEndpoint *EventstreamsEndpointPrototype) *CreateTargetOptions {
+	_options.EventstreamsEndpoint = eventstreamsEndpoint
 	return _options
 }
 
@@ -1373,6 +1401,94 @@ func (_options *DeleteTargetOptions) SetID(id string) *DeleteTargetOptions {
 func (options *DeleteTargetOptions) SetHeaders(param map[string]string) *DeleteTargetOptions {
 	options.Headers = param
 	return options
+}
+
+// EventstreamsEndpoint : Property values for the Event Streams Endpoint in responses.
+type EventstreamsEndpoint struct {
+	// The CRN of the Event Streams instance.
+	TargetCRN *string `json:"target_crn" validate:"required"`
+
+	// List of broker endpoints.
+	Brokers []string `json:"brokers" validate:"required"`
+
+	// The messsage hub topic defined in the Event Streams instance.
+	Topic *string `json:"topic" validate:"required"`
+
+	// The user password (api key) for the message hub topic in the Event Streams instance.
+	APIKey *string `json:"api_key" validate:"required"`
+}
+
+// UnmarshalEventstreamsEndpoint unmarshals an instance of EventstreamsEndpoint from the specified map of raw messages.
+func UnmarshalEventstreamsEndpoint(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EventstreamsEndpoint)
+	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "brokers", &obj.Brokers)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "topic", &obj.Topic)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// EventstreamsEndpointPrototype : Property values for an Event Streams Endpoint in requests.
+type EventstreamsEndpointPrototype struct {
+	// The CRN of the Event Streams instance.
+	TargetCRN *string `json:"target_crn" validate:"required"`
+
+	// List of broker endpoints.
+	Brokers []string `json:"brokers" validate:"required"`
+
+	// The messsage hub topic defined in the Event Streams instance.
+	Topic *string `json:"topic" validate:"required"`
+
+	// The user password (api key) for the message hub topic in the Event Streams instance.
+	APIKey *string `json:"api_key" validate:"required"`
+}
+
+// NewEventstreamsEndpointPrototype : Instantiate EventstreamsEndpointPrototype (Generic Model Constructor)
+func (*AtrackerV2) NewEventstreamsEndpointPrototype(targetCRN string, brokers []string, topic string, apiKey string) (_model *EventstreamsEndpointPrototype, err error) {
+	_model = &EventstreamsEndpointPrototype{
+		TargetCRN: core.StringPtr(targetCRN),
+		Brokers:   brokers,
+		Topic:     core.StringPtr(topic),
+		APIKey:    core.StringPtr(apiKey),
+	}
+	err = core.ValidateStruct(_model, "required parameters")
+	return
+}
+
+// UnmarshalEventstreamsEndpointPrototype unmarshals an instance of EventstreamsEndpointPrototype from the specified map of raw messages.
+func UnmarshalEventstreamsEndpointPrototype(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(EventstreamsEndpointPrototype)
+	err = core.UnmarshalPrimitive(m, "target_crn", &obj.TargetCRN)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "brokers", &obj.Brokers)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "topic", &obj.Topic)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "api_key", &obj.APIKey)
+	if err != nil {
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
 }
 
 // GetMigrationOptions : The GetMigration options.
@@ -1540,7 +1656,7 @@ type LogdnaEndpointPrototype struct {
 // NewLogdnaEndpointPrototype : Instantiate LogdnaEndpointPrototype (Generic Model Constructor)
 func (*AtrackerV2) NewLogdnaEndpointPrototype(targetCRN string, ingestionKey string) (_model *LogdnaEndpointPrototype, err error) {
 	_model = &LogdnaEndpointPrototype{
-		TargetCRN: core.StringPtr(targetCRN),
+		TargetCRN:    core.StringPtr(targetCRN),
 		IngestionKey: core.StringPtr(ingestionKey),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -1577,13 +1693,13 @@ type Migration struct {
 // Constants associated with the Migration.Status property.
 // The overall status of the migration.
 const (
-	MigrationStatusCanceledConst = "canceled"
-	MigrationStatusCompletedConst = "completed"
-	MigrationStatusFailedConst = "failed"
-	MigrationStatusInProgressConst = "in_progress"
+	MigrationStatusCanceledConst    = "canceled"
+	MigrationStatusCompletedConst   = "completed"
+	MigrationStatusFailedConst      = "failed"
+	MigrationStatusInProgressConst  = "in_progress"
 	MigrationStatusNotRequiredConst = "not_required"
-	MigrationStatusNotStartedConst = "not_started"
-	MigrationStatusPendingConst = "pending"
+	MigrationStatusNotStartedConst  = "not_started"
+	MigrationStatusPendingConst     = "pending"
 )
 
 // UnmarshalMigration unmarshals an instance of Migration from the specified map of raw messages.
@@ -1631,18 +1747,18 @@ type MigrationItem struct {
 // The type of the resource being migrated.
 const (
 	MigrationItemResourceTypePrivateEndpointConst = "private_endpoint"
-	MigrationItemResourceTypeRouteConst = "route"
-	MigrationItemResourceTypeTargetConst = "target"
+	MigrationItemResourceTypeRouteConst           = "route"
+	MigrationItemResourceTypeTargetConst          = "target"
 )
 
 // Constants associated with the MigrationItem.Status property.
 // The status of the migration for this resource.
 const (
-	MigrationItemStatusCompletedConst = "completed"
-	MigrationItemStatusFailedConst = "failed"
+	MigrationItemStatusCompletedConst  = "completed"
+	MigrationItemStatusFailedConst     = "failed"
 	MigrationItemStatusInProgressConst = "in_progress"
 	MigrationItemStatusNotStartedConst = "not_started"
-	MigrationItemStatusPendingConst = "pending"
+	MigrationItemStatusPendingConst    = "pending"
 )
 
 // UnmarshalMigrationItem unmarshals an instance of MigrationItem from the specified map of raw messages.
@@ -1719,7 +1835,7 @@ type PutSettingsOptions struct {
 // NewPutSettingsOptions : Instantiate PutSettingsOptions
 func (*AtrackerV2) NewPutSettingsOptions(metadataRegionPrimary string, privateAPIEndpointOnly bool) *PutSettingsOptions {
 	return &PutSettingsOptions{
-		MetadataRegionPrimary: core.StringPtr(metadataRegionPrimary),
+		MetadataRegionPrimary:  core.StringPtr(metadataRegionPrimary),
 		PrivateAPIEndpointOnly: core.BoolPtr(privateAPIEndpointOnly),
 	}
 }
@@ -1779,8 +1895,8 @@ type ReplaceRouteOptions struct {
 // NewReplaceRouteOptions : Instantiate ReplaceRouteOptions
 func (*AtrackerV2) NewReplaceRouteOptions(id string, name string, rules []RulePrototype) *ReplaceRouteOptions {
 	return &ReplaceRouteOptions{
-		ID: core.StringPtr(id),
-		Name: core.StringPtr(name),
+		ID:    core.StringPtr(id),
+		Name:  core.StringPtr(name),
 		Rules: rules,
 	}
 }
@@ -1824,6 +1940,9 @@ type ReplaceTargetOptions struct {
 	// Property values for a LogDNA Endpoint in requests.
 	LogdnaEndpoint *LogdnaEndpointPrototype `json:"logdna_endpoint,omitempty"`
 
+	// Property values for an Event Streams Endpoint in requests.
+	EventstreamsEndpoint *EventstreamsEndpointPrototype `json:"eventstreams_endpoint,omitempty"`
+
 	// Allows users to set headers on API requests
 	Headers map[string]string
 }
@@ -1856,6 +1975,12 @@ func (_options *ReplaceTargetOptions) SetCosEndpoint(cosEndpoint *CosEndpointPro
 // SetLogdnaEndpoint : Allow user to set LogdnaEndpoint
 func (_options *ReplaceTargetOptions) SetLogdnaEndpoint(logdnaEndpoint *LogdnaEndpointPrototype) *ReplaceTargetOptions {
 	_options.LogdnaEndpoint = logdnaEndpoint
+	return _options
+}
+
+// SetEventstreamsEndpoint : Allow user to set EventstreamsEndpoint
+func (_options *ReplaceTargetOptions) SetEventstreamsEndpoint(eventstreamsEndpoint *EventstreamsEndpointPrototype) *ReplaceTargetOptions {
+	_options.EventstreamsEndpoint = eventstreamsEndpoint
 	return _options
 }
 
@@ -2038,6 +2163,9 @@ type Settings struct {
 
 	// The lowest API version of targets or routes that customer might have under his or her account.
 	APIVersion *int64 `json:"api_version" validate:"required"`
+
+	// An optional message containing information about the audit log locations.
+	Message *string `json:"message,omitempty"`
 }
 
 // UnmarshalSettings unmarshals an instance of Settings from the specified map of raw messages.
@@ -2064,6 +2192,10 @@ func UnmarshalSettings(m map[string]json.RawMessage, result interface{}) (err er
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "api_version", &obj.APIVersion)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "message", &obj.Message)
 	if err != nil {
 		return
 	}
@@ -2095,6 +2227,9 @@ type Target struct {
 	// Property values for a LogDNA Endpoint in responses.
 	LogdnaEndpoint *LogdnaEndpoint `json:"logdna_endpoint,omitempty"`
 
+	// Property values for the Event Streams Endpoint in responses.
+	EventstreamsEndpoint *EventstreamsEndpoint `json:"eventstreams_endpoint,omitempty"`
+
 	// The status of the write attempt to the target with the provided endpoint parameters.
 	WriteStatus *WriteStatus `json:"write_status" validate:"required"`
 
@@ -2115,7 +2250,7 @@ type Target struct {
 // The type of the target.
 const (
 	TargetTargetTypeCloudObjectStorageConst = "cloud_object_storage"
-	TargetTargetTypeLogdnaConst = "logdna"
+	TargetTargetTypeLogdnaConst             = "logdna"
 )
 
 // UnmarshalTarget unmarshals an instance of Target from the specified map of raw messages.
@@ -2146,6 +2281,10 @@ func UnmarshalTarget(m map[string]json.RawMessage, result interface{}) (err erro
 		return
 	}
 	err = core.UnmarshalModel(m, "logdna_endpoint", &obj.LogdnaEndpoint, UnmarshalLogdnaEndpoint)
+	if err != nil {
+		return
+	}
+	err = core.UnmarshalModel(m, "eventstreams_endpoint", &obj.EventstreamsEndpoint, UnmarshalEventstreamsEndpoint)
 	if err != nil {
 		return
 	}

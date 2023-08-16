@@ -45,7 +45,8 @@ func NewServiceBrokerAuthInfoTokenOK() *ServiceBrokerAuthInfoTokenOK {
 	return &ServiceBrokerAuthInfoTokenOK{}
 }
 
-/* ServiceBrokerAuthInfoTokenOK describes a response with status code 200, with default header values.
+/*
+ServiceBrokerAuthInfoTokenOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type ServiceBrokerAuthInfoTokenOK struct {
 	Payload *models.TokenExtra
 }
 
+// IsSuccess returns true when this service broker auth info token o k response has a 2xx status code
+func (o *ServiceBrokerAuthInfoTokenOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this service broker auth info token o k response has a 3xx status code
+func (o *ServiceBrokerAuthInfoTokenOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth info token o k response has a 4xx status code
+func (o *ServiceBrokerAuthInfoTokenOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker auth info token o k response has a 5xx status code
+func (o *ServiceBrokerAuthInfoTokenOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this service broker auth info token o k response a status code equal to that given
+func (o *ServiceBrokerAuthInfoTokenOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *ServiceBrokerAuthInfoTokenOK) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/info/token][%d] serviceBrokerAuthInfoTokenOK  %+v", 200, o.Payload)
 }
+
+func (o *ServiceBrokerAuthInfoTokenOK) String() string {
+	return fmt.Sprintf("[GET /auth/v1/info/token][%d] serviceBrokerAuthInfoTokenOK  %+v", 200, o.Payload)
+}
+
 func (o *ServiceBrokerAuthInfoTokenOK) GetPayload() *models.TokenExtra {
 	return o.Payload
 }
@@ -77,7 +108,8 @@ func NewServiceBrokerAuthInfoTokenInternalServerError() *ServiceBrokerAuthInfoTo
 	return &ServiceBrokerAuthInfoTokenInternalServerError{}
 }
 
-/* ServiceBrokerAuthInfoTokenInternalServerError describes a response with status code 500, with default header values.
+/*
+ServiceBrokerAuthInfoTokenInternalServerError describes a response with status code 500, with default header values.
 
 Internal Server Error
 */
@@ -85,9 +117,39 @@ type ServiceBrokerAuthInfoTokenInternalServerError struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this service broker auth info token internal server error response has a 2xx status code
+func (o *ServiceBrokerAuthInfoTokenInternalServerError) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this service broker auth info token internal server error response has a 3xx status code
+func (o *ServiceBrokerAuthInfoTokenInternalServerError) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this service broker auth info token internal server error response has a 4xx status code
+func (o *ServiceBrokerAuthInfoTokenInternalServerError) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this service broker auth info token internal server error response has a 5xx status code
+func (o *ServiceBrokerAuthInfoTokenInternalServerError) IsServerError() bool {
+	return true
+}
+
+// IsCode returns true when this service broker auth info token internal server error response a status code equal to that given
+func (o *ServiceBrokerAuthInfoTokenInternalServerError) IsCode(code int) bool {
+	return code == 500
+}
+
 func (o *ServiceBrokerAuthInfoTokenInternalServerError) Error() string {
 	return fmt.Sprintf("[GET /auth/v1/info/token][%d] serviceBrokerAuthInfoTokenInternalServerError  %+v", 500, o.Payload)
 }
+
+func (o *ServiceBrokerAuthInfoTokenInternalServerError) String() string {
+	return fmt.Sprintf("[GET /auth/v1/info/token][%d] serviceBrokerAuthInfoTokenInternalServerError  %+v", 500, o.Payload)
+}
+
 func (o *ServiceBrokerAuthInfoTokenInternalServerError) GetPayload() *models.Error {
 	return o.Payload
 }

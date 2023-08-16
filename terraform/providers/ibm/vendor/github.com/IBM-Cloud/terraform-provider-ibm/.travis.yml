@@ -2,7 +2,7 @@ dist: bionic
 sudo: false
 language: go
 go:
-  - 1.16.x
+  - 1.18.x
 
 addons:
   apt:
@@ -10,7 +10,7 @@ addons:
       - python3 
       - python3-pip 
       - python3-setuptools
-
+      
 before_script:
   - scripts/detect_secrets.sh
 
@@ -18,6 +18,7 @@ install:
   # Required to install detect-secrets
   - sudo chmod o+rwx /usr/lib/python3/dist-packages/
   - python3 -m pip install -U pip
+  - pip3 install pyOpenSSL --upgrade
   - pip3 install --upgrade "git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets"
   # This script is used by the Travis build to install a cookie for
   # go.googlesource.com so rate limits are higher when using `go get` to fetch

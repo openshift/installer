@@ -59,12 +59,6 @@ func ResourceIBMEnEmailSubscription() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"to": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: "The email id in case of smtp_ibm destination type.",
-							Elem:        &schema.Schema{Type: schema.TypeString},
-						},
 						"add_notification_payload": {
 							Type:        schema.TypeBool,
 							Optional:    true,
@@ -91,16 +85,16 @@ func ResourceIBMEnEmailSubscription() *schema.Resource {
 							Description: "The Email address send the invite to in case of smtp_ibm.",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
-						"unsubscribed": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: "The Email address which should be unsubscribed from smtp_ibm.",
-							Elem:        &schema.Schema{Type: schema.TypeString},
-						},
 						"add": {
 							Type:        schema.TypeList,
 							Optional:    true,
 							Description: "The Email address which should be added to smtp_ibm.",
+							Elem:        &schema.Schema{Type: schema.TypeString},
+						},
+						"remove": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "The email id to be removed in case of smtp_ibm destination type.",
 							Elem:        &schema.Schema{Type: schema.TypeString},
 						},
 					},
@@ -320,12 +314,12 @@ func resourceIBMEnEmailSubscriptionDelete(context context.Context, d *schema.Res
 
 func EmailattributesMapToAttributes(attributeMap map[string]interface{}) en.SubscriptionCreateAttributes {
 	attributesCreate := en.SubscriptionCreateAttributes{}
-	if attributeMap["to"] != nil {
-		to := []string{}
-		for _, toItem := range attributeMap["to"].([]interface{}) {
-			to = append(to, toItem.(string))
+	if attributeMap["invited"] != nil {
+		invited := []string{}
+		for _, invitedItem := range attributeMap["invited"].([]interface{}) {
+			invited = append(invited, invitedItem.(string))
 		}
-		attributesCreate.To = to
+		attributesCreate.Invited = invited
 	}
 
 	if attributeMap["add_notification_payload"] != nil {
@@ -350,7 +344,7 @@ func EmailattributesMapToAttributes(attributeMap map[string]interface{}) en.Subs
 func EmailattributesupdateMapToAttributes(attributeMap map[string]interface{}) en.SubscriptionUpdateAttributesEmailUpdateAttributes {
 	updateattributes := en.SubscriptionUpdateAttributesEmailUpdateAttributes{}
 
-	addemail := new(en.EmailUpdateAttributesTo)
+	addemail := new(en.UpdateAttributesInvited)
 	if attributeMap["add"] != nil {
 		to := []string{}
 		for _, toItem := range attributeMap["add"].([]interface{}) {
@@ -358,7 +352,17 @@ func EmailattributesupdateMapToAttributes(attributeMap map[string]interface{}) e
 		}
 		addemail.Add = to
 	}
-	updateattributes.To = addemail
+	updateattributes.Invited = addemail
+
+	if attributeMap["remove"] != nil {
+		rmemail := []string{}
+		for _, removeitem := range attributeMap["remove"].([]interface{}) {
+			rmemail = append(rmemail, removeitem.(string))
+		}
+
+		addemail.Remove = rmemail
+	}
+	updateattributes.Invited = addemail
 
 	if attributeMap["add_notification_payload"] != nil {
 		updateattributes.AddNotificationPayload = core.BoolPtr(attributeMap["add_notification_payload"].(bool))
@@ -375,25 +379,6 @@ func EmailattributesupdateMapToAttributes(attributeMap map[string]interface{}) e
 	if attributeMap["from_name"] != nil {
 		updateattributes.FromName = core.StringPtr(attributeMap["from_name"].(string))
 	}
-
-	if attributeMap["invited"] != nil {
-		invited := []string{}
-		for _, invitedItem := range attributeMap["invited"].([]interface{}) {
-			invited = append(invited, invitedItem.(string))
-		}
-		updateattributes.Invited = invited
-	}
-
-	unsubscribed := new(en.EmailUpdateAttributesUnsubscribed)
-	if attributeMap["unsubscribed"] != nil {
-		unsubscribe := []string{}
-		for _, unsubscribeItem := range attributeMap["unsubscribed"].([]interface{}) {
-			unsubscribe = append(unsubscribe, unsubscribeItem.(string))
-		}
-		addemail.Remove = unsubscribe
-		unsubscribed.Remove = unsubscribe
-	}
-	updateattributes.Unsubscribed = unsubscribed
 
 	return updateattributes
 }

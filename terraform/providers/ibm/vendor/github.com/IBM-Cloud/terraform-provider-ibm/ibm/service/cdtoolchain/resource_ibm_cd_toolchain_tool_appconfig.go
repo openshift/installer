@@ -19,10 +19,10 @@ import (
 
 func ResourceIBMCdToolchainToolAppconfig() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: ResourceIBMCdToolchainToolAppconfigCreate,
-		ReadContext:   ResourceIBMCdToolchainToolAppconfigRead,
-		UpdateContext: ResourceIBMCdToolchainToolAppconfigUpdate,
-		DeleteContext: ResourceIBMCdToolchainToolAppconfigDelete,
+		CreateContext: resourceIBMCdToolchainToolAppconfigCreate,
+		ReadContext:   resourceIBMCdToolchainToolAppconfigRead,
+		UpdateContext: resourceIBMCdToolchainToolAppconfigUpdate,
+		DeleteContext: resourceIBMCdToolchainToolAppconfigDelete,
 		Importer:      &schema.ResourceImporter{},
 
 		Schema: map[string]*schema.Schema{
@@ -31,45 +31,45 @@ func ResourceIBMCdToolchainToolAppconfig() *schema.Resource {
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_appconfig", "toolchain_id"),
-				Description:  "ID of the toolchain to bind tool to.",
+				Description:  "ID of the toolchain to bind the tool to.",
 			},
 			"parameters": &schema.Schema{
 				Type:        schema.TypeList,
 				MinItems:    1,
 				MaxItems:    1,
 				Required:    true,
-				Description: "Parameters to be used to create the tool.",
+				Description: "Unique key-value pairs representing parameters to be used to create the tool. A list of parameters for each tool integration can be found in the <a href=\"https://cloud.ibm.com/docs/ContinuousDelivery?topic=ContinuousDelivery-integrations\">Configuring tool integrations page</a>.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Type a name for this tool integration, for example: my-appconfig. This name displays on your toolchain.",
+							Description: "The name used to identify this tool integration. App Configuration references include this name to identify the App Configuration instance where the configuration values reside. All App Configuration tools integrated into a toolchain should have a unique name to allow resolution to function properly.",
 						},
-						"region": &schema.Schema{
+						"location": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Region.",
+							Description: "The IBM Cloud location where the App Configuration service instance is located.",
 						},
-						"resource_group": &schema.Schema{
+						"resource_group_name": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Resource group.",
+							Description: "The name of the resource group where the App Configuration service instance is located.",
 						},
-						"instance_name": &schema.Schema{
+						"instance_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "The name of your App Configuration instance. You should choose an entry from the list provided based on the selected region and resource group. e.g: App Configuration-01.",
+							Description: "The guid of the App Configuration service instance.",
 						},
-						"environment_name": &schema.Schema{
+						"environment_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "App Configuration environment.",
+							Description: "The ID of the App Configuration environment.",
 						},
-						"collection_name": &schema.Schema{
+						"collection_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "App Configuration collection.",
+							Description: "The ID of the App Configuration collection.",
 						},
 					},
 				},
@@ -78,12 +78,12 @@ func ResourceIBMCdToolchainToolAppconfig() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_cd_toolchain_tool_appconfig", "name"),
-				Description:  "Name of tool.",
+				Description:  "Name of the tool.",
 			},
 			"resource_group_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Resource group where tool can be found.",
+				Description: "Resource group where the tool is located.",
 			},
 			"crn": &schema.Schema{
 				Type:        schema.TypeString,
@@ -109,12 +109,12 @@ func ResourceIBMCdToolchainToolAppconfig() *schema.Resource {
 						"ui_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "URI representing the this resource through the UI.",
+							Description: "URI representing this resource through the UI.",
 						},
 						"api_href": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "URI representing the this resource through an API.",
+							Description: "URI representing this resource through an API.",
 						},
 					},
 				},
@@ -155,7 +155,7 @@ func ResourceIBMCdToolchainToolAppconfigValidator() *validate.ResourceValidator 
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `^([^\\x00-\\x7F]|[a-zA-Z0-9-._ ])+$`,
+			Regexp:                     `^([^\x00-\x7F]|[a-zA-Z0-9-._ ])+$`,
 			MinValueLength:             0,
 			MaxValueLength:             128,
 		},
@@ -165,7 +165,7 @@ func ResourceIBMCdToolchainToolAppconfigValidator() *validate.ResourceValidator 
 	return &resourceValidator
 }
 
-func ResourceIBMCdToolchainToolAppconfigCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolAppconfigCreate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -176,10 +176,11 @@ func ResourceIBMCdToolchainToolAppconfigCreate(context context.Context, d *schem
 	createToolOptions.SetToolchainID(d.Get("toolchain_id").(string))
 	createToolOptions.SetToolTypeID("appconfig")
 	remapFields := map[string]string{
-		"resource_group":   "resource-group",
-		"instance_name":    "instance-name",
-		"environment_name": "environment-name",
-		"collection_name":  "collection-name",
+		"location":            "region",
+		"resource_group_name": "resource-group",
+		"instance_id":         "instance-name",
+		"environment_id":      "environment-name",
+		"collection_id":       "collection-name",
 	}
 	parametersModel := GetParametersForCreate(d, ResourceIBMCdToolchainToolAppconfig(), remapFields)
 	createToolOptions.SetParameters(parametersModel)
@@ -187,18 +188,18 @@ func ResourceIBMCdToolchainToolAppconfigCreate(context context.Context, d *schem
 		createToolOptions.SetName(d.Get("name").(string))
 	}
 
-	postToolResponse, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
+	toolchainToolPost, response, err := cdToolchainClient.CreateToolWithContext(context, createToolOptions)
 	if err != nil {
 		log.Printf("[DEBUG] CreateToolWithContext failed %s\n%s", err, response)
 		return diag.FromErr(fmt.Errorf("CreateToolWithContext failed %s\n%s", err, response))
 	}
 
-	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *postToolResponse.ID))
+	d.SetId(fmt.Sprintf("%s/%s", *createToolOptions.ToolchainID, *toolchainToolPost.ID))
 
-	return ResourceIBMCdToolchainToolAppconfigRead(context, d, meta)
+	return resourceIBMCdToolchainToolAppconfigRead(context, d, meta)
 }
 
-func ResourceIBMCdToolchainToolAppconfigRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolAppconfigRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -214,7 +215,7 @@ func ResourceIBMCdToolchainToolAppconfigRead(context context.Context, d *schema.
 	getToolByIDOptions.SetToolchainID(parts[0])
 	getToolByIDOptions.SetToolID(parts[1])
 
-	getToolByIDResponse, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
+	toolchainTool, response, err := cdToolchainClient.GetToolByIDWithContext(context, getToolByIDOptions)
 	if err != nil {
 		if response != nil && response.StatusCode == 404 {
 			d.SetId("")
@@ -224,55 +225,56 @@ func ResourceIBMCdToolchainToolAppconfigRead(context context.Context, d *schema.
 		return diag.FromErr(fmt.Errorf("GetToolByIDWithContext failed %s\n%s", err, response))
 	}
 
-	if err = d.Set("toolchain_id", getToolByIDResponse.ToolchainID); err != nil {
+	if err = d.Set("toolchain_id", toolchainTool.ToolchainID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_id: %s", err))
 	}
 	remapFields := map[string]string{
-		"resource_group":   "resource-group",
-		"instance_name":    "instance-name",
-		"environment_name": "environment-name",
-		"collection_name":  "collection-name",
+		"location":            "region",
+		"resource_group_name": "resource-group",
+		"instance_id":         "instance-name",
+		"environment_id":      "environment-name",
+		"collection_id":       "collection-name",
 	}
-	parametersMap := GetParametersFromRead(getToolByIDResponse.Parameters, ResourceIBMCdToolchainToolAppconfig(), remapFields)
+	parametersMap := GetParametersFromRead(toolchainTool.Parameters, ResourceIBMCdToolchainToolAppconfig(), remapFields)
 	if err = d.Set("parameters", []map[string]interface{}{parametersMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting parameters: %s", err))
 	}
-	if err = d.Set("name", getToolByIDResponse.Name); err != nil {
+	if err = d.Set("name", toolchainTool.Name); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting name: %s", err))
 	}
-	if err = d.Set("resource_group_id", getToolByIDResponse.ResourceGroupID); err != nil {
+	if err = d.Set("resource_group_id", toolchainTool.ResourceGroupID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting resource_group_id: %s", err))
 	}
-	if err = d.Set("crn", getToolByIDResponse.CRN); err != nil {
+	if err = d.Set("crn", toolchainTool.CRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting crn: %s", err))
 	}
-	if err = d.Set("toolchain_crn", getToolByIDResponse.ToolchainCRN); err != nil {
+	if err = d.Set("toolchain_crn", toolchainTool.ToolchainCRN); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting toolchain_crn: %s", err))
 	}
-	if err = d.Set("href", getToolByIDResponse.Href); err != nil {
+	if err = d.Set("href", toolchainTool.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
-	referentMap, err := ResourceIBMCdToolchainToolAppconfigToolReferentToMap(getToolByIDResponse.Referent)
+	referentMap, err := resourceIBMCdToolchainToolAppconfigToolModelReferentToMap(toolchainTool.Referent)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 	if err = d.Set("referent", []map[string]interface{}{referentMap}); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting referent: %s", err))
 	}
-	if err = d.Set("updated_at", flex.DateTimeToString(getToolByIDResponse.UpdatedAt)); err != nil {
+	if err = d.Set("updated_at", flex.DateTimeToString(toolchainTool.UpdatedAt)); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting updated_at: %s", err))
 	}
-	if err = d.Set("state", getToolByIDResponse.State); err != nil {
+	if err = d.Set("state", toolchainTool.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
 	}
-	if err = d.Set("tool_id", getToolByIDResponse.ID); err != nil {
+	if err = d.Set("tool_id", toolchainTool.ID); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting tool_id: %s", err))
 	}
 
 	return nil
 }
 
-func ResourceIBMCdToolchainToolAppconfigUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolAppconfigUpdate(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -287,42 +289,45 @@ func ResourceIBMCdToolchainToolAppconfigUpdate(context context.Context, d *schem
 
 	updateToolOptions.SetToolchainID(parts[0])
 	updateToolOptions.SetToolID(parts[1])
-	updateToolOptions.SetToolTypeID("appconfig")
 
 	hasChange := false
 
+	patchVals := &cdtoolchainv2.ToolchainToolPrototypePatch{}
 	if d.HasChange("toolchain_id") {
 		return diag.FromErr(fmt.Errorf("Cannot update resource property \"%s\" with the ForceNew annotation."+
 			" The resource must be re-created to update this property.", "toolchain_id"))
 	}
 	if d.HasChange("parameters") {
 		remapFields := map[string]string{
-			"resource_group":   "resource-group",
-			"instance_name":    "instance-name",
-			"environment_name": "environment-name",
-			"collection_name":  "collection-name",
+			"location":            "region",
+			"resource_group_name": "resource-group",
+			"instance_id":         "instance-name",
+			"environment_id":      "environment-name",
+			"collection_id":       "collection-name",
 		}
 		parameters := GetParametersForUpdate(d, ResourceIBMCdToolchainToolAppconfig(), remapFields)
-		updateToolOptions.SetParameters(parameters)
+		patchVals.Parameters = parameters
 		hasChange = true
 	}
 	if d.HasChange("name") {
-		updateToolOptions.SetName(d.Get("name").(string))
+		newName := d.Get("name").(string)
+		patchVals.Name = &newName
 		hasChange = true
 	}
 
 	if hasChange {
-		response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
+		updateToolOptions.ToolchainToolPrototypePatch, _ = patchVals.AsPatch()
+		_, response, err := cdToolchainClient.UpdateToolWithContext(context, updateToolOptions)
 		if err != nil {
 			log.Printf("[DEBUG] UpdateToolWithContext failed %s\n%s", err, response)
 			return diag.FromErr(fmt.Errorf("UpdateToolWithContext failed %s\n%s", err, response))
 		}
 	}
 
-	return ResourceIBMCdToolchainToolAppconfigRead(context, d, meta)
+	return resourceIBMCdToolchainToolAppconfigRead(context, d, meta)
 }
 
-func ResourceIBMCdToolchainToolAppconfigDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceIBMCdToolchainToolAppconfigDelete(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	cdToolchainClient, err := meta.(conns.ClientSession).CdToolchainV2()
 	if err != nil {
 		return diag.FromErr(err)
@@ -349,7 +354,7 @@ func ResourceIBMCdToolchainToolAppconfigDelete(context context.Context, d *schem
 	return nil
 }
 
-func ResourceIBMCdToolchainToolAppconfigToolReferentToMap(model *cdtoolchainv2.ToolReferent) (map[string]interface{}, error) {
+func resourceIBMCdToolchainToolAppconfigToolModelReferentToMap(model *cdtoolchainv2.ToolModelReferent) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	if model.UIHref != nil {
 		modelMap["ui_href"] = model.UIHref

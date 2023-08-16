@@ -218,6 +218,21 @@ func (mr *MockAPIMockRecorder) ListServiceInstances(ctx interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServiceInstances", reflect.TypeOf((*MockAPI)(nil).ListServiceInstances), ctx)
 }
 
+// ServiceInstanceIDToCRN mocks base method.
+func (m *MockAPI) ServiceInstanceIDToCRN(ctx context.Context, id string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ServiceInstanceIDToCRN", ctx, id)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ServiceInstanceIDToCRN indicates an expected call of ServiceInstanceIDToCRN.
+func (mr *MockAPIMockRecorder) ServiceInstanceIDToCRN(ctx, id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ServiceInstanceIDToCRN", reflect.TypeOf((*MockAPI)(nil).ServiceInstanceIDToCRN), ctx, id)
+}
+
 // SetVPCServiceURLForRegion mocks base method.
 func (m *MockAPI) SetVPCServiceURLForRegion(ctx context.Context, region string) error {
 	m.ctrl.T.Helper()

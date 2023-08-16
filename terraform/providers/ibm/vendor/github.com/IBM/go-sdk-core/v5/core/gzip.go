@@ -22,7 +22,8 @@ import (
 // NewGzipCompressionReader will return an io.Reader instance that will deliver
 // the gzip-compressed version of the "uncompressedReader" argument.
 // This function was inspired by this github gist:
-//    https://gist.github.com/tomcatzh/cf8040820962e0f8c04700eb3b2f26be
+//
+//	https://gist.github.com/tomcatzh/cf8040820962e0f8c04700eb3b2f26be
 func NewGzipCompressionReader(uncompressedReader io.Reader) (io.Reader, error) {
 	// Create a pipe whose reader will effectively replace "uncompressedReader"
 	// to deliver the gzip-compressed byte stream.

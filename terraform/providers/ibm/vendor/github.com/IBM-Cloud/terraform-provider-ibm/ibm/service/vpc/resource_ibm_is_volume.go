@@ -42,6 +42,14 @@ const (
 	isVolumeSourceSnapshot        = "source_snapshot"
 	isVolumeDeleteAllSnapshots    = "delete_all_snapshots"
 	isVolumeBandwidth             = "bandwidth"
+	isVolumeAccessTags            = "access_tags"
+	isVolumeUserTagType           = "user"
+	isVolumeAccessTagType         = "access"
+	isVolumeHealthReasons         = "health_reasons"
+	isVolumeHealthReasonsCode     = "code"
+	isVolumeHealthReasonsMessage  = "message"
+	isVolumeHealthReasonsMoreInfo = "more_info"
+	isVolumeHealthState           = "health_state"
 )
 
 func ResourceIBMISVolume() *schema.Resource {
@@ -67,6 +75,10 @@ func ResourceIBMISVolume() *schema.Resource {
 			customdiff.Sequence(
 				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
 					return flex.ResourceVolumeValidate(diff)
+				}),
+			customdiff.Sequence(
+				func(_ context.Context, diff *schema.ResourceDiff, v interface{}) error {
+					return flex.ResourceValidateAccessTags(diff, v)
 				}),
 		),
 
@@ -109,10 +121,18 @@ func ResourceIBMISVolume() *schema.Resource {
 			isVolumeCapacity: {
 				Type:         schema.TypeInt,
 				Optional:     true,
-				Default:      100,
 				ForceNew:     false,
+				Computed:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_is_volume", isVolumeCapacity),
 				Description:  "Volume capacity value",
+			},
+			isVolumeSourceSnapshot: {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Computed:     true,
+				ValidateFunc: validate.InvokeValidator("ibm_is_volume", isVolumeSourceSnapshot),
+				Description:  "The unique identifier for this snapshot",
 			},
 			isVolumeResourceGroup: {
 				Type:        schema.TypeString,
@@ -164,11 +184,36 @@ func ResourceIBMISVolume() *schema.Resource {
 					},
 				},
 			},
+			isVolumeHealthReasons: {
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isVolumeHealthReasonsCode: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A snake case string succinctly identifying the reason for this health state.",
+						},
 
-			isVolumeSourceSnapshot: {
+						isVolumeHealthReasonsMessage: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "An explanation of the reason for this health state.",
+						},
+
+						isVolumeHealthReasonsMoreInfo: {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Link to documentation about the reason for this health state.",
+						},
+					},
+				},
+			},
+
+			isVolumeHealthState: {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Identifier of the snapshot from which this volume was cloned",
+				Description: "The health of this resource.",
 			},
 			isVolumeDeleteAllSnapshots: {
 				Type:        schema.TypeBool,
@@ -182,6 +227,14 @@ func ResourceIBMISVolume() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_volume", "tags")},
 				Set:         flex.ResourceIBMVPCHash,
 				Description: "UserTags for the volume instance",
+			},
+			isVolumeAccessTags: {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString, ValidateFunc: validate.InvokeValidator("ibm_is_volume", "accesstag")},
+				Set:         flex.ResourceIBMVPCHash,
+				Description: "Access management tags for the volume instance",
 			},
 
 			flex.ResourceControllerURL: {
@@ -218,6 +271,57 @@ func ResourceIBMISVolume() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "The maximum bandwidth (in megabits per second) for the volume",
+			},
+
+			isVolumesOperatingSystem: &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "The operating system associated with this volume. If absent, this volume was notcreated from an image, or the image did not include an operating system.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						isVolumeArchitecture: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The operating system architecture.",
+						},
+						isVolumeDHOnly: &schema.Schema{
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Images with this operating system can only be used on dedicated hosts or dedicated host groups.",
+						},
+						isVolumeDisplayName: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "A unique, display-friendly name for the operating system.",
+						},
+						isVolumeOSFamily: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The software family for this operating system.",
+						},
+
+						isVolumesOperatingSystemHref: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The URL for this operating system.",
+						},
+						isVolumesOperatingSystemName: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The globally unique name for this operating system.",
+						},
+						isVolumeOSVendor: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The vendor of the operating system.",
+						},
+						isVolumeOSVersion: &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "The major release version of this operating system.",
+						},
+					},
+				},
 			},
 		},
 	}
@@ -262,11 +366,29 @@ func ResourceIBMISVolumeValidator() *validate.ResourceValidator {
 			MaxValue:                   "16000"})
 	validateSchema = append(validateSchema,
 		validate.ValidateSchema{
+			Identifier:                 isVolumeSourceSnapshot,
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^[-0-9a-z_]+$`,
+			MinValueLength:             1,
+			MaxValueLength:             64})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
 			Identifier:                 isVolumeIops,
 			ValidateFunctionIdentifier: validate.IntBetween,
 			Type:                       validate.TypeInt,
 			MinValue:                   "100",
 			MaxValue:                   "48000"})
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "accesstag",
+			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
+			Type:                       validate.TypeString,
+			Optional:                   true,
+			Regexp:                     `^([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-]):([A-Za-z0-9_.-]|[A-Za-z0-9_.-][A-Za-z0-9_ .-]*[A-Za-z0-9_.-])$`,
+			MinValueLength:             1,
+			MaxValueLength:             128})
 
 	ibmISVolumeResourceValidator := validate.ResourceValidator{ResourceName: "ibm_is_volume", Schema: validateSchema}
 	return &ibmISVolumeResourceValidator
@@ -277,14 +399,8 @@ func resourceIBMISVolumeCreate(d *schema.ResourceData, meta interface{}) error {
 	volName := d.Get(isVolumeName).(string)
 	profile := d.Get(isVolumeProfileName).(string)
 	zone := d.Get(isVolumeZone).(string)
-	var volCapacity int64
-	if capacity, ok := d.GetOk(isVolumeCapacity); ok {
-		volCapacity = int64(capacity.(int))
-	} else {
-		volCapacity = 100
-	}
 
-	err := volCreate(d, meta, volName, profile, zone, volCapacity)
+	err := volCreate(d, meta, volName, profile, zone)
 	if err != nil {
 		return err
 	}
@@ -292,15 +408,15 @@ func resourceIBMISVolumeCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceIBMISVolumeRead(d, meta)
 }
 
-func volCreate(d *schema.ResourceData, meta interface{}, volName, profile, zone string, volCapacity int64) error {
+func volCreate(d *schema.ResourceData, meta interface{}, volName, profile, zone string) error {
 	sess, err := vpcClient(meta)
 	if err != nil {
 		return err
 	}
+	log.Println("I AM INSIDE func volCreate(d *schema.ResourceData, meta interface{}, volName, profile, zone string)")
 	options := &vpcv1.CreateVolumeOptions{
 		VolumePrototype: &vpcv1.VolumePrototype{
-			Name:     &volName,
-			Capacity: &volCapacity,
+			Name: &volName,
 			Zone: &vpcv1.ZoneIdentity{
 				Name: &zone,
 			},
@@ -310,6 +426,44 @@ func volCreate(d *schema.ResourceData, meta interface{}, volName, profile, zone 
 		},
 	}
 	volTemplate := options.VolumePrototype.(*vpcv1.VolumePrototype)
+
+	var volCapacity int64
+	if sourceSnapsht, ok := d.GetOk(isVolumeSourceSnapshot); ok {
+		sourceSnapshot := sourceSnapsht.(string)
+		snapshotIdentity := &vpcv1.SnapshotIdentity{
+			ID: &sourceSnapshot,
+		}
+		volTemplate.SourceSnapshot = snapshotIdentity
+		getSnapshotOptions := &vpcv1.GetSnapshotOptions{
+			ID: &sourceSnapshot,
+		}
+		snapshot, response, err := sess.GetSnapshot(getSnapshotOptions)
+		if err != nil {
+			return fmt.Errorf("[ERROR] Error fetching snapshot %s\n%s", err, response)
+		}
+		if (response != nil && response.StatusCode == 404) || snapshot == nil {
+			return fmt.Errorf("[ERROR] No snapshot found with id %s", sourceSnapshot)
+		}
+		minimumCapacity := *snapshot.MinimumCapacity
+		if capacity, ok := d.GetOk(isVolumeCapacity); ok {
+			if int64(capacity.(int)) > minimumCapacity {
+				volCapacity = int64(capacity.(int))
+			} else {
+				volCapacity = minimumCapacity
+			}
+			volTemplate.Capacity = &volCapacity
+		}
+	} else {
+
+		if capacity, ok := d.GetOk(isVolumeCapacity); ok {
+			if int64(capacity.(int)) > 0 {
+				volCapacity = int64(capacity.(int))
+			}
+		} else {
+			volCapacity = 100
+		}
+		volTemplate.Capacity = &volCapacity
+	}
 
 	if key, ok := d.GetOk(isVolumeEncryptionKey); ok {
 		encryptionKey := key.(string)
@@ -359,6 +513,15 @@ func volCreate(d *schema.ResourceData, meta interface{}, volName, profile, zone 
 	if err != nil {
 		return err
 	}
+
+	if _, ok := d.GetOk(isVolumeAccessTags); ok {
+		oldList, newList := d.GetChange(isVolumeAccessTags)
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vol.CRN, "", isVolumeAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on create of resource vpc volume (%s) access tags: %s", d.Id(), err)
+		}
+	}
 	return nil
 }
 
@@ -405,6 +568,9 @@ func volGet(d *schema.ResourceData, meta interface{}, id string) error {
 		d.Set(isVolumeSourceSnapshot, *vol.SourceSnapshot.ID)
 	}
 	d.Set(isVolumeStatus, *vol.Status)
+	if vol.HealthState != nil {
+		d.Set(isVolumeHealthState, *vol.HealthState)
+	}
 	d.Set(isVolumeBandwidth, int(*vol.Bandwidth))
 	//set the status reasons
 	if vol.StatusReasons != nil {
@@ -427,6 +593,27 @@ func volGet(d *schema.ResourceData, meta interface{}, id string) error {
 			return fmt.Errorf("Error setting user tags: %s", err)
 		}
 	}
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vol.CRN, "", isVolumeAccessTagType)
+	if err != nil {
+		log.Printf(
+			"Error on get of resource volume (%s) access tags: %s", d.Id(), err)
+	}
+	d.Set(isVolumeAccessTags, accesstags)
+	if vol.HealthReasons != nil {
+		healthReasonsList := make([]map[string]interface{}, 0)
+		for _, sr := range vol.HealthReasons {
+			currentSR := map[string]interface{}{}
+			if sr.Code != nil && sr.Message != nil {
+				currentSR[isVolumeHealthReasonsCode] = *sr.Code
+				currentSR[isVolumeHealthReasonsMessage] = *sr.Message
+				if sr.MoreInfo != nil {
+					currentSR[isVolumeHealthReasonsMoreInfo] = *sr.Message
+				}
+				healthReasonsList = append(healthReasonsList, currentSR)
+			}
+		}
+		d.Set(isVolumeHealthReasons, healthReasonsList)
+	}
 	controller, err := flex.GetBaseController(meta)
 	if err != nil {
 		return err
@@ -439,6 +626,12 @@ func volGet(d *schema.ResourceData, meta interface{}, id string) error {
 		d.Set(flex.ResourceGroupName, vol.ResourceGroup.Name)
 		d.Set(isVolumeResourceGroup, *vol.ResourceGroup.ID)
 	}
+	operatingSystemList := []map[string]interface{}{}
+	if vol.OperatingSystem != nil {
+		operatingSystemMap := dataSourceVolumeCollectionVolumesOperatingSystemToMap(*vol.OperatingSystem)
+		operatingSystemList = append(operatingSystemList, operatingSystemMap)
+	}
+	d.Set(isVolumesOperatingSystem, operatingSystemList)
 	return nil
 }
 
@@ -473,6 +666,23 @@ func volUpdate(d *schema.ResourceData, meta interface{}, id, name string, hasNam
 	var capacity int64
 	if delete {
 		deleteAllSnapshots(sess, id)
+	}
+
+	if d.HasChange(isVolumeAccessTags) {
+		options := &vpcv1.GetVolumeOptions{
+			ID: &id,
+		}
+		vol, response, err := sess.GetVolume(options)
+		if err != nil {
+			return fmt.Errorf("Error getting Volume : %s\n%s", err, response)
+		}
+		oldList, newList := d.GetChange(isVolumeAccessTags)
+
+		err = flex.UpdateGlobalTagsUsingCRN(oldList, newList, meta, *vol.CRN, "", isVolumeAccessTagType)
+		if err != nil {
+			log.Printf(
+				"Error on update of resource vpc volume (%s) access tags: %s", id, err)
+		}
 	}
 
 	optionsget := &vpcv1.GetVolumeOptions{

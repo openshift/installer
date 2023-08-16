@@ -36,7 +36,7 @@ type ClientService interface {
 }
 
 /*
-  InternalV1PowervsInstancesGet gets list of power v s cloud instances
+InternalV1PowervsInstancesGet gets list of power v s cloud instances
 */
 func (a *Client) InternalV1PowervsInstancesGet(params *InternalV1PowervsInstancesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1PowervsInstancesGetOK, error) {
 	// TODO: Validate the params before sending

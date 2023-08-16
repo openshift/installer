@@ -9,6 +9,7 @@ import (
 
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/conns"
 	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/flex"
+	"github.com/IBM-Cloud/terraform-provider-ibm/ibm/validate"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -22,6 +23,9 @@ func DataSourceIBMContainerNLBDNS() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "A unique name of the cluster",
+				ValidateFunc: validate.InvokeDataSourceValidator(
+					"ibm_container_nlb_dns",
+					"cluster"),
 			},
 			"nlb_config": {
 				Type:        schema.TypeList,
@@ -82,6 +86,20 @@ func DataSourceIBMContainerNLBDNS() *schema.Resource {
 	}
 }
 
+func DataSourceIBMContainerNLBDNSValidator() *validate.ResourceValidator {
+	validateSchema := make([]validate.ValidateSchema, 0)
+	validateSchema = append(validateSchema,
+		validate.ValidateSchema{
+			Identifier:                 "cluster",
+			ValidateFunctionIdentifier: validate.ValidateCloudData,
+			Type:                       validate.TypeString,
+			Required:                   true,
+			CloudDataType:              "cluster",
+			CloudDataRange:             []string{"resolved_to:id"}})
+
+	iBMContainerNLBDNSValidator := validate.ResourceValidator{ResourceName: "ibm_container_nlb_dns", Schema: validateSchema}
+	return &iBMContainerNLBDNSValidator
+}
 func dataSourceIBMContainerNLBDNSRead(context context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	name := d.Get("cluster").(string)

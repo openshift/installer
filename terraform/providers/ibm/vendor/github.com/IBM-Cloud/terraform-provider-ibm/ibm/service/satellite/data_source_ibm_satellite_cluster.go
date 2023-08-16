@@ -173,6 +173,11 @@ func DataSourceIBMSatelliteCluster() *schema.Resource {
 				Computed: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
+			"infrastructure_topology": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "String value for single node cluster option.",
+			},
 		},
 	}
 }
@@ -241,8 +246,11 @@ func dataSourceIBMSatelliteClusterRead(d *schema.ResourceData, meta interface{})
 	d.Set("state", *clusterFields.State)
 	d.Set("status", *clusterFields.Status)
 	d.Set("workers", workers)
-
 	d.Set("worker_pools", flex.FlattenSatelliteWorkerPools(workerPools))
+
+	if clusterFields.InfrastructureTopology != nil {
+		d.Set("infrastructure_topology", *clusterFields.InfrastructureTopology)
+	}
 
 	if clusterFields.ServiceEndpoints != nil {
 		d.Set("public_service_endpoint", *clusterFields.ServiceEndpoints.PublicServiceEndpointEnabled)

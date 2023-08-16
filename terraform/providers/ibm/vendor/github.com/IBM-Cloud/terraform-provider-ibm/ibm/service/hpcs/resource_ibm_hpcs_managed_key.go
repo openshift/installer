@@ -53,7 +53,7 @@ func ResourceIbmManagedKey() *schema.Resource {
 			},
 			"template_name": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
+				Required:     true,
 				ValidateFunc: validate.InvokeValidator("ibm_hpcs_managed_key", "template_name"),
 				Description:  "Name of the key template to use when creating a key.",
 			},
@@ -270,6 +270,18 @@ func ResourceIbmManagedKey() *schema.Resource {
 								},
 							},
 						},
+						"google_key_protection_level": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"google_key_purpose": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+						"google_kms_algorithm": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -278,7 +290,7 @@ func ResourceIbmManagedKey() *schema.Resource {
 				Computed:    true,
 				Description: "A URL that uniquely identifies your cloud resource.",
 			},
-			"version": &schema.Schema{
+			"etag": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -310,18 +322,20 @@ func ResourceIbmManagedKeyValidator() *validate.ResourceValidator {
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Required:                   true,
-			Regexp:                     `^[A-Za-z0-9._ -]+$`,
+			Regexp:                     `^[A-Za-z0-9._ \/-]+$`,
 			MinValueLength:             1,
-			MaxValueLength:             100,
+			MaxValueLength:             255,
 		},
 		validate.ValidateSchema{
 			Identifier:                 "description",
 			ValidateFunctionIdentifier: validate.ValidateRegexpLen,
 			Type:                       validate.TypeString,
 			Optional:                   true,
-			Regexp:                     `(.|\\n)*`,
-			MinValueLength:             0,
-			MaxValueLength:             200,
+			Regexp:                     `(.|\n)*`,
+			// TODO: the old version was:
+			// Regexp:                     `(.|\\n)*`,
+			MinValueLength: 0,
+			MaxValueLength: 200,
 		},
 	)
 
@@ -417,7 +431,12 @@ func ResourceIbmManagedKeyRead(context context.Context, d *schema.ResourceData, 
 	if err = d.Set("uko_vault", getManagedKeyOptions.UKOVault); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting uko_vault: %s", err))
 	}
-	d.Set("key_id", key_id)
+	if err = d.Set("key_id", key_id); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting key_id: %s", err))
+	}
+	// if err = d.Set("template_name", getManagedKeyOptions.TemplateName); err != nil {
+	// 	return diag.FromErr(fmt.Errorf("Error setting template_name: %s", err))
+	// }
 	vaultMap, err := ResourceIbmManagedKeyVaultReferenceInCreationRequestToMap(managedKey.Vault)
 	if err != nil {
 		return diag.FromErr(err)
@@ -444,12 +463,14 @@ func ResourceIbmManagedKeyRead(context context.Context, d *schema.ResourceData, 
 	if err = d.Set("description", managedKey.Description); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting description: %s", err))
 	}
-	templateMap, err := ResourceIbmManagedKeyTemplateReferenceToMap(managedKey.Template)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if err = d.Set("template", []map[string]interface{}{templateMap}); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting template: %s", err))
+	if managedKey.Template != nil {
+		templateMap, err := ResourceIbmManagedKeyTemplateReferenceToMap(managedKey.Template)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		if err = d.Set("template", []map[string]interface{}{templateMap}); err != nil {
+			return diag.FromErr(fmt.Errorf("Error setting template: %s", err))
+		}
 	}
 	if err = d.Set("state", managedKey.State); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting state: %s", err))
@@ -504,7 +525,8 @@ func ResourceIbmManagedKeyRead(context context.Context, d *schema.ResourceData, 
 	}
 	instances := []map[string]interface{}{}
 	for _, instancesItem := range managedKey.Instances {
-		instancesItemMap, err := ResourceIbmManagedKeyKeyInstanceToMap(&instancesItem)
+		// TODO: Worried about this typing
+		instancesItemMap, err := ResourceIbmManagedKeyKeyInstanceToMap(instancesItem)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -516,8 +538,8 @@ func ResourceIbmManagedKeyRead(context context.Context, d *schema.ResourceData, 
 	if err = d.Set("href", managedKey.Href); err != nil {
 		return diag.FromErr(fmt.Errorf("Error setting href: %s", err))
 	}
-	if err = d.Set("version", response.Headers.Get("Etag")); err != nil {
-		return diag.FromErr(fmt.Errorf("Error setting version: %s", err))
+	if err = d.Set("etag", response.Headers.Get("Etag")); err != nil {
+		return diag.FromErr(fmt.Errorf("Error setting etag: %s", err))
 	}
 
 	return nil
@@ -547,11 +569,14 @@ func ResourceIbmManagedKeyUpdate(context context.Context, d *schema.ResourceData
 
 	hasChange := false
 
-	if d.HasChange("uko_vault") || d.HasChange("label") {
+	if d.HasChange("uko_vault") || d.HasChange("template_name") || d.HasChange("vault") || d.HasChange("label") {
 		updateManagedKeyOptions.SetUKOVault(d.Get("uko_vault").(string))
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		// updateManagedKeyOptions.SetTemplateName(d.Get("template_name").(string))
+		// vault, err := ResourceIbmManagedKeyMapToVaultReferenceInCreationRequest(d.Get("vault.0").(map[string]interface{}))
+		// if err != nil {
+		// 	return diag.FromErr(err)
+		// }
+		// updateManagedKeyOptions.SetUKOVault(vault)
 		updateManagedKeyOptions.SetLabel(d.Get("label").(string))
 		hasChange = true
 	}
@@ -563,7 +588,7 @@ func ResourceIbmManagedKeyUpdate(context context.Context, d *schema.ResourceData
 		updateManagedKeyOptions.SetDescription(d.Get("description").(string))
 		hasChange = true
 	}
-	etag := d.Get("version").(string)
+	etag := d.Get("etag").(string)
 	updateManagedKeyOptions.SetIfMatch(etag)
 
 	if hasChange {
@@ -597,7 +622,7 @@ func ResourceIbmManagedKeyUpdate(context context.Context, d *schema.ResourceData
 				return diag.FromErr(fmt.Errorf("Deactivate managed key failed: Cannot deactivate key not in active state"))
 			}
 		} else if new == "destroyed" {
-			if prev == "deactivated" {
+			if prev == "deactivated" || prev == "pre_activation" {
 				destroyManagedKeyOptions := &ukov4.DestroyManagedKeyOptions{}
 
 				destroyManagedKeyOptions.SetIfMatch(etag)
@@ -640,13 +665,14 @@ func ResourceIbmManagedKeyDelete(context context.Context, d *schema.ResourceData
 		return diag.FromErr(err)
 	}
 
+	// TODO: This is where we need to walk through for deleting keys
 	// Don't allow deleting of non-destroyed keys
 	if d.Get("state") != "destroyed" {
 		return diag.FromErr(fmt.Errorf("Delete Key failed: Cannot delete key that is not destroyed"))
 	}
 
 	// Etag support
-	etag := d.Get("version").(string)
+	etag := d.Get("etag").(string)
 
 	id := strings.Split(d.Id(), "/")
 	region := id[0]
@@ -739,14 +765,89 @@ func ResourceIbmManagedKeyTargetKeystoreReferenceToMap(model *ukov4.TargetKeysto
 	return modelMap, nil
 }
 
-func ResourceIbmManagedKeyKeyInstanceToMap(model *ukov4.KeyInstance) (map[string]interface{}, error) {
+// TODO: Worried about typing
+func ResourceIbmManagedKeyKeyInstanceToMap(model ukov4.KeyInstanceIntf) (map[string]interface{}, error) {
+	if _, ok := model.(*ukov4.KeyInstanceGoogleKms); ok {
+		return resourceIbmHpcsManagedKeyKeyInstanceGoogleKmsToMap(model.(*ukov4.KeyInstanceGoogleKms))
+	} else if _, ok := model.(*ukov4.KeyInstanceAwsKms); ok {
+		return resourceIbmHpcsManagedKeyKeyInstanceAwsKmsToMap(model.(*ukov4.KeyInstanceAwsKms))
+	} else if _, ok := model.(*ukov4.KeyInstanceIbmCloudKms); ok {
+		return resourceIbmHpcsManagedKeyKeyInstanceIbmCloudKmsToMap(model.(*ukov4.KeyInstanceIbmCloudKms))
+	} else if _, ok := model.(*ukov4.KeyInstanceAzure); ok {
+		return resourceIbmHpcsManagedKeyKeyInstanceAzureToMap(model.(*ukov4.KeyInstanceAzure))
+	} else if _, ok := model.(*ukov4.KeyInstance); ok {
+		modelMap := make(map[string]interface{})
+		model := model.(*ukov4.KeyInstance)
+		if model.ID != nil {
+			modelMap["id"] = model.ID
+		}
+		if model.LabelInKeystore != nil {
+			modelMap["label_in_keystore"] = model.LabelInKeystore
+		}
+		if model.Type != nil {
+			modelMap["type"] = model.Type
+		}
+		if model.Keystore != nil {
+			keystoreMap, err := resourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+			if err != nil {
+				return modelMap, err
+			}
+			modelMap["keystore"] = []map[string]interface{}{keystoreMap}
+		}
+		if model.GoogleKeyProtectionLevel != nil {
+			modelMap["google_key_protection_level"] = model.GoogleKeyProtectionLevel
+		}
+		if model.GoogleKeyPurpose != nil {
+			modelMap["google_key_purpose"] = model.GoogleKeyPurpose
+		}
+		if model.GoogleKmsAlgorithm != nil {
+			modelMap["google_kms_algorithm"] = model.GoogleKmsAlgorithm
+		}
+		return modelMap, nil
+	} else {
+		return nil, fmt.Errorf("Unrecognized ukov4.KeyInstanceIntf subtype encountered")
+	}
+}
+
+func resourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model *ukov4.InstanceInKeystore) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["group"] = model.Group
+	modelMap["type"] = model.Type
+	return modelMap, nil
+}
+
+func resourceIbmHpcsManagedKeyKeyInstanceGoogleKmsToMap(model *ukov4.KeyInstanceGoogleKms) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
 	modelMap["id"] = model.ID
 	modelMap["label_in_keystore"] = model.LabelInKeystore
 	if model.Type != nil {
 		modelMap["type"] = model.Type
 	}
-	keystoreMap, err := ResourceIbmManagedKeyInstanceInKeystoreToMap(model.Keystore)
+	keystoreMap, err := resourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["keystore"] = []map[string]interface{}{keystoreMap}
+	if model.GoogleKeyProtectionLevel != nil {
+		modelMap["google_key_protection_level"] = model.GoogleKeyProtectionLevel
+	}
+	if model.GoogleKeyPurpose != nil {
+		modelMap["google_key_purpose"] = model.GoogleKeyPurpose
+	}
+	if model.GoogleKmsAlgorithm != nil {
+		modelMap["google_kms_algorithm"] = model.GoogleKmsAlgorithm
+	}
+	return modelMap, nil
+}
+
+func resourceIbmHpcsManagedKeyKeyInstanceAwsKmsToMap(model *ukov4.KeyInstanceAwsKms) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = model.ID
+	modelMap["label_in_keystore"] = model.LabelInKeystore
+	if model.Type != nil {
+		modelMap["type"] = model.Type
+	}
+	keystoreMap, err := resourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
 	if err != nil {
 		return modelMap, err
 	}
@@ -754,9 +855,32 @@ func ResourceIbmManagedKeyKeyInstanceToMap(model *ukov4.KeyInstance) (map[string
 	return modelMap, nil
 }
 
-func ResourceIbmManagedKeyInstanceInKeystoreToMap(model *ukov4.InstanceInKeystore) (map[string]interface{}, error) {
+func resourceIbmHpcsManagedKeyKeyInstanceIbmCloudKmsToMap(model *ukov4.KeyInstanceIbmCloudKms) (map[string]interface{}, error) {
 	modelMap := make(map[string]interface{})
-	modelMap["group"] = model.Group
-	modelMap["type"] = model.Type
+	modelMap["id"] = model.ID
+	modelMap["label_in_keystore"] = model.LabelInKeystore
+	if model.Type != nil {
+		modelMap["type"] = model.Type
+	}
+	keystoreMap, err := resourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["keystore"] = []map[string]interface{}{keystoreMap}
+	return modelMap, nil
+}
+
+func resourceIbmHpcsManagedKeyKeyInstanceAzureToMap(model *ukov4.KeyInstanceAzure) (map[string]interface{}, error) {
+	modelMap := make(map[string]interface{})
+	modelMap["id"] = model.ID
+	modelMap["label_in_keystore"] = model.LabelInKeystore
+	if model.Type != nil {
+		modelMap["type"] = model.Type
+	}
+	keystoreMap, err := resourceIbmHpcsManagedKeyInstanceInKeystoreToMap(model.Keystore)
+	if err != nil {
+		return modelMap, err
+	}
+	modelMap["keystore"] = []map[string]interface{}{keystoreMap}
 	return modelMap, nil
 }

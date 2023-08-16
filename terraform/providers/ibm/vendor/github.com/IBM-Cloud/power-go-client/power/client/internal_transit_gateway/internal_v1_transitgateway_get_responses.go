@@ -45,7 +45,8 @@ func NewInternalV1TransitgatewayGetOK() *InternalV1TransitgatewayGetOK {
 	return &InternalV1TransitgatewayGetOK{}
 }
 
-/* InternalV1TransitgatewayGetOK describes a response with status code 200, with default header values.
+/*
+InternalV1TransitgatewayGetOK describes a response with status code 200, with default header values.
 
 OK
 */
@@ -53,9 +54,39 @@ type InternalV1TransitgatewayGetOK struct {
 	Payload *models.TransitGatewayInstance
 }
 
+// IsSuccess returns true when this internal v1 transitgateway get o k response has a 2xx status code
+func (o *InternalV1TransitgatewayGetOK) IsSuccess() bool {
+	return true
+}
+
+// IsRedirect returns true when this internal v1 transitgateway get o k response has a 3xx status code
+func (o *InternalV1TransitgatewayGetOK) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 transitgateway get o k response has a 4xx status code
+func (o *InternalV1TransitgatewayGetOK) IsClientError() bool {
+	return false
+}
+
+// IsServerError returns true when this internal v1 transitgateway get o k response has a 5xx status code
+func (o *InternalV1TransitgatewayGetOK) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 transitgateway get o k response a status code equal to that given
+func (o *InternalV1TransitgatewayGetOK) IsCode(code int) bool {
+	return code == 200
+}
+
 func (o *InternalV1TransitgatewayGetOK) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetOK  %+v", 200, o.Payload)
 }
+
+func (o *InternalV1TransitgatewayGetOK) String() string {
+	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetOK  %+v", 200, o.Payload)
+}
+
 func (o *InternalV1TransitgatewayGetOK) GetPayload() *models.TransitGatewayInstance {
 	return o.Payload
 }
@@ -77,7 +108,8 @@ func NewInternalV1TransitgatewayGetForbidden() *InternalV1TransitgatewayGetForbi
 	return &InternalV1TransitgatewayGetForbidden{}
 }
 
-/* InternalV1TransitgatewayGetForbidden describes a response with status code 403, with default header values.
+/*
+InternalV1TransitgatewayGetForbidden describes a response with status code 403, with default header values.
 
 Forbidden
 */
@@ -85,9 +117,39 @@ type InternalV1TransitgatewayGetForbidden struct {
 	Payload *models.Error
 }
 
+// IsSuccess returns true when this internal v1 transitgateway get forbidden response has a 2xx status code
+func (o *InternalV1TransitgatewayGetForbidden) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this internal v1 transitgateway get forbidden response has a 3xx status code
+func (o *InternalV1TransitgatewayGetForbidden) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this internal v1 transitgateway get forbidden response has a 4xx status code
+func (o *InternalV1TransitgatewayGetForbidden) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this internal v1 transitgateway get forbidden response has a 5xx status code
+func (o *InternalV1TransitgatewayGetForbidden) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this internal v1 transitgateway get forbidden response a status code equal to that given
+func (o *InternalV1TransitgatewayGetForbidden) IsCode(code int) bool {
+	return code == 403
+}
+
 func (o *InternalV1TransitgatewayGetForbidden) Error() string {
 	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetForbidden  %+v", 403, o.Payload)
 }
+
+func (o *InternalV1TransitgatewayGetForbidden) String() string {
+	return fmt.Sprintf("[GET /internal/v1/transit-gateway/{powervs_service_crn}][%d] internalV1TransitgatewayGetForbidden  %+v", 403, o.Payload)
+}
+
 func (o *InternalV1TransitgatewayGetForbidden) GetPayload() *models.Error {
 	return o.Payload
 }

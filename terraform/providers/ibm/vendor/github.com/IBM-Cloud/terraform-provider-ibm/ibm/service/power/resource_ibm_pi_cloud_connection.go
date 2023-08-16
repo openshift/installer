@@ -184,13 +184,16 @@ func resourceIBMPICloudConnectionCreate(ctx context.Context, d *schema.ResourceD
 		classic := &models.CloudConnectionEndpointClassicUpdate{
 			Enabled: classicEnabled,
 		}
+		gre := &models.CloudConnectionGRETunnelCreate{}
 		if v, ok := d.GetOk(helpers.PICloudConnectionClassicGreCidr); ok {
 			greCIDR := v.(string)
-			classic.Gre.Cidr = &greCIDR
+			gre.Cidr = &greCIDR
+			classic.Gre = gre
 		}
 		if v, ok := d.GetOk(helpers.PICloudConnectionClassicGreDest); ok {
 			greDest := v.(string)
-			classic.Gre.DestIPAddress = &greDest
+			gre.DestIPAddress = &greDest
+			classic.Gre = gre
 		}
 		body.Classic = classic
 	}
@@ -284,13 +287,16 @@ func resourceIBMPICloudConnectionUpdate(ctx context.Context, d *schema.ResourceD
 			classic := &models.CloudConnectionEndpointClassicUpdate{
 				Enabled: classicEnabled,
 			}
+			gre := &models.CloudConnectionGRETunnelCreate{}
 			if v, ok := d.GetOk(helpers.PICloudConnectionClassicGreCidr); ok {
 				greCIDR := v.(string)
-				classic.Gre.Cidr = &greCIDR
+				gre.Cidr = &greCIDR
+				classic.Gre = gre
 			}
 			if v, ok := d.GetOk(helpers.PICloudConnectionClassicGreDest); ok {
 				greDest := v.(string)
-				classic.Gre.DestIPAddress = &greDest
+				gre.DestIPAddress = &greDest
+				classic.Gre = gre
 			}
 			body.Classic = classic
 		} else {

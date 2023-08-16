@@ -370,6 +370,14 @@ func DataSourceIBMIsVPNServers() *schema.Resource {
 								},
 							},
 						},
+
+						isVPNServerAccessTags: {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Set:         flex.ResourceIBMVPCHash,
+							Description: "List of access tags",
+						},
 					},
 				},
 			},
@@ -412,7 +420,7 @@ func dataSourceIBMIsVPNServersRead(context context.Context, d *schema.ResourceDa
 	d.SetId(dataSourceIBMIsVPNServersID(d))
 
 	if allrecs != nil {
-		err = d.Set("vpn_servers", dataSourceVPNServerCollectionFlattenVPNServers(allrecs))
+		err = d.Set("vpn_servers", dataSourceVPNServerCollectionFlattenVPNServers(allrecs, meta))
 		if err != nil {
 			return diag.FromErr(fmt.Errorf("[ERROR] Error setting vpn_servers %s", err))
 		}
@@ -462,15 +470,15 @@ func dataSourceVPNServerCollectionNextToMap(nextItem vpcv1.VPNServerCollectionNe
 	return nextMap
 }
 
-func dataSourceVPNServerCollectionFlattenVPNServers(result []vpcv1.VPNServer) (vpnServers []map[string]interface{}) {
+func dataSourceVPNServerCollectionFlattenVPNServers(result []vpcv1.VPNServer, meta interface{}) (vpnServers []map[string]interface{}) {
 	for _, vpnServersItem := range result {
-		vpnServers = append(vpnServers, dataSourceVPNServerCollectionVPNServersToMap(vpnServersItem))
+		vpnServers = append(vpnServers, dataSourceVPNServerCollectionVPNServersToMap(vpnServersItem, meta))
 	}
 
 	return vpnServers
 }
 
-func dataSourceVPNServerCollectionVPNServersToMap(vpnServersItem vpcv1.VPNServer) (vpnServersMap map[string]interface{}) {
+func dataSourceVPNServerCollectionVPNServersToMap(vpnServersItem vpcv1.VPNServer, meta interface{}) (vpnServersMap map[string]interface{}) {
 	vpnServersMap = map[string]interface{}{}
 
 	if vpnServersItem.Certificate != nil {
@@ -589,6 +597,13 @@ func dataSourceVPNServerCollectionVPNServersToMap(vpnServersItem vpcv1.VPNServer
 		// }
 		vpnServersMap["vpc"] = vpcList
 	}
+
+	accesstags, err := flex.GetGlobalTagsUsingCRN(meta, *vpnServersItem.CRN, "", isVPNServerAccessTagType)
+	if err != nil {
+		log.Printf(
+			"An error occured during reading of vpn server (%s) access tags: %s", *vpnServersItem.ID, err)
+	}
+	vpnServersMap[isVPNServerAccessTags] = accesstags
 
 	return vpnServersMap
 }
