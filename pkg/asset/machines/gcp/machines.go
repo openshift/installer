@@ -132,9 +132,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 
 func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string, credentialsMode types.CredentialsMode) (*machineapi.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
-	if len(platform.Licenses) > 0 {
-		osImage = fmt.Sprintf("%s-rhcos-image", clusterID)
-	} else if mpool.OSImage != nil {
+	if mpool.OSImage != nil {
 		osImage = fmt.Sprintf("projects/%s/global/images/%s", mpool.OSImage.Project, mpool.OSImage.Name)
 	}
 	network, subnetwork, err := getNetworks(platform, clusterID, role)

@@ -33,11 +33,8 @@ type config struct {
 	CreateFirewallRules       bool              `json:"gcp_create_firewall_rules"`
 	MasterInstanceType        string            `json:"gcp_master_instance_type,omitempty"`
 	MasterAvailabilityZones   []string          `json:"gcp_master_availability_zones"`
-	ImageURI                  string            `json:"gcp_image_uri,omitempty"`
 	Image                     string            `json:"gcp_image,omitempty"`
-	PreexistingImage          bool              `json:"gcp_preexisting_image"`
 	InstanceServiceAccount    string            `json:"gcp_instance_service_account,omitempty"`
-	ImageLicenses             []string          `json:"gcp_image_licenses,omitempty"`
 	VolumeType                string            `json:"gcp_master_root_volume_type"`
 	VolumeSize                int64             `json:"gcp_master_root_volume_size"`
 	VolumeKMSKeyLink          string            `json:"gcp_root_volume_kms_key_link"`
@@ -59,8 +56,6 @@ type config struct {
 type TFVarsSources struct {
 	Auth                Auth
 	CreateFirewallRules bool
-	ImageURI            string
-	ImageLicenses       []string
 	MasterConfigs       []*machineapi.GCPMachineProviderSpec
 	WorkerConfigs       []*machineapi.GCPMachineProviderSpec
 	PublicZoneName      string
@@ -95,9 +90,7 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		MasterAvailabilityZones:   masterAvailabilityZones,
 		VolumeType:                masterConfig.Disks[0].Type,
 		VolumeSize:                masterConfig.Disks[0].SizeGB,
-		ImageURI:                  sources.ImageURI,
 		Image:                     masterConfig.Disks[0].Image,
-		ImageLicenses:             sources.ImageLicenses,
 		PublicZoneName:            sources.PublicZoneName,
 		PrivateZoneName:           sources.PrivateZoneName,
 		PublishStrategy:           string(sources.PublishStrategy),
@@ -110,11 +103,6 @@ func TFVars(sources TFVarsSources) ([]byte, error) {
 		EnableConfidentialCompute: string(masterConfig.ConfidentialCompute),
 		OnHostMaintenance:         string(masterConfig.OnHostMaintenance),
 		ExtraLabels:               labels,
-	}
-
-	cfg.PreexistingImage = true
-	if len(sources.ImageLicenses) > 0 {
-		cfg.PreexistingImage = false
 	}
 
 	if masterConfig.Disks[0].EncryptionKey != nil {
