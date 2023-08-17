@@ -45,7 +45,7 @@ require (
 	github.com/metal3-io/baremetal-operator/apis v0.0.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.0.0
 	github.com/nutanix-cloud-native/prism-go-client v0.2.1-0.20220804130801-c8a253627c64
-	github.com/openshift/api v3.9.1-0.20191111211345-a27ff30ebf09+incompatible
+	github.com/openshift/api v0.0.0-20230817133225-564be9ddb58e
 	github.com/openshift/assisted-image-service v0.0.0-20220506122314-2f689a1084b8
 	github.com/openshift/assisted-service v0.0.0-20220928142635-a40422bdea61
 	github.com/openshift/assisted-service/api v0.0.0
@@ -246,7 +246,7 @@ replace sigs.k8s.io/controller-tools => sigs.k8s.io/controller-tools v0.3.1-0.20
 
 // Override the OpenShift API version in hive
 
-replace github.com/openshift/api => github.com/openshift/api v0.0.0-20221004120407-c46852673d03
+replace github.com/openshift/api => github.com/openshift/api v0.0.0-20230817133225-564be9ddb58e
 
 replace github.com/terraform-providers/terraform-provider-nutanix => github.com/nutanix/terraform-provider-nutanix v1.5.0
 
