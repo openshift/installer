@@ -71,6 +71,7 @@ var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
 var _ = internaloption.WithDefaultEndpoint
+var _ = internal.Version
 
 const apiId = "run:v2"
 const apiName = "run"
@@ -316,6 +317,7 @@ type GoogleCloudRunV2Condition struct {
 	// attempt failed due to the user container exiting with a non-zero exit
 	// code.
 	//   "CANCELLED" - The execution was cancelled by users.
+	//   "CANCELLING" - The execution is in the process of being cancelled.
 	ExecutionReason string `json:"executionReason,omitempty"`
 
 	// LastTransitionTime: Last time the condition transitioned from one
@@ -442,41 +444,29 @@ func (s *GoogleCloudRunV2Condition) MarshalJSON() ([]byte, error) {
 // GoogleCloudRunV2Container: A single application container. This
 // specifies both the container to run, the command to run in the
 // container and the arguments to supply to it. Note that additional
-// arguments may be supplied by the system to the container at runtime.
+// arguments can be supplied by the system to the container at runtime.
 type GoogleCloudRunV2Container struct {
 	// Args: Arguments to the entrypoint. The docker image's CMD is used if
-	// this is not provided. Variable references $(VAR_NAME) are expanded
-	// using the container's environment. If a variable cannot be resolved,
-	// the reference in the input string will be unchanged. The $(VAR_NAME)
-	// syntax can be escaped with a double $$, ie: $$(VAR_NAME). Escaped
-	// references will never be expanded, regardless of whether the variable
-	// exists or not. More info:
-	// https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+	// this is not provided.
 	Args []string `json:"args,omitempty"`
 
 	// Command: Entrypoint array. Not executed within a shell. The docker
-	// image's ENTRYPOINT is used if this is not provided. Variable
-	// references $(VAR_NAME) are expanded using the container's
-	// environment. If a variable cannot be resolved, the reference in the
-	// input string will be unchanged. The $(VAR_NAME) syntax can be escaped
-	// with a double $$, ie: $$(VAR_NAME). Escaped references will never be
-	// expanded, regardless of whether the variable exists or not. More
-	// info:
-	// https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell
+	// image's ENTRYPOINT is used if this is not provided.
 	Command []string `json:"command,omitempty"`
+
+	// DependsOn: Container names which must start before this container.
+	DependsOn []string `json:"dependsOn,omitempty"`
 
 	// Env: List of environment variables to set in the container.
 	Env []*GoogleCloudRunV2EnvVar `json:"env,omitempty"`
 
 	// Image: Required. Name of the container image in Dockerhub, Google
 	// Artifact Registry, or Google Container Registry. If the host is not
-	// provided, Dockerhub is assumed. More info:
-	// https://kubernetes.io/docs/concepts/containers/images
+	// provided, Dockerhub is assumed.
 	Image string `json:"image,omitempty"`
 
 	// LivenessProbe: Periodic probe of container liveness. Container will
-	// be restarted if the probe fails. More info:
-	// https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
+	// be restarted if the probe fails.
 	LivenessProbe *GoogleCloudRunV2Probe `json:"livenessProbe,omitempty"`
 
 	// Name: Name of the container specified as a DNS_LABEL (RFC 1123).
@@ -489,16 +479,13 @@ type GoogleCloudRunV2Container struct {
 	// through the PORT environment variable for the container to listen on.
 	Ports []*GoogleCloudRunV2ContainerPort `json:"ports,omitempty"`
 
-	// Resources: Compute Resource requirements by this container. More
-	// info:
-	// https://kubernetes.io/docs/concepts/storage/persistent-volumes#resources
+	// Resources: Compute Resource requirements by this container.
 	Resources *GoogleCloudRunV2ResourceRequirements `json:"resources,omitempty"`
 
 	// StartupProbe: Startup probe of application within the container. All
 	// other probes are disabled if a startup probe is provided, until it
 	// succeeds. Container will not be added to service endpoints if the
-	// probe fails. More info:
-	// https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
+	// probe fails.
 	StartupProbe *GoogleCloudRunV2Probe `json:"startupProbe,omitempty"`
 
 	// VolumeMounts: Volume to mount into the container's filesystem.
@@ -566,11 +553,62 @@ func (s *GoogleCloudRunV2ContainerPort) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleCloudRunV2EmptyDirVolumeSource: Ephemeral storage which can be
+// backed by real disks (HD, SSD), network storage or memory (i.e.
+// tmpfs). For now only in memory (tmpfs) is supported. It is ephemeral
+// in the sense that when the sandbox is taken down, the data is
+// destroyed with it (it does not persist across sandbox runs).
+type GoogleCloudRunV2EmptyDirVolumeSource struct {
+	// Medium: The medium on which the data is stored. Acceptable values
+	// today is only MEMORY or none. When none, the default will currently
+	// be backed by memory but could change over time. +optional
+	//
+	// Possible values:
+	//   "MEDIUM_UNSPECIFIED" - When not specified, falls back to the
+	// default implementation which is currently in memory (this may change
+	// over time).
+	//   "MEMORY" - Explicitly set the EmptyDir to be in memory. Uses tmpfs.
+	Medium string `json:"medium,omitempty"`
+
+	// SizeLimit: Limit on the storage usable by this EmptyDir volume. The
+	// size limit is also applicable for memory medium. The maximum usage on
+	// memory medium EmptyDir would be the minimum value between the
+	// SizeLimit specified here and the sum of memory limits of all
+	// containers in a pod. This field's values are of the 'Quantity' k8s
+	// type:
+	// https://kubernetes.io/docs/reference/kubernetes-api/common-definitions/quantity/.
+	// The default is nil which means that the limit is undefined. More
+	// info: https://kubernetes.io/docs/concepts/storage/volumes/#emptydir
+	SizeLimit string `json:"sizeLimit,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Medium") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Medium") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudRunV2EmptyDirVolumeSource) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudRunV2EmptyDirVolumeSource
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleCloudRunV2EnvVar: EnvVar represents an environment variable
 // present in a Container.
 type GoogleCloudRunV2EnvVar struct {
 	// Name: Required. Name of the environment variable. Must be a
-	// C_IDENTIFIER, and mnay not exceed 32768 characters.
+	// C_IDENTIFIER, and must not exceed 32768 characters.
 	Name string `json:"name,omitempty"`
 
 	// Value: Variable references $(VAR_NAME) are expanded using the
@@ -642,7 +680,9 @@ func (s *GoogleCloudRunV2EnvVarSource) MarshalJSON() ([]byte, error) {
 // a single execution. A execution an immutable resource that references
 // a container image which is run to completion.
 type GoogleCloudRunV2Execution struct {
-	// Annotations: KRM-style annotations for the resource.
+	// Annotations: Output only. Unstructured key value map that may be set
+	// by external tools to store and arbitrary metadata. They are not
+	// queryable and should be preserved when modifying objects.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// CancelledCount: Output only. The number of tasks which reached phase
@@ -689,19 +729,22 @@ type GoogleCloudRunV2Execution struct {
 	// Job: Output only. The name of the parent Job.
 	Job string `json:"job,omitempty"`
 
-	// Labels: KRM-style labels for the resource. User-provided labels are
-	// shared with Google's billing system, so they can be used to filter,
-	// or break down billing charges by team, component, environment, state,
-	// etc. For more information, visit
+	// Labels: Output only. Unstructured key value map that can be used to
+	// organize and categorize objects. User-provided labels are shared with
+	// Google's billing system, so they can be used to filter, or break down
+	// billing charges by team, component, environment, state, etc. For more
+	// information, visit
 	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
 	// or https://cloud.google.com/run/docs/configuring/labels
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// LaunchStage: Set the launch stage to a preview stage on write to
-	// allow use of preview features in that stage. On read, describes
-	// whether the resource uses preview features. Launch Stages are defined
-	// at Google Cloud Platform Launch Stages
-	// (https://cloud.google.com/terms/launch-stages).
+	// LaunchStage: The least stable launch stage needed to create this
+	// resource, as defined by Google Cloud Platform Launch Stages
+	// (https://cloud.google.com/terms/launch-stages). Cloud Run supports
+	// `ALPHA`, `BETA`, and `GA`. Note that this value might not be what was
+	// used as input. For example, if ALPHA was provided as input in the
+	// parent resource, but only BETA and GA-level features are were, this
+	// field will be BETA.
 	//
 	// Possible values:
 	//   "LAUNCH_STAGE_UNSPECIFIED" - Do not use this default value.
@@ -755,8 +798,7 @@ type GoogleCloudRunV2Execution struct {
 	// task_count. The actual number of tasks running in steady state will
 	// be less than this number when ((.spec.task_count -
 	// .status.successful) < .spec.parallelism), i.e. when the work left to
-	// do is less than max parallelism. More info:
-	// https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
+	// do is less than max parallelism.
 	Parallelism int64 `json:"parallelism,omitempty"`
 
 	// Reconciling: Output only. Indicates whether the resource's
@@ -787,8 +829,7 @@ type GoogleCloudRunV2Execution struct {
 	// TaskCount: Output only. Specifies the desired number of tasks the
 	// execution should run. Setting to 1 means that parallelism is limited
 	// to 1 and the success of that task signals the success of the
-	// execution. More info:
-	// https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/
+	// execution.
 	TaskCount int64 `json:"taskCount,omitempty"`
 
 	// Template: Output only. The template used to create tasks for this
@@ -870,19 +911,29 @@ func (s *GoogleCloudRunV2ExecutionReference) MarshalJSON() ([]byte, error) {
 // GoogleCloudRunV2ExecutionTemplate: ExecutionTemplate describes the
 // data an execution should have when created from a template.
 type GoogleCloudRunV2ExecutionTemplate struct {
-	// Annotations: KRM-style annotations for the resource. Cloud Run API v2
-	// does not support annotations with `run.googleapis.com`,
+	// Annotations: Unstructured key value map that may be set by external
+	// tools to store and arbitrary metadata. They are not queryable and
+	// should be preserved when modifying objects. Cloud Run API v2 does not
+	// support annotations with `run.googleapis.com`,
 	// `cloud.googleapis.com`, `serving.knative.dev`, or
 	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
 	// system annotations in v1 now have a corresponding field in v2
-	// ExecutionTemplate.
+	// ExecutionTemplate. This field follows Kubernetes annotations'
+	// namespacing, limits, and rules.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
-	// Labels: KRM-style labels for the resource. Cloud Run API v2 does not
-	// support labels with `run.googleapis.com`, `cloud.googleapis.com`,
-	// `serving.knative.dev`, or `autoscaling.knative.dev` namespaces, and
-	// they will be rejected. All system labels in v1 now have a
-	// corresponding field in v2 ExecutionTemplate.
+	// Labels: Unstructured key value map that can be used to organize and
+	// categorize objects. User-provided labels are shared with Google's
+	// billing system, so they can be used to filter, or break down billing
+	// charges by team, component, environment, state, etc. For more
+	// information, visit
+	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
+	// or https://cloud.google.com/run/docs/configuring/labels. Cloud Run
+	// API v2 does not support labels with `run.googleapis.com`,
+	// `cloud.googleapis.com`, `serving.knative.dev`, or
+	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
+	// system labels in v1 now have a corresponding field in v2
+	// ExecutionTemplate.
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// Parallelism: Specifies the maximum desired number of tasks the
@@ -1037,16 +1088,15 @@ func (s *GoogleCloudRunV2HTTPHeader) MarshalJSON() ([]byte, error) {
 // GoogleCloudRunV2Job: Job represents the configuration of a single
 // job, which references a container image that is run to completion.
 type GoogleCloudRunV2Job struct {
-	// Annotations: KRM-style annotations for the resource. Unstructured key
-	// value map that may be set by external tools to store and arbitrary
-	// metadata. They are not queryable and should be preserved when
-	// modifying objects. Cloud Run API v2 does not support annotations with
-	// `run.googleapis.com`, `cloud.googleapis.com`, `serving.knative.dev`,
-	// or `autoscaling.knative.dev` namespaces, and they will be rejected.
-	// All system annotations in v1 now have a corresponding field in v2
-	// Job. This field follows Kubernetes annotations' namespacing, limits,
-	// and rules. More info:
-	// https://kubernetes.io/docs/user-guide/annotations
+	// Annotations: Unstructured key value map that may be set by external
+	// tools to store and arbitrary metadata. They are not queryable and
+	// should be preserved when modifying objects. Cloud Run API v2 does not
+	// support annotations with `run.googleapis.com`,
+	// `cloud.googleapis.com`, `serving.knative.dev`, or
+	// `autoscaling.knative.dev` namespaces, and they will be rejected on
+	// new resources. All system annotations in v1 now have a corresponding
+	// field in v2 Job. This field follows Kubernetes annotations'
+	// namespacing, limits, and rules.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// BinaryAuthorization: Settings for the Binary Authorization feature.
@@ -1091,13 +1141,14 @@ type GoogleCloudRunV2Job struct {
 	// time the user modifies the desired state.
 	Generation int64 `json:"generation,omitempty,string"`
 
-	// Labels: KRM-style labels for the resource. User-provided labels are
-	// shared with Google's billing system, so they can be used to filter,
-	// or break down billing charges by team, component, environment, state,
-	// etc. For more information, visit
+	// Labels: Unstructured key value map that can be used to organize and
+	// categorize objects. User-provided labels are shared with Google's
+	// billing system, so they can be used to filter, or break down billing
+	// charges by team, component, environment, state, etc. For more
+	// information, visit
 	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
-	// or https://cloud.google.com/run/docs/configuring/labels Cloud Run API
-	// v2 does not support labels with `run.googleapis.com`,
+	// or https://cloud.google.com/run/docs/configuring/labels. Cloud Run
+	// API v2 does not support labels with `run.googleapis.com`,
 	// `cloud.googleapis.com`, `serving.knative.dev`, or
 	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
 	// system labels in v1 now have a corresponding field in v2 Job.
@@ -1114,7 +1165,11 @@ type GoogleCloudRunV2Job struct {
 	// LaunchStage: The launch stage as defined by Google Cloud Platform
 	// Launch Stages (https://cloud.google.com/terms/launch-stages). Cloud
 	// Run supports `ALPHA`, `BETA`, and `GA`. If no value is specified, GA
-	// is assumed.
+	// is assumed. Set the launch stage to a preview stage on input to allow
+	// use of preview features in that stage. On read (or output), describes
+	// whether the resource uses preview features. For example, if ALPHA is
+	// provided as input, but only BETA and GA-level features are used, this
+	// field will be BETA on output.
 	//
 	// Possible values:
 	//   "LAUNCH_STAGE_UNSPECIFIED" - Do not use this default value.
@@ -1433,8 +1488,7 @@ type GoogleCloudRunV2Probe struct {
 	// InitialDelaySeconds: Number of seconds after the container has
 	// started before the probe is initiated. Defaults to 0 seconds. Minimum
 	// value is 0. Maximum value for liveness probe is 3600. Maximum value
-	// for startup probe is 240. More info:
-	// https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
+	// for startup probe is 240.
 	InitialDelaySeconds int64 `json:"initialDelaySeconds,omitempty"`
 
 	// PeriodSeconds: How often (in seconds) to perform the probe. Default
@@ -1449,8 +1503,7 @@ type GoogleCloudRunV2Probe struct {
 
 	// TimeoutSeconds: Number of seconds after which the probe times out.
 	// Defaults to 1 second. Minimum value is 1. Maximum value is 3600. Must
-	// be smaller than period_seconds. More info:
-	// https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes
+	// be smaller than period_seconds.
 	TimeoutSeconds int64 `json:"timeoutSeconds,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "FailureThreshold") to
@@ -1484,12 +1537,18 @@ type GoogleCloudRunV2ResourceRequirements struct {
 	// requests.
 	CpuIdle bool `json:"cpuIdle,omitempty"`
 
-	// Limits: Only memory and CPU are supported. Note: The only supported
-	// values for CPU are '1', '2', '4', and '8'. Setting 4 CPU requires at
-	// least 2Gi of memory. The values of the map is string form of the
-	// 'quantity' k8s type:
-	// https://github.com/kubernetes/kubernetes/blob/master/staging/src/k8s.io/apimachinery/pkg/api/resource/quantity.go
+	// Limits: Only ´memory´ and 'cpu' are supported. Notes: * The only
+	// supported values for CPU are '1', '2', '4', and '8'. Setting 4 CPU
+	// requires at least 2Gi of memory. For more information, go to
+	// https://cloud.google.com/run/docs/configuring/cpu. * For supported
+	// 'memory' values and syntax, go to
+	// https://cloud.google.com/run/docs/configuring/memory-limits
 	Limits map[string]string `json:"limits,omitempty"`
+
+	// StartupCpuBoost: Determines whether CPU should be boosted on startup
+	// of a new container instance above the requested CPU threshold, this
+	// can help reduce cold-start latency.
+	StartupCpuBoost bool `json:"startupCpuBoost,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CpuIdle") to
 	// unconditionally include in API requests. By default, fields with
@@ -1518,7 +1577,9 @@ func (s *GoogleCloudRunV2ResourceRequirements) MarshalJSON() ([]byte, error) {
 // and configuration. A Revision references a container image. Revisions
 // are only created by updates to its parent Service.
 type GoogleCloudRunV2Revision struct {
-	// Annotations: KRM-style annotations for the resource.
+	// Annotations: Output only. Unstructured key value map that may be set
+	// by external tools to store and arbitrary metadata. They are not
+	// queryable and should be preserved when modifying objects.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// Conditions: Output only. The Condition of this Revision, containing
@@ -1581,19 +1642,22 @@ type GoogleCloudRunV2Revision struct {
 	// time the user modifies the desired state.
 	Generation int64 `json:"generation,omitempty,string"`
 
-	// Labels: KRM-style labels for the resource. User-provided labels are
-	// shared with Google's billing system, so they can be used to filter,
-	// or break down billing charges by team, component, environment, state,
-	// etc. For more information, visit
+	// Labels: Output only. Unstructured key value map that can be used to
+	// organize and categorize objects. User-provided labels are shared with
+	// Google's billing system, so they can be used to filter, or break down
+	// billing charges by team, component, environment, state, etc. For more
+	// information, visit
 	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
-	// or https://cloud.google.com/run/docs/configuring/labels
+	// or https://cloud.google.com/run/docs/configuring/labels.
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// LaunchStage: Set the launch stage to a preview stage on write to
-	// allow use of preview features in that stage. On read, describes
-	// whether the resource uses preview features. Launch Stages are defined
-	// at Google Cloud Platform Launch Stages
-	// (https://cloud.google.com/terms/launch-stages).
+	// LaunchStage: The least stable launch stage needed to create this
+	// resource, as defined by Google Cloud Platform Launch Stages
+	// (https://cloud.google.com/terms/launch-stages). Cloud Run supports
+	// `ALPHA`, `BETA`, and `GA`. Note that this value might not be what was
+	// used as input. For example, if ALPHA was provided as input in the
+	// parent resource, but only BETA and GA-level features are were, this
+	// field will be BETA.
 	//
 	// Possible values:
 	//   "LAUNCH_STAGE_UNSPECIFIED" - Do not use this default value.
@@ -1666,6 +1730,9 @@ type GoogleCloudRunV2Revision struct {
 	// identity of the running revision, and determines what permissions the
 	// revision has.
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// SessionAffinity: Enable session affinity.
+	SessionAffinity bool `json:"sessionAffinity,omitempty"`
 
 	// Timeout: Max allowed time for an instance to respond to a request.
 	Timeout string `json:"timeout,omitempty"`
@@ -1751,12 +1818,15 @@ func (s *GoogleCloudRunV2RevisionScaling) MarshalJSON() ([]byte, error) {
 // GoogleCloudRunV2RevisionTemplate: RevisionTemplate describes the data
 // a revision should have when created from a template.
 type GoogleCloudRunV2RevisionTemplate struct {
-	// Annotations: KRM-style annotations for the resource. Cloud Run API v2
-	// does not support annotations with `run.googleapis.com`,
+	// Annotations: Unstructured key value map that may be set by external
+	// tools to store and arbitrary metadata. They are not queryable and
+	// should be preserved when modifying objects. Cloud Run API v2 does not
+	// support annotations with `run.googleapis.com`,
 	// `cloud.googleapis.com`, `serving.knative.dev`, or
 	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
 	// system annotations in v1 now have a corresponding field in v2
-	// RevisionTemplate.
+	// RevisionTemplate. This field follows Kubernetes annotations'
+	// namespacing, limits, and rules.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// Containers: Holds the single container that defines the unit of
@@ -1777,11 +1847,18 @@ type GoogleCloudRunV2RevisionTemplate struct {
 	//   "EXECUTION_ENVIRONMENT_GEN2" - Uses Second Generation environment.
 	ExecutionEnvironment string `json:"executionEnvironment,omitempty"`
 
-	// Labels: KRM-style labels for the resource. Cloud Run API v2 does not
-	// support labels with `run.googleapis.com`, `cloud.googleapis.com`,
-	// `serving.knative.dev`, or `autoscaling.knative.dev` namespaces, and
-	// they will be rejected. All system labels in v1 now have a
-	// corresponding field in v2 RevisionTemplate.
+	// Labels: Unstructured key value map that can be used to organize and
+	// categorize objects. User-provided labels are shared with Google's
+	// billing system, so they can be used to filter, or break down billing
+	// charges by team, component, environment, state, etc. For more
+	// information, visit
+	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
+	// or https://cloud.google.com/run/docs/configuring/labels. Cloud Run
+	// API v2 does not support labels with `run.googleapis.com`,
+	// `cloud.googleapis.com`, `serving.knative.dev`, or
+	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
+	// system labels in v1 now have a corresponding field in v2
+	// RevisionTemplate.
 	Labels map[string]string `json:"labels,omitempty"`
 
 	// MaxInstanceRequestConcurrency: Sets the maximum number of requests
@@ -1801,6 +1878,9 @@ type GoogleCloudRunV2RevisionTemplate struct {
 	// revision has. If not provided, the revision will use the project's
 	// default service account.
 	ServiceAccount string `json:"serviceAccount,omitempty"`
+
+	// SessionAffinity: Enable session affinity.
+	SessionAffinity bool `json:"sessionAffinity,omitempty"`
 
 	// Timeout: Max allowed time for an instance to respond to a request.
 	Timeout string `json:"timeout,omitempty"`
@@ -1975,11 +2055,10 @@ type GoogleCloudRunV2Service struct {
 	// should be preserved when modifying objects. Cloud Run API v2 does not
 	// support annotations with `run.googleapis.com`,
 	// `cloud.googleapis.com`, `serving.knative.dev`, or
-	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
-	// system annotations in v1 now have a corresponding field in v2
-	// Service. This field follows Kubernetes annotations' namespacing,
-	// limits, and rules. More info:
-	// https://kubernetes.io/docs/user-guide/annotations
+	// `autoscaling.knative.dev` namespaces, and they will be rejected in
+	// new resources. All system annotations in v1 now have a corresponding
+	// field in v2 Service. This field follows Kubernetes annotations'
+	// namespacing, limits, and rules.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// BinaryAuthorization: Settings for the Binary Authorization feature.
@@ -2003,6 +2082,10 @@ type GoogleCloudRunV2Service struct {
 
 	// Creator: Output only. Email address of the authenticated creator.
 	Creator string `json:"creator,omitempty"`
+
+	// CustomAudiences: Custom audiences that can be used in the audience
+	// field of ID token for authenticated requests.
+	CustomAudiences []string `json:"customAudiences,omitempty"`
 
 	// DeleteTime: Output only. The deletion time.
 	DeleteTime string `json:"deleteTime,omitempty"`
@@ -2038,14 +2121,14 @@ type GoogleCloudRunV2Service struct {
 	// Cloud Load Balancer traffic is allowed.
 	Ingress string `json:"ingress,omitempty"`
 
-	// Labels: Map of string keys and values that can be used to organize
-	// and categorize objects. User-provided labels are shared with Google's
+	// Labels: Unstructured key value map that can be used to organize and
+	// categorize objects. User-provided labels are shared with Google's
 	// billing system, so they can be used to filter, or break down billing
 	// charges by team, component, environment, state, etc. For more
 	// information, visit
 	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
-	// or https://cloud.google.com/run/docs/configuring/labels Cloud Run API
-	// v2 does not support labels with `run.googleapis.com`,
+	// or https://cloud.google.com/run/docs/configuring/labels. Cloud Run
+	// API v2 does not support labels with `run.googleapis.com`,
 	// `cloud.googleapis.com`, `serving.knative.dev`, or
 	// `autoscaling.knative.dev` namespaces, and they will be rejected. All
 	// system labels in v1 now have a corresponding field in v2 Service.
@@ -2068,7 +2151,11 @@ type GoogleCloudRunV2Service struct {
 	// LaunchStage: The launch stage as defined by Google Cloud Platform
 	// Launch Stages (https://cloud.google.com/terms/launch-stages). Cloud
 	// Run supports `ALPHA`, `BETA`, and `GA`. If no value is specified, GA
-	// is assumed.
+	// is assumed. Set the launch stage to a preview stage on input to allow
+	// use of preview features in that stage. On read (or output), describes
+	// whether the resource uses preview features. For example, if ALPHA is
+	// provided as input, but only BETA and GA-level features are used, this
+	// field will be BETA on output.
 	//
 	// Possible values:
 	//   "LAUNCH_STAGE_UNSPECIFIED" - Do not use this default value.
@@ -2236,7 +2323,9 @@ func (s *GoogleCloudRunV2TCPSocketAction) MarshalJSON() ([]byte, error) {
 // GoogleCloudRunV2Task: Task represents a single run of a container to
 // completion.
 type GoogleCloudRunV2Task struct {
-	// Annotations: KRM-style annotations for the resource.
+	// Annotations: Output only. Unstructured key value map that may be set
+	// by external tools to store and arbitrary metadata. They are not
+	// queryable and should be preserved when modifying objects.
 	Annotations map[string]string `json:"annotations,omitempty"`
 
 	// CompletionTime: Output only. Represents time when the Task was
@@ -2302,10 +2391,11 @@ type GoogleCloudRunV2Task struct {
 	// Job: Output only. The name of the parent Job.
 	Job string `json:"job,omitempty"`
 
-	// Labels: KRM-style labels for the resource. User-provided labels are
-	// shared with Google's billing system, so they can be used to filter,
-	// or break down billing charges by team, component, environment, state,
-	// etc. For more information, visit
+	// Labels: Output only. Unstructured key value map that can be used to
+	// organize and categorize objects. User-provided labels are shared with
+	// Google's billing system, so they can be used to filter, or break down
+	// billing charges by team, component, environment, state, etc. For more
+	// information, visit
 	// https://cloud.google.com/resource-manager/docs/creating-managing-labels
 	// or https://cloud.google.com/run/docs/configuring/labels
 	Labels map[string]string `json:"labels,omitempty"`
@@ -2665,11 +2755,13 @@ type GoogleCloudRunV2Volume struct {
 	// information on how to connect Cloud SQL and Cloud Run.
 	CloudSqlInstance *GoogleCloudRunV2CloudSqlInstance `json:"cloudSqlInstance,omitempty"`
 
+	// EmptyDir: Ephemeral storage used as a shared volume.
+	EmptyDir *GoogleCloudRunV2EmptyDirVolumeSource `json:"emptyDir,omitempty"`
+
 	// Name: Required. Volume's name.
 	Name string `json:"name,omitempty"`
 
 	// Secret: Secret represents a secret that should populate this volume.
-	// More info: https://kubernetes.io/docs/concepts/storage/volumes#secret
 	Secret *GoogleCloudRunV2SecretVolumeSource `json:"secret,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CloudSqlInstance") to
@@ -2745,7 +2837,8 @@ type GoogleCloudRunV2VpcAccess struct {
 	// {project} can be project id or number.
 	Connector string `json:"connector,omitempty"`
 
-	// Egress: Traffic VPC egress settings.
+	// Egress: Traffic VPC egress settings. If not provided, it defaults to
+	// PRIVATE_RANGES_ONLY.
 	//
 	// Possible values:
 	//   "VPC_EGRESS_UNSPECIFIED" - Unspecified
@@ -7297,8 +7390,8 @@ func (r *ProjectsLocationsServicesService) Patch(name string, googlecloudrunv2se
 
 // AllowMissing sets the optional parameter "allowMissing": If set to
 // true, and if the Service does not exist, it will create a new one.
-// Caller must have both create and update permissions for this call if
-// this is set to true.
+// The caller must have 'run.services.create' permissions if this is set
+// to true and the Service does not exist.
 func (c *ProjectsLocationsServicesPatchCall) AllowMissing(allowMissing bool) *ProjectsLocationsServicesPatchCall {
 	c.urlParams_.Set("allowMissing", fmt.Sprint(allowMissing))
 	return c
@@ -7412,7 +7505,7 @@ func (c *ProjectsLocationsServicesPatchCall) Do(opts ...googleapi.CallOption) (*
 	//   ],
 	//   "parameters": {
 	//     "allowMissing": {
-	//       "description": "If set to true, and if the Service does not exist, it will create a new one. Caller must have both create and update permissions for this call if this is set to true.",
+	//       "description": "If set to true, and if the Service does not exist, it will create a new one. The caller must have 'run.services.create' permissions if this is set to true and the Service does not exist.",
 	//       "location": "query",
 	//       "type": "boolean"
 	//     },

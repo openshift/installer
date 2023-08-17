@@ -255,6 +255,13 @@ components:
                     a default value is provided. See the specific reference in the
                     parent resource.
                   x-dcl-server-default: true
+                throughput:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: Throughput
+                  description: Optional. The throughput to provision for the volume,
+                    in MiB/s. Only valid if the volume type is GP3.
+                  x-dcl-server-default: true
                 volumeType:
                   type: string
                   x-dcl-go-name: VolumeType

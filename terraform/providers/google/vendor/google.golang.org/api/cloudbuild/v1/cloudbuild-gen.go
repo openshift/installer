@@ -71,6 +71,7 @@ var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
 var _ = internaloption.WithDefaultEndpoint
+var _ = internal.Version
 
 const apiId = "cloudbuild:v1"
 const apiName = "cloudbuild"
@@ -535,8 +536,8 @@ type ArtifactResult struct {
 	// FileHash: The file hash of the artifact.
 	FileHash []*FileHashes `json:"fileHash,omitempty"`
 
-	// Location: The path of an artifact in a Google Cloud Storage bucket,
-	// with the generation number. For example,
+	// Location: The path of an artifact in a Cloud Storage bucket, with the
+	// generation number. For example,
 	// `gs://mybucket/path/to/output.jar#generation`.
 	Location string `json:"location,omitempty"`
 
@@ -580,6 +581,13 @@ type Artifacts struct {
 	// account's credentials. If any artifacts fail to be pushed, the build
 	// is marked FAILURE.
 	MavenArtifacts []*MavenArtifact `json:"mavenArtifacts,omitempty"`
+
+	// NpmPackages: A list of npm packages to be uploaded to Artifact
+	// Registry upon successful completion of all build steps. Npm packages
+	// in the specified paths will be uploaded to the specified Artifact
+	// Registry repository using the builder service account's credentials.
+	// If any packages fail to be pushed, the build is marked FAILURE.
+	NpmPackages []*NpmPackage `json:"npmPackages,omitempty"`
 
 	// Objects: A list of objects to be uploaded to Cloud Storage upon
 	// successful completion of all build steps. Files in the workspace
@@ -1170,8 +1178,8 @@ type Build struct {
 	// Console.
 	LogUrl string `json:"logUrl,omitempty"`
 
-	// LogsBucket: Google Cloud Storage bucket where logs should be written
-	// (see Bucket Name Requirements
+	// LogsBucket: Cloud Storage bucket where logs should be written (see
+	// Bucket Name Requirements
 	// (https://cloud.google.com/storage/docs/bucket-naming#requirements)).
 	// Logs file names will be of the format
 	// `${logs_bucket}/log-${build_id}.txt`.
@@ -1403,15 +1411,14 @@ type BuildOptions struct {
 	Env []string `json:"env,omitempty"`
 
 	// LogStreamingOption: Option to define build log streaming behavior to
-	// Google Cloud Storage.
+	// Cloud Storage.
 	//
 	// Possible values:
 	//   "STREAM_DEFAULT" - Service may automatically determine build log
 	// streaming behavior.
-	//   "STREAM_ON" - Build logs should be streamed to Google Cloud
-	// Storage.
-	//   "STREAM_OFF" - Build logs should not be streamed to Google Cloud
-	// Storage; they will be written when the build is completed.
+	//   "STREAM_ON" - Build logs should be streamed to Cloud Storage.
+	//   "STREAM_OFF" - Build logs should not be streamed to Cloud Storage;
+	// they will be written when the build is completed.
 	LogStreamingOption string `json:"logStreamingOption,omitempty"`
 
 	// Logging: Option to specify the logging mode, which determines if and
@@ -1439,6 +1446,7 @@ type BuildOptions struct {
 	//   "N1_HIGHCPU_32" - Highcpu machine with 32 CPUs.
 	//   "E2_HIGHCPU_8" - Highcpu e2 machine with 8 CPUs.
 	//   "E2_HIGHCPU_32" - Highcpu e2 machine with 32 CPUs.
+	//   "E2_MEDIUM" - E2 machine with 1 CPU.
 	MachineType string `json:"machineType,omitempty"`
 
 	// Pool: Optional. Specification for execution on a `WorkerPool`. See
@@ -1466,6 +1474,7 @@ type BuildOptions struct {
 	//   "NONE" - No hash requested.
 	//   "SHA256" - Use a sha256 hash.
 	//   "MD5" - Use a md5 hash.
+	//   "SHA512" - Use a sha512 hash.
 	SourceProvenanceHash []string `json:"sourceProvenanceHash,omitempty"`
 
 	// SubstitutionOption: Option to specify behavior when there is an error
@@ -2394,7 +2403,8 @@ type GitFileSource struct {
 	// RepoType: See RepoType above.
 	//
 	// Possible values:
-	//   "UNKNOWN" - The default, unknown repo type.
+	//   "UNKNOWN" - The default, unknown repo type. Don't use it, instead
+	// use one of the other repo types.
 	//   "CLOUD_SOURCE_REPOSITORIES" - A Google Cloud Source
 	// Repositories-hosted repo.
 	//   "GITHUB" - A GitHub-hosted repo not necessarily on "github.com"
@@ -2402,6 +2412,12 @@ type GitFileSource struct {
 	//   "BITBUCKET_SERVER" - A Bitbucket Server-hosted repo.
 	//   "GITLAB" - A GitLab-hosted repo.
 	RepoType string `json:"repoType,omitempty"`
+
+	// Repository: The fully qualified resource name of the Repos API
+	// repository. Either URI or repository can be specified. If
+	// unspecified, the repo from which the trigger invocation originated is
+	// assumed to be the repo from which to read the specified path.
+	Repository string `json:"repository,omitempty"`
 
 	// Revision: The branch, tag, arbitrary ref, or SHA version of the repo
 	// to use when resolving the filename (optional). This field respects
@@ -2943,7 +2959,8 @@ type GitRepoSource struct {
 	// RepoType: See RepoType below.
 	//
 	// Possible values:
-	//   "UNKNOWN" - The default, unknown repo type.
+	//   "UNKNOWN" - The default, unknown repo type. Don't use it, instead
+	// use one of the other repo types.
 	//   "CLOUD_SOURCE_REPOSITORIES" - A Google Cloud Source
 	// Repositories-hosted repo.
 	//   "GITHUB" - A GitHub-hosted repo not necessarily on "github.com"
@@ -2952,8 +2969,13 @@ type GitRepoSource struct {
 	//   "GITLAB" - A GitLab-hosted repo.
 	RepoType string `json:"repoType,omitempty"`
 
-	// Uri: The URI of the repo. Either uri or repository can be specified
-	// and is required.
+	// Repository: The connected repository resource name, in the format
+	// `projects/*/locations/*/connections/*/repositories/*`. Either `uri`
+	// or `repository` can be specified and is required.
+	Repository string `json:"repository,omitempty"`
+
+	// Uri: The URI of the repo (e.g. https://github.com/user/repo.git).
+	// Either `uri` or `repository` can be specified and is required.
 	Uri string `json:"uri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g.
@@ -2981,6 +3003,50 @@ func (s *GitRepoSource) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GitSource: Location of the source in any accessible Git repository.
+type GitSource struct {
+	// Dir: Directory, relative to the source root, in which to run the
+	// build. This must be a relative path. If a step's `dir` is specified
+	// and is an absolute path, this value is ignored for that step's
+	// execution.
+	Dir string `json:"dir,omitempty"`
+
+	// Revision: The revision to fetch from the Git repository such as a
+	// branch, a tag, a commit SHA, or any Git ref. Cloud Build uses `git
+	// fetch` to fetch the revision from the Git repository; therefore make
+	// sure that the string you provide for `revision` is parsable by the
+	// command. For information on string values accepted by `git fetch`,
+	// see https://git-scm.com/docs/gitrevisions#_specifying_revisions. For
+	// information on `git fetch`, see https://git-scm.com/docs/git-fetch.
+	Revision string `json:"revision,omitempty"`
+
+	// Url: Location of the Git repo to build. This will be used as a `git
+	// remote`, see https://git-scm.com/docs/git-remote.
+	Url string `json:"url,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Dir") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Dir") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GitSource) MarshalJSON() ([]byte, error) {
+	type NoMethod GitSource
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Hash: Container message for hash values.
 type Hash struct {
 	// Type: The type of hash that was performed.
@@ -2989,6 +3055,7 @@ type Hash struct {
 	//   "NONE" - No hash requested.
 	//   "SHA256" - Use a sha256 hash.
 	//   "MD5" - Use a md5 hash.
+	//   "SHA512" - Use a sha512 hash.
 	Type string `json:"type,omitempty"`
 
 	// Value: The hash value.
@@ -3511,6 +3578,41 @@ type NetworkConfig struct {
 
 func (s *NetworkConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod NetworkConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// NpmPackage: Npm package to upload to Artifact Registry upon
+// successful completion of all build steps.
+type NpmPackage struct {
+	// PackagePath: Path to the package.json. e.g. workspace/path/to/package
+	PackagePath string `json:"packagePath,omitempty"`
+
+	// Repository: Artifact Registry repository, in the form
+	// "https://$REGION-npm.pkg.dev/$PROJECT/$REPOSITORY" Npm package in the
+	// workspace specified by path will be zipped and uploaded to Artifact
+	// Registry with this location as a prefix.
+	Repository string `json:"repository,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "PackagePath") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PackagePath") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *NpmPackage) MarshalJSON() ([]byte, error) {
+	type NoMethod NpmPackage
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -4114,6 +4216,10 @@ type Results struct {
 	// end of the build.
 	MavenArtifacts []*UploadedMavenArtifact `json:"mavenArtifacts,omitempty"`
 
+	// NpmPackages: Npm packages uploaded to Artifact Registry at the end of
+	// the build.
+	NpmPackages []*UploadedNpmPackage `json:"npmPackages,omitempty"`
+
 	// NumArtifacts: Number of non-container artifacts uploaded to Cloud
 	// Storage. Only populated when artifacts are uploaded to Cloud Storage.
 	NumArtifacts int64 `json:"numArtifacts,omitempty,string"`
@@ -4357,21 +4463,23 @@ func (s *ServiceDirectoryConfig) MarshalJSON() ([]byte, error) {
 
 // Source: Location of the source in a supported storage service.
 type Source struct {
+	// GitSource: If provided, get the source from this Git repository.
+	GitSource *GitSource `json:"gitSource,omitempty"`
+
 	// RepoSource: If provided, get the source from this location in a Cloud
 	// Source Repository.
 	RepoSource *RepoSource `json:"repoSource,omitempty"`
 
 	// StorageSource: If provided, get the source from this location in
-	// Google Cloud Storage.
+	// Cloud Storage.
 	StorageSource *StorageSource `json:"storageSource,omitempty"`
 
 	// StorageSourceManifest: If provided, get the source from this manifest
-	// in Google Cloud Storage. This feature is in Preview; see description
-	// here
+	// in Cloud Storage. This feature is in Preview; see description here
 	// (https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gcs-fetcher).
 	StorageSourceManifest *StorageSourceManifest `json:"storageSourceManifest,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "RepoSource") to
+	// ForceSendFields is a list of field names (e.g. "GitSource") to
 	// unconditionally include in API requests. By default, fields with
 	// empty or default values are omitted from API requests. However, any
 	// non-pointer, non-interface field appearing in ForceSendFields will be
@@ -4379,7 +4487,7 @@ type Source struct {
 	// This may be used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "RepoSource") to include in
+	// NullFields is a list of field names (e.g. "GitSource") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -4487,21 +4595,21 @@ func (s *Status) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// StorageSource: Location of the source in an archive file in Google
-// Cloud Storage.
+// StorageSource: Location of the source in an archive file in Cloud
+// Storage.
 type StorageSource struct {
-	// Bucket: Google Cloud Storage bucket containing the source (see Bucket
-	// Name Requirements
+	// Bucket: Cloud Storage bucket containing the source (see Bucket Name
+	// Requirements
 	// (https://cloud.google.com/storage/docs/bucket-naming#requirements)).
 	Bucket string `json:"bucket,omitempty"`
 
-	// Generation: Google Cloud Storage generation for the object. If the
+	// Generation: Cloud Storage generation for the object. If the
 	// generation is omitted, the latest generation will be used.
 	Generation int64 `json:"generation,omitempty,string"`
 
-	// Object: Google Cloud Storage object containing the source. This
-	// object must be a zipped (`.zip`) or gzipped archive file (`.tar.gz`)
-	// containing source to build.
+	// Object: Cloud Storage object containing the source. This object must
+	// be a zipped (`.zip`) or gzipped archive file (`.tar.gz`) containing
+	// source to build.
 	Object string `json:"object,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Bucket") to
@@ -4527,21 +4635,21 @@ func (s *StorageSource) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// StorageSourceManifest: Location of the source manifest in Google
-// Cloud Storage. This feature is in Preview; see description here
+// StorageSourceManifest: Location of the source manifest in Cloud
+// Storage. This feature is in Preview; see description here
 // (https://github.com/GoogleCloudPlatform/cloud-builders/tree/master/gcs-fetcher).
 type StorageSourceManifest struct {
-	// Bucket: Google Cloud Storage bucket containing the source manifest
-	// (see Bucket Name Requirements
+	// Bucket: Cloud Storage bucket containing the source manifest (see
+	// Bucket Name Requirements
 	// (https://cloud.google.com/storage/docs/bucket-naming#requirements)).
 	Bucket string `json:"bucket,omitempty"`
 
-	// Generation: Google Cloud Storage generation for the object. If the
+	// Generation: Cloud Storage generation for the object. If the
 	// generation is omitted, the latest generation will be used.
 	Generation int64 `json:"generation,omitempty,string"`
 
-	// Object: Google Cloud Storage object containing the source manifest.
-	// This object must be a JSON file.
+	// Object: Cloud Storage object containing the source manifest. This
+	// object must be a JSON file.
 	Object string `json:"object,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Bucket") to
@@ -4780,6 +4888,42 @@ type UploadedMavenArtifact struct {
 
 func (s *UploadedMavenArtifact) MarshalJSON() ([]byte, error) {
 	type NoMethod UploadedMavenArtifact
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// UploadedNpmPackage: An npm package uploaded to Artifact Registry
+// using the NpmPackage directive.
+type UploadedNpmPackage struct {
+	// FileHashes: Hash types and values of the npm package.
+	FileHashes *FileHashes `json:"fileHashes,omitempty"`
+
+	// PushTiming: Output only. Stores timing information for pushing the
+	// specified artifact.
+	PushTiming *TimeSpan `json:"pushTiming,omitempty"`
+
+	// Uri: URI of the uploaded npm package.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FileHashes") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FileHashes") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UploadedNpmPackage) MarshalJSON() ([]byte, error) {
+	type NoMethod UploadedNpmPackage
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -6528,8 +6672,8 @@ type ProjectsBuildsRetryCall struct {
 // the original build. * If the original build specified a commit sha or
 // revision ID, the retried build will use the identical source. For
 // builds that specify `StorageSource`: * If the original build pulled
-// source from Google Cloud Storage without specifying the generation of
-// the object, the new build will use the current object, which may be
+// source from Cloud Storage without specifying the generation of the
+// object, the new build will use the current object, which may be
 // different from the original build source. * If the original build
 // pulled source from Cloud Storage and specified the generation of the
 // object, the new build will attempt to use the same object, which may
@@ -6638,7 +6782,7 @@ func (c *ProjectsBuildsRetryCall) Do(opts ...googleapi.CallOption) (*Operation, 
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a new build based on the specified build. This method creates a new build using the original build request, which may or may not result in an identical build. For triggered builds: * Triggered builds resolve to a precise revision; therefore a retry of a triggered build will result in a build that uses the same revision. For non-triggered builds that specify `RepoSource`: * If the original build built from the tip of a branch, the retried build will build from the tip of that branch, which may not be the same revision as the original build. * If the original build specified a commit sha or revision ID, the retried build will use the identical source. For builds that specify `StorageSource`: * If the original build pulled source from Google Cloud Storage without specifying the generation of the object, the new build will use the current object, which may be different from the original build source. * If the original build pulled source from Cloud Storage and specified the generation of the object, the new build will attempt to use the same object, which may or may not be available depending on the bucket's lifecycle management settings.",
+	//   "description": "Creates a new build based on the specified build. This method creates a new build using the original build request, which may or may not result in an identical build. For triggered builds: * Triggered builds resolve to a precise revision; therefore a retry of a triggered build will result in a build that uses the same revision. For non-triggered builds that specify `RepoSource`: * If the original build built from the tip of a branch, the retried build will build from the tip of that branch, which may not be the same revision as the original build. * If the original build specified a commit sha or revision ID, the retried build will use the identical source. For builds that specify `StorageSource`: * If the original build pulled source from Cloud Storage without specifying the generation of the object, the new build will use the current object, which may be different from the original build source. * If the original build pulled source from Cloud Storage and specified the generation of the object, the new build will attempt to use the same object, which may or may not be available depending on the bucket's lifecycle management settings.",
 	//   "flatPath": "v1/projects/{projectId}/builds/{id}:retry",
 	//   "httpMethod": "POST",
 	//   "id": "cloudbuild.projects.builds.retry",
@@ -6826,6 +6970,7 @@ func (c *ProjectsGithubEnterpriseConfigsCreateCall) Do(opts ...googleapi.CallOpt
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project.",
 	//       "location": "query",
 	//       "type": "string"
@@ -6976,6 +7121,7 @@ func (c *ProjectsGithubEnterpriseConfigsDeleteCall) Do(opts ...googleapi.CallOpt
 	//   ],
 	//   "parameters": {
 	//     "configId": {
+	//       "deprecated": true,
 	//       "description": "Unique identifier of the `GitHubEnterpriseConfig`",
 	//       "location": "query",
 	//       "type": "string"
@@ -6988,6 +7134,7 @@ func (c *ProjectsGithubEnterpriseConfigsDeleteCall) Do(opts ...googleapi.CallOpt
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project",
 	//       "location": "query",
 	//       "type": "string"
@@ -7148,6 +7295,7 @@ func (c *ProjectsGithubEnterpriseConfigsGetCall) Do(opts ...googleapi.CallOption
 	//   ],
 	//   "parameters": {
 	//     "configId": {
+	//       "deprecated": true,
 	//       "description": "Unique identifier of the `GitHubEnterpriseConfig`",
 	//       "location": "query",
 	//       "type": "string"
@@ -7160,6 +7308,7 @@ func (c *ProjectsGithubEnterpriseConfigsGetCall) Do(opts ...googleapi.CallOption
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project",
 	//       "location": "query",
 	//       "type": "string"
@@ -7319,6 +7468,7 @@ func (c *ProjectsGithubEnterpriseConfigsListCall) Do(opts ...googleapi.CallOptio
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project",
 	//       "location": "query",
 	//       "type": "string"
@@ -9645,8 +9795,8 @@ type ProjectsLocationsBuildsRetryCall struct {
 // the original build. * If the original build specified a commit sha or
 // revision ID, the retried build will use the identical source. For
 // builds that specify `StorageSource`: * If the original build pulled
-// source from Google Cloud Storage without specifying the generation of
-// the object, the new build will use the current object, which may be
+// source from Cloud Storage without specifying the generation of the
+// object, the new build will use the current object, which may be
 // different from the original build source. * If the original build
 // pulled source from Cloud Storage and specified the generation of the
 // object, the new build will attempt to use the same object, which may
@@ -9753,7 +9903,7 @@ func (c *ProjectsLocationsBuildsRetryCall) Do(opts ...googleapi.CallOption) (*Op
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a new build based on the specified build. This method creates a new build using the original build request, which may or may not result in an identical build. For triggered builds: * Triggered builds resolve to a precise revision; therefore a retry of a triggered build will result in a build that uses the same revision. For non-triggered builds that specify `RepoSource`: * If the original build built from the tip of a branch, the retried build will build from the tip of that branch, which may not be the same revision as the original build. * If the original build specified a commit sha or revision ID, the retried build will use the identical source. For builds that specify `StorageSource`: * If the original build pulled source from Google Cloud Storage without specifying the generation of the object, the new build will use the current object, which may be different from the original build source. * If the original build pulled source from Cloud Storage and specified the generation of the object, the new build will attempt to use the same object, which may or may not be available depending on the bucket's lifecycle management settings.",
+	//   "description": "Creates a new build based on the specified build. This method creates a new build using the original build request, which may or may not result in an identical build. For triggered builds: * Triggered builds resolve to a precise revision; therefore a retry of a triggered build will result in a build that uses the same revision. For non-triggered builds that specify `RepoSource`: * If the original build built from the tip of a branch, the retried build will build from the tip of that branch, which may not be the same revision as the original build. * If the original build specified a commit sha or revision ID, the retried build will use the identical source. For builds that specify `StorageSource`: * If the original build pulled source from Cloud Storage without specifying the generation of the object, the new build will use the current object, which may be different from the original build source. * If the original build pulled source from Cloud Storage and specified the generation of the object, the new build will attempt to use the same object, which may or may not be available depending on the bucket's lifecycle management settings.",
 	//   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/builds/{buildsId}:retry",
 	//   "httpMethod": "POST",
 	//   "id": "cloudbuild.projects.locations.builds.retry",
@@ -11214,6 +11364,7 @@ func (c *ProjectsLocationsGithubEnterpriseConfigsCreateCall) Do(opts ...googleap
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project.",
 	//       "location": "query",
 	//       "type": "string"
@@ -11364,6 +11515,7 @@ func (c *ProjectsLocationsGithubEnterpriseConfigsDeleteCall) Do(opts ...googleap
 	//   ],
 	//   "parameters": {
 	//     "configId": {
+	//       "deprecated": true,
 	//       "description": "Unique identifier of the `GitHubEnterpriseConfig`",
 	//       "location": "query",
 	//       "type": "string"
@@ -11376,6 +11528,7 @@ func (c *ProjectsLocationsGithubEnterpriseConfigsDeleteCall) Do(opts ...googleap
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project",
 	//       "location": "query",
 	//       "type": "string"
@@ -11536,6 +11689,7 @@ func (c *ProjectsLocationsGithubEnterpriseConfigsGetCall) Do(opts ...googleapi.C
 	//   ],
 	//   "parameters": {
 	//     "configId": {
+	//       "deprecated": true,
 	//       "description": "Unique identifier of the `GitHubEnterpriseConfig`",
 	//       "location": "query",
 	//       "type": "string"
@@ -11548,6 +11702,7 @@ func (c *ProjectsLocationsGithubEnterpriseConfigsGetCall) Do(opts ...googleapi.C
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project",
 	//       "location": "query",
 	//       "type": "string"
@@ -11707,6 +11862,7 @@ func (c *ProjectsLocationsGithubEnterpriseConfigsListCall) Do(opts ...googleapi.
 	//       "type": "string"
 	//     },
 	//     "projectId": {
+	//       "deprecated": true,
 	//       "description": "ID of the project",
 	//       "location": "query",
 	//       "type": "string"
@@ -12911,6 +13067,15 @@ func (c *ProjectsLocationsTriggersPatchCall) TriggerId(triggerId string) *Projec
 	return c
 }
 
+// UpdateMask sets the optional parameter "updateMask": Update mask for
+// the resource. If this is set, the server will only update the fields
+// specified in the field mask. Otherwise, a full update of the mutable
+// resource fields will be performed.
+func (c *ProjectsLocationsTriggersPatchCall) UpdateMask(updateMask string) *ProjectsLocationsTriggersPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -13024,6 +13189,12 @@ func (c *ProjectsLocationsTriggersPatchCall) Do(opts ...googleapi.CallOption) (*
 	//     },
 	//     "triggerId": {
 	//       "description": "Required. ID of the `BuildTrigger` to update.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Update mask for the resource. If this is set, the server will only update the fields specified in the field mask. Otherwise, a full update of the mutable resource fields will be performed.",
+	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
 	//     }
@@ -14934,6 +15105,15 @@ func (r *ProjectsTriggersService) Patch(projectId string, triggerId string, buil
 	return c
 }
 
+// UpdateMask sets the optional parameter "updateMask": Update mask for
+// the resource. If this is set, the server will only update the fields
+// specified in the field mask. Otherwise, a full update of the mutable
+// resource fields will be performed.
+func (c *ProjectsTriggersPatchCall) UpdateMask(updateMask string) *ProjectsTriggersPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -15045,6 +15225,12 @@ func (c *ProjectsTriggersPatchCall) Do(opts ...googleapi.CallOption) (*BuildTrig
 	//       "description": "Required. ID of the `BuildTrigger` to update.",
 	//       "location": "path",
 	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Update mask for the resource. If this is set, the server will only update the fields specified in the field mask. Otherwise, a full update of the mutable resource fields will be performed.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },

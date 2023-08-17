@@ -75,6 +75,7 @@ var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
 var _ = internaloption.WithDefaultEndpoint
+var _ = internal.Version
 
 const apiId = "dataflow:v1b3"
 const apiName = "dataflow"
@@ -2262,6 +2263,23 @@ func (s *FloatingPointList) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+func (s *FloatingPointList) UnmarshalJSON(data []byte) error {
+	type NoMethod FloatingPointList
+	var s1 struct {
+		Elements []gensupport.JSONFloat64 `json:"elements"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Elements = make([]float64, len(s1.Elements))
+	for i := range s1.Elements {
+		s.Elements[i] = float64(s1.Elements[i])
+	}
+	return nil
+}
+
 // FloatingPointMean: A representation of a floating point mean metric
 // contribution.
 type FloatingPointMean struct {
@@ -2959,6 +2977,11 @@ type Job struct {
 	// interested.
 	RequestedState string `json:"requestedState,omitempty"`
 
+	// RuntimeUpdatableParams: This field may ONLY be modified at runtime
+	// using the projects.jobs.update method to adjust job behavior. This
+	// field has no effect when specified at job creation.
+	RuntimeUpdatableParams *RuntimeUpdatableParams `json:"runtimeUpdatableParams,omitempty"`
+
 	// SatisfiesPzs: Reserved for future use. This field is set only in
 	// responses from the server; it is ignored if it is set in any
 	// requests.
@@ -3227,6 +3250,10 @@ type JobMetadata struct {
 	// SpannerDetails: Identification of a Spanner source used in the
 	// Dataflow job.
 	SpannerDetails []*SpannerIODetails `json:"spannerDetails,omitempty"`
+
+	// UserDisplayProperties: List of display properties to help UI filter
+	// jobs.
+	UserDisplayProperties map[string]string `json:"userDisplayProperties,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "BigTableDetails") to
 	// unconditionally include in API requests. By default, fields with
@@ -4321,6 +4348,16 @@ type ParameterMetadata struct {
 	// parameter.
 	CustomMetadata map[string]string `json:"customMetadata,omitempty"`
 
+	// EnumOptions: Optional. The options shown when ENUM ParameterType is
+	// specified.
+	EnumOptions []*ParameterMetadataEnumOption `json:"enumOptions,omitempty"`
+
+	// GroupName: Optional. Specifies a group name for this parameter to be
+	// rendered under. Group header text will be rendered exactly as
+	// specified in this field. Only considered when parent_name is NOT
+	// provided.
+	GroupName string `json:"groupName,omitempty"`
+
 	// HelpText: Required. The help text to display for the parameter.
 	HelpText string `json:"helpText,omitempty"`
 
@@ -4358,7 +4395,28 @@ type ParameterMetadata struct {
 	//   "BIGQUERY_TABLE" - The parameter specifies a BigQuery table.
 	//   "JAVASCRIPT_UDF_FILE" - The parameter specifies a JavaScript UDF in
 	// Cloud Storage.
+	//   "SERVICE_ACCOUNT" - The parameter specifies a Service Account
+	// email.
+	//   "MACHINE_TYPE" - The parameter specifies a Machine Type.
+	//   "KMS_KEY_NAME" - The parameter specifies a KMS Key name.
+	//   "WORKER_REGION" - The parameter specifies a Worker Region.
+	//   "WORKER_ZONE" - The parameter specifies a Worker Zone.
+	//   "BOOLEAN" - The parameter specifies a boolean input.
+	//   "ENUM" - The parameter specifies an enum input.
 	ParamType string `json:"paramType,omitempty"`
+
+	// ParentName: Optional. Specifies the name of the parent parameter.
+	// Used in conjunction with 'parent_trigger_values' to make this
+	// parameter conditional (will only be rendered conditionally). Should
+	// be mappable to a ParameterMetadata.name field.
+	ParentName string `json:"parentName,omitempty"`
+
+	// ParentTriggerValues: Optional. The value(s) of the 'parent_name'
+	// parameter which will trigger this parameter to be shown. If left
+	// empty, ANY non-empty value in parent_name will trigger this parameter
+	// to be shown. Only considered when this parameter is conditional (when
+	// 'parent_name' has been provided).
+	ParentTriggerValues []string `json:"parentTriggerValues,omitempty"`
 
 	// Regexes: Optional. Regexes that the parameter must match.
 	Regexes []string `json:"regexes,omitempty"`
@@ -4383,6 +4441,42 @@ type ParameterMetadata struct {
 
 func (s *ParameterMetadata) MarshalJSON() ([]byte, error) {
 	type NoMethod ParameterMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ParameterMetadataEnumOption: ParameterMetadataEnumOption specifies
+// the option shown in the enum form.
+type ParameterMetadataEnumOption struct {
+	// Description: Optional. The description to display for the enum
+	// option.
+	Description string `json:"description,omitempty"`
+
+	// Label: Optional. The label to display for the enum option.
+	Label string `json:"label,omitempty"`
+
+	// Value: Required. The value of the enum option.
+	Value string `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Description") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Description") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ParameterMetadataEnumOption) MarshalJSON() ([]byte, error) {
+	type NoMethod ParameterMetadataEnumOption
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -4657,6 +4751,10 @@ type PubsubLocation struct {
 	// DropLateData: Indicates whether the pipeline allows late-arriving
 	// data.
 	DropLateData bool `json:"dropLateData,omitempty"`
+
+	// DynamicDestinations: If true, then this location represents dynamic
+	// topics.
+	DynamicDestinations bool `json:"dynamicDestinations,omitempty"`
 
 	// IdLabel: If set, contains a pubsub label from which to extract record
 	// ids. If left empty, record deduplication will be strictly best
@@ -5097,6 +5195,41 @@ type RuntimeMetadata struct {
 
 func (s *RuntimeMetadata) MarshalJSON() ([]byte, error) {
 	type NoMethod RuntimeMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RuntimeUpdatableParams: Additional job parameters that can only be
+// updated during runtime using the projects.jobs.update method. These
+// fields have no effect when specified during job creation.
+type RuntimeUpdatableParams struct {
+	// MaxNumWorkers: The maximum number of workers to cap autoscaling at.
+	// This field is currently only supported for Streaming Engine jobs.
+	MaxNumWorkers int64 `json:"maxNumWorkers,omitempty"`
+
+	// MinNumWorkers: The minimum number of workers to scale down to. This
+	// field is currently only supported for Streaming Engine jobs.
+	MinNumWorkers int64 `json:"minNumWorkers,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "MaxNumWorkers") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "MaxNumWorkers") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RuntimeUpdatableParams) MarshalJSON() ([]byte, error) {
+	type NoMethod RuntimeUpdatableParams
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -8591,7 +8724,8 @@ type ProjectsJobsAggregatedCall struct {
 	header_      http.Header
 }
 
-// Aggregated: List the jobs of a project across all regions.
+// Aggregated: List the jobs of a project across all regions. **Note:**
+// This method doesn't support filtering the list of jobs by name.
 //
 // - projectId: The project which owns the jobs.
 func (r *ProjectsJobsService) Aggregated(projectId string) *ProjectsJobsAggregatedCall {
@@ -8636,7 +8770,7 @@ func (c *ProjectsJobsAggregatedCall) Location(location string) *ProjectsJobsAggr
 	return c
 }
 
-// Name sets the optional parameter "name": The job name. Optional.
+// Name sets the optional parameter "name": The job name.
 func (c *ProjectsJobsAggregatedCall) Name(name string) *ProjectsJobsAggregatedCall {
 	c.urlParams_.Set("name", name)
 	return c
@@ -8675,6 +8809,14 @@ func (c *ProjectsJobsAggregatedCall) PageToken(pageToken string) *ProjectsJobsAg
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -8782,7 +8924,7 @@ func (c *ProjectsJobsAggregatedCall) Do(opts ...googleapi.CallOption) (*ListJobs
 	}
 	return ret, nil
 	// {
-	//   "description": "List the jobs of a project across all regions.",
+	//   "description": "List the jobs of a project across all regions. **Note:** This method doesn't support filtering the list of jobs by name.",
 	//   "flatPath": "v1b3/projects/{projectId}/jobs:aggregated",
 	//   "httpMethod": "GET",
 	//   "id": "dataflow.projects.jobs.aggregated",
@@ -8813,7 +8955,7 @@ func (c *ProjectsJobsAggregatedCall) Do(opts ...googleapi.CallOption) (*ListJobs
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "Optional. The job name. Optional.",
+	//       "description": "Optional. The job name.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -8835,6 +8977,7 @@ func (c *ProjectsJobsAggregatedCall) Do(opts ...googleapi.CallOption) (*ListJobs
 	//       "type": "string"
 	//     },
 	//     "view": {
+	//       "deprecated": true,
 	//       "description": "Deprecated. ListJobs always returns summaries now. Use GetJob for other JobViews.",
 	//       "enum": [
 	//         "JOB_VIEW_UNKNOWN",
@@ -8845,7 +8988,7 @@ func (c *ProjectsJobsAggregatedCall) Do(opts ...googleapi.CallOption) (*ListJobs
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -8946,6 +9089,14 @@ func (c *ProjectsJobsCreateCall) ReplaceJobId(replaceJobId string) *ProjectsJobs
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -9080,7 +9231,7 @@ func (c *ProjectsJobsCreateCall) Do(opts ...googleapi.CallOption) (*Job, error) 
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -9158,6 +9309,14 @@ func (c *ProjectsJobsGetCall) Location(location string) *ProjectsJobsGetCall {
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -9303,7 +9462,7 @@ func (c *ProjectsJobsGetCall) Do(opts ...googleapi.CallOption) (*Job, error) {
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -9533,8 +9692,10 @@ type ProjectsJobsListCall struct {
 // (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints).
 // To list the all jobs across all regions, use
 // `projects.jobs.aggregated`. Using `projects.jobs.list` is not
-// recommended, as you can only get the list of jobs that are running in
-// `us-central1`.
+// recommended, because you can only get the list of jobs that are
+// running in `us-central1`. `projects.locations.jobs.list` and
+// `projects.jobs.list` support filtering the list of jobs by name.
+// Filtering by name isn't supported by `projects.jobs.aggregated`.
 //
 // - projectId: The project which owns the jobs.
 func (r *ProjectsJobsService) List(projectId string) *ProjectsJobsListCall {
@@ -9579,7 +9740,7 @@ func (c *ProjectsJobsListCall) Location(location string) *ProjectsJobsListCall {
 	return c
 }
 
-// Name sets the optional parameter "name": The job name. Optional.
+// Name sets the optional parameter "name": The job name.
 func (c *ProjectsJobsListCall) Name(name string) *ProjectsJobsListCall {
 	c.urlParams_.Set("name", name)
 	return c
@@ -9618,6 +9779,14 @@ func (c *ProjectsJobsListCall) PageToken(pageToken string) *ProjectsJobsListCall
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -9725,7 +9894,7 @@ func (c *ProjectsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJobsRespon
 	}
 	return ret, nil
 	// {
-	//   "description": "List the jobs of a project. To list the jobs of a project in a region, we recommend using `projects.locations.jobs.list` with a [regional endpoint] (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints). To list the all jobs across all regions, use `projects.jobs.aggregated`. Using `projects.jobs.list` is not recommended, as you can only get the list of jobs that are running in `us-central1`.",
+	//   "description": "List the jobs of a project. To list the jobs of a project in a region, we recommend using `projects.locations.jobs.list` with a [regional endpoint] (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints). To list the all jobs across all regions, use `projects.jobs.aggregated`. Using `projects.jobs.list` is not recommended, because you can only get the list of jobs that are running in `us-central1`. `projects.locations.jobs.list` and `projects.jobs.list` support filtering the list of jobs by name. Filtering by name isn't supported by `projects.jobs.aggregated`.",
 	//   "flatPath": "v1b3/projects/{projectId}/jobs",
 	//   "httpMethod": "GET",
 	//   "id": "dataflow.projects.jobs.list",
@@ -9756,7 +9925,7 @@ func (c *ProjectsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJobsRespon
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "Optional. The job name. Optional.",
+	//       "description": "Optional. The job name.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -9778,6 +9947,7 @@ func (c *ProjectsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJobsRespon
 	//       "type": "string"
 	//     },
 	//     "view": {
+	//       "deprecated": true,
 	//       "description": "Deprecated. ListJobs always returns summaries now. Use GetJob for other JobViews.",
 	//       "enum": [
 	//         "JOB_VIEW_UNKNOWN",
@@ -9788,7 +9958,7 @@ func (c *ProjectsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJobsRespon
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -10024,6 +10194,18 @@ func (c *ProjectsJobsUpdateCall) Location(location string) *ProjectsJobsUpdateCa
 	return c
 }
 
+// UpdateMask sets the optional parameter "updateMask": The list of
+// fields to update relative to Job. If empty, only RequestedJobState
+// will be considered for update. If the FieldMask is not empty and
+// RequestedJobState is none/empty, The fields specified in the update
+// mask will be the only ones considered for update. If both
+// RequestedJobState and update_mask are specified, an error will be
+// returned as we cannot update both state and mask.
+func (c *ProjectsJobsUpdateCall) UpdateMask(updateMask string) *ProjectsJobsUpdateCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -10140,6 +10322,12 @@ func (c *ProjectsJobsUpdateCall) Do(opts ...googleapi.CallOption) (*Job, error) 
 	//       "description": "The ID of the Cloud Platform project that the job belongs to.",
 	//       "location": "path",
 	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "The list of fields to update relative to Job. If empty, only RequestedJobState will be considered for update. If the FieldMask is not empty and RequestedJobState is none/empty, The fields specified in the update mask will be the only ones considered for update. If both RequestedJobState and update_mask are specified, an error will be returned as we cannot update both state and mask.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
@@ -11475,6 +11663,14 @@ func (c *ProjectsLocationsJobsCreateCall) ReplaceJobId(replaceJobId string) *Pro
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -11612,7 +11808,7 @@ func (c *ProjectsLocationsJobsCreateCall) Do(opts ...googleapi.CallOption) (*Job
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -11686,6 +11882,14 @@ func (r *ProjectsLocationsJobsService) Get(projectId string, location string, jo
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -11834,7 +12038,7 @@ func (c *ProjectsLocationsJobsGetCall) Do(opts ...googleapi.CallOption) (*Job, e
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -12287,8 +12491,10 @@ type ProjectsLocationsJobsListCall struct {
 // (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints).
 // To list the all jobs across all regions, use
 // `projects.jobs.aggregated`. Using `projects.jobs.list` is not
-// recommended, as you can only get the list of jobs that are running in
-// `us-central1`.
+// recommended, because you can only get the list of jobs that are
+// running in `us-central1`. `projects.locations.jobs.list` and
+// `projects.jobs.list` support filtering the list of jobs by name.
+// Filtering by name isn't supported by `projects.jobs.aggregated`.
 //
 //   - location: The [regional endpoint]
 //     (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints)
@@ -12328,7 +12534,7 @@ func (c *ProjectsLocationsJobsListCall) Filter(filter string) *ProjectsLocations
 	return c
 }
 
-// Name sets the optional parameter "name": The job name. Optional.
+// Name sets the optional parameter "name": The job name.
 func (c *ProjectsLocationsJobsListCall) Name(name string) *ProjectsLocationsJobsListCall {
 	c.urlParams_.Set("name", name)
 	return c
@@ -12367,6 +12573,14 @@ func (c *ProjectsLocationsJobsListCall) PageToken(pageToken string) *ProjectsLoc
 // version details.
 //
 //	"JOB_VIEW_ALL" - Request all information available for this job.
+//
+// When the job is in `JOB_STATE_PENDING`, the job has been created but
+// is not yet running, and not all job information is available. For
+// complete job information, wait until the job in is
+// `JOB_STATE_RUNNING`. For more information, see
+// [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/
+// projects.jobs#jobstate).
+//
 //	"JOB_VIEW_DESCRIPTION" - Request summary info and limited job
 //
 // description data for steps, labels and environment.
@@ -12475,7 +12689,7 @@ func (c *ProjectsLocationsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJ
 	}
 	return ret, nil
 	// {
-	//   "description": "List the jobs of a project. To list the jobs of a project in a region, we recommend using `projects.locations.jobs.list` with a [regional endpoint] (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints). To list the all jobs across all regions, use `projects.jobs.aggregated`. Using `projects.jobs.list` is not recommended, as you can only get the list of jobs that are running in `us-central1`.",
+	//   "description": "List the jobs of a project. To list the jobs of a project in a region, we recommend using `projects.locations.jobs.list` with a [regional endpoint] (https://cloud.google.com/dataflow/docs/concepts/regional-endpoints). To list the all jobs across all regions, use `projects.jobs.aggregated`. Using `projects.jobs.list` is not recommended, because you can only get the list of jobs that are running in `us-central1`. `projects.locations.jobs.list` and `projects.jobs.list` support filtering the list of jobs by name. Filtering by name isn't supported by `projects.jobs.aggregated`.",
 	//   "flatPath": "v1b3/projects/{projectId}/locations/{location}/jobs",
 	//   "httpMethod": "GET",
 	//   "id": "dataflow.projects.locations.jobs.list",
@@ -12508,7 +12722,7 @@ func (c *ProjectsLocationsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJ
 	//       "type": "string"
 	//     },
 	//     "name": {
-	//       "description": "Optional. The job name. Optional.",
+	//       "description": "Optional. The job name.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -12530,6 +12744,7 @@ func (c *ProjectsLocationsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJ
 	//       "type": "string"
 	//     },
 	//     "view": {
+	//       "deprecated": true,
 	//       "description": "Deprecated. ListJobs always returns summaries now. Use GetJob for other JobViews.",
 	//       "enum": [
 	//         "JOB_VIEW_UNKNOWN",
@@ -12540,7 +12755,7 @@ func (c *ProjectsLocationsJobsListCall) Do(opts ...googleapi.CallOption) (*ListJ
 	//       "enumDescriptions": [
 	//         "The job view to return isn't specified, or is unknown. Responses will contain at least the `JOB_VIEW_SUMMARY` information, and may contain additional information.",
 	//         "Request summary information only: Project ID, Job ID, job name, job type, job status, start/end time, and Cloud SDK version details.",
-	//         "Request all information available for this job.",
+	//         "Request all information available for this job. When the job is in `JOB_STATE_PENDING`, the job has been created but is not yet running, and not all job information is available. For complete job information, wait until the job in is `JOB_STATE_RUNNING`. For more information, see [JobState](https://cloud.google.com/dataflow/docs/reference/rest/v1b3/projects.jobs#jobstate).",
 	//         "Request summary info and limited job description data for steps, labels and environment."
 	//       ],
 	//       "location": "query",
@@ -12783,6 +12998,18 @@ func (r *ProjectsLocationsJobsService) Update(projectId string, location string,
 	return c
 }
 
+// UpdateMask sets the optional parameter "updateMask": The list of
+// fields to update relative to Job. If empty, only RequestedJobState
+// will be considered for update. If the FieldMask is not empty and
+// RequestedJobState is none/empty, The fields specified in the update
+// mask will be the only ones considered for update. If both
+// RequestedJobState and update_mask are specified, an error will be
+// returned as we cannot update both state and mask.
+func (c *ProjectsLocationsJobsUpdateCall) UpdateMask(updateMask string) *ProjectsLocationsJobsUpdateCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -12902,6 +13129,12 @@ func (c *ProjectsLocationsJobsUpdateCall) Do(opts ...googleapi.CallOption) (*Job
 	//       "description": "The ID of the Cloud Platform project that the job belongs to.",
 	//       "location": "path",
 	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "The list of fields to update relative to Job. If empty, only RequestedJobState will be considered for update. If the FieldMask is not empty and RequestedJobState is none/empty, The fields specified in the update mask will be the only ones considered for update. If both RequestedJobState and update_mask are specified, an error will be returned as we cannot update both state and mask.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },

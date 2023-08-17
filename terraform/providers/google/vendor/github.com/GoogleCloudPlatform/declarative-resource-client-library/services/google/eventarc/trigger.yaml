@@ -226,6 +226,12 @@ components:
             on the value of other fields, and may be sent only on create requests
             to ensure the client has an up-to-date value before proceeding.
           x-kubernetes-immutable: true
+        eventDataContentType:
+          type: string
+          x-dcl-go-name: EventDataContentType
+          description: Optional. EventDataContentType specifies the type of payload
+            in MIME format that is expected from the CloudEvent data field. This is
+            set to `application/json` if the value is not defined.
         labels:
           type: object
           additionalProperties:

@@ -277,6 +277,11 @@ func DCLTriggerSchema() *dcl.Schema {
 								Description: "Output only. This checksum is computed by the server based on the value of other fields, and may be sent only on create requests to ensure the client has an up-to-date value before proceeding.",
 								Immutable:   true,
 							},
+							"eventDataContentType": &dcl.Property{
+								Type:        "string",
+								GoName:      "EventDataContentType",
+								Description: "Optional. EventDataContentType specifies the type of payload in MIME format that is expected from the CloudEvent data field. This is set to `application/json` if the value is not defined.",
+							},
 							"labels": &dcl.Property{
 								Type: "object",
 								AdditionalProperties: &dcl.Property{

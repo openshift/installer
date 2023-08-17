@@ -41,6 +41,8 @@ type Target struct {
 	ExecutionConfigs []TargetExecutionConfigs `json:"executionConfigs"`
 	Project          *string                  `json:"project"`
 	Location         *string                  `json:"location"`
+	Run              *TargetRun               `json:"run"`
+	DeployParameters map[string]string        `json:"deployParameters"`
 }
 
 func (r *Target) String() string {
@@ -227,6 +229,52 @@ func (r *TargetExecutionConfigs) HashCode() string {
 	return fmt.Sprintf("%x", hash)
 }
 
+type TargetRun struct {
+	empty    bool    `json:"-"`
+	Location *string `json:"location"`
+}
+
+type jsonTargetRun TargetRun
+
+func (r *TargetRun) UnmarshalJSON(data []byte) error {
+	var res jsonTargetRun
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyTargetRun
+	} else {
+
+		r.Location = res.Location
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this TargetRun is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyTargetRun *TargetRun = &TargetRun{empty: true}
+
+func (r *TargetRun) Empty() bool {
+	return r.empty
+}
+
+func (r *TargetRun) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *TargetRun) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
 // Describe returns a simple description of this resource to ensure that automated tools
 // can identify it.
 func (r *Target) Describe() dcl.ServiceTypeVersion {
@@ -258,6 +306,8 @@ func (r *Target) ID() (string, error) {
 		"execution_configs": dcl.ValueOrEmptyString(nr.ExecutionConfigs),
 		"project":           dcl.ValueOrEmptyString(nr.Project),
 		"location":          dcl.ValueOrEmptyString(nr.Location),
+		"run":               dcl.ValueOrEmptyString(nr.Run),
+		"deploy_parameters": dcl.ValueOrEmptyString(nr.DeployParameters),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/targets/{{name}}", params), nil
 }

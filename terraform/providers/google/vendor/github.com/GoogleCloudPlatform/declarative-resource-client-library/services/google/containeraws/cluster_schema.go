@@ -281,6 +281,14 @@ func DCLClusterSchema() *dcl.Schema {
 												Immutable:     true,
 												ServerDefault: true,
 											},
+											"throughput": &dcl.Property{
+												Type:          "integer",
+												Format:        "int64",
+												GoName:        "Throughput",
+												Description:   "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
+												Immutable:     true,
+												ServerDefault: true,
+											},
 											"volumeType": &dcl.Property{
 												Type:          "string",
 												GoName:        "VolumeType",
@@ -342,6 +350,13 @@ func DCLClusterSchema() *dcl.Schema {
 												Format:        "int64",
 												GoName:        "SizeGib",
 												Description:   "Optional. The size of the volume, in GiBs. When unspecified, a default value is provided. See the specific reference in the parent resource.",
+												ServerDefault: true,
+											},
+											"throughput": &dcl.Property{
+												Type:          "integer",
+												Format:        "int64",
+												GoName:        "Throughput",
+												Description:   "Optional. The throughput to provision for the volume, in MiB/s. Only valid if the volume type is GP3.",
 												ServerDefault: true,
 											},
 											"volumeType": &dcl.Property{
@@ -488,13 +503,17 @@ func DCLClusterSchema() *dcl.Schema {
 								GoName:      "Networking",
 								GoType:      "ClusterNetworking",
 								Description: "Cluster-wide networking configuration.",
-								Immutable:   true,
 								Required: []string{
 									"vpcId",
 									"podAddressCidrBlocks",
 									"serviceAddressCidrBlocks",
 								},
 								Properties: map[string]*dcl.Property{
+									"perNodePoolSgRulesDisabled": &dcl.Property{
+										Type:        "boolean",
+										GoName:      "PerNodePoolSgRulesDisabled",
+										Description: "Disable the per node pool subnet security group rules on the control plane security group. When set to true, you must also provide one or more security groups that ensure node pools are able to send requests to the control plane on TCP/443 and TCP/8132. Failure to do so may result in unavailable node pools.",
+									},
 									"podAddressCidrBlocks": &dcl.Property{
 										Type:        "array",
 										GoName:      "PodAddressCidrBlocks",

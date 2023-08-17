@@ -661,9 +661,10 @@ func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) Has
 }
 
 type CaPoolIssuancePolicyBaselineValuesCaOptions struct {
-	empty               bool   `json:"-"`
-	IsCa                *bool  `json:"isCa"`
-	MaxIssuerPathLength *int64 `json:"maxIssuerPathLength"`
+	empty                   bool   `json:"-"`
+	IsCa                    *bool  `json:"isCa"`
+	MaxIssuerPathLength     *int64 `json:"maxIssuerPathLength"`
+	ZeroMaxIssuerPathLength *bool  `json:"zeroMaxIssuerPathLength"`
 }
 
 type jsonCaPoolIssuancePolicyBaselineValuesCaOptions CaPoolIssuancePolicyBaselineValuesCaOptions
@@ -684,6 +685,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesCaOptions) UnmarshalJSON(data []byte)
 		r.IsCa = res.IsCa
 
 		r.MaxIssuerPathLength = res.MaxIssuerPathLength
+
+		r.ZeroMaxIssuerPathLength = res.ZeroMaxIssuerPathLength
 
 	}
 	return nil

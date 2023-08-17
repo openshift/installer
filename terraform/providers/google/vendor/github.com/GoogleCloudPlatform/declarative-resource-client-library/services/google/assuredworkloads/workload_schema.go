@@ -130,7 +130,7 @@ func DCLWorkloadSchema() *dcl.Schema {
 								Type:        "string",
 								GoName:      "ComplianceRegime",
 								GoType:      "WorkloadComplianceRegimeEnum",
-								Description: "Required. Immutable. Compliance Regime associated with this workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH, FEDRAMP_MODERATE, US_REGIONAL_ACCESS",
+								Description: "Required. Immutable. Compliance Regime associated with this workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH, FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, EU_REGIONS_AND_SUPPORT, CA_REGIONS_AND_SUPPORT, ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS",
 								Immutable:   true,
 								Enum: []string{
 									"COMPLIANCE_REGIME_UNSPECIFIED",
@@ -139,6 +139,12 @@ func DCLWorkloadSchema() *dcl.Schema {
 									"FEDRAMP_HIGH",
 									"FEDRAMP_MODERATE",
 									"US_REGIONAL_ACCESS",
+									"HIPAA",
+									"EU_REGIONS_AND_SUPPORT",
+									"CA_REGIONS_AND_SUPPORT",
+									"ITAR",
+									"AU_REGIONS_AND_US_SUPPORT",
+									"ASSURED_WORKLOADS_FOR_PARTNERS",
 								},
 							},
 							"createTime": &dcl.Property{

@@ -2460,6 +2460,11 @@ func canonicalizeCertificateAuthorityConfigX509ConfigCaOptions(des, initial *Cer
 	} else {
 		cDes.MaxIssuerPathLength = des.MaxIssuerPathLength
 	}
+	if dcl.BoolCanonicalize(des.ZeroMaxIssuerPathLength, initial.ZeroMaxIssuerPathLength) || dcl.IsZeroValue(des.ZeroMaxIssuerPathLength) {
+		cDes.ZeroMaxIssuerPathLength = initial.ZeroMaxIssuerPathLength
+	} else {
+		cDes.ZeroMaxIssuerPathLength = des.ZeroMaxIssuerPathLength
+	}
 
 	return cDes
 }
@@ -2508,6 +2513,9 @@ func canonicalizeNewCertificateAuthorityConfigX509ConfigCaOptions(c *Client, des
 
 	if dcl.BoolCanonicalize(des.IsCa, nw.IsCa) {
 		nw.IsCa = des.IsCa
+	}
+	if dcl.BoolCanonicalize(des.ZeroMaxIssuerPathLength, nw.ZeroMaxIssuerPathLength) {
+		nw.ZeroMaxIssuerPathLength = des.ZeroMaxIssuerPathLength
 	}
 
 	return nw
@@ -6817,6 +6825,13 @@ func compareCertificateAuthorityConfigX509ConfigCaOptionsNewStyle(d, a interface
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.ZeroMaxIssuerPathLength, actual.ZeroMaxIssuerPathLength, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ZeroMaxIssuerPathLength")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -8979,7 +8994,7 @@ func expandCertificateAuthorityConfigX509Config(c *Client, f *CertificateAuthori
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["keyUsage"] = v
 	}
-	if v, err := expandCertificateAuthorityConfigX509ConfigCaOptions(c, f.CaOptions, res); err != nil {
+	if v, err := expandCertificateAuthorityConfigX509ConfigCAOptions(c, f.CaOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding CaOptions into caOptions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["caOptions"] = v
@@ -9012,7 +9027,7 @@ func flattenCertificateAuthorityConfigX509Config(c *Client, i interface{}, res *
 		return EmptyCertificateAuthorityConfigX509Config
 	}
 	r.KeyUsage = flattenCertificateAuthorityConfigX509ConfigKeyUsage(c, m["keyUsage"], res)
-	r.CaOptions = flattenCertificateAuthorityConfigX509ConfigCaOptions(c, m["caOptions"], res)
+	r.CaOptions = flattenCertificateAuthorityConfigX509ConfigCAOptions(c, m["caOptions"], res)
 	r.PolicyIds = flattenCertificateAuthorityConfigX509ConfigPolicyIdsSlice(c, m["policyIds"], res)
 	r.AiaOcspServers = dcl.FlattenStringSlice(m["aiaOcspServers"])
 	r.AdditionalExtensions = flattenCertificateAuthorityConfigX509ConfigAdditionalExtensionsSlice(c, m["additionalExtensions"], res)
@@ -9637,6 +9652,9 @@ func expandCertificateAuthorityConfigX509ConfigCaOptions(c *Client, f *Certifica
 	if v := f.MaxIssuerPathLength; !dcl.IsEmptyValueIndirect(v) {
 		m["maxIssuerPathLength"] = v
 	}
+	if v := f.ZeroMaxIssuerPathLength; !dcl.IsEmptyValueIndirect(v) {
+		m["zeroMaxIssuerPathLength"] = v
+	}
 
 	return m, nil
 }
@@ -9656,6 +9674,7 @@ func flattenCertificateAuthorityConfigX509ConfigCaOptions(c *Client, i interface
 	}
 	r.IsCa = dcl.FlattenBool(m["isCa"])
 	r.MaxIssuerPathLength = dcl.FlattenInteger(m["maxIssuerPathLength"])
+	r.ZeroMaxIssuerPathLength = dcl.FlattenBool(m["zeroMaxIssuerPathLength"])
 
 	return r
 }

@@ -71,6 +71,7 @@ var _ = errors.New
 var _ = strings.Replace
 var _ = context.Canceled
 var _ = internaloption.WithDefaultEndpoint
+var _ = internal.Version
 
 const apiId = "cloudfunctions:v1"
 const apiName = "cloudfunctions"
@@ -491,11 +492,8 @@ type CloudFunction struct {
 	DockerRepository string `json:"dockerRepository,omitempty"`
 
 	// EntryPoint: The name of the function (as defined in source code) that
-	// will be executed. Defaults to the resource name suffix, if not
-	// specified. For backward compatibility, if function with given name is
-	// not found, then the system will try to use function named "function".
-	// For Node.js this is name of a function exported by the module
-	// specified in `source_location`.
+	// will be executed. Defaults to the resource name suffix (ID of the
+	// function), if not specified.
 	EntryPoint string `json:"entryPoint,omitempty"`
 
 	// EnvironmentVariables: Environment variables that shall be available
@@ -991,6 +989,40 @@ func (s *GenerateUploadUrlResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleCloudFunctionsV2LocationMetadata: Extra GCF specific location
+// information.
+type GoogleCloudFunctionsV2LocationMetadata struct {
+	// Environments: The Cloud Function environments this location supports.
+	//
+	// Possible values:
+	//   "ENVIRONMENT_UNSPECIFIED" - Unspecified
+	//   "GEN_1" - Gen 1
+	//   "GEN_2" - Gen 2
+	Environments []string `json:"environments,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Environments") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Environments") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudFunctionsV2LocationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudFunctionsV2LocationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleCloudFunctionsV2OperationMetadata: Represents the metadata of
 // the long-running operation.
 type GoogleCloudFunctionsV2OperationMetadata struct {
@@ -999,8 +1031,8 @@ type GoogleCloudFunctionsV2OperationMetadata struct {
 
 	// CancelRequested: Identifies whether the user has requested
 	// cancellation of the operation. Operations that have successfully been
-	// cancelled have Operation.error value with a google.rpc.Status.code of
-	// 1, corresponding to `Code.CANCELLED`.
+	// cancelled have google.longrunning.Operation.error value with a
+	// google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
 	CancelRequested bool `json:"cancelRequested,omitempty"`
 
 	// CreateTime: The time the operation was created.
@@ -1146,6 +1178,40 @@ func (s *GoogleCloudFunctionsV2StateMessage) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleCloudFunctionsV2alphaLocationMetadata: Extra GCF specific
+// location information.
+type GoogleCloudFunctionsV2alphaLocationMetadata struct {
+	// Environments: The Cloud Function environments this location supports.
+	//
+	// Possible values:
+	//   "ENVIRONMENT_UNSPECIFIED" - Unspecified
+	//   "GEN_1" - Gen 1
+	//   "GEN_2" - Gen 2
+	Environments []string `json:"environments,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Environments") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Environments") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudFunctionsV2alphaLocationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudFunctionsV2alphaLocationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleCloudFunctionsV2alphaOperationMetadata: Represents the metadata
 // of the long-running operation.
 type GoogleCloudFunctionsV2alphaOperationMetadata struct {
@@ -1154,8 +1220,8 @@ type GoogleCloudFunctionsV2alphaOperationMetadata struct {
 
 	// CancelRequested: Identifies whether the user has requested
 	// cancellation of the operation. Operations that have successfully been
-	// cancelled have Operation.error value with a google.rpc.Status.code of
-	// 1, corresponding to `Code.CANCELLED`.
+	// cancelled have google.longrunning.Operation.error value with a
+	// google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
 	CancelRequested bool `json:"cancelRequested,omitempty"`
 
 	// CreateTime: The time the operation was created.
@@ -1302,6 +1368,40 @@ func (s *GoogleCloudFunctionsV2alphaStateMessage) MarshalJSON() ([]byte, error) 
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GoogleCloudFunctionsV2betaLocationMetadata: Extra GCF specific
+// location information.
+type GoogleCloudFunctionsV2betaLocationMetadata struct {
+	// Environments: The Cloud Function environments this location supports.
+	//
+	// Possible values:
+	//   "ENVIRONMENT_UNSPECIFIED" - Unspecified
+	//   "GEN_1" - Gen 1
+	//   "GEN_2" - Gen 2
+	Environments []string `json:"environments,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Environments") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Environments") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudFunctionsV2betaLocationMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudFunctionsV2betaLocationMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // GoogleCloudFunctionsV2betaOperationMetadata: Represents the metadata
 // of the long-running operation.
 type GoogleCloudFunctionsV2betaOperationMetadata struct {
@@ -1310,8 +1410,8 @@ type GoogleCloudFunctionsV2betaOperationMetadata struct {
 
 	// CancelRequested: Identifies whether the user has requested
 	// cancellation of the operation. Operations that have successfully been
-	// cancelled have Operation.error value with a google.rpc.Status.code of
-	// 1, corresponding to `Code.CANCELLED`.
+	// cancelled have google.longrunning.Operation.error value with a
+	// google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.
 	CancelRequested bool `json:"cancelRequested,omitempty"`
 
 	// CreateTime: The time the operation was created.
@@ -1615,7 +1715,7 @@ func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Location: A resource that represents Google Cloud Platform location.
+// Location: A resource that represents a Google Cloud location.
 type Location struct {
 	// DisplayName: The friendly name for this location, typically a nearby
 	// city name. For example, "Tokyo".
@@ -1959,7 +2059,7 @@ type SecretVersion struct {
 	Path string `json:"path,omitempty"`
 
 	// Version: Version of the secret (version number or the string
-	// 'latest'). It is preferrable to use `latest` version with secret
+	// 'latest'). It is preferable to use `latest` version with secret
 	// volumes as secret value changes are reflected immediately.
 	Version string `json:"version,omitempty"`
 

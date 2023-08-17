@@ -98,7 +98,8 @@ components:
           x-dcl-go-type: WorkloadComplianceRegimeEnum
           description: 'Required. Immutable. Compliance Regime associated with this
             workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH,
-            FEDRAMP_MODERATE, US_REGIONAL_ACCESS'
+            FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, EU_REGIONS_AND_SUPPORT, CA_REGIONS_AND_SUPPORT,
+            ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS'
           x-kubernetes-immutable: true
           enum:
           - COMPLIANCE_REGIME_UNSPECIFIED
@@ -107,6 +108,12 @@ components:
           - FEDRAMP_HIGH
           - FEDRAMP_MODERATE
           - US_REGIONAL_ACCESS
+          - HIPAA
+          - EU_REGIONS_AND_SUPPORT
+          - CA_REGIONS_AND_SUPPORT
+          - ITAR
+          - AU_REGIONS_AND_US_SUPPORT
+          - ASSURED_WORKLOADS_FOR_PARTNERS
         createTime:
           type: string
           format: date-time
