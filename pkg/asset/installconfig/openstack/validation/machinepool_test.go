@@ -33,9 +33,29 @@ const (
 	volumeLargeSize  = 100
 )
 
-var volumeTypes = []string{"performance", "standard"}
-var invalidVolumeTypes = []string{"performance", "invalid-type"}
+var volumeTypes = []VolumeType{
+	{
+		Name: "performance",
+	},
+	{
+		Name: "standard",
+	},
+}
+var volumeTypesNames = []string{"performance", "standard"}
+var invalidVolumeTypes = []VolumeType{
+	{
+		Name: "performance",
+		Zones: []string{
+			invalidZone,
+		},
+	},
+	{
+		Name: "standard",
+	},
+}
+var invalidVolumeTypesNames = []string{"performance", "invalid-type"}
 var volumeType = volumeTypes[0]
+var volumeTypeName = volumeType.Name
 
 func validMachinePool() *openstack.MachinePool {
 	return &openstack.MachinePool{
@@ -50,7 +70,7 @@ func invalidMachinePoolSmallVolume() *openstack.MachinePool {
 		Zones:      []string{""},
 		RootVolume: &openstack.RootVolume{
 			Size:  volumeSmallSize,
-			Types: volumeTypes,
+			Types: volumeTypesNames,
 			Zones: []string{""},
 		},
 	}
@@ -62,7 +82,7 @@ func warningMachinePoolMediumVolume() *openstack.MachinePool {
 		Zones:      []string{""},
 		RootVolume: &openstack.RootVolume{
 			Size:  volumeMediumSize,
-			Types: volumeTypes,
+			Types: volumeTypesNames,
 			Zones: []string{""},
 		},
 	}
@@ -74,7 +94,7 @@ func validMachinePoolLargeVolume() *openstack.MachinePool {
 		Zones:      []string{""},
 		RootVolume: &openstack.RootVolume{
 			Size:  volumeLargeSize,
-			Types: volumeTypes,
+			Types: volumeTypesNames,
 			Zones: []string{validZone},
 		},
 	}
@@ -148,6 +168,36 @@ func validMpoolCloudInfo() *CloudInfo {
 			validZone,
 		},
 		VolumeTypes: volumeTypes,
+	}
+}
+
+func invalidMpoolCloudInfo() *CloudInfo {
+	return &CloudInfo{
+		Flavors: map[string]Flavor{
+			validCtrlPlaneFlavor: {
+				Flavor: flavors.Flavor{
+					Name:  validCtrlPlaneFlavor,
+					RAM:   16384,
+					Disk:  100,
+					VCPUs: 4,
+				},
+			},
+			validComputeFlavor: {
+				Flavor: flavors.Flavor{
+					Name:  validComputeFlavor,
+					RAM:   8192,
+					Disk:  100,
+					VCPUs: 2,
+				},
+			},
+		},
+		ComputeZones: []string{
+			validZone,
+		},
+		VolumeZones: []string{
+			validZone,
+		},
+		VolumeTypes: invalidVolumeTypes,
 	}
 }
 
@@ -375,7 +425,7 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			controlPlane: true,
 			mpool: func() *openstack.MachinePool {
 				mp := validMachinePoolLargeVolume()
-				mp.RootVolume.Types = invalidVolumeTypes
+				mp.RootVolume.Types = invalidVolumeTypesNames
 				return mp
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
@@ -383,11 +433,22 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			expectedErrMsg: "controlPlane.platform.openstack.rootVolume.types: Invalid value: \"invalid-type\": Volume type either does not exist in this cloud, or is not available",
 		},
 		{
+			name:         "invalid volume types with invalid zones",
+			controlPlane: true,
+			mpool: func() *openstack.MachinePool {
+				mp := validMachinePoolLargeVolume()
+				return mp
+			}(),
+			cloudInfo:      invalidMpoolCloudInfo(),
+			expectedError:  true,
+			expectedErrMsg: "controlPlane.platform.openstack.rootVolume.types: Invalid value: \"performance\": Volume type performance is not available in zone invalid-zone",
+		},
+		{
 			name:         "valid volume type",
 			controlPlane: true,
 			mpool: func() *openstack.MachinePool {
 				mp := validMachinePoolLargeVolume()
-				mp.RootVolume.DeprecatedType = volumeType
+				mp.RootVolume.DeprecatedType = volumeTypeName
 				mp.RootVolume.Types = []string{}
 				return mp
 			}(),
@@ -400,7 +461,7 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			controlPlane: true,
 			mpool: func() *openstack.MachinePool {
 				mp := validMachinePoolLargeVolume()
-				mp.RootVolume.Types = volumeTypes
+				mp.RootVolume.Types = volumeTypesNames
 				return mp
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),

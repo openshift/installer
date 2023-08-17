@@ -42,7 +42,7 @@ func ValidateMachinePool(p *openstack.MachinePool, ci *CloudInfo, controlPlane b
 	var checkStorageFlavor bool
 	// Validate Root Volumes
 	if p.RootVolume != nil {
-		allErrs = append(allErrs, validateVolumeTypes(p.RootVolume.Types, ci.VolumeTypes, fldPath.Child("rootVolume").Child("types"))...)
+		allErrs = append(allErrs, validateVolumeTypes(p.RootVolume.Types, ci.VolumeTypes, p.RootVolume.Zones, fldPath.Child("rootVolume").Child("types"))...)
 		if p.RootVolume.Size < minimumStorage {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("rootVolume").Child("size"), p.RootVolume.Size, fmt.Sprintf("Volume size must be greater than %d GB to use root volumes, had %d GB", minimumStorage, p.RootVolume.Size)))
 		} else if p.RootVolume.Size < recommendedStorage {
@@ -89,15 +89,32 @@ func validateZones(input []string, available []string, fldPath *field.Path) fiel
 	return allErrs
 }
 
-func validateVolumeTypes(input []string, available []string, fldPath *field.Path) field.ErrorList {
+func validateVolumeTypes(input []string, available []VolumeType, zones []string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if len(input) == 0 {
 		return allErrs
 	}
-	volumeTypes := sets.New[string](available...)
+	availableTypes := sets.NewString()
+	for _, vt := range available {
+		availableTypes.Insert(vt.Name)
+	}
 	for _, volumeType := range input {
-		if !volumeTypes.Has(volumeType) {
+		if !availableTypes.Has(volumeType) {
 			allErrs = append(allErrs, field.Invalid(fldPath, volumeType, "Volume type either does not exist in this cloud, or is not available"))
+		}
+	}
+
+	// For each rootVolume type specified that has zones configured in Cinder, check that the zones were specified in the machine pool with the rootVolume zones field.
+	// See https://docs.openstack.org/cinder/latest/admin/availability-zone-type.html for more information.
+	// Note that this is not a complete check, as if more than one type is specified, the zones could be specified in another index of the rootVolume zones field.
+	for _, vt := range available {
+		for _, zone := range vt.Zones {
+			for _, z := range zones {
+				if zone == z {
+					break
+				}
+			}
+			allErrs = append(allErrs, field.Invalid(fldPath, vt.Name, fmt.Sprintf("Volume type %s is not available in zone %s", vt.Name, zone)))
 		}
 	}
 

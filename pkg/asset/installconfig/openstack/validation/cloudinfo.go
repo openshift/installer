@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack/blockstorage/extensions/availabilityzones"
@@ -24,6 +25,7 @@ import (
 	imageutils "github.com/gophercloud/utils/openstack/imageservice/v2/images"
 	networkutils "github.com/gophercloud/utils/openstack/networking/v2/networks"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/openshift/installer/pkg/quota"
 	"github.com/openshift/installer/pkg/types"
@@ -43,7 +45,7 @@ type CloudInfo struct {
 	OSImage                 *images.Image
 	ComputeZones            []string
 	VolumeZones             []string
-	VolumeTypes             []string
+	VolumeTypes             []VolumeType
 	NetworkExtensions       []extensions.Extension
 	Quotas                  []quota.Quota
 
@@ -63,6 +65,12 @@ type clients struct {
 type Flavor struct {
 	flavors.Flavor
 	Baremetal bool
+}
+
+// VolumeType embeds the name and availability zones of a Cinder volume type if any.
+type VolumeType struct {
+	Name  string
+	Zones []string
 }
 
 var ci *CloudInfo
@@ -419,7 +427,7 @@ func (ci *CloudInfo) getVolumeZones() ([]string, error) {
 	return zones, nil
 }
 
-func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
+func (ci *CloudInfo) getVolumeTypes() ([]VolumeType, error) {
 	allPages, err := volumetypes.List(ci.clients.volumeClient, volumetypes.ListOpts{}).AllPages()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list volume types: %w", err)
@@ -434,12 +442,49 @@ func (ci *CloudInfo) getVolumeTypes() ([]string, error) {
 		return nil, fmt.Errorf("could not find an available block storage volume type")
 	}
 
-	var types []string
+	types := make([]VolumeType, 0)
 	for _, volumeType := range volumeTypeInfo {
-		types = append(types, volumeType.Name)
+		vt := VolumeType{
+			Name: volumeType.Name,
+		}
+		volumeExtraSpecs, err := volumetypes.ListExtraSpecs(ci.clients.volumeClient, volumeType.ID).Extract()
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse response with volume type extra specs: %w", err)
+		}
+		if volumeExtraSpecs != nil && volumeExtraSpecs["RESKEY:availability_zones"] != "" {
+			// The value of ExtraSpecs['RESKEY:availability_zones'] is a comma-separated list of availability zones
+			// and we want to make sure they exist in the list of available volume zones.
+			zones := getVolumeTypeZones(volumeExtraSpecs)
+			if zones == nil {
+				return nil, fmt.Errorf("volume type %v has an empty value for RESKEY:availability_zones", volumeType.Name)
+			}
+			for _, zone := range zones {
+				if !sets.NewString(ci.VolumeZones...).Has(zone) {
+					continue
+				} else {
+					return nil, fmt.Errorf("volume type %v is allowed in %v availability zone, but the zone was not found or is not available", volumeType.Name, zone)
+				}
+			}
+			vt.Zones = zones
+		}
+		types = append(types, vt)
 	}
 
 	return types, nil
+}
+
+// getVolumeTypeZones returns the list of availability zones for a volume type.
+func getVolumeTypeZones(volumeExtraSpecs map[string]string) []string {
+	if volumeExtraSpecs != nil && volumeExtraSpecs["RESKEY:availability_zones"] != "" {
+		// The value of ExtraSpecs['RESKEY:availability_zones'] is a comma-separated list of availability zones
+		// and we want to make sure they exist in the list of available volume zones.
+		zones := strings.Split(volumeExtraSpecs["RESKEY:availability_zones"], ",")
+		if len(zones) == 0 {
+			return nil
+		}
+		return zones
+	}
+	return nil
 }
 
 // loadQuotas loads the quota information for a project and provided services. It provides information
