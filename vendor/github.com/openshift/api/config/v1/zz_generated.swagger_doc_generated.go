@@ -364,7 +364,7 @@ var map_AuthenticationSpec = map[string]string{
 	"oauthMetadata":              "oauthMetadata contains the discovery endpoint data for OAuth 2.0 Authorization Server Metadata for an external OAuth server. This discovery document can be viewed from its served location: oc get --raw '/.well-known/oauth-authorization-server' For further details, see the IETF Draft: https://tools.ietf.org/html/draft-ietf-oauth-discovery-04#section-2 If oauthMetadata.name is non-empty, this value has precedence over any metadata reference stored in status. The key \"oauthMetadata\" is used to locate the data. If specified and the config map or expected key is not found, no metadata is served. If the specified metadata is not valid, no metadata is served. The namespace for this config map is openshift-config.",
 	"webhookTokenAuthenticators": "webhookTokenAuthenticators is DEPRECATED, setting it has no effect.",
 	"webhookTokenAuthenticator":  "webhookTokenAuthenticator configures a remote token reviewer. These remote authentication webhooks can be used to verify bearer tokens via the tokenreviews.authentication.k8s.io REST API. This is required to honor bearer tokens that are provisioned by an external authentication service.",
-	"serviceAccountIssuer":       "serviceAccountIssuer is the identifier of the bound service account token issuer. The default is https://kubernetes.default.svc WARNING: Updating this field will result in the invalidation of all bound tokens with the previous issuer value. Unless the holder of a bound token has explicit support for a change in issuer, they will not request a new bound token until pod restart or until their existing token exceeds 80% of its duration.",
+	"serviceAccountIssuer":       "serviceAccountIssuer is the identifier of the bound service account token issuer. The default is https://kubernetes.default.svc WARNING: Updating this field will not result in immediate invalidation of all bound tokens with the previous issuer value. Instead, the tokens issued by previous service account issuer will continue to be trusted for a time period chosen by the platform (currently set to 24h). This time period is subject to change over time. This allows internal components to transition to use new service account issuer without service distruption.",
 }
 
 func (AuthenticationSpec) SwaggerDoc() map[string]string {
@@ -733,6 +733,15 @@ func (ConsoleStatus) SwaggerDoc() map[string]string {
 	return map_ConsoleStatus
 }
 
+var map_AWSDNSSpec = map[string]string{
+	"":                   "AWSDNSSpec contains DNS configuration specific to the Amazon Web Services cloud provider.",
+	"privateZoneIAMRole": "privateZoneIAMRole contains the ARN of an IAM role that should be assumed when performing operations on the cluster's private hosted zone specified in the cluster DNS config. When left empty, no role should be assumed.",
+}
+
+func (AWSDNSSpec) SwaggerDoc() map[string]string {
+	return map_AWSDNSSpec
+}
+
 var map_DNS = map[string]string{
 	"":       "DNS holds cluster-wide information about DNS. The canonical name is `cluster`\n\nCompatibility level 1: Stable within a major release for a minimum of 12 months or 3 minor releases (whichever is longer).",
 	"spec":   "spec holds user settable values for configuration",
@@ -751,10 +760,21 @@ func (DNSList) SwaggerDoc() map[string]string {
 	return map_DNSList
 }
 
+var map_DNSPlatformSpec = map[string]string{
+	"":     "DNSPlatformSpec holds cloud-provider-specific configuration for DNS administration.",
+	"type": "type is the underlying infrastructure provider for the cluster. Allowed values: \"\", \"AWS\".\n\nIndividual components may not support all platforms, and must handle unrecognized platforms with best-effort defaults.",
+	"aws":  "aws contains DNS configuration specific to the Amazon Web Services cloud provider.",
+}
+
+func (DNSPlatformSpec) SwaggerDoc() map[string]string {
+	return map_DNSPlatformSpec
+}
+
 var map_DNSSpec = map[string]string{
 	"baseDomain":  "baseDomain is the base domain of the cluster. All managed DNS records will be sub-domains of this base.\n\nFor example, given the base domain `openshift.example.com`, an API server DNS record may be created for `cluster-api.openshift.example.com`.\n\nOnce set, this field cannot be changed.",
 	"publicZone":  "publicZone is the location where all the DNS records that are publicly accessible to the internet exist.\n\nIf this field is nil, no public records should be created.\n\nOnce set, this field cannot be changed.",
 	"privateZone": "privateZone is the location where all the DNS records that are only available internally to the cluster exist.\n\nIf this field is nil, no private records should be created.\n\nOnce set, this field cannot be changed.",
+	"platform":    "platform holds configuration specific to the underlying infrastructure provider for DNS. When omitted, this means the user has no opinion and the platform is left to choose reasonable defaults. These defaults are subject to change over time.",
 }
 
 func (DNSSpec) SwaggerDoc() map[string]string {
