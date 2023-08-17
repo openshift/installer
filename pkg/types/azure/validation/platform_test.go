@@ -151,14 +151,24 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expected: `^test-path\.outboundType: Invalid value: "UserDefinedRouting": UserDefinedRouting is only allowed when installing to pre-existing network$`,
 		},
+		{
+			name: "invalid nat gateway",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.OutboundType = azure.NatGatewayOutboundType
+				return p
+			}(),
+			expected: `^test-path\.outboundType: Invalid value: "NatGateway": not supported in this feature set$`,
+		},
 	}
+	ic := types.InstallConfig{}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			if tc.wantSkip != nil && tc.wantSkip(tc.platform) {
 				t.Skip()
 			}
 
-			err := ValidatePlatform(tc.platform, types.ExternalPublishingStrategy, field.NewPath("test-path")).ToAggregate()
+			err := ValidatePlatform(tc.platform, types.ExternalPublishingStrategy, field.NewPath("test-path"), &ic).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {

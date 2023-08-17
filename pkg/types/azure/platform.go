@@ -79,6 +79,7 @@ type Platform struct {
 	CloudName CloudEnvironment `json:"cloudName,omitempty"`
 
 	// OutboundType is a strategy for how egress from cluster is achieved. When not specified default is "Loadbalancer".
+	// "NatGateway" is only available in TechPreview.
 	//
 	// +kubebuilder:default=Loadbalancer
 	// +optional
