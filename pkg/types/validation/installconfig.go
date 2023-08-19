@@ -741,7 +741,7 @@ func validatePlatform(platform *types.Platform, usingAgentMethod bool, fldPath *
 	}
 	if platform.Azure != nil {
 		validate(azure.Name, platform.Azure, func(f *field.Path) field.ErrorList {
-			return azurevalidation.ValidatePlatform(platform.Azure, c.Publish, f)
+			return azurevalidation.ValidatePlatform(platform.Azure, c.Publish, f, c)
 		})
 	}
 	if platform.GCP != nil {

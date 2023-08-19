@@ -2717,7 +2717,8 @@ spec:
                   outboundType:
                     default: Loadbalancer
                     description: OutboundType is a strategy for how egress from cluster
-                      is achieved. When not specified default is "Loadbalancer".
+                      is achieved. When not specified default is "Loadbalancer". "NatGateway"
+                      is only available in TechPreview.
                     enum:
                     - ""
                     - Loadbalancer

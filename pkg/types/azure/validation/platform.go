@@ -8,6 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
@@ -46,7 +47,7 @@ var (
 const maxUserTagLimit = 10
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.Region == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "region should be set to one of the supported Azure regions"))
@@ -88,9 +89,14 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 	if p.OutboundType == azure.UserDefinedRoutingOutboundType && p.VirtualNetwork == "" {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is only allowed when installing to pre-existing network", azure.UserDefinedRoutingOutboundType)))
 	}
-	if p.OutboundType == azure.NatGatewayOutboundType && p.VirtualNetwork != "" {
-		// For now, BYO network and NAT gateways are not compatible
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is not allowed when installing to pre-existing network", azure.NatGatewayOutboundType)))
+	if p.OutboundType == azure.NatGatewayOutboundType {
+		if ic.FeatureSet != configv1.TechPreviewNoUpgrade {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "not supported in this feature set"))
+		}
+		if p.VirtualNetwork != "" {
+			// For now, BYO network and NAT gateways are not compatible
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, fmt.Sprintf("%s is not allowed when installing to pre-existing network", azure.NatGatewayOutboundType)))
+		}
 	}
 
 	// support for Azure user-defined tags made available through
@@ -208,8 +214,11 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	if p.ARMEndpoint == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("armEndpoint"), "ARM endpoint must be set when installing on Azure Stack"))
 	}
-	if p.OutboundType == azure.UserDefinedRoutingOutboundType {
+	switch p.OutboundType {
+	case azure.UserDefinedRoutingOutboundType:
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support user-defined routing"))
+	case azure.NatGatewayOutboundType:
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support NAT routing currently"))
 	}
 	return allErrs
 }
