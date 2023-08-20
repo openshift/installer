@@ -307,11 +307,9 @@ func (a *AgentConfig) validateRendezvousIPNotWorker(rendezvousIP string, hosts [
 	if rendezvousIP != "" {
 		for i, host := range hosts {
 			hostPath := field.NewPath("Hosts").Index(i)
-			if strings.Contains(string(host.NetworkConfig.Raw), rendezvousIP) && host.Role != "master" {
-				if len(host.Role) > 0 {
-					errMsg := "Host " + host.Hostname + " is not of role 'master' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a host of role 'master'"
-					allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), errMsg))
-				}
+			if strings.Contains(string(host.NetworkConfig.Raw), rendezvousIP) && host.Role == "worker" {
+				errMsg := "Host " + host.Hostname + " has role 'worker' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a control plane host."
+				allErrs = append(allErrs, field.Forbidden(hostPath.Child("Host"), errMsg))
 			}
 		}
 	}
