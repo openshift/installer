@@ -444,7 +444,7 @@ hosts:
                   prefix-length: 24
               dhcp: false`,
 			expectedFound: false,
-			expectedError: "invalid Agent Config configuration: Hosts[0].Host: Forbidden: Host host0 is not of role 'master' and has the rendevousIP assigned to it. The rendevousIP must be assigned to a host of role 'master'",
+			expectedError: "invalid Agent Config configuration: Hosts[0].Host: Forbidden: Host host0 is not of role 'master' and has the rendezvousIP assigned to it. The rendezvousIP must be assigned to a host of role 'master'",
 		},
 	}
 	for _, tc := range cases {
