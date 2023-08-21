@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
@@ -139,7 +138,7 @@ func (i *BaseIso) retrieveBaseIso(dependencies asset.Parents) (string, error) {
 		dependencies.Get(agentManifests, registriesConf)
 
 		// If we have the image registry location and 'oc' command is available then get from release payload
-		ocRelease := NewRelease(&executer.CommonExecuter{},
+		ocRelease := NewRelease(
 			Config{MaxTries: OcDefaultTries, RetryDelay: OcDefaultRetryDelay},
 			releaseImage, pullSecret, registriesConf.MirrorConfig)
 

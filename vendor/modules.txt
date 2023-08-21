@@ -8711,7 +8711,6 @@ github.com/openshift/assisted-service/client/managed_domains
 github.com/openshift/assisted-service/client/manifests
 github.com/openshift/assisted-service/client/operators
 github.com/openshift/assisted-service/client/versions
-github.com/openshift/assisted-service/pkg/executer
 # github.com/openshift/assisted-service/api v0.0.0 => github.com/openshift/assisted-service/api v0.0.0-20220928142635-a40422bdea61
 ## explicit; go 1.17
 github.com/openshift/assisted-service/api/common
