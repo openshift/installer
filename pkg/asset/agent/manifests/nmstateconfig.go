@@ -18,10 +18,10 @@ import (
 
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
-	"github.com/openshift/assisted-service/pkg/staticnetworkconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
+	"github.com/openshift/installer/pkg/asset/agent/manifests/staticnetworkconfig"
 	"github.com/openshift/installer/pkg/types"
 )
 

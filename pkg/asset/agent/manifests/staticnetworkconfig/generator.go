@@ -10,47 +10,51 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-multierror"
-	"github.com/openshift/assisted-service/models"
-	"github.com/openshift/assisted-service/pkg/executer"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/semaphore"
 	"gopkg.in/ini.v1"
 	"gopkg.in/yaml.v2"
 	"k8s.io/apimachinery/pkg/util/json"
+
+	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/assisted-service/pkg/executer"
 )
 
+// Config is the configuration for the nmstatectl runner.
 type Config struct {
 	MaxConcurrentGenerations int64 `envconfig:"MAX_CONCURRENT_NMSTATECTL_GENERATIONS" default:"30"`
 }
 
-type StaticNetworkConfigData struct {
+// StaticNetworkConfigData represents a NetworkManager keyfile.
+type StaticNetworkConfigData struct { //nolint:revive
 	FilePath     string
 	FileContents string
 }
 
-//go:generate mockgen -source=generator.go -package=staticnetworkconfig -destination=mock_generator.go
+// StaticNetworkConfig is the interface for converting NMState.
 type StaticNetworkConfig interface {
 	GenerateStaticNetworkConfigData(ctx context.Context, hostsYAMLS string) ([]StaticNetworkConfigData, error)
 	FormatStaticNetworkConfigForDB(staticNetworkConfig []*models.HostStaticNetworkConfig) (string, error)
 	ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error
 }
 
-type StaticNetworkConfigGenerator struct {
+type staticNetworkConfigGenerator struct {
 	Config
 	log logrus.FieldLogger
 	sem *semaphore.Weighted
 }
 
+// New returns a new network config generator.
 func New(log logrus.FieldLogger, cfg Config) StaticNetworkConfig {
-	return &StaticNetworkConfigGenerator{
+	return &staticNetworkConfigGenerator{
 		Config: cfg,
 		log:    log,
 		sem:    semaphore.NewWeighted(cfg.MaxConcurrentGenerations)}
 }
 
-func (s *StaticNetworkConfigGenerator) GenerateStaticNetworkConfigData(ctx context.Context, staticNetworkConfigStr string) ([]StaticNetworkConfigData, error) {
-
+// GenerateStaticNetworkConfigData converts the NMState config to NetworkManager key files.
+func (s *staticNetworkConfigGenerator) GenerateStaticNetworkConfigData(ctx context.Context, staticNetworkConfigStr string) ([]StaticNetworkConfigData, error) {
 	staticNetworkConfig, err := s.decodeStaticNetworkConfig(staticNetworkConfigStr)
 	if err != nil {
 		s.log.WithError(err).Errorf("Failed to decode static network config")
@@ -70,7 +74,7 @@ func (s *StaticNetworkConfigGenerator) GenerateStaticNetworkConfigData(ctx conte
 	return filesList, nil
 }
 
-func (s *StaticNetworkConfigGenerator) generateHostStaticNetworkConfigData(ctx context.Context, hostConfig *models.HostStaticNetworkConfig, hostDir string) ([]StaticNetworkConfigData, error) {
+func (s *staticNetworkConfigGenerator) generateHostStaticNetworkConfigData(ctx context.Context, hostConfig *models.HostStaticNetworkConfig, hostDir string) ([]StaticNetworkConfigData, error) {
 	hostYAML := hostConfig.NetworkYaml
 	macInterfaceMapping := s.formatMacInterfaceMap(hostConfig.MacInterfaceMap)
 	result, err := s.executeNMStatectl(ctx, hostYAML)
@@ -90,7 +94,7 @@ func (s *StaticNetworkConfigGenerator) generateHostStaticNetworkConfigData(ctx c
 	return filesList, nil
 }
 
-func (s *StaticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, hostYAML string) (string, error) {
+func (s *staticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, hostYAML string) (string, error) {
 	err := s.sem.Acquire(ctx, 1)
 	if err != nil {
 		s.log.WithError(err).Errorf("Failed to lock semaphore for nmstatectl execution")
@@ -128,9 +132,9 @@ func (s *StaticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, ho
 	return stdout, nil
 }
 
-// create NMConnectionFiles formats the nmstate output into a list of file data
-// Nothing is written to the local filesystem
-func (s *StaticNetworkConfigGenerator) createNMConnectionFiles(nmstateOutput, hostDir string) ([]StaticNetworkConfigData, error) {
+// createNMConnectionFiles formats the nmstate output into a list of file data.
+// Nothing is written to the local filesystem.
+func (s *staticNetworkConfigGenerator) createNMConnectionFiles(nmstateOutput, hostDir string) ([]StaticNetworkConfigData, error) {
 	var hostNMConnections map[string]interface{}
 	err := yaml.Unmarshal([]byte(nmstateOutput), &hostNMConnections)
 	if err != nil {
@@ -141,28 +145,32 @@ func (s *StaticNetworkConfigGenerator) createNMConnectionFiles(nmstateOutput, ho
 		return nil, errors.Errorf("nmstate generated an empty NetworkManager config file content")
 	}
 	filesList := []StaticNetworkConfigData{}
-	connectionsList := hostNMConnections["NetworkManager"].([]interface{})
-	if len(connectionsList) == 0 {
+	connectionsList, ok := hostNMConnections["NetworkManager"].([]interface{})
+	if !ok || len(connectionsList) == 0 {
 		return nil, errors.Errorf("nmstate generated an empty NetworkManager config file content")
 	}
 	for _, connection := range connectionsList {
-		connectionElems := connection.([]interface{})
-		fileName := connectionElems[0].(string)
-		fileContents, err := s.formatNMConnection(connectionElems[1].(string))
-		if err != nil {
-			return nil, err
+		if connectionElems, ok := connection.([]interface{}); ok {
+			if fileName, ok := connectionElems[0].(string); ok {
+				if nmConnection, ok := connectionElems[1].(string); ok {
+					fileContents, err := s.formatNMConnection(nmConnection)
+					if err != nil {
+						return nil, err
+					}
+					s.log.Infof("Adding NMConnection file <%s>", fileName)
+					newFile := StaticNetworkConfigData{
+						FilePath:     filepath.Join(hostDir, fileName),
+						FileContents: fileContents,
+					}
+					filesList = append(filesList, newFile)
+				}
+			}
 		}
-		s.log.Infof("Adding NMConnection file <%s>", fileName)
-		newFile := StaticNetworkConfigData{
-			FilePath:     filepath.Join(hostDir, fileName),
-			FileContents: fileContents,
-		}
-		filesList = append(filesList, newFile)
 	}
 	return filesList, nil
 }
 
-func (s *StaticNetworkConfigGenerator) formatNMConnection(nmConnection string) (string, error) {
+func (s *staticNetworkConfigGenerator) formatNMConnection(nmConnection string) (string, error) {
 	ini.PrettyFormat = false
 	cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, []byte(nmConnection))
 	if err != nil {
@@ -190,18 +198,19 @@ func (s *StaticNetworkConfigGenerator) formatNMConnection(nmConnection string) (
 	return buf.String(), nil
 }
 
-func (s *StaticNetworkConfigGenerator) ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error {
+// ValidateStaticConfigParams validates the NMState data in a HostStaticNetworkConfig.
+func (s *staticNetworkConfigGenerator) ValidateStaticConfigParams(ctx context.Context, staticNetworkConfig []*models.HostStaticNetworkConfig) error {
 	var err *multierror.Error
 	for i, hostConfig := range staticNetworkConfig {
 		err = multierror.Append(err, s.validateMacInterfaceName(i, hostConfig.MacInterfaceMap))
 		if validateErr := s.validateNMStateYaml(ctx, hostConfig.NetworkYaml); validateErr != nil {
-			err = multierror.Append(err, fmt.Errorf("failed to validate network yaml for host %d, %s", i, validateErr))
+			err = multierror.Append(err, fmt.Errorf("failed to validate network yaml for host %d, %w", i, validateErr))
 		}
 	}
 	return err.ErrorOrNil()
 }
 
-func (s *StaticNetworkConfigGenerator) validateMacInterfaceName(hostIdx int, macInterfaceMap models.MacInterfaceMap) error {
+func (s *staticNetworkConfigGenerator) validateMacInterfaceName(hostIdx int, macInterfaceMap models.MacInterfaceMap) error {
 	interfaceCheck := make(map[string]struct{}, len(macInterfaceMap))
 	macCheck := make(map[string]struct{}, len(macInterfaceMap))
 	for _, macInterface := range macInterfaceMap {
@@ -214,7 +223,7 @@ func (s *StaticNetworkConfigGenerator) validateMacInterfaceName(hostIdx int, mac
 	return nil
 }
 
-func (s *StaticNetworkConfigGenerator) validateNMStateYaml(ctx context.Context, networkYaml string) error {
+func (s *staticNetworkConfigGenerator) validateNMStateYaml(ctx context.Context, networkYaml string) error {
 	result, err := s.executeNMStatectl(ctx, networkYaml)
 	if err != nil {
 		return err
@@ -264,7 +273,8 @@ func sortStaticNetworkConfig(staticNetworkConfig []*models.HostStaticNetworkConf
 	})
 }
 
-func (s *StaticNetworkConfigGenerator) FormatStaticNetworkConfigForDB(staticNetworkConfig []*models.HostStaticNetworkConfig) (string, error) {
+// FormatStaticNetworkConfigForDB returns a sorted JSON representation of the network config.
+func (s *staticNetworkConfigGenerator) FormatStaticNetworkConfigForDB(staticNetworkConfig []*models.HostStaticNetworkConfig) (string, error) {
 	if len(staticNetworkConfig) == 0 {
 		return "", nil
 	}
@@ -276,7 +286,7 @@ func (s *StaticNetworkConfigGenerator) FormatStaticNetworkConfigForDB(staticNetw
 	return string(b), nil
 }
 
-func (s *StaticNetworkConfigGenerator) decodeStaticNetworkConfig(staticNetworkConfigStr string) (staticNetworkConfig []*models.HostStaticNetworkConfig, err error) {
+func (s *staticNetworkConfigGenerator) decodeStaticNetworkConfig(staticNetworkConfigStr string) (staticNetworkConfig []*models.HostStaticNetworkConfig, err error) {
 	if staticNetworkConfigStr == "" {
 		return
 	}
@@ -287,7 +297,7 @@ func (s *StaticNetworkConfigGenerator) decodeStaticNetworkConfig(staticNetworkCo
 	return
 }
 
-func (s *StaticNetworkConfigGenerator) formatMacInterfaceMap(macInterfaceMap models.MacInterfaceMap) string {
+func (s *staticNetworkConfigGenerator) formatMacInterfaceMap(macInterfaceMap models.MacInterfaceMap) string {
 	lines := make([]string, len(macInterfaceMap))
 	for i, entry := range macInterfaceMap {
 		lines[i] = fmt.Sprintf("%s=%s", entry.MacAddress, entry.LogicalNicName)
