@@ -130,8 +130,12 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 		return nil, errors.Wrap(err, "failed to create resourcemanager service")
 	}
 
-	err = wait.PollImmediateInfinite(
+	pollCtx, cancel := context.WithTimeout(context.Background(), time.Minute*60)
+	defer cancel()
+	err = wait.PollUntilContextCancel(
+		pollCtx,
 		time.Second*10,
+		true,
 		o.destroyCluster,
 	)
 	if err != nil {
@@ -142,7 +146,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	return &types.ClusterQuota{GCP: &quota}, nil
 }
 
-func (o *ClusterUninstaller) destroyCluster() (bool, error) {
+func (o *ClusterUninstaller) destroyCluster(ctx context.Context) (bool, error) {
 	stagedFuncs := [][]struct {
 		name    string
 		execute func(ctx context.Context) error
@@ -170,9 +174,6 @@ func (o *ClusterUninstaller) destroyCluster() (bool, error) {
 		{name: "Subnetworks", execute: o.destroySubnetworks},
 		{name: "Networks", execute: o.destroyNetworks},
 	}}
-
-	// create the main Context, so all stages can accept and make context children
-	ctx := context.Background()
 
 	done := true
 	for _, stage := range stagedFuncs {
