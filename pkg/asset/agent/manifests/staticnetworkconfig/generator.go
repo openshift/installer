@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -18,7 +19,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 
 	"github.com/openshift/assisted-service/models"
-	"github.com/openshift/assisted-service/pkg/executer"
 )
 
 // Config is the configuration for the nmstatectl runner.
@@ -102,8 +102,7 @@ func (s *staticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, ho
 	}
 	defer s.sem.Release(1)
 
-	executer := &executer.CommonExecuter{}
-	f, err := executer.TempFile("", "host-config")
+	f, err := os.CreateTemp("", "host-config")
 	if err != nil {
 		s.log.WithError(err).Errorf("Failed to create temp file")
 		return "", err
@@ -123,13 +122,24 @@ func (s *staticNetworkConfigGenerator) executeNMStatectl(ctx context.Context, ho
 	if err = f.Close(); err != nil {
 		s.log.WithError(err).Warn("Failed to close file")
 	}
-	stdout, stderr, retCode := executer.ExecuteWithContext(ctx, "nmstatectl", "gc", f.Name())
-	if retCode != 0 {
-		s.log.Errorf("<nmstatectl gc> failed, errorCode %d, stderr %s, input yaml <%s>", retCode, stderr, hostYAML)
-		errMsg := strings.Split(stderr, "Error:")
+
+	var stdoutBytes, stderrBytes bytes.Buffer
+	cmd := exec.CommandContext(ctx, "nmstatectl", "gc", f.Name()) //nolint:gosec
+	cmd.Stdout = &stdoutBytes
+	cmd.Stderr = &stderrBytes
+
+	err = cmd.Run()
+	if err == nil {
+		return stdoutBytes.String(), nil
+	}
+
+	var exitErr *exec.ExitError
+	if errors.As(err, &exitErr) {
+		s.log.Errorf("<nmstatectl gc> failed, errorCode %d, stderr %s, input yaml <%s>", exitErr.ExitCode(), stderrBytes.String(), hostYAML)
+		errMsg := strings.Split(stderrBytes.String(), "Error:")
 		return "", fmt.Errorf("failed to execute 'nmstatectl gc', error: %s", strings.TrimSpace(errMsg[len(errMsg)-1]))
 	}
-	return stdout, nil
+	return "", fmt.Errorf("failed to execute 'nmstatectl gc', error: %w", err)
 }
 
 // createNMConnectionFiles formats the nmstate output into a list of file data.
