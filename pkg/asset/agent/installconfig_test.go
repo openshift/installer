@@ -40,7 +40,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "none"`,
+			expectedError: `invalid install-config configuration: Platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "none", "external"`,
 		},
 		{
 			name: "apiVips not set for baremetal Compact platform",
@@ -124,7 +124,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for none platform. Found 3",
+			expectedError: "invalid install-config configuration: Compute.Replicas: Required value: Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform none or external. Found 3",
 		},
 		{
 			name: "invalid networkType for SNO cluster",
@@ -181,7 +181,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", Platform: Invalid value: \"aws\": Only platform none supports 1 ControlPlane and 0 Compute nodes]",
+			expectedError: "invalid install-config configuration: [Platform: Unsupported value: \"aws\": supported values: \"baremetal\", \"vsphere\", \"none\", \"external\", Platform: Invalid value: \"aws\": Only platform none and external supports 1 ControlPlane and 0 Compute nodes]",
 		},
 		{
 			name: "invalid architecture for SNO cluster",
@@ -210,6 +210,21 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
 			expectedError: "invalid install-config configuration: [ControlPlane.Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\", Compute[0].Architecture: Unsupported value: \"s390x\": supported values: \"amd64\", \"arm64\"]",
+		},
+		{
+			name: "unsupported platformName for external platform",
+			data: `
+apiVersion: v1
+metadata:
+    name: test-cluster
+baseDomain: test-domain
+platform:
+  external:
+    platformName: some-cloud-provider
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: Platform.External.PlatformName: Unsupported value: "some-cloud-provider": supported values: "oci"`,
 		},
 		{
 			name: "valid configuration for none platform for sno",

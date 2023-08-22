@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/defaults"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -156,8 +157,12 @@ func (a *AgentClusterInstall) Generate(dependencies asset.Parents) error {
 			},
 		}
 
-		if installConfig.Config.Platform.Name() == none.Name {
-			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", none.Name)
+		if installConfig.Config.Platform.Name() == external.Name {
+			agentClusterInstall.Spec.ExternalSpec.PlatformName = installConfig.Config.Platform.External.PlatformName
+		}
+
+		if installConfig.Config.Platform.Name() == none.Name || installConfig.Config.Platform.Name() == external.Name {
+			logrus.Debugf("Setting UserManagedNetworking to true for %s platform", installConfig.Config.Platform.Name())
 			agentClusterInstall.Spec.Networking.UserManagedNetworking = swag.Bool(true)
 		}
 
@@ -276,6 +281,8 @@ func (a *AgentClusterInstall) Load(f asset.FileFetcher) (bool, error) {
 	switch string(agentClusterInstall.Spec.PlatformType) {
 	case baremetal.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.BareMetalPlatformType
+	case external.Name:
+		agentClusterInstall.Spec.PlatformType = hiveext.ExternalPlatformType
 	case none.Name:
 		agentClusterInstall.Spec.PlatformType = hiveext.NonePlatformType
 		if agentClusterInstall.Spec.Networking.UserManagedNetworking != swag.Bool(true) {

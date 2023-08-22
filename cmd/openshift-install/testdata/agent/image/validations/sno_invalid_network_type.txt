@@ -1,0 +1,41 @@
+! exec openshift-install agent create image --dir $WORK
+
+stderr 'Only OVNKubernetes network type is allowed for Single Node OpenShift \(SNO\) cluster'
+
+! exists $WORK/agent.x86_64.iso
+! exists $WORK/auth/kubeconfig
+! exists $WORK/auth/kubeadmin-password
+
+-- install-config.yaml --
+apiVersion: v1
+baseDomain: test.metalkube.org
+controlPlane: 
+  name: master
+  replicas: 1
+compute: 
+- name: worker
+  replicas: 0
+metadata:
+  namespace: cluster0
+  name: ostest
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14 
+    hostPrefix: 23 
+  networkType: OpenShiftSDN
+  machineNetwork:
+  - cidr: 192.168.111.0/24
+  serviceNetwork: 
+  - 172.30.0.0/16
+platform:
+  external:
+    platformName: oci
+sshKey: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDK6UTEydcEKzuNdPaofn8Z2DwgHqdcionLZBiPf/zIRNco++etLsat7Avv7yt04DINQd5zjxIFgG8jblaUB5E5C9ClUcMwb52GO0ay2Y9v1uBv1a4WhI3peKktAzYNk0EBMQlJtXPjRMrC9ylBPh+DsBHMu+KmDnfk7PIwyN4efC8k5kSRuPWoNdme1rz2+umU8FSmaWTHIajrbspf4GQbsntA5kuKEtDbfoNCU97o2KrRnUbeg3a8hwSjfh3u6MhlnGcg5K2Ij+zivEsWGCLKYUtE1ErqwfIzwWmJ6jnV66XCQGHf4Q1iIxqF7s2a1q24cgG2Z/iDXfqXrCIfy4P7b/Ztak3bdT9jfAdVZtdO5/r7I+O5hYhF86ayFlDWzZWP/ByiSb+q4CQbfVgK3BMmiAv2MqLHdhesmD/SmIcoOWUF6rFmRKZVFFpKpt5ATNTgUJ3JRowoXrrDruVXClUGRiCS6Zabd1rZ3VmTchaPJwtzQMdfIWISXj+Ig+C4UK0=
+pullSecret: '{"auths": {"quay.io": {"auth": "c3VwZXItc2VjcmV0Cg=="}}}'
+
+-- agent-config.yaml --
+apiVersion: v1alpha1
+metadata:
+  name: ostest
+  namespace: cluster0
+rendezvousIP: 192.168.111.20

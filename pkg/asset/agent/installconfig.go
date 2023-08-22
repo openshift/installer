@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
 	baremetaldefaults "github.com/openshift/installer/pkg/types/baremetal/defaults"
+	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/validation"
 	"github.com/openshift/installer/pkg/types/vsphere"
@@ -95,6 +96,10 @@ func (a *OptionalInstallConfig) validateSupportedPlatforms(installConfig *types.
 	if installConfig.Platform.Name() != "" && !IsSupportedPlatform(HivePlatformType(installConfig.Platform)) {
 		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.Name(), SupportedInstallerPlatforms()))
 	}
+	fieldPath = field.NewPath("Platform", "External", "PlatformName")
+	if installConfig.Platform.Name() == external.Name && installConfig.Platform.External.PlatformName != "oci" {
+		allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.Platform.External.PlatformName, []string{"oci"}))
+	}
 	return allErrs
 }
 
@@ -135,17 +140,17 @@ func (a *OptionalInstallConfig) validateSNOConfiguration(installConfig *types.In
 
 	if installConfig.ControlPlane != nil && *installConfig.ControlPlane.Replicas == 1 {
 		if workers == 0 {
-			if installConfig.Platform.Name() == none.Name && installConfig.Networking.NetworkType != "OVNKubernetes" {
+			if (installConfig.Platform.Name() == none.Name || installConfig.Platform.Name() == external.Name) && installConfig.Networking.NetworkType != "OVNKubernetes" {
 				fieldPath = field.NewPath("Networking", "NetworkType")
 				allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Networking.NetworkType, "Only OVNKubernetes network type is allowed for Single Node OpenShift (SNO) cluster"))
 			}
-			if installConfig.Platform.Name() != none.Name {
+			if installConfig.Platform.Name() != none.Name && installConfig.Platform.Name() != external.Name {
 				fieldPath = field.NewPath("Platform")
-				allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("Only platform %s supports 1 ControlPlane and 0 Compute nodes", none.Name)))
+				allErrs = append(allErrs, field.Invalid(fieldPath, installConfig.Platform.Name(), fmt.Sprintf("Only platform %s and %s supports 1 ControlPlane and 0 Compute nodes", none.Name, external.Name)))
 			}
 		} else {
 			fieldPath = field.NewPath("Compute", "Replicas")
-			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for %s platform. Found %v", none.Name, workers)))
+			allErrs = append(allErrs, field.Required(fieldPath, fmt.Sprintf("Total number of Compute.Replicas must be 0 when ControlPlane.Replicas is 1 for platform %s or %s. Found %v", none.Name, external.Name, workers)))
 		}
 	}
 	return allErrs
