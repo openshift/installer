@@ -229,6 +229,11 @@ spec:
                                 required:
                                   - zone
                                 properties:
+                                  subnet:
+                                    description: subnet is the name of the network subnet in which the VM will be created. When omitted, the subnet value from the machine providerSpec template will be used.
+                                    type: string
+                                    maxLength: 80
+                                    pattern: ^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9_])?$
                                   zone:
                                     description: Availability Zone for the virtual machine. If nil, the virtual machine should be deployed to no zone.
                                     type: string
